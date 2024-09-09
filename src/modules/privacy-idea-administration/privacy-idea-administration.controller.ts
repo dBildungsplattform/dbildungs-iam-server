@@ -155,7 +155,7 @@ export class PrivacyIdeaAdministrationController {
 
     @Post('verify')
     @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({ description: 'The token was successfully verified.', type: Boolean })
+    @ApiCreatedResponse({ description: 'The token was successfully verified.' })
     @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to verify token.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to verify token.' })
@@ -165,7 +165,7 @@ export class PrivacyIdeaAdministrationController {
     public async verifyToken(
         @Body() params: TokenVerifyBodyParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<boolean> {
+    ): Promise<void> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             params.personId,
             permissions,
@@ -178,11 +178,6 @@ export class PrivacyIdeaAdministrationController {
         if (personResult.value.referrer === undefined) {
             throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
         }
-        const success: boolean = await this.privacyIdeaAdministrationService.verifyToken(
-            personResult.value.referrer,
-            params.otp,
-        );
-
-        return success;
+        await this.privacyIdeaAdministrationService.verifyTokenEnrollment(personResult.value.referrer, params.otp);
     }
 }

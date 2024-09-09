@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { catchError, firstValueFrom, lastValueFrom, of } from 'rxjs';
+import { catchError, firstValueFrom, lastValueFrom } from 'rxjs';
 import { AxiosError, AxiosResponse } from 'axios';
 import {
     InitSoftwareToken,
@@ -22,6 +22,8 @@ import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
 import { ConfigService } from '@nestjs/config';
 import { PrivacyIdeaConfig } from '../../shared/config/privacyidea.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
+import { SoftwareTokenVerificationError } from './api/error/software-token-verification.error.js';
+import { TokenError } from './api/error/token.error.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -307,15 +309,13 @@ export class PrivacyIdeaAdministrationService {
         return this.assignToken(serial, token, user);
     }
 
-    public async verifyToken(userName: string, otp: string): Promise<boolean> {
+    public async verifyTokenEnrollment(userName: string, otp: string): Promise<void> {
         const tokenToVerify: PrivacyIdeaToken | undefined = await this.getTokenToVerify(userName);
         if (!tokenToVerify) {
             throw new Error('No token to verify');
         }
         const token: string = await this.getJWTToken();
-        const endpoint: string = '/token/init';
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = baseUrl + endpoint;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + '/token/init';
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };
@@ -329,15 +329,19 @@ export class PrivacyIdeaAdministrationService {
                 this.httpService.post(url, payload, { headers: headers }).pipe(
                     catchError((error: AxiosError<VerificationResponse>) => {
                         if (error.response?.data.result.error?.code == 905) {
-                            return of(null);
+                            throw new OTPnotValidError();
                         }
                         throw error;
                     }),
                 ),
             );
-            return response ? response.data.result.status : false;
+            if (!response.data.result.status) {
+                throw new SoftwareTokenVerificationError();
+            }
         } catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof TokenError) {
+                throw error;
+            } else if (error instanceof Error) {
                 throw new Error(`Error verifying token: ${error.message}`);
             } else {
                 throw new Error(`Error verifying token: Unknown error occurred`);
@@ -351,9 +355,7 @@ export class PrivacyIdeaAdministrationService {
 
     private async deleteToken(serial: string): Promise<void> {
         const token: string = await this.getJWTToken();
-        const endpoint: string = '/token/' + serial;
-        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
-        const url: string = baseUrl + endpoint;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + `/token/${serial}`;
         const headers: { Authorization: string } = {
             Authorization: `${token}`,
         };

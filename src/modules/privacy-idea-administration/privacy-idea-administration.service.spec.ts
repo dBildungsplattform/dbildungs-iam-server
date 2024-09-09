@@ -15,6 +15,7 @@ import {
 } from './privacy-idea-api.types.js';
 import { TokenError } from './api/error/token.error.js';
 import { ConfigTestModule } from '../../../test/utils/index.js';
+import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -60,22 +61,6 @@ export const mockUser: User = {
     surname: 'Doe',
     userid: 'user123',
     username: 'johndoe',
-};
-
-export const mockVerificationResponseErrorCode905: VerificationResponse = {
-    detail: null,
-    id: 2,
-    jsonrpc: '2.0',
-    result: {
-        status: false,
-        error: {
-            code: 905,
-            message: 'Specific error message for code 905',
-        },
-    },
-    time: 1627891255,
-    version: '1.0',
-    signature: 'hijklmn789012',
 };
 
 export const mockVerificationResponseErrorCode905: VerificationResponse = {
@@ -640,8 +625,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
             httpServiceMock.post.mockReturnValueOnce(mockVerficationTokenResponse());
 
-            const result: boolean = await service.verifyToken(`test-user`, `123456`);
-            expect(result).toBe(true);
+            await service.verifyTokenEnrollment(`test-user`, `123456`);
         });
 
         it(`should return false with wrong otp`, async () => {
@@ -650,8 +634,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
             httpServiceMock.post.mockReturnValueOnce(throwError(() => mockVerificationError905Response()));
 
-            const result: boolean = await service.verifyToken(`test-user`, `123456`);
-            expect(result).toBe(false);
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(OTPnotValidError);
         });
 
         it(`should throw error when axios error occurs`, async () => {
@@ -660,7 +643,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
             httpServiceMock.post.mockReturnValueOnce(throwError(() => new AxiosError('Mock error')));
 
-            await expect(service.verifyToken(`test-user`, `123456`)).rejects.toThrow(
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
                 'Error verifying token: Mock error',
             );
         });
@@ -671,7 +654,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 'getTokenToVerify',
             ).mockResolvedValueOnce(undefined);
 
-            await expect(service.verifyToken(`test-user`, `123456`)).rejects.toThrow('No token to verify');
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow('No token to verify');
         });
 
         it(`should throw an error if the verify request causes error throw`, async () => {
@@ -680,7 +663,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
             httpServiceMock.post.mockImplementationOnce(mockErrorResponse);
 
-            await expect(service.verifyToken(`test-user`, `123456`)).rejects.toThrow(
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
                 `Error verifying token: ${mockErrorMsg}`,
             );
         });
@@ -691,7 +674,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
             httpServiceMock.post.mockImplementationOnce(mockNonErrorThrow);
 
-            await expect(service.verifyToken(`test-user`, `123456`)).rejects.toThrow(
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
                 `Error verifying token: Unknown error occurred`,
             );
         });

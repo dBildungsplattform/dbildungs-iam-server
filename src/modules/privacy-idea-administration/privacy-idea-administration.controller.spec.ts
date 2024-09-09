@@ -302,12 +302,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 value: person,
             });
 
-            jest.spyOn(serviceMock, 'verifyToken').mockResolvedValue(true);
-            const response: boolean = await sut.verifyToken(
-                { personId: 'user1', otp: '123456' },
-                personPermissionsMock,
-            );
-            expect(response).toEqual(true);
+            await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
         });
 
         it('should return forbidden insufficient permissions', async () => {
