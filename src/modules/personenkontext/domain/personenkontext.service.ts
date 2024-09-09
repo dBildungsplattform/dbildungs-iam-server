@@ -11,6 +11,7 @@ import { PersonenkontextDo } from './personenkontext.do.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextQueryParams } from '../api/param/personenkontext-query.params.js';
@@ -21,6 +22,7 @@ export class PersonenkontextService {
     public constructor(
         private readonly personenkontextRepo: PersonenkontextRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly personRepo: PersonRepo,
     ) {}
 
@@ -114,7 +116,8 @@ export class PersonenkontextService {
             revision: newRevision,
         };
         const updatedPersonenkontextDo: Personenkontext<true> = Object.assign(storedPersonenkontext, newData);
-        const saved: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.save(updatedPersonenkontextDo);
+        const saved: Option<Personenkontext<true>> =
+            await this.dBiamPersonenkontextRepoInternal.save(updatedPersonenkontextDo);
 
         if (!saved) {
             return { ok: false, error: new EntityCouldNotBeUpdated('Personenkontext', updatedPersonenkontextDo.id) };
@@ -134,7 +137,7 @@ export class PersonenkontextService {
             return { ok: false, error: new MismatchedRevisionError('Personenkontext') };
         }
 
-        const deletedPersons: boolean = await this.dBiamPersonenkontextRepo.deleteById(id);
+        const deletedPersons: boolean = await this.dBiamPersonenkontextRepoInternal.deleteById(id);
 
         if (deletedPersons === false) {
             return { ok: false, error: new EntityCouldNotBeDeleted('Personenkontext', id) };

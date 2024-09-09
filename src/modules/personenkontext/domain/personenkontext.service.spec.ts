@@ -16,6 +16,7 @@ import { MismatchedRevisionError } from '../../../shared/error/mismatched-revisi
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { faker } from '@faker-js/faker';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
@@ -31,6 +32,7 @@ describe('PersonenkontextService', () => {
     let personenkontextRepoMock: DeepMocked<PersonenkontextRepo>;
     let personRepoMock: DeepMocked<PersonRepo>;
     let dbiamPersonenKontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let dbiamPersonenKontextRepoInternalMock: DeepMocked<DBiamPersonenkontextRepoInternal>;
     let mapperMock: DeepMocked<Mapper>;
 
     let personenkontextFactory: PersonenkontextFactory;
@@ -65,6 +67,10 @@ describe('PersonenkontextService', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
+                    provide: DBiamPersonenkontextRepoInternal,
+                    useValue: createMock<DBiamPersonenkontextRepoInternal>(),
+                },
+                {
                     provide: getMapperToken(),
                     useValue: createMock<Mapper>(),
                 },
@@ -78,6 +84,7 @@ describe('PersonenkontextService', () => {
         personenkontextRepoMock = module.get(PersonenkontextRepo);
         personRepoMock = module.get(PersonRepo);
         dbiamPersonenKontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        dbiamPersonenKontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
         personenkontextFactory = module.get(PersonenkontextFactory);
         mapperMock = module.get(getMapperToken());
         personenkontextFactory = module.get(PersonenkontextFactory);
@@ -252,7 +259,7 @@ describe('PersonenkontextService', () => {
                 });
 
                 dbiamPersonenKontextRepoMock.findByID.mockResolvedValue(personenkontext);
-                dbiamPersonenKontextRepoMock.save.mockResolvedValue(personenkontextDoWithUpdatedRevision);
+                dbiamPersonenKontextRepoInternalMock.save.mockResolvedValue(personenkontextDoWithUpdatedRevision);
 
                 const result: Result<
                     Personenkontext<true>,
@@ -311,7 +318,9 @@ describe('PersonenkontextService', () => {
                 const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
 
                 dbiamPersonenKontextRepoMock.findByID.mockResolvedValue(personenkontext);
-                dbiamPersonenKontextRepoMock.save.mockResolvedValueOnce(undefined as unknown as Personenkontext<true>);
+                dbiamPersonenKontextRepoInternalMock.save.mockResolvedValueOnce(
+                    undefined as unknown as Personenkontext<true>,
+                );
 
                 const result: Result<
                     Personenkontext<true>,
@@ -332,7 +341,7 @@ describe('PersonenkontextService', () => {
         describe('when personenkontext is deleted successfully', () => {
             it('should return void', async () => {
                 dbiamPersonenKontextRepoMock.findByID.mockResolvedValue(personenkontext);
-                dbiamPersonenKontextRepoMock.deleteById.mockResolvedValue(true);
+                dbiamPersonenKontextRepoInternalMock.deleteById.mockResolvedValue(true);
 
                 const result: Result<void, DomainError> = await personenkontextService.deletePersonenkontextById(
                     personenkontext.id,
@@ -380,7 +389,7 @@ describe('PersonenkontextService', () => {
             it('should return EntityCouldNotBeDeleted', async () => {
                 // AI next 11 lines
                 dbiamPersonenKontextRepoMock.findByID.mockResolvedValue(personenkontext);
-                dbiamPersonenKontextRepoMock.deleteById.mockResolvedValue(false);
+                dbiamPersonenKontextRepoInternalMock.deleteById.mockResolvedValue(false);
 
                 const response: Result<void, DomainError> = await personenkontextService.deletePersonenkontextById(
                     personenkontext.id,

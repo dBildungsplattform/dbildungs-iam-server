@@ -21,7 +21,7 @@ import { PassportUser } from '../../authentication/types/user.js';
 import { Request } from 'express';
 import { OrganisationApiModule } from '../organisation-api.module.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -40,7 +40,7 @@ describe('Organisation API', () => {
     let em: EntityManager;
     let rolleRepo: RolleRepo;
     let personRepo: PersonRepository;
-    let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
+    let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personenkontextFactory: PersonenkontextFactory;
     let personFactory: PersonFactory;
 
@@ -121,7 +121,7 @@ describe('Organisation API', () => {
         rolleRepo = module.get(RolleRepo);
         personRepo = module.get(PersonRepository);
         personenkontextFactory = module.get(PersonenkontextFactory);
-        dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personFactory = module.get(PersonFactory);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -188,7 +188,7 @@ describe('Organisation API', () => {
                     }),
                 );
 
-                await dBiamPersonenkontextRepo.save(
+                await dBiamPersonenkontextRepoInternal.save(
                     createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,

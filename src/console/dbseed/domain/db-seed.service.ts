@@ -19,7 +19,7 @@ import { RolleFile } from '../file/rolle-file.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderFile } from '../file/service-provider-file.js';
-import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -40,7 +40,7 @@ export class DbSeedService {
         private readonly logger: ClassLogger,
         private readonly personFactory: PersonFactory,
         private readonly personRepository: PersonRepository,
-        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
@@ -296,7 +296,7 @@ export class DbSeedService {
                 throw specificationCheckError;
             }
 
-            persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepo.save(personenKontext));
+            persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepoInternal.save(personenKontext));
             //at the moment no saving of Personenkontext
         }
         this.logger.info(`Insert ${files.length} entities of type Personenkontext`);

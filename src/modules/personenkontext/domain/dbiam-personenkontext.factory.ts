@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { PersonID } from '../../../shared/types/index.js';
@@ -18,6 +19,7 @@ export class DbiamPersonenkontextFactory {
         private readonly eventService: EventService,
         private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly personRepo: PersonRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
@@ -34,6 +36,7 @@ export class DbiamPersonenkontextFactory {
             this.eventService,
             this.logger,
             this.dBiamPersonenkontextRepo,
+            this.dBiamPersonenkontextRepoInternal,
             this.personRepo,
             this.rolleRepo,
             this.organisationRepo,

@@ -11,6 +11,7 @@ import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.serv
 import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.factory.js';
 import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
 import { EventService } from '../../core/eventbus/index.js';
+import { DBiamPersonenkontextRepoInternal } from './persistence/internal-dbiam-personenkontext.repo.js';
 
 @Module({
     imports: [PersonModule, RolleModule, OrganisationModule, LoggerModule.register(PersonenKontextModule.name)],
@@ -20,6 +21,7 @@ import { EventService } from '../../core/eventbus/index.js';
         PersonRepo,
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
+        DBiamPersonenkontextRepoInternal,
         DbiamPersonenkontextFactory,
         PersonenkontextFactory,
         EventService,
@@ -30,6 +32,7 @@ import { EventService } from '../../core/eventbus/index.js';
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
         DbiamPersonenkontextFactory,
+        DBiamPersonenkontextRepoInternal,
         PersonenkontextFactory,
     ],
 })

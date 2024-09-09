@@ -5,6 +5,7 @@ import { RolleController } from './api/rolle.controller.js';
 import { RolleModule } from './rolle.module.js';
 import { ServiceProviderModule } from '../service-provider/service-provider.module.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
 import { PersonModule } from '../person/person.module.js';
 
@@ -16,7 +17,7 @@ import { PersonModule } from '../person/person.module.js';
         ServiceProviderModule,
         LoggerModule.register(RolleApiModule.name),
     ],
-    providers: [DBiamPersonenkontextRepo, PersonenkontextFactory],
+    providers: [DBiamPersonenkontextRepo, DBiamPersonenkontextRepoInternal, PersonenkontextFactory],
     controllers: [RolleController],
 })
 export class RolleApiModule {}
