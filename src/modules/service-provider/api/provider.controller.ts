@@ -21,13 +21,9 @@ import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { ProvidersForPersonParams } from './providers-for-person.params.js';
+import { ServiceProviderService } from '../domain/service-provider.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -36,10 +32,9 @@ import { ProvidersForPersonParams } from './providers-for-person.params.js';
 @Controller({ path: 'provider' })
 export class ProviderController {
     public constructor(
-        private readonly rolleRepo: RolleRepo,
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
-        private readonly personenkontextService: PersonenkontextService,
+        private readonly serviceProviderService: ServiceProviderService,
     ) {}
 
     @Get('all')
@@ -73,34 +68,9 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
         const roleIds: string[] = await permissions.getRoleIds();
-        const serviceProviders: ServiceProvider<true>[] = await this.getServiceProvidersByRolleIds(roleIds);
+        const serviceProviders: ServiceProvider<true>[] =
+            await this.serviceProviderService.getServiceProvidersByRolleIds(roleIds);
 
-        return serviceProviders.map(
-            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
-        );
-    }
-
-    @Get('person/:personId')
-    @ApiOperation({ description: 'Get service-providers available for specified user.' })
-    @ApiOkResponse({
-        description: 'The service-providers were successfully returned.',
-        type: [ServiceProviderResponse],
-    })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
-    public async getAvailableServiceProvidersForPerson(
-        @Param() params: ProvidersForPersonParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<ServiceProviderResponse[]> {
-        const { personId }: ProvidersForPersonParams = params;
-        if (!(await permissions.canModifyPerson(personId))) return [];
-        const personenkontexte: Personenkontext<true>[] =
-            await this.personenkontextService.findPersonenkontexteByPersonId(personId);
-        const rolleIds: Array<string> = Array.from(
-            new Set(personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId)),
-        );
-        const serviceProviders: ServiceProvider<true>[] = await this.getServiceProvidersByRolleIds(rolleIds);
         return serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
@@ -143,24 +113,5 @@ export class ProviderController {
         });
 
         return logoFile;
-    }
-
-    // TODO: should there be a service for this?
-    private async getServiceProvidersByRolleIds(rolleIds: string[]): Promise<ServiceProvider<true>[]> {
-        const serviceProviders: Map<string, ServiceProvider<true>> = new Map();
-        for (const rolleId of rolleIds) {
-            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
-            if (rolle) {
-                for (const serviceProviderId of rolle.serviceProviderIds) {
-                    if (serviceProviders.has(serviceProviderId)) continue;
-                    const serviceProvider: Option<ServiceProvider<true>> =
-                        await this.serviceProviderRepo.findById(serviceProviderId);
-                    if (serviceProvider) {
-                        serviceProviders.set(serviceProviderId, serviceProvider);
-                    }
-                }
-            }
-        }
-        return Array.from(serviceProviders.values());
     }
 }

@@ -11,7 +11,10 @@ export class TokenStateResponse {
     @ApiProperty()
     public serial: string;
 
-    public constructor(token: PrivacyIdeaToken | undefined) {
+    @ApiProperty()
+    public required: boolean;
+
+    public constructor(token: PrivacyIdeaToken | undefined, required: boolean) {
         if (token) {
             this.hasToken = true;
             this.tokenKind = token.info.tokenkind;
@@ -21,5 +24,6 @@ export class TokenStateResponse {
             this.tokenKind = '';
             this.serial = '';
         }
+        this.required = required;
     }
 }

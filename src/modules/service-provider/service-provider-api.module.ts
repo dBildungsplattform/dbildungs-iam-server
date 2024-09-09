@@ -7,6 +7,7 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { StreamableFileFactory } from '../../shared/util/streamable-file.factory.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { PersonModule } from '../person/person.module.js';
+import { ServiceProviderService } from './domain/service-provider.service.js';
 
 @Module({
     imports: [
@@ -17,7 +18,8 @@ import { PersonModule } from '../person/person.module.js';
         RolleModule,
         PersonModule,
     ],
-    providers: [StreamableFileFactory],
+    providers: [StreamableFileFactory, ServiceProviderService],
+    exports: [ServiceProviderService],
     controllers: [ProviderController],
 })
 export class ServiceProviderApiModule {}

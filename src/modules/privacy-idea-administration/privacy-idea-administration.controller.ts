@@ -93,7 +93,8 @@ export class PrivacyIdeaAdministrationController {
         const piToken: PrivacyIdeaToken | undefined = await this.privacyIdeaAdministrationService.getTwoAuthState(
             personResult.value.referrer,
         );
-        return new TokenStateResponse(piToken);
+        const requires2fa: boolean = await this.privacyIdeaAdministrationService.requires2fa(personId);
+        return new TokenStateResponse(piToken, requires2fa);
     }
 
     @Post('assign/hardwareToken')

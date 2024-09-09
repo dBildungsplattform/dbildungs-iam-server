@@ -1,26 +1,31 @@
-import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
+import { firstValueFrom } from 'rxjs';
+import { PrivacyIdeaConfig } from '../../shared/config/privacyidea.config.js';
+import { ServerConfig } from '../../shared/config/server.config.js';
+import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
+import { PersonenkontextService } from '../personenkontext/domain/personenkontext.service.js';
+import { ServiceProvider } from '../service-provider/domain/service-provider.js';
+import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { HardwareTokenServiceError } from './api/error/hardware-token-service.error.js';
+import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
+import { SerialInUseError } from './api/error/serial-in-use.error.js';
+import { SerialNotFoundError } from './api/error/serial-not-found.error.js';
 import {
+    AssignTokenPayload,
+    AssignTokenResponse,
+    AuthenticaitonResponse,
     InitSoftwareToken,
     InitSoftwareTokenPayload,
     PrivacyIdeaResponseTokens,
     PrivacyIdeaToken,
-    AuthenticaitonResponse,
-    UserResponse,
-    AssignTokenPayload,
-    AssignTokenResponse,
     TokenOTPSerialResponse,
     TokenVerificationResponse,
+    UserResponse,
 } from './privacy-idea-api.types.js';
-import { HardwareTokenServiceError } from './api/error/hardware-token-service.error.js';
-import { SerialNotFoundError } from './api/error/serial-not-found.error.js';
-import { SerialInUseError } from './api/error/serial-in-use.error.js';
-import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
-import { ConfigService } from '@nestjs/config';
-import { PrivacyIdeaConfig } from '../../shared/config/privacyidea.config.js';
-import { ServerConfig } from '../../shared/config/server.config.js';
+import { uniq } from 'lodash-es';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -34,6 +39,8 @@ export class PrivacyIdeaAdministrationService {
 
     public constructor(
         private readonly httpService: HttpService,
+        private readonly serviceProviderService: ServiceProviderService,
+        private readonly personenkontextService: PersonenkontextService,
         configService: ConfigService<ServerConfig>,
     ) {
         this.privacyIdeaConfig = configService.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA');
@@ -283,5 +290,16 @@ export class PrivacyIdeaAdministrationService {
         }
         // Call assignToken
         return this.assignToken(serial, token, user);
+    }
+
+    public async requires2fa(personId: string): Promise<boolean> {
+        const rolleIds: Array<string> = uniq(
+            (await this.personenkontextService.findPersonenkontexteByPersonId(personId)).map(
+                (pk: Personenkontext<true>) => pk.rolleId,
+            ),
+        );
+        const serviceProviders: ServiceProvider<true>[] =
+            await this.serviceProviderService.getServiceProvidersByRolleIds(rolleIds);
+        return serviceProviders.some((sp: ServiceProvider<true>) => sp.requires2fa);
     }
 }
