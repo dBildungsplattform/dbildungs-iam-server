@@ -33,6 +33,7 @@ export class PersonenkontextCreationService {
         familienname: string,
         createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[],
         personalnummer?: string,
+        befristung?: Date,
     ): Promise<PersonPersonenkontext | DomainError> {
         const person: Person<false> | DomainError = await this.personFactory.createNew({
             vorname: vorname,
@@ -67,6 +68,7 @@ export class PersonenkontextCreationService {
                 personId: savedPerson.id,
                 organisationId: createPersonenkontext.organisationId,
                 rolleId: createPersonenkontext.rolleId,
+                    befristung,
             })),
             new PermissionsOverride(permissions).grantPersonModifyPermission(savedPerson.id),
         );
