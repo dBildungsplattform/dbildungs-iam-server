@@ -9,12 +9,14 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @Injectable()
 export class DbiamPersonenkontextFactory {
     public constructor(
         private personenkontextFactory: PersonenkontextFactory,
         private readonly eventService: EventService,
+        private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepository,
         private readonly rolleRepo: RolleRepo,
@@ -30,6 +32,7 @@ export class DbiamPersonenkontextFactory {
     ): PersonenkontexteUpdate {
         return PersonenkontexteUpdate.createNew(
             this.eventService,
+            this.logger,
             this.dBiamPersonenkontextRepo,
             this.personRepo,
             this.rolleRepo,

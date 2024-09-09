@@ -16,9 +16,6 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
-import { EventService } from '../../../core/eventbus/index.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
@@ -30,6 +27,7 @@ export function mapAggregateToData(
         organisationId: personenKontext.organisationId,
         rolleId: rel(RolleEntity, personenKontext.rolleId),
         rolle: Rolle.LERNENDER, // Placeholder, until rolle is removed from entity
+        befristung: personenKontext.befristung,
     };
 }
 
@@ -51,6 +49,7 @@ function mapEntityToAggregate(
         entity.jahrgangsstufe,
         entity.sichtfreigabe,
         entity.loeschungZeitpunkt,
+        entity.befristung,
     );
 }
 
@@ -58,7 +57,6 @@ function mapEntityToAggregate(
 export class DBiamPersonenkontextRepo {
     public constructor(
         private readonly em: EntityManager,
-        private readonly eventService: EventService,
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
@@ -204,6 +202,9 @@ export class DBiamPersonenkontextRepo {
         return !!personenKontext;
     }
 
+    /**
+     * @deprecated This method does not throw events, please always use the PersonenkontexteUpdate aggregate
+     */
     public async save(personenKontext: Personenkontext<boolean>): Promise<Personenkontext<true>> {
         if (personenKontext.id) {
             return this.update(personenKontext);
@@ -212,6 +213,9 @@ export class DBiamPersonenkontextRepo {
         }
     }
 
+    /**
+     * @deprecated This method does not throw events, please always use the PersonenkontexteUpdate aggregate
+     */
     public async saveAuthorized(
         personenkontext: Personenkontext<false>,
         permissions: PersonPermissions,
@@ -257,19 +261,16 @@ export class DBiamPersonenkontextRepo {
         );
 
         await this.em.persistAndFlush(personenKontextEntity);
-        this.eventService.publish(
-            new PersonenkontextCreatedEvent(
-                personenkontext.personId,
-                personenkontext.organisationId,
-                personenkontext.rolleId,
-            ),
-        );
+
         return {
             ok: true,
             value: mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory),
         };
     }
 
+    /**
+     * @deprecated This method does not throw events, please always use the PersonenkontexteUpdate aggregate
+     */
     public async deleteAuthorized(
         id: PersonenkontextID,
         revision: string,
@@ -296,22 +297,22 @@ export class DBiamPersonenkontextRepo {
         return;
     }
 
+    /**
+     * @deprecated This method does not throw events, please always use the PersonenkontexteUpdate aggregate
+     */
     private async create(personenKontext: Personenkontext<false>): Promise<Personenkontext<true>> {
         const personenKontextEntity: PersonenkontextEntity = this.em.create(
             PersonenkontextEntity,
             mapAggregateToData(personenKontext),
         );
         await this.em.persistAndFlush(personenKontextEntity);
-        this.eventService.publish(
-            new PersonenkontextCreatedEvent(
-                personenKontext.personId,
-                personenKontext.organisationId,
-                personenKontext.rolleId,
-            ),
-        );
+
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
     }
 
+    /**
+     * @deprecated This method does not throw events, please always use the PersonenkontexteUpdate aggregate
+     */
     private async update(personenKontext: Personenkontext<true>): Promise<Personenkontext<true>> {
         const personenKontextEntity: Loaded<PersonenkontextEntity> = await this.em.findOneOrFail(
             PersonenkontextEntity,
@@ -336,6 +337,9 @@ export class DBiamPersonenkontextRepo {
         return organisationIDs.includes(entity.organisationId);
     }
 
+    /**
+     * @deprecated This method does not throw events, please always use the PersonenkontexteUpdate aggregate
+     */
     public async delete(personenKontext: Personenkontext<true>): Promise<void> {
         const personId: PersonID = personenKontext.personId;
         const organisationId: OrganisationID = personenKontext.organisationId;
@@ -346,13 +350,6 @@ export class DBiamPersonenkontextRepo {
             organisationId: organisationId,
             rolleId: rolleId,
         });
-        this.eventService.publish(
-            new PersonenkontextDeletedEvent(
-                personenKontext.personId,
-                personenKontext.organisationId,
-                personenKontext.rolleId,
-            ),
-        );
     }
 
     public async hasSystemrechtAtOrganisation(
@@ -389,6 +386,9 @@ export class DBiamPersonenkontextRepo {
         return result[0].has_systemrecht_at_orga as boolean;
     }
 
+    /**
+     * @deprecated This method does not throw events, please always use the PersonenkontexteUpdate aggregate
+     */
     public async deleteById(id: string): Promise<boolean> {
         const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
         return deletedPersons > 0;
