@@ -28,6 +28,7 @@ export class PersonenkontextFactory {
         jahrgangsstufe?: Jahrgangsstufe,
         sichtfreigabe?: SichtfreigabeType,
         loeschungZeitpunkt?: Date,
+        befristung?: Date,
     ): Personenkontext<WasPersisted> {
         return Personenkontext.construct(
             this.personRepository,
@@ -46,6 +47,7 @@ export class PersonenkontextFactory {
             sichtfreigabe,
             loeschungZeitpunkt,
             revision,
+            befristung,
         );
     }
 
@@ -59,6 +61,7 @@ export class PersonenkontextFactory {
         jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
+        befristung: Date | undefined = undefined,
     ): Personenkontext<false> {
         return Personenkontext.createNew(
             this.personRepository,
@@ -73,6 +76,7 @@ export class PersonenkontextFactory {
             jahrgangsstufe,
             sichtfreigabe,
             loeschungZeitpunkt,
+            befristung,
         );
     }
 }
