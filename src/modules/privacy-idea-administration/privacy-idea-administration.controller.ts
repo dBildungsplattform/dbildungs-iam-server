@@ -108,7 +108,7 @@ export class PrivacyIdeaAdministrationController {
             }
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityCouldNotBeUpdated(referrer, 'Hardware-Token could not be assigned.'),
+                    new EntityCouldNotBeUpdated(referrer, 'Token could not be unassigned.'),
                 ),
             );
         }
