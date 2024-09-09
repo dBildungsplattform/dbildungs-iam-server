@@ -213,6 +213,15 @@ describe('AuthenticationController', () => {
     });
 
     describe('info', () => {
+        function setupRequest(passportUser?: PassportUser): Request {
+            const sessionMock: DeepMocked<Session> = createMock<Session>();
+            const requestMock: DeepMocked<Request> = createMock<Request>({
+                session: sessionMock,
+                passportUser,
+            });
+            return requestMock;
+        }
+
         it('should return user info', async () => {
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -250,7 +259,9 @@ describe('AuthenticationController', () => {
                         },
                     ]),
             });
-            const result: UserinfoResponse = await authController.info(permissions);
+
+            const requestMock: Request = setupRequest();
+            const result: UserinfoResponse = await authController.info(permissions, requestMock);
 
             expect(result).toBeInstanceOf(UserinfoResponse);
             expect(result.birthdate!).toBe(permissions.personFields.geburtsdatum?.toISOString());

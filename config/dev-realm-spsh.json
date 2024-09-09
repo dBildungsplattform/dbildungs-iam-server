@@ -2478,12 +2478,12 @@
         "config" : {
           "pienrolltokentype" : "TOTP",
           "pipollinbrowser" : "false",
-          "piservicerealm" : "defrealm",
-          "piservicepass" : "admin",
-          "piserver" : "http://privacy-idea:8080",
-          "piserviceaccount" : "admin",
+          "piservicerealm" : "${PI_REALM}",
+          "piservicepass" : "${PI_ADMIN_PASSWORD}",
+          "piserver" : "${PI_BASE_URL}",
+          "piserviceaccount" : "${PI_ADMIN_USER}",
           "preftokentype" : "OTP",
-          "pirealm" : "defrealm",
+          "pirealm" : "${PI_REALM}",
           "pidolog" : "true",
           "pienrolltoken" : "false"
         }

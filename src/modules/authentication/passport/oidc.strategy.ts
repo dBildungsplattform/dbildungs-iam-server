@@ -10,11 +10,24 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { Request } from 'express';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
+
+interface CustomJwtPayload extends JwtPayload {
+    acr: StepUpLevel;
+}
 
 export enum StepUpLevel {
     NONE = 'none',
     SILVER = 'silver',
     GOLD = 'gold',
+}
+
+export function extractStepUpLevelFromJWT(jwt: string | undefined): StepUpLevel {
+    if (!jwt) {
+        return StepUpLevel.NONE;
+    }
+    const payload: CustomJwtPayload = jwtDecode(jwt);
+    return payload.acr;
 }
 
 @Injectable()
