@@ -1870,15 +1870,15 @@
                     "priority": 0,
                     "autheticatorFlow": false,
                     "userSetupAllowed": false
-                },
-                {
-                    "authenticator": "auth-otp-form",
-                    "authenticatorFlow": false,
-                    "requirement": "REQUIRED",
-                    "priority": 1,
-                    "autheticatorFlow": false,
-                    "userSetupAllowed": false
-                }
+                }, {
+                    "authenticatorConfig" : "pi",
+                    "authenticator" : "privacyidea-authenticator",
+                    "authenticatorFlow" : false,
+                    "requirement" : "REQUIRED",
+                    "priority" : 2,
+                    "autheticatorFlow" : false,
+                    "userSetupAllowed" : false
+                  }
             ]
         },
         {
@@ -2471,6 +2471,21 @@
         "config": {
             "loa-condition-level": "20",
             "loa-max-age": "10000"
+        }
+      }, {
+        "id" : "a289ca13-92ef-4ac8-9544-bbff68c93147",
+        "alias" : "pi",
+        "config" : {
+          "pienrolltokentype" : "TOTP",
+          "pipollinbrowser" : "false",
+          "piservicerealm" : "defrealm",
+          "piservicepass" : "admin",
+          "piserver" : "http://privacy-idea:8080",
+          "piserviceaccount" : "admin",
+          "preftokentype" : "OTP",
+          "pirealm" : "defrealm",
+          "pidolog" : "true",
+          "pienrolltoken" : "false"
         }
       },
       {
