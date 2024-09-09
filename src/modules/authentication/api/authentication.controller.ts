@@ -124,8 +124,9 @@ export class AuthenticationController {
         );
         const userinfoExtension: UserinfoExtension = {};
         if (permissions.personFields.keycloakUserId) {
-            const lastPasswordChange: Result<number, DomainError> =
-                await this.keycloakUserService.getLastPasswordChange(permissions.personFields.keycloakUserId);
+            const lastPasswordChange: Result<Date, DomainError> = await this.keycloakUserService.getLastPasswordChange(
+                permissions.personFields.keycloakUserId,
+            );
             if (lastPasswordChange.ok) userinfoExtension.password_updated_at = lastPasswordChange.value;
         }
 

@@ -253,7 +253,7 @@ export class KeycloakUserService {
         }
     }
 
-    public async getLastPasswordChange(userId: string): Promise<Result<number, DomainError>> {
+    public async getLastPasswordChange(userId: string): Promise<Result<Date, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
         if (!kcAdminClientResult.ok) {
@@ -285,7 +285,7 @@ export class KeycloakUserService {
         const tolerance: number = 120000; // 2 minutes
         if (password.createdDate - userResult.value.createdTimestamp <= tolerance)
             return { ok: false, error: new KeycloakClientError('Keycloak user password has never been updated') };
-        return { ok: true, value: password.createdDate };
+        return { ok: true, value: new Date(password.createdDate) };
     }
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {
