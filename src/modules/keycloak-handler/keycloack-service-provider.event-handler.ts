@@ -55,19 +55,28 @@ export class KeycloackServiceProviderHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         const { newKontexte, currentKontexte, removedKontexte, person }: PersonenkontextUpdatedEvent = event;
-        const newRolle: RolleID | undefined = newKontexte?.[0]?.rolleId;
-        const deleteRolle: RolleID | undefined = removedKontexte?.[0]?.rolleId;
+
+        const newRolleIDs: RolleID[] = newKontexte.map((kontext: PersonenkontextUpdatedData) => kontext.rolleId);
+        const deleteRolleIDs: RolleID[] = removedKontexte.map((kontext: PersonenkontextUpdatedData) => kontext.rolleId);
         const currentRolleIDs: RolleID[] = currentKontexte
             .map((kontext: PersonenkontextUpdatedData) => kontext.rolleId)
-            .filter((id: RolleID) => id && id !== newRolle);
+            .filter((id: RolleID) => id && !newRolleIDs.includes(id));
 
         if (person.keycloakUserId) {
-            if (newRolle !== undefined && currentKontexte?.length) {
-                await this.updateUserGroups(person.keycloakUserId, currentRolleIDs, newRolle);
+            if (newRolleIDs.length > 0 && currentKontexte.length) {
+                for (const newRolle of newRolleIDs) {
+                    if (!deleteRolleIDs.includes(newRolle)) {
+                        await this.updateUserGroups(person.keycloakUserId, currentRolleIDs, newRolle);
+                    }
+                }
             }
 
-            if (deleteRolle !== undefined && removedKontexte?.length) {
-                await this.updateUserGroups(person.keycloakUserId, currentRolleIDs, deleteRolle, true);
+            if (deleteRolleIDs.length > 0 && removedKontexte.length) {
+                for (const deleteRolle of deleteRolleIDs) {
+                    if (!newRolleIDs.includes(deleteRolle)) {
+                        await this.updateUserGroups(person.keycloakUserId, currentRolleIDs, deleteRolle, true);
+                    }
+                }
             }
         }
     }
