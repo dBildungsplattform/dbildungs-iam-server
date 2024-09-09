@@ -7,12 +7,13 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('UserinfoResponse', () => {
     const permissions: PersonPermissions = new PersonPermissions(
-        jest.fn() as unknown as DBiamPersonenkontextRepo,
-        jest.fn() as unknown as OrganisationRepository,
-        jest.fn() as unknown as RolleRepo,
+        createMock<DBiamPersonenkontextRepo>(),
+        createMock<OrganisationRepository>(),
+        createMock<RolleRepo>(),
         DoFactory.createPerson(true),
     );
     const pk: PersonenkontextRolleFieldsResponse = {
@@ -26,7 +27,7 @@ describe('UserinfoResponse', () => {
         expect(userinfoResponse.password_updated_at).toBeUndefined();
     });
 
-    it('constructs the object without optional extension', () => {
+    it('constructs the object with optional extension', () => {
         const extension: UserinfoExtension = { password_updated_at: faker.date.past().valueOf() };
         const userinfoResponse: UserinfoResponse = new UserinfoResponse(permissions, [pk], extension);
         expect(userinfoResponse).toBeDefined();
