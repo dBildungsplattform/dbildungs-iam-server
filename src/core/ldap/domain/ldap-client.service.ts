@@ -8,6 +8,7 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 export type PersonData = {
     vorname: string;
@@ -164,7 +165,7 @@ export class LdapClientService {
         return `uid=${referrer},cn=lehrer,ou=${orgaKennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`;
     }
 
-    public async deleteLehrerByPersonId(person: PersonData): Promise<Result<PersonData>> {
+    public async deleteLehrerByPersonId(personId: PersonID): Promise<Result<PersonID>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -173,7 +174,7 @@ export class LdapClientService {
 
             const searchResultLehrer: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
                 scope: 'sub',
-                filter: `(employeeNumber=${person.id})`,
+                filter: `(employeeNumber=${personId})`,
             });
             if (!searchResultLehrer.searchEntries[0]) {
                 return {
@@ -182,9 +183,9 @@ export class LdapClientService {
                 };
             }
             await client.del(searchResultLehrer.searchEntries[0].dn);
-            this.logger.info(`LDAP: Successfully deleted lehrer by personId:${person.id}`);
+            this.logger.info(`LDAP: Successfully deleted lehrer by personId:${personId}`);
 
-            return { ok: true, value: person };
+            return { ok: true, value: personId };
         });
     }
 

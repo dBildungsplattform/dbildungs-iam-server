@@ -1,10 +1,7 @@
-import { DomainError } from '../../../../shared/error/index.js';
+import { PersonenkontexteUpdateError } from './personenkontexte-update.error.js';
 
-export class PersonenkontextCommitError extends DomainError {
-    public constructor(
-        public override readonly message: string,
-        details?: unknown[] | Record<string, undefined>,
-    ) {
-        super(message, 'PERSONENKONTEXT_COULD_NOT_BE_COMMITED', details);
+export class PersonenkontextCommitError extends PersonenkontexteUpdateError {
+    public constructor(details?: unknown[] | Record<string, undefined>) {
+        super('PERSONENKONTEXT_COULD_NOT_BE_COMMITED', details);
     }
 }
