@@ -5,16 +5,6 @@ import { type Person } from '../../modules/person/domain/person.js';
 import { type Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { type Rolle } from '../../modules/rolle/domain/rolle.js';
 import { PersonenkontextEventKontextData, PersonenkontextEventPersonData } from './personenkontext-event.types.js';
-//import { PersonID } from '../types/aggregate-ids.types.js';
-
-// export type PersonenkontextUpdatedPersonData = {
-//     id: PersonID;
-//     vorname: string;
-//     familienname: string;
-//     referrer?: string;
-//     keycloakUserId?: string;
-//     email?: string;
-// };
 
 export type PersonenkontextUpdatedData = PersonenkontextEventKontextData;
 export type PersonenkontextUpdatedPersonData = PersonenkontextEventPersonData;
