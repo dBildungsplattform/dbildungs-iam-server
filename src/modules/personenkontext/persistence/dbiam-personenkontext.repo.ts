@@ -13,9 +13,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 
 export function mapAggregateToData(
     personenKontext: Personenkontext<boolean>,
