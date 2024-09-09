@@ -258,7 +258,7 @@ describe('AuthenticationController', () => {
             });
             keycloakUserServiceMock.getLastPasswordChange.mockResolvedValueOnce({
                 ok: true,
-                value: person.updatedAt.valueOf(),
+                value: person.updatedAt,
             });
             const result: UserinfoResponse = await authController.info(permissions);
 

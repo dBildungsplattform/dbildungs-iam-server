@@ -655,7 +655,7 @@ describe('KeycloakUserService', () => {
             it('should return the timestamp', async () => {
                 kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
                 kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
-                const result: Result<number, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
                 expect(result).toStrictEqual({
                     ok: true,
                     value: updatedAt,
@@ -666,7 +666,7 @@ describe('KeycloakUserService', () => {
             it('should return an error', async () => {
                 kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
                 kcUsersMock.getCredentials.mockRejectedValueOnce({});
-                const result: Result<number, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Keycloak request failed'),
@@ -683,7 +683,7 @@ describe('KeycloakUserService', () => {
                 ];
                 kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
                 kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
-                const result: Result<number, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Keycloak user password has never been updated'),
@@ -699,7 +699,7 @@ describe('KeycloakUserService', () => {
             it('should return an error', async () => {
                 kcUsersMock.findOne.mockRejectedValueOnce(null);
                 kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
-                const result: Result<number, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Keycloak request failed'),
@@ -716,7 +716,7 @@ describe('KeycloakUserService', () => {
             it('should return an error', async () => {
                 kcUsersMock.findOne.mockResolvedValueOnce(brokenUser);
                 kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
-                const result: Result<number, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Keycloak user has no createdTimestamp'),
@@ -742,7 +742,7 @@ describe('KeycloakUserService', () => {
                 async ({ credentials, error }: { credentials: Array<CredentialRepresentation>; error: string }) => {
                     kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
                     kcUsersMock.getCredentials.mockResolvedValueOnce(credentials);
-                    const result: Result<number, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                    const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
                     expect(result).toStrictEqual({
                         ok: false,
                         error: new KeycloakClientError(error),
@@ -759,7 +759,7 @@ describe('KeycloakUserService', () => {
                 };
 
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
-                const res: Result<number, DomainError> = await service.getLastPasswordChange(faker.string.uuid());
+                const res: Result<Date, DomainError> = await service.getLastPasswordChange(faker.string.uuid());
 
                 expect(res).toBe(error);
             });

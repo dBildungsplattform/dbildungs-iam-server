@@ -28,7 +28,7 @@ describe('UserinfoResponse', () => {
     });
 
     it('constructs the object with optional extension', () => {
-        const extension: UserinfoExtension = { password_updated_at: faker.date.past().valueOf() };
+        const extension: UserinfoExtension = { password_updated_at: faker.date.past() };
         const userinfoResponse: UserinfoResponse = new UserinfoResponse(permissions, [pk], extension);
         expect(userinfoResponse).toBeDefined();
         expect(userinfoResponse.password_updated_at).toEqual(extension.password_updated_at);
