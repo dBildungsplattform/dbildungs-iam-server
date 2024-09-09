@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
+import { IsDate, IsNotEmpty, IsOptional, IsString, MinLength, ValidateNested } from 'class-validator';
 import { IsDIN91379A } from '../../../../shared/util/din-91379-validation.js';
 import { DbiamCreatePersonenkontextBodyParams } from './dbiam-create-personenkontext.body.params.js';
 import { Type } from 'class-transformer';
@@ -21,6 +21,11 @@ export class DbiamCreatePersonWithPersonenkontexteBodyParams {
     @IsOptional()
     @ApiProperty({ required: false })
     public readonly personalnummer?: string;
+
+    @IsDate()
+    @IsOptional()
+    @ApiProperty({ required: false })
+    public readonly befristung?: Date;
 
     @ApiProperty({ type: [DbiamCreatePersonenkontextBodyParams], required: true, nullable: false })
     @Type(() => DbiamCreatePersonenkontextBodyParams)
