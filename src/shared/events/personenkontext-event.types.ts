@@ -8,6 +8,7 @@ export type PersonenkontextEventPersonData = {
     familienname: string;
     referrer?: string;
     email?: string;
+    ldapEntryUUID?: string;
 };
 
 export type PersonenkontextEventKontextData = {
