@@ -68,7 +68,7 @@ export class PersonenkontextCreationService {
                 personId: savedPerson.id,
                 organisationId: createPersonenkontext.organisationId,
                 rolleId: createPersonenkontext.rolleId,
-                    befristung,
+                befristung,
             })),
             new PermissionsOverride(permissions).grantPersonModifyPermission(savedPerson.id),
         );
