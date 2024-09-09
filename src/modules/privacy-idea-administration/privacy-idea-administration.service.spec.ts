@@ -16,6 +16,7 @@ import {
 import { TokenError } from './api/error/token.error.js';
 import { ConfigTestModule } from '../../../test/utils/index.js';
 import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
+import { SoftwareTokenVerificationError } from './api/error/software-token-verification.error.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -106,8 +107,8 @@ const mockTokenResponse = (verify: boolean = false): Observable<AxiosResponse> =
     return of({ data: { result: { value: { tokens: [mockPrivacyIdeaToken] } } } } as AxiosResponse);
 };
 
-export const mockVerficationTokenResponse = (): Observable<AxiosResponse> =>
-    of({ data: { result: { status: true } } } as AxiosResponse);
+export const mockVerficationTokenResponse = (status: boolean = true): Observable<AxiosResponse> =>
+    of({ data: { result: { status: status } } } as AxiosResponse);
 
 const mockErrorResponse = (): never => {
     throw new Error(mockErrorMsg);
@@ -628,7 +629,18 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             await service.verifyTokenEnrollment(`test-user`, `123456`);
         });
 
-        it(`should return false with wrong otp`, async () => {
+        it(`should throw domainerror when result status is false`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.post.mockReturnValueOnce(mockVerficationTokenResponse(false));
+
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
+                SoftwareTokenVerificationError,
+            );
+        });
+
+        it(`should throw domainerror with wrong otp`, async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
             httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
             httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
