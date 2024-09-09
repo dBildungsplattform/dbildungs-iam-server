@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { Client, SearchResult } from 'ldapts';
+import { Client, Control, SearchResult } from 'ldapts';
 import { LdapEntityType, LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 import { LdapClient } from './ldap-client.js';
@@ -8,12 +8,14 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 export type PersonData = {
     vorname: string;
     familienname: string;
     id: string;
     referrer?: string;
+    ldapEntryUUID?: string;
 };
 
 type OrganisationData = {
@@ -153,7 +155,15 @@ export class LdapClientService {
                 mail: [`${person.referrer}@schule-sh.de`],
                 objectclass: ['inetOrgPerson'],
             };
-            await client.add(lehrerUid, entry);
+
+            const controls: Control[] = [];
+            if (person.ldapEntryUUID) {
+                const relaxRulesControlOID: string = '1.3.6.1.4.1.4203.666.5.12';
+                entry.entryUUID = person.ldapEntryUUID;
+                controls.push(new Control(relaxRulesControlOID));
+            }
+
+            await client.add(lehrerUid, entry, controls);
             this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
             return { ok: true, value: person };
@@ -164,7 +174,7 @@ export class LdapClientService {
         return `uid=${referrer},cn=lehrer,ou=${orgaKennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`;
     }
 
-    public async deleteLehrerByPersonId(person: PersonData): Promise<Result<PersonData>> {
+    public async deleteLehrerByPersonId(personId: PersonID): Promise<Result<PersonID>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -173,7 +183,7 @@ export class LdapClientService {
 
             const searchResultLehrer: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
                 scope: 'sub',
-                filter: `(employeeNumber=${person.id})`,
+                filter: `(employeeNumber=${personId})`,
             });
             if (!searchResultLehrer.searchEntries[0]) {
                 return {
@@ -182,9 +192,9 @@ export class LdapClientService {
                 };
             }
             await client.del(searchResultLehrer.searchEntries[0].dn);
-            this.logger.info(`LDAP: Successfully deleted lehrer by personId:${person.id}`);
+            this.logger.info(`LDAP: Successfully deleted lehrer by personId:${personId}`);
 
-            return { ok: true, value: person };
+            return { ok: true, value: personId };
         });
     }
 
