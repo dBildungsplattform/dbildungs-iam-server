@@ -8,10 +8,12 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 export type PersonData = {
     vorname: string;
     familienname: string;
+    id: string;
     referrer?: string;
 };
 
@@ -148,6 +150,7 @@ export class LdapClientService {
             const entry: LdapPersonEntry = {
                 cn: person.vorname,
                 sn: person.familienname,
+                employeeNumber: person.id,
                 mail: [`${person.referrer}@schule-sh.de`],
                 objectclass: ['inetOrgPerson'],
             };
@@ -160,6 +163,30 @@ export class LdapClientService {
 
     private getLehrerUid(referrer: string, orgaKennung: string): string {
         return `uid=${referrer},cn=lehrer,ou=${orgaKennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`;
+    }
+
+    public async deleteLehrerByPersonId(personId: PersonID): Promise<Result<PersonID>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: deleteLehrer');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResultLehrer: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
+                scope: 'sub',
+                filter: `(employeeNumber=${personId})`,
+            });
+            if (!searchResultLehrer.searchEntries[0]) {
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
+            await client.del(searchResultLehrer.searchEntries[0].dn);
+            this.logger.info(`LDAP: Successfully deleted lehrer by personId:${personId}`);
+
+            return { ok: true, value: personId };
+        });
     }
 
     public async deleteLehrer(person: PersonData, organisation: OrganisationData): Promise<Result<PersonData>> {

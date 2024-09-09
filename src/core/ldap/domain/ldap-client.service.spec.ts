@@ -22,6 +22,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
 import { Client, Entry, SearchResult } from 'ldapts';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -319,6 +320,53 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
                 const result: Result<PersonData> = await ldapClientService.deleteLehrer(person, organisation);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('delete lehrer by personId', () => {
+            it('should return truthy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [createMock<Entry>()],
+                        }),
+                    );
+                    clientMock.del.mockResolvedValueOnce();
+                    return clientMock;
+                });
+
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
+
+                expect(result.ok).toBeTruthy();
+            });
+
+            it('should return error when lehrer cannot be found', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    clientMock.del.mockResolvedValueOnce();
+                    return clientMock;
+                });
+
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
+
+                expect(result.ok).toBeFalsy();
+            });
+
+            it('when bind returns error', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+                    clientMock.add.mockResolvedValueOnce();
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
 
                 expect(result.ok).toBeFalsy();
             });
