@@ -1,10 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
+import { Test, TestingModule } from '@nestjs/testing';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 
+import { faker } from '@faker-js/faker';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { AxiosResponse } from 'axios';
 import { Observable, of, throwError } from 'rxjs';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { ConfigTestModule, DoFactory } from '../../../test/utils/index.js';
+import { PersonenkontextService } from '../personenkontext/domain/personenkontext.service.js';
+import { ServiceProvider } from '../service-provider/domain/service-provider.js';
+import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { TokenError } from './api/error/token.error.js';
 import {
     AssignTokenResponse,
     PrivacyIdeaToken,
@@ -12,8 +18,6 @@ import {
     TokenVerificationResponse,
     User,
 } from './privacy-idea-api.types.js';
-import { TokenError } from './api/error/token.error.js';
-import { ConfigTestModule } from '../../../test/utils/index.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -251,6 +255,8 @@ const mockAssignTokenResponse: AssignTokenResponse = {
 describe(`PrivacyIdeaAdministrationService`, () => {
     let service: PrivacyIdeaAdministrationService;
     let httpServiceMock: DeepMocked<HttpService>;
+    let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
+    let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -258,11 +264,15 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             providers: [
                 PrivacyIdeaAdministrationService,
                 { provide: HttpService, useValue: createMock<HttpService>() },
+                { provide: ServiceProviderService, useValue: createMock<ServiceProviderService>() },
+                { provide: PersonenkontextService, useValue: createMock<PersonenkontextService>() },
             ],
         }).compile();
 
         service = module.get<PrivacyIdeaAdministrationService>(PrivacyIdeaAdministrationService);
         httpServiceMock = module.get(HttpService);
+        serviceProviderServiceMock = module.get(ServiceProviderService);
+        personenkontextServiceMock = module.get(PersonenkontextService);
     });
 
     describe(`initializeSoftwareToken`, () => {
@@ -395,7 +405,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             );
         });
 
-        it(`sshould throw an error if the two auth state request causes non error throw`, async () => {
+        it(`should throw an error if the two auth state request causes non error throw`, async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
             httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
             httpServiceMock.get.mockImplementationOnce(mockNonErrorThrow);
@@ -533,6 +543,30 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                     'general-token-error',
                 ),
             );
+        });
+    });
+
+    describe('requires2fa', () => {
+        const personId: string = faker.string.uuid();
+
+        beforeEach(() => {
+            personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValueOnce([
+                DoFactory.createPersonenkontext(true),
+            ]);
+        });
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it.each([true, false])('should return %s depending on 2fa requirement', async (requires2fa: boolean) => {
+            const serviceProviders: Array<ServiceProvider<true>> = [
+                DoFactory.createServiceProvider(true, { requires2fa }),
+            ];
+            serviceProviderServiceMock.getServiceProvidersByRolleIds.mockResolvedValueOnce(serviceProviders);
+
+            const result: boolean = await service.requires2fa(personId);
+
+            expect(result).toBe(requires2fa);
         });
     });
 });
