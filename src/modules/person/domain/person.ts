@@ -268,4 +268,11 @@ export class Person<WasPersisted extends boolean> {
             casing: 'mixed',
         });
     }
+
+    public async checkPersonalnummerSpecifications(
+        personRepository: PersonRepository,
+    ): Promise<undefined | PersonSpecificationError> {
+
+        return undefined;
+    }
 }

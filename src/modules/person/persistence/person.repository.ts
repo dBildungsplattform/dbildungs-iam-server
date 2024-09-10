@@ -413,4 +413,32 @@ export class PersonRepository {
 
         return person;
     }
+
+    public async updatePersonalnummer(
+        personId: string,
+        newPersonalnummer: string,
+    ): Promise<Person<true> | DomainError> {
+        const personFound: Option<Person<true>> = await this.findById(personId);
+
+        if (!personFound) {
+            return new EntityNotFoundError('Person', personId);
+        }
+        //Specifications
+        //Prüfung dass KoPers-Nr nicht leer ist
+        //Prüfung auf Eindeutigkeit
+        {
+            if (personFound.personalnummer !== newPersonalnummer) {
+                personFound.personalnummer = newPersonalnummer;
+                const specificationError: undefined | PersonSpecificationError =
+                    await personFound.checkPersonalnummerSpecifications(this);
+
+                if (specificationError) {
+                    return specificationError;
+                }
+            }
+        }
+        const savedPerson: Person<true> | DomainError = await this.save(personFound);
+
+        return savedPerson;
+    }
 }
