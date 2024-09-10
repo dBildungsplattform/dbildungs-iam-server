@@ -8,6 +8,11 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { AuthenticationErrorI18nTypes } from './dbiam-authentication.error.js';
+import { jwtDecode, JwtPayload } from 'jwt-decode';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
+interface CustomJwtPayload extends JwtPayload {
+    acr?: string;
+}
 
 @Injectable()
 export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
@@ -21,9 +26,19 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
     public override async canActivate(context: ExecutionContext): Promise<boolean> {
         const request: Request = context.switchToHttp().getRequest<Request>();
         const res: Response = context.switchToHttp().getResponse<Response>();
+        const stepup: StepUpLevel = request.query['requiredStepUpLevel'] as StepUpLevel;
 
         if (request.query['redirectUrl']) {
             request.session.redirectUrl = request.query['redirectUrl'] as string;
+        }
+
+        let decodedIdToken: CustomJwtPayload = { acr: '' };
+        if (request.passportUser?.access_token) {
+            decodedIdToken = jwtDecode<CustomJwtPayload>(request.passportUser?.access_token);
+        }
+
+        if (stepup === decodedIdToken.acr && request.isAuthenticated()) {
+            return true;
         }
 
         try {
