@@ -110,7 +110,12 @@ describe('AuthenticationController', () => {
 
         it('should redirect to saved redirectUrl', () => {
             const responseMock: Response = createMock<Response>();
-            const sessionMock: SessionData = createMock<SessionData>({ redirectUrl: faker.internet.url() });
+            const user: { redirect_uri: string } = { redirect_uri: faker.internet.url() };
+            const passport: { user: { redirect_uri: string } } = { user: user };
+            const sessionMock: SessionData = createMock<SessionData>({
+                redirectUrl: passport.user.redirect_uri,
+                passport: passport,
+            });
 
             authController.login(responseMock, sessionMock);
 
