@@ -214,15 +214,12 @@ export class OrganisationRepository {
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
-        if (searchStr) {
-            // searchStr is set, the scope is not paged
-            scope
-                .searchString(searchStr)
-                .setScopeWhereOperator(ScopeOperator.AND)
-                .excludeTyp([excludeOrganisationType]);
-        } else {
-            scope.excludeTyp([excludeOrganisationType]).paged(0, limit);
-        }
+
+        scope
+            .searchString(searchStr)
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .paged(0, limit)
+            .excludeTyp([excludeOrganisationType]);
 
         let foundOrganisations: Organisation<true>[] = [];
         [foundOrganisations] = await this.findBy(scope);
