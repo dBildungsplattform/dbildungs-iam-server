@@ -419,7 +419,6 @@ describe('KeycloakUserService', () => {
         describe('when user does not exist', () => {
             it('should return error', async () => {
                 kcUsersMock.find.mockRejectedValueOnce(new Error());
-                //kcUsersMock.update.mockResolvedValueOnce();
 
                 const res: Result<void, DomainError> = await service.updateOXUserAttributes(
                     username,
@@ -434,7 +433,6 @@ describe('KeycloakUserService', () => {
         describe('when find returns array with undefined first element', () => {
             it('should return error', async () => {
                 kcUsersMock.find.mockResolvedValueOnce([]);
-                //kcUsersMock.update.mockResolvedValueOnce();
 
                 const res: Result<void, DomainError> = await service.updateOXUserAttributes(
                     username,
