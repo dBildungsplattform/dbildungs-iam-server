@@ -275,12 +275,12 @@ describe('PrivacyIdeaAdministrationController', () => {
             const mockAssignTokenResponse: AssignTokenResponse = createMock<AssignTokenResponse>();
             const person: Person<true> = getPerson();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
 
-            jest.spyOn(serviceMock, 'assignHardwareToken').mockResolvedValue(mockAssignTokenResponse);
+            serviceMock.assignHardwareToken.mockResolvedValueOnce(mockAssignTokenResponse);
             const response: AssignHardwareTokenResponse | undefined = await sut.assignHardwareToken(
                 mockParams,
                 personPermissionsMock,
@@ -302,7 +302,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         it('should return forbidden if permissions are insufficient', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Forbidden access'),
             });
@@ -315,7 +315,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         it('should return user not found if referrer is undefined', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
             });
@@ -329,12 +329,12 @@ describe('PrivacyIdeaAdministrationController', () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
             const tokenError: TokenError = new TokenError('Something went wrong', 'Error');
             const person: Person<true> = getPerson();
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
 
-            jest.spyOn(serviceMock, 'assignHardwareToken').mockRejectedValueOnce(tokenError);
+            serviceMock.assignHardwareToken.mockRejectedValueOnce(tokenError);
 
             await expect(sut.assignHardwareToken(mockParams, personPermissionsMock)).rejects.toThrow(tokenError);
         });
@@ -344,12 +344,12 @@ describe('PrivacyIdeaAdministrationController', () => {
             const unexpectedError: Error = new Error('Unexpected error');
             const entityCouldNotBeCreatedError: EntityCouldNotBeCreated = createMock<EntityCouldNotBeCreated>();
             const person: Person<true> = getPerson();
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
 
-            jest.spyOn(serviceMock, 'assignHardwareToken').mockRejectedValue(unexpectedError);
+            serviceMock.assignHardwareToken.mockRejectedValue(unexpectedError);
 
             await expect(sut.assignHardwareToken(mockParams, personPermissionsMock)).rejects.toThrow(
                 SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
