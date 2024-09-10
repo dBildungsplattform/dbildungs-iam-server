@@ -8,7 +8,6 @@ import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.e
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { SimplePersonenkontextDeletedEvent } from '../../../shared/events/simple-personenkontext-deleted.event.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -23,10 +22,14 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
+import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly eventService: EventService,
+        private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly personRepo: PersonRepository,
         private readonly rolleRepo: RolleRepo,
@@ -42,6 +45,7 @@ export class PersonenkontexteUpdate {
 
     public static createNew(
         eventService: EventService,
+        logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         personRepo: PersonRepository,
         rolleRepo: RolleRepo,
@@ -56,6 +60,7 @@ export class PersonenkontexteUpdate {
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
+            logger,
             dBiamPersonenkontextRepo,
             personRepo,
             rolleRepo,
@@ -92,6 +97,7 @@ export class PersonenkontexteUpdate {
                     undefined,
                     undefined,
                     undefined,
+                    pkBodyParam.befristung,
                 );
                 personenKontexte.push(newPK); // New
             } else {
@@ -210,16 +216,12 @@ export class PersonenkontexteUpdate {
                         pk.rolleId == existingPK.rolleId,
                 )
             ) {
-                await this.dBiamPersonenkontextRepo.delete(existingPK);
-                deletedPKs.push(existingPK);
-                this.eventService.publish(
-                    new SimplePersonenkontextDeletedEvent(
-                        existingPK.id,
-                        existingPK.personId,
-                        existingPK.organisationId,
-                        existingPK.rolleId,
-                    ),
-                );
+                try {
+                    await this.dBiamPersonenkontextRepo.delete(existingPK).then(() => {});
+                    deletedPKs.push(existingPK);
+                } catch (err) {
+                    this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
+                }
             }
         }
 
@@ -241,11 +243,15 @@ export class PersonenkontexteUpdate {
                         existingPK.rolleId == sentPK.rolleId,
                 )
             ) {
-                const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
-                createdPKs.push(savedPK);
-                /*this.eventService.publish(
-                    new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
-                );*/
+                try {
+                    const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
+                    createdPKs.push(savedPK);
+                } catch (err) {
+                    this.logger.error(
+                        `Personenkontext with (person: ${sentPK.personId}, organisation: ${sentPK.organisationId}, rolle: ${sentPK.rolleId}) could not be added!`,
+                        err,
+                    );
+                }
             }
         }
 
@@ -267,17 +273,37 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
-    public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+    private async checkBefristungSpecification(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new CheckBefristungSpecification(this.rolleRepo).checkBefristung(sentPKs);
+
+        if (!isSatisfied) {
+            return new PersonenkontextBefristungRequiredError();
+        }
+
+        return undefined;
+    }
+
+    public async update(ldapEntryUUID?: string): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+        //If first lehrer kontext is created and a UUID is passed as ldapEntryUUID it is used as internal LDAP entryUUID (needed for migration, can be build back afterwards)
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
+
         const validationForLernError: Option<PersonenkontexteUpdateError> =
             await this.checkRollenartLernSpecification(sentPKs);
         if (validationForLernError) {
             return validationForLernError;
+        }
+
+        const validationForBefristung: Option<PersonenkontexteUpdateError> =
+            await this.checkBefristungSpecification(sentPKs);
+        if (validationForBefristung) {
+            return validationForBefristung;
         }
         const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
@@ -305,7 +331,7 @@ export class PersonenkontexteUpdate {
             }
         }
 
-        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate);
+        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate, ldapEntryUUID);
 
         return existingPKsAfterUpdate;
     }
@@ -314,6 +340,7 @@ export class PersonenkontexteUpdate {
         deletedPKs: Personenkontext<true>[],
         createdPKs: Personenkontext<true>[],
         existingPKs: Personenkontext<true>[],
+        ldapEntryUUID?: string,
     ): Promise<void> {
         const deletedRollenIDs: RolleID[] = deletedPKs.map((pk: Personenkontext<true>) => pk.rolleId);
         const createdRollenIDs: RolleID[] = createdPKs.map((pk: Personenkontext<true>) => pk.rolleId);
@@ -336,6 +363,9 @@ export class PersonenkontexteUpdate {
         ]);
 
         if (!person) {
+            this.logger.error(
+                `Could not find person with ID ${this.personId} while building PersonenkontextUpdatedEvent`,
+            );
             return; // Person can not be found
         }
 
@@ -357,6 +387,7 @@ export class PersonenkontexteUpdate {
                     orgas.get(pk.organisationId)!,
                     rollen.get(pk.rolleId)!,
                 ]),
+                ldapEntryUUID,
             ),
         );
     }

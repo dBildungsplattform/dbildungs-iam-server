@@ -253,13 +253,36 @@ describe('OrganisationController', () => {
 
     describe('findOrganizations', () => {
         describe('when finding organizations with given query params', () => {
-            it('should find all organizations that match', async () => {
+            it('should find all organizations that match and handle provided IDs', async () => {
+                const organisationIds: string[] = [faker.string.uuid(), faker.string.uuid()];
+
                 const queryParams: FindOrganisationQueryParams = {
                     typ: OrganisationsTyp.SONSTIGE,
                     searchString: faker.lorem.word(),
                     systemrechte: [],
                     administriertVon: [faker.string.uuid(), faker.string.uuid()],
+                    // Assuming you have a field for organisationIds in your query params
+                    organisationIds: organisationIds,
                 };
+
+                const selectedOrganisationMap: Map<string, Organisation<true>> = new Map(
+                    organisationIds.map((id: string) => [
+                        id,
+                        DoFactory.createOrganisationAggregate(true, {
+                            id: id,
+                            createdAt: faker.date.recent(),
+                            updatedAt: faker.date.recent(),
+                            administriertVon: faker.string.uuid(),
+                            zugehoerigZu: faker.string.uuid(),
+                            kennung: faker.lorem.word(),
+                            name: faker.lorem.word(),
+                            namensergaenzung: faker.lorem.word(),
+                            kuerzel: faker.lorem.word(),
+                            typ: OrganisationsTyp.SCHULE,
+                            traegerschaft: Traegerschaft.LAND,
+                        }),
+                    ]),
+                );
 
                 const mockedRepoResponse: Counted<Organisation<true>> = [
                     [
@@ -284,6 +307,7 @@ describe('OrganisationController', () => {
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
                 organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
+                organisationRepositoryMock.findByIds.mockResolvedValue(selectedOrganisationMap);
 
                 const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(
                     queryParams,
@@ -305,8 +329,9 @@ describe('OrganisationController', () => {
                         .paged(queryParams.offset, queryParams.limit),
                 );
 
-                expect(result.items.length).toEqual(1);
+                expect(result.items.length).toEqual(3);
             });
+
             it('should find all organizations that match with Klasse Typ', async () => {
                 const queryParams: FindOrganisationQueryParams = {
                     typ: OrganisationsTyp.KLASSE,
