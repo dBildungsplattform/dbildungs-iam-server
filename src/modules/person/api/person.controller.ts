@@ -65,6 +65,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -439,5 +440,20 @@ export class PersonController {
         }
 
         return { ok: true, value: personResult.value.newPassword! };
+    }
+
+    @Patch(':personId/personalnummer')
+    @ApiNoContentResponse({
+        description: 'The personalnummer were successfully updated.',
+    })
+    @ApiBadRequestResponse({ description: 'The personalnummer could not be updated.', type: DbiamOrganisationError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the personalnummer.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to update the personalnummer.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the personalnummer.' })
+    public async updatePersonalnummer(
+        @Param() params: PersonByIdParams,
+        @Body() body: PersonByPersonalnummerBodyParams,
+    ): Promise<void | DomainError> {
+        //Update personalnummer im Repo
     }
 }
