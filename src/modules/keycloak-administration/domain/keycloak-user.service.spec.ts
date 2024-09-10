@@ -647,9 +647,9 @@ describe('KeycloakUserService', () => {
         const userCreationTimestamp: number = faker.date.past().valueOf();
         const mockUser: UserRepresentation = { id: faker.string.uuid(), createdTimestamp: userCreationTimestamp };
         describe('when the password has been updated', () => {
-            const updatedAt: number = Date.now();
+            const updatedAt: Date = new Date();
             const mockCredentials: Array<CredentialRepresentation> = [
-                { type: 'password', createdDate: updatedAt },
+                { type: 'password', createdDate: updatedAt.valueOf() },
                 { type: 'other', createdDate: faker.date.past().valueOf() },
             ];
             it('should return the timestamp', async () => {
