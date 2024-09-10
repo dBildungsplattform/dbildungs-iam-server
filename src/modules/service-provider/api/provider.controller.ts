@@ -16,14 +16,14 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { ServiceProviderService } from '../domain/service-provider.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
