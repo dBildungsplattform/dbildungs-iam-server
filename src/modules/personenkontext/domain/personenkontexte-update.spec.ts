@@ -59,6 +59,7 @@ describe('PersonenkontexteUpdate', () => {
     let pk2: Personenkontext<true>;
     let personPermissionsMock: PersonPermissionsMock;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -122,6 +123,7 @@ describe('PersonenkontexteUpdate', () => {
         });
         personPermissionsMock = new PersonPermissionsMock();
         rolleRepoMock = module.get(RolleRepo);
+        loggerMock = module.get(ClassLogger);
     });
 
     afterAll(async () => {
@@ -174,6 +176,43 @@ describe('PersonenkontexteUpdate', () => {
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(Array);
+            });
+        });
+
+        describe('when personenkontext could not be saved', () => {
+            beforeAll(() => {
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    0,
+                    [pk1],
+                    personPermissionsMock,
+                );
+            });
+
+            it('should log error', async () => {
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(null);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(null); //mock pk1 is not found => therefore handled as new
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([]); //person has no existing PKs
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([]); //CheckRollenartLernSpecification: person has no existing PKs
+                rolleRepoMock.findByIds.mockResolvedValueOnce(new Map()); //CheckRollenartLernSpecification
+                rolleRepoMock.findByIds.mockResolvedValueOnce(new Map()); //CheckRollenartLernSpecification
+                rolleRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+
+                const error: Error = new Error('DB Error');
+                dBiamPersonenkontextRepoMock.save.mockRejectedValueOnce(error);
+
+                const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
+
+                expect(updateResult).toBeInstanceOf(Array);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringMatching(/Personenkontext with \(.*\) could not be added!/),
+                    error,
+                );
             });
         });
 

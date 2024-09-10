@@ -22,6 +22,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
 import { Client, Entry, SearchResult } from 'ldapts';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -199,6 +200,29 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeTruthy();
             });
 
+            it('when called with extra entryUUID should return truthy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValue();
+                    clientMock.add.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
+                    ); //mock existsSchule
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+
+                    return clientMock;
+                });
+                const testLehrer: PersonData = {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.lorem.word(),
+                    ldapEntryUUID: faker.string.uuid(),
+                };
+                const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, organisation);
+
+                expect(result.ok).toBeTruthy();
+            });
+
             it('when called with valid person and an organisation without kennung should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
@@ -337,7 +361,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<PersonData> = await ldapClientService.deleteLehrerByPersonId(person);
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
 
                 expect(result.ok).toBeTruthy();
             });
@@ -354,7 +378,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<PersonData> = await ldapClientService.deleteLehrerByPersonId(person);
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -365,7 +389,7 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.deleteLehrerByPersonId(person);
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
 
                 expect(result.ok).toBeFalsy();
             });

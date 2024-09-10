@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
-import { SimplePersonenkontextDeletedEvent } from '../../../shared/events/simple-personenkontext-deleted.event.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -36,14 +34,6 @@ export class EmailEventHandler {
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly eventService: EventService,
     ) {}
-
-    @EventHandler(PersonenkontextCreatedEvent)
-    public async handlePersonenkontextCreatedEvent(event: PersonenkontextCreatedEvent): Promise<void> {
-        this.logger.info(
-            `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
-        );
-        await this.handlePerson(event.personId);
-    }
 
     @EventHandler(PersonRenamedEvent)
     // eslint-disable-next-line @typescript-eslint/require-await
@@ -86,20 +76,12 @@ export class EmailEventHandler {
         });
     }
 
-    @EventHandler(SimplePersonenkontextDeletedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async handlePersonenkontextDeletedEvent(event: SimplePersonenkontextDeletedEvent): Promise<void> {
-        this.logger.info(
-            `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
-        );
-        // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
-    }
-
     @EventHandler(PersonenkontextUpdatedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
+    // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(`Received handlePersonenkontextUpdatedEvent, personId:${event.person.id}`);
-        // // TODO implement handlePersonenkontextUpdatedEvent
+
+        await this.handlePerson(event.person.id);
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
