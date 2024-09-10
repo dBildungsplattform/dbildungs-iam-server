@@ -4,6 +4,7 @@ export type LdapPersonEntry = {
     employeeNumber: string;
     mail: string[];
     objectclass: string[];
+    entryUUID?: string;
 };
 
 export type LdapOrganisationEntry = {

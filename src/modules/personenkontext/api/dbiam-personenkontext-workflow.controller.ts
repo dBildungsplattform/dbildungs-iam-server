@@ -84,7 +84,6 @@ export class DbiamPersonenkontextWorkflowController {
         const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
             permissions,
             params.organisationName,
-            params.limit,
         );
 
         // Find all possible roles under the selected Organisation
@@ -221,9 +220,13 @@ export class DbiamPersonenkontextWorkflowController {
             params.organisationId,
             params.rolleId,
             params.personalnummer || undefined,
+            params.befristung || undefined,
         );
 
         if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
+            throw savedPersonWithPersonenkontext;
+        }
+        if (savedPersonWithPersonenkontext instanceof PersonenkontexteUpdateError) {
             throw savedPersonWithPersonenkontext;
         }
 
