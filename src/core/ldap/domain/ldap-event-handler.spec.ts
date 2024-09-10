@@ -30,6 +30,7 @@ import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -151,7 +152,7 @@ describe('LDAP Event Handler', () => {
         });
     });
 
-    describe('asyncSchuleDeletedEventHandler', () => {
+    describe('handleSchuleDeletedEvent', () => {
         describe('deletion is successful', () => {
             it('should execute without errors', async () => {
                 const event: SchuleDeletedEvent = new SchuleDeletedEvent(faker.string.uuid(), '1234567', 'Teschule');
@@ -353,6 +354,24 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
             expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('handleEmailAddressGeneratedEvent', () => {
+        it('should call ldap client changeEmailAddressByPersonId', async () => {
+            const event: EmailAddressGeneratedEvent = new EmailAddressGeneratedEvent(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.internet.email(),
+                true,
+            );
+
+            await ldapEventHandler.handleEmailAddressGeneratedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
+            );
+            expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });
     });
 });

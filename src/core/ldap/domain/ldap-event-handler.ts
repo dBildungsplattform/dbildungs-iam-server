@@ -9,6 +9,7 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -96,5 +97,13 @@ export class LdapEventHandler {
                     }
                 }),
         );
+    }
+
+    @EventHandler(EmailAddressGeneratedEvent)
+    public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
+        );
+        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.address);
     }
 }

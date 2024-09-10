@@ -1,8 +1,10 @@
 export type LdapPersonEntry = {
     cn: string;
     sn: string;
+    personID?: string;
     employeeNumber: string;
-    mail: string[];
+    mailPrimaryAddress?: string;
+    mailAlternativeAddress?: string;
     objectclass: string[];
     entryUUID?: string;
 };
