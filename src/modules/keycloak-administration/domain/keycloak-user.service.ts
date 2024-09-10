@@ -200,9 +200,9 @@ export class KeycloakUserService {
             };
         }
 
-        const attributes: Record<string, string> | undefined = userRepresentation.attributes ?? {};
+        const attributes: Record<string, string[]> | undefined = userRepresentation.attributes ?? {};
 
-        attributes['ID_OX'] = oxUserName + '@' + oxContextName;
+        attributes['ID_OX'] = [oxUserName + '@' + oxContextName];
 
         const updatedUserRepresentation: UserRepresentation = {
             //only attributes shall be updated here for this event
