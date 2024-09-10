@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
-import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
+import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { EventService } from '../../../core/eventbus/index.js';
 
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
@@ -114,7 +114,7 @@ export class ServiceProviderRepo {
 
         if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
             this.eventService.publish(
-                new CreateGroupAndRoleEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
+                new GroupAndRoleCreatedEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
             );
         }
 

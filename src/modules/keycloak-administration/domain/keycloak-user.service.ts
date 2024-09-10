@@ -278,7 +278,7 @@ export class KeycloakUserService {
     }
 
     public async assignRealmGroupsToUser(
-        usernameId: string,
+        userId: string,
         groupNames: (string | undefined)[],
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
@@ -287,12 +287,12 @@ export class KeycloakUserService {
         if (!kcAdminClientResult.ok) {
             return kcAdminClientResult;
         }
-        const userResult: Result<User<true>, DomainError> = await this.findById(usernameId);
+        const userResult: Result<User<true>, DomainError> = await this.findById(userId);
         if (!userResult.ok) {
             return userResult;
         }
 
-        const userId: string = userResult.value.id;
+        const foundUserId: string = userResult.value.id;
 
         try {
             const allGroups: GroupRepresentation[] = await kcAdminClientResult.value.groups.find();
@@ -317,7 +317,7 @@ export class KeycloakUserService {
             }
 
             const userCurrentGroups: GroupRepresentation[] = await kcAdminClientResult.value.users.listGroups({
-                id: userId,
+                id: foundUserId,
             });
 
             const newGroupsToAssign: GroupRepresentation[] = validGroups.filter(
@@ -331,20 +331,20 @@ export class KeycloakUserService {
 
             for (const group of newGroupsToAssign) {
                 await kcAdminClientResult.value.users.addToGroup({
-                    id: userId,
+                    id: foundUserId,
                     groupId: group.id!,
                 });
             }
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Failed to assign groups to user ${usernameId}: ${JSON.stringify(err)}`);
+            this.logger.error(`Failed to assign groups to user ${userId}: ${JSON.stringify(err)}`);
             return { ok: false, error: new KeycloakClientError('Failed to assign groups') };
         }
     }
 
     public async removeRealmGroupsFromUser(
-        usernameId: string,
+        userId: string,
         groupNames: (string | undefined)[],
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
@@ -354,12 +354,12 @@ export class KeycloakUserService {
             return kcAdminClientResult;
         }
 
-        const userResult: Result<User<true>, DomainError> = await this.findById(usernameId);
+        const userResult: Result<User<true>, DomainError> = await this.findById(userId);
         if (!userResult.ok) {
             return userResult;
         }
 
-        const userId: string = userResult.value.id;
+        const foundUserId: string = userResult.value.id;
         try {
             const allGroups: GroupRepresentation[] = await kcAdminClientResult.value.groups.find();
             const filteredGroupNames: string[] = groupNames.filter(
@@ -383,7 +383,7 @@ export class KeycloakUserService {
             }
 
             const userCurrentGroups: GroupRepresentation[] = await kcAdminClientResult.value.users.listGroups({
-                id: userId,
+                id: foundUserId,
             });
 
             const groupsToUnassign: GroupRepresentation[] = validGroups.filter((group: GroupRepresentation) =>
@@ -396,14 +396,14 @@ export class KeycloakUserService {
 
             for (const group of groupsToUnassign) {
                 await kcAdminClientResult.value.users.delFromGroup({
-                    id: userId,
+                    id: foundUserId,
                     groupId: group.id!,
                 });
             }
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Failed to remove groups from user ${usernameId}: ${JSON.stringify(err)}`);
+            this.logger.error(`Failed to remove groups from user ${userId}: ${JSON.stringify(err)}`);
             return { ok: false, error: new KeycloakClientError('Failed to remove groups') };
         }
     }
