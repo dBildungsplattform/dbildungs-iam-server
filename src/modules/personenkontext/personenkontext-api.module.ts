@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from '../../core/logging/logger.module.js';
-import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
 import { PersonenkontextController } from '../personenkontext/api/personenkontext.controller.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
@@ -31,7 +30,6 @@ import { PersonApiMapper } from '../person/mapper/person-api.mapper.js';
         LoggerModule.register(PersonenKontextApiModule.name),
     ],
     providers: [
-        PersonenkontextUc,
         PersonenkontextService,
         DBiamPersonenkontextService,
         PersonenkontextRepo,

@@ -135,6 +135,14 @@ describe('PersonApiMapperProfile', () => {
             expect(() =>
                 sut.map({} as CreatedPersonenkontextDto, CreatedPersonenkontextDto, PersonenkontextResponse),
             ).not.toThrow(MappingError);
+
+            expect(() =>
+                sut.map(
+                    { loeschung: { zeitpunkt: faker.date.recent() } } as CreatedPersonenkontextDto,
+                    CreatedPersonenkontextDto,
+                    PersonenkontextResponse,
+                ),
+            ).not.toThrow(MappingError);
         });
 
         it('should map CreatedPersonenkontextDto to PersonenkontextResponse when loeschung is undefined', () => {

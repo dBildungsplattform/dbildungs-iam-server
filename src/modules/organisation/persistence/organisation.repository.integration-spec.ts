@@ -808,4 +808,60 @@ describe('OrganisationRepository', () => {
             });
         });
     });
+
+    describe('isOrgaAParentOfOrgaB', () => {
+        it('should return true if A is parent of B', async () => {
+            const orgaA: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orgaA instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaA));
+            await em.persistAndFlush(mappedOrgaA);
+            const orgaB: Organisation<false> | DomainError = Organisation.createNew(
+                mappedOrgaA.id,
+                mappedOrgaA.id,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orgaB instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaB));
+            await em.persistAndFlush(mappedOrgaB);
+
+            await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(true);
+        });
+
+        it('should return false if A is not parent of B', async () => {
+            const orgaA: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orgaA instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaA));
+            await em.persistAndFlush(mappedOrgaA);
+            const orgaB: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orgaB instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaB));
+            await em.persistAndFlush(mappedOrgaB);
+
+            await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(false);
+        });
+    });
 });
