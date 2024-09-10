@@ -320,9 +320,10 @@ export class PrivacyIdeaAdministrationService {
             Authorization: `${token}`,
             'Content-Type': 'application/json',
         };
-        const payload: { serial: string; verify: string } = {
+        const payload: { serial: string; verify: string; type: string } = {
             serial: tokenToVerify.serial,
             verify: otp,
+            type: 'totp',
         };
 
         try {
