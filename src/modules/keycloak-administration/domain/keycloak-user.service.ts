@@ -163,7 +163,7 @@ export class KeycloakUserService {
         }
     }
 
-    public async updateUser(
+    public async updateOXUserAttributes(
         username: string,
         oxUserName: OXUserName,
         oxContextName: OXContextName,

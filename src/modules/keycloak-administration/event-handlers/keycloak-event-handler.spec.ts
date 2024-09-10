@@ -65,7 +65,7 @@ describe('KeycloakEventHandler', () => {
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Received OxUserCreatedEvent personId:${fakePersonID}, userId:${fakeOXUserID}, userName:${fakeOXUserName} contextId:${fakeOXContextID}, contextName:${fakeOXContextName}`,
             );
-            expect(keycloakUserServiceMock.updateUser).toHaveBeenCalledTimes(1);
+            expect(keycloakUserServiceMock.updateOXUserAttributes).toHaveBeenCalledTimes(1);
         });
     });
 });

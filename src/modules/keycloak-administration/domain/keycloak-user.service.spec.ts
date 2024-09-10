@@ -383,7 +383,11 @@ describe('KeycloakUserService', () => {
 
                 kcUsersMock.update.mockRejectedValueOnce(new Error());
 
-                const res: Result<void, DomainError> = await service.updateUser(username, oxUserName, oxContextName);
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
 
                 expect(res.ok).toBeFalsy();
             });
@@ -402,7 +406,11 @@ describe('KeycloakUserService', () => {
 
                 kcUsersMock.update.mockResolvedValueOnce();
 
-                const res: Result<void, DomainError> = await service.updateUser(username, oxUserName, oxContextName);
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
 
                 expect(res.ok).toBeTruthy();
             });
@@ -413,7 +421,11 @@ describe('KeycloakUserService', () => {
                 kcUsersMock.find.mockRejectedValueOnce(new Error());
                 kcUsersMock.update.mockResolvedValueOnce();
 
-                const res: Result<void, DomainError> = await service.updateUser(username, oxUserName, oxContextName);
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
 
                 expect(res.ok).toBeFalsy();
             });
@@ -428,7 +440,11 @@ describe('KeycloakUserService', () => {
 
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
 
-                const res: Result<void, DomainError> = await service.updateUser(username, oxUserName, oxContextName);
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
 
                 expect(res).toBe(error);
             });

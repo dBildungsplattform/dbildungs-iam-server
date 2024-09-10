@@ -21,7 +21,7 @@ export class KeycloakEventHandler {
             `Received OxUserCreatedEvent personId:${event.personId}, userId:${event.userId}, userName:${event.userName} contextId:${event.contextId}, contextName:${event.contextName}`,
         );
 
-        const updateResult: Result<void> = await this.kcUserService.updateUser(
+        const updateResult: Result<void> = await this.kcUserService.updateOXUserAttributes(
             event.keycloakUsername,
             event.userName,
             event.contextName,
