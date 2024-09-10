@@ -316,8 +316,9 @@ export class PrivacyIdeaAdministrationService {
         }
         const token: string = await this.getJWTToken();
         const url: string = this.privacyIdeaConfig.ENDPOINT + '/token/init';
-        const headers: { Authorization: string } = {
+        const headers: { Authorization: string; 'Content-Type': string } = {
             Authorization: `${token}`,
+            'Content-Type': 'application/json',
         };
         const payload: { serial: string; verify: string } = {
             serial: tokenToVerify.serial,
