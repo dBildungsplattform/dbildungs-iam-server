@@ -1,6 +1,6 @@
 export type ExternalSystemIDs = {
-    ID_ITSLEARNING?: string;
-    ID_OX?: string;
+    ID_ITSLEARNING?: string[];
+    ID_OX?: string[];
 };
 
 export class User<WasPersisted extends boolean> {

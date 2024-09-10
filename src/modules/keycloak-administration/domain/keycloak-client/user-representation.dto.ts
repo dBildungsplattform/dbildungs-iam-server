@@ -17,5 +17,5 @@ export class UserRepresentationDto {
     public createdTimestamp!: number;
 
     @IsOptional()
-    public attributes?: Record<string, string>;
+    public attributes?: Record<string, string[]>;
 }

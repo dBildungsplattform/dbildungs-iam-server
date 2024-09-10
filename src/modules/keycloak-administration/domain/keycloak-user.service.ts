@@ -326,8 +326,8 @@ export class KeycloakUserService {
 
         const externalSystemIDs: ExternalSystemIDs = {};
         if (userReprDto.attributes) {
-            externalSystemIDs.ID_ITSLEARNING = userReprDto.attributes['ID_ITSLEARNING'] as string;
-            externalSystemIDs.ID_OX = userReprDto.attributes['ID_OX'] as string;
+            externalSystemIDs.ID_ITSLEARNING = userReprDto.attributes['ID_ITSLEARNING'] as string[];
+            externalSystemIDs.ID_OX = userReprDto.attributes['ID_OX'] as string[];
         }
 
         const userDo: User<true> = User.construct<true>(
