@@ -63,6 +63,7 @@ import { PersonExceptionFilter } from './person-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
+import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -77,6 +78,7 @@ export class PersonController {
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
+        private readonly personDeleteService: PersonDeleteService,
         @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
@@ -165,7 +167,7 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const response: Result<void, DomainError> = await this.personRepository.deletePerson(
+        const response: Result<void, DomainError> = await this.personDeleteService.deletePerson(
             params.personId,
             permissions,
         );

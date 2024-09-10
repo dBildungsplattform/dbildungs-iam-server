@@ -21,6 +21,8 @@ import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
@@ -97,6 +99,10 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
     return person;
 }
 
+export type PersonEventPayload = {
+    personenkontexte: [{ id: string; organisationId: string; rolleId: string }];
+};
+
 @Injectable()
 export class PersonRepository {
     public readonly ROOT_ORGANISATION_ID: string;
@@ -144,9 +150,10 @@ export class PersonRepository {
 
     public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
         const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
+
         const person: Person<true> | undefined = persons[0];
 
         if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
@@ -163,7 +170,7 @@ export class PersonRepository {
             permissions,
             RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
         );
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
         const person: Person<true> | undefined = persons[0];
@@ -175,7 +182,11 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
-    public async deletePerson(personId: string, permissions: PersonPermissions): Promise<Result<void, DomainError>> {
+    public async deletePerson(
+        personId: string,
+        permissions: PersonPermissions,
+        removedPersonenkontexts: PersonenkontextEventKontextData[],
+    ): Promise<Result<void, DomainError>> {
         // First check if the user has permission to view the person
         const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
 
@@ -200,6 +211,18 @@ export class PersonRepository {
         // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
 
+        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                familienname: person.familienname,
+                vorname: person.vorname,
+                email: person.email,
+            },
+            [],
+            removedPersonenkontexts,
+            [],
+        );
+        this.eventService.publish(personenkontextUpdatedEvent);
         // Delete email-addresses if any, must happen before person deletion to get the referred email-address
         if (person.email) {
             this.eventService.publish(new PersonDeletedEvent(personId, person.email));
