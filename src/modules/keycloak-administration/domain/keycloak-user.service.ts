@@ -168,7 +168,9 @@ export class KeycloakUserService {
         oxUserName: OXUserName,
         oxContextName: OXContextName,
     ): Promise<Result<void, DomainError>> {
-        // Get authed client
+        const filter: FindUserFilter = {
+            username: username,
+        };
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -176,34 +178,40 @@ export class KeycloakUserService {
             return kcAdminClientResult;
         }
 
-        // Check for existing user
-        const filter: FindUserFilter = {
-            username: username,
-        };
+        const userResult: Result<UserRepresentation[], DomainError> = await this.wrapClientResponse(
+            kcAdminClientResult.value.users.find({ ...filter, exact: true }),
+        );
+        if (!userResult.ok) {
+            return userResult;
+        }
 
-        const findResult: Result<User<true>, DomainError> = await this.findOne(filter);
-
-        if (!findResult.ok) {
+        if (!userResult.value[0]) {
             return {
                 ok: false,
-                error: findResult.error,
+                error: new EntityNotFoundError(`Keycloak User could not be found`),
             };
         }
 
-        const foundUser: User<true> = findResult.value;
-        const newExternalSystemIDs: ExternalSystemIDs = {
-            ID_ITSLEARNING: foundUser.externalSystemIDs.ID_ITSLEARNING,
-            ID_OX: oxUserName + '@' + oxContextName,
-        };
+        const userRepresentation: UserRepresentation = userResult.value[0];
+        if (!userRepresentation.id) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError(`Keycloak User has no id`),
+            };
+        }
 
-        const userRepresentation: UserRepresentation = {
+        const attributes: Record<string, string> | undefined = userRepresentation.attributes ?? {};
+
+        attributes['ID_OX'] = oxUserName + '@' + oxContextName;
+
+        const updatedUserRepresentation: UserRepresentation = {
             //only attributes shall be updated here for this event
-            attributes: newExternalSystemIDs,
+            attributes: attributes,
         };
 
         try {
-            await kcAdminClientResult.value.users.update({ id: foundUser.id }, userRepresentation);
-            this.logger.info(`Updated user-attributes for user:${foundUser.id}`);
+            await kcAdminClientResult.value.users.update({ id: userRepresentation.id }, updatedUserRepresentation);
+            this.logger.info(`Updated user-attributes for user:${userRepresentation.id}`);
 
             return { ok: true, value: undefined };
         } catch (err) {

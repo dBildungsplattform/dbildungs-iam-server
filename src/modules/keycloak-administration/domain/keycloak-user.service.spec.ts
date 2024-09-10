@@ -359,7 +359,7 @@ describe('KeycloakUserService', () => {
         });
     });
 
-    describe('updateUser', () => {
+    describe('updateOXUserAttributes', () => {
         let username: string;
         let oxUserName: OXUserName;
         let oxContextName: OXContextName;
@@ -419,7 +419,42 @@ describe('KeycloakUserService', () => {
         describe('when user does not exist', () => {
             it('should return error', async () => {
                 kcUsersMock.find.mockRejectedValueOnce(new Error());
-                kcUsersMock.update.mockResolvedValueOnce();
+                //kcUsersMock.update.mockResolvedValueOnce();
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when find returns array with undefined first element', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([]);
+                //kcUsersMock.update.mockResolvedValueOnce();
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when user exists but id is undefined', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
 
                 const res: Result<void, DomainError> = await service.updateOXUserAttributes(
                     username,
