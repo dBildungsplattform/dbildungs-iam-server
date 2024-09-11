@@ -37,24 +37,26 @@ ou: oeffentlicheSchulen
 # Entry 5: cn=mmusterschueler,ou=oeffentlicheSchulen,dc=schule-sh,dc=de
 dn: cn=mmusterschueler,ou=oeffentlicheSchulen,dc=schule-sh,dc=de
 changetype: add
+uid: mmusterschueler
 cn: mmusterschueler
 givenname: Moritz
 objectclass: inetOrgPerson
-#objectclass: univentionMail
-#mailPrimaryAddress: moritz.muster-schueler@schule-sh.de
-#mailAlternativeAddress: moritz.muster-schueler@schule-sh.de
+objectclass: univentionMail
+mailPrimaryAddress: moritz.muster-schueler@schule-sh.de
+mailAlternativeAddress: moritz.muster-schueler@schule-sh.de
 objectclass: top
 sn: Muster-Schueler
 
 # Entry 6: cn=ssuperadmin,ou=oeffentlicheSchulen,dc=schule-sh,dc=de
 dn: cn=ssuperadmin,ou=oeffentlicheSchulen,dc=schule-sh,dc=de
 changetype: add
+uid: ssuperadmin
 cn: ssuperadmin
 givenname: Susi
 objectclass: inetOrgPerson
-#objectclass: univentionMail
-#mailPrimaryAddress: susi.superadmin@schule-sh.de
-#mailAlternativeAddress: susi.superadmin@schule-sh.de
+objectclass: univentionMail
+mailPrimaryAddress: susi.superadmin@schule-sh.de
+mailAlternativeAddress: susi.superadmin@schule-sh.de
 objectclass: top
 sn: Superadmin
 
