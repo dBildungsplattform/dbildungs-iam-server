@@ -335,7 +335,6 @@ export class DBiamPersonenkontextRepo {
         return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
     }
 
-
     /**
      * @deprecated This method does not throw events, please always use the PersonenkontexteUpdate aggregate
      */

@@ -388,7 +388,7 @@ describe('PersonController', () => {
 
         it('should get all persons', async () => {
             personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true })
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 queryParams,

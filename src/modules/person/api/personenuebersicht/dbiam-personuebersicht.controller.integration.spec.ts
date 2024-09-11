@@ -1,4 +1,4 @@
-import { MikroORM } from '@mikro-orm/core';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -36,14 +36,19 @@ import { PersonPermissions } from '../../../authentication/domain/person-permiss
 import { Request } from 'express';
 import { PassportUser } from '../../../authentication/types/user.js';
 import { Observable } from 'rxjs';
-import { DBiamPersonenuebersichtController } from './dbiam-personenuebersicht.controller.js';
-import { OrganisationID } from '../../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextFactory } from '../../../personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
+import {
+    createAndPersistOrganisation,
+    createAndPersistRootOrganisation,
+} from '../../../../../test/utils/organisation-test-helper.js';
+import { OrganisationEntity } from '../../../organisation/persistence/organisation.entity.js';
+import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 
 describe('Personenuebersicht API', () => {
     let app: INestApplication;
     let orm: MikroORM;
+    let em: EntityManager;
     let personRepository: PersonRepository;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let rolleFactory: RolleFactory;
@@ -52,8 +57,6 @@ describe('Personenuebersicht API', () => {
     let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let organisationRepository: OrganisationRepository;
-
-    let ROOT_ORGANISATION_ID: OrganisationID;
 
     beforeAll(async () => {
         const keycloakUserServiceMock: KeycloakUserService = createMock<KeycloakUserService>({
@@ -127,7 +130,7 @@ describe('Personenuebersicht API', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         organisationRepository = module.get(OrganisationRepository);
 
-        ROOT_ORGANISATION_ID = module.get(DBiamPersonenuebersichtController).ROOT_ORGANISATION_ID;
+        em = module.get(EntityManager);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -235,11 +238,18 @@ describe('Personenuebersicht API', () => {
                     }
                     const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
-                    const savedOrganisation1: OrganisationDo<true> = await organisationRepository.save(
-                        DoFactory.createOrganisation(true),
+                    const savedOrganisation1: OrganisationEntity = await createAndPersistOrganisation(
+                        em,
+                        undefined,
+                        OrganisationsTyp.SONSTIGE,
+                        true,
                     );
-                    const savedOrganisation2: OrganisationDo<true> = await organisationRepository.save(
-                        DoFactory.createOrganisation(true),
+
+                    const savedOrganisation2: OrganisationEntity = await createAndPersistOrganisation(
+                        em,
+                        undefined,
+                        OrganisationsTyp.SONSTIGE,
+                        true,
                     );
 
                     const personenkontext1: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
@@ -381,8 +391,11 @@ describe('Personenuebersicht API', () => {
                     const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
                     const unsavedOrganisation1: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                    const savedOrganisation2: OrganisationDo<true> = await organisationRepository.save(
-                        DoFactory.createOrganisation(true),
+                    const savedOrganisation2: OrganisationEntity = await createAndPersistOrganisation(
+                        em,
+                        undefined,
+                        OrganisationsTyp.SONSTIGE,
+                        true,
                     );
 
                     await dBiamPersonenkontextRepo.save(
@@ -473,11 +486,15 @@ describe('Personenuebersicht API', () => {
             }
             const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
 
-            const savedOrganisation1: OrganisationDo<true> = await organisationRepository.save(
-                DoFactory.createOrganisation(true, { id: ROOT_ORGANISATION_ID }),
+            const savedOrganisation1: OrganisationEntity = await createAndPersistRootOrganisation(
+                em,
+                organisationRepository,
             );
-            const savedOrganisation2: OrganisationDo<true> = await organisationRepository.save(
-                DoFactory.createOrganisation(true),
+            const savedOrganisation2: OrganisationEntity = await createAndPersistOrganisation(
+                em,
+                savedOrganisation1.id,
+                OrganisationsTyp.SONSTIGE,
+                true,
             );
 
             await dBiamPersonenkontextRepo.save(
