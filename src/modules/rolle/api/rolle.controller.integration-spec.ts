@@ -856,7 +856,7 @@ describe('Rolle API', () => {
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                     all: false,
-                    orgaIds: [organisation.id],
+                    orgaIds: [],
                 });
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 

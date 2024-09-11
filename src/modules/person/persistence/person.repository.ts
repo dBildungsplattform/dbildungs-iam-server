@@ -161,7 +161,7 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
-    public async checkIfDeleteIsAllowed(
+    private async checkIfDeleteIsAllowed(
         personId: string,
         permissions: PersonPermissions,
     ): Promise<Result<Person<true>>> {
