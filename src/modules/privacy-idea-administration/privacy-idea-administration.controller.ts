@@ -1,6 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query, UseFilters } from '@nestjs/common';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
-import { Public } from '../authentication/api/public.decorator.js';
 import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import {
     ApiBadRequestResponse,
@@ -46,7 +45,6 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
-    @Public()
     public async initializeSoftwareToken(
         @Body() params: TokenInitBodyParams,
         @Permissions() permissions: PersonPermissions,
@@ -77,7 +75,6 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
-    @Public()
     public async getTwoAuthState(
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
@@ -110,7 +107,6 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to reset token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to assign hardware token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while assigning a hardware token.' })
-    @Public()
     public async assignHardwareToken(
         @Body() params: AssignHardwareTokenBodyParams,
         @Permissions() permissions: PersonPermissions,
@@ -161,7 +157,6 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to verify token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to verify token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while verifying a token.' })
-    @Public()
     public async verifyToken(
         @Body() params: TokenVerifyBodyParams,
         @Permissions() permissions: PersonPermissions,

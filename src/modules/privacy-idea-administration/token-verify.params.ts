@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
 
 export class TokenVerifyBodyParams {
-    @IsString()
-    @IsNotEmpty()
+    @IsUUID()
     @ApiProperty({ type: String })
     public readonly personId!: string;
 

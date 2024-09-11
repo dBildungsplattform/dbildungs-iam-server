@@ -330,7 +330,7 @@ export class PrivacyIdeaAdministrationService {
             const response: AxiosResponse<VerificationResponse> | null = await lastValueFrom(
                 this.httpService.post(url, payload, { headers: headers }).pipe(
                     catchError((error: AxiosError<VerificationResponse>) => {
-                        if (error.response?.data.result.error?.code == 905) {
+                        if (error.response?.data.result.error?.code === 905) {
                             throw new OTPnotValidError();
                         }
                         throw error;
@@ -352,7 +352,7 @@ export class PrivacyIdeaAdministrationService {
     }
 
     private async getTokenToVerify(userName: string): Promise<PrivacyIdeaToken | undefined> {
-        return (await this.getUserTokens(userName)).filter((x: PrivacyIdeaToken) => x.rollout_state == 'verify')[0];
+        return (await this.getUserTokens(userName)).filter((x: PrivacyIdeaToken) => x.rollout_state === 'verify')[0];
     }
 
     private async deleteToken(serial: string): Promise<void> {
