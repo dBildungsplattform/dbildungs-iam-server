@@ -30,6 +30,8 @@ import { OrganisationService } from '../domain/organisation.service.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ParentOrganisationenResponse } from './organisation.parents.response.js';
+import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -419,6 +421,35 @@ describe('OrganisationController', () => {
         });
     });
 
+    describe('getParents', () => {
+        it('should return the parent organisations', async () => {
+            const ids: Array<string> = [faker.string.uuid(), faker.string.uuid(), faker.string.uuid()];
+            const mockBody: ParentOrganisationsByIdsBodyParams = { organisationIds: ids };
+            const mockedRepoResponse: Array<Organisation<true>> = ids.map((id: string) =>
+                Organisation.construct(
+                    id,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                ),
+            );
+            organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue(mockedRepoResponse);
+
+            const result: ParentOrganisationenResponse = await organisationController.getParentsByIds(mockBody);
+
+            expect(organisationRepositoryMock.findParentOrgasForIds).toHaveBeenCalledTimes(1);
+            expect(organisationRepositoryMock.findParentOrgasForIds).toHaveBeenCalledWith(ids);
+            expect(result).toBeInstanceOf(ParentOrganisationenResponse);
+            expect(result.parents[0]?.id).toBe(ids[0]);
+        });
+    });
+
     describe('getRootOrganisation', () => {
         it('should return the root organisation if it exists', async () => {
             const response: Organisation<true> = DoFactory.createOrganisation(true);
@@ -454,6 +485,7 @@ describe('OrganisationController', () => {
                     limit: 10,
                     offset: 0,
                     total: 2,
+                    pageTotal: 2,
                 };
                 const organisatonResponse: OrganisationResponse[] = organisations.items.map(
                     (item: Organisation<true>) => new OrganisationResponse(item),
@@ -499,6 +531,7 @@ describe('OrganisationController', () => {
                     limit: 10,
                     offset: 0,
                     total: 2,
+                    pageTotal: 2,
                 };
                 const organisatonResponse: OrganisationResponse[] = organisations.items.map(
                     (item: Organisation<true>) => new OrganisationResponse(item),

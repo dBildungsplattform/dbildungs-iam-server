@@ -60,6 +60,8 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
+import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
+import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -208,6 +210,24 @@ export class OrganisationController {
         return new OrganisationRootChildrenResponse(oeffentlich, ersatz);
     }
 
+    @Post('parents-by-ids')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description: 'The parent organizations were successfully pulled.',
+        type: ParentOrganisationenResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    public async getParentsByIds(
+        @Body() body: ParentOrganisationsByIdsBodyParams,
+    ): Promise<ParentOrganisationenResponse> {
+        const organisationen: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIds(
+            body.organisationIds,
+        );
+        return new ParentOrganisationenResponse(organisationen);
+    }
+
     @Get(':organisationId')
     @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'Organization ID is required' })
@@ -307,10 +327,11 @@ export class OrganisationController {
         );
 
         const pagedOrganisationResponse: Paged<OrganisationResponse> = {
-            total: total,
             offset: queryParams.offset ?? 0,
-            limit: queryParams.limit ?? 0,
-            items: organisationResponses,
+            limit: queryParams.limit ?? total,
+            total: total,
+            pageTotal: organisationResponses.length, // Number of items in the current page
+            items: organisationResponses, // Paginated items
         };
 
         return new PagedResponse(pagedOrganisationResponse);
@@ -345,18 +366,13 @@ export class OrganisationController {
             queryParams.limit,
         );
 
-        const organisations: OrganisationResponse[] = result.items.map(
-            (item: Organisation<true>) => new OrganisationResponse(item),
-        );
-
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse({
+        return new PagedResponse({
             total: result.total,
             offset: result.offset,
             limit: result.limit,
-            items: organisations,
+            items: result.items.map((item: Organisation<true>) => new OrganisationResponse(item)),
+            pageTotal: result.items.length,
         });
-
-        return response;
     }
 
     @Post(':organisationId/administriert')
@@ -417,6 +433,7 @@ export class OrganisationController {
             offset: result.offset,
             limit: result.limit,
             items: organisations,
+            pageTotal: organisations.length,
         });
 
         return response;

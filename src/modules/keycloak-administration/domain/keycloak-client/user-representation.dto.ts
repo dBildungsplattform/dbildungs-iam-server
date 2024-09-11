@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { KcCustomAttributes } from '../user.js';
 
 export class UserRepresentationDto {
     @IsString()
@@ -16,6 +17,8 @@ export class UserRepresentationDto {
     @IsNumber()
     public createdTimestamp!: number;
 
-    @IsOptional()
-    public attributes?: Record<string, string[]>;
+    @IsBoolean()
+    public enabled!: boolean;
+
+    public attributes!: KcCustomAttributes;
 }
