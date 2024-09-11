@@ -2,6 +2,8 @@ export type ExternalSystemIDs = {
     ID_ITSLEARNING?: string;
 };
 
+export type KcCustomAttributes = Record<string, string[]>;
+
 export class User<WasPersisted extends boolean> {
     private constructor(
         public id: Persisted<string, WasPersisted>,
@@ -9,6 +11,8 @@ export class User<WasPersisted extends boolean> {
         public email: string | undefined,
         public createdDate: Persisted<Date, WasPersisted>,
         public externalSystemIDs: ExternalSystemIDs,
+        public enabled: boolean,
+        public attributes: KcCustomAttributes,
     ) {}
 
     public static createNew(
@@ -16,7 +20,7 @@ export class User<WasPersisted extends boolean> {
         email: string | undefined,
         externalSystemIDs: ExternalSystemIDs,
     ): User<false> {
-        return new User(undefined, username, email, undefined, externalSystemIDs);
+        return new User(undefined, username, email, undefined, externalSystemIDs, true, {});
     }
 
     public static construct<WasPersisted extends boolean = true>(
@@ -25,7 +29,9 @@ export class User<WasPersisted extends boolean> {
         email: string | undefined,
         createdDate: Date,
         externalSystemIDs: ExternalSystemIDs,
+        enabled: boolean,
+        attributes: KcCustomAttributes,
     ): User<WasPersisted> {
-        return new User(id, username, email, createdDate, externalSystemIDs);
+        return new User(id, username, email, createdDate, externalSystemIDs, enabled, attributes);
     }
 }

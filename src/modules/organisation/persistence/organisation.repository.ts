@@ -65,7 +65,6 @@ export class OrganisationRepository {
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
             mapEntityToAggregate(entity),
         );
-
         return [organisations, total];
     }
 
@@ -107,6 +106,32 @@ export class OrganisationRepository {
                                                               INNER JOIN sub_organisations so ON o.administriert_von = so.id)
                 SELECT DISTINCT ON (id) *
                 FROM sub_organisations;
+            `;
+
+            rawResult = await this.em.execute(query, [ids]);
+        }
+
+        return rawResult.map(mapEntityToAggregate);
+    }
+
+    public async findParentOrgasForIds(ids: OrganisationID[]): Promise<Organisation<true>[]> {
+        let rawResult: OrganisationEntity[];
+
+        if (ids.length === 0) {
+            return [];
+        } else {
+            const query: string = `
+                WITH RECURSIVE parent_organisations AS (
+                    SELECT *
+                    FROM public.organisation
+                    WHERE id IN (?)
+                    UNION ALL
+                    SELECT o.*
+                    FROM public.organisation o
+                    INNER JOIN parent_organisations po ON po.administriert_von = o.id
+                )
+                SELECT DISTINCT ON (id) *
+                FROM parent_organisations;
             `;
 
             rawResult = await this.em.execute(query, [ids]);
