@@ -424,7 +424,7 @@ describe('DbSeedService', () => {
                 organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
 
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
-                rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>()); // mock getReferencedRolle
+                rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>({ merkmale: [] })); // mock getReferencedRolle
 
                 personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(
                     new GleicheRolleAnKlasseWieSchuleError(),
@@ -516,7 +516,7 @@ describe('DbSeedService', () => {
                     organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
 
                     dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
-                    rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>()); // mock getReferencedRolle
+                    rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>({ merkmale: [] })); // mock getReferencedRolle
 
                     personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(
                         new GleicheRolleAnKlasseWieSchuleError(),
