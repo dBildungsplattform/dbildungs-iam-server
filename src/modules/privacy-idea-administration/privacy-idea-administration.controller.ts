@@ -10,6 +10,7 @@ import {
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
+    ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -25,6 +26,7 @@ import { TokenError } from './api/error/token.error.js';
 import { PrivacyIdeaAdministrationExceptionFilter } from './api/privacy-idea-administration-exception-filter.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
+import { TokenRequiredResponse } from './api/token-required.response.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
@@ -68,12 +70,12 @@ export class PrivacyIdeaAdministrationController {
 
     @Get('state')
     @HttpCode(HttpStatus.OK)
-    @ApiCreatedResponse({ description: 'The token was successfully created.', type: TokenStateResponse })
+    @ApiCreatedResponse({ description: 'The token state was successfully returned.', type: TokenStateResponse })
     @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create token.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
-    @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get token state.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get token state.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to get token state.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while retrieving token state.' })
     @Public()
     public async getTwoAuthState(
         @Query('personId') personId: string,
@@ -93,8 +95,7 @@ export class PrivacyIdeaAdministrationController {
         const piToken: PrivacyIdeaToken | undefined = await this.privacyIdeaAdministrationService.getTwoAuthState(
             personResult.value.referrer,
         );
-        const requires2fa: boolean = await this.privacyIdeaAdministrationService.requires2fa(personId);
-        return new TokenStateResponse(piToken, requires2fa);
+        return new TokenStateResponse(piToken);
     }
 
     @Post('assign/hardwareToken')
@@ -149,5 +150,37 @@ export class PrivacyIdeaAdministrationController {
                 ),
             );
         }
+    }
+
+    @Get('required')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description: 'The requirement was successfully returned.',
+        type: TokenRequiredResponse,
+    })
+    @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get requirement information.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get requirement information.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to get requirement information.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting requirement information.' })
+    @Public()
+    public async requiresTwoFactorAuthentication(
+        @Query('personId') personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<TokenRequiredResponse> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
+        }
+
+        if (personResult.value.referrer === undefined) {
+            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
+        }
+
+        const requires2fa: boolean = await this.privacyIdeaAdministrationService.requires2fa(personId);
+        return new TokenRequiredResponse(requires2fa);
     }
 }
