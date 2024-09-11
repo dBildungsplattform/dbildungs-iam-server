@@ -65,7 +65,6 @@ export class OrganisationRepository {
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
             mapEntityToAggregate(entity),
         );
-
         return [organisations, total];
     }
 

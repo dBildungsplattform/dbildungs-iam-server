@@ -327,10 +327,11 @@ export class OrganisationController {
         );
 
         const pagedOrganisationResponse: Paged<OrganisationResponse> = {
-            total: total,
             offset: queryParams.offset ?? 0,
-            limit: queryParams.limit ?? 0,
-            items: organisationResponses,
+            limit: queryParams.limit ?? total,
+            total: total,
+            pageTotal: organisationResponses.length, // Number of items in the current page
+            items: organisationResponses, // Paginated items
         };
 
         return new PagedResponse(pagedOrganisationResponse);
@@ -365,18 +366,13 @@ export class OrganisationController {
             queryParams.limit,
         );
 
-        const organisations: OrganisationResponse[] = result.items.map(
-            (item: Organisation<true>) => new OrganisationResponse(item),
-        );
-
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse({
+        return new PagedResponse({
             total: result.total,
             offset: result.offset,
             limit: result.limit,
-            items: organisations,
+            items: result.items.map((item: Organisation<true>) => new OrganisationResponse(item)),
+            pageTotal: result.items.length,
         });
-
-        return response;
     }
 
     @Post(':organisationId/administriert')
@@ -437,6 +433,7 @@ export class OrganisationController {
             offset: result.offset,
             limit: result.limit,
             items: organisations,
+            pageTotal: organisations.length,
         });
 
         return response;
