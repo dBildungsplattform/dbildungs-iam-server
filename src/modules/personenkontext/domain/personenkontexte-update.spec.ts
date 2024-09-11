@@ -547,7 +547,42 @@ describe('PersonenkontexteUpdate', () => {
                 await expect(pkUpdate.update()).resolves.toBeInstanceOf(MissingPermissionsError);
             });
         });
+        describe('when personalnummer is provided', () => {
+            it('should update the personalnummer of the person', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
 
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                // Mock call before publishing the event
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                // Mock call if the personalnummer exists
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const count: number = 2;
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    personPermissionsMock,
+                    '1234567',
+                );
+                await sut.update();
+
+                expect(personRepoMock.save).toHaveBeenCalledTimes(1);
+            });
+        });
         describe('when existing personenkontexte have one personenkontext with rollenart LERN', () => {
             beforeAll(() => {
                 const count: number = 2;
