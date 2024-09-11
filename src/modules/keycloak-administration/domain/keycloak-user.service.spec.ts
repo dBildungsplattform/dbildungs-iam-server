@@ -9,6 +9,7 @@ import { KeycloakAdministrationService } from './keycloak-admin-client.service.j
 import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { User } from './user.js';
+import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -373,6 +374,131 @@ describe('KeycloakUserService', () => {
                     user,
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
+                );
+
+                expect(res).toBe(error);
+            });
+        });
+    });
+
+    describe('updateOXUserAttributes', () => {
+        let username: string;
+        let oxUserName: OXUserName;
+        let oxContextName: OXContextName;
+
+        beforeEach(() => {
+            username = faker.internet.userName();
+            oxUserName = faker.internet.userName();
+            oxContextName = 'context1';
+        });
+
+        describe('when user could not be updated', () => {
+            it('should return error result', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        id: faker.string.uuid(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                kcUsersMock.update.mockRejectedValueOnce(new Error());
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when updating user is successful', () => {
+            it('should log info', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        id: faker.string.uuid(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                kcUsersMock.update.mockResolvedValueOnce();
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeTruthy();
+            });
+        });
+
+        describe('when user does not exist', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockRejectedValueOnce(new Error());
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when find returns array with undefined first element', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([]);
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when user exists but id is undefined', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should pass along error result', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
                 );
 
                 expect(res).toBe(error);
