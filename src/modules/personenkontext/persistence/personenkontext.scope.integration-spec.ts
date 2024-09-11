@@ -83,10 +83,12 @@ describe('PersonenkontextScope', () => {
                     DoFactory.createPersonenkontextDo,
                     { personId: person.id },
                 );
+                /* eslint-disable no-await-in-loop */
                 for (const doObj of dos) {
                     const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                     doObj.rolleId = rolle.id;
                 }
+                /* eslint-disable no-await-in-loop */
 
                 await em.persistAndFlush(
                     // Don't use mapArray, because beforeMap does not get called
