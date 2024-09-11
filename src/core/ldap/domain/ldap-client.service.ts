@@ -155,15 +155,13 @@ export class LdapClientService {
                 cn: person.vorname,
                 sn: person.familienname,
                 employeeNumber: person.id,
-                objectclass: ['inetOrgPerson'],
+                objectclass: ['inetOrgPerson', 'univentionMail'],
             };
 
             const controls: Control[] = [];
-            if (person.ldapEntryUUID) {
-                const relaxRulesControlOID: string = '1.3.6.1.4.1.4203.666.5.12';
-                entry.entryUUID = person.ldapEntryUUID;
-                controls.push(new Control(relaxRulesControlOID));
-            }
+            const relaxRulesControlOID: string = '1.3.6.1.4.1.4203.666.5.12';
+            entry.entryUUID = person.ldapEntryUUID ?? person.id;
+            controls.push(new Control(relaxRulesControlOID));
 
             await client.add(lehrerUid, entry, controls);
             this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
@@ -185,7 +183,7 @@ export class LdapClientService {
 
             const searchResultLehrer: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
                 scope: 'sub',
-                filter: `(employeeNumber=${personId})`,
+                filter: `(entryUUID=${personId})`,
             });
             if (!searchResultLehrer.searchEntries[0]) {
                 return {
@@ -231,8 +229,8 @@ export class LdapClientService {
 
             const searchResult: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
                 scope: 'sub',
-                filter: `(employeeNumber=${personId})`,
-                attributes: ['displayName', 'givenName'],
+                filter: `(entryUUID=${personId})`,
+                attributes: ['mailPrimaryAddress', 'mailAlternativeAddress'],
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
@@ -242,19 +240,19 @@ export class LdapClientService {
                 };
             }
 
-            const currentEmailAddressArray: string[] = searchResult.searchEntries[0]['displayName'] as string[];
+            const currentEmailAddressArray: string[] = searchResult.searchEntries[0]['mailPrimaryAddress'] as string[];
             const currentEmailAddress: string = currentEmailAddressArray[0] ?? newEmailAddress;
 
             await client.modify(searchResult.searchEntries[0].dn, [
                 new Change({
                     operation: 'add',
-                    modification: new Attribute({ type: 'displayName', values: [newEmailAddress] }),
+                    modification: new Attribute({ type: 'mailPrimaryAddress', values: [newEmailAddress] }),
                 }),
             ]);
             await client.modify(searchResult.searchEntries[0].dn, [
                 new Change({
                     operation: 'add',
-                    modification: new Attribute({ type: 'givenName', values: [currentEmailAddress] }),
+                    modification: new Attribute({ type: 'mailAlternativeAddress', values: [currentEmailAddress] }),
                 }),
             ]);
             this.logger.info(
