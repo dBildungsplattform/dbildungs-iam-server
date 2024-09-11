@@ -70,6 +70,8 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     externalSystemIDs: user.externalSystemIDs,
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -92,6 +94,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     password,
                 );
@@ -117,6 +121,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -126,6 +132,8 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     externalSystemIDs: user.externalSystemIDs,
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -179,6 +187,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -202,6 +212,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{crypt}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -224,6 +236,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}xxxxxhqG5T3$z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -246,6 +260,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{crypt}$$x$$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -268,6 +284,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{notsupported}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -289,6 +307,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -299,6 +319,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -403,6 +425,8 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     id: user.id,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 } as unknown as UserRepresentation);
 
                 const res: Result<User<true>> = await service.findById(user.id);
@@ -485,6 +509,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -638,6 +664,151 @@ describe('KeycloakUserService', () => {
                 expect(result).toStrictEqual({
                     ok: false,
                     error: new KeycloakClientError('Could not authenticate'),
+                });
+            });
+        });
+
+        describe('updateKeycloakUserStatus', () => {
+            it('should update user status successfully', async () => {
+                const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
+                    users: {
+                        update: jest.fn().mockResolvedValueOnce(undefined),
+                        findOne: jest.fn().mockResolvedValueOnce({ attributes: {} }),
+                    },
+                });
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: keyCloakAdminClient,
+                });
+
+                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus('user-id', true);
+                expect(result).toStrictEqual({ ok: true, value: undefined });
+                expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
+            });
+
+            it.each([{ attributes: {} }, {}])(
+                'should update user status and custom attributes successfully',
+                async (findOneResponse: Record<string, string> | object) => {
+                    const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
+                        users: {
+                            update: jest.fn().mockResolvedValueOnce(undefined),
+                            findOne: jest.fn().mockResolvedValueOnce(findOneResponse),
+                        },
+                    });
+                    adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                        ok: true,
+                        value: keyCloakAdminClient,
+                    });
+
+                    const customAttributes: Record<string, string> = { attribute1: 'value1' };
+                    const expectedAttributes: Record<string, string[]> = {
+                        attribute1: [customAttributes['attribute1'] ?? ''],
+                    };
+                    const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
+                        'user-id',
+                        true,
+                        customAttributes,
+                    );
+
+                    expect(result).toStrictEqual({ ok: true, value: undefined });
+                    expect(keyCloakAdminClient.users.update).toHaveBeenCalledTimes(2);
+                    expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith(
+                        { id: 'user-id' },
+                        { attributes: expectedAttributes },
+                    );
+                },
+            );
+
+            it.each([
+                {
+                    attributes: {
+                        lock_locked_from: ['value'],
+                        someOtherAttribute: ['someValue'],
+                        '': ['empty'],
+                    },
+                },
+                {},
+            ])(
+                'should remove locked attributes when user is enabled',
+                async (findOneResponse: Record<string, string> | object) => {
+                    kcUsersMock.update.mockResolvedValueOnce(undefined);
+                    kcUsersMock.findOne.mockResolvedValueOnce(findOneResponse);
+
+                    const result: Result<void, DomainError> = await service.updateKeycloakUserStatus('user-id', true);
+
+                    expect(result).toStrictEqual({ ok: true, value: undefined });
+                    expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
+                    expect(kcUsersMock.update).toHaveBeenCalledWith({ id: 'user-id' }, findOneResponse);
+                },
+            );
+
+            it('should return error if update fails', async () => {
+                kcUsersMock.update.mockRejectedValueOnce(new Error('Update failed'));
+
+                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus('user-id', true);
+
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Could not update user status or custom attributes'),
+                });
+            });
+
+            it('should return error if getAuthedKcAdminClient fails', async () => {
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                });
+
+                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus('user-id', true);
+
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                });
+            });
+        });
+    });
+
+    describe('getKeyCloakUserData', () => {
+        const userId: string = 'userid';
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should return', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+                const actual: UserRepresentation | undefined = await service.getKeyCloakUserData(userId);
+                expect(actual).toBeUndefined();
+            });
+        });
+        describe('when retrieval from keycloak', () => {
+            describe('succeeds', () => {
+                it('should return UserRepresentation', async () => {
+                    kcUsersMock.findOne.mockImplementationOnce((payload?: { id: string; realm?: string }) => {
+                        return Promise.resolve({ id: payload?.id });
+                    });
+
+                    const actual: UserRepresentation | undefined = await service.getKeyCloakUserData(userId);
+                    expect(actual).toEqual({ id: userId });
+                });
+            });
+            describe('fails', () => {
+                it('should return', async () => {
+                    const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
+                        users: {
+                            findOne: jest.fn().mockRejectedValueOnce(new Error('Retrieval failed')),
+                        },
+                    });
+                    adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                        ok: true,
+                        value: keyCloakAdminClient,
+                    });
+
+                    const actual: UserRepresentation | undefined = await service.getKeyCloakUserData(userId);
+                    expect(keyCloakAdminClient.users.findOne).toHaveBeenCalledWith({ id: userId });
+                    expect(actual).toBeUndefined();
                 });
             });
         });
