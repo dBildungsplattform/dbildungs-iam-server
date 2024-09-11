@@ -1,5 +1,6 @@
 export type ExternalSystemIDs = {
-    ID_ITSLEARNING?: string;
+    ID_ITSLEARNING?: string[];
+    ID_OX?: string[];
 };
 
 export type KcCustomAttributes = Record<string, string[]>;

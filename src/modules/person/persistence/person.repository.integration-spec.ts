@@ -39,6 +39,7 @@ import { EmailAddressEntity } from '../../email/persistence/email-address.entity
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -806,7 +807,7 @@ describe('PersonRepository Integration', () => {
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
                 const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.enabled = true;
+                emailAddressEntity.status = EmailAddressStatus.ENABLED;
                 emailAddressEntity.address = faker.internet.email();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
@@ -819,7 +820,7 @@ describe('PersonRepository Integration', () => {
         describe('when NO enabled emailAddress is in collection', () => {
             it('should return undefined', () => {
                 const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.enabled = false;
+                emailAddressEntity.status = EmailAddressStatus.DISABLED;
                 emailAddressEntity.address = faker.internet.email();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
@@ -1096,7 +1097,7 @@ describe('PersonRepository Integration', () => {
                     const emailAddress: EmailAddressEntity = new EmailAddressEntity();
                     emailAddress.address = faker.internet.email();
                     emailAddress.personId = rel(PersonEntity, person.id);
-                    emailAddress.enabled = true;
+                    emailAddress.status = EmailAddressStatus.ENABLED;
 
                     const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
                     await em.persistAndFlush(pp);
