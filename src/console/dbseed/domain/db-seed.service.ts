@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Injectable } from '@nestjs/common';
 import fs from 'fs';
 import { DataProviderFile } from '../file/data-provider-file.js';
@@ -282,6 +283,8 @@ export class DbSeedService {
             const referencedRolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
 
             let befristung: Date | undefined = undefined;
+            console.log(referencedRolle.merkmale);
+            console.log(typeof referencedRolle.merkmale);
             const hasBefristungPflicht: boolean = referencedRolle.merkmale?.some(
                 (merkmal: RollenMerkmal) => merkmal === RollenMerkmal.BEFRISTUNG_PFLICHT,
             );
