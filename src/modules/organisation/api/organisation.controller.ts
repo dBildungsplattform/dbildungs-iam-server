@@ -330,7 +330,7 @@ export class OrganisationController {
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            pageTotal: organisationResponses.length, // Number of items in the current page
+            pageTotal: organisations.length, // Number of items in the current page
             items: organisationResponses, // Paginated items
         };
 
