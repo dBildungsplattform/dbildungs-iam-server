@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { ServiceProviderRepo } from './repo/service-provider.repo.js';
@@ -8,10 +8,17 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 
 import { CreateGroupAndRoleHandler } from './repo/service-provider-event-handler.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
+import { RolleModule } from '../rolle/rolle.module.js';
+import { ServiceProviderService } from './domain/service-provider.service.js';
 
 @Module({
-    imports: [LoggerModule.register(ServiceProviderModule.name), KeycloakAdministrationModule, EventModule],
-    providers: [ServiceProviderRepo, ServiceProviderFactory, CreateGroupAndRoleHandler],
-    exports: [ServiceProviderRepo, ServiceProviderFactory],
+    imports: [
+        LoggerModule.register(ServiceProviderModule.name),
+        KeycloakAdministrationModule,
+        EventModule,
+        forwardRef(() => RolleModule),
+    ],
+    providers: [ServiceProviderRepo, ServiceProviderFactory, ServiceProviderService, CreateGroupAndRoleHandler],
+    exports: [ServiceProviderRepo, ServiceProviderFactory, ServiceProviderService],
 })
 export class ServiceProviderModule {}

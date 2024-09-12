@@ -17,7 +17,7 @@ export class ServiceProviderFactory {
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
         keycloakRole: string | undefined,
-        requires2fa: boolean | undefined,
+        requires2fa: boolean,
     ): ServiceProvider<true> {
         return ServiceProvider.construct(
             id,
@@ -46,7 +46,7 @@ export class ServiceProviderFactory {
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
         keycloakRole: string | undefined,
-        requires2fa: boolean | undefined,
+        requires2fa: boolean,
     ): ServiceProvider<false> {
         return ServiceProvider.createNew(
             name,

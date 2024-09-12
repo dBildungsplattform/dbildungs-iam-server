@@ -51,8 +51,8 @@ describe('Provider Controller Test', () => {
             .useValue(createMock<ServiceProviderRepo>())
             .compile();
 
-        serviceProviderServiceMock = await module.resolve<DeepMocked<ServiceProviderService>>(ServiceProviderService);
-        serviceProviderRepoMock = await module.resolve<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
+        serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
+        serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         providerController = module.get(ProviderController);
         app = module.createNestApplication();
         await app.init();

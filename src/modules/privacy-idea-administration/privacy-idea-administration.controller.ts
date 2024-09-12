@@ -163,7 +163,6 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get requirement information.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to get requirement information.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting requirement information.' })
-    @Public()
     public async requiresTwoFactorAuthentication(
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,

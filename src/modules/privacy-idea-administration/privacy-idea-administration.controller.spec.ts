@@ -155,7 +155,7 @@ describe('PrivacyIdeaAdministrationController', () => {
 
             serviceMock.getTwoAuthState.mockResolvedValue(mockTokenState);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
-            expect(response).toEqual(new TokenStateResponse(mockTokenState, twoFaRequired));
+            expect(response).toEqual(new TokenStateResponse(mockTokenState));
         });
 
         it('should successfully retrieve empty token state when user is undefined', async () => {
@@ -173,7 +173,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             serviceMock.getTwoAuthState.mockResolvedValue(undefined);
             serviceMock.requires2fa.mockResolvedValue(twoFaRequired);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
-            expect(response).toEqual(new TokenStateResponse(undefined, twoFaRequired));
+            expect(response).toEqual(new TokenStateResponse(undefined));
         });
 
         it('should return forbidden insufficient permissions', async () => {
