@@ -32,7 +32,6 @@ import { Organisation } from '../../../modules/organisation/domain/organisation.
 import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/organisation/specification/error/name-with-trailing-space.error.js';
 import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
-import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 
 describe('DbSeedService', () => {
@@ -45,7 +44,6 @@ describe('DbSeedService', () => {
     let personenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let dbSeedReferenceRepoMock: DeepMocked<DbSeedReferenceRepo>;
     let kcUserService: DeepMocked<KeycloakUserService>;
-    let dBiamPersonenkontextRepoInternal: DeepMocked<DBiamPersonenkontextRepoInternal>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -110,7 +108,6 @@ describe('DbSeedService', () => {
         personenkontextServiceMock = module.get(DBiamPersonenkontextService);
         dbSeedReferenceRepoMock = module.get(DbSeedReferenceRepo);
         kcUserService = module.get(KeycloakUserService);
-        dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
     });
 
     afterAll(async () => {
@@ -457,7 +454,6 @@ describe('DbSeedService', () => {
                 ); // mock getReferencedRolle
 
                 personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(null);
-                dBiamPersonenkontextRepoInternal.save.mockResolvedValueOnce({} as Personenkontext<true>);
 
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
