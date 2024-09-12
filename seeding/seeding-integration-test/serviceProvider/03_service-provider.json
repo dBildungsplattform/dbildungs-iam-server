@@ -8,7 +8,8 @@
             "kategorie": "UNTERRICHT",
             "logoMimeType": "image/png",
             "logoBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==",
-            "providedOnSchulstrukturknoten": 111
+            "providedOnSchulstrukturknoten": 111,
+            "requires2fa": false
         },
         {
             "name": "E-Mail",
@@ -17,7 +18,8 @@
             "kategorie": "EMAIL",
             "logoMimeType": "image/png",
             "logoBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==",
-            "providedOnSchulstrukturknoten": 111
+            "providedOnSchulstrukturknoten": 111,
+            "requires2fa": true
         }
     ]
 }
