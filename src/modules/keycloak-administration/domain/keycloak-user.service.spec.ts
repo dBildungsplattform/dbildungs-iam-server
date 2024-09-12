@@ -862,7 +862,7 @@ describe('KeycloakUserService', () => {
                 const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, groupNames);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Failed to assign groups to user ${user.id}: ${JSON.stringify(error)}`,
+                    `Failed to assign groups for user ${user.id}: ${JSON.stringify(error)}`,
                 );
 
                 expect(result).toStrictEqual({
