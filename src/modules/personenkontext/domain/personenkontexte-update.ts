@@ -25,12 +25,14 @@ import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
 import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly eventService: EventService,
         private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly personRepo: PersonRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
@@ -40,12 +42,14 @@ export class PersonenkontexteUpdate {
         private readonly count: number,
         private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         private readonly permissions: IPersonPermissions,
+        private readonly personalnummer?: string,
     ) {}
 
     public static createNew(
         eventService: EventService,
         logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         personRepo: PersonRepository,
         rolleRepo: RolleRepo,
         organisationRepo: OrganisationRepository,
@@ -55,11 +59,13 @@ export class PersonenkontexteUpdate {
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
+        personalnummer?: string,
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
             logger,
             dBiamPersonenkontextRepo,
+            dBiamPersonenkontextRepoInternal,
             personRepo,
             rolleRepo,
             organisationRepo,
@@ -69,6 +75,7 @@ export class PersonenkontexteUpdate {
             count,
             dBiamPersonenkontextBodyParams,
             permissions,
+            personalnummer,
         );
     }
 
@@ -214,7 +221,7 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 try {
-                    await this.dBiamPersonenkontextRepo.delete(existingPK).then(() => {});
+                    await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
                     deletedPKs.push(existingPK);
                 } catch (err) {
                     this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
@@ -241,7 +248,7 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 try {
-                    const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepo.save(sentPK);
+                    const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepoInternal.save(sentPK);
                     createdPKs.push(savedPK);
                 } catch (err) {
                     this.logger.error(
@@ -318,6 +325,15 @@ export class PersonenkontexteUpdate {
         const existingPKsAfterUpdate: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(
             this.personId,
         );
+
+        // Update the personalnummer if it is provided
+        if (this.personalnummer) {
+            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
+            if (person) {
+                person.personalnummer = this.personalnummer;
+                await this.personRepo.save(person);
+            }
+        }
 
         await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate, ldapEntryUUID);
 

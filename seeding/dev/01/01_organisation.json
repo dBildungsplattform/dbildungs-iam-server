@@ -3,7 +3,7 @@
     "entities": [
         {
             "id": 0,
-            "kennung": "0701114",
+            "kennung": null,
             "name": "Land Schleswig-Holstein",
             "kuerzel": "Root",
             "typ": "ROOT",
@@ -12,7 +12,7 @@
         },
         {
             "id": 1,
-            "kennung": "0702224",
+            "kennung": null,
             "name": "Öffentliche Schulen Land Schleswig-Holstein",
             "kuerzel": "Öffentl. Schulen",
             "typ": "LAND",
@@ -21,7 +21,7 @@
         },
         {
             "id": 2,
-            "kennung": "0703334",
+            "kennung": null,
             "name": "Ersatzschulen Land Schleswig-Holstein",
             "kuerzel": "Ersatzschulen",
             "typ": "LAND",

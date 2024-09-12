@@ -11,6 +11,7 @@ import { PersonService } from '../../person/domain/person.service.js';
 import { User } from './user.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -77,6 +78,8 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     externalSystemIDs: user.externalSystemIDs,
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -99,6 +102,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     password,
                 );
@@ -124,6 +129,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -133,6 +140,8 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     externalSystemIDs: user.externalSystemIDs,
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 });
 
                 expect(res).toStrictEqual<Result<string>>({
@@ -186,6 +195,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -209,6 +220,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{crypt}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -231,6 +244,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}xxxxxhqG5T3$z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -253,6 +268,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{crypt}$$x$$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -275,6 +292,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{notsupported}$6$M.L8yO/PSWLRRhe6$CXj2g0wgWhiAnfROIdqJROrgbjmcmin02M1
                     sM1Z25N7H3puT6qlgsDIM.60brf1csn0Zk9GxS8sILpJvmvFi11`,
@@ -296,6 +315,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 
@@ -306,6 +327,8 @@ describe('KeycloakUserService', () => {
                         username: user.username,
                         email: user.email,
                         externalSystemIDs: user.externalSystemIDs,
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                     `{BCRYPT}$2b$12$hqG5T3z8v0Ou8Lmmr2mhW.lNP0DQGO9MS6PQT/CzCJP8Fcx
                     GgKOau`,
@@ -365,6 +388,131 @@ describe('KeycloakUserService', () => {
         });
     });
 
+    describe('updateOXUserAttributes', () => {
+        let username: string;
+        let oxUserName: OXUserName;
+        let oxContextName: OXContextName;
+
+        beforeEach(() => {
+            username = faker.internet.userName();
+            oxUserName = faker.internet.userName();
+            oxContextName = 'context1';
+        });
+
+        describe('when user could not be updated', () => {
+            it('should return error result', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        id: faker.string.uuid(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                kcUsersMock.update.mockRejectedValueOnce(new Error());
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when updating user is successful', () => {
+            it('should log info', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        id: faker.string.uuid(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                kcUsersMock.update.mockResolvedValueOnce();
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeTruthy();
+            });
+        });
+
+        describe('when user does not exist', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockRejectedValueOnce(new Error());
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when find returns array with undefined first element', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([]);
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when user exists but id is undefined', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should pass along error result', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+
+                const res: Result<void, DomainError> = await service.updateOXUserAttributes(
+                    username,
+                    oxUserName,
+                    oxContextName,
+                );
+
+                expect(res).toBe(error);
+            });
+        });
+    });
+
     describe('delete', () => {
         it('should return ok result if user exists', async () => {
             kcUsersMock.del.mockResolvedValueOnce();
@@ -410,6 +558,8 @@ describe('KeycloakUserService', () => {
                     email: user.email,
                     id: user.id,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: user.enabled,
+                    attributes: user.attributes,
                 } as unknown as UserRepresentation);
 
                 const res: Result<User<true>> = await service.findById(user.id);
@@ -492,6 +642,8 @@ describe('KeycloakUserService', () => {
                         email: user.email,
                         id: user.id,
                         createdTimestamp: user.createdDate.getTime(),
+                        enabled: user.enabled,
+                        attributes: user.attributes,
                     },
                 ] as unknown as UserRepresentation[]);
 
