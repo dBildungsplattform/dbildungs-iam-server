@@ -29,6 +29,7 @@ export class DbiamPersonenkontextFactory {
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
+        personalnummer?: string,
     ): PersonenkontexteUpdate {
         return PersonenkontexteUpdate.createNew(
             this.eventService,
@@ -43,6 +44,7 @@ export class DbiamPersonenkontextFactory {
             count,
             dBiamPersonenkontextBodyParams,
             permissions,
+            personalnummer,
         );
     }
 }

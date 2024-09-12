@@ -18,6 +18,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { DbiamPersonenkontextWorkflowController } from './dbiam-personenkontext-workflow.controller.js';
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 import { PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
+import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
 
 describe('DbiamPersonenkontextWorkflowController Test', () => {
     let module: TestingModule;
@@ -198,6 +199,9 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     lastModified: new Date(),
                     personenkontexte: [],
                 };
+                const queryParams: DbiamUpdatePersonenkontexteQueryParams = {
+                    personalnummer: '1234',
+                };
                 const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError(
                     'Update error message',
                 );
@@ -206,7 +210,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
 
-                await expect(sut.commit(params, bodyParams, personpermissions)).rejects.toThrow(
+                await expect(sut.commit(params, queryParams, bodyParams, personpermissions)).rejects.toThrow(
                     PersonenkontexteUpdateError,
                 );
             });
