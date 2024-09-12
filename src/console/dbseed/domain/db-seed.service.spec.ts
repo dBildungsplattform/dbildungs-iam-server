@@ -18,7 +18,7 @@ import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
-import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
 import { KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
 import { Person } from '../../../modules/person/domain/person.js';
@@ -77,8 +77,8 @@ describe('DbSeedService', () => {
                     useValue: createMock<PersonRepository>(),
                 },
                 {
-                    provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    provide: DBiamPersonenkontextRepoInternal,
+                    useValue: createMock<DBiamPersonenkontextRepoInternal>(),
                 },
                 {
                     provide: OrganisationRepository,
