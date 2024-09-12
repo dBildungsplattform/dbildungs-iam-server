@@ -9,6 +9,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -54,6 +55,7 @@ describe('PersonenkontextSpecifications Integration', () => {
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let personenkontextRepoInternalMock: DeepMocked<DBiamPersonenkontextRepoInternal>;
 
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
@@ -86,6 +88,10 @@ describe('PersonenkontextSpecifications Integration', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
+                    provide: DBiamPersonenkontextRepoInternal,
+                    useValue: createMock<DBiamPersonenkontextRepoInternal>(),
+                },
+                {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
@@ -101,6 +107,7 @@ describe('PersonenkontextSpecifications Integration', () => {
         organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        personenkontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
         personFactory = module.get(PersonFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
         personRepo = module.get(PersonRepository);
@@ -159,7 +166,7 @@ describe('PersonenkontextSpecifications Integration', () => {
                     personId: person.id,
                 },
             );
-            await personenkontextRepoMock.save(foundPersonenkontextDummy);
+            await personenkontextRepoInternalMock.save(foundPersonenkontextDummy);
 
             organisationRepoMock.findById.mockResolvedValueOnce(klasse); //mock Klasse
             organisationRepoMock.findById.mockResolvedValueOnce(schule); //mock Schule
