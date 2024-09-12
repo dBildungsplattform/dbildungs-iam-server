@@ -283,13 +283,12 @@ export class DbSeedService {
             const referencedRolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
 
             let befristung: Date | undefined = undefined;
-            console.log(referencedRolle.merkmale);
-            console.log(typeof referencedRolle.merkmale);
             const hasBefristungPflicht: boolean = referencedRolle.merkmale?.some(
                 (merkmal: RollenMerkmal) => merkmal === RollenMerkmal.BEFRISTUNG_PFLICHT,
             );
             if (hasBefristungPflicht) {
                 befristung = new Date(2099, 1, 1, 0, 1, 0); // In consultation with Kristoff, Kiefer (Cap): Set Befristung fixed to Date far in future
+                this.logger.info(`Automatically Set Befristung to 2099 for seeded kontext`);
             }
 
             const personenKontext: Personenkontext<false> = this.personenkontextFactory.construct(
