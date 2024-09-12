@@ -231,15 +231,14 @@ describe('PersonPermissions', () => {
                 person,
             );
 
-            const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
-                [RollenSystemRecht.PERSONEN_VERWALTEN],
-                false,
-            );
+            const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht([
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
             if (permittedOrgas.all) {
                 fail('permittedOrgas.all should be false');
             }
             expect(permittedOrgas.orgaIds).toContain('1');
-            expect(permittedOrgas.orgaIds).not .toContain('2');
+            expect(permittedOrgas.orgaIds).not.toContain('2');
         });
     });
 
