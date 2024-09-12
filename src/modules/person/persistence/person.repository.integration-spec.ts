@@ -41,6 +41,7 @@ import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1273,6 +1274,18 @@ describe('PersonRepository Integration', () => {
             );
 
             expect(result).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should return PersonalnummerRequiredError when personalnummer was not provided', async () => {
+            const person: Person<true> = await savePerson(true);
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                '',
+                person.updatedAt,
+                person.revision,
+            );
+
+            expect(result).toBeInstanceOf(PersonalnummerRequiredError);
         });
 
         it('should return DuplicatePersonalnummerError when the new personalnummer is already assigned', async () => {
