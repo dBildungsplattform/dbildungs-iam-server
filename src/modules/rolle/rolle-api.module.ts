@@ -4,10 +4,8 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 import { RolleController } from './api/rolle.controller.js';
 import { RolleModule } from './rolle.module.js';
 import { ServiceProviderModule } from '../service-provider/service-provider.module.js';
-import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { DBiamPersonenkontextRepoInternal } from '../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
-import { PersonenkontextFactory } from '../personenkontext/domain/personenkontext.factory.js';
 import { PersonModule } from '../person/person.module.js';
+import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 
 @Module({
     imports: [
@@ -15,9 +13,10 @@ import { PersonModule } from '../person/person.module.js';
         OrganisationModule,
         PersonModule,
         ServiceProviderModule,
+        PersonenKontextModule,
         LoggerModule.register(RolleApiModule.name),
     ],
-    providers: [DBiamPersonenkontextRepo, DBiamPersonenkontextRepoInternal, PersonenkontextFactory],
+    providers: [],
     controllers: [RolleController],
 })
 export class RolleApiModule {}
