@@ -18,7 +18,6 @@ import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
-import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
 import { KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
 import { Person } from '../../../modules/person/domain/person.js';
@@ -34,6 +33,8 @@ import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/orga
 import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -45,7 +46,7 @@ describe('DbSeedService', () => {
     let personenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let dbSeedReferenceRepoMock: DeepMocked<DbSeedReferenceRepo>;
     let kcUserService: DeepMocked<KeycloakUserService>;
-    let dBiamPersonenkontextRepo: DeepMocked<DBiamPersonenkontextRepo>;
+    let dBiamPersonenkontextRepo: DeepMocked<DBiamPersonenkontextRepoInternal>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
