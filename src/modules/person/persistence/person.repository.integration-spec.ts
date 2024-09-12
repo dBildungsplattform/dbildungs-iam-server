@@ -108,7 +108,10 @@ describe('PersonRepository Integration', () => {
     });
 
     type SavedPersonProps = { keycloackID: string };
-    async function savePerson(props: Partial<SavedPersonProps> = {}): Promise<Person<true>> {
+    async function savePerson(
+        withPersonalnummer: boolean = false,
+        props: Partial<SavedPersonProps> = {},
+    ): Promise<Person<true>> {
         usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
@@ -120,6 +123,7 @@ describe('PersonRepository Integration', () => {
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
             familienname: faker.person.lastName(),
             vorname: faker.person.firstName(),
+            personalnummer: withPersonalnummer ? faker.finance.pin(7) : undefined,
         });
 
         if (person instanceof DomainError) {
@@ -172,7 +176,7 @@ describe('PersonRepository Integration', () => {
             it('should return found person', async () => {
                 const nokeyclockID: SavedPersonProps = { keycloackID: '' };
 
-                const personSaved: Person<true> = await savePerson(nokeyclockID);
+                const personSaved: Person<true> = await savePerson(false, nokeyclockID);
 
                 const foundPerson: Option<Person<true>> = await sut.findById(personSaved.id);
 
@@ -1235,6 +1239,56 @@ describe('PersonRepository Integration', () => {
             const exists: boolean = await sut.exists(nonExistentId);
 
             expect(exists).toBe(false);
+        });
+    });
+    describe('updatePersonalnummer', () => {
+        it('should return the updated person', async () => {
+            const person: Person<true> = await savePerson(true);
+            const newPersonalnummer: string = faker.finance.pin(7);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                newPersonalnummer,
+                person.updatedAt,
+                person.revision,
+            );
+            if (result instanceof DomainError) {
+                throw result;
+            }
+
+            expect(person.id).toBe(result.id);
+            expect(person.personalnummer).not.toBeNull();
+            expect(person.personalnummer).not.toEqual(newPersonalnummer);
+            expect(result.personalnummer).toEqual(newPersonalnummer);
+        });
+
+        it('should return EntityNotFound when person does not exit', async () => {
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                faker.string.uuid(),
+                faker.finance.pin(7),
+                faker.date.anytime(),
+                '1',
+            );
+
+            expect(result).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should return DuplicatePersonalnummerError when the new personalnummer is already assigned', async () => {
+            const person: Person<true> = await savePerson(true);
+            const person2: Person<true> = await savePerson(true);
+
+            if (!person2.personalnummer) {
+                return;
+            }
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                person2.personalnummer,
+                person.updatedAt,
+                person.revision,
+            );
+
+            expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
         });
     });
 });

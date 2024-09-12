@@ -224,13 +224,10 @@ export class Person<WasPersisted extends boolean> {
         personalnummer?: string,
         email?: string,
     ): void | DomainError {
-        if (this.revision !== revision) {
-            return new MismatchedRevisionError(
-                `Revision ${revision} does not match revision ${this.revision} of stored person.`,
-            );
+        const newRevision: string | DomainError = this.TryToUpdateRevision(revision);
+        if (newRevision instanceof DomainError) {
+            return newRevision;
         }
-
-        const newRevision: string = (parseInt(this.revision) + 1).toString();
 
         if (vorname && !NameValidator.isNameValid(vorname)) {
             return new VornameForPersonWithTrailingSpaceError();
@@ -269,10 +266,13 @@ export class Person<WasPersisted extends boolean> {
         });
     }
 
-    public async checkPersonalnummerSpecifications(
-        personRepository: PersonRepository,
-    ): Promise<undefined | PersonSpecificationError> {
+    public TryToUpdateRevision(revision: string): string | DomainError {
+        if (this.revision !== revision) {
+            return new MismatchedRevisionError(
+                `Revision ${revision} does not match revision ${this.revision} of stored person.`,
+            );
+        }
 
-        return undefined;
+        return (parseInt(this.revision) + 1).toString();
     }
 }

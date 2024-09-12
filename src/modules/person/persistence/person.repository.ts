@@ -24,6 +24,8 @@ import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -414,31 +416,51 @@ export class PersonRepository {
         return person;
     }
 
+    public async isPersonalnummerAlreadayAssigned(personalnummer: string): Promise<boolean> {
+        const person: Option<Loaded<PersonEntity, never, '*', never>> = await this.em.findOne(PersonEntity, {
+            personalnummer: personalnummer,
+        });
+
+        return !!person;
+    }
+
     public async updatePersonalnummer(
         personId: string,
         newPersonalnummer: string,
+        lastModified: Date,
+        revision: string,
     ): Promise<Person<true> | DomainError> {
         const personFound: Option<Person<true>> = await this.findById(personId);
 
         if (!personFound) {
             return new EntityNotFoundError('Person', personId);
         }
-        //Specifications
-        //Prüfung dass KoPers-Nr nicht leer ist
-        //Prüfung auf Eindeutigkeit
+
         {
-            if (personFound.personalnummer !== newPersonalnummer) {
-                personFound.personalnummer = newPersonalnummer;
-                const specificationError: undefined | PersonSpecificationError =
-                    await personFound.checkPersonalnummerSpecifications(this);
-
-                if (specificationError) {
-                    return specificationError;
-                }
+            //Specifications
+            if (!newPersonalnummer) {
+                return new PersonalnummerRequiredError();
             }
-        }
-        const savedPerson: Person<true> | DomainError = await this.save(personFound);
 
+            if (await this.isPersonalnummerAlreadayAssigned(newPersonalnummer)) {
+                return new DuplicatePersonalnummerError(`Personalnummer ${newPersonalnummer} already exists.`);
+            }
+
+            if (personFound.updatedAt.getTime() > lastModified.getTime()) {
+                // The existing data is newer than the incoming update
+                return new PersonalnummerUpdateOutdatedError();
+            }
+
+            const newRevision: string | DomainError = personFound.TryToUpdateRevision(revision);
+            if (newRevision instanceof DomainError) {
+                return newRevision;
+            }
+            //Update
+            personFound.revision = newRevision;
+            personFound.personalnummer = newPersonalnummer;
+        }
+
+        const savedPerson: Person<true> | DomainError = await this.save(personFound);
         return savedPerson;
     }
 }

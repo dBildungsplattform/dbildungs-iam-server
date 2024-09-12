@@ -66,6 +66,7 @@ import { PersonenkontextService } from '../../personenkontext/domain/personenkon
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
+import { DbiamPersonError } from './dbiam-person.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -444,9 +445,9 @@ export class PersonController {
 
     @Patch(':personId/personalnummer')
     @ApiNoContentResponse({
-        description: 'The personalnummer were successfully updated.',
+        description: 'The personalnummer was successfully updated.',
     })
-    @ApiBadRequestResponse({ description: 'The personalnummer could not be updated.', type: DbiamOrganisationError })
+    @ApiBadRequestResponse({ description: 'Request has a wrong format.', type: DbiamPersonError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to update the personalnummer.' })
     @ApiForbiddenResponse({ description: 'Not permitted to update the personalnummer.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the personalnummer.' })
@@ -454,6 +455,21 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Body() body: PersonByPersonalnummerBodyParams,
     ): Promise<void | DomainError> {
-        //Update personalnummer im Repo
+        const result: Person<true> | DomainError = await this.personRepository.updatePersonalnummer(
+            params.personId,
+            body.personalnummer,
+            body.lastModified,
+            body.revision,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof PersonDomainError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
     }
 }
