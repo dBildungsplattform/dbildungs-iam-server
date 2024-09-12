@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Injectable } from '@nestjs/common';
 import fs from 'fs';
 import { DataProviderFile } from '../file/data-provider-file.js';
