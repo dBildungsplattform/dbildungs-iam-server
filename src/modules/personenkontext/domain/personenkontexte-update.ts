@@ -224,8 +224,11 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 try {
+                    // TODO: this one I am not sure
+                    /* eslint-disable no-await-in-loop */
                     await this.dBiamPersonenkontextRepo.delete(existingPK).then(() => {});
                     deletedPKs.push(existingPK);
+                    /* eslint-disable no-await-in-loop */
                 } catch (err) {
                     this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
                 }
@@ -235,7 +238,7 @@ export class PersonenkontexteUpdate {
         return deletedPKs;
     }
 
-    // TODO: this need to be rewritten
+    // TODO: Since we are writting to the database can this be written in a batch process?
     /* eslint-disable no-await-in-loop */
     private async add(
         existingPKs: Personenkontext<true>[],
