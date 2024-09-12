@@ -33,7 +33,6 @@ import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/orga
 import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 
 describe('DbSeedService', () => {
@@ -46,7 +45,7 @@ describe('DbSeedService', () => {
     let personenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let dbSeedReferenceRepoMock: DeepMocked<DbSeedReferenceRepo>;
     let kcUserService: DeepMocked<KeycloakUserService>;
-    let dBiamPersonenkontextRepo: DeepMocked<DBiamPersonenkontextRepoInternal>;
+    let dBiamPersonenkontextRepoInternal: DeepMocked<DBiamPersonenkontextRepoInternal>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -111,7 +110,7 @@ describe('DbSeedService', () => {
         personenkontextServiceMock = module.get(DBiamPersonenkontextService);
         dbSeedReferenceRepoMock = module.get(DbSeedReferenceRepo);
         kcUserService = module.get(KeycloakUserService);
-        dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
     });
 
     afterAll(async () => {
@@ -458,7 +457,7 @@ describe('DbSeedService', () => {
                 ); // mock getReferencedRolle
 
                 personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(null);
-                dBiamPersonenkontextRepo.save.mockResolvedValueOnce({} as Personenkontext<true>);
+                dBiamPersonenkontextRepoInternal.save.mockResolvedValueOnce({} as Personenkontext<true>);
 
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).resolves.not.toThrow(
                     EntityNotFoundError,
