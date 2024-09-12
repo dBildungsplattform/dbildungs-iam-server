@@ -67,6 +67,7 @@ import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
 import { DbiamPersonError } from './dbiam-person.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -463,7 +464,7 @@ export class PersonController {
         );
 
         if (result instanceof DomainError) {
-            if (result instanceof PersonDomainError) {
+            if (result instanceof PersonDomainError || result instanceof DuplicatePersonalnummerError) {
                 throw result;
             }
 

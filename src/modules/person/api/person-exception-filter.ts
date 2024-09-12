@@ -7,6 +7,7 @@ import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienn
 import { DbiamPersonError, PersonErrorI18nTypes } from './dbiam-person.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 @Catch(PersonDomainError)
 export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError> {
@@ -37,6 +38,13 @@ export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError>
             new DbiamPersonError({
                 code: 400,
                 i18nKey: PersonErrorI18nTypes.NEWER_VERSION_OF_PERSONALNUMMER_AVAILABLE,
+            }),
+        ],
+        [
+            DuplicatePersonalnummerError.name,
+            new DbiamPersonError({
+                code: 400,
+                i18nKey: PersonErrorI18nTypes.PERSONALNUMMER_NICHT_EINDEUTIG,
             }),
         ],
     ]);

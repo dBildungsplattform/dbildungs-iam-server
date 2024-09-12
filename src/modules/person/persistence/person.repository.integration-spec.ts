@@ -28,6 +28,7 @@ import {
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
     KeycloakClientError,
+    MismatchedRevisionError,
 } from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
@@ -39,6 +40,7 @@ import { EmailAddressEntity } from '../../email/persistence/email-address.entity
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1289,6 +1291,32 @@ describe('PersonRepository Integration', () => {
             );
 
             expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+        });
+
+        it('should return PersonalnummerUpdateOutdatedError if there is a newer updated version', async () => {
+            const person: Person<true> = await savePerson(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                faker.finance.pin(7),
+                faker.date.past(),
+                person.revision,
+            );
+
+            expect(result).toBeInstanceOf(PersonalnummerUpdateOutdatedError);
+        });
+
+        it('should return MismatchedRevisionError if the revision is incorrect', async () => {
+            const person: Person<true> = await savePerson(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                faker.finance.pin(7),
+                person.updatedAt,
+                '2',
+            );
+
+            expect(result).toBeInstanceOf(MismatchedRevisionError);
         });
     });
 });
