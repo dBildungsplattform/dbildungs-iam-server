@@ -845,6 +845,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const mockGroups: GroupRepresentation[] = [
@@ -880,6 +881,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 kcGroupsMock.find.mockResolvedValueOnce([]);
@@ -902,6 +904,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const mockGroups: GroupRepresentation[] = [
@@ -927,6 +930,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, []);
@@ -943,6 +947,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
@@ -978,6 +983,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const error: Error = new Error('Simulated error during group assignment');
@@ -998,6 +1004,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const mockGroups: GroupRepresentation[] = [
@@ -1070,6 +1077,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const mockGroups: GroupRepresentation[] = [
@@ -1106,6 +1114,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 kcGroupsMock.find.mockResolvedValueOnce([]);
@@ -1129,6 +1138,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const mockGroups: GroupRepresentation[] = [
@@ -1156,6 +1166,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, []);
@@ -1172,6 +1183,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
@@ -1204,6 +1216,7 @@ describe('KeycloakUserService', () => {
                     username: user.username,
                     email: user.email,
                     createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
                 } as UserRepresentation);
 
                 const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
