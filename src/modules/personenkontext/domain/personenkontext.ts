@@ -30,8 +30,8 @@ export function mapAggregateToPartial(personenkontext: Personenkontext<boolean>)
 
 export class Personenkontext<WasPersisted extends boolean> {
     private constructor(
-        private readonly personRepo: PersonRepository,
-        private readonly organisationRepo: OrganisationRepository,
+        private readonly personRepository: PersonRepository,
+        private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         public id: Persisted<string, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
@@ -47,11 +47,12 @@ export class Personenkontext<WasPersisted extends boolean> {
         public readonly sichtfreigabe: SichtfreigabeType | undefined,
         public readonly loeschungZeitpunkt: Date | undefined,
         public readonly revision: Persisted<string, WasPersisted>,
+        public readonly befristung: Date | undefined,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
-        personRepo: PersonRepository,
-        organisationRepo: OrganisationRepository,
+        personRepository: PersonRepository,
+        organisationRepository: OrganisationRepository,
         rolleRepo: RolleRepo,
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
@@ -67,10 +68,11 @@ export class Personenkontext<WasPersisted extends boolean> {
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
         revision: Persisted<string, WasPersisted> = '1',
+        befristung: Date | undefined = undefined,
     ): Personenkontext<WasPersisted> {
         return new Personenkontext(
-            personRepo,
-            organisationRepo,
+            personRepository,
+            organisationRepository,
             rolleRepo,
             id,
             createdAt,
@@ -86,12 +88,13 @@ export class Personenkontext<WasPersisted extends boolean> {
             sichtfreigabe,
             loeschungZeitpunkt,
             revision,
+            befristung,
         );
     }
 
     public static createNew(
-        personRepo: PersonRepository,
-        organisationRepo: OrganisationRepository,
+        personRepository: PersonRepository,
+        organisationRepository: OrganisationRepository,
         rolleRepo: RolleRepo,
         personId: PersonID,
         organisationId: OrganisationID,
@@ -103,10 +106,11 @@ export class Personenkontext<WasPersisted extends boolean> {
         jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
+        befristung: Date | undefined = undefined,
     ): Personenkontext<false> {
         return new Personenkontext(
-            personRepo,
-            organisationRepo,
+            personRepository,
+            organisationRepository,
             rolleRepo,
             undefined,
             undefined,
@@ -122,14 +126,15 @@ export class Personenkontext<WasPersisted extends boolean> {
             sichtfreigabe,
             loeschungZeitpunkt,
             undefined,
+            befristung,
         );
     }
 
     public async checkReferences(): Promise<Option<DomainError>> {
         const [personExists, orga, rolle]: [boolean, Option<Organisation<true>>, Option<Rolle<true>>] =
             await Promise.all([
-                this.personRepo.exists(this.personId),
-                this.organisationRepo.findById(this.organisationId),
+                this.personRepository.exists(this.personId),
+                this.organisationRepository.findById(this.organisationId),
                 this.rolleRepo.findById(this.rolleId),
             ]);
 

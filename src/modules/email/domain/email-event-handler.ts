@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -22,6 +20,8 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { OxUserAttributesCreatedEvent } from '../../../shared/events/ox-user-attributes-created.event.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -35,14 +35,6 @@ export class EmailEventHandler {
         private readonly eventService: EventService,
     ) {}
 
-    @EventHandler(PersonenkontextCreatedEvent)
-    public async handlePersonenkontextCreatedEvent(event: PersonenkontextCreatedEvent): Promise<void> {
-        this.logger.info(
-            `Received PersonenkontextCreatedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
-        );
-        await this.handlePerson(event.personId);
-    }
-
     @EventHandler(PersonRenamedEvent)
     // eslint-disable-next-line @typescript-eslint/require-await
     public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
@@ -55,7 +47,7 @@ export class EmailEventHandler {
                 this.logger.info(
                     `Existing email found for personId:${event.personId}, address:${existingEmail.currentAddress}`,
                 );
-                if (existingEmail.enabled) {
+                if (existingEmail.enabledOrRequested) {
                     existingEmail.disable();
                     const persistenceResult: EmailAddress<true> | DomainError =
                         await this.emailRepo.save(existingEmail);
@@ -84,13 +76,12 @@ export class EmailEventHandler {
         });
     }
 
-    @EventHandler(PersonenkontextDeletedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async handlePersonenkontextDeletedEvent(event: PersonenkontextDeletedEvent): Promise<void> {
-        this.logger.info(
-            `Received PersonenkontextDeletedEvent, personId:${event.personId}, orgaId:${event.organisationId}, rolleId:${event.rolleId}`,
-        );
-        // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
+    @EventHandler(PersonenkontextUpdatedEvent)
+    // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
+        this.logger.info(`Received handlePersonenkontextUpdatedEvent, personId:${event.person.id}`);
+
+        await this.handlePerson(event.person.id);
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
@@ -142,6 +133,37 @@ export class EmailEventHandler {
         await Promise.all(handlePersonPromises);
     }
 
+    @EventHandler(OxUserAttributesCreatedEvent)
+    public async handleOxUserAttributesCreatedEvent(event: OxUserAttributesCreatedEvent): Promise<void> {
+        this.logger.info(
+            `Received OxUserAttributesCreatedEvent personId:${event.personId}, keycloakUsername: ${event.keycloakUsername}, userName:${event.userName}, contextName:${event.contextName}, email:${event.emailAddress}`,
+        );
+        const email: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
+
+        if (!email) {
+            return this.logger.error(
+                `Cannot find email-address for person with personId:${event.personId}, enabling not possible`,
+            );
+        }
+
+        if (email.address !== event.emailAddress) {
+            this.logger.warning(
+                `Mismatch between requested(${email.address}) and received(${event.emailAddress}) address from OX`,
+            );
+            this.logger.warning(`Overriding ${email.address} with ${event.emailAddress}) from OX`);
+            email.setAddress(event.emailAddress);
+        }
+
+        email.enable();
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
+
+        if (persistenceResult instanceof DomainError) {
+            return this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
+        } else {
+            return this.logger.info(`Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED`);
+        }
+    }
+
     private async handlePerson(personId: PersonID): Promise<void> {
         const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
         const rollenIds: string[] = personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId);
@@ -168,12 +190,12 @@ export class EmailEventHandler {
             this.logger.info(`Existing email found for personId:${personId}`);
 
             if (existingEmail.enabled) {
-                this.logger.info(`Existing email for personId:${personId} already enabled`);
+                return this.logger.info(`Existing email for personId:${personId} already enabled`);
             } else {
-                existingEmail.enable();
+                existingEmail.request();
                 const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(existingEmail);
                 if (persistenceResult instanceof EmailAddress) {
-                    this.logger.info(`Enabled and saved address:${persistenceResult.currentAddress}`);
+                    this.logger.info(`Set Requested status and persisted address:${persistenceResult.address}`);
                     this.eventService.publish(
                         new EmailAddressGeneratedEvent(
                             personId,
@@ -183,7 +205,7 @@ export class EmailEventHandler {
                         ),
                     );
                 } else {
-                    this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
+                    return this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
                 }
             }
         } else {
@@ -198,10 +220,12 @@ export class EmailEventHandler {
             this.logger.error(`Could not create email, error is ${email.error.message}`);
             return;
         }
-        email.value.enable();
+        email.value.request();
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
         if (persistenceResult instanceof EmailAddress) {
-            this.logger.info(`Successfully persisted email with new address:${persistenceResult.currentAddress}`);
+            this.logger.info(
+                `Successfully persisted email with Request status for address:${persistenceResult.address}`,
+            );
             this.eventService.publish(
                 new EmailAddressGeneratedEvent(
                     personId,

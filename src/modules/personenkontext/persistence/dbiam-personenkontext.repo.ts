@@ -1,37 +1,16 @@
-import { Loaded, RequiredEntityData, rel } from '@mikro-orm/core';
+import { Loaded } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../../../shared/types/index.js';
-import { Rolle } from '../domain/personenkontext.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
-import { PersonEntity } from '../../person/persistence/person.entity.js';
-import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
-import { EventService } from '../../../core/eventbus/index.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-
-export function mapAggregateToData(
-    personenKontext: Personenkontext<boolean>,
-): RequiredEntityData<PersonenkontextEntity> {
-    return {
-        // Don't assign createdAt and updatedAt, they are auto-generated!
-        id: personenKontext.id,
-        personId: rel(PersonEntity, personenKontext.personId),
-        organisationId: personenKontext.organisationId,
-        rolleId: rel(RolleEntity, personenKontext.rolleId),
-        rolle: Rolle.LERNENDER, // Placeholder, until rolle is removed from entity
-    };
-}
 
 function mapEntityToAggregate(
     entity: PersonenkontextEntity,
@@ -51,6 +30,7 @@ function mapEntityToAggregate(
         entity.jahrgangsstufe,
         entity.sichtfreigabe,
         entity.loeschungZeitpunkt,
+        entity.befristung,
     );
 }
 
@@ -58,7 +38,6 @@ function mapEntityToAggregate(
 export class DBiamPersonenkontextRepo {
     public constructor(
         private readonly em: EntityManager,
-        private readonly eventService: EventService,
         private readonly personenkontextFactory: PersonenkontextFactory,
     ) {}
 
@@ -204,126 +183,6 @@ export class DBiamPersonenkontextRepo {
         return !!personenKontext;
     }
 
-    public async save(personenKontext: Personenkontext<boolean>): Promise<Personenkontext<true>> {
-        if (personenKontext.id) {
-            return this.update(personenKontext);
-        } else {
-            return this.create(personenKontext);
-        }
-    }
-
-    public async saveAuthorized(
-        personenkontext: Personenkontext<false>,
-        permissions: PersonPermissions,
-    ): Promise<Result<Personenkontext<true>, DomainError>> {
-        {
-            const result: Option<DomainError> = await personenkontext.checkReferences();
-            if (result) {
-                return {
-                    ok: false,
-                    error: result,
-                };
-            }
-        }
-
-        {
-            const result: Option<DomainError> = await personenkontext.checkPermissions(permissions);
-            if (result) {
-                return {
-                    ok: false,
-                    error: result,
-                };
-            }
-        }
-
-        {
-            const exists: boolean = await this.exists(
-                personenkontext.personId,
-                personenkontext.organisationId,
-                personenkontext.rolleId,
-            );
-
-            if (exists) {
-                return {
-                    ok: false,
-                    error: new EntityAlreadyExistsError('Personenkontext already exists'),
-                };
-            }
-        }
-
-        const personenKontextEntity: PersonenkontextEntity = this.em.create(
-            PersonenkontextEntity,
-            mapAggregateToData(personenkontext),
-        );
-
-        await this.em.persistAndFlush(personenKontextEntity);
-        this.eventService.publish(
-            new PersonenkontextCreatedEvent(
-                personenkontext.personId,
-                personenkontext.organisationId,
-                personenkontext.rolleId,
-            ),
-        );
-        return {
-            ok: true,
-            value: mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory),
-        };
-    }
-
-    public async deleteAuthorized(
-        id: PersonenkontextID,
-        revision: string,
-        permissions: PersonPermissions,
-    ): Promise<Option<DomainError>> {
-        const personenkontext: Option<PersonenkontextEntity> = await this.em.findOne(PersonenkontextEntity, {
-            id,
-        });
-
-        if (!personenkontext) {
-            return new EntityNotFoundError('Personenkontext', id);
-        }
-
-        if (!(await this.canModifyPersonenkontext(personenkontext, permissions))) {
-            return new MissingPermissionsError('Access denied');
-        }
-
-        if (personenkontext.revision !== revision) {
-            return new MismatchedRevisionError('Personenkontext');
-        }
-
-        await this.em.nativeDelete(PersonenkontextEntity, { id });
-
-        return;
-    }
-
-    private async create(personenKontext: Personenkontext<false>): Promise<Personenkontext<true>> {
-        const personenKontextEntity: PersonenkontextEntity = this.em.create(
-            PersonenkontextEntity,
-            mapAggregateToData(personenKontext),
-        );
-        await this.em.persistAndFlush(personenKontextEntity);
-        this.eventService.publish(
-            new PersonenkontextCreatedEvent(
-                personenKontext.personId,
-                personenKontext.organisationId,
-                personenKontext.rolleId,
-            ),
-        );
-        return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
-    }
-
-    private async update(personenKontext: Personenkontext<true>): Promise<Personenkontext<true>> {
-        const personenKontextEntity: Loaded<PersonenkontextEntity> = await this.em.findOneOrFail(
-            PersonenkontextEntity,
-            personenKontext.id,
-        );
-        personenKontextEntity.assign(mapAggregateToData(personenKontext));
-
-        await this.em.persistAndFlush(personenKontextEntity);
-
-        return mapEntityToAggregate(personenKontextEntity, this.personenkontextFactory);
-    }
-
     private async canModifyPersonenkontext(
         entity: PersonenkontextEntity,
         permissions: PersonPermissions,
@@ -334,25 +193,6 @@ export class DBiamPersonenkontextRepo {
         );
 
         return organisationIDs.includes(entity.organisationId);
-    }
-
-    public async delete(personenKontext: Personenkontext<true>): Promise<void> {
-        const personId: PersonID = personenKontext.personId;
-        const organisationId: OrganisationID = personenKontext.organisationId;
-        const rolleId: RolleID = personenKontext.rolleId;
-
-        await this.em.nativeDelete(PersonenkontextEntity, {
-            personId: personId,
-            organisationId: organisationId,
-            rolleId: rolleId,
-        });
-        this.eventService.publish(
-            new PersonenkontextDeletedEvent(
-                personenKontext.personId,
-                personenKontext.organisationId,
-                personenKontext.rolleId,
-            ),
-        );
     }
 
     public async hasSystemrechtAtOrganisation(
@@ -387,11 +227,6 @@ export class DBiamPersonenkontextRepo {
         const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return result[0].has_systemrecht_at_orga as boolean;
-    }
-
-    public async deleteById(id: string): Promise<boolean> {
-        const deletedPersons: number = await this.em.nativeDelete(PersonenkontextEntity, { id });
-        return deletedPersons > 0;
     }
 
     public async hasPersonASystemrechtAtAnyKontextOfPersonB(

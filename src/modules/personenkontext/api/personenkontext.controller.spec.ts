@@ -1,11 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { HttpException } from '@nestjs/common';
+import { HttpException, NotImplementedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { FindPersonenkontextByIdParams } from './param/find-personenkontext-by-id.params.js';
 
 import { PersonendatensatzResponseAutomapper } from '../../person/api/personendatensatz.response-automapper.js';
@@ -13,7 +13,6 @@ import { PersonenkontextQueryParams } from './param/personenkontext-query.params
 import { PersonenkontextController } from './personenkontext.controller.js';
 
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
-import { UpdatePersonenkontextBodyParams } from './param/update-personenkontext.body.params.js';
 
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 import { PersonByIdParams } from '../../person/api/person-by-id.param.js';
@@ -21,7 +20,7 @@ import { HatSystemrechtQueryParams } from './param/hat-systemrecht.query.params.
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
 
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
 
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -221,130 +220,8 @@ describe('PersonenkontextController', () => {
     });
 
     describe('updatePersonenkontextWithId', () => {
-        describe('when updating a personenkontext is successful', () => {
-            it('should return PersonenkontextResponse', async () => {
-                personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
-                    ok: true,
-                    value: createMock(),
-                });
-                const idParams: FindPersonenkontextByIdParams = {
-                    personenkontextId: faker.string.uuid(),
-                };
-                const bodyParams: UpdatePersonenkontextBodyParams = {
-                    id: idParams.personenkontextId,
-                    referrer: 'referrer',
-                    personenstatus: Personenstatus.AKTIV,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    revision: '1',
-                };
-                const mockPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const mockPerson: Person<true> = createMock<Person<true>>();
-
-                personenkontextService.updatePersonenkontext.mockResolvedValue({
-                    ok: true,
-                    value: mockPersonenkontext,
-                });
-
-                personService.findPersonById.mockResolvedValue({
-                    ok: true,
-                    value: mockPerson,
-                });
-
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-
-                const response: PersonendatensatzResponseAutomapper = await sut.updatePersonenkontextWithId(
-                    idParams,
-                    bodyParams,
-                    permissionsMock,
-                );
-
-                expect(response).toBeInstanceOf(PersonendatensatzResponseAutomapper);
-                expect(personenkontextService.updatePersonenkontext).toHaveBeenCalledTimes(1);
-                expect(personService.findPersonById).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when updating a personenkontext returns a SchulConnexError', () => {
-            it('should throw HttpException', async () => {
-                // Mock Auth check
-                personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
-                    ok: true,
-                    value: createMock(),
-                });
-                const idParams: FindPersonenkontextByIdParams = {
-                    personenkontextId: faker.string.uuid(),
-                };
-                const bodyParams: UpdatePersonenkontextBodyParams = {
-                    id: idParams.personenkontextId,
-                    referrer: 'referrer',
-                    personenstatus: Personenstatus.AKTIV,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    revision: '1',
-                };
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-
-                personenkontextService.updatePersonenkontext.mockResolvedValueOnce({
-                    ok: false,
-                    error: new EntityNotFoundError(),
-                });
-
-                await expect(sut.updatePersonenkontextWithId(idParams, bodyParams, permissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-                expect(personenkontextService.updatePersonenkontext).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when not authorized', () => {
-            it('should throw error', async () => {
-                // Mock Auth check
-                personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
-                    ok: false,
-                    error: new MissingPermissionsError(''),
-                });
-                const idParams: FindPersonenkontextByIdParams = createMock();
-                const bodyParams: UpdatePersonenkontextBodyParams = createMock();
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-
-                await expect(sut.updatePersonenkontextWithId(idParams, bodyParams, permissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-            });
-        });
-
-        describe('if findPerson returns an error', () => {
-            it('should throw HttpException', async () => {
-                personenkontextRepo.findByIDAuthorized.mockResolvedValueOnce({
-                    ok: true,
-                    value: createMock(),
-                });
-                const idParams: FindPersonenkontextByIdParams = {
-                    personenkontextId: faker.string.uuid(),
-                };
-                const bodyParams: UpdatePersonenkontextBodyParams = {
-                    id: idParams.personenkontextId,
-                    referrer: 'referrer',
-                    personenstatus: Personenstatus.AKTIV,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    revision: '1',
-                };
-                const mockPersonenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                personenkontextService.updatePersonenkontext.mockResolvedValue({
-                    ok: true,
-                    value: mockPersonenkontext,
-                });
-
-                personService.findPersonById.mockResolvedValue({
-                    ok: false,
-                    error: createMock<DomainError>(),
-                });
-
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-
-                await expect(sut.updatePersonenkontextWithId(idParams, bodyParams, permissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-            });
+        it('should return NotImplemented error', () => {
+            expect(() => sut.updatePersonenkontextWithId()).toThrow(NotImplementedException);
         });
     });
 

@@ -31,6 +31,9 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: Boolean })
     public readonly editable: boolean;
 
+    @ApiProperty({ type: Date })
+    public readonly befristung?: Date;
+
     @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, nullable: true })
     public readonly merkmale?: RollenMerkmal[];
 
@@ -50,5 +53,6 @@ export class DBiamPersonenzuordnungResponse {
         this.typ = organisation.typ;
         this.editable = editable;
         this.merkmale = rolle.merkmale;
+        this.befristung = personenkontext.befristung;
     }
 }

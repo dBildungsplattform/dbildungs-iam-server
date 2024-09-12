@@ -40,6 +40,7 @@ import { PersonenkontextExceptionFilter } from './personenkontext-exception-filt
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
@@ -84,7 +85,6 @@ export class DbiamPersonenkontextWorkflowController {
         const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
             permissions,
             params.organisationName,
-            params.limit,
         );
 
         // Find all possible roles under the selected Organisation
@@ -133,6 +133,7 @@ export class DbiamPersonenkontextWorkflowController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
     public async commit(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
+        @Query() queryParams: DbiamUpdatePersonenkontexteQueryParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
@@ -145,6 +146,7 @@ export class DbiamPersonenkontextWorkflowController {
                     bodyParams.count,
                     bodyParams.personenkontexte,
                     permissions,
+                    queryParams.personalnummer || undefined,
                 );
 
         if (updateResult instanceof PersonenkontexteUpdateError) {
@@ -221,9 +223,13 @@ export class DbiamPersonenkontextWorkflowController {
             params.organisationId,
             params.rolleId,
             params.personalnummer || undefined,
+            params.befristung || undefined,
         );
 
         if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
+            throw savedPersonWithPersonenkontext;
+        }
+        if (savedPersonWithPersonenkontext instanceof PersonenkontexteUpdateError) {
             throw savedPersonWithPersonenkontext;
         }
 

@@ -37,7 +37,9 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -805,7 +807,7 @@ describe('PersonRepository Integration', () => {
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
                 const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.enabled = true;
+                emailAddressEntity.status = EmailAddressStatus.ENABLED;
                 emailAddressEntity.address = faker.internet.email();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
@@ -818,7 +820,7 @@ describe('PersonRepository Integration', () => {
         describe('when NO enabled emailAddress is in collection', () => {
             it('should return undefined', () => {
                 const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.enabled = false;
+                emailAddressEntity.status = EmailAddressStatus.DISABLED;
                 emailAddressEntity.address = faker.internet.email();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
@@ -929,6 +931,19 @@ describe('PersonRepository Integration', () => {
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
 
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
+
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
 
@@ -943,6 +958,18 @@ describe('PersonRepository Integration', () => {
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
 
                 const result: Result<Person<true>> = await sut.getPersonIfAllowed(
                     personEntity.id,
@@ -961,8 +988,25 @@ describe('PersonRepository Integration', () => {
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeTruthy();
             });
@@ -975,7 +1019,12 @@ describe('PersonRepository Integration', () => {
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -1005,6 +1054,18 @@ describe('PersonRepository Integration', () => {
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                     person1.id,
@@ -1013,9 +1074,12 @@ describe('PersonRepository Integration', () => {
                 if (!personGetAllowed.ok) {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePerson(
                     personGetAllowed.value.id,
                     personPermissionsMock,
+                    removedPersonenkontexts,
                 );
                 expect(result.ok).toBeTruthy();
             });
@@ -1023,7 +1087,8 @@ describe('PersonRepository Integration', () => {
             describe('Delete the person and all kontexte and trigger event to delete email', () => {
                 it('should delete the person and trigger PersonDeletedEvent', async () => {
                     const person: Person<true> = DoFactory.createPerson(true);
-                    const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
+                    const personEntity: PersonEntity = new PersonEntity();
+                    await em.persistAndFlush(personEntity.assign(mapAggregateToData(person)));
                     person.id = personEntity.id;
                     personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person.id]);
 
@@ -1032,13 +1097,25 @@ describe('PersonRepository Integration', () => {
                     const emailAddress: EmailAddressEntity = new EmailAddressEntity();
                     emailAddress.address = faker.internet.email();
                     emailAddress.personId = rel(PersonEntity, person.id);
-                    emailAddress.enabled = true;
+                    emailAddress.status = EmailAddressStatus.ENABLED;
 
                     const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
                     await em.persistAndFlush(pp);
 
                     personEntity.emailAddresses.add(emailAddress);
                     await em.persistAndFlush(personEntity);
+                    kcUserServiceMock.findById.mockResolvedValue({
+                        ok: true,
+                        value: {
+                            id: person.keycloakUserId!,
+                            username: person.username ?? '',
+                            enabled: true,
+                            email: faker.internet.email(),
+                            createdDate: new Date(),
+                            externalSystemIDs: {},
+                            attributes: {},
+                        },
+                    });
 
                     await sut.getPersonIfAllowed(person.id, personPermissionsMock);
                     const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
@@ -1048,9 +1125,12 @@ describe('PersonRepository Integration', () => {
                     if (!personGetAllowed.ok) {
                         throw new EntityNotFoundError('Person', person.id);
                     }
+
+                    const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                     const result: Result<void, DomainError> = await sut.deletePerson(
                         personGetAllowed.value.id,
                         personPermissionsMock,
+                        removedPersonenkontexts,
                     );
 
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
@@ -1068,7 +1148,12 @@ describe('PersonRepository Integration', () => {
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -1078,6 +1163,19 @@ describe('PersonRepository Integration', () => {
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
+
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
 
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
@@ -1097,7 +1195,12 @@ describe('PersonRepository Integration', () => {
 
                 await sut.checkIfDeleteIsAllowed(personGetAllowed.value.id, personPermissionsMock);
 
-                const result: Result<void, DomainError> = await sut.deletePerson(person1.id, personPermissionsMock);
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
 
                 expect(result.ok).toBeFalsy();
                 if (!result.ok) {
@@ -1113,6 +1216,19 @@ describe('PersonRepository Integration', () => {
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
 
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
+
                 await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
                     person1.id,
@@ -1123,9 +1239,10 @@ describe('PersonRepository Integration', () => {
                     throw new EntityNotFoundError('Person', person1.id);
                 }
 
-                await expect(sut.deletePerson(personGetAllowed.value.id, personPermissionsMock)).rejects.toThrow(
-                    PersonHasNoKeycloakId,
-                );
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                await expect(
+                    sut.deletePerson(personGetAllowed.value.id, personPermissionsMock, removedPersonenkontexts),
+                ).rejects.toThrow(PersonHasNoKeycloakId);
             });
         });
     });
