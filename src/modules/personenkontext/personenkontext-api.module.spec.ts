@@ -5,7 +5,6 @@ import {
     MapperTestModule,
     KeycloakConfigTestModule,
 } from '../../../test/utils/index.js';
-import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
 import { PersonenKontextApiModule } from './personenkontext-api.module.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
@@ -56,10 +55,6 @@ describe('PersonenKontextApiModule', () => {
     describe('when module is initialized', () => {
         it('should resolve PersonkontextController', () => {
             expect(module.get(PersonenkontextController)).toBeInstanceOf(PersonenkontextController);
-        });
-
-        it('should resolve PersonkontextUc', () => {
-            expect(module.get(PersonenkontextUc)).toBeInstanceOf(PersonenkontextUc);
         });
 
         it('should resolve PersonkontextUc', () => {
