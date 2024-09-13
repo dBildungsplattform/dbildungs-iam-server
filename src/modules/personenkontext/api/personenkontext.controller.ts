@@ -172,7 +172,6 @@ export class PersonenkontextController {
         const organisations: Organisation<true>[] = [];
         const personenkontexte: Personenkontext<true>[] =
             await this.personenkontextService.findPersonenkontexteByPersonId(personByIdParams.personId);
-        // TODOD: This needs to be addressed with the Loops await issue
         /* eslint-disable no-await-in-loop */
         for (const personenkontext of personenkontexte) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);

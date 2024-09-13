@@ -70,7 +70,6 @@ export class ProviderController {
     ): Promise<ServiceProviderResponse[]> {
         const roleIds: string[] = await permissions.getRoleIds();
         const serviceProviders: ServiceProvider<true>[] = [];
-        // TODO: this needs to be adressed in its own issue
         /* eslint-disable no-await-in-loop */
         for (const roleId of roleIds) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(roleId);

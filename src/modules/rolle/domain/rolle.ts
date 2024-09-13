@@ -91,13 +91,9 @@ export class Rolle<WasPersisted extends boolean> {
         //Replace service providers with new ones
         const serviceProviderAttachPromises: Promise<void>[] = serviceProviderIds.map(
             async (serviceProviderId: string) => {
-                const result: void | DomainError = await rolleToUpdate.attachServiceProvider(serviceProviderId);
-                if (result instanceof DomainError) {
-                    throw result;
-                }
+                await rolleToUpdate.attachServiceProvider(serviceProviderId);
             },
         );
-
         try {
             await Promise.all(serviceProviderAttachPromises);
         } catch (error) {

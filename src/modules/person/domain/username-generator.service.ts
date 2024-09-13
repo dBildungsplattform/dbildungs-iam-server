@@ -71,7 +71,6 @@ export class UsernameGeneratorService {
             return calculatedUsername;
         }
         let counter: number = 1;
-        //TODO: should be adressed there this is possibility as there might be race ronditions and concurrency
         /* eslint-disable no-await-in-loop */
         while (await this.usernameExists(calculatedUsername + counter)) {
             counter = counter + 1;

@@ -72,49 +72,41 @@ export class PersonenkontexteUpdate {
         );
     }
 
+    /* eslint-disable no-await-in-loop */
     private async getSentPersonenkontexte(): Promise<Personenkontext<boolean>[] | PersonenkontexteUpdateError> {
-        const personenKontextPromises: Promise<Personenkontext<false> | Personenkontext<true>>[] =
-            this.dBiamPersonenkontextBodyParams.map(async (pkBodyParam: DbiamPersonenkontextBodyParams) => {
-                if (pkBodyParam.personId !== this.personId) {
-                    throw new UpdatePersonIdMismatchError();
-                }
-
-                const pk: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
+        const personenKontexte: Personenkontext<boolean>[] = [];
+        for (const pkBodyParam of this.dBiamPersonenkontextBodyParams) {
+            if (pkBodyParam.personId != this.personId) {
+                return new UpdatePersonIdMismatchError();
+            }
+            const pk: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
+                pkBodyParam.personId,
+                pkBodyParam.organisationId,
+                pkBodyParam.rolleId,
+            );
+            if (!pk) {
+                const newPK: Personenkontext<false> = this.personenkontextFactory.createNew(
                     pkBodyParam.personId,
                     pkBodyParam.organisationId,
                     pkBodyParam.rolleId,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    pkBodyParam.befristung,
                 );
-
-                if (!pk) {
-                    return this.personenkontextFactory.createNew(
-                        pkBodyParam.personId,
-                        pkBodyParam.organisationId,
-                        pkBodyParam.rolleId,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        undefined,
-                        pkBodyParam.befristung,
-                    ); // New
-                } else {
-                    return pk; // Old
-                }
-            });
-
-        try {
-            const personenKontexte: (Personenkontext<false> | Personenkontext<true>)[] =
-                await Promise.all(personenKontextPromises);
-            return personenKontexte;
-        } catch (error) {
-            if (error instanceof UpdatePersonIdMismatchError) {
-                return error;
+                personenKontexte.push(newPK); // New
+            } else {
+                personenKontexte.push(pk); // Old
             }
-            throw error;
         }
+
+        return personenKontexte;
     }
 
+    /* eslint-disable no-await-in-loop */
     private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
         const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
 
