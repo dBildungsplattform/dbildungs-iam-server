@@ -1,9 +1,9 @@
-nameOverride: ""
-fullnameOverride: ""
-namespaceOverride: ""
+nameOverride: ''
+fullnameOverride: ''
+namespaceOverride: ''
 
-backendHostname: ""
-keycloakHostname: ""
+backendHostname: ''
+keycloakHostname: ''
 
 containerSecurityContext:
   enabled: true
@@ -13,49 +13,47 @@ containerSecurityContext:
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
   capabilities:
-    drop: ["ALL"]
+    drop: ['ALL']
   seccompProfile:
-    type: "RuntimeDefault"
+    type: 'RuntimeDefault'
 
 restartPolicy: Always
 environment: dev
 
 database:
-  name: "dbildungs_iam_server"
-  host: ""
-  password: ""
-  username: "dbildungs_iam_server"
-
+  name: 'dbildungs_iam_server'
+  host: ''
+  password: ''
+  username: 'dbildungs_iam_server'
 
 ldap:
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
   bindDN: cn=admin,dc=schule-sh,dc=de
 
-
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
-  existingSecret: ""
+  existingSecret: ''
   secretName: dbildungs-iam-server
-  keycloak_adminSecret: ""
-  keycloak_clientSecret: ""
-  ldap_admin_password: ""
-  secrets_json: ""
-  frontend_sessionSecret: ""
-  itslearning_enabled: ""
-  itslearning_endpoint: ""
-  itslearning_username: ""
-  itslearning_password: ""
-  pi_base_url: ""
-  pi_admin_user: ""
-  pi_admin_password: ""
-  pi_user_resolver: ""
-
+  keycloak_adminSecret: ''
+  keycloak_clientSecret: ''
+  ldap_admin_password: ''
+  secrets_json: ''
+  frontend_sessionSecret: ''
+  itslearning_enabled: ''
+  itslearning_endpoint: ''
+  itslearning_username: ''
+  itslearning_password: ''
+  pi_base_url: ''
+  pi_admin_user: ''
+  pi_admin_password: ''
+  pi_user_resolver: ''
+  pi_user_realm: ''
 
 backend:
   replicaCount: 1
   image:
     repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-    tag: ""
+    tag: ''
     pullPolicy: Always
   containerPorts:
     http: 8080
@@ -91,7 +89,7 @@ backend:
       path: '/health'
   dbseeding:
     enabled: true
-    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+    command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev', '']
   ingress:
     enabled: true
     ingressClassName: nginx
@@ -111,7 +109,7 @@ backend:
   serviceMonitor:
     enabled: true
     endpoints:
-      - port: "web"
+      - port: 'web'
   extraEnvVars: []
   extraVolumes: []
   volumeMounts:
@@ -124,15 +122,14 @@ backend:
       name: secret-volume
   extraVolumeMounts: []
 
-
 redis:
   image:
     name: redis
     repository: redis
-    tag: "7.2.4"
+    tag: '7.2.4'
     pullPolicy: IfNotPresent
   args:
-    - "/data/tls/redis.conf"
+    - '/data/tls/redis.conf'
   containerPorts:
     redis: 6379
   resources:

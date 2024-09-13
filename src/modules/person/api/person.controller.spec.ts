@@ -1,24 +1,16 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { HttpException } from '@nestjs/common';
+import { HttpException, NotImplementedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
-import {
-    Jahrgangsstufe,
-    Personenstatus,
-    Rolle,
-    SichtfreigabeType,
-} from '../../personenkontext/domain/personenkontext.enums.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonController } from './person.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
-import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
@@ -36,11 +28,12 @@ import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-t
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { LockUserBodyParams } from './lock-user.body.params.js';
+import { PersonDomainError } from '../domain/person-domain.error.js';
 import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -48,11 +41,11 @@ import { PersonalnummerRequiredError } from '../domain/personalnummer-required.e
 describe('PersonController', () => {
     let module: TestingModule;
     let personController: PersonController;
-    let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
+    let keycloakUserService: DeepMocked<KeycloakUserService>;
     let personDeleteServiceMock: DeepMocked<PersonDeleteService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
@@ -64,10 +57,6 @@ describe('PersonController', () => {
                 PersonController,
                 PersonFactory,
                 PersonApiMapper,
-                {
-                    provide: PersonenkontextUc,
-                    useValue: createMock<PersonenkontextUc>(),
-                },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -107,12 +96,12 @@ describe('PersonController', () => {
             ],
         }).compile();
         personController = module.get(PersonController);
-        personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         personenkontextServiceMock = module.get(PersonenkontextService);
         rolleRepoMock = module.get(RolleRepo);
         personDeleteServiceMock = module.get(PersonDeleteService);
+        keycloakUserService = module.get(KeycloakUserService);
     });
 
     function getPerson(): Person<true> {
@@ -405,88 +394,8 @@ describe('PersonController', () => {
     });
 
     describe('createPersonenkontext', () => {
-        describe('when creating a personenkontext is successful', () => {
-            it('should not throw', async () => {
-                const pathParams: PersonByIdParams = {
-                    personId: faker.string.uuid(),
-                };
-                const body: CreatePersonenkontextBodyParams = {
-                    rolle: Rolle.LEHRENDER,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    referrer: 'referrer',
-                };
-                const ucResult: CreatedPersonenkontextDto = {
-                    id: faker.string.uuid(),
-                    mandant: faker.string.uuid(),
-                    organisation: {
-                        id: faker.string.uuid(),
-                    },
-                    revision: '1',
-                    rolle: Rolle.LEHRENDER,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    referrer: 'referrer',
-                    loeschung: { zeitpunkt: faker.date.past() },
-                };
-                personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
-                await expect(
-                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
-                ).resolves.toBeInstanceOf(PersonenkontextResponse);
-                expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when creating a personenkontext returns a SchulConnexError', () => {
-            it('should throw HttpException', async () => {
-                const pathParams: PersonByIdParams = {
-                    personId: faker.string.uuid(),
-                };
-                const body: CreatePersonenkontextBodyParams = {
-                    rolle: Rolle.LEHRENDER,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    referrer: 'referrer',
-                };
-                personPermissionsMock = createMock<PersonPermissions>();
-
-                personenkontextUcMock.createPersonenkontext.mockResolvedValue(
-                    new SchulConnexError({} as SchulConnexError),
-                );
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
-
-                await expect(
-                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
-                expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when permissions are insufficient to create personenkontext', () => {
-            it('should throw HttpNotFoundException', async () => {
-                const pathParams: PersonByIdParams = {
-                    personId: faker.string.uuid(),
-                };
-                const body: CreatePersonenkontextBodyParams = {
-                    rolle: Rolle.LEHRENDER,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    referrer: 'referrer',
-                };
-                personenkontextUcMock.createPersonenkontext.mockResolvedValue(
-                    new SchulConnexError({} as SchulConnexError),
-                );
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
-                    ok: false,
-                    error: new EntityNotFoundError(),
-                });
-                personPermissionsMock = createMock<PersonPermissions>();
-
-                await expect(
-                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
-            });
+        it('should throw NotImplemented error', () => {
+            expect(() => personController.createPersonenkontext()).toThrow(NotImplementedException);
         });
     });
 
@@ -753,6 +662,114 @@ describe('PersonController', () => {
                     VornameForPersonWithTrailingSpaceError,
                 );
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+    });
+    describe('lockPerson', () => {
+        const params: PersonByIdParams = {
+            personId: faker.string.uuid(),
+        };
+        personPermissionsMock = createMock<PersonPermissions>();
+
+        describe('when locking a user is successful', () => {
+            const person: Person<true> = getPerson();
+            const lockUserBodyParams: LockUserBodyParams = {
+                lock: true,
+                locked_from: 'Theo Tester',
+            };
+            it('should return a success message', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
+
+                const response: { message: string } = await personController.lockPerson(
+                    params.personId,
+                    lockUserBodyParams,
+                    personPermissionsMock,
+                );
+
+                expect(response).toEqual({ message: 'User has been successfully locked.' });
+                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when unlocking a user is successful', () => {
+            const person: Person<true> = getPerson();
+            const lockUserBodyParams: LockUserBodyParams = {
+                lock: false,
+                locked_from: 'Theo Tester',
+            };
+            it('should return a success message', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
+
+                const response: { message: string } = await personController.lockPerson(
+                    params.personId,
+                    lockUserBodyParams,
+                    personPermissionsMock,
+                );
+
+                expect(response).toEqual({ message: 'User has been successfully unlocked.' });
+                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when person does not exist or no permissions', () => {
+            const lockUserBodyParams: LockUserBodyParams = {
+                lock: false,
+                locked_from: '2024-01-01T00:00:00Z',
+            };
+            it('should throw an error', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError('Person'),
+                });
+                await expect(
+                    personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
+                ).rejects.toThrow(PersonDomainError);
+            });
+        });
+
+        describe('when keycloakUserId is missing', () => {
+            const lockUserBodyParams: LockUserBodyParams = {
+                lock: false,
+                locked_from: '2024-01-01T00:00:00Z',
+            };
+            const person: Person<true> = getPerson();
+            person.keycloakUserId = undefined;
+
+            it('should throw an error', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
+                await expect(
+                    personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
+                ).rejects.toThrow(PersonDomainError);
+            });
+        });
+
+        describe('when updating user status fails', () => {
+            const person: Person<true> = getPerson();
+            person.keycloakUserId = 'keycloak-12345';
+
+            it('should throw an error', async () => {
+                const lockUserBodyParams: LockUserBodyParams = {
+                    lock: false,
+                    locked_from: '2024-01-01T00:00:00Z',
+                };
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
+                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({
+                    ok: false,
+                    error: new KeycloakClientError('Could not update user status or custom attributes'),
+                });
+                await expect(
+                    personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
+                ).rejects.toThrow(PersonDomainError);
             });
         });
     });
