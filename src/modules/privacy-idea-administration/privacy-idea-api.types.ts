@@ -164,6 +164,23 @@ export type UserResponse = {
     signature: string;
 };
 
+export type ResetTokenResponse = {
+    id: number;
+    jsonrpc: string;
+    result: {
+        status: boolean;
+        value: number;
+    };
+    time: number;
+    version: string;
+    versionNumber: string;
+    signature: string;
+};
+
+export type ResetTokenPayload = {
+    serial: string;
+};
+
 export type TokenOTPSerialResponse = {
     id: number;
     jsonrpc: string;

@@ -178,6 +178,7 @@ export class RolleController {
             params.merkmale,
             params.systemrechte,
             [],
+            [],
             false,
         );
 
