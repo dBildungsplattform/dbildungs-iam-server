@@ -34,7 +34,17 @@ export class RolleResponse {
     @ApiProperty({ enum: RollenSystemRecht, enumName: RollenSystemRechtTypName, isArray: true, uniqueItems: true })
     public systemrechte: RollenSystemRecht[];
 
-    public constructor(rolle: Rolle<true>) {
+    @ApiProperty({ nullable: true })
+    public administeredBySchulstrukturknotenName?: string;
+
+    @ApiProperty({ nullable: true })
+    public administeredBySchulstrukturknotenKennung?: string;
+
+    public constructor(
+        rolle: Rolle<true>,
+        administeredBySchulstrukturknotenName?: string,
+        administeredBySchulstrukturknotenKennung?: string,
+    ) {
         this.id = rolle.id;
         this.createdAt = rolle.createdAt;
         this.updatedAt = rolle.updatedAt;
@@ -43,5 +53,7 @@ export class RolleResponse {
         this.rollenart = rolle.rollenart;
         this.merkmale = rolle.merkmale;
         this.systemrechte = rolle.systemrechte;
+        this.administeredBySchulstrukturknotenName = administeredBySchulstrukturknotenName;
+        this.administeredBySchulstrukturknotenKennung = administeredBySchulstrukturknotenKennung;
     }
 }

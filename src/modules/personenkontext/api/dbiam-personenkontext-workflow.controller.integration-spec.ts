@@ -49,6 +49,7 @@ function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rol
         [faker.helpers.enumValue(RollenMerkmal)],
         [faker.helpers.enumValue(RollenSystemRecht)],
         [],
+        [],
         false,
     );
     Object.assign(rolle, params);
@@ -151,15 +152,18 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
-    describe('/POST create person with personenkontext', () => {
-        it('should return created person and personenkontext', async () => {
-            const organisation: Organisation<true> = await organisationRepo.save(
+    describe('/POST create person with personenkontexte', () => {
+        it('should return created person and personenkontexte', async () => {
+            const schule: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const klasse: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.KLASSE, administriertVon: schule.id }),
             );
             const rolle: Rolle<true> = await rolleRepo.save(
                 DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                    rollenart: RollenArt.LEHR,
+                    administeredBySchulstrukturknoten: schule.id,
+                    rollenart: RollenArt.LERN,
                     merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                 }),
             );
@@ -173,8 +177,16 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
+                    createPersonenkontexte: [
+                        {
+                            organisationId: schule.id,
+                            rolleId: rolle.id,
+                        },
+                        {
+                            organisationId: klasse.id,
+                            rolleId: rolle.id,
+                        },
+                    ],
                 });
             expect(response.status).toBe(201);
         });
@@ -200,8 +212,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
+                    createPersonenkontexte: [
+                        {
+                            organisationId: organisation.id,
+                            rolleId: rolle.id,
+                        },
+                    ],
                     personalnummer: '1234567',
                 });
             expect(response.status).toBe(201);
@@ -224,8 +240,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                    organisationId: faker.string.uuid(),
-                    rolleId: rolle.id,
+                    createPersonenkontexte: [
+                        {
+                            organisationId: faker.string.uuid(),
+                            rolleId: rolle.id,
+                        },
+                    ],
                 });
 
             expect(response.status).toBe(404);
@@ -251,8 +271,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
+                    createPersonenkontexte: [
+                        {
+                            organisationId: organisation.id,
+                            rolleId: rolle.id,
+                        },
+                    ],
                 });
 
             expect(response.status).toBe(400);
@@ -282,8 +306,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
+                    createPersonenkontexte: [
+                        {
+                            organisationId: organisation.id,
+                            rolleId: rolle.id,
+                        },
+                    ],
                 });
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
@@ -309,7 +337,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontext').mockResolvedValueOnce(
+            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
                 new DuplicatePersonalnummerError('Duplicate Kopers'),
             );
 
@@ -341,7 +369,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             // Mock the service to throw DuplicatePersonalnummerError
-            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontext').mockResolvedValueOnce(
+            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
                 new PersonenkontexteUpdateError('Error'),
             );
 
@@ -350,8 +378,48 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 .send({
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
+                    createPersonenkontexte: [
+                        {
+                            organisationId: organisation.id,
+                            rolleId: rolle.id,
+                        },
+                    ],
+                    personalnummer: '1234567',
+                });
+
+            expect(response.status).toBe(400);
+        });
+        it('should return error with status-code 400 if PersonenkontexteUpdateError is thrown', async () => {
+            const organisation: Organisation<true> = await organisationRepo.save(
+                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            // Mock the service to throw DuplicatePersonalnummerError
+            jest.spyOn(personenkontextService, 'createPersonWithPersonenkontexte').mockResolvedValueOnce(
+                new PersonenkontexteUpdateError('Error'),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/personenkontext-workflow')
+                .send({
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    createPersonenkontexte: [
+                        {
+                            organisationId: organisation.id,
+                            rolleId: rolle.id,
+                        },
+                    ],
                     personalnummer: '1234567',
                 });
 

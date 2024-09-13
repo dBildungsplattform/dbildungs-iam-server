@@ -31,7 +31,7 @@ import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-updat
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { DBiamPersonResponse } from './response/dbiam-person.response.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
-import { DbiamCreatePersonWithContextBodyParams } from './param/dbiam-create-person-with-context.body.params.js';
+import { DbiamCreatePersonWithPersonenkontexteBodyParams } from './param/dbiam-create-person-with-personenkontexte.body.params.js';
 import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
 import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
@@ -209,8 +209,8 @@ export class DbiamPersonenkontextWorkflowController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while creating person with personenkontext.',
     })
-    public async createPersonWithKontext(
-        @Body() params: DbiamCreatePersonWithContextBodyParams,
+    public async createPersonWithPersonenkontexte(
+        @Body() params: DbiamCreatePersonWithPersonenkontexteBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonResponse> {
         //Check all references & permissions then save person
@@ -218,12 +218,11 @@ export class DbiamPersonenkontextWorkflowController {
             | PersonPersonenkontext
             | DomainError
             | PersonenkontextCommitError
-            | DuplicatePersonalnummerError = await this.personenkontextCreationService.createPersonWithPersonenkontext(
+            | DuplicatePersonalnummerError = await this.personenkontextCreationService.createPersonWithPersonenkontexte(
             permissions,
             params.vorname,
             params.familienname,
-            params.organisationId,
-            params.rolleId,
+            params.createPersonenkontexte,
             params.personalnummer || undefined,
             params.befristung || undefined,
         );
@@ -247,7 +246,7 @@ export class DbiamPersonenkontextWorkflowController {
 
         return new DBiamPersonResponse(
             savedPersonWithPersonenkontext.person,
-            savedPersonWithPersonenkontext.personenkontext,
+            savedPersonWithPersonenkontext.personenkontexte,
         );
     }
 }
