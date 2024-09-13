@@ -27,6 +27,7 @@ import {
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
+    ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -212,6 +213,7 @@ export class PersonController {
     @Post(':personId/personenkontexte')
     @HttpCode(200)
     @ApiOperation({ deprecated: true })
+    @ApiParam({ name: 'personId', type: String })
     @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
     @ApiBadRequestResponse({ description: 'The personenkontext already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the personenkontext.' })

@@ -158,6 +158,7 @@ describe('dbiam Personenkontext Repo', () => {
             [],
             rechte,
             [],
+            [],
             false,
         );
 

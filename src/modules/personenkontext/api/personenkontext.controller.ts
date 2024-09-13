@@ -21,6 +21,7 @@ import {
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
+    ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -212,6 +213,7 @@ export class PersonenkontextController {
 
     @Put(':personenkontextId')
     @ApiOperation({ deprecated: true })
+    @ApiParam({ name: 'personenkontextId', type: String })
     @ApiOkResponse({
         description: 'The personenkontext was successfully updated.',
         type: PersonenkontextResponse,
