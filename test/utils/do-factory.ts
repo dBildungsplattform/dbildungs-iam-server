@@ -80,6 +80,8 @@ export class DoFactory {
             username: faker.internet.userName(),
             email: faker.internet.email(),
             externalSystemIDs: {},
+            enabled: true,
+            attributes: {},
         };
 
         return Object.assign(Object.create(User.prototype) as User<boolean>, user, props);
@@ -124,6 +126,7 @@ export class DoFactory {
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
+            serviceProviderData: [],
         };
         return Object.assign(Object.create(RolleAggregate.prototype) as RolleAggregate<boolean>, rolle, props);
     }
