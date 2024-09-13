@@ -32,6 +32,7 @@ import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
+import { OrgRecService } from '../../../modules/organisation/domain/org-rec.service.js';
 
 @Injectable()
 export class DbSeedService {
@@ -43,6 +44,7 @@ export class DbSeedService {
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly orgRecService: OrgRecService,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
@@ -87,6 +89,7 @@ export class DbSeedService {
         }
 
         const organisation: Organisation<false> | DomainError = Organisation.createNew(
+            this.orgRecService,
             administriertVon,
             zugehoerigZu,
             data.kennung,

@@ -62,6 +62,7 @@ import { OrganisationByNameBodyParams } from './organisation-by-name.body.params
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
+import { OrgRecService } from '../domain/org-rec.service.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -75,6 +76,7 @@ import { ParentOrganisationenResponse } from './organisation.parents.response.js
 export class OrganisationController {
     public constructor(
         private readonly organisationRepository: OrganisationRepository,
+        private readonly orgRecService: OrgRecService,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly config: ConfigService<ServerConfig>,
         private readonly organisationService: OrganisationService,
@@ -90,6 +92,7 @@ export class OrganisationController {
         const ROOT_ORGANISATION_ID: string = this.config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
 
         const organisation: Organisation<false> | DomainError = Organisation.createNew(
+            this.orgRecService,
             params.administriertVon ?? ROOT_ORGANISATION_ID,
             params.zugehoerigZu ?? ROOT_ORGANISATION_ID,
             params.kennung,

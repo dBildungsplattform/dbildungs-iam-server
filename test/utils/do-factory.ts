@@ -186,7 +186,7 @@ export class DoFactory {
         return Object.assign(new PersonenkontextDo<WasPersisted>(), personenkontext, params);
     }
 
-    public static createOrganisationAggregate<WasPersisted extends boolean>(
+    /*   public static createOrganisationAggregate<WasPersisted extends boolean>(
         this: void,
         withId: WasPersisted,
         params: Partial<Organisation<boolean>> = {},
@@ -208,5 +208,27 @@ export class DoFactory {
         Object.assign(organisation, params);
 
         return organisation;
+    }*/
+
+    public static createOrganisationAggregate<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        params: Partial<Organisation<boolean>> = {},
+    ): Organisation<WasPersisted> {
+        const organisation: Partial<Organisation<WasPersisted>> = {
+            id: withId ? faker.string.uuid() : undefined,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+            administriertVon: faker.string.uuid(),
+            zugehoerigZu: faker.string.uuid(),
+            kennung: faker.lorem.word(),
+            name: faker.lorem.word(),
+            namensergaenzung: faker.lorem.word(),
+            kuerzel: faker.string.uuid(),
+            typ: faker.helpers.enumValue(OrganisationsTyp),
+            traegerschaft: faker.helpers.enumValue(Traegerschaft),
+        };
+
+        return Object.assign(Object.create(Organisation.prototype) as Organisation<boolean>, organisation, params);
     }
 }

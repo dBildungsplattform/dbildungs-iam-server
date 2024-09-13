@@ -33,6 +33,7 @@ import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/orga
 import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { OrgRecService } from '../../../modules/organisation/domain/org-rec.service.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -58,6 +59,7 @@ describe('DbSeedService', () => {
                 RolleFactory,
                 ServiceProviderFactory,
                 PersonenkontextFactory,
+                OrgRecService,
                 {
                     provide: DBiamPersonenkontextService,
                     useValue: createMock<DBiamPersonenkontextService>(),

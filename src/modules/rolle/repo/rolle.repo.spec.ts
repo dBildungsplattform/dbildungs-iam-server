@@ -23,6 +23,7 @@ import { OrganisationID } from '../../../shared/types/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
+import { OrgRecService } from '../../organisation/domain/org-rec.service.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -39,7 +40,14 @@ describe('RolleRepo', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
             ],
-            providers: [RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository, EventService],
+            providers: [
+                RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
+                OrganisationRepository,
+                OrgRecService,
+                EventService,
+            ],
         }).compile();
 
         sut = module.get(RolleRepo);

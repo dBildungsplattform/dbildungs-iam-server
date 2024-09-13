@@ -18,6 +18,7 @@ import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig
 import { EventModule } from '../../../core/eventbus/index.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { Organisation } from '../domain/organisation.js';
+import { OrgRecService } from '../domain/org-rec.service.js';
 
 describe('OrganisationSpecificationTests', () => {
     let module: TestingModule;
@@ -38,7 +39,7 @@ describe('OrganisationSpecificationTests', () => {
                 MapperTestModule,
                 EventModule,
             ],
-            providers: [OrganisationPersistenceMapperProfile, OrganisationRepository],
+            providers: [OrganisationPersistenceMapperProfile, OrganisationRepository, OrgRecService],
         }).compile();
         repo = module.get(OrganisationRepository);
         orm = module.get(MikroORM);

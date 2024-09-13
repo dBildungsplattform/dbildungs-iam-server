@@ -32,6 +32,7 @@ import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
+import { OrgRecService } from '../domain/org-rec.service.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -48,6 +49,7 @@ describe('OrganisationController', () => {
     let organisationController: OrganisationController;
     let organisationServiceMock: DeepMocked<OrganisationService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let orgRecServiceMock: DeepMocked<OrgRecService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -63,6 +65,10 @@ describe('OrganisationController', () => {
                     useValue: createMock<OrganisationRepository>(),
                 },
                 {
+                    provide: OrgRecService,
+                    useValue: createMock<OrgRecService>(),
+                },
+                {
                     provide: EventService,
                     useValue: createMock<EventService>(),
                 },
@@ -75,6 +81,7 @@ describe('OrganisationController', () => {
         organisationController = module.get(OrganisationController);
         organisationServiceMock = module.get(OrganisationService);
         organisationRepositoryMock = module.get(OrganisationRepository);
+        orgRecServiceMock = module.get(OrgRecService);
     });
 
     afterAll(async () => {
@@ -367,6 +374,7 @@ describe('OrganisationController', () => {
         describe('when both oeffentlich & ersatz could be found', () => {
             it('should return offentliche & ersatz organisation', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
+                    orgRecServiceMock,
                     faker.string.uuid(),
                     faker.date.past(),
                     faker.date.recent(),
@@ -380,6 +388,7 @@ describe('OrganisationController', () => {
                     undefined,
                 );
                 const ersatz: Organisation<true> = Organisation.construct(
+                    orgRecServiceMock,
                     faker.string.uuid(),
                     faker.date.past(),
                     faker.date.recent(),
@@ -427,6 +436,7 @@ describe('OrganisationController', () => {
             const mockBody: ParentOrganisationsByIdsBodyParams = { organisationIds: ids };
             const mockedRepoResponse: Array<Organisation<true>> = ids.map((id: string) =>
                 Organisation.construct(
+                    orgRecServiceMock,
                     id,
                     faker.date.past(),
                     faker.date.recent(),
@@ -658,6 +668,7 @@ describe('OrganisationController', () => {
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
+                    orgRecServiceMock,
                     faker.string.uuid(),
                     faker.date.past(),
                     faker.date.recent(),
@@ -721,6 +732,7 @@ describe('OrganisationController', () => {
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
+                    orgRecServiceMock,
                     faker.string.uuid(),
                     faker.date.past(),
                     faker.date.recent(),

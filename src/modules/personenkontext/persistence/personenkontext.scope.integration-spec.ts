@@ -24,6 +24,7 @@ import { faker } from '@faker-js/faker';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { OrgRecService } from '../../organisation/domain/org-rec.service.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
@@ -51,6 +52,7 @@ describe('PersonenkontextScope', () => {
                 RolleRepo,
                 ServiceProviderRepo,
                 OrganisationRepository,
+                OrgRecService,
             ],
         }).compile();
         orm = module.get(MikroORM);

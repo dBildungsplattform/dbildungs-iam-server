@@ -13,10 +13,12 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { OrgRecService } from './org-rec.service.js';
 
 describe('Organisation', () => {
     let module: TestingModule;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let orgRecServiceMock: DeepMocked<OrgRecService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -26,9 +28,14 @@ describe('Organisation', () => {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
+                {
+                    provide: OrgRecService,
+                    useValue: createMock<OrgRecService>(),
+                },
             ],
         }).compile();
         organisationRepositoryMock = module.get(OrganisationRepository);
+        orgRecServiceMock = module.get(OrgRecService);
     });
 
     afterAll(async () => {
@@ -42,6 +49,7 @@ describe('Organisation', () => {
     describe('construct', () => {
         it('should return persisted organisation', () => {
             const organisation: Organisation<true> = Organisation.construct(
+                orgRecServiceMock,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -63,6 +71,7 @@ describe('Organisation', () => {
     describe('createNew', () => {
         it('should return non pesisted organisation', () => {
             const organisation: Organisation<false> | DomainError = Organisation.createNew(
+                orgRecServiceMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
                 faker.lorem.word(),
@@ -78,6 +87,7 @@ describe('Organisation', () => {
         });
         it('should return non persisted organisation', () => {
             const organisation: Organisation<false> | DomainError = Organisation.createNew(
+                orgRecServiceMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
                 'kennung',
@@ -94,6 +104,7 @@ describe('Organisation', () => {
 
         it('should return an error if name has leading whitespace', () => {
             const result: DomainError | Organisation<false> = Organisation.createNew(
+                orgRecServiceMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
                 'kennung',
@@ -108,6 +119,7 @@ describe('Organisation', () => {
 
         it('should return an error if dienststellennummer has leading whitespace', () => {
             const result: DomainError | Organisation<false> = Organisation.createNew(
+                orgRecServiceMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
                 ' Test',

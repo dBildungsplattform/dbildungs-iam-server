@@ -23,6 +23,7 @@ import { LdapClient } from './ldap-client.js';
 import { Client, Entry, SearchResult } from 'ldapts';
 import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrgRecService } from '../../../modules/organisation/domain/org-rec.service.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -30,6 +31,7 @@ describe('LDAP Client Service', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let ldapClientService: LdapClientService;
+    let orgRecService: OrgRecService;
     let ldapClientMock: DeepMocked<LdapClient>;
     let clientMock: DeepMocked<Client>;
 
@@ -63,11 +65,14 @@ describe('LDAP Client Service', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         ldapClientService = module.get(LdapClientService);
+        orgRecService = module.get(OrgRecService);
+
         ldapClientMock = module.get(LdapClient);
         clientMock = createMock<Client>();
 
         ouKennung = faker.string.numeric({ length: 7 });
         organisation = Organisation.construct(
+            orgRecService,
             faker.string.uuid(),
             faker.date.past(),
             faker.date.recent(),

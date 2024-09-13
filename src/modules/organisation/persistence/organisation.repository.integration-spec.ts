@@ -24,10 +24,12 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { OrgRecService } from '../domain/org-rec.service.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
     let sut: OrganisationRepository;
+    let orgRecService: OrgRecService;
     let orm: MikroORM;
     let em: EntityManager;
     let config: ConfigService<ServerConfig>;
@@ -40,6 +42,7 @@ describe('OrganisationRepository', () => {
             providers: [
                 OrganisationPersistenceMapperProfile,
                 OrganisationRepository,
+                OrgRecService,
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
@@ -47,6 +50,7 @@ describe('OrganisationRepository', () => {
             ],
         }).compile();
         sut = module.get(OrganisationRepository);
+        orgRecService = module.get(OrgRecService);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         config = module.get(ConfigService<ServerConfig>);
@@ -74,7 +78,7 @@ describe('OrganisationRepository', () => {
 
     describe('findById', () => {
         it('should return one organisation by id', async () => {
-            const orga: Organisation<false> | DomainError = Organisation.createNew();
+            const orga: Organisation<false> | DomainError = Organisation.createNew(orgRecService);
             if (orga instanceof DomainError) {
                 return;
             }
@@ -95,6 +99,7 @@ describe('OrganisationRepository', () => {
     describe('mapAggregateToData', () => {
         it('should return Person RequiredEntityData', () => {
             const organisation: Organisation<true> = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -133,7 +138,7 @@ describe('OrganisationRepository', () => {
                 OrganisationEntity,
                 mapAggregateToData(DoFactory.createOrganisation(true)),
             );
-            const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity);
+            const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity, orgRecService);
 
             expect(organisation).toBeInstanceOf(Organisation);
         });
@@ -142,6 +147,7 @@ describe('OrganisationRepository', () => {
     describe('exists', () => {
         it('should return true if the orga exists', async () => {
             const orga: Organisation<false> | DomainError = Organisation.createNew(
+                orgRecService,
                 sut.ROOT_ORGANISATION_ID,
                 sut.ROOT_ORGANISATION_ID,
                 faker.string.numeric(6),
@@ -166,6 +172,7 @@ describe('OrganisationRepository', () => {
     describe('findById', () => {
         it('should return the organisation if it exists', async () => {
             const orga: Organisation<false> | DomainError = Organisation.createNew(
+                orgRecService,
                 sut.ROOT_ORGANISATION_ID,
                 sut.ROOT_ORGANISATION_ID,
                 faker.string.numeric(6),
@@ -197,6 +204,7 @@ describe('OrganisationRepository', () => {
 
         beforeEach(async () => {
             organisation1 = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -210,6 +218,7 @@ describe('OrganisationRepository', () => {
                 undefined,
             );
             organisation2 = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -223,6 +232,7 @@ describe('OrganisationRepository', () => {
                 undefined,
             );
             organisation3 = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -335,6 +345,7 @@ describe('OrganisationRepository', () => {
     describe('findChildOrgasByIds', () => {
         async function createOrgaTree(): Promise<[root: string, traeger: string, schule: string]> {
             const root: Organisation<true> = Organisation.construct(
+                orgRecService,
                 sut.ROOT_ORGANISATION_ID,
                 faker.date.past(),
                 faker.date.recent(),
@@ -349,6 +360,7 @@ describe('OrganisationRepository', () => {
             );
 
             const traeger: Organisation<true> = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -363,6 +375,7 @@ describe('OrganisationRepository', () => {
             );
 
             const schule: Organisation<true> = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -422,6 +435,7 @@ describe('OrganisationRepository', () => {
         };
         async function createOrgaTree(): Promise<CreateOrgaTreeResult> {
             const root: Organisation<true> = Organisation.construct(
+                orgRecService,
                 sut.ROOT_ORGANISATION_ID,
                 faker.date.past(),
                 faker.date.recent(),
@@ -435,6 +449,7 @@ describe('OrganisationRepository', () => {
             );
 
             const traeger: Organisation<true> = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -448,6 +463,7 @@ describe('OrganisationRepository', () => {
             );
 
             const schule: Organisation<true> = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -518,6 +534,7 @@ describe('OrganisationRepository', () => {
 
         beforeEach(async () => {
             root = Organisation.construct(
+                orgRecService,
                 ROOT_ORGANISATION_ID,
                 faker.date.past(),
                 faker.date.recent(),
@@ -531,6 +548,7 @@ describe('OrganisationRepository', () => {
                 undefined,
             );
             oeffentlich = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -544,6 +562,7 @@ describe('OrganisationRepository', () => {
                 undefined,
             );
             ersatz = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -795,6 +814,7 @@ describe('OrganisationRepository', () => {
 
         beforeEach(async () => {
             root = Organisation.construct(
+                orgRecService,
                 ROOT_ORGANISATION_ID,
                 faker.date.past(),
                 faker.date.recent(),
@@ -808,6 +828,7 @@ describe('OrganisationRepository', () => {
                 undefined,
             );
             oeffentlich = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -821,6 +842,7 @@ describe('OrganisationRepository', () => {
                 undefined,
             );
             ersatz = Organisation.construct(
+                orgRecService,
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
@@ -906,6 +928,7 @@ describe('OrganisationRepository', () => {
     describe('isOrgaAParentOfOrgaB', () => {
         it('should return true if A is parent of B', async () => {
             const orgaA: Organisation<false> | DomainError = Organisation.createNew(
+                orgRecService,
                 sut.ROOT_ORGANISATION_ID,
                 sut.ROOT_ORGANISATION_ID,
                 faker.string.numeric(6),
@@ -917,6 +940,7 @@ describe('OrganisationRepository', () => {
             const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaA));
             await em.persistAndFlush(mappedOrgaA);
             const orgaB: Organisation<false> | DomainError = Organisation.createNew(
+                orgRecService,
                 mappedOrgaA.id,
                 mappedOrgaA.id,
                 faker.string.numeric(6),
@@ -933,6 +957,7 @@ describe('OrganisationRepository', () => {
 
         it('should return false if A is not parent of B', async () => {
             const orgaA: Organisation<false> | DomainError = Organisation.createNew(
+                orgRecService,
                 sut.ROOT_ORGANISATION_ID,
                 sut.ROOT_ORGANISATION_ID,
                 faker.string.numeric(6),
@@ -944,6 +969,7 @@ describe('OrganisationRepository', () => {
             const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaA));
             await em.persistAndFlush(mappedOrgaA);
             const orgaB: Organisation<false> | DomainError = Organisation.createNew(
+                orgRecService,
                 sut.ROOT_ORGANISATION_ID,
                 sut.ROOT_ORGANISATION_ID,
                 faker.string.numeric(6),

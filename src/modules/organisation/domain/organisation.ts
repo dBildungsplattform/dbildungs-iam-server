@@ -8,9 +8,11 @@ import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { OrganisationsTyp, Traegerschaft } from './organisation.enums.js';
+import { OrgRecService } from './org-rec.service.js';
 
 export class Organisation<WasPersisted extends boolean> {
     private constructor(
+        public orgRecService: OrgRecService,
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,
@@ -22,9 +24,11 @@ export class Organisation<WasPersisted extends boolean> {
         public kuerzel?: string,
         public typ?: OrganisationsTyp,
         public traegerschaft?: Traegerschaft,
+        public emailDomain?: string,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
+        orgRecService: OrgRecService,
         id: Persisted<string, WasPersisted>,
         createdAt: Persisted<Date, WasPersisted>,
         updatedAt: Persisted<Date, WasPersisted>,
@@ -36,8 +40,10 @@ export class Organisation<WasPersisted extends boolean> {
         kuerzel?: string,
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
+        emailDomain?: string,
     ): Organisation<WasPersisted> {
         return new Organisation(
+            orgRecService,
             id,
             createdAt,
             updatedAt,
@@ -49,10 +55,12 @@ export class Organisation<WasPersisted extends boolean> {
             kuerzel,
             typ,
             traegerschaft,
+            emailDomain,
         );
     }
 
     public static createNew(
+        orgRecService: OrgRecService,
         administriertVon?: string,
         zugehoerigZu?: string,
         kennung?: string,
@@ -61,8 +69,10 @@ export class Organisation<WasPersisted extends boolean> {
         kuerzel?: string,
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
+        emailDomain?: string,
     ): Organisation<false> | DomainError {
         const organisation: Organisation<false> = new Organisation(
+            orgRecService,
             undefined,
             undefined,
             undefined,
@@ -74,6 +84,7 @@ export class Organisation<WasPersisted extends boolean> {
             kuerzel,
             typ,
             traegerschaft,
+            emailDomain,
         );
 
         const validationError: void | OrganisationSpecificationError = organisation.validateFieldNames();
@@ -101,6 +112,17 @@ export class Organisation<WasPersisted extends boolean> {
         }
 
         return undefined;
+    }
+
+    public async getDomain(): Promise<Option<string>> {
+        if (this.emailDomain) return this.emailDomain;
+        if (!this.administriertVon) return undefined;
+
+        const parent: Option<Organisation<true>> = await this.orgRecService.findById(this.administriertVon);
+
+        if (!parent) return undefined;
+
+        return parent.getDomain();
     }
 
     private async validateClassNameIsUniqueOnSchool(organisationRepository: OrganisationRepository): Promise<boolean> {

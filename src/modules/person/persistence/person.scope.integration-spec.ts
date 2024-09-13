@@ -22,6 +22,7 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { mapAggregateToData } from './person.repository.js';
+import { OrgRecService } from '../../organisation/domain/org-rec.service.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -59,6 +60,7 @@ describe('PersonScope', () => {
                 RolleFactory,
                 ServiceProviderRepo,
                 OrganisationRepository,
+                OrgRecService,
             ],
         }).compile();
         orm = module.get(MikroORM);

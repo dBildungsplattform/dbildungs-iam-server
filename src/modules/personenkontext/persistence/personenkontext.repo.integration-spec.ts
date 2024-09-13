@@ -19,6 +19,7 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { OrgRecService } from '../../organisation/domain/org-rec.service.js';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -47,6 +48,7 @@ describe('PersonenkontextRepo', () => {
                 RolleFactory,
                 ServiceProviderRepo,
                 OrganisationRepository,
+                OrgRecService,
             ],
         }).compile();
         sut = module.get(PersonenkontextRepo);

@@ -18,6 +18,7 @@ import { EventModule } from '../../../core/eventbus/index.js';
 import { Organisation } from './organisation.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { OrgRecService } from './org-rec.service.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -35,7 +36,12 @@ describe('OrganisationServiceSpecificationTest', () => {
                 MapperTestModule,
                 EventModule,
             ],
-            providers: [OrganisationService, OrganisationRepository, OrganisationPersistenceMapperProfile],
+            providers: [
+                OrganisationService,
+                OrganisationRepository,
+                OrgRecService,
+                OrganisationPersistenceMapperProfile,
+            ],
         }).compile();
         organisationService = module.get(OrganisationService);
         organisationRepository = module.get(OrganisationRepository);
