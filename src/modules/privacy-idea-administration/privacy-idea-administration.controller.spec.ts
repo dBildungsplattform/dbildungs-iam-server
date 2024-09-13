@@ -75,6 +75,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
+            personPermissionsMock = createMock<PersonPermissions>();
 
             serviceMock.initializeSoftwareToken.mockResolvedValue('token123');
             const response: string = await sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock);
