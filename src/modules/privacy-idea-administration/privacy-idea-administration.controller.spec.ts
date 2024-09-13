@@ -16,6 +16,7 @@ import { TokenError } from './api/error/token.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
 import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
+import { TokenRequiredResponse } from './api/token-required.response.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -362,6 +363,22 @@ describe('PrivacyIdeaAdministrationController', () => {
                     SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(entityCouldNotBeCreatedError),
                 ),
             );
+        });
+    });
+
+    describe('requires2fa', () => {
+        beforeEach(() => {
+            jest.restoreAllMocks();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
+        });
+
+        it.each([[true], [false]])('should return %s', async (expected: boolean) => {
+            serviceMock.requires2fa.mockResolvedValueOnce(expected);
+            const expectedResponse: TokenRequiredResponse = new TokenRequiredResponse(expected);
+
+            const actual: TokenRequiredResponse = await sut.requiresTwoFactorAuthentication('', personPermissionsMock);
+
+            expect(actual).toStrictEqual(expectedResponse);
         });
     });
 });

@@ -89,7 +89,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
                 sp.logoMimeType,
                 sp.keycloakGroup,
                 sp.keycloakRole,
-                sp.requires2fa
+                sp.requires2fa,
             );
         },
     );
