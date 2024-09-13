@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory,
 } from '../../../../test/utils/index.js';
 import { EmailRepo } from './email.repo.js';
 import { EmailFactory } from '../domain/email.factory.js';
@@ -20,6 +20,8 @@ import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
+import {OrganisationRepository} from "../../organisation/persistence/organisation.repository.js";
+import {Organisation} from "../../organisation/domain/organisation.js";
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -27,6 +29,7 @@ describe('EmailRepo', () => {
     let emailFactory: EmailFactory;
     let personFactory: PersonFactory;
     let personRepository: PersonRepository;
+    let organisationRepository: OrganisationRepository;
     let orm: MikroORM;
 
     beforeAll(async () => {
@@ -38,6 +41,7 @@ describe('EmailRepo', () => {
                 EmailFactory,
                 PersonFactory,
                 PersonRepository,
+                OrganisationRepository,
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
@@ -67,6 +71,7 @@ describe('EmailRepo', () => {
         emailFactory = module.get(EmailFactory);
         personFactory = module.get(PersonFactory);
         personRepository = module.get(PersonRepository);
+        organisationRepository = module.get(OrganisationRepository);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -90,6 +95,14 @@ describe('EmailRepo', () => {
         return person;
     }
 
+    async function createOrganisation(): Promise<Organisation<true>> {
+        const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
+            emailDomain: 'fake@schule-sh.de',
+        });
+        return await organisationRepository.save(organisation);
+
+    }
+
     afterAll(async () => {
         await orm.close();
         await module.close();
@@ -107,7 +120,8 @@ describe('EmailRepo', () => {
         describe('when email-address is found for personId', () => {
             it('should return email with email-addresses by personId', async () => {
                 const person: Person<true> = await createPerson();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id);
+                const organisation: Organisation<true> = await createOrganisation();
+                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
                 if (!email.ok) throw new Error();
 
                 email.value.enable();
@@ -133,7 +147,9 @@ describe('EmailRepo', () => {
         describe('when email-address exists', () => {
             it('should disable it and return EmailAddressEntity', async () => {
                 const person: Person<true> = await createPerson();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id);
+                const organisation: Organisation<true> = await createOrganisation();
+                organisationRepository.save(organisation);
+                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
                 if (!email.ok) throw new Error();
                 email.value.enable();
 
@@ -151,7 +167,8 @@ describe('EmailRepo', () => {
         describe('when email-address does NOT exist', () => {
             it('should return EmailAddressNotFoundError', async () => {
                 const person: Person<true> = await createPerson();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id);
+                const organisation: Organisation<true> = await createOrganisation();
+                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
                 if (!email.ok) throw Error();
                 email.value.enable();
                 const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
@@ -168,7 +185,8 @@ describe('EmailRepo', () => {
         describe('when address is already persisted', () => {
             it('should use update method and return EmailAddress aggregate', async () => {
                 const person: Person<true> = await createPerson();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id);
+                const organisation: Organisation<true> = await createOrganisation();
+                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
                 if (!email.ok) throw Error();
                 email.value.enable();
                 const persistedValidEmail: EmailAddress<true> | DomainError = await sut.save(email.value);

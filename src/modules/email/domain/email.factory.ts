@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { EmailGenerator } from './email-generator.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { Person } from '../../person/domain/person.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 
 @Injectable()
 export class EmailFactory {
@@ -14,6 +17,7 @@ export class EmailFactory {
     public constructor(
         private readonly emailRepo: EmailRepo,
         private readonly personRepository: PersonRepository,
+        private readonly organisationRepository: OrganisationRepository,
     ) {
         this.emailGenerator = new EmailGenerator(this.emailRepo);
     }
@@ -29,7 +33,7 @@ export class EmailFactory {
         return EmailAddress.construct(id, createdAt, updatedAt, personId, address, enabled);
     }
 
-    public async createNew(personId: PersonID): Promise<Result<EmailAddress<false>>> {
+    public async createNew(personId: PersonID, organisationId: OrganisationID): Promise<Result<EmailAddress<false>>> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
         if (!person) {
             return {
@@ -37,9 +41,32 @@ export class EmailFactory {
                 error: new EntityNotFoundError('Person', personId),
             };
         }
+        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(organisationId);
+        if (!organisation) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', organisationId),
+            };
+        }
+        const organisations: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIds([
+            organisation.id,
+        ]);
+        organisations.push(organisation);
+        const emailDomain: Option<string> = this.getDomainRecursive(organisations);
+        if (!emailDomain) {
+            return {
+                ok: false,
+                error: new EmailDomainNotFoundError(
+                    personId,
+                    organisations.map((orga: Organisation<true>) => orga.id),
+                ),
+            };
+        }
+
         const generatedAddressResult: Result<string> = await this.emailGenerator.generateAvailableAddress(
             person.vorname,
             person.familienname,
+            emailDomain,
         );
         if (!generatedAddressResult.ok) {
             return {
@@ -58,5 +85,12 @@ export class EmailFactory {
             ok: true,
             value: newEmailAddress,
         };
+    }
+
+    private getDomainRecursive(organisations: Organisation<true>[]): Option<string> {
+        if (!organisations || organisations.length == 0) return undefined;
+        if (organisations[0] && organisations[0].emailDomain) return organisations[0].emailDomain;
+
+        return this.getDomainRecursive(organisations.slice(1));
     }
 }

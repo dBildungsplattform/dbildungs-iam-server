@@ -9,11 +9,14 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { InvalidNameError } from '../../../shared/error/index.js';
 import { EmailGenerator } from './email-generator.js';
+import {OrganisationRepository} from "../../organisation/persistence/organisation.repository.js";
+import {Organisation} from "../../organisation/domain/organisation.js";
 
 describe('EmailFactory', () => {
     let module: TestingModule;
     let sut: EmailFactory;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -27,9 +30,15 @@ describe('EmailFactory', () => {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
             ],
         }).compile();
         personRepositoryMock = module.get(PersonRepository);
+        organisationRepositoryMock = module.get(OrganisationRepository);
+
         sut = module.get(EmailFactory);
     });
 
@@ -93,7 +102,13 @@ describe('EmailFactory', () => {
                     },
                 );
 
-                const creationResult: Result<EmailAddress<false>> = await sut.createNew(person.id);
+                organisationRepositoryMock.findParentOrgasForIds.mockResolvedValueOnce([
+                    createMock<Organisation<true>>({
+                        emailDomain: '@schule-sh.de',
+                    })
+                ]);
+
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(person.id, faker.string.uuid());
 
                 if (!creationResult.ok) throw new Error();
                 expect(creationResult.value.personId).toStrictEqual(person.id);
@@ -107,7 +122,7 @@ describe('EmailFactory', () => {
             it('should return error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                const creationResult: Result<EmailAddress<false>> = await sut.createNew(faker.string.uuid());
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(faker.string.uuid(), faker.string.uuid());
 
                 expect(creationResult.ok).toBeFalsy();
             });
@@ -127,7 +142,7 @@ describe('EmailFactory', () => {
                     },
                 );
 
-                const creationResult: Result<EmailAddress<false>> = await sut.createNew(faker.string.uuid());
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(faker.string.uuid(), faker.string.uuid());
 
                 expect(creationResult.ok).toBeFalsy();
             });

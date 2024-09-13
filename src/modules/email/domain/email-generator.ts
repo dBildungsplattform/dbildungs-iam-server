@@ -7,16 +7,14 @@ import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-9137
 import { EmailRepo } from '../persistence/email.repo.js';
 
 export class EmailGenerator {
-    private static EMAIL_SUFFIX: string = '@schule-sh.de';
-
     public constructor(private emailRepo: EmailRepo) {}
 
-    public isEqual(address: string, firstname: string, lastname: string): boolean {
+    public isEqual(address: string, firstname: string, lastname: string, emailDomain: string): boolean {
         const createAddress: Result<string> = this.generateAddress(firstname, lastname);
 
         if (!createAddress.ok) return false;
 
-        return address === createAddress.value + EmailGenerator.EMAIL_SUFFIX;
+        return address === createAddress.value + emailDomain;
     }
 
     public generateAddress(firstname: string, lastname: string): Result<string> {
@@ -66,16 +64,20 @@ export class EmailGenerator {
         };
     }
 
-    public async generateAvailableAddress(firstname: string, lastname: string): Promise<Result<string>> {
+    public async generateAvailableAddress(
+        firstname: string,
+        lastname: string,
+        emailDomain: string,
+    ): Promise<Result<string>> {
         const createdAddress: Result<string> = this.generateAddress(firstname, lastname);
 
         if (!createdAddress.ok) return createdAddress;
 
-        const nextAddressName: string = await this.getNextAvailableAddress(createdAddress.value);
+        const nextAddressName: string = await this.getNextAvailableAddress(createdAddress.value, emailDomain);
 
         return {
             ok: true,
-            value: nextAddressName + EmailGenerator.EMAIL_SUFFIX,
+            value: nextAddressName + emailDomain,
         };
     }
 
@@ -90,12 +92,12 @@ export class EmailGenerator {
         return removedDiacritics.join('-');
     }
 
-    private async getNextAvailableAddress(calculatedAddress: string): Promise<string> {
-        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + EmailGenerator.EMAIL_SUFFIX))) {
+    private async getNextAvailableAddress(calculatedAddress: string, emailDomain: string): Promise<string> {
+        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + emailDomain))) {
             return calculatedAddress;
         }
         let counter: number = 1;
-        while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + EmailGenerator.EMAIL_SUFFIX)) {
+        while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + emailDomain)) {
             counter = counter + 1;
         }
         return calculatedAddress + counter;

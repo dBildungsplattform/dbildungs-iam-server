@@ -29,6 +29,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         kuerzel: organisation.kuerzel,
         typ: organisation.typ,
         traegerschaft: organisation.traegerschaft,
+        emailDomain: organisation.emailDomain,
     };
 }
 
@@ -45,6 +46,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.kuerzel,
         entity.typ,
         entity.traegerschaft,
+        entity.emailDomain,
     );
 }
 
