@@ -1,24 +1,34 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CredentialRepresentation, KeycloakAdminClient, UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
+import {
+    CredentialRepresentation,
+    GroupRepresentation,
+    KeycloakAdminClient,
+    UserRepresentation,
+} from '@s3pweb/keycloak-admin-client-cjs';
 
 import { faker } from '@faker-js/faker';
 import { ConfigTestModule, DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
+import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
+import { PersonService } from '../../person/domain/person.service.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
-import { PersonService } from '../../person/domain/person.service.js';
 import { User } from './user.js';
-import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
     let service: KeycloakUserService;
     let adminService: DeepMocked<KeycloakAdministrationService>;
     let kcUsersMock: DeepMocked<KeycloakAdminClient['users']>;
+    let kcGroupsMock: DeepMocked<KeycloakAdminClient['groups']>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         kcUsersMock = createMock<KeycloakAdminClient['users']>();
+        kcGroupsMock = createMock<KeycloakAdminClient['groups']>();
 
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, MapperTestModule, LoggingTestModule],
@@ -32,6 +42,7 @@ describe('KeycloakUserService', () => {
                                 ok: true,
                                 value: createMock<KeycloakAdminClient>({
                                     users: kcUsersMock,
+                                    groups: kcGroupsMock,
                                 }),
                             });
                         },
@@ -45,6 +56,7 @@ describe('KeycloakUserService', () => {
         }).compile();
         service = module.get(KeycloakUserService);
         adminService = module.get(KeycloakAdministrationService);
+        loggerMock = module.get(ClassLogger);
     });
 
     beforeEach(() => {
@@ -793,7 +805,442 @@ describe('KeycloakUserService', () => {
                 });
             });
         });
+    });
+    describe('assignRealmGroupsToUser', () => {
+        describe('getAuthedKcAdminClient is not ok ', () => {
+            it('should return a DomainError', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
 
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+
+                const res: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, [rolle.name]);
+
+                expect(res).toBe(error);
+            });
+        });
+        describe('when user does not exist', () => {
+            it('should return error when findById fails', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const rolle2: Rolle<true> = DoFactory.createRolle(true);
+                kcUsersMock.findOne.mockResolvedValueOnce(undefined);
+                const roleNames: string[] = [rolle.name, rolle2.name];
+
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, roleNames);
+
+                expect(result).toStrictEqual<Result<User<true>>>({
+                    ok: false,
+                    error: new EntityNotFoundError(`Keycloak User with the following ID ${user.id} does not exist`),
+                });
+            });
+        });
+        describe('when user exists', () => {
+            it('should return user', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const roleNames: string[] = ['group1', 'group2'];
+
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [
+                    {
+                        id: 'group-id-1',
+                        name: 'group1',
+                    },
+                    {
+                        id: 'group-id-2',
+                        name: 'group2',
+                    },
+                ];
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+
+                kcUsersMock.listGroups.mockResolvedValueOnce([]);
+
+                kcUsersMock.addToGroup.mockResolvedValueOnce('group-id-1');
+                kcUsersMock.addToGroup.mockResolvedValueOnce('group-id-2');
+
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, roleNames);
+
+                expect(result).toStrictEqual<Result<void>>({
+                    ok: true,
+                    value: undefined,
+                });
+            });
+        });
+        describe('when no valid roles found', () => {
+            it('should return an error', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                kcGroupsMock.find.mockResolvedValueOnce([]);
+
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, [
+                    'non-existing-role',
+                ]);
+
+                expect(result).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: new EntityNotFoundError(`No valid groups found for the provided group names`),
+                });
+            });
+        });
+        describe('when user already has all roles', () => {
+            it('should return ok without assigning new roles', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [
+                    { id: 'group-id-1', name: 'group1' },
+                    { id: 'group-id-2', name: 'group2' },
+                ];
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+
+                kcUsersMock.listGroups.mockResolvedValueOnce(mockGroups);
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, [
+                    'group1',
+                    'group2',
+                ]);
+
+                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+            });
+        });
+        describe('when no roles are provided', () => {
+            it('should return ok without making any changes', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, []);
+
+                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+            });
+        });
+
+        describe('when some roles are not valid', () => {
+            it('should only assign the valid roles', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
+
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+                kcUsersMock.listGroups.mockResolvedValueOnce([]);
+                kcUsersMock.addToGroup.mockResolvedValueOnce('group-id-1');
+
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, [
+                    'group1',
+                    'invalid-group',
+                ]);
+
+                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+                expect(kcUsersMock.addToGroup).toHaveBeenCalledWith({
+                    id: user.id,
+                    groupId: 'group-id-1',
+                });
+                // Assert that only the valid group was passed to addToGroup
+                expect(kcUsersMock.addToGroup).not.toHaveBeenCalledWith({
+                    id: user.id,
+                    groupId: 'invalid-group',
+                });
+            });
+        });
+        describe('when an error occurs during group assignment', () => {
+            it('should log the error and return a DomainError', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const groupNames: string[] = ['group1', 'group2'];
+
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const error: Error = new Error('Simulated error during group assignment');
+                kcUsersMock.addToGroup.mockRejectedValueOnce(error);
+
+                await service.assignRealmGroupsToUser(user.id, groupNames);
+
+                expect(loggerMock.error).toHaveBeenCalled();
+            });
+        });
+        describe('when an error occurs during group assignment', () => {
+            it('should log the error and return a DomainError', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const groupNames: string[] = ['group1', 'group2'];
+
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [
+                    { id: 'group-id-1', name: 'group1' },
+                    { id: 'group-id-2', name: 'group2' },
+                ];
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+
+                kcUsersMock.listGroups.mockResolvedValueOnce([]);
+
+                const error: Error = new Error('Simulated error during group assignment');
+                kcUsersMock.addToGroup.mockRejectedValueOnce(error);
+
+                const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, groupNames);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Failed to assign groups for user ${user.id}: ${JSON.stringify(error)}`,
+                );
+
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Failed to assign groups'),
+                });
+            });
+        });
+    });
+    describe('removeRealmGroupsFromUser', () => {
+        describe('getAuthedKcAdminClient is not ok', () => {
+            it('should return a DomainError', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                kcUsersMock.create.mockResolvedValueOnce({ id: user.id });
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+
+                const res: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [rolle.name]);
+
+                expect(res).toBe(error);
+            });
+        });
+
+        describe('when user does not exist', () => {
+            it('should return error when findById fails', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const rolle2: Rolle<true> = DoFactory.createRolle(true);
+                kcUsersMock.findOne.mockResolvedValueOnce(undefined);
+                const groupNames: string[] = [rolle.name, rolle2.name];
+
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, groupNames);
+
+                expect(result).toStrictEqual<Result<User<true>>>({
+                    ok: false,
+                    error: new EntityNotFoundError(`Keycloak User with the following ID ${user.id} does not exist`),
+                });
+            });
+        });
+
+        describe('when user exists', () => {
+            it('should return ok after removing groups', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const groupNames: string[] = ['group1', 'group2'];
+
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [
+                    {
+                        id: 'group-id-1',
+                        name: 'group1',
+                    },
+                    {
+                        id: 'group-id-2',
+                        name: 'group2',
+                    },
+                ];
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+
+                kcUsersMock.listGroups.mockResolvedValueOnce(mockGroups);
+
+                kcUsersMock.delFromGroup.mockResolvedValueOnce('group-id-1');
+                kcUsersMock.delFromGroup.mockResolvedValueOnce('group-id-2');
+
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, groupNames);
+
+                expect(result).toStrictEqual<Result<void>>({
+                    ok: true,
+                    value: undefined,
+                });
+            });
+        });
+
+        describe('when no valid roles found', () => {
+            it('should return an error', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                kcGroupsMock.find.mockResolvedValueOnce([]);
+
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [
+                    'non-existing-role',
+                ]);
+
+                expect(result).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: new EntityNotFoundError(`No valid groups found for the provided group names`),
+                });
+            });
+        });
+
+        describe('when user does not have the roles', () => {
+            it('should return ok without removing any roles', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [
+                    { id: 'group-id-1', name: 'group1' },
+                    { id: 'group-id-2', name: 'group2' },
+                ];
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+
+                kcUsersMock.listGroups.mockResolvedValueOnce([]);
+
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [
+                    'group1',
+                    'group2',
+                ]);
+
+                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+            });
+        });
+
+        describe('when no roles are provided', () => {
+            it('should return ok without making any changes', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, []);
+
+                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+            });
+        });
+
+        describe('when some groups are not valid', () => {
+            it('should only remove the valid groups', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
+
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+                kcUsersMock.listGroups.mockResolvedValueOnce(mockGroups);
+                kcUsersMock.delFromGroup.mockResolvedValueOnce('group-id-1');
+
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, [
+                    'group1',
+                    'invalid-group',
+                ]);
+
+                expect(result).toStrictEqual<Result<void>>({ ok: true, value: undefined });
+                // Assert that only the valid role was passed to delFromGroup
+                expect(kcUsersMock.delFromGroup).toHaveBeenCalledWith({
+                    id: user.id,
+                    groupId: 'group-id-1',
+                });
+            });
+        });
+
+        describe('when an error occurs during group removal', () => {
+            it('should log the error and return a DomainError', async () => {
+                const user: User<true> = DoFactory.createUser(true);
+                const groupNames: string[] = ['group1', 'group2'];
+
+                kcUsersMock.findOne.mockResolvedValueOnce({
+                    id: user.id,
+                    username: user.username,
+                    email: user.email,
+                    createdTimestamp: user.createdDate.getTime(),
+                    enabled: true,
+                } as UserRepresentation);
+
+                const mockGroups: GroupRepresentation[] = [{ id: 'group-id-1', name: 'group1' }];
+
+                kcGroupsMock.find.mockResolvedValueOnce(mockGroups);
+                kcUsersMock.listGroups.mockResolvedValueOnce(mockGroups);
+
+                const error: Error = new Error('Simulated error during group removal');
+                kcUsersMock.delFromGroup.mockRejectedValueOnce(error);
+
+                const result: Result<void, DomainError> = await service.removeRealmGroupsFromUser(user.id, groupNames);
+
+                expect(loggerMock.error).toHaveBeenCalled();
+                expect(result).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: new KeycloakClientError('Failed to remove groups'),
+                });
+            });
+        });
         describe('updateKeycloakUserStatus', () => {
             it('should update user status successfully', async () => {
                 const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({

@@ -1,18 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import {
     CredentialRepresentation,
+    GroupRepresentation,
     KeycloakAdminClient,
     type UserRepresentation,
 } from '@s3pweb/keycloak-admin-client-cjs';
 import { plainToClass } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
+import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
 import { ExternalSystemIDs, User } from './user.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 
 export type FindUserFilter = {
     username?: string;
@@ -385,6 +386,108 @@ export class KeycloakUserService {
         );
 
         return { ok: true, value: userDo };
+    }
+
+    public async assignRealmGroupsToUser(
+        userId: string,
+        groupNames: (string | undefined)[],
+    ): Promise<Result<void, DomainError>> {
+        return this.modifyRealmGroupsForUser(userId, groupNames, 'assign');
+    }
+
+    public async removeRealmGroupsFromUser(
+        userId: string,
+        groupNames: (string | undefined)[],
+    ): Promise<Result<void, DomainError>> {
+        return this.modifyRealmGroupsForUser(userId, groupNames, 'remove');
+    }
+
+    private async modifyRealmGroupsForUser(
+        userId: string,
+        groupNames: (string | undefined)[],
+        action: 'assign' | 'remove',
+    ): Promise<Result<void, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        const userResult: Result<User<true>, DomainError> = await this.findById(userId);
+        if (!userResult.ok) {
+            return userResult;
+        }
+
+        const foundUserId: string = userResult.value.id;
+
+        try {
+            const allGroups: GroupRepresentation[] = await kcAdminClientResult.value.groups.find();
+            const filteredGroupNames: string[] = groupNames.filter(
+                (groupName: string | undefined): groupName is string => groupName !== undefined,
+            );
+
+            const groupsToModify: GroupRepresentation[] = this.filterValidGroups(allGroups, filteredGroupNames);
+            if (groupsToModify.length === 0) {
+                return {
+                    ok: false,
+                    error: new EntityNotFoundError(`No valid groups found for the provided group names`),
+                };
+            }
+
+            const userCurrentGroups: GroupRepresentation[] = await kcAdminClientResult.value.users.listGroups({
+                id: foundUserId,
+            });
+
+            const groupsToProcess: GroupRepresentation[] =
+                action === 'assign'
+                    ? this.findNewGroupsToAssign(groupsToModify, userCurrentGroups)
+                    : this.findGroupsToRemove(groupsToModify, userCurrentGroups);
+
+            if (groupsToProcess.length === 0) {
+                return { ok: true, value: undefined };
+            }
+
+            for (const group of groupsToProcess) {
+                if (action === 'assign') {
+                    await kcAdminClientResult.value.users.addToGroup({ id: foundUserId, groupId: group.id! });
+                } else {
+                    await kcAdminClientResult.value.users.delFromGroup({ id: foundUserId, groupId: group.id! });
+                }
+            }
+
+            return { ok: true, value: undefined };
+        } catch (err) {
+            this.logger.error(`Failed to ${action} groups for user ${userId}: ${JSON.stringify(err)}`);
+            return { ok: false, error: new KeycloakClientError(`Failed to ${action} groups`) };
+        }
+    }
+
+    private filterValidGroups(allGroups: GroupRepresentation[], groupNames: string[]): GroupRepresentation[] {
+        return allGroups
+            .filter((group: GroupRepresentation) => groupNames.some((groupName: string) => group.name === groupName))
+            .filter(
+                (group: GroupRepresentation | undefined): group is GroupRepresentation =>
+                    group !== undefined && group.id !== undefined && group.name !== undefined,
+            );
+    }
+
+    private findNewGroupsToAssign(
+        validGroups: GroupRepresentation[],
+        userCurrentGroups: GroupRepresentation[],
+    ): GroupRepresentation[] {
+        return validGroups.filter(
+            (group: GroupRepresentation) =>
+                !userCurrentGroups.some((userGroup: GroupRepresentation) => userGroup.id === group.id),
+        );
+    }
+
+    private findGroupsToRemove(
+        validGroups: GroupRepresentation[],
+        userCurrentGroups: GroupRepresentation[],
+    ): GroupRepresentation[] {
+        return validGroups.filter((group: GroupRepresentation) =>
+            userCurrentGroups.some((userGroup: GroupRepresentation) => userGroup.id === group.id),
+        );
     }
 
     public async updateKeycloakUserStatus(
