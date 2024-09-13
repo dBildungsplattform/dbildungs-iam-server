@@ -335,15 +335,6 @@ export class PersonenkontexteUpdate {
             }
         }
 
-        // Update the personalnummer if it is provided
-        if (this.personalnummer) {
-            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
-            if (person) {
-                person.personalnummer = this.personalnummer;
-                await this.personRepo.save(person);
-            }
-        }
-
         await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate, ldapEntryUUID);
 
         return existingPKsAfterUpdate;
