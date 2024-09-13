@@ -4,6 +4,7 @@ import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { TokenStateResponse } from './token-state.response.js';
 import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { ResetTokenResponse } from './privacy-idea-api.types.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { Person } from '../person/domain/person.js';
@@ -14,12 +15,13 @@ import { AssignHardwareTokenResponse } from './api/assign-hardware-token.respons
 import { TokenError } from './api/error/token.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
     let sut: PrivacyIdeaAdministrationController;
     let serviceMock: DeepMocked<PrivacyIdeaAdministrationService>;
-    let personRepository: PersonRepository;
+    let personRepository: DeepMocked<PersonRepository>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
     function getPerson(emptyReferrer: boolean = false): Person<true> {
@@ -46,16 +48,14 @@ describe('PrivacyIdeaAdministrationController', () => {
                 },
                 {
                     provide: PersonRepository,
-                    useValue: {
-                        getPersonIfAllowed: jest.fn(),
-                    },
+                    useValue: createMock<PersonRepository>(),
                 },
             ],
         }).compile();
 
         sut = module.get<PrivacyIdeaAdministrationController>(PrivacyIdeaAdministrationController);
         serviceMock = module.get<DeepMocked<PrivacyIdeaAdministrationService>>(PrivacyIdeaAdministrationService);
-        personRepository = module.get<PersonRepository>(PersonRepository);
+        personRepository = module.get<DeepMocked<PersonRepository>>(PersonRepository);
     });
 
     afterAll(async () => {
@@ -69,10 +69,9 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController initializeSoftwareToken', () => {
         it('should successfully create a token', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
             const person: Person<true> = getPerson();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
@@ -83,9 +82,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return forbidden insufficient permissions', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Forbidden access'),
             });
@@ -96,9 +93,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return user not found if referrer is undefined', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
             });
@@ -111,11 +106,10 @@ describe('PrivacyIdeaAdministrationController', () => {
 
     describe('PrivacyIdeaAdministrationController getTwoAuthState', () => {
         it('should successfully retrieve token state', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
             const person: Person<true> = getPerson();
             const twoFaRequired: boolean = true;
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
@@ -159,11 +153,10 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should successfully retrieve empty token state when user is undefined', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
             const person: Person<true> = getPerson();
             const twoFaRequired: boolean = true;
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
@@ -177,9 +170,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return forbidden insufficient permissions', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Forbidden access'),
             });
@@ -190,9 +181,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         });
 
         it('should return user not found if referrer is undefined', async () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
             });
@@ -202,6 +191,86 @@ describe('PrivacyIdeaAdministrationController', () => {
             );
         });
     });
+    describe('PrivacyIdeaAdministrationController resetToken', () => {
+        it('should successfully reset a token', async () => {
+            const person: Person<true> = getPerson();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+            const personId: string = 'user1';
+            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>({
+                result: { status: true },
+            });
+            serviceMock.resetToken.mockResolvedValue(mockResetTokenResponse);
+
+            const response: boolean = await sut.resetToken(personId, personPermissionsMock);
+
+            expect(response).toEqual(mockResetTokenResponse.result.status);
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+        });
+
+        it('should return bad request if username is not given or not found', async () => {
+            const personId: string = 'user1';
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: false,
+                error: new Error('Forbidden access'),
+            });
+
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
+                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+            );
+        });
+
+        it('should return unauthorized if not authorized to reset token', async () => {
+            const personId: string = 'user1';
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: getPerson(true),
+            });
+
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+
+        it('should throw TokenError if caught during resetToken', async () => {
+            const person: Person<true> = getPerson();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+
+            const personId: string = 'user1';
+            const tokenError: TokenError = new TokenError('Something went wrong', 'Error');
+            serviceMock.resetToken.mockRejectedValue(tokenError);
+
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(tokenError);
+
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+        });
+
+        it('should map other errors to SchulConnexError', async () => {
+            const person: Person<true> = getPerson();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+
+            const personId: string = 'user1';
+            const entityCouldNotBeUpdatedError: EntityCouldNotBeUpdated = createMock<EntityCouldNotBeUpdated>();
+            serviceMock.resetToken.mockRejectedValue(entityCouldNotBeUpdatedError);
+
+            await expect(sut.resetToken(personId, personPermissionsMock)).rejects.toThrow(
+                SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(entityCouldNotBeUpdatedError),
+                ),
+            );
+
+            expect(serviceMock.resetToken).toHaveBeenCalledWith(person.referrer);
+        });
+    });
+
     describe('PrivacyIdeaAdministrationController assignHardwareToken', () => {
         beforeEach(() => {
             personPermissionsMock = createMock<PersonPermissions>();
@@ -212,12 +281,12 @@ describe('PrivacyIdeaAdministrationController', () => {
             const mockAssignTokenResponse: AssignTokenResponse = createMock<AssignTokenResponse>();
             const person: Person<true> = getPerson();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
 
-            serviceMock.assignHardwareToken.mockResolvedValue(mockAssignTokenResponse);
+            serviceMock.assignHardwareToken.mockResolvedValueOnce(mockAssignTokenResponse);
             const response: AssignHardwareTokenResponse | undefined = await sut.assignHardwareToken(
                 mockParams,
                 personPermissionsMock,
@@ -239,7 +308,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         it('should return forbidden if permissions are insufficient', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Forbidden access'),
             });
@@ -252,7 +321,7 @@ describe('PrivacyIdeaAdministrationController', () => {
         it('should return user not found if referrer is undefined', async () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: getPerson(true),
             });
@@ -266,7 +335,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             const mockParams: AssignHardwareTokenBodyParams = createMock<AssignHardwareTokenBodyParams>();
             const tokenError: TokenError = new TokenError('Something went wrong', 'Error');
             const person: Person<true> = getPerson();
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
@@ -281,7 +350,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             const unexpectedError: Error = new Error('Unexpected error');
             const entityCouldNotBeCreatedError: EntityCouldNotBeCreated = createMock<EntityCouldNotBeCreated>();
             const person: Person<true> = getPerson();
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });

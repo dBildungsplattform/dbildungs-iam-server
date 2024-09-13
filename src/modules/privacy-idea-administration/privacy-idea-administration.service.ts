@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
+import { uniq } from 'lodash-es';
 import { firstValueFrom } from 'rxjs';
 import { PrivacyIdeaConfig } from '../../shared/config/privacyidea.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
@@ -13,6 +14,8 @@ import { HardwareTokenServiceError } from './api/error/hardware-token-service.er
 import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
 import { SerialInUseError } from './api/error/serial-in-use.error.js';
 import { SerialNotFoundError } from './api/error/serial-not-found.error.js';
+import { TokenResetError } from './api/error/token-reset.error.js';
+import { TwoAuthStateError } from './api/error/two-auth-state.error.js';
 import {
     AssignTokenPayload,
     AssignTokenResponse,
@@ -21,11 +24,12 @@ import {
     InitSoftwareTokenPayload,
     PrivacyIdeaResponseTokens,
     PrivacyIdeaToken,
+    ResetTokenPayload,
+    ResetTokenResponse,
     TokenOTPSerialResponse,
     TokenVerificationResponse,
     UserResponse,
 } from './privacy-idea-api.types.js';
-import { uniq } from 'lodash-es';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -290,6 +294,48 @@ export class PrivacyIdeaAdministrationService {
         }
         // Call assignToken
         return this.assignToken(serial, token, user);
+    }
+
+    public async resetToken(user: string): Promise<ResetTokenResponse> {
+        try {
+            const token: string = await this.getJWTToken();
+            const twoAuthState: PrivacyIdeaToken | undefined = await this.getTwoAuthState(user);
+            if (!twoAuthState) {
+                throw new TwoAuthStateError();
+            }
+            const serial: string = twoAuthState.serial;
+            const response: ResetTokenResponse = await this.unassignToken(serial, token);
+            return response;
+        } catch (error) {
+            throw new TokenResetError();
+        }
+    }
+
+    public async unassignToken(serial: string, token: string): Promise<ResetTokenResponse> {
+        const endpoint: string = '/token/unassign';
+        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
+        const url: string = baseUrl + endpoint;
+        const headers: { Authorization: string; 'Content-Type': string } = {
+            Authorization: `${token}`,
+            'Content-Type': 'application/json',
+        };
+
+        const payload: ResetTokenPayload = {
+            serial,
+        };
+
+        try {
+            const response: AxiosResponse<ResetTokenResponse> = await firstValueFrom(
+                this.httpService.post(url, payload, { headers }),
+            );
+            return response.data;
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error unassigning token: ${error.message}`);
+            } else {
+                throw new Error(`Error unassigning token: Unknown error occurred`);
+            }
+        }
     }
 
     public async requires2fa(personId: string): Promise<boolean> {

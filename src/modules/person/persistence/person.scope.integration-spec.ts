@@ -13,7 +13,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { faker } from '@faker-js/faker';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
@@ -27,7 +27,7 @@ describe('PersonScope', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let em: EntityManager;
-    let kontextRepo: DBiamPersonenkontextRepo;
+    let kontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let rolleRepo: RolleRepo;
     let personenkontextFactory: PersonenkontextFactory;
 
@@ -42,7 +42,7 @@ describe('PersonScope', () => {
             orgnisationID,
             rolleID,
         );
-        await kontextRepo.save(personkentext);
+        await kontextRepoInternal.save(personkentext);
     };
 
     beforeAll(async () => {
@@ -53,11 +53,17 @@ describe('PersonScope', () => {
                 MapperTestModule,
                 PersonenKontextModule,
             ],
-            providers: [DBiamPersonenkontextRepo, RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository],
+            providers: [
+                DBiamPersonenkontextRepoInternal,
+                RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
+                OrganisationRepository,
+            ],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        kontextRepo = module.get(DBiamPersonenkontextRepo);
+        kontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         rolleRepo = module.get(RolleRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
 

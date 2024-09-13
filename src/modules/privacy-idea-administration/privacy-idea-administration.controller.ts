@@ -1,7 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Post, Query, UseFilters } from '@nestjs/common';
-import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
-import { Public } from '../authentication/api/public.decorator.js';
-import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpException,
+    HttpStatus,
+    Post,
+    Put,
+    Query,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -14,19 +22,23 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { TokenStateResponse } from './token-state.response.js';
-import { TokenInitBodyParams } from './token-init.body.params.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
+import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
+import { Public } from '../authentication/api/public.decorator.js';
+import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
 import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
 import { TokenError } from './api/error/token.error.js';
 import { PrivacyIdeaAdministrationExceptionFilter } from './api/privacy-idea-administration-exception-filter.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
-import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
 import { TokenRequiredResponse } from './api/token-required.response.js';
+import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
+import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
+import { TokenInitBodyParams } from './token-init.body.params.js';
+import { TokenStateResponse } from './token-state.response.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
@@ -52,20 +64,8 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: TokenInitBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<string> {
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            params.personId,
-            permissions,
-        );
-
-        if (!personResult.ok) {
-            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
-        }
-
-        if (personResult.value.referrer === undefined) {
-            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
-        }
-
-        return this.privacyIdeaAdministrationService.initializeSoftwareToken(personResult.value.referrer);
+        const referrer: string = await this.getPersonIfAllowed(params.personId, permissions);
+        return this.privacyIdeaAdministrationService.initializeSoftwareToken(referrer);
     }
 
     @Get('state')
@@ -81,21 +81,39 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenStateResponse> {
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            personId,
-            permissions,
-        );
-        if (!personResult.ok) {
-            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
-        }
-
-        if (personResult.value.referrer === undefined) {
-            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
-        }
-        const piToken: PrivacyIdeaToken | undefined = await this.privacyIdeaAdministrationService.getTwoAuthState(
-            personResult.value.referrer,
-        );
+        const referrer: string = await this.getPersonIfAllowed(personId, permissions);
+        const piToken: PrivacyIdeaToken | undefined =
+            await this.privacyIdeaAdministrationService.getTwoAuthState(referrer);
         return new TokenStateResponse(piToken);
+    }
+
+    @Put('reset')
+    @HttpCode(HttpStatus.OK)
+    @ApiCreatedResponse({ description: 'The token was successfully reset.', type: Boolean })
+    @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to reset token.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to reset token.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to reset token.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while reseting a token.' })
+    @Public()
+    public async resetToken(
+        @Query('personId') personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<boolean> {
+        const referrer: string = await this.getPersonIfAllowed(personId, permissions);
+        try {
+            const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
+            return response.result.status;
+        } catch (error) {
+            if (error instanceof TokenError) {
+                throw error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeUpdated(referrer, 'Token could not be unassigned.'),
+                ),
+            );
+        }
     }
 
     @Post('assign/hardwareToken')
@@ -114,22 +132,12 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: AssignHardwareTokenBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<AssignHardwareTokenResponse | undefined> {
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            params.userId,
-            permissions,
-        );
-        if (!personResult.ok) {
-            throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
-        }
-
-        if (personResult.value.referrer === undefined) {
-            throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
-        }
+        const referrer: string = await this.getPersonIfAllowed(params.userId, permissions);
         try {
             const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
                 params.serial,
                 params.otp,
-                personResult.value.referrer,
+                referrer,
             );
             return new AssignHardwareTokenResponse(
                 result.id,
@@ -167,6 +175,13 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenRequiredResponse> {
+        await this.getPersonIfAllowed(personId, permissions);
+
+        const requires2fa: boolean = await this.privacyIdeaAdministrationService.requires2fa(personId);
+        return new TokenRequiredResponse(requires2fa);
+    }
+
+    private async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
             permissions,
@@ -174,12 +189,9 @@ export class PrivacyIdeaAdministrationController {
         if (!personResult.ok) {
             throw new HttpException(personResult.error, HttpStatus.FORBIDDEN);
         }
-
         if (personResult.value.referrer === undefined) {
             throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
         }
-
-        const requires2fa: boolean = await this.privacyIdeaAdministrationService.requires2fa(personId);
-        return new TokenRequiredResponse(requires2fa);
+        return personResult.value.referrer;
     }
 }
