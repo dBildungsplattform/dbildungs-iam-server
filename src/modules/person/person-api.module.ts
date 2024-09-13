@@ -4,7 +4,6 @@ import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonController } from './api/person.controller.js';
 import { PersonModule } from './person.module.js';
 import { PersonFrontendController } from './api/person.frontend.controller.js';
-import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
@@ -25,7 +24,7 @@ import { PersonDeleteModule } from './person-deletion/person-delete.module.js';
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],
-    providers: [PersonenkontextUc, PersonApiMapper, PersonApiMapperProfile],
+    providers: [PersonApiMapper, PersonApiMapperProfile],
     controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController, PersonInfoController],
 })
 export class PersonApiModule {}

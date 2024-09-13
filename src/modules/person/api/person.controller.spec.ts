@@ -1,24 +1,16 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { HttpException } from '@nestjs/common';
+import { HttpException, NotImplementedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
-import {
-    Jahrgangsstufe,
-    Personenstatus,
-    Rolle,
-    SichtfreigabeType,
-} from '../../personenkontext/domain/personenkontext.enums.js';
+import { Personenstatus, Rolle, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonController } from './person.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
-import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
@@ -36,7 +28,6 @@ import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-t
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
@@ -47,7 +38,6 @@ import { PersonDomainError } from '../domain/person-domain.error.js';
 describe('PersonController', () => {
     let module: TestingModule;
     let personController: PersonController;
-    let personenkontextUcMock: DeepMocked<PersonenkontextUc>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
@@ -64,10 +54,6 @@ describe('PersonController', () => {
                 PersonController,
                 PersonFactory,
                 PersonApiMapper,
-                {
-                    provide: PersonenkontextUc,
-                    useValue: createMock<PersonenkontextUc>(),
-                },
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -107,7 +93,6 @@ describe('PersonController', () => {
             ],
         }).compile();
         personController = module.get(PersonController);
-        personenkontextUcMock = module.get(PersonenkontextUc);
         personRepositoryMock = module.get(PersonRepository);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         personenkontextServiceMock = module.get(PersonenkontextService);
@@ -426,88 +411,8 @@ describe('PersonController', () => {
     });
 
     describe('createPersonenkontext', () => {
-        describe('when creating a personenkontext is successful', () => {
-            it('should not throw', async () => {
-                const pathParams: PersonByIdParams = {
-                    personId: faker.string.uuid(),
-                };
-                const body: CreatePersonenkontextBodyParams = {
-                    rolle: Rolle.LEHRENDER,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    referrer: 'referrer',
-                };
-                const ucResult: CreatedPersonenkontextDto = {
-                    id: faker.string.uuid(),
-                    mandant: faker.string.uuid(),
-                    organisation: {
-                        id: faker.string.uuid(),
-                    },
-                    revision: '1',
-                    rolle: Rolle.LEHRENDER,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    referrer: 'referrer',
-                    loeschung: { zeitpunkt: faker.date.past() },
-                };
-                personenkontextUcMock.createPersonenkontext.mockResolvedValue(ucResult);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
-                await expect(
-                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
-                ).resolves.toBeInstanceOf(PersonenkontextResponse);
-                expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when creating a personenkontext returns a SchulConnexError', () => {
-            it('should throw HttpException', async () => {
-                const pathParams: PersonByIdParams = {
-                    personId: faker.string.uuid(),
-                };
-                const body: CreatePersonenkontextBodyParams = {
-                    rolle: Rolle.LEHRENDER,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    referrer: 'referrer',
-                };
-                personPermissionsMock = createMock<PersonPermissions>();
-
-                personenkontextUcMock.createPersonenkontext.mockResolvedValue(
-                    new SchulConnexError({} as SchulConnexError),
-                );
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
-
-                await expect(
-                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
-                expect(personenkontextUcMock.createPersonenkontext).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when permissions are insufficient to create personenkontext', () => {
-            it('should throw HttpNotFoundException', async () => {
-                const pathParams: PersonByIdParams = {
-                    personId: faker.string.uuid(),
-                };
-                const body: CreatePersonenkontextBodyParams = {
-                    rolle: Rolle.LEHRENDER,
-                    jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-                    personenstatus: Personenstatus.AKTIV,
-                    referrer: 'referrer',
-                };
-                personenkontextUcMock.createPersonenkontext.mockResolvedValue(
-                    new SchulConnexError({} as SchulConnexError),
-                );
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
-                    ok: false,
-                    error: new EntityNotFoundError(),
-                });
-                personPermissionsMock = createMock<PersonPermissions>();
-
-                await expect(
-                    personController.createPersonenkontext(pathParams, body, personPermissionsMock),
-                ).rejects.toThrow(HttpException);
-            });
+        it('should throw NotImplemented error', () => {
+            expect(() => personController.createPersonenkontext()).toThrow(NotImplementedException);
         });
     });
 

@@ -28,7 +28,7 @@ import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.response.js';
 import { PagedResponse } from '../../../../shared/paging/index.js';
 import { PersonPermissionsRepo } from '../../../authentication/domain/person-permission.repo.js';
@@ -54,7 +54,7 @@ describe('Personenuebersicht API', () => {
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let personenkontextFactory: PersonenkontextFactory;
-    let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
+    let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let organisationRepository: OrganisationRepository;
 
@@ -95,7 +95,7 @@ describe('Personenuebersicht API', () => {
                 PersonRepository,
                 RolleFactory,
                 RolleRepo,
-                DBiamPersonenkontextRepo,
+                DBiamPersonenkontextRepoInternal,
                 PersonenkontextFactory,
                 PersonRepository,
                 OrganisationRepository,
@@ -125,7 +125,7 @@ describe('Personenuebersicht API', () => {
         usernameGeneratorService.generateUsername = jest.fn().mockResolvedValue({ ok: true, value: 'mockUsername' });
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
-        dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
         organisationRepository = module.get(OrganisationRepository);
@@ -252,13 +252,13 @@ describe('Personenuebersicht API', () => {
                         true,
                     );
 
-                    const personenkontext1: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
+                    const personenkontext1: Personenkontext<true> = await dBiamPersonenkontextRepoInternal.save(
                         personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle1.id),
                     );
-                    const personenkontext2: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
+                    const personenkontext2: Personenkontext<true> = await dBiamPersonenkontextRepoInternal.save(
                         personenkontextFactory.createNew(savedPerson.id, savedOrganisation1.id, savedRolle2.id),
                     );
-                    const personenkontext3: Personenkontext<true> = await dBiamPersonenkontextRepo.save(
+                    const personenkontext3: Personenkontext<true> = await dBiamPersonenkontextRepoInternal.save(
                         personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
                     );
 
@@ -398,13 +398,13 @@ describe('Personenuebersicht API', () => {
                         true,
                     );
 
-                    await dBiamPersonenkontextRepo.save(
+                    await dBiamPersonenkontextRepoInternal.save(
                         personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id),
                     );
-                    await dBiamPersonenkontextRepo.save(
+                    await dBiamPersonenkontextRepoInternal.save(
                         personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id),
                     );
-                    await dBiamPersonenkontextRepo.save(
+                    await dBiamPersonenkontextRepoInternal.save(
                         personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
                     );
 
@@ -497,13 +497,13 @@ describe('Personenuebersicht API', () => {
                 true,
             );
 
-            await dBiamPersonenkontextRepo.save(
+            await dBiamPersonenkontextRepoInternal.save(
                 personenkontextFactory.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle1.id),
             );
-            await dBiamPersonenkontextRepo.save(
+            await dBiamPersonenkontextRepoInternal.save(
                 personenkontextFactory.createNew(savedPerson1.id, savedOrganisation1.id, savedRolle2.id),
             );
-            await dBiamPersonenkontextRepo.save(
+            await dBiamPersonenkontextRepoInternal.save(
                 personenkontextFactory.createNew(savedPerson1.id, savedOrganisation2.id, savedRolle2.id),
             );
 

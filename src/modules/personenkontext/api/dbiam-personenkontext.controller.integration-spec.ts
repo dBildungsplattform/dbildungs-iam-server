@@ -23,7 +23,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
@@ -43,7 +43,7 @@ describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
     let orm: MikroORM;
 
-    let personenkontextRepo: DBiamPersonenkontextRepo;
+    let personenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personRepo: PersonRepository;
     let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
@@ -92,7 +92,7 @@ describe('dbiam Personenkontext API', () => {
             .compile();
 
         orm = module.get(MikroORM);
-        personenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        personenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personRepo = module.get(PersonRepository);
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
@@ -148,19 +148,19 @@ describe('dbiam Personenkontext API', () => {
             }
             const [pk1, pk2]: [Personenkontext<true>, Personenkontext<true>, Personenkontext<true>] = await Promise.all(
                 [
-                    personenkontextRepo.save(
+                    personenkontextRepoInternal.save(
                         DoFactory.createPersonenkontext(false, {
                             personId: personA.id,
                             rolleId: rolleA.id,
                         }),
                     ),
-                    personenkontextRepo.save(
+                    personenkontextRepoInternal.save(
                         DoFactory.createPersonenkontext(false, {
                             personId: personA.id,
                             rolleId: rolleB.id,
                         }),
                     ),
-                    personenkontextRepo.save(
+                    personenkontextRepoInternal.save(
                         DoFactory.createPersonenkontext(false, {
                             personId: personB.id,
                             rolleId: rolleC.id,

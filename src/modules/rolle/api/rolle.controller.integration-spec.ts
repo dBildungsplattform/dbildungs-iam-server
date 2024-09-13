@@ -36,7 +36,7 @@ import { PassportUser } from '../../authentication/types/user.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
@@ -53,7 +53,7 @@ describe('Rolle API', () => {
     let rolleRepo: RolleRepo;
     let personRepo: PersonRepository;
     let serviceProviderRepo: ServiceProviderRepo;
-    let dBiamPersonenkontextRepo: DBiamPersonenkontextRepo;
+    let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let personFactory: PersonFactory;
@@ -117,7 +117,7 @@ describe('Rolle API', () => {
         serviceProviderRepo = module.get(ServiceProviderRepo);
         personFactory = module.get(PersonFactory);
 
-        dBiamPersonenkontextRepo = module.get(DBiamPersonenkontextRepo);
+        dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         personPermissionsMock = createMock<PersonPermissions>();
@@ -717,7 +717,7 @@ describe('Rolle API', () => {
                     }),
                 );
 
-                await dBiamPersonenkontextRepo.save(
+                await dBiamPersonenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
@@ -816,7 +816,7 @@ describe('Rolle API', () => {
                     }),
                 );
 
-                await dBiamPersonenkontextRepo.save(
+                await dBiamPersonenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
