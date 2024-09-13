@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
+import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { KeycloakGroupRoleService } from '../../keycloak-administration/domain/keycloak-group-role.service.js';
 
 @Injectable()
@@ -12,9 +12,9 @@ export class CreateGroupAndRoleHandler {
         private readonly logger: ClassLogger,
     ) {}
 
-    @EventHandler(CreateGroupAndRoleEvent)
-    public async handleCreateGroupAndRoleEvent(event: CreateGroupAndRoleEvent): Promise<void> {
-        this.logger.info(`Received CreateGroupAndRoleEvent, groupName: ${event.groupName}`);
+    @EventHandler(GroupAndRoleCreatedEvent)
+    public async handleCreateGroupAndRoleEvent(event: GroupAndRoleCreatedEvent): Promise<void> {
+        this.logger.info(`Received GroupAndRoleCreatedEvent, groupName: ${event.groupName}`);
 
         const group: Result<string, DomainError> = await this.keycloakGroupRoleService.createGroup(event.groupName);
         if (!group.ok) {

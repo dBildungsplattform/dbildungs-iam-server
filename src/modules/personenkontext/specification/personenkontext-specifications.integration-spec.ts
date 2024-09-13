@@ -103,6 +103,8 @@ describe('PersonenkontextSpecifications Integration', () => {
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .overrideProvider(DBiamPersonenkontextRepo)
+            .useValue(createMock<DBiamPersonenkontextRepo>())
             .compile();
         organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
