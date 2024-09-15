@@ -87,20 +87,17 @@ export class Rolle<WasPersisted extends boolean> {
             [],
             istTechnisch,
         );
-
         //Replace service providers with new ones
-        const serviceProviderAttachPromises: Promise<void>[] = serviceProviderIds.map(
-            async (serviceProviderId: string) => {
-                await rolleToUpdate.attachServiceProvider(serviceProviderId);
-            },
+        const attachmentResults: (void | DomainError)[] = await Promise.all(
+            serviceProviderIds.map(async (serviceProviderId: string) => {
+                return rolleToUpdate.attachServiceProvider(serviceProviderId);
+            }),
         );
-        try {
-            await Promise.all(serviceProviderAttachPromises);
-        } catch (error) {
-            if (error instanceof DomainError) {
-                return error;
+
+        for (const result of attachmentResults) {
+            if (result instanceof DomainError) {
+                return result;
             }
-            throw error;
         }
 
         return rolleToUpdate;
