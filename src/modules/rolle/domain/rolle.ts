@@ -99,10 +99,8 @@ export class Rolle<WasPersisted extends boolean> {
             }),
         );
 
-        for (const result of attachmentResults) {
-            if (result instanceof DomainError) {
-                return result;
-            }
+        if (attachmentResults.some((result: void | DomainError) => result instanceof DomainError)) {
+            return attachmentResults.find((result: void | DomainError) => result instanceof DomainError) as DomainError;
         }
 
         return rolleToUpdate;
