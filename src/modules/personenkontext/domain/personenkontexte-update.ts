@@ -223,6 +223,7 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 try {
+                    /* eslint-disable no-await-in-loop */
                     await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
                     deletedPKs.push(existingPK);
                     /* eslint-disable no-await-in-loop */

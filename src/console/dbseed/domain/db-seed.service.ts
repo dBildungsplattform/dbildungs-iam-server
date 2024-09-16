@@ -140,6 +140,7 @@ export class DbSeedService {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderUUIDs.push(sp.id);
             }
+            /* eslint-disable no-await-in-loop */
             const serviceProviderData: ServiceProvider<true>[] = [];
             for (const spId of file.serviceProviderIds) {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
