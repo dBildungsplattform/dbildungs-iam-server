@@ -1,17 +1,22 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { GroupRepresentation, KeycloakAdminClient, UserRepresentation } from '@s3pweb/keycloak-admin-client-cjs';
+import {
+    CredentialRepresentation,
+    GroupRepresentation,
+    KeycloakAdminClient,
+    UserRepresentation,
+} from '@s3pweb/keycloak-admin-client-cjs';
 
 import { faker } from '@faker-js/faker';
 import { ConfigTestModule, DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
+import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
+import { PersonService } from '../../person/domain/person.service.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
-import { PersonService } from '../../person/domain/person.service.js';
 import { User } from './user.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -1378,6 +1383,129 @@ describe('KeycloakUserService', () => {
                     expect(keyCloakAdminClient.users.findOne).toHaveBeenCalledWith({ id: userId });
                     expect(actual).toBeUndefined();
                 });
+            });
+        });
+    });
+
+    describe('getLastPasswordChange', () => {
+        const userCreationTimestamp: number = faker.date.past().valueOf();
+        const mockUser: UserRepresentation = { id: faker.string.uuid(), createdTimestamp: userCreationTimestamp };
+        describe('when the password has been updated', () => {
+            const updatedAt: Date = new Date();
+            const mockCredentials: Array<CredentialRepresentation> = [
+                { type: 'password', createdDate: updatedAt.valueOf() },
+                { type: 'other', createdDate: faker.date.past().valueOf() },
+            ];
+            it('should return the timestamp', async () => {
+                kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
+                kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                expect(result).toStrictEqual({
+                    ok: true,
+                    value: updatedAt,
+                });
+            });
+        });
+        describe('when the credential request fails', () => {
+            it('should return an error', async () => {
+                kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
+                kcUsersMock.getCredentials.mockRejectedValueOnce({});
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Keycloak request failed'),
+                });
+            });
+        });
+
+        describe('when the password has not been updated', () => {
+            it('should return an error', async () => {
+                const updatedAt: number = mockUser.createdTimestamp!;
+                const mockCredentials: Array<CredentialRepresentation> = [
+                    { type: 'password', createdDate: updatedAt },
+                    { type: 'other', createdDate: faker.date.past().valueOf() },
+                ];
+                kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
+                kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Keycloak user password has never been updated'),
+                });
+            });
+        });
+        describe('when the user does not exist', () => {
+            const updatedAt: number = mockUser.createdTimestamp!;
+            const mockCredentials: Array<CredentialRepresentation> = [
+                { type: 'password', createdDate: updatedAt },
+                { type: 'other', createdDate: faker.date.past().valueOf() },
+            ];
+            it('should return an error', async () => {
+                kcUsersMock.findOne.mockRejectedValueOnce(null);
+                kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Keycloak request failed'),
+                });
+            });
+        });
+        describe('when the user does not have a proper timestamp', () => {
+            const updatedAt: number = mockUser.createdTimestamp!;
+            const brokenUser: UserRepresentation = { id: faker.string.uuid() };
+            const mockCredentials: Array<CredentialRepresentation> = [
+                { type: 'password', createdDate: updatedAt },
+                { type: 'other', createdDate: faker.date.past().valueOf() },
+            ];
+            it('should return an error', async () => {
+                kcUsersMock.findOne.mockResolvedValueOnce(brokenUser);
+                kcUsersMock.getCredentials.mockResolvedValueOnce(mockCredentials);
+                const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                expect(result).toStrictEqual({
+                    ok: false,
+                    error: new KeycloakClientError('Keycloak user has no createdTimestamp'),
+                });
+            });
+        });
+        describe('when something is wrong with the credentials', () => {
+            const data: Array<{ credentials: Array<CredentialRepresentation>; error: string }> = [
+                { credentials: [], error: 'Keycloak returned no credentials' },
+                { credentials: [{ type: 'other' }], error: 'Keycloak user has no password' },
+                { credentials: [{ type: 'password' }], error: 'Keycloak user password has no createdDate' },
+                {
+                    credentials: [{ type: 'password', createdDate: userCreationTimestamp }],
+                    error: 'Keycloak user password has never been updated',
+                },
+            ];
+            beforeEach(() => {
+                kcUsersMock.findOne.mockReset();
+                kcUsersMock.getCredentials.mockReset();
+            });
+            it.each(data)(
+                'should return an error',
+                async ({ credentials, error }: { credentials: Array<CredentialRepresentation>; error: string }) => {
+                    kcUsersMock.findOne.mockResolvedValueOnce(mockUser);
+                    kcUsersMock.getCredentials.mockResolvedValueOnce(credentials);
+                    const result: Result<Date, DomainError> = await service.getLastPasswordChange(mockUser.id!);
+                    expect(result).toStrictEqual({
+                        ok: false,
+                        error: new KeycloakClientError(error),
+                    });
+                },
+            );
+        });
+
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should pass along error result', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+                const res: Result<Date, DomainError> = await service.getLastPasswordChange(faker.string.uuid());
+
+                expect(res).toBe(error);
             });
         });
     });
