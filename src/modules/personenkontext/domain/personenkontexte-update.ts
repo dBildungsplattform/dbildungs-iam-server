@@ -235,7 +235,6 @@ export class PersonenkontexteUpdate {
         return deletedPKs;
     }
 
-    // TODO: Since we are writting to the database can this be written in a batch process?
     /* eslint-disable no-await-in-loop */
     private async add(
         existingPKs: Personenkontext<true>[],

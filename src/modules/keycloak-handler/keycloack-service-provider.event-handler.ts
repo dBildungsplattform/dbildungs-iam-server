@@ -63,6 +63,7 @@ export class KeycloackServiceProviderHandler {
             .filter((id: RolleID) => id && !newRolleIDs.includes(id));
 
         if (person.keycloakUserId) {
+            /* eslint-disable no-await-in-loop */
             if (newRolleIDs.length > 0 && currentKontexte.length) {
                 for (const newRolle of newRolleIDs) {
                     if (!deleteRolleIDs.includes(newRolle)) {
@@ -79,6 +80,7 @@ export class KeycloackServiceProviderHandler {
                 }
             }
         }
+        /* eslint-disable no-await-in-loop */
     }
 
     private async updateUserGroups(
