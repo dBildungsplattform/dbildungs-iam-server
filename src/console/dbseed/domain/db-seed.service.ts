@@ -135,14 +135,11 @@ export class DbSeedService {
         const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
         for (const file of files) {
             const serviceProviderUUIDs: string[] = [];
+            const serviceProviderData: ServiceProvider<true>[] = [];
             /* eslint-disable no-await-in-loop */
             for (const spId of file.serviceProviderIds) {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderUUIDs.push(sp.id);
-            }
-            const serviceProviderData: ServiceProvider<true>[] = [];
-            for (const spId of file.serviceProviderIds) {
-                const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderData.push(sp);
             }
             const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(
