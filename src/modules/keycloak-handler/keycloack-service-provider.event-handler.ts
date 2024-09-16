@@ -61,7 +61,7 @@ export class KeycloackServiceProviderHandler {
         const currentRolleIDs: RolleID[] = currentKontexte
             .map((kontext: PersonenkontextUpdatedData) => kontext.rolleId)
             .filter((id: RolleID) => id && !newRolleIDs.includes(id));
-
+        /* eslint-disable no-await-in-loop */
         if (person.keycloakUserId) {
             if (newRolleIDs.length > 0 && currentKontexte.length) {
                 for (const newRolle of newRolleIDs) {
@@ -79,6 +79,7 @@ export class KeycloackServiceProviderHandler {
                 }
             }
         }
+        /* eslint-disable no-await-in-loop */
     }
 
     private async updateUserGroups(
