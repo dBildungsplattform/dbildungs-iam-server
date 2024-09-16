@@ -5,7 +5,7 @@ const commonConfig = {
     preset: 'ts-jest/presets/default-esm',
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
-        "^lodash-es$": "lodash",
+        '^lodash-es$': 'lodash',
     },
     transform: {
         '^.+\\.tsx?$': [

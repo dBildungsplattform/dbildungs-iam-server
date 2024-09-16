@@ -7,7 +7,9 @@
             "rollenart": "LERN",
             "merkmale": [],
             "systemrechte": [],
-            "serviceProviderIds": [10]
+            "serviceProviderIds": [],
+            "istTechnisch": false,
+            "serviceProviderData": []
         }
     ]
 }

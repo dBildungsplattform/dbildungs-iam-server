@@ -19,7 +19,7 @@ import { RolleFile } from '../file/rolle-file.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderFile } from '../file/service-provider-file.js';
-import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -31,6 +31,7 @@ import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
 
 @Injectable()
 export class DbSeedService {
@@ -40,7 +41,7 @@ export class DbSeedService {
         private readonly logger: ClassLogger,
         private readonly personFactory: PersonFactory,
         private readonly personRepository: PersonRepository,
-        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
@@ -139,7 +140,11 @@ export class DbSeedService {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderUUIDs.push(sp.id);
             }
-            /* eslint-disable no-await-in-loop */
+            const serviceProviderData: ServiceProvider<true>[] = [];
+            for (const spId of file.serviceProviderIds) {
+                const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
+                serviceProviderData.push(sp);
+            }
             const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(
                 file.administeredBySchulstrukturknoten,
             );
@@ -150,6 +155,7 @@ export class DbSeedService {
                 file.merkmale,
                 file.systemrechte,
                 serviceProviderUUIDs,
+                serviceProviderData,
                 file.istTechnisch ?? false,
             );
 
@@ -284,6 +290,16 @@ export class DbSeedService {
             const referencedPerson: Person<true> = await this.getReferencedPerson(file.personId);
             const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(file.organisationId);
             const referencedRolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
+
+            let befristung: Date | undefined = undefined;
+            const hasBefristungPflicht: boolean = referencedRolle.merkmale?.some(
+                (merkmal: RollenMerkmal) => merkmal === RollenMerkmal.BEFRISTUNG_PFLICHT,
+            );
+            if (hasBefristungPflicht) {
+                befristung = new Date(2099, 1, 1, 0, 1, 0); // In consultation with Kristoff, Kiefer (Cap): Set Befristung fixed to Date far in future
+                this.logger.info(`Automatically Set Befristung to 2099 for seeded kontext`);
+            }
+
             const personenKontext: Personenkontext<false> = this.personenkontextFactory.construct(
                 undefined,
                 new Date(),
@@ -292,6 +308,13 @@ export class DbSeedService {
                 referencedPerson.id,
                 referencedOrga.id,
                 referencedRolle.id,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                befristung,
             );
 
             //Check specifications
@@ -301,7 +324,7 @@ export class DbSeedService {
                 throw specificationCheckError;
             }
 
-            persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepo.save(personenKontext));
+            persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepoInternal.save(personenKontext));
             //at the moment no saving of Personenkontext
         }
         this.logger.info(`Insert ${files.length} entities of type Personenkontext`);
