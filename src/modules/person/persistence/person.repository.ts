@@ -276,7 +276,11 @@ export class PersonRepository {
         return !!person;
     }
 
-    public async create(person: Person<false>, hashedPassword?: string, personId?: string): Promise<Person<true> | DomainError> {
+    public async create(
+        person: Person<false>,
+        hashedPassword?: string,
+        personId?: string,
+    ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
 

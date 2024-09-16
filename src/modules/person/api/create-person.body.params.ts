@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 
 export class CreatePersonMigrationBodyParams {
-
     @IsString()
     @ApiProperty({ required: true })
     public readonly personId!: string;

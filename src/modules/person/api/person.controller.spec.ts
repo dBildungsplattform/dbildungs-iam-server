@@ -128,7 +128,7 @@ describe('PersonController', () => {
     });
 
     describe('createPerson', () => {
-        describe('when is authorized migration call with username & password', () => {
+        describe('when is authorized migration user', () => {
             it('should return PersonendatensatzResponse', async () => {
                 const person: Person<true> = getPerson();
                 const params: CreatePersonMigrationBodyParams = {
@@ -138,7 +138,7 @@ describe('PersonController', () => {
                     username: 'fixedusername',
                     hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([faker.string.uuid()]);
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 personRepositoryMock.create.mockResolvedValue(person);
                 await expect(
                     personController.createPersonMigration(params, personPermissionsMock),
@@ -152,7 +152,7 @@ describe('PersonController', () => {
                 expect(result.person.name.familienname).toEqual(person.familienname);
             });
         });
-        describe('when is not authorized migration call with username & password', () => {
+        describe('when is not authorized migration user', () => {
             it('should return error', async () => {
                 const person: Person<true> = getPerson();
                 const params: CreatePersonMigrationBodyParams = {
@@ -162,7 +162,7 @@ describe('PersonController', () => {
                     username: 'fixedusername',
                     hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([]);
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
                 personRepositoryMock.create.mockResolvedValue(person);
                 await expect(personController.createPersonMigration(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
@@ -206,6 +206,8 @@ describe('PersonController', () => {
                 hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
             };
 
+            //NEUER TEST DER personFactory.createNew einen DOmain Error liefert der nicht PersonDomainError ist
+
             it('should throw HttpException', async () => {
                 const person: Person<true> = getPerson();
                 personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
@@ -218,14 +220,6 @@ describe('PersonController', () => {
                     HttpException,
                 );
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
-            });
-
-            it('should throw HttpException when no user has no PERSONEN_VERWALTEN permission on any organisations', async () => {
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
-                await expect(personController.createPersonMigration(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-                expect(personRepositoryMock.create).not.toHaveBeenCalled();
             });
 
             it('should throw FamiliennameForPersonWithTrailingSpaceError when familienname has trailing space', async () => {

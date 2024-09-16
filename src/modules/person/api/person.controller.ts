@@ -120,7 +120,7 @@ export class PersonController {
                 throw person;
             }
 
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException( //UNCOVERED --> kann aber eventuell raus wenn PersonDomainError alles cached
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
             );
         }
