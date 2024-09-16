@@ -48,6 +48,7 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         organisationName: string | undefined,
         organisationId?: string, // Add organisationId as an optional parameter
+        limit?: number,
     ): Promise<Organisation<true>[]> {
         let allOrganisationsExceptKlassen: Organisation<boolean>[] = [];
 
@@ -56,6 +57,7 @@ export class PersonenkontextWorkflowAggregate {
             await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
                 OrganisationsTyp.KLASSE,
                 organisationName,
+                limit,
             );
 
         if (allOrganisationsExceptKlassen.length === 0) return [];

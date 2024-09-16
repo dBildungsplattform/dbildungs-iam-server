@@ -337,7 +337,6 @@ describe('OrganisationController', () => {
             it('should find all organizations that match with Klasse Typ', async () => {
                 const queryParams: FindOrganisationQueryParams = {
                     typ: OrganisationsTyp.KLASSE,
-                    searchString: faker.lorem.word(),
                     systemrechte: [],
                     administriertVon: [faker.string.uuid(), faker.string.uuid()],
                 };
