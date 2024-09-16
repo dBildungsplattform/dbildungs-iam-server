@@ -109,18 +109,22 @@ describe('PersonenkontextCreationService', () => {
         expect(sut).toBeDefined();
     });
 
-    describe('createPersonWithPersonenkontext', () => {
+    describe('createPersonWithPersonenkontexte', () => {
         it('should return DomainError if Person Aggregate ist invalid ', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(new InvalidAttributeLengthError('name.vorname'));
             rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
             organisationRepositoryMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(DomainError);
         });
@@ -130,12 +134,16 @@ describe('PersonenkontextCreationService', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
             organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(EntityNotFoundError);
         });
@@ -145,12 +153,16 @@ describe('PersonenkontextCreationService', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(undefined);
             organisationRepositoryMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(EntityNotFoundError);
         });
@@ -162,12 +174,16 @@ describe('PersonenkontextCreationService', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>());
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(EntityNotFoundError);
         });
@@ -181,12 +197,16 @@ describe('PersonenkontextCreationService', () => {
                 createMock<Organisation<true>>({ typ: OrganisationsTyp.SCHULE }),
             );
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(RolleNurAnPassendeOrganisationError);
         });
@@ -201,12 +221,16 @@ describe('PersonenkontextCreationService', () => {
             );
             personpermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(MissingPermissionsError);
         });
@@ -224,12 +248,16 @@ describe('PersonenkontextCreationService', () => {
                 new KeycloakClientError('Username or email already exists'),
             );
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(DomainError);
         });
@@ -251,12 +279,16 @@ describe('PersonenkontextCreationService', () => {
                 personenkontextUpdateMock,
             );
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(DomainError);
         });
@@ -278,12 +310,16 @@ describe('PersonenkontextCreationService', () => {
                 personenkontextUpdateMock,
             );
 
-            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontext(
+            const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
                 faker.string.uuid(),
                 faker.string.uuid(),
-                faker.string.uuid(),
-                faker.string.uuid(),
+                [
+                    {
+                        organisationId: faker.string.uuid(),
+                        rolleId: faker.string.uuid(),
+                    },
+                ],
             );
             expect(result).toBeInstanceOf(DomainError);
         });
