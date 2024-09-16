@@ -6,7 +6,7 @@ import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonID } from '../../../shared/types/index.js';
-import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { DbiamPersonenkontextMigrationBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
 import { Personenkontext } from './personenkontext.js';
@@ -30,14 +30,14 @@ import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rolle
 import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
 
-function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
-    const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
+function createPKBodyParams(personId: PersonID): DbiamPersonenkontextMigrationBodyParams[] {
+    const firstCreatePKBodyParams: DbiamPersonenkontextMigrationBodyParams = createMock<DbiamPersonenkontextMigrationBodyParams>({
         personId: personId,
         organisationId: faker.string.uuid(),
         rolleId: faker.string.uuid(),
     });
 
-    const secondCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
+    const secondCreatePKBodyParams: DbiamPersonenkontextMigrationBodyParams = createMock<DbiamPersonenkontextMigrationBodyParams>({
         personId: personId,
         organisationId: faker.string.uuid(),
         rolleId: faker.string.uuid(),
@@ -55,8 +55,8 @@ describe('PersonenkontexteUpdate', () => {
     let sut: PersonenkontexteUpdate;
     let personId: string;
     let lastModified: Date;
-    let bodyParam1: DbiamPersonenkontextBodyParams;
-    let bodyParam2: DbiamPersonenkontextBodyParams;
+    let bodyParam1: DbiamPersonenkontextMigrationBodyParams;
+    let bodyParam2: DbiamPersonenkontextMigrationBodyParams;
     let pk1: Personenkontext<true>;
     let pk2: Personenkontext<true>;
     let personPermissionsMock: PersonPermissionsMock;
@@ -105,12 +105,12 @@ describe('PersonenkontexteUpdate', () => {
         dbiamPersonenkontextFactory = module.get(DbiamPersonenkontextFactory);
         personId = faker.string.uuid();
         lastModified = faker.date.recent();
-        bodyParam1 = createMock<DbiamPersonenkontextBodyParams>({
+        bodyParam1 = createMock<DbiamPersonenkontextMigrationBodyParams>({
             personId: personId,
             organisationId: faker.string.uuid(),
             rolleId: faker.string.uuid(),
         });
-        bodyParam2 = createMock<DbiamPersonenkontextBodyParams>({
+        bodyParam2 = createMock<DbiamPersonenkontextMigrationBodyParams>({
             personId: personId,
             organisationId: faker.string.uuid(),
             rolleId: faker.string.uuid(),

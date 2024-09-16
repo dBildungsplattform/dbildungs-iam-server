@@ -13,7 +13,7 @@ import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
-import { EmailAddress } from './email-address.js';
+import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -22,6 +22,8 @@ import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { OxUserAttributesCreatedEvent } from '../../../shared/events/ox-user-attributes-created.event.js';
+import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 @Injectable()
 export class EmailEventHandler {
@@ -74,6 +76,38 @@ export class EmailEventHandler {
         return Array.from(rollenMap.values(), (value: Rolle<true>) => {
             return value;
         });
+    }
+
+    @EventHandler(PersonenkontextCreatedMigrationEvent)
+    public async handlePersonenkontextCreatedMigrationEvent(
+        event: PersonenkontextCreatedMigrationEvent,
+    ): Promise<void> {
+        this.logger.info(
+            `MIGRATION: Received PersonenkontextCreatedMigrationEvent, personId:${event.createdKontext.personId}`,
+        );
+        if (event.email && event.rollenArt == RollenArt.LEHR) {
+            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(
+                event.createdKontext.personId,
+            );
+            if (!existingEmail) {
+                const newEmail: EmailAddress<false> = EmailAddress.createNew(
+                    event.createdKontext.personId,
+                    event.email,
+                    EmailAddressStatus.ENABLED,
+                );
+                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(newEmail);
+
+                if (persistenceResult instanceof DomainError) {
+                    return this.logger.error(
+                        `MIGRATION: Could save existing email, error is ${persistenceResult.message}`,
+                    );
+                } else {
+                    return this.logger.info(`MIGRATION: Successfully Saved Email Adress ${persistenceResult.address}`);
+                }
+            } else {
+                return this.logger.info(`MIGRATION: Email Adress has already been saved during earlier call`);
+            }
+        }
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)

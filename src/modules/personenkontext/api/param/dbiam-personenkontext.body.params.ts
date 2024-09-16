@@ -3,7 +3,7 @@ import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validato
 
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/index.js';
 
-export class DbiamPersonenkontextBodyParams {
+export class DbiamPersonenkontextMigrationBodyParams {
     @IsString()
     @IsNotEmpty()
     @IsUUID()
@@ -26,4 +26,9 @@ export class DbiamPersonenkontextBodyParams {
     @IsOptional()
     @ApiProperty({ required: false })
     public readonly befristung?: Date;
+
+    @IsDate()
+    @IsOptional()
+    @ApiProperty({ required: false })
+    public readonly email?: string;
 }

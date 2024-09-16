@@ -13,7 +13,7 @@ import { PersonenkontexteUpdateError } from './error/personenkontexte-update.err
 import { Personenkontext } from './personenkontext.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
-import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { DbiamPersonenkontextMigrationBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
@@ -200,7 +200,7 @@ export class PersonenkontextWorkflowAggregate {
         personId: string,
         lastModified: Date | undefined,
         count: number,
-        personenkontexte: DbiamPersonenkontextBodyParams[],
+        personenkontexte: DbiamPersonenkontextMigrationBodyParams[],
         permissions: IPersonPermissions,
         personalnummer?: string,
     ): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {

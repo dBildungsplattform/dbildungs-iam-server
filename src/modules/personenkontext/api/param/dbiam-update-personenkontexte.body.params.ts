@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DbiamPersonenkontextBodyParams } from './dbiam-personenkontext.body.params.js';
+import { DbiamPersonenkontextMigrationBodyParams } from './dbiam-personenkontext.body.params.js';
 import { IsDate, IsNumber, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -21,8 +21,8 @@ export class DbiamUpdatePersonenkontexteBodyParams {
     })
     public readonly count!: number;
 
-    @ApiProperty({ type: [DbiamPersonenkontextBodyParams], required: true, nullable: false })
-    @Type(() => DbiamPersonenkontextBodyParams)
+    @ApiProperty({ type: [DbiamPersonenkontextMigrationBodyParams], required: true, nullable: false })
+    @Type(() => DbiamPersonenkontextMigrationBodyParams)
     @ValidateNested({ each: true })
-    public readonly personenkontexte!: DbiamPersonenkontextBodyParams[];
+    public readonly personenkontexte!: DbiamPersonenkontextMigrationBodyParams[];
 }

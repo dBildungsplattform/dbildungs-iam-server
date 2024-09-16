@@ -1,4 +1,4 @@
-import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { DbiamPersonenkontextMigrationBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from './personenkontext.js';
 import { UpdateCountError } from './error/update-count.error.js';
@@ -40,7 +40,7 @@ export class PersonenkontexteUpdate {
         private readonly personId: PersonID,
         private readonly lastModified: Date | undefined,
         private readonly count: number,
-        private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
+        private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextMigrationBodyParams[],
         private readonly permissions: IPersonPermissions,
         private readonly personalnummer?: string,
     ) {}
@@ -57,7 +57,7 @@ export class PersonenkontexteUpdate {
         personId: PersonID,
         lastModified: Date | undefined,
         count: number,
-        dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
+        dBiamPersonenkontextBodyParams: DbiamPersonenkontextMigrationBodyParams[],
         permissions: IPersonPermissions,
         personalnummer?: string,
     ): PersonenkontexteUpdate {
