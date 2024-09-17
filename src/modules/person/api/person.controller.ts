@@ -66,6 +66,7 @@ import { PersonLockResponse } from './person-lock.response.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -80,6 +81,7 @@ export class PersonController {
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
+        private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
@@ -120,7 +122,7 @@ export class PersonController {
                 throw person;
             }
 
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException( //UNCOVERED --> kann aber eventuell raus wenn PersonDomainError alles cached
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
             );
         }
@@ -135,7 +137,9 @@ export class PersonController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
-
+        this.logger.info(
+            `MIGRATION: Create Person Operation / personId: ${params.personId} / Successfully Created Person`,
+        );
         return new PersonendatensatzResponse(result, false);
     }
 

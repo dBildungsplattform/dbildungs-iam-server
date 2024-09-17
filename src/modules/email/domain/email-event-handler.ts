@@ -83,9 +83,12 @@ export class EmailEventHandler {
         event: PersonenkontextCreatedMigrationEvent,
     ): Promise<void> {
         this.logger.info(
-            `MIGRATION: Received PersonenkontextCreatedMigrationEvent, personId:${event.createdKontext.personId}`,
+            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Recieved PersonenkontextCreatedMigrationEvent`,
         );
-        if (event.email && event.rollenArt == RollenArt.LEHR) {
+        if (event.email && event.createdKontextRolle.rollenart == RollenArt.LEHR) {
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Rollenart is LEHR, trying to persist Email`,
+            );
             const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(
                 event.createdKontext.personId,
             );
@@ -99,14 +102,22 @@ export class EmailEventHandler {
 
                 if (persistenceResult instanceof DomainError) {
                     return this.logger.error(
-                        `MIGRATION: Could save existing email, error is ${persistenceResult.message}`,
+                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Could not persist existing email, error is ${persistenceResult.message}`,
                     );
                 } else {
-                    return this.logger.info(`MIGRATION: Successfully Saved Email Adress ${persistenceResult.address}`);
+                    return this.logger.info(
+                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Successfully persisted Email ${persistenceResult.address}`,
+                    );
                 }
             } else {
-                return this.logger.info(`MIGRATION: Email Adress has already been saved during earlier call`);
+                return this.logger.info(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting persist Email Operation, Email already exists`,
+                );
             }
+        } else {
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Do Nothing because Rollenart is Not LEHR`,
+            );
         }
     }
 
