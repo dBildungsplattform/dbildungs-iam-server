@@ -31,14 +31,18 @@ import {
 } from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
-import { DataConfig } from '../../../shared/config/data.config.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
+import { createAndPersistOrganisation } from '../../../../test/utils/organisation-test-helper.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 describe('PersonRepository Integration', () => {
@@ -49,7 +53,6 @@ describe('PersonRepository Integration', () => {
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
-    let configService: ConfigService;
     let eventServiceMock: DeepMocked<EventService>;
 
     beforeAll(async () => {
@@ -75,10 +78,6 @@ describe('PersonRepository Integration', () => {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
                 },
-                {
-                    provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
-                },
             ],
         }).compile();
         sut = module.get(PersonRepository);
@@ -88,7 +87,6 @@ describe('PersonRepository Integration', () => {
 
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        configService = module.get(ConfigService);
         eventServiceMock = module.get(EventService);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -926,7 +924,7 @@ describe('PersonRepository Integration', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should return person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([person1.id]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
@@ -951,7 +949,9 @@ describe('PersonRepository Integration', () => {
             });
             it('should return person with fallback keycloak info', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: true,
+                });
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
@@ -963,7 +963,6 @@ describe('PersonRepository Integration', () => {
                     error: new KeycloakClientError(''),
                 });
 
-                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
 
                 expect(result.ok).toBeTruthy();
@@ -972,9 +971,8 @@ describe('PersonRepository Integration', () => {
         describe('when user has permission on root organisation', () => {
             it('should return person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                const fakeOrganisationId: string = configService.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
 
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([fakeOrganisationId]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 kcUserServiceMock.findById.mockResolvedValue({
@@ -999,77 +997,15 @@ describe('PersonRepository Integration', () => {
             });
         });
     });
-    describe('checkIfDeleteIsAllowed', () => {
-        describe('when person is found on any same organisations like the affected person', () => {
-            it('should delete with no error', async () => {
-                const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
-                const personEntity: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
-                person1.id = personEntity.id;
-                kcUserServiceMock.findById.mockResolvedValue({
-                    ok: true,
-                    value: {
-                        id: person1.keycloakUserId!,
-                        username: person1.username ?? '',
-                        enabled: true,
-                        email: faker.internet.email(),
-                        createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
-                    },
-                });
-                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
-                const result: Result<void, DomainError> = await sut.deletePerson(
-                    person1.id,
-                    personPermissionsMock,
-                    removedPersonenkontexts,
-                );
-
-                expect(result.ok).toBeTruthy();
-            });
-        });
-        describe('when user has no permission on root organisation', () => {
-            it('should not delete', async () => {
-                const person1: Person<true> = DoFactory.createPerson(true);
-
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
-
-                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
-
-                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
-                const result: Result<void, DomainError> = await sut.deletePerson(
-                    person1.id,
-                    personPermissionsMock,
-                    removedPersonenkontexts,
-                );
-
-                expect(result.ok).toBeFalsy();
-            });
-        });
-        it('should return an EntityCouldNotBeDeleted exception', async () => {
-            const person1: Person<true> = DoFactory.createPerson(true);
-
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
-
-            await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
-
-            const result: Result<Person<true>, Error> = await sut.checkIfDeleteIsAllowed(
-                person1.id,
-                personPermissionsMock,
-            );
-
-            if (!result.ok) {
-                expect(result.error).toBeInstanceOf(EntityCouldNotBeDeleted);
-            }
-        });
-    });
     describe('deletePerson', () => {
         describe('Delete the person and all kontexte', () => {
-            it('should delete the person', async () => {
+            afterEach(() => {
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockReset();
+            });
+
+            it('should delete the person as root', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
@@ -1085,18 +1021,63 @@ describe('PersonRepository Integration', () => {
                         attributes: {},
                     },
                 });
-                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
-                    person1.id,
-                    personPermissionsMock,
-                );
-                if (!personGetAllowed.ok) {
-                    throw new EntityNotFoundError('Person', person1.id);
-                }
 
                 const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePerson(
-                    personGetAllowed.value.id,
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
+                expect(result.ok).toBeTruthy();
+            });
+
+            it.skip('should delete the person as admin of organisation', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+                const organisation: OrganisationEntity = await createAndPersistOrganisation(
+                    em,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
+
+                const rolleData: RequiredEntityData<RolleEntity> = {
+                    name: 'Testrolle',
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.ORGADMIN,
+                    istTechnisch: false,
+                };
+
+                const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
+                await em.persistAndFlush(rolleEntity);
+
+                const personenkontextEntity: PersonenkontextEntity = new PersonenkontextEntity();
+                personenkontextEntity.personId = em.getReference(PersonEntity, person1.id, { wrapped: true });
+                personenkontextEntity.organisationId = organisation.id;
+                personenkontextEntity.rolleId = em.getReference(RolleEntity, rolleEntity.id, { wrapped: true });
+                await em.persistAndFlush(personenkontextEntity);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePerson(
+                    person1.id,
                     personPermissionsMock,
                     removedPersonenkontexts,
                 );
@@ -1109,7 +1090,7 @@ describe('PersonRepository Integration', () => {
                     const personEntity: PersonEntity = new PersonEntity();
                     await em.persistAndFlush(personEntity.assign(mapAggregateToData(person)));
                     person.id = personEntity.id;
-                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person.id]);
+                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
                     await em.persistAndFlush(personEntity);
 
@@ -1136,18 +1117,9 @@ describe('PersonRepository Integration', () => {
                         },
                     });
 
-                    await sut.getPersonIfAllowed(person.id, personPermissionsMock);
-                    const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
-                        person.id,
-                        personPermissionsMock,
-                    );
-                    if (!personGetAllowed.ok) {
-                        throw new EntityNotFoundError('Person', person.id);
-                    }
-
                     const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                     const result: Result<void, DomainError> = await sut.deletePerson(
-                        personGetAllowed.value.id,
+                        person.id,
                         personPermissionsMock,
                         removedPersonenkontexts,
                     );
@@ -1163,7 +1135,7 @@ describe('PersonRepository Integration', () => {
 
             it('should not delete the person because of unsufficient permissions to find the person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
                 await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
 
@@ -1178,11 +1150,17 @@ describe('PersonRepository Integration', () => {
             });
             it('should not delete the person because of unsufficient permissions to delete the person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockImplementation(
+                    (systemRechte: RollenSystemRecht[]) => {
+                        if (systemRechte.length === 1 && systemRechte[0] === RollenSystemRecht.PERSONEN_VERWALTEN) {
+                            return Promise.resolve({ all: true });
+                        }
+                        return Promise.resolve({ all: false, orgaIds: [] });
+                    },
+                );
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
-
                 kcUserServiceMock.findById.mockResolvedValue({
                     ok: true,
                     value: {
@@ -1196,24 +1174,6 @@ describe('PersonRepository Integration', () => {
                     },
                 });
 
-                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
-                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
-                    person1.id,
-                    personPermissionsMock,
-                );
-                if (!personGetAllowed.ok) {
-                    throw new EntityNotFoundError('Person', person1.id);
-                }
-                const checkIfDeleteIsAllowedSpy: jest.SpyInstance<
-                    Promise<Result<Person<true>, Error>>,
-                    [personId: string, permissions: PersonPermissions]
-                > = jest.spyOn(sut, 'checkIfDeleteIsAllowed').mockResolvedValue({
-                    ok: false,
-                    error: new EntityCouldNotBeDeleted('Person', person1.id),
-                });
-
-                await sut.checkIfDeleteIsAllowed(personGetAllowed.value.id, personPermissionsMock);
-
                 const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePerson(
                     person1.id,
@@ -1225,12 +1185,11 @@ describe('PersonRepository Integration', () => {
                 if (!result.ok) {
                     expect(result.error).toBeInstanceOf(EntityCouldNotBeDeleted);
                 }
-                checkIfDeleteIsAllowedSpy.mockRestore();
             });
             it('should not delete the person because it has no keycloakId', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 person1.keycloakUserId = '';
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([person1.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;

@@ -12,7 +12,6 @@ import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { createMock } from '@golevelup/ts-jest';
-import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonenKontextApiModule', () => {
@@ -24,10 +23,6 @@ describe('PersonenKontextApiModule', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
-                },
-                {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
