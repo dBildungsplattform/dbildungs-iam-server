@@ -12,7 +12,7 @@ import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.err
 import { Request } from 'express';
 import { JwtPayload, decode } from 'jsonwebtoken';
 
-interface CustomJwtPayload extends JwtPayload {
+export interface CustomJwtPayload extends JwtPayload {
     acr: StepUpLevel;
 }
 
