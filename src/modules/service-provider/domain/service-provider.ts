@@ -1,4 +1,4 @@
-import { ServiceProviderKategorie, ServiceProviderTarget } from './service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 
 export class ServiceProvider<WasPersisted extends boolean> {
     private constructor(
@@ -14,6 +14,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public logoMimeType: string | undefined,
         public keycloakGroup: string | undefined,
         public keycloakRole: string | undefined,
+        public system: ServiceProviderSystem,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -29,6 +30,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
         keycloakRole: string | undefined,
+        system: ServiceProviderSystem,
     ): ServiceProvider<WasPersisted> {
         return new ServiceProvider(
             id,
@@ -43,6 +45,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             logoMimeType,
             keycloakGroup,
             keycloakRole,
+            system,
         );
     }
 
@@ -56,6 +59,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
         keycloakRole: string | undefined,
+        system: ServiceProviderSystem,
     ): ServiceProvider<false> {
         return new ServiceProvider(
             undefined,
@@ -70,6 +74,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             logoMimeType,
             keycloakGroup,
             keycloakRole,
+            system,
         );
     }
 }

@@ -1,5 +1,6 @@
 import {
     ServiceProviderKategorie,
+    ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../../modules/service-provider/domain/service-provider.enum.js';
 
@@ -23,4 +24,6 @@ export class ServiceProviderFile {
     public keycloakGroup?: string;
 
     public keycloakRole?: string;
+
+    public system?: ServiceProviderSystem;
 }
