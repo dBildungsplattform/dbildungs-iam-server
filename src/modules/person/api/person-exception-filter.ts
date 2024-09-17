@@ -11,7 +11,7 @@ import { PersonalnummerRequiredError } from '../domain/personalnummer-required.e
 import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
-@Catch(PersonDomainError)
+@Catch(PersonDomainError, DuplicatePersonalnummerError)
 export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError> {
     private ERROR_MAPPINGS: Map<string, DbiamPersonError> = new Map([
         [
