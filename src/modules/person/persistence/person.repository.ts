@@ -9,6 +9,7 @@ import {
     EntityCouldNotBeCreated,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
+    MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
@@ -451,11 +452,17 @@ export class PersonRepository {
         newPersonalnummer: string,
         lastModified: Date,
         revision: string,
+        permissions: PersonPermissions,
     ): Promise<Person<true> | DomainError> {
         const personFound: Option<Person<true>> = await this.findById(personId);
 
         if (!personFound) {
             return new EntityNotFoundError('Person', personId);
+        }
+
+        //Permissions: Only the admin can update the personalnummer.
+        if (!(await permissions.canModifyPerson(personId))) {
+            return new MissingPermissionsError('Not allowed to update the Personalnummer for the person.');
         }
 
         {

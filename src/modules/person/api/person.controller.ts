@@ -470,12 +470,14 @@ export class PersonController {
     public async updatePersonalnummer(
         @Param() params: PersonByIdParams,
         @Body() body: PersonByPersonalnummerBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<void | DomainError> {
         const result: Person<true> | DomainError = await this.personRepository.updatePersonalnummer(
             params.personId,
             body.personalnummer,
             body.lastModified,
             body.revision,
+            permissions,
         );
 
         if (result instanceof DomainError) {

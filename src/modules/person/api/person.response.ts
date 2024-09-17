@@ -46,4 +46,11 @@ export class PersonResponse {
 
     @ApiProperty({ nullable: true })
     public lockInfo?: LockInfo;
+
+    @ApiProperty({
+        nullable: true,
+        type: Date,
+        description: 'Date of the most recent changes for the person',
+    })
+    public readonly lastModified?: Date;
 }

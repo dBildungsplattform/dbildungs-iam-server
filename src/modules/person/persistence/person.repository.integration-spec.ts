@@ -29,6 +29,7 @@ import {
     EntityNotFoundError,
     KeycloakClientError,
     MismatchedRevisionError,
+    MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
@@ -1336,12 +1337,14 @@ describe('PersonRepository Integration', () => {
         it('should return the updated person', async () => {
             const person: Person<true> = await savePerson(true);
             const newPersonalnummer: string = faker.finance.pin(7);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
             const result: Person<true> | DomainError = await sut.updatePersonalnummer(
                 person.id,
                 newPersonalnummer,
                 person.updatedAt,
                 person.revision,
+                personPermissionsMock,
             );
             if (result instanceof DomainError) {
                 throw result;
@@ -1359,18 +1362,37 @@ describe('PersonRepository Integration', () => {
                 faker.finance.pin(7),
                 faker.date.anytime(),
                 '1',
+                personPermissionsMock,
             );
 
             expect(result).toBeInstanceOf(EntityNotFoundError);
         });
 
+        it('should return MissingPermissionsError if the admin does not have permissions to update the Personalnummer', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(false);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                faker.finance.pin(7),
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(MissingPermissionsError);
+        });
+
         it('should return PersonalnummerRequiredError when personalnummer was not provided', async () => {
             const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
             const result: Person<true> | DomainError = await sut.updatePersonalnummer(
                 person.id,
                 '',
                 person.updatedAt,
                 person.revision,
+                personPermissionsMock,
             );
 
             expect(result).toBeInstanceOf(PersonalnummerRequiredError);
@@ -1379,16 +1401,18 @@ describe('PersonRepository Integration', () => {
         it('should return DuplicatePersonalnummerError when the new personalnummer is already assigned', async () => {
             const person: Person<true> = await savePerson(true);
             const person2: Person<true> = await savePerson(true);
-
             if (!person2.personalnummer) {
                 return;
             }
+
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
             const result: Person<true> | DomainError = await sut.updatePersonalnummer(
                 person.id,
                 person2.personalnummer,
                 person.updatedAt,
                 person.revision,
+                personPermissionsMock,
             );
 
             expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
@@ -1396,12 +1420,14 @@ describe('PersonRepository Integration', () => {
 
         it('should return PersonalnummerUpdateOutdatedError if there is a newer updated version', async () => {
             const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
             const result: Person<true> | DomainError = await sut.updatePersonalnummer(
                 person.id,
                 faker.finance.pin(7),
                 faker.date.past(),
                 person.revision,
+                personPermissionsMock,
             );
 
             expect(result).toBeInstanceOf(PersonalnummerUpdateOutdatedError);
@@ -1409,12 +1435,14 @@ describe('PersonRepository Integration', () => {
 
         it('should return MismatchedRevisionError if the revision is incorrect', async () => {
             const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
             const result: Person<true> | DomainError = await sut.updatePersonalnummer(
                 person.id,
                 faker.finance.pin(7),
                 person.updatedAt,
                 '2',
+                personPermissionsMock,
             );
 
             expect(result).toBeInstanceOf(MismatchedRevisionError);
