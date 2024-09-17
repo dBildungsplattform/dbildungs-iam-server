@@ -17,6 +17,8 @@ import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -47,6 +49,18 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.traegerschaft,
     );
 }
+
+export type OrganisationSeachOptions = {
+    readonly kennung?: string;
+    readonly name?: string;
+    readonly searchString?: string;
+    readonly typ?: OrganisationsTyp;
+    readonly excludeTyp?: OrganisationsTyp[];
+    readonly administriertVon?: string[];
+    readonly organisationIds?: string[];
+    readonly offset?: number;
+    readonly limit?: number;
+};
 
 @Injectable()
 export class OrganisationRepository {
@@ -179,14 +193,6 @@ export class OrganisationRepository {
         return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
     }
 
-    public async find(limit?: number, offset?: number): Promise<Organisation<true>[]> {
-        const organisations: OrganisationEntity[] = await this.em.findAll(OrganisationEntity, {
-            limit: limit,
-            offset: offset,
-        });
-        return organisations.map(mapEntityToAggregate);
-    }
-
     public async findById(id: string): Promise<Option<Organisation<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {
@@ -232,6 +238,37 @@ export class OrganisationRepository {
         });
 
         return organisations.map(mapEntityToAggregate);
+    }
+
+    public async findAuthorized(
+        personPermissions: PersonPermissions,
+        systemrechte: RollenSystemRecht[],
+        searchOptions: OrganisationSeachOptions,
+    ): Promise<Counted<Organisation<true>>> {
+        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
+
+        const scope: OrganisationScope = new OrganisationScope();
+
+        scope
+            .byIDs(searchOptions.organisationIds)
+            .setScopeWhereOperator(ScopeOperator.OR)
+            .findBy({
+                kennung: searchOptions.kennung,
+                name: searchOptions.name,
+                typ: searchOptions.typ,
+            })
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .findByAdministriertVonArray(searchOptions.administriertVon)
+            .searchStringAdministriertVon(searchOptions.searchString)
+            .excludeTyp(searchOptions.excludeTyp)
+            .byIDs(permittedOrgas.all ? undefined : permittedOrgas.orgaIds)
+            .paged(searchOptions.offset, searchOptions.limit);
+
+        const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
+        const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
+            mapEntityToAggregate(entity),
+        );
+        return [organisations, total];
     }
 
     public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {

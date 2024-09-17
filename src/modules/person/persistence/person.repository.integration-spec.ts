@@ -9,8 +9,6 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonEntity } from './person.entity.js';
-import { PersonRepo } from './person.repo.js';
-import {
     getEnabledEmailAddress,
     mapAggregateToData,
     mapEntityToAggregate,
@@ -59,7 +57,6 @@ describe('PersonRepository Integration', () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
             providers: [
-                PersonRepo,
                 PersonRepository,
                 ConfigService,
                 {

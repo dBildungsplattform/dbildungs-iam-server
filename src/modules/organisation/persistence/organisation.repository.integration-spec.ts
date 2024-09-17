@@ -717,31 +717,6 @@ describe('OrganisationRepository', () => {
             });
         });
     });
-    describe('find', () => {
-        let organisations: Organisation<false>[];
-
-        beforeEach(async () => {
-            organisations = Array.from({ length: 5 }).map(() =>
-                DoFactory.createOrganisationAggregate(false, {
-                    typ: OrganisationsTyp.SONSTIGE,
-                    name: 'test',
-                }),
-            );
-            for (const organisation of organisations) {
-                await sut.save(organisation);
-            }
-        });
-
-        it('should return all organisations when no limit and offset are provided', async () => {
-            const result: Organisation<true>[] = await sut.find();
-            expect(result).toHaveLength(5);
-        });
-
-        it('should return limited number of organisations when limit is provided', async () => {
-            const result: Organisation<true>[] = await sut.find(2);
-            expect(result).toHaveLength(2);
-        });
-    });
     describe('findByNameOrKennung', () => {
         let organisations: Organisation<false>[];
 

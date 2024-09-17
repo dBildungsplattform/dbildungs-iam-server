@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonService } from './domain/person.service.js';
-import { PersonRepo } from './persistence/person.repo.js';
 import { UsernameGeneratorService } from './domain/username-generator.service.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { PersonRepository } from './persistence/person.repository.js';
@@ -15,7 +14,6 @@ import { PersonPersistenceMapperProfile } from './persistence/person-persistence
 @Module({
     imports: [KeycloakAdministrationModule, LoggerModule.register(PersonModule.name), EventModule],
     providers: [
-        PersonRepo,
         PersonRepository,
         PersonService,
         PersonFactory,
@@ -26,6 +24,6 @@ import { PersonPersistenceMapperProfile } from './persistence/person-persistence
         ServiceProviderRepo,
         PersonPersistenceMapperProfile, //Remove this when PersonRepo is removed
     ],
-    exports: [PersonService, PersonFactory, PersonRepo, PersonRepository],
+    exports: [PersonService, PersonFactory, PersonRepository],
 })
 export class PersonModule {}
