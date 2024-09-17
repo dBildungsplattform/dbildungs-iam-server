@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { faker } from '@faker-js/faker';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonID } from '../../../shared/types/index.js';
@@ -49,6 +50,7 @@ describe('PersonenkontexteUpdate', () => {
     let module: TestingModule;
     let personRepoMock: DeepMocked<PersonRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let dBiamPersonenkontextRepoInternalMock: DeepMocked<DBiamPersonenkontextRepoInternal>;
     let dbiamPersonenkontextFactory: DbiamPersonenkontextFactory;
     let sut: PersonenkontexteUpdate;
     let personId: string;
@@ -73,6 +75,10 @@ describe('PersonenkontexteUpdate', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
+                    provide: DBiamPersonenkontextRepoInternal,
+                    useValue: createMock<DBiamPersonenkontextRepoInternal>(),
+                },
+                {
                     provide: PersonRepo,
                     useValue: createMock<PersonRepo>(),
                 },
@@ -94,6 +100,7 @@ describe('PersonenkontexteUpdate', () => {
             ],
         }).compile();
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        dBiamPersonenkontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
         personRepoMock = module.get(PersonRepository);
         dbiamPersonenkontextFactory = module.get(DbiamPersonenkontextFactory);
         personId = faker.string.uuid();
@@ -204,7 +211,7 @@ describe('PersonenkontexteUpdate', () => {
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);
 
                 const error: Error = new Error('DB Error');
-                dBiamPersonenkontextRepoMock.save.mockRejectedValueOnce(error);
+                dBiamPersonenkontextRepoInternalMock.save.mockRejectedValueOnce(error);
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -402,7 +409,7 @@ describe('PersonenkontexteUpdate', () => {
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(Array);
-                expect(dBiamPersonenkontextRepoMock.delete).toHaveBeenCalledTimes(0);
+                expect(dBiamPersonenkontextRepoInternalMock.delete).toHaveBeenCalledTimes(0);
             });
 
             // This test only test for right sorting by date of PKs, pk2 and pk1 are switched in retrieval order
@@ -422,7 +429,7 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
 
-                expect(dBiamPersonenkontextRepoMock.delete).toHaveBeenCalledTimes(0);
+                expect(dBiamPersonenkontextRepoInternalMock.delete).toHaveBeenCalledTimes(0);
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
                 expect(updateResult).toBeInstanceOf(Array);
             });
@@ -547,7 +554,42 @@ describe('PersonenkontexteUpdate', () => {
                 await expect(pkUpdate.update()).resolves.toBeInstanceOf(MissingPermissionsError);
             });
         });
+        describe('when personalnummer is provided', () => {
+            it('should update the personalnummer of the person', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>();
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
 
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                // Mock call before publishing the event
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                // Mock call if the personalnummer exists
+                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+
+                const count: number = 2;
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    count,
+                    [bodyParam1, bodyParam2],
+                    personPermissionsMock,
+                    '1234567',
+                );
+                await sut.update();
+
+                expect(personRepoMock.save).toHaveBeenCalledTimes(1);
+            });
+        });
         describe('when existing personenkontexte have one personenkontext with rollenart LERN', () => {
             beforeAll(() => {
                 const count: number = 2;

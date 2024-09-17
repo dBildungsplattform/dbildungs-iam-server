@@ -9,6 +9,8 @@ import {
     PrivacyIdeaToken,
     AuthenticaitonResponse,
     UserResponse,
+    ResetTokenPayload,
+    ResetTokenResponse,
     AssignTokenPayload,
     AssignTokenResponse,
     TokenOTPSerialResponse,
@@ -21,6 +23,8 @@ import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
 import { ConfigService } from '@nestjs/config';
 import { PrivacyIdeaConfig } from '../../shared/config/privacyidea.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
+import { TokenResetError } from './api/error/token-reset.error.js';
+import { TwoAuthStateError } from './api/error/two-auth-state.error.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -283,5 +287,47 @@ export class PrivacyIdeaAdministrationService {
         }
         // Call assignToken
         return this.assignToken(serial, token, user);
+    }
+
+    public async resetToken(user: string): Promise<ResetTokenResponse> {
+        try {
+            const token: string = await this.getJWTToken();
+            const twoAuthState: PrivacyIdeaToken | undefined = await this.getTwoAuthState(user);
+            if (!twoAuthState) {
+                throw new TwoAuthStateError();
+            }
+            const serial: string = twoAuthState.serial;
+            const response: ResetTokenResponse = await this.unassignToken(serial, token);
+            return response;
+        } catch (error) {
+            throw new TokenResetError();
+        }
+    }
+
+    public async unassignToken(serial: string, token: string): Promise<ResetTokenResponse> {
+        const endpoint: string = '/token/unassign';
+        const baseUrl: string = process.env['PI_BASE_URL'] ?? 'http://localhost:5000';
+        const url: string = baseUrl + endpoint;
+        const headers: { Authorization: string; 'Content-Type': string } = {
+            Authorization: `${token}`,
+            'Content-Type': 'application/json',
+        };
+
+        const payload: ResetTokenPayload = {
+            serial,
+        };
+
+        try {
+            const response: AxiosResponse<ResetTokenResponse> = await firstValueFrom(
+                this.httpService.post(url, payload, { headers }),
+            );
+            return response.data;
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error unassigning token: ${error.message}`);
+            } else {
+                throw new Error(`Error unassigning token: Unknown error occurred`);
+            }
+        }
     }
 }
