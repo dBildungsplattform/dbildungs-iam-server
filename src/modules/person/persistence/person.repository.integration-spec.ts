@@ -950,7 +950,7 @@ describe('PersonRepository Integration', () => {
             it('should return person with fallback keycloak info', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
-                    all: true
+                    all: true,
                 });
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
