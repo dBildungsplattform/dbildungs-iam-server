@@ -173,14 +173,24 @@ export class PersonRepository {
         const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.kcUserService.findById(
             person.keycloakUserId,
         );
-        if (keyCloakUserDataResponse.ok) {
+
+        person.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
+        person.isLocked = false;
+
+        if (!keyCloakUserDataResponse.ok) {
+            return person;
+        }
+        if (keyCloakUserDataResponse.value.attributes) {
+            const attributes: Record<string, string[]> = keyCloakUserDataResponse.value.attributes;
+            const lockedFrom: string | undefined = attributes[LockKeys.LockedFrom]?.toString();
+            const lockedTimeStamp: string | undefined = attributes[LockKeys.Timestamp]?.toString();
             const lockInfo: LockInfo = {
-                lock_locked_from: keyCloakUserDataResponse.value.attributes[LockKeys.LockedFrom]?.toString() ?? '',
-                lock_timestamp: keyCloakUserDataResponse.value.attributes[LockKeys.Timestamp]?.toString() ?? '',
+                lock_locked_from: lockedFrom ?? '',
+                lock_timestamp: lockedTimeStamp ?? '',
             };
             person.lockInfo = lockInfo;
-            person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         }
+        person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         return person;
     }
 
