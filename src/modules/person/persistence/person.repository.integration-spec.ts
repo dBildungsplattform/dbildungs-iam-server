@@ -947,6 +947,26 @@ describe('PersonRepository Integration', () => {
 
                 expect(result.ok).toBeTruthy();
             });
+            it('should return person with fallback keycloak info', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: true
+                });
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+                person1.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
+                person1.isLocked = false;
+
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: false,
+                    error: new KeycloakClientError(''),
+                });
+
+                const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+
+                expect(result.ok).toBeTruthy();
+            });
         });
         describe('when user has permission on root organisation', () => {
             it('should return person', async () => {
