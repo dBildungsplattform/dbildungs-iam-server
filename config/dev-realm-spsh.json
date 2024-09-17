@@ -434,6 +434,7 @@
     "requiredCredentials": [
       "password"
     ],
+    "passwordPolicy" : "maxAuthAge(0)",
     "otpPolicyType": "totp",
     "otpPolicyAlgorithm": "HmacSHA1",
     "otpPolicyInitialCounter": 0,
