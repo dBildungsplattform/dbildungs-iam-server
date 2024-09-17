@@ -2,16 +2,17 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthorizationParameters, Client, Issuer, TokenSet, UserinfoResponse } from 'openid-client';
+import { AuthorizationParameters, Client, Issuer, Strategy, TokenSet, UserinfoResponse } from 'openid-client';
 
 import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
-import { OpenIdConnectStrategy } from './oidc.strategy.js';
+import { OpenIdConnectStrategy, StepUpLevel, extractStepUpLevelFromJWT } from './oidc.strategy.js';
 import { PassportUser } from '../types/user.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { Request } from 'express';
+import { sign } from 'jsonwebtoken';
 
 describe('OpenIdConnectStrategy', () => {
     let module: TestingModule;
@@ -126,6 +127,60 @@ describe('OpenIdConnectStrategy', () => {
                 KeycloakUserNotFoundError,
             );
             expect(openIdClient.revoke).toHaveBeenCalled();
+        });
+    });
+
+    describe('authenticate', () => {
+        let superPassportSpy: jest.SpyInstance;
+        beforeEach(() => {
+            superPassportSpy = jest.spyOn(Strategy.prototype, 'authenticate').mockImplementation(() => {});
+        });
+
+        it('should call super.authenticate with options', () => {
+            const request: Request = createMock<Request>();
+            sut.authenticate(request);
+
+            expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'silver' });
+        });
+
+        it('should call super.authenticate with options', () => {
+            const request: Request = createMock<Request>();
+            request.query['requiredStepUpLevel'] = StepUpLevel.GOLD;
+            sut.authenticate(request);
+
+            expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'gold' });
+        });
+    });
+
+    describe('extractStepUpLevelFromJWT', () => {
+        it('should return StepUpLevel.NONE when JWT is undefined', () => {
+            const result: StepUpLevel = extractStepUpLevelFromJWT(undefined);
+
+            expect(result).toBe(StepUpLevel.NONE);
+        });
+
+        it('should return the acr value from the decoded JWT', () => {
+            const jwt: string = sign({ acr: StepUpLevel.GOLD }, 'secret');
+
+            const result: StepUpLevel = extractStepUpLevelFromJWT(jwt);
+
+            expect(result).toBe(StepUpLevel.GOLD);
+        });
+
+        it('should return StepUpLevel.NONE when acr isnt present', () => {
+            const jwt: string = sign({}, 'secret');
+
+            const result: StepUpLevel = extractStepUpLevelFromJWT(jwt);
+
+            expect(result).toBe(StepUpLevel.NONE);
+        });
+
+        it('should return StepUpLevel.NONE when invalid jwt', () => {
+            const jwt: string = 'abc';
+
+            const result: StepUpLevel = extractStepUpLevelFromJWT(jwt);
+
+            expect(result).toBe(StepUpLevel.NONE);
         });
     });
 });
