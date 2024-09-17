@@ -719,7 +719,7 @@ describe('OrganisationRepository', () => {
     });
     describe('find', () => {
         let organisations: Organisation<false>[];
-        /* eslint-disable no-await-in-loop */
+
         beforeEach(async () => {
             organisations = Array.from({ length: 5 }).map(() =>
                 DoFactory.createOrganisationAggregate(false, {
@@ -733,7 +733,6 @@ describe('OrganisationRepository', () => {
                 }),
             );
         });
-        /* eslint-disable no-await-in-loop */
 
         it('should return all organisations when no limit and offset are provided', async () => {
             const result: Organisation<true>[] = await sut.find();
