@@ -727,9 +727,11 @@ describe('OrganisationRepository', () => {
                     name: 'test',
                 }),
             );
-            for (const organisation of organisations) {
-                await sut.save(organisation);
-            }
+            await Promise.all(
+                organisations.map(async (organisation: Organisation<false>) => {
+                    await sut.save(organisation);
+                }),
+            );
         });
         /* eslint-disable no-await-in-loop */
 
