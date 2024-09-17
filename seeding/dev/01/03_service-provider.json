@@ -76,7 +76,7 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Schulportal-Administration-service",
             "keycloakRole": "Schulportal-Administration-user",
-            "requires2fa": false
+            "requires2fa": true
         },
         {
             "id": 6,
@@ -89,7 +89,7 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "School-SH-service",
             "keycloakRole": "School-SH-user",
-            "requires2fa": false
+            "requires2fa": true
         },
         {
             "id": 7,
