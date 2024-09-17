@@ -9,7 +9,8 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonEntity } from './person.entity.js';
-import { getEnabledEmailAddress,
+import {
+    getEnabledEmailAddress,
     mapAggregateToData,
     mapEntityToAggregate,
     mapEntityToAggregateInplace,
