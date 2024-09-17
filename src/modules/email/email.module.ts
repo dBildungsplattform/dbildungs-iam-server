@@ -8,7 +8,7 @@ import { EmailEventHandler } from './domain/email-event-handler.js';
 import { EmailFactory } from './domain/email.factory.js';
 import { EmailRepo } from './persistence/email.repo.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
-import {OrganisationModule} from "../organisation/organisation.module.js";
+import { OrganisationModule } from '../organisation/organisation.module.js';
 
 @Module({
     imports: [

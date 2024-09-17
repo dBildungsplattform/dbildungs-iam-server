@@ -3,7 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DoFactory,
 } from '../../../../test/utils/index.js';
 import { EmailRepo } from './email.repo.js';
 import { EmailFactory } from '../domain/email.factory.js';
@@ -20,8 +21,8 @@ import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { MikroORM } from '@mikro-orm/core';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
-import {OrganisationRepository} from "../../organisation/persistence/organisation.repository.js";
-import {Organisation} from "../../organisation/domain/organisation.js";
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -99,8 +100,7 @@ describe('EmailRepo', () => {
         const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
             emailDomain: 'fake@schule-sh.de',
         });
-        return await organisationRepository.save(organisation);
-
+        return organisationRepository.save(organisation);
     }
 
     afterAll(async () => {
@@ -148,7 +148,7 @@ describe('EmailRepo', () => {
             it('should disable it and return EmailAddressEntity', async () => {
                 const person: Person<true> = await createPerson();
                 const organisation: Organisation<true> = await createOrganisation();
-                organisationRepository.save(organisation);
+                await organisationRepository.save(organisation);
                 const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
                 if (!email.ok) throw new Error();
                 email.value.enable();

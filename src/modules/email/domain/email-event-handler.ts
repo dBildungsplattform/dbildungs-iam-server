@@ -45,7 +45,6 @@ export class EmailEventHandler {
     public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
         this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
 
-        //const rollen: Rolle<true>[] = await this.getRollenForPerson(event.personId);
         const rollenWithPK: Map<string, RolleWithPK> = await this.getRollenWithPKForPerson(event.personId);
         const rollen: Rolle<true>[] = Array.from(rollenWithPK.values(), (value: RolleWithPK) => {
             return value.rolle;
@@ -67,33 +66,18 @@ export class EmailEventHandler {
                         this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
                     }
                 }
-            } else {
-                const pkForRolleWithSPReference: RolleWithPK | undefined = rollenWithPK.get(rollenIdWithSPReference);
-                if (!pkForRolleWithSPReference) {
-                    return this.logger.error(
-                        `PK for rolle that references SP not found, cannot get organisation for emailDomain`,
-                    );
-                }
+            }
+            const pkForRolleWithSPReference: RolleWithPK | undefined = rollenWithPK.get(rollenIdWithSPReference);
+            if (pkForRolleWithSPReference) {
                 this.logger.info(
                     `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
                 );
                 await this.createNewEmail(event.personId, pkForRolleWithSPReference.personenkontext.organisationId);
             }
+        } else {
+            this.logger.info(`Renamed person with personId:${event.personId} has no SP with Email, nothing to do`);
         }
     }
-
-    /* private async getRollenForPerson(personId: PersonID): Promise<Rolle<true>[]> {
-        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
-        const rollenIds: string[] = [];
-        for (const personenkontext of personenkontexte) {
-            rollenIds.push(personenkontext.rolleId);
-        }
-        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
-
-        return Array.from(rollenMap.values(), (value: Rolle<true>) => {
-            return value;
-        });
-    }*/
 
     private async getRollenWithPKForPerson(personId: PersonID): Promise<Map<string, RolleWithPK>> {
         const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
@@ -118,6 +102,7 @@ export class EmailEventHandler {
                 });
             }
         });
+
         return resMap;
     }
 
@@ -318,6 +303,7 @@ export class EmailEventHandler {
         );
 
         if (references) return rolle.id;
+
         return undefined;
     }
 }

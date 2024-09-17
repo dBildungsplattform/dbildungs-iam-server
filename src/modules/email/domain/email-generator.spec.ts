@@ -83,7 +83,9 @@ describe('EmailGenerator', () => {
             it('should return valid email', async () => {
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
 
-                await expect(sut.generateAvailableAddress('Paul', 'Müller-Meier', '@schule-sh.de')).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAvailableAddress('Paul', 'Müller-Meier', '@schule-sh.de'),
+                ).resolves.toStrictEqual({
                     ok: true,
                     value: 'paul.mueller-meier@schule-sh.de',
                 });
@@ -94,7 +96,9 @@ describe('EmailGenerator', () => {
             it('should return valid email', async () => {
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
 
-                await expect(sut.generateAvailableAddress('Paul-Edgar', 'Müller', '@schule-sh.de')).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAvailableAddress('Paul-Edgar', 'Müller', '@schule-sh.de'),
+                ).resolves.toStrictEqual({
                     ok: true,
                     value: 'paul-edgar.mueller@schule-sh.de',
                 });
@@ -105,7 +109,9 @@ describe('EmailGenerator', () => {
             it('should return valid email', async () => {
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
 
-                await expect(sut.generateAvailableAddress('Paul Edgar', 'Müller', '@schule-sh.de')).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAvailableAddress('Paul Edgar', 'Müller', '@schule-sh.de'),
+                ).resolves.toStrictEqual({
                     ok: true,
                     value: 'pauledgar.mueller@schule-sh.de',
                 });
@@ -118,7 +124,7 @@ describe('EmailGenerator', () => {
                     sut.generateAvailableAddress(
                         faker.string.alpha({ length: 32 }),
                         faker.string.alpha({ length: 32 }),
-                '@schule-sh.de'
+                        '@schule-sh.de',
                     ),
                 ).resolves.toStrictEqual({
                     ok: false,
@@ -129,7 +135,9 @@ describe('EmailGenerator', () => {
 
         describe('when firstname is not isDIN91379A', () => {
             it('should return error', async () => {
-                await expect(sut.generateAvailableAddress('123^^$/()', 'Rottelburg', '@schule-sh.de')).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAvailableAddress('123^^$/()', 'Rottelburg', '@schule-sh.de'),
+                ).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
                 });
@@ -138,7 +146,9 @@ describe('EmailGenerator', () => {
 
         describe('when lastname is not isDIN91379A', () => {
             it('should return error', async () => {
-                await expect(sut.generateAvailableAddress('Torsten', '123^^$/()', '@schule-sh.de')).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAvailableAddress('Torsten', '123^^$/()', '@schule-sh.de'),
+                ).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidCharacterSetError('name.familienname', 'DIN-91379A'),
                 });
@@ -148,7 +158,9 @@ describe('EmailGenerator', () => {
         describe('when contains special characters', () => {
             it('should normalize german, danish and french special characters', async () => {
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
-                await expect(sut.generateAvailableAddress('Åron', 'åàâçèéêëîïôùûÿäæöøœüß', '@schule-sh.de')).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAvailableAddress('Åron', 'åàâçèéêëîïôùûÿäæöøœüß', '@schule-sh.de'),
+                ).resolves.toStrictEqual({
                     ok: true,
                     value: 'aaron.aaaaceeeeiiouuyaeaeoeoeoeuess@schule-sh.de',
                 });
@@ -169,7 +181,9 @@ describe('EmailGenerator', () => {
             it('should not accept invalid character set in firstname', async () => {
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
 
-                await expect(sut.generateAvailableAddress('Èlène?', 'L.,unâtiz', '@schule-sh.de')).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAvailableAddress('Èlène?', 'L.,unâtiz', '@schule-sh.de'),
+                ).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
                 });
@@ -180,7 +194,9 @@ describe('EmailGenerator', () => {
             it('should not accept invalid character set in lastname', async () => {
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(false);
 
-                await expect(sut.generateAvailableAddress('Èlène', 'L.,unâtiz?', '@schule-sh.de')).resolves.toStrictEqual({
+                await expect(
+                    sut.generateAvailableAddress('Èlène', 'L.,unâtiz?', '@schule-sh.de'),
+                ).resolves.toStrictEqual({
                     ok: false,
                     error: new InvalidCharacterSetError('name.familienname', 'DIN-91379A'),
                 });
@@ -228,10 +244,12 @@ describe('EmailGenerator', () => {
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(true); //mock second attempt => maxmustermann1 already exists
                 emailRepoMock.existsEmailAddress.mockResolvedValueOnce(false); //mock third attempt => maxmustermann2 not exists
 
-                await expect(sut.generateAvailableAddress('Max', 'Mustermann', '@schule-sh.de')).resolves.toStrictEqual({
-                    ok: true,
-                    value: 'max.mustermann2@schule-sh.de',
-                });
+                await expect(sut.generateAvailableAddress('Max', 'Mustermann', '@schule-sh.de')).resolves.toStrictEqual(
+                    {
+                        ok: true,
+                        value: 'max.mustermann2@schule-sh.de',
+                    },
+                );
             });
         });
     });
