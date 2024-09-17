@@ -788,7 +788,9 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             person.personalnummer = body.personalnummer;
             personRepositoryMock.updatePersonalnummer.mockResolvedValue(person);
-            await expect(personController.updatePersonalnummer(params, body)).resolves.toBe(undefined);
+            await expect(personController.updatePersonalnummer(params, body, personPermissionsMock)).resolves.toBe(
+                undefined,
+            );
             expect(personRepositoryMock.updatePersonalnummer).toHaveBeenCalledTimes(1);
         });
 
@@ -796,7 +798,7 @@ describe('PersonController', () => {
             personRepositoryMock.updatePersonalnummer.mockResolvedValue(
                 new DuplicatePersonalnummerError('Personalnummer already exists'),
             );
-            await expect(personController.updatePersonalnummer(params, body)).rejects.toThrow(
+            await expect(personController.updatePersonalnummer(params, body, personPermissionsMock)).rejects.toThrow(
                 DuplicatePersonalnummerError,
             );
         });
@@ -808,9 +810,9 @@ describe('PersonController', () => {
                 revision: '1',
             };
             personRepositoryMock.updatePersonalnummer.mockResolvedValue(new PersonalnummerRequiredError());
-            await expect(personController.updatePersonalnummer(params, bodyWithInvalidPersonalnummer)).rejects.toThrow(
-                PersonalnummerRequiredError,
-            );
+            await expect(
+                personController.updatePersonalnummer(params, bodyWithInvalidPersonalnummer, personPermissionsMock),
+            ).rejects.toThrow(PersonalnummerRequiredError);
         });
 
         it('should throw HttpException when revision is incorrect', async () => {
@@ -820,9 +822,9 @@ describe('PersonController', () => {
                 revision: '2',
             };
             personRepositoryMock.updatePersonalnummer.mockResolvedValue(new MismatchedRevisionError(''));
-            await expect(personController.updatePersonalnummer(params, bodyWithInvalidRevision)).rejects.toThrow(
-                HttpException,
-            );
+            await expect(
+                personController.updatePersonalnummer(params, bodyWithInvalidRevision, personPermissionsMock),
+            ).rejects.toThrow(HttpException);
         });
     });
 });
