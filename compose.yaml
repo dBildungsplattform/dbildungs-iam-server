@@ -154,7 +154,7 @@ services:
       retries: 3
     volumes:
       - mariadb:/var/lib/mysql
-      - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql
+      - ./privacyidea/dump.sql:/docker-entrypoint-initdb.d/dump.sql
 
 volumes:
   db-data:
