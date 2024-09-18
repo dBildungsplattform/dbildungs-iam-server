@@ -34,6 +34,7 @@ import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -89,6 +90,10 @@ describe('PersonController', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
             ],
         }).compile();

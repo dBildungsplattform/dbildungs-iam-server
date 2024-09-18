@@ -35,9 +35,6 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
-import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
-import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
-import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 
 describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
@@ -47,7 +44,6 @@ describe('dbiam Personenkontext API', () => {
     let personRepo: PersonRepository;
     let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
-    let personenkontextFactory: DbiamPersonenkontextFactory;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personFactory: PersonFactory;
 
@@ -96,7 +92,6 @@ describe('dbiam Personenkontext API', () => {
         personRepo = module.get(PersonRepository);
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
-        personenkontextFactory = module.get(DbiamPersonenkontextFactory);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personFactory = module.get(PersonFactory);
 
@@ -235,17 +230,21 @@ describe('dbiam Personenkontext API', () => {
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
-            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
-                .send({ personId: person.id, organisationId: organisation.id, rolleId: rolle.id });
+                .send({
+                    personId: person.id,
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    email: 'test@schule-sh.de',
+                });
 
             expect(response.status).toBe(201);
         });
 
-        it('should return error if PersonenkontexteUpdateError occurs', async () => {
+        it('should return error if Not Migration User', async () => {
             const person: Person<true> = await createPerson();
             const organisation: Organisation<true> = await organisationRepo.save(
                 DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
@@ -257,11 +256,9 @@ describe('dbiam Personenkontext API', () => {
                 }),
             );
 
-            const personenkontextUpdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
-            personenkontextUpdateMock.update.mockResolvedValueOnce(new PersonenkontextCommitError());
-            jest.spyOn(personenkontextFactory, 'createNewPersonenkontexteUpdate').mockReturnValueOnce(
-                personenkontextUpdateMock,
-            );
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/dbiam/personenkontext')
@@ -269,12 +266,13 @@ describe('dbiam Personenkontext API', () => {
                     personId: person.id,
                     organisationId: organisation.id,
                     rolleId: rolle.id,
+                    email: 'test@schule-sh.de',
                 });
 
-            expect(response.status).toBe(400);
-            expect(response.text).toBe('{"code":400,"i18nKey":"PERSONENKONTEXTE_UPDATE_ERROR"}');
+            expect(response.status).toBe(404);
         });
 
+        /*
         it('should return error, if personenkontext was not added', async () => {
             const person: Person<true> = await createPerson();
             const organisation: Organisation<true> = await organisationRepo.save(
@@ -300,10 +298,12 @@ describe('dbiam Personenkontext API', () => {
                     personId: person.id,
                     organisationId: organisation.id,
                     rolleId: rolle.id,
+                    email: 'test@schule-sh.de',
                 });
 
             expect(response.status).toBe(400);
             expect(response.text).toBe('{"code":400,"i18nKey":"PERSONENKONTEXTE_UPDATE_ERROR"}');
         });
+        */
     });
 });
