@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { faker } from '@faker-js/faker';
+import {faker} from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
@@ -88,7 +88,7 @@ describe('EmailFactory', () => {
     });
 
     describe('createNew', () => {
-        describe('when person is found and address generation succeeds ', () => {
+        describe('when person is found and address generation succeeds', () => {
             it('should return new Email', async () => {
                 const person: Person<true> = getPerson();
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
@@ -107,6 +107,45 @@ describe('EmailFactory', () => {
                     createMock<Organisation<true>>({
                         emailDomain: '@schule-sh.de',
                     }),
+                ]);
+
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(person.id, faker.string.uuid());
+
+                if (!creationResult.ok) throw new Error();
+                expect(creationResult.value.personId).toStrictEqual(person.id);
+                expect(creationResult.value.address).toStrictEqual(
+                    `${person.vorname}.${person.familienname}@schule-sh.de`,
+                );
+            });
+        });
+
+        describe('when person is found and multiple organisations exists in hierarchy', () => {
+            it('should return the first found email-domain', async () => {
+                const person: Person<true> = getPerson();
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementation(
+                    // eslint-disable-next-line @typescript-eslint/require-await
+                    async (vorname: string, familienname: string) => {
+                        return {
+                            ok: true,
+                            value: vorname + '.' + familienname + '@schule-sh.de',
+                        };
+                    },
+                );
+
+                const land: Organisation<true> = createMock<Organisation<true>>({
+                    emailDomain: '@schule-sh.de',
+                });
+                const traeger: Organisation<true> = createMock<Organisation<true>>({
+                    emailDomain: undefined,
+                });
+                const schule: Organisation<true> = createMock<Organisation<true>>({
+                        emailDomain: undefined,
+                });
+
+                organisationRepositoryMock.findParentOrgasForIds.mockResolvedValueOnce([
+                    schule, traeger, land
                 ]);
 
                 const creationResult: Result<EmailAddress<false>> = await sut.createNew(person.id, faker.string.uuid());
