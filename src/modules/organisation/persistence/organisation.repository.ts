@@ -29,7 +29,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         kuerzel: organisation.kuerzel,
         typ: organisation.typ,
         traegerschaft: organisation.traegerschaft,
-        emailDomain: organisation.emailDomain,
+        emaildomain: organisation.emaildomain,
     };
 }
 
@@ -46,7 +46,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.kuerzel,
         entity.typ,
         entity.traegerschaft,
-        entity.emailDomain,
+        entity.emaildomain,
     );
 }
 
@@ -140,6 +140,28 @@ export class OrganisationRepository {
         }
 
         return rawResult.map(mapEntityToAggregate);
+    }
+
+    public async findParentOrgasForIdSorted(id: OrganisationID): Promise<Organisation<true>[]> {
+        const query: string = `
+             WITH RECURSIVE parent_organisations AS (
+                SELECT *, 0 as depth
+                FROM public.organisation
+                WHERE id = (?)
+                UNION ALL
+                SELECT o.*, depth + 1
+                FROM public.organisation o
+                INNER JOIN parent_organisations po ON po.administriert_von = o.id
+            )
+            SELECT *
+            FROM parent_organisations ORDER BY depth;
+        `;
+
+        const rawResult: OrganisationEntity[] = await this.em.execute(query, [id]);
+
+        const res: Organisation<true>[] = rawResult.map(mapEntityToAggregate);
+
+        return res;
     }
 
     public async isOrgaAParentOfOrgaB(

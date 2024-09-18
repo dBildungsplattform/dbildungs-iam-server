@@ -44,5 +44,5 @@ export class OrganisationEntity extends TimestampedEntity {
     public traegerschaft?: Traegerschaft;
 
     @Property({ nullable: true })
-    public emailDomain?: string;
+    public emaildomain?: string;
 }

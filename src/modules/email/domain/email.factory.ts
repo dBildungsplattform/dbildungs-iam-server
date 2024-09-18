@@ -48,10 +48,10 @@ export class EmailFactory {
                 error: new EntityNotFoundError('Organisation', organisationId),
             };
         }
-        const organisations: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIds([
+        const organisations: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIdSorted(
             organisation.id,
-        ]);
-        organisations.push(organisation);
+        );
+        //organisations.push(organisation);
         const emailDomain: Option<string> = this.getDomainRecursive(organisations);
         if (!emailDomain) {
             return {
@@ -89,7 +89,7 @@ export class EmailFactory {
 
     private getDomainRecursive(organisations: Organisation<true>[]): Option<string> {
         if (!organisations || organisations.length == 0) return undefined;
-        if (organisations[0] && organisations[0].emailDomain) return organisations[0].emailDomain;
+        if (organisations[0] && organisations[0].emaildomain) return organisations[0].emaildomain;
 
         return this.getDomainRecursive(organisations.slice(1));
     }
