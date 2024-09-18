@@ -7,7 +7,6 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { PersonRepository } from './persistence/person.repository.js';
 import { PersonFactory } from './domain/person.factory.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
-import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
 import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
@@ -22,7 +21,6 @@ import { PersonPersistenceMapperProfile } from './persistence/person-persistence
         PersonFactory,
         UsernameGeneratorService,
         RolleRepo,
-        OrganisationRepo,
         OrganisationRepository,
         RolleFactory,
         ServiceProviderRepo,
