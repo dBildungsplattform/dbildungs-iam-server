@@ -13,7 +13,6 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -74,7 +73,7 @@ describe('PersonAdministrationController Integration Test', () => {
             .compile();
 
         orm = module.get(MikroORM);
-        organisationRepo = module.get(OrganisationRepo);
+        organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
@@ -102,7 +101,9 @@ describe('PersonAdministrationController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationRepo.ROOT_ORGANISATION_ID]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([
+                organisationRepo.ROOT_ORGANISATION_ID,
+            ]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
