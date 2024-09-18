@@ -122,7 +122,7 @@ describe('Rolle API', () => {
 
         personPermissionsMock = createMock<PersonPermissions>();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
-        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([]);
+        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -264,7 +264,7 @@ describe('Rolle API', () => {
                 ])
             ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgaIds);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
@@ -294,9 +294,10 @@ describe('Rolle API', () => {
                 DoFactory.createRolle(false),
             );
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([
-                testRolle.administeredBySchulstrukturknoten,
-            ]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [testRolle.administeredBySchulstrukturknoten],
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
@@ -327,7 +328,7 @@ describe('Rolle API', () => {
                 ])
             ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgaIds);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
@@ -375,7 +376,10 @@ describe('Rolle API', () => {
         it('should return rolle', async () => {
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([rolle.administeredBySchulstrukturknoten]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [rolle.administeredBySchulstrukturknoten],
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/rolle/${rolle.id}`)
@@ -393,7 +397,10 @@ describe('Rolle API', () => {
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([rolle.administeredBySchulstrukturknoten]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [rolle.administeredBySchulstrukturknoten],
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/rolle/${rolle.id}`)
@@ -600,7 +607,10 @@ describe('Rolle API', () => {
                 }),
             );
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([organisation.id]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
 
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                 DoFactory.createServiceProvider(false),
@@ -656,7 +666,7 @@ describe('Rolle API', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const params: UpdateRolleBodyParams = {
@@ -814,7 +824,10 @@ describe('Rolle API', () => {
                     }),
                 );
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
-                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const response: Response = await request(app.getHttpServer() as App)
@@ -841,7 +854,10 @@ describe('Rolle API', () => {
                 );
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
-                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [],
+                });
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
                 const response: Response = await request(app.getHttpServer() as App)
