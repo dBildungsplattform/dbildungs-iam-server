@@ -92,17 +92,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
             );
         });
-
-        it('should return user not found if referrer is undefined', async () => {
-            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
-                ok: true,
-                value: getPerson(true),
-            });
-
-            await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
-                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
-            );
-        });
     });
 
     describe('PrivacyIdeaAdministrationController getTwoAuthState', () => {
@@ -184,6 +173,35 @@ describe('PrivacyIdeaAdministrationController', () => {
             await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
                 new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
+        });
+
+        it('should return user not found if referrer is undefined', async () => {
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: getPerson(true),
+            });
+
+            await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+
+        it('should return user not found if referrer is undefined self service', async () => {
+            personRepository.findById.mockResolvedValueOnce(getPerson(true));
+            personPermissionsMock.personFields.id = 'user1';
+
+            await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+
+        it('should return valid response if referrer is valid self service', async () => {
+            personRepository.findById.mockResolvedValueOnce(getPerson(false));
+            personPermissionsMock.personFields.id = 'user1';
+
+            serviceMock.getTwoAuthState.mockResolvedValue(undefined);
+            const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
+            expect(response).toEqual(new TokenStateResponse(undefined));
         });
     });
     describe('PrivacyIdeaAdministrationController resetToken', () => {

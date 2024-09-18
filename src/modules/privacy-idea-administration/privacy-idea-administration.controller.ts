@@ -62,11 +62,10 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: TokenInitBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<string> {
-        const person: Person<true> = await this.getPersonIfAllowed(params.personId, permissions);
+        const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
+        const selfService: boolean = params.personId === permissions.personFields.id;
 
-        const selfService: boolean = person.id === permissions.personFields.id;
-
-        return this.privacyIdeaAdministrationService.initializeSoftwareToken(person.referrer!, selfService);
+        return this.privacyIdeaAdministrationService.initializeSoftwareToken(referrer, selfService);
     }
 
     @Get('state')
@@ -81,10 +80,9 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenStateResponse> {
-        const person: Person<true> = await this.getPersonIfAllowed(personId, permissions);
-        const piToken: PrivacyIdeaToken | undefined = await this.privacyIdeaAdministrationService.getTwoAuthState(
-            person.referrer!,
-        );
+        const referrer: string = await this.getReferrerIfAllowedOrSelf(personId, permissions);
+        const piToken: PrivacyIdeaToken | undefined =
+            await this.privacyIdeaAdministrationService.getTwoAuthState(referrer);
         return new TokenStateResponse(piToken);
     }
 
@@ -101,11 +99,9 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<boolean> {
-        const person: Person<true> = await this.getPersonIfAllowed(personId, permissions);
+        const referrer: string = await this.getReferrerIfAllowed(personId, permissions);
         try {
-            const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(
-                person.referrer!,
-            );
+            const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
             return response.result.status;
         } catch (error) {
             if (error instanceof TokenError) {
@@ -113,7 +109,7 @@ export class PrivacyIdeaAdministrationController {
             }
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityCouldNotBeUpdated(person.referrer!, 'Token could not be unassigned.'),
+                    new EntityCouldNotBeUpdated(referrer, 'Token could not be unassigned.'),
                 ),
             );
         }
@@ -134,12 +130,12 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: AssignHardwareTokenBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<AssignHardwareTokenResponse | undefined> {
-        const person: Person<true> = await this.getPersonIfAllowed(params.userId, permissions);
+        const referrer: string = await this.getReferrerIfAllowed(params.userId, permissions);
         try {
             const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
                 params.serial,
                 params.otp,
-                person.referrer!,
+                referrer,
             );
             return new AssignHardwareTokenResponse(
                 result.id,
@@ -174,12 +170,12 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: TokenVerifyBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const person: Person<true> = await this.getPersonIfAllowed(params.personId, permissions);
+        const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
 
-        await this.privacyIdeaAdministrationService.verifyTokenEnrollment(person.referrer!, params.otp);
+        await this.privacyIdeaAdministrationService.verifyTokenEnrollment(referrer, params.otp);
     }
 
-    private async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Person<true>> {
+    private async getReferrerIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
             permissions,
@@ -190,6 +186,18 @@ export class PrivacyIdeaAdministrationController {
         if (personResult.value.referrer === undefined) {
             throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
         }
-        return personResult.value;
+        return personResult.value.referrer;
+    }
+
+    private async getReferrerIfAllowedOrSelf(personId: string, permissions: PersonPermissions): Promise<string> {
+        if (personId === permissions.personFields.id) {
+            const person: Option<Person<true>> = await this.personRepository.findById(personId);
+            if (!person?.referrer) {
+                throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
+            }
+            return person.referrer;
+        } else {
+            return this.getReferrerIfAllowed(personId, permissions);
+        }
     }
 }
