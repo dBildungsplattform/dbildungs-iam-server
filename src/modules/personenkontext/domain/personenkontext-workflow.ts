@@ -48,6 +48,7 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         organisationName: string | undefined,
         organisationId?: string, // Add organisationId as an optional parameter
+        limit?: number,
     ): Promise<Organisation<true>[]> {
         let allOrganisationsExceptKlassen: Organisation<boolean>[] = [];
 
@@ -56,11 +57,12 @@ export class PersonenkontextWorkflowAggregate {
             await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
                 OrganisationsTyp.KLASSE,
                 organisationName,
+                limit,
             );
 
         if (allOrganisationsExceptKlassen.length === 0) return [];
 
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
@@ -118,7 +120,7 @@ export class PersonenkontextWorkflowAggregate {
         }
 
         // Retrieve all organisations that the admin has access to
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );

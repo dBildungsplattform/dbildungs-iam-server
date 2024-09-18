@@ -262,7 +262,7 @@ export class OrganisationController {
         @Query() queryParams: FindOrganisationQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const validOrgaIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const validOrgaIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             queryParams.systemrechte,
             true,
         );
@@ -330,8 +330,11 @@ export class OrganisationController {
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            pageTotal: organisationResponses.length, // Number of items in the current page
-            items: organisationResponses, // Paginated items
+            //During a search, you want to know how many items match the search criteria.
+            //When not searching, you want to know the total number of items,
+            // including any specifically selected items that might not have been part of the initial paginated results.
+            pageTotal: queryParams.searchString ? organisations.length : mergedOrganisations.length,
+            items: organisationResponses,
         };
 
         return new PagedResponse(pagedOrganisationResponse);

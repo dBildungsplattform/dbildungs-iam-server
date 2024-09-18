@@ -213,7 +213,10 @@ describe('PersonController', () => {
                 personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 const orgaId: OrganisationID[] = [faker.string.uuid()];
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce(orgaId);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: orgaId,
+                });
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
                 personRepositoryMock.create.mockResolvedValue(new KeycloakClientError(''));
                 await expect(personController.createPersonMigration(params, personPermissionsMock)).rejects.toThrow(
@@ -338,6 +341,7 @@ describe('PersonController', () => {
 
         it('should get all persons', async () => {
             personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 queryParams,
@@ -353,9 +357,10 @@ describe('PersonController', () => {
 
         it('should get all persons when organisationIds is found and is ROOT', async () => {
             personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
-                personController.ROOT_ORGANISATION_ID,
-            ]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [personController.ROOT_ORGANISATION_ID],
+            });
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 queryParams,
                 personPermissionsMock,
