@@ -173,6 +173,7 @@ describe('PersonenkontexteUpdate', () => {
                             rollenart: RollenArt.LEHR,
                             merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                             id: pk1.rolleId,
+                            serviceProviderData: [DoFactory.createServiceProvider(true)],
                         }),
                 });
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);

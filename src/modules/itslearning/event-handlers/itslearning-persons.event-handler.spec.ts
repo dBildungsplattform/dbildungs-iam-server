@@ -362,6 +362,40 @@ describe('ItsLearning Persons Event Handler', () => {
             await sut.updatePersonenkontexteEventHandler(event);
         });
 
+        it('should call updatePerson, if at least one relevant kontext exists', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
+                [],
+                [],
+                [makeKontextEventData({ serviceProviderSystems: [ServiceProviderSystem.ITSLEARNING] })],
+            );
+
+            const updatePersonSpy: jest.SpyInstance = jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
+            jest.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
+            jest.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
+
+            await sut.updatePersonenkontexteEventHandler(event);
+
+            expect(updatePersonSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not call updatePerson, if no relevant kontext exists', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
+                [],
+                [],
+                [makeKontextEventData({ serviceProviderSystems: [ServiceProviderSystem.NONE] })],
+            );
+
+            const updatePersonSpy: jest.SpyInstance = jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
+            jest.spyOn(sut, 'updateMemberships').mockResolvedValueOnce(undefined);
+            jest.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
+
+            await sut.updatePersonenkontexteEventHandler(event);
+
+            expect(updatePersonSpy).toHaveBeenCalledTimes(0);
+        });
+
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
             const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
