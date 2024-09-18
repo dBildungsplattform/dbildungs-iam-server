@@ -51,7 +51,6 @@ export class EmailFactory {
         const organisations: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIdSorted(
             organisation.id,
         );
-        //organisations.push(organisation);
         const emailDomain: Option<string> = this.getDomainRecursive(organisations);
         if (!emailDomain) {
             return {

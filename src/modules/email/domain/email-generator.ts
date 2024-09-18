@@ -14,7 +14,7 @@ export class EmailGenerator {
 
         if (!createAddress.ok) return false;
 
-        return address === createAddress.value + emailDomain;
+        return address === createAddress.value + '@' + emailDomain;
     }
 
     public generateAddress(firstname: string, lastname: string): Result<string> {
@@ -77,7 +77,7 @@ export class EmailGenerator {
 
         return {
             ok: true,
-            value: nextAddressName + emailDomain,
+            value: nextAddressName + '@' + emailDomain,
         };
     }
 
@@ -93,11 +93,11 @@ export class EmailGenerator {
     }
 
     private async getNextAvailableAddress(calculatedAddress: string, emailDomain: string): Promise<string> {
-        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + emailDomain))) {
+        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + '@' + emailDomain))) {
             return calculatedAddress;
         }
         let counter: number = 1;
-        while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + emailDomain)) {
+        while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + '@' + emailDomain)) {
             counter = counter + 1;
         }
         return calculatedAddress + counter;
