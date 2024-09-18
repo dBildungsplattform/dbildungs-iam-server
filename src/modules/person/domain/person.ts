@@ -236,13 +236,10 @@ export class Person<WasPersisted extends boolean> {
         isLocked?: boolean,
         email?: string,
     ): void | DomainError {
-        if (this.revision !== revision) {
-            return new MismatchedRevisionError(
-                `Revision ${revision} does not match revision ${this.revision} of stored person.`,
-            );
+        const newRevision: string | DomainError = this.TryToUpdateRevision(revision);
+        if (newRevision instanceof DomainError) {
+            return newRevision;
         }
-
-        const newRevision: string = (parseInt(this.revision) + 1).toString();
 
         if (vorname && !NameValidator.isNameValid(vorname)) {
             return new VornameForPersonWithTrailingSpaceError();
@@ -281,5 +278,15 @@ export class Person<WasPersisted extends boolean> {
             length: { min: 10, max: 10 },
             casing: 'mixed',
         });
+    }
+
+    public TryToUpdateRevision(revision: string): string | DomainError {
+        if (this.revision !== revision) {
+            return new MismatchedRevisionError(
+                `Revision ${revision} does not match revision ${this.revision} of stored person.`,
+            );
+        }
+
+        return (parseInt(this.revision) + 1).toString();
     }
 }
