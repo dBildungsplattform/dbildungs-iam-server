@@ -1,4 +1,11 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import {
+    EntityManager,
+    Loaded,
+    QBFilterQuery,
+    QueryBuilder,
+    RequiredEntityData,
+    SelectQueryBuilder,
+} from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -246,25 +253,50 @@ export class OrganisationRepository {
         searchOptions: OrganisationSeachOptions,
     ): Promise<Counted<Organisation<true>>> {
         const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+            return [[], 0];
+        }
 
-        const scope: OrganisationScope = new OrganisationScope();
+        let whereClause: QBFilterQuery<OrganisationEntity> = {};
+        const andClauses: QBFilterQuery<OrganisationEntity>[] = [];
+        if (searchOptions.kennung) {
+            andClauses.push({ kennung: searchOptions.kennung });
+        }
+        if (searchOptions.name) {
+            andClauses.push({ name: searchOptions.name });
+        }
+        if (searchOptions.typ) {
+            andClauses.push({ typ: searchOptions.typ });
+        }
+        if (searchOptions.administriertVon) {
+            andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
+        }
+        if (searchOptions.searchString) {
+            andClauses.push({ name: { $ilike: `%${searchOptions.searchString}%` } });
+        }
+        if (searchOptions.excludeTyp) {
+            andClauses.push({ typ: { $nin: searchOptions.excludeTyp } });
+        }
+        if (andClauses.length > 0) {
+            whereClause = { $and: andClauses };
+        }
+        // return organisations for IDs even if other search options do not match
+        if (searchOptions.organisationIds) {
+            whereClause = { $or: [whereClause, { id: { $in: searchOptions.organisationIds } }] };
+        }
+        // return only permitted organisations
+        if (!permittedOrgas.all) {
+            whereClause = { $and: [whereClause, { id: { $in: permittedOrgas.orgaIds } }] };
+        }
 
-        scope
-            .byIDs(searchOptions.organisationIds)
-            .setScopeWhereOperator(ScopeOperator.OR)
-            .findBy({
-                kennung: searchOptions.kennung,
-                name: searchOptions.name,
-                typ: searchOptions.typ,
-            })
-            .setScopeWhereOperator(ScopeOperator.AND)
-            .findByAdministriertVonArray(searchOptions.administriertVon)
-            .searchStringAdministriertVon(searchOptions.searchString)
-            .excludeTyp(searchOptions.excludeTyp)
-            .byIDs(permittedOrgas.all ? undefined : permittedOrgas.orgaIds)
-            .paged(searchOptions.offset, searchOptions.limit);
+        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
+        const query: SelectQueryBuilder<OrganisationEntity> = qb
+            .select('*')
+            .where(whereClause)
+            .offset(searchOptions.offset)
+            .limit(searchOptions.limit);
+        const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
-        const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
             mapEntityToAggregate(entity),
         );
