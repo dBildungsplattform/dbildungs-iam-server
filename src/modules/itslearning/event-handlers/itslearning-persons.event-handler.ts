@@ -39,7 +39,7 @@ const ROLLENART_TO_IMSES_ROLE: Record<RollenArt, IMSESRoleType> = {
     [RollenArt.EXTERN]: IMSESRoleType.MEMBER,
     [RollenArt.LERN]: IMSESRoleType.LEARNER,
     [RollenArt.LEHR]: IMSESRoleType.INSTRUCTOR,
-    [RollenArt.LEIT]: IMSESRoleType.MANAGER,
+    [RollenArt.LEIT]: IMSESRoleType.ADMINISTRATOR,
     [RollenArt.ORGADMIN]: IMSESRoleType.ADMINISTRATOR,
     [RollenArt.SYSADMIN]: IMSESRoleType.ADMINISTRATOR,
 };
@@ -129,11 +129,14 @@ export class ItsLearningPersonsEventHandler {
             removedOrgaIDs.has(mr.groupId),
         );
 
-        const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
-            new DeleteMembershipsAction(membershipsToBeRemoved.map((mr: MembershipResponse) => mr.id)),
-        );
-        if (!deleteResult.ok) {
-            this.logger.error('Deletion failed', deleteResult.error);
+        if (membershipsToBeRemoved.length > 0) {
+            const deleteResult: Result<void, DomainError> = await this.itsLearningService.send(
+                new DeleteMembershipsAction(membershipsToBeRemoved.map((mr: MembershipResponse) => mr.id)),
+            );
+
+            if (!deleteResult.ok) {
+                this.logger.error('Deletion failed', deleteResult.error);
+            }
         }
 
         // Add and Update memberships with correct roles
@@ -146,10 +149,12 @@ export class ItsLearningPersonsEventHandler {
             }),
         );
 
-        const createMembershipsAction: CreateMembershipsAction = new CreateMembershipsAction(memberships);
-        const createResult: Result<void, DomainError> = await this.itsLearningService.send(createMembershipsAction);
-        if (!createResult.ok) {
-            this.logger.error('Creation failed', createResult.error);
+        if (memberships.length > 0) {
+            const createMembershipsAction: CreateMembershipsAction = new CreateMembershipsAction(memberships);
+            const createResult: Result<void, DomainError> = await this.itsLearningService.send(createMembershipsAction);
+            if (!createResult.ok) {
+                this.logger.error('Creation failed', createResult.error);
+            }
         }
     }
 

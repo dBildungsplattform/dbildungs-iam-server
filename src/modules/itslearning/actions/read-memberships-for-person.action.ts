@@ -2,7 +2,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 
 import { IMS_COMMON_SCHEMA, IMS_MEMBER_MAN_MESS_SCHEMA, IMS_MESS_BIND_SCHEMA } from '../schemas.js';
 import { IMSESRoleType } from '../types/role.enum.js';
-import { IMSESAction } from './base-action.js';
+import { IMSESMassAction } from './base-mass-action.js';
 
 export type ReadAllPersonsParams = {
     pageIndex: number;
@@ -27,8 +27,10 @@ export type MembershipIdPair = {
         groupSourcedId: {
             identifier: string;
         };
-        role: {
-            roleType: IMSESRoleType;
+        member: {
+            role: {
+                roleType: IMSESRoleType;
+            };
         };
     };
 };
@@ -46,15 +48,15 @@ function mapPersonIdPairToPersonResponse(idPair: MembershipIdPair): MembershipRe
     return {
         id: idPair.sourcedId.identifier,
         groupId: idPair.membership.groupSourcedId.identifier,
-        role: idPair.membership.role.roleType,
+        role: idPair.membership.member.role.roleType,
     };
 }
 
-export class ReadMembershipsForPersonAction extends IMSESAction<
+export class ReadMembershipsForPersonAction extends IMSESMassAction<
     ReadMembershipsForPersonReponseBody,
     MembershipResponse[]
 > {
-    public override action: string = 'http://www.imsglobal.org/soap/pms/readMembershipsForPerson';
+    public override action: string = 'http://www.imsglobal.org/soap/mms/readMembershipsForPerson';
 
     public constructor(private readonly personId: string) {
         super();
