@@ -168,7 +168,12 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); //mock the return values in the end of update method
                 const mapRollen: Map<string, Rolle<true>> = createMock<Map<string, Rolle<true>>>({
-                    get: () => DoFactory.createRolle(true),
+                    get: () =>
+                        DoFactory.createRolle(true, {
+                            rollenart: RollenArt.LEHR,
+                            merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                            id: pk1.rolleId,
+                        }),
                 });
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
