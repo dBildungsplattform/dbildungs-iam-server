@@ -43,8 +43,10 @@ describe('ReadMembershipsForPersonAction', () => {
                                     groupSourcedId: {
                                         identifier: m.groupId,
                                     },
-                                    role: {
-                                        roleType: m.role,
+                                    member: {
+                                        role: {
+                                            roleType: m.role,
+                                        },
                                     },
                                 },
                             })),

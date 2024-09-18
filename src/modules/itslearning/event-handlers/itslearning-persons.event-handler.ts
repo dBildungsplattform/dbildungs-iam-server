@@ -90,9 +90,14 @@ export class ItsLearningPersonsEventHandler {
 
         // Synchronize memberships
         await this.updateMemberships(event.person.id, currentKontexte, removedKontexte);
+
+        // Delete person (After updating memberships, to make sure they are removed in case the person is restored)
+        if (currentKontexte.length === 0) {
+            await this.deletePerson(event.person.id);
+        }
     }
 
-    private async updateMemberships(
+    public async updateMemberships(
         personId: PersonID,
         currentKontexte: PersonenkontextUpdatedData[],
         removedKontexte: PersonenkontextUpdatedData[],
@@ -135,7 +140,12 @@ export class ItsLearningPersonsEventHandler {
             );
 
             if (!deleteResult.ok) {
-                this.logger.error('Deletion failed', deleteResult.error);
+                this.logger.error(
+                    `Could not delete ${membershipsToBeRemoved.length} memberships for person ${personId}`,
+                    deleteResult.error,
+                );
+            } else {
+                this.logger.info(`Deleted ${membershipsToBeRemoved.length} memberships for person ${personId}`);
             }
         }
 
@@ -152,8 +162,14 @@ export class ItsLearningPersonsEventHandler {
         if (memberships.length > 0) {
             const createMembershipsAction: CreateMembershipsAction = new CreateMembershipsAction(memberships);
             const createResult: Result<void, DomainError> = await this.itsLearningService.send(createMembershipsAction);
+
             if (!createResult.ok) {
-                this.logger.error('Creation failed', createResult.error);
+                this.logger.error(
+                    `Could not create/update ${memberships.length} memberships for person ${personId}`,
+                    createResult.error,
+                );
+            } else {
+                this.logger.info(`Created/Updated ${memberships.length} memberships for person ${personId}`);
             }
         }
     }
@@ -167,11 +183,6 @@ export class ItsLearningPersonsEventHandler {
     ): Promise<void> {
         // Use mutex because multiple personenkontexte can be created at once
         return this.mutex.runExclusive(async () => {
-            // If no personenkontexte exist, TODO
-            if (currentPersonenkontexte.length === 0) {
-                return;
-            }
-
             const targetRole: IMSESInstitutionRoleType =
                 ROLLENART_TO_ITSLEARNING_ROLE[this.determineHighestRoleType(currentPersonenkontexte)];
 
