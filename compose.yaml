@@ -131,6 +131,10 @@ services:
     depends_on:
       maria-db:
         condition: service_healthy
+    volumes:
+      - ./privacyidea/encfile:/data/privacyidea/keys/encfile
+      - ./privacyidea/dummy_private.pem:/data/privacyidea/keys/private.pem
+      - ./privacyidea/dummy_public.pem:/data/privacyidea/keys/public.pem
 
   maria-db:
     image: mariadb:latest

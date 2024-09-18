@@ -1199,7 +1199,7 @@ INSERT INTO `resolverconfig` VALUES
 (4,2,'Port','3306','int',''),
 (5,2,'Database','ducsxqm001','string',''),
 (6,2,'User','admin','string',''),
-(7,2,'Password','ec3af8d866e2795aeb737a197c110014:d2f22c2249998099901c70b20e1db865','password',''),
+(7,2,'Password','40a280204e5afec1cb26f96dd8e4a1ea:80e57e6205166ee894b6bf36822aaad0','password',''),
 (8,2,'Editable','True','int',''),
 (9,2,'Password_Hash_Type','SSHA256','string',''),
 (10,2,'Table','users','string',''),
