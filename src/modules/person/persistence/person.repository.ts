@@ -480,12 +480,13 @@ export class PersonRepository {
                 return new PersonalnummerUpdateOutdatedError();
             }
 
-            const newRevision: string | DomainError = personFound.TryToUpdateRevision(revision);
-            if (newRevision instanceof DomainError) {
-                return newRevision;
+            const newRevisionResult: Result<string, DomainError> = personFound.tryToUpdateRevision(revision);
+            if (!newRevisionResult.ok) {
+                return newRevisionResult.error;
             }
+
             //Update
-            personFound.revision = newRevision;
+            personFound.revision = newRevisionResult.value;
             personFound.personalnummer = newPersonalnummer;
         }
 

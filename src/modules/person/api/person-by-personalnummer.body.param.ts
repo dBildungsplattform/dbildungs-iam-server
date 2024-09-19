@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsString } from 'class-validator';
 
 export class PersonByPersonalnummerBodyParams {
     @IsString()
@@ -7,9 +7,8 @@ export class PersonByPersonalnummerBodyParams {
     public readonly personalnummer!: string;
 
     @IsDate()
-    @IsOptional()
     @ApiProperty({
-        required: false,
+        required: true,
         description: 'Date of the most recent changed Personalnummer',
     })
     public readonly lastModified!: Date;

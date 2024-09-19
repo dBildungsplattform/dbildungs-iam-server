@@ -236,9 +236,9 @@ export class Person<WasPersisted extends boolean> {
         isLocked?: boolean,
         email?: string,
     ): void | DomainError {
-        const newRevision: string | DomainError = this.TryToUpdateRevision(revision);
-        if (newRevision instanceof DomainError) {
-            return newRevision;
+        const newRevisionResult: Result<string, DomainError> = this.tryToUpdateRevision(revision);
+        if (!newRevisionResult.ok) {
+            return newRevisionResult.error;
         }
 
         if (vorname && !NameValidator.isNameValid(vorname)) {
@@ -266,7 +266,7 @@ export class Person<WasPersisted extends boolean> {
         this.lokalisierung = lokalisierung;
         this.vertrauensstufe = vertrauensstufe;
         this.auskunftssperre = auskunftssperre;
-        this.revision = newRevision;
+        this.revision = newRevisionResult.value;
         this.personalnummer = personalnummer;
         this.lockInfo = lockInfo;
         this.isLocked = isLocked;
@@ -280,13 +280,19 @@ export class Person<WasPersisted extends boolean> {
         });
     }
 
-    public TryToUpdateRevision(revision: string): string | DomainError {
+    public tryToUpdateRevision(revision: string): Result<string, DomainError> {
         if (this.revision !== revision) {
-            return new MismatchedRevisionError(
-                `Revision ${revision} does not match revision ${this.revision} of stored person.`,
-            );
+            return {
+                ok: false,
+                error: new MismatchedRevisionError(
+                    `Revision ${revision} does not match revision ${this.revision} of stored person.`,
+                ),
+            };
         }
 
-        return (parseInt(this.revision) + 1).toString();
+        return {
+            ok: true,
+            value: (parseInt(this.revision) + 1).toString(),
+        };
     }
 }

@@ -1402,7 +1402,7 @@ describe('PersonRepository Integration', () => {
             const person: Person<true> = await savePerson(true);
             const person2: Person<true> = await savePerson(true);
             if (!person2.personalnummer) {
-                return;
+                throw new PersonalnummerRequiredError();
             }
 
             personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
