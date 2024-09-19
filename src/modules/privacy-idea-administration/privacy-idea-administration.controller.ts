@@ -30,6 +30,7 @@ import { PersonPermissions } from '../authentication/domain/person-permissions.j
 import { Permissions } from '../authentication/api/permissions.decorator.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
+import { TokenVerifyBodyParams } from './token-verify.params.js';
 import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
 import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
 import { TokenError } from './api/error/token.error.js';
@@ -57,13 +58,14 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
-    @Public()
     public async initializeSoftwareToken(
         @Body() params: TokenInitBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<string> {
-        const referrer: string = await this.getPersonIfAllowed(params.personId, permissions);
-        return this.privacyIdeaAdministrationService.initializeSoftwareToken(referrer);
+        const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
+        const selfService: boolean = params.personId === permissions.personFields.id;
+
+        return this.privacyIdeaAdministrationService.initializeSoftwareToken(referrer, selfService);
     }
 
     @Get('state')
@@ -74,12 +76,11 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
-    @Public()
     public async getTwoAuthState(
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenStateResponse> {
-        const referrer: string = await this.getPersonIfAllowed(personId, permissions);
+        const referrer: string = await this.getReferrerIfAllowedOrSelf(personId, permissions);
         const piToken: PrivacyIdeaToken | undefined =
             await this.privacyIdeaAdministrationService.getTwoAuthState(referrer);
         return new TokenStateResponse(piToken);
@@ -98,7 +99,7 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<boolean> {
-        const referrer: string = await this.getPersonIfAllowed(personId, permissions);
+        const referrer: string = await this.getReferrerIfAllowed(personId, permissions);
         try {
             const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
             return response.result.status;
@@ -125,12 +126,11 @@ export class PrivacyIdeaAdministrationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to reset token.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to assign hardware token.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while assigning a hardware token.' })
-    @Public()
     public async assignHardwareToken(
         @Body() params: AssignHardwareTokenBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<AssignHardwareTokenResponse | undefined> {
-        const referrer: string = await this.getPersonIfAllowed(params.userId, permissions);
+        const referrer: string = await this.getReferrerIfAllowed(params.userId, permissions);
         try {
             const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
                 params.serial,
@@ -158,7 +158,24 @@ export class PrivacyIdeaAdministrationController {
         }
     }
 
-    private async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
+    @Post('verify')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiCreatedResponse({ description: 'The token was successfully verified.' })
+    @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to verify token.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to verify token.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to verify token.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while verifying a token.' })
+    public async verifyToken(
+        @Body() params: TokenVerifyBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
+
+        await this.privacyIdeaAdministrationService.verifyTokenEnrollment(referrer, params.otp);
+    }
+
+    private async getReferrerIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {
         const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             personId,
             permissions,
@@ -170,5 +187,17 @@ export class PrivacyIdeaAdministrationController {
             throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
         }
         return personResult.value.referrer;
+    }
+
+    private async getReferrerIfAllowedOrSelf(personId: string, permissions: PersonPermissions): Promise<string> {
+        if (personId === permissions.personFields.id) {
+            const person: Option<Person<true>> = await this.personRepository.findById(personId);
+            if (!person?.referrer) {
+                throw new HttpException('User not found.', HttpStatus.BAD_REQUEST);
+            }
+            return person.referrer;
+        } else {
+            return this.getReferrerIfAllowed(personId, permissions);
+        }
     }
 }

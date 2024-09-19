@@ -13,6 +13,7 @@ import { OTPnotValidError } from './error/otp-not-valid.error.js';
 import { HardwareTokenServiceError } from './error/hardware-token-service.error.js';
 import { TokenResetError } from './error/token-reset.error.js';
 import { TwoAuthStateError } from './error/two-auth-state.error.js';
+import { SoftwareTokenVerificationError } from './error/software-token-verification.error.js';
 
 @Catch(TokenError)
 export class PrivacyIdeaAdministrationExceptionFilter implements ExceptionFilter<TokenError> {
@@ -57,6 +58,13 @@ export class PrivacyIdeaAdministrationExceptionFilter implements ExceptionFilter
             new DbiamPrivacyIdeaAdministrationError({
                 code: 400,
                 i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.TWO_AUTH_STATE_ERROR,
+            }),
+        ],
+        [
+            SoftwareTokenVerificationError.name,
+            new DbiamPrivacyIdeaAdministrationError({
+                code: 400,
+                i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.SOFTWARE_TOKEN_VERIFICATION_ERROR,
             }),
         ],
     ]);
