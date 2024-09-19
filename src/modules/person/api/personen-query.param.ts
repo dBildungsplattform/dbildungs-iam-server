@@ -3,7 +3,7 @@ import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validat
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
-import { SortField } from '../domain/person.enums.js';
+import { SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 export class PersonenQueryParams extends PagedQueryParams {
@@ -86,12 +86,12 @@ export class PersonenQueryParams extends PagedQueryParams {
     public readonly sortOrder?: ScopeOrder;
 
     @IsOptional()
-    @IsEnum(SortField)
+    @IsEnum(SortFieldPersonFrontend)
     @ApiProperty({
-        enum: SortField,
+        enum: SortFieldPersonFrontend,
         required: false,
         nullable: true,
         description: 'Field to sort by.',
     })
-    public readonly sortField?: SortField;
+    public readonly sortField?: SortFieldPersonFrontend;
 }

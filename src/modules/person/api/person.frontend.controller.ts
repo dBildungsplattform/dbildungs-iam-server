@@ -22,7 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { SortField } from '../domain/person.enums.js';
+import { SortFieldPersonFrontend } from '../domain/person.enums.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen-frontend')
@@ -75,7 +75,7 @@ export class PersonFrontendController {
             //.sortBy('familienname', ScopeOrder.ASC)
             .paged(queryParams.offset, queryParams.limit);
 
-        const sortField: SortField | 'vorname' = queryParams.sortField || 'vorname';
+        const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
         scope.sortBy(sortField, sortOrder);
         if (queryParams.suchFilter) {
