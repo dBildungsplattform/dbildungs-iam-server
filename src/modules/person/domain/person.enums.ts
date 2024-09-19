@@ -14,3 +14,9 @@ export enum Geschlecht {
     D = 'd',
     X = 'x',
 }
+export enum SortField {
+    FAMILIENNAME = 'familienname',
+    VORNAME = 'vorname',
+    PERSONALNUMMER = 'personalnummer',
+    REFERRER = 'referrer',
+}
