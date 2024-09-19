@@ -2,7 +2,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -50,7 +50,7 @@ export class PersonenkontextWorkflowAggregate {
         organisationId?: string, // Add organisationId as an optional parameter
         limit?: number,
     ): Promise<Organisation<true>[]> {
-        let allOrganisationsExceptKlassen: Organisation<boolean>[] = [];
+        let allOrganisationsExceptKlassen: Organisation<true>[] = [];
 
         // If the search string for organisation is present then search for Name or Kennung
         allOrganisationsExceptKlassen =
@@ -62,20 +62,20 @@ export class PersonenkontextWorkflowAggregate {
 
         if (allOrganisationsExceptKlassen.length === 0) return [];
 
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
 
         // Return only the orgas that the admin have rights on
         let filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
-            (orga: Organisation<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
+            (orga: Organisation<true>) => permittedOrgas.all || permittedOrgas.orgaIds.includes(orga.id),
         );
 
         // If organisationId is provided and it's not in the filtered results, fetch it explicitly
         if (
             this.selectedOrganisationId &&
-            !filteredOrganisations.find((orga: Organisation<boolean>) => orga.id === organisationId)
+            !filteredOrganisations.find((orga: Organisation<true>) => orga.id === organisationId)
         ) {
             const selectedOrg: Option<Organisation<true>> = await this.organisationRepository.findById(
                 this.selectedOrganisationId,

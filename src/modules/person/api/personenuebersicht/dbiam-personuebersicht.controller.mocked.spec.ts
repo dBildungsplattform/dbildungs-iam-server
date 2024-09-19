@@ -138,7 +138,10 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([orga.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [orga.id],
+                });
 
                 await expect(sut.findPersonenuebersichtenByPerson(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
@@ -174,7 +177,10 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([orga.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [orga.id],
+                });
 
                 const result: DBiamPersonenuebersichtResponse = await sut.findPersonenuebersichtenByPerson(
                     params,
@@ -213,7 +219,10 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [faker.string.uuid()],
+                });
 
                 const result: DBiamPersonenuebersichtResponse = await sut.findPersonenuebersichtenByPerson(
                     params,
@@ -259,7 +268,10 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([orga.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [orga.id],
+                });
 
                 await expect(sut.findPersonenuebersichten(bodyParams, personPermissionsMock)).rejects.toThrow(
                     HttpException,
