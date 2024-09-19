@@ -67,7 +67,7 @@ export class LdapEventHandler {
         event: PersonenkontextCreatedMigrationEvent,
     ): Promise<void> {
         this.logger.info(
-           `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Recieved PersonenkontextCreatedMigrationEvent`,
+            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Recieved PersonenkontextCreatedMigrationEvent`,
         );
 
         if (event.createdKontextRolle.rollenart == RollenArt.LEHR) {
@@ -92,7 +92,7 @@ export class LdapEventHandler {
             );
             if (!isLehrerExistingResult.ok) {
                 this.logger.error(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / ${isLehrerExistingResult.error.message}`,
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Check Lehrer existing call failed: ${isLehrerExistingResult.error.message}`,
                 );
                 return;
             }
@@ -120,12 +120,18 @@ export class LdapEventHandler {
                 event.email,
             );
             if (!creationResult.ok) {
-                this.logger.error(creationResult.error.message);
+                this.logger.error(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Create Lehrer Operation failed: ${creationResult.error.message}`,
+                );
                 return;
             }
-            this.logger.info('MIGRATION: Successfully created LDAP Entry Lehrer');
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Successfully created LDAP Entry Lehrer`,
+            );
         } else {
-            this.logger.info(`MIGRATION: Do Nothing because Rollenart is Not LEHR`);
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / 'Do Nothing because Rollenart is Not LEHR'`,
+            );
         }
     }
 

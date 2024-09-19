@@ -25,7 +25,6 @@ import { EntityCouldNotBeDeleted, EntityNotFoundError } from '../../../shared/er
 import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
-import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
@@ -211,9 +210,7 @@ describe('PersonController', () => {
                 hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
             };
 
-            //NEUER TEST DER personFactory.createNew einen DOmain Error liefert der nicht PersonDomainError ist
-
-            it('should throw HttpException', async () => {
+            it('should throw HttpException when create operation fails', async () => {
                 const person: Person<true> = getPerson();
                 personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
@@ -230,7 +227,7 @@ describe('PersonController', () => {
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
             });
 
-            it('should throw FamiliennameForPersonWithTrailingSpaceError when familienname has trailing space', async () => {
+            it('should throw HttpException when familienname has trailing space', async () => {
                 const person: Person<true> = getPerson();
                 const bodyParams: CreatePersonMigrationBodyParams = {
                     personId: faker.string.uuid(),
@@ -243,7 +240,7 @@ describe('PersonController', () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
                 await expect(personController.createPersonMigration(bodyParams, personPermissionsMock)).rejects.toThrow(
-                    FamiliennameForPersonWithTrailingSpaceError,
+                    HttpException,
                 );
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(0);
             });

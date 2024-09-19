@@ -203,7 +203,7 @@ export class Person<WasPersisted extends boolean> {
                 person.familienname,
             );
             if (!result.ok) {
-                return result.error; //UNCOVERED
+                return result.error;
             }
             person.username = result.value;
         }

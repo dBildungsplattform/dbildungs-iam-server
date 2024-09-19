@@ -31,17 +31,19 @@ import { PersonenkontextBefristungRequiredError } from './error/personenkontext-
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextMigrationBodyParams[] {
-    const firstCreatePKBodyParams: DbiamPersonenkontextMigrationBodyParams = createMock<DbiamPersonenkontextMigrationBodyParams>({
-        personId: personId,
-        organisationId: faker.string.uuid(),
-        rolleId: faker.string.uuid(),
-    });
+    const firstCreatePKBodyParams: DbiamPersonenkontextMigrationBodyParams =
+        createMock<DbiamPersonenkontextMigrationBodyParams>({
+            personId: personId,
+            organisationId: faker.string.uuid(),
+            rolleId: faker.string.uuid(),
+        });
 
-    const secondCreatePKBodyParams: DbiamPersonenkontextMigrationBodyParams = createMock<DbiamPersonenkontextMigrationBodyParams>({
-        personId: personId,
-        organisationId: faker.string.uuid(),
-        rolleId: faker.string.uuid(),
-    });
+    const secondCreatePKBodyParams: DbiamPersonenkontextMigrationBodyParams =
+        createMock<DbiamPersonenkontextMigrationBodyParams>({
+            personId: personId,
+            organisationId: faker.string.uuid(),
+            rolleId: faker.string.uuid(),
+        });
 
     return [firstCreatePKBodyParams, secondCreatePKBodyParams];
 }

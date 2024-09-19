@@ -117,10 +117,6 @@ export class PersonController {
             personalnummer: params.personalnummer,
         });
         if (person instanceof DomainError) {
-            if (person instanceof PersonDomainError) {
-                throw person;
-            }
-
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
             );

@@ -347,8 +347,6 @@ describe('Email Event Handler', () => {
         });
     });
 
-    //MEINS
-
     describe('handlePersonenkontextCreatedMigrationEvent', () => {
         it('should do nothing when rolle is not LEHR', async () => {
             const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
@@ -370,7 +368,6 @@ describe('Email Event Handler', () => {
             );
         });
         it('should Create Email When None Exists and Rollenart is LEHR', async () => {
-
             const inputEmailAdress: string = 'test@schule-spsh.de';
 
             const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
@@ -398,7 +395,6 @@ describe('Email Event Handler', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Successfully persisted Email'));
         });
         it('should Log Error When Email persisting Operation fails', async () => {
-
             const inputEmailAdress: string = 'test@schule-spsh.de';
 
             const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
@@ -428,7 +424,6 @@ describe('Email Event Handler', () => {
             );
         });
         it('should Abort When email is already persisted', async () => {
-
             const inputEmailAdress: string = 'test@schule-spsh.de';
 
             const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
@@ -453,7 +448,9 @@ describe('Email Event Handler', () => {
             emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>());
 
             await emailEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Aborting persist Email Operation, Email already exists'));
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining('Aborting persist Email Operation, Email already exists'),
+            );
         });
     });
 
