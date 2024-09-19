@@ -20,10 +20,3 @@ export enum SortFieldPersonFrontend {
     PERSONALNUMMER = 'personalnummer',
     REFERRER = 'referrer',
 }
-export enum SortFieldPersonenuebersicht {
-    VORNAME = 'vorname',
-    ROLLE = 'rolle',
-    SSK_DST_NR = 'sskDstNr',
-    SSK_ID = 'sskId',
-    SSK_NAME = 'sskName',
-}
