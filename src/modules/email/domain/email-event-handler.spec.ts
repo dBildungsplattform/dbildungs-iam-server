@@ -370,7 +370,6 @@ describe('Email Event Handler', () => {
             spMap = new Map<string, ServiceProvider<true>>();
             spMap.set(sp.id, sp);
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-            //serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
             emailAddress = EmailAddress.construct(
                 faker.string.uuid(),
                 faker.date.past(),

@@ -97,6 +97,7 @@ export class EmailGenerator {
             return calculatedAddress;
         }
         let counter: number = 1;
+        // eslint-disable-next-line no-await-in-loop
         while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + '@' + emailDomain)) {
             counter = counter + 1;
         }
