@@ -25,5 +25,4 @@ describe('ScopeBase', () => {
         scope.setScopeWhereOperator(ScopeOperator.AND);
         expect(() => scope.setScopeWhereOperator(ScopeOperator.OR)).toThrow('Scope where operator is already set');
     });
-
 });
