@@ -12,8 +12,8 @@ import {
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonPermissions, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Person, LockInfo } from '../domain/person.js';
@@ -127,17 +127,15 @@ export class PersonRepository {
         requiredRight: RollenSystemRecht = RollenSystemRecht.PERSONEN_VERWALTEN,
     ): Promise<PersonScope> {
         // Find all organisations where user has the required permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
-            [requiredRight],
-            true,
-        );
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([requiredRight], true);
 
         // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
+        if (permittedOrgas.all) {
+            return new PersonScope();
         }
-
-        return new PersonScope().findBy({ organisationen: organisationIDs }).setScopeWhereOperator(ScopeOperator.AND);
+        return new PersonScope()
+            .findBy({ organisationen: permittedOrgas.orgaIds })
+            .setScopeWhereOperator(ScopeOperator.AND);
     }
 
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
@@ -176,18 +174,28 @@ export class PersonRepository {
         const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.kcUserService.findById(
             person.keycloakUserId,
         );
-        if (keyCloakUserDataResponse.ok) {
+
+        person.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
+        person.isLocked = false;
+
+        if (!keyCloakUserDataResponse.ok) {
+            return person;
+        }
+        if (keyCloakUserDataResponse.value.attributes) {
+            const attributes: Record<string, string[]> = keyCloakUserDataResponse.value.attributes;
+            const lockedFrom: string | undefined = attributes[LockKeys.LockedFrom]?.toString();
+            const lockedTimeStamp: string | undefined = attributes[LockKeys.Timestamp]?.toString();
             const lockInfo: LockInfo = {
-                lock_locked_from: keyCloakUserDataResponse.value.attributes[LockKeys.LockedFrom]?.toString() ?? '',
-                lock_timestamp: keyCloakUserDataResponse.value.attributes[LockKeys.Timestamp]?.toString() ?? '',
+                lock_locked_from: lockedFrom ?? '',
+                lock_timestamp: lockedTimeStamp ?? '',
             };
             person.lockInfo = lockInfo;
-            person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         }
+        person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         return person;
     }
 
-    public async checkIfDeleteIsAllowed(
+    private async checkIfDeleteIsAllowed(
         personId: string,
         permissions: PersonPermissions,
     ): Promise<Result<Person<true>>> {

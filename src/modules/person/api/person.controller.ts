@@ -48,9 +48,8 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { PersonFactory } from '../domain/person.factory.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
@@ -104,17 +103,17 @@ export class PersonController {
     ): Promise<PersonendatensatzResponse> {
         // Find all organisations where user has permission
         const isMigrationCall: boolean = !(!params.hashedPassword && !params.username);
-        let organisationIDs: OrganisationID[];
+        let permittedOrgas: PermittedOrgas;
 
         if (isMigrationCall === true) {
-            organisationIDs = await permissions.getOrgIdsWithSystemrecht(
+            permittedOrgas = await permissions.getOrgIdsWithSystemrecht(
                 [RollenSystemRecht.MIGRATION_DURCHFUEHREN],
                 true,
             );
         } else {
-            organisationIDs = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
+            permittedOrgas = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
         }
-        if (organisationIDs.length < 1) {
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length < 1) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person')),
             );
@@ -294,21 +293,17 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
         // Find all organisations where user has permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
 
-        // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
-        }
-
         // Find all Personen on child-orgas (+root orgas)
-        const scope: PersonScope = new PersonScope()
-            .findBy({ organisationen: organisationIDs })
-            .sortBy('vorname', ScopeOrder.ASC)
-            .paged(queryParams.offset, queryParams.limit);
+        const scope: PersonScope = new PersonScope();
+        if (!permittedOrgas.all) {
+            scope.findBy({ organisationen: permittedOrgas.orgaIds });
+        }
+        scope.sortBy('vorname', ScopeOrder.ASC).paged(queryParams.offset, queryParams.limit);
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
