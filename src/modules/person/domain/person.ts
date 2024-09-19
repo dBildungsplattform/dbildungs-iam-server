@@ -289,4 +289,16 @@ export class Person<WasPersisted extends boolean> {
 
         return (parseInt(this.revision) + 1).toString();
     }
+
+    public async generateNewUsername(usernameGenerator: UsernameGeneratorService): Promise<void | DomainError> {
+        const result: Result<string, DomainError> = await usernameGenerator.generateUsername(
+            this.vorname,
+            this.familienname,
+        );
+        if (!result.ok) {
+            return result.error;
+        }
+        this.username = result.value;
+        this.referrer = result.value;
+    }
 }

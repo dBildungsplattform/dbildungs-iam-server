@@ -34,7 +34,7 @@ import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
-import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
+import { PersonByPersonalnummerBodyParams } from './person-metadata.body.param.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 

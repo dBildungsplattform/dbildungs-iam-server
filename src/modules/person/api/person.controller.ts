@@ -65,7 +65,7 @@ import { PersonLockResponse } from './person-lock.response.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
-import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
+import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
@@ -454,21 +454,24 @@ export class PersonController {
         return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
     }
 
-    @Patch(':personId/personalnummer')
-    @ApiNoContentResponse({
-        description: 'The personalnummer was successfully updated.',
+    @Patch(':personId/metadata')
+    @ApiOkResponse({
+        description: 'The metadata for user was successfully updated.',
+        type: PersonendatensatzResponse,
     })
     @ApiBadRequestResponse({ description: 'Request has a wrong format.', type: DbiamPersonError })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to update the personalnummer.' })
-    @ApiForbiddenResponse({ description: 'Not permitted to update the personalnummer.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the personalnummer.' })
-    public async updatePersonalnummer(
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the metadata.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to update the metadata.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the metadata for user.' })
+    public async updateMetadata(
         @Param() params: PersonByIdParams,
-        @Body() body: PersonByPersonalnummerBodyParams,
+        @Body() body: PersonMetadataBodyParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<void | DomainError> {
-        const result: Person<true> | DomainError = await this.personRepository.updatePersonalnummer(
+    ): Promise<PersonendatensatzResponse | DomainError> {
+        const result: Person<true> | DomainError = await this.personRepository.updatePersonMetadata(
             params.personId,
+            body.familienname,
+            body.vorname,
             body.personalnummer,
             body.lastModified,
             body.revision,
@@ -484,5 +487,7 @@ export class PersonController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+
+        return new PersonendatensatzResponse(result, false);
     }
 }
