@@ -7,7 +7,7 @@ import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienn
 import { DbiamPersonError, PersonErrorI18nTypes } from './dbiam-person.error.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
-import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { PersonMetadataRequiredError } from '../domain/person-metadata-required.error.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
@@ -43,7 +43,7 @@ export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError>
             }),
         ],
         [
-            PersonalnummerRequiredError.name,
+            PersonMetadataRequiredError.name,
             new DbiamPersonError({
                 code: 400,
                 i18nKey: PersonErrorI18nTypes.PERSONALNUMMER_REQUIRED,

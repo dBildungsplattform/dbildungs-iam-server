@@ -47,7 +47,7 @@ import { OrganisationEntity } from '../../organisation/persistence/organisation.
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
-import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { PersonalnummerRequiredError } from '../domain/person-metadata-required.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;

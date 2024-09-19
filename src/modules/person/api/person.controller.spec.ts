@@ -36,7 +36,7 @@ import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { PersonByPersonalnummerBodyParams } from './person-metadata.body.param.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { PersonalnummerRequiredError } from '../domain/person-metadata-required.error.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
