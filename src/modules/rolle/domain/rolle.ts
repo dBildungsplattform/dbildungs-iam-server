@@ -174,10 +174,47 @@ export class Rolle<WasPersisted extends boolean> {
         this.serviceProviderIds.push(serviceProviderId);
     }
 
-    public detatchServiceProvider(serviceProviderId: string): void | DomainError {
-        if (!this.serviceProviderIds.includes(serviceProviderId)) {
-            return new EntityNotFoundError('Rolle ServiceProvider Verknüpfung', serviceProviderId);
+    public async attachServiceProviders(serviceProviderIds: string[]): Promise<void | DomainError> {
+        // Fetch the service providers for the provided IDs using the findByIds method
+        const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            serviceProviderIds,
+        );
+
+        // Find any IDs that were not found in the database
+        const missingIds: string[] = serviceProviderIds.filter((id: string) => !serviceProviderMap.has(id));
+        if (missingIds.length > 0) {
+            return new EntityNotFoundError('ServiceProvider', missingIds.join(', '));
         }
-        this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => id !== serviceProviderId);
+
+        // Check if any of the service providers are already attached
+        const alreadyAttachedIds: string[] = serviceProviderIds.filter((id: string) =>
+            this.serviceProviderIds.includes(id),
+        );
+        if (alreadyAttachedIds.length > 0) {
+            return new EntityAlreadyExistsError(
+                `Rolle ServiceProvider Verknüpfung for IDs: ${alreadyAttachedIds.join(', ')}`,
+            );
+        }
+
+        // Attach the service providers by pushing the new IDs
+        this.serviceProviderIds.push(...serviceProviderIds);
+    }
+
+    public detatchServiceProvider(serviceProviderIds: string[]): void | DomainError {
+        // Find any serviceProviderIds that are not currently attached
+        const missingServiceProviderIds: string[] = serviceProviderIds.filter(
+            (id: string) => !this.serviceProviderIds.includes(id),
+        );
+
+        // If any IDs are missing, return an error indicating which ones were not found
+        if (missingServiceProviderIds.length > 0) {
+            return new EntityNotFoundError(
+                'Rolle ServiceProvider Verknüpfung',
+                `The following service-provider IDs were not found: ${missingServiceProviderIds.join(', ')}`,
+            );
+        }
+
+        // Filter out all the serviceProviderIds that need to be detached
+        this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => !serviceProviderIds.includes(id));
     }
 }
