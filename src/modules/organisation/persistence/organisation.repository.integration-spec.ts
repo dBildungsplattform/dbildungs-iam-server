@@ -518,7 +518,7 @@ describe('OrganisationRepository', () => {
                 it('should return all organisations sorted by depth asc', async () => {
                     const { root, traeger, schule }: CreateOrgaTreeResult = await createOrgaTree();
 
-                    const result: Organisation<true>[] = await sut.findParentOrgasForIdSorted(schule.id);
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIdSortedByDepthAsc(schule.id);
 
                     expect(result).toHaveLength(3);
                     expect(result[0]).toMatchObject({
@@ -537,7 +537,7 @@ describe('OrganisationRepository', () => {
                 it('should return only root', async () => {
                     const { root }: CreateOrgaTreeResult = await createOrgaTree();
 
-                    const result: Organisation<true>[] = await sut.findParentOrgasForIdSorted(root.id);
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIdSortedByDepthAsc(root.id);
 
                     expect(result).toHaveLength(1);
                 });

@@ -98,12 +98,12 @@ describe('EmailRepo', () => {
 
     async function createOrganisation(): Promise<Organisation<true>> {
         const parent: Organisation<false> = DoFactory.createOrganisation(false, {
-            emaildomain: 'fake@schule-sh.de',
+            emailDomain: 'fake@schule-sh.de',
         });
         const parentPersisted: Organisation<true> = await organisationRepository.save(parent);
         const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
             administriertVon: parentPersisted.id,
-            emaildomain: 'fake@fake-schule.de',
+            emailDomain: 'fake@fake-schule.de',
         });
         return organisationRepository.save(organisation);
     }

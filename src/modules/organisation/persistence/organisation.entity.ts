@@ -43,6 +43,7 @@ export class OrganisationEntity extends TimestampedEntity {
     @Enum({ items: () => Traegerschaft, nullable: true, nativeEnumName: 'traegerschaft_enum' })
     public traegerschaft?: Traegerschaft;
 
+    @AutoMap()
     @Property({ nullable: true })
-    public emaildomain?: string;
+    public emailDomain?: string;
 }

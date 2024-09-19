@@ -18,6 +18,12 @@ import { OrganisationSpecificationError } from '../specification/error/organisat
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 
+type OrganisationUnderScoreAttributes = {
+    administriert_von: OrganisationID;
+    zugehoerig_zu: OrganisationID;
+    email_domain: string;
+};
+
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
         id: organisation.id,
@@ -29,7 +35,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         kuerzel: organisation.kuerzel,
         typ: organisation.typ,
         traegerschaft: organisation.traegerschaft,
-        emaildomain: organisation.emaildomain,
+        emailDomain: organisation.emailDomain,
     };
 }
 
@@ -46,7 +52,27 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.kuerzel,
         entity.typ,
         entity.traegerschaft,
-        entity.emaildomain,
+        entity.emailDomain,
+    );
+}
+
+export function mapEntityWithUnderScoreAttributesToAggregate(entity: OrganisationEntity): Organisation<true> {
+    const underScoreAttributes: OrganisationUnderScoreAttributes =
+        entity as unknown as OrganisationUnderScoreAttributes;
+
+    return Organisation.construct(
+        entity.id,
+        entity.createdAt,
+        entity.updatedAt,
+        underScoreAttributes.administriert_von,
+        underScoreAttributes.zugehoerig_zu,
+        entity.kennung,
+        entity.name,
+        entity.namensergaenzung,
+        entity.kuerzel,
+        entity.typ,
+        entity.traegerschaft,
+        underScoreAttributes.email_domain,
     );
 }
 
@@ -142,7 +168,12 @@ export class OrganisationRepository {
         return rawResult.map(mapEntityToAggregate);
     }
 
-    public async findParentOrgasForIdSorted(id: OrganisationID): Promise<Organisation<true>[]> {
+    /**
+     * Searches for all upper level organisations for a given organisation by its organisationID
+     * and returns an array sorted by the depth ascending. Element at index 0 is always the organisationIDs organisation,
+     * this way the lowest child is always included. Its direct parent will be at index 1 and so on.
+     */
+    public async findParentOrgasForIdSortedByDepthAsc(id: OrganisationID): Promise<Organisation<true>[]> {
         const query: string = `
              WITH RECURSIVE parent_organisations AS (
                 SELECT *, 0 as depth
@@ -159,7 +190,7 @@ export class OrganisationRepository {
 
         const rawResult: OrganisationEntity[] = await this.em.execute(query, [id]);
 
-        const res: Organisation<true>[] = rawResult.map(mapEntityToAggregate);
+        const res: Organisation<true>[] = rawResult.map(mapEntityWithUnderScoreAttributesToAggregate);
 
         return res;
     }

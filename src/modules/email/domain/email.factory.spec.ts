@@ -103,9 +103,9 @@ describe('EmailFactory', () => {
                     },
                 );
 
-                organisationRepositoryMock.findParentOrgasForIdSorted.mockResolvedValueOnce([
+                organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
                     createMock<Organisation<true>>({
-                        emaildomain: '@schule-sh.de',
+                        emailDomain: '@schule-sh.de',
                     }),
                 ]);
 
@@ -152,10 +152,10 @@ describe('EmailFactory', () => {
             it('should return EmailDomainNotFoundError', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
                 organisationRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Organisation<true>>({ emaildomain: undefined }),
+                    createMock<Organisation<true>>({ emailDomain: undefined }),
                 );
-                organisationRepositoryMock.findParentOrgasForIdSorted.mockResolvedValueOnce([
-                    createMock<Organisation<true>>({ emaildomain: undefined }),
+                organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
+                    createMock<Organisation<true>>({ emailDomain: undefined }),
                 ]);
 
                 const creationResult: Result<EmailAddress<false>> = await sut.createNew(
@@ -173,10 +173,10 @@ describe('EmailFactory', () => {
             it('should return error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
                 organisationRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Organisation<true>>({ emaildomain: undefined }),
+                    createMock<Organisation<true>>({ emailDomain: undefined }),
                 );
-                organisationRepositoryMock.findParentOrgasForIdSorted.mockResolvedValueOnce([
-                    createMock<Organisation<true>>({ emaildomain: faker.internet.email() }),
+                organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
+                    createMock<Organisation<true>>({ emailDomain: faker.internet.email() }),
                 ]);
 
                 jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementation(

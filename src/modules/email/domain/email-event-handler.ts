@@ -49,7 +49,7 @@ export class EmailEventHandler {
         const rollen: Rolle<true>[] = Array.from(rollenWithPK.values(), (value: RolleWithPK) => {
             return value.rolle;
         });
-        const rollenIdWithSPReference: Option<string> = await this.anyRolleReferencesEmailServiceProvider(rollen);
+        const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
         if (rollenIdWithSPReference) {
             const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
             if (existingEmail) {
@@ -133,7 +133,7 @@ export class EmailEventHandler {
         this.logger.info(`Successfully deactivated email-address:${event.emailAddress}`);
     }
 
-    private async anyRolleReferencesEmailServiceProvider(rollen: Rolle<true>[]): Promise<Option<string>> {
+    private async getAnyRolleReferencesEmailServiceProvider(rollen: Rolle<true>[]): Promise<Option<string>> {
         const pro: Promise<Option<string>>[] = rollen.map((rolle: Rolle<true>) =>
             this.rolleReferencesEmailServiceProvider(rolle),
         );
@@ -212,7 +212,7 @@ export class EmailEventHandler {
             return value;
         });
 
-        const rollenIdWithSPReference: Option<string> = await this.anyRolleReferencesEmailServiceProvider(rollen);
+        const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
 
         if (rollenIdWithSPReference) {
             const pkOfRolleWithSPReference: Personenkontext<true> | undefined =

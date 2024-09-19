@@ -103,4 +103,23 @@ export class EmailGenerator {
         }
         return calculatedAddress + counter;
     }
+
+    private async getNextAvailableAddressRec(calculatedAddress: string, emailDomain: string, call: number): Promise<Result<string>> {
+        if (call > 50) {
+            return { ok: false, error: new InvalidNameError('Could not generate valid username, max attempts exceeded') };
+        }
+        let counterAsStr: string = '';
+        if (call > 0) {
+            counterAsStr = '' + call
+        }
+
+        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + counterAsStr + '@' + emailDomain))) {
+            return {
+                ok: true,
+                value: calculatedAddress,
+            };
+        }
+
+        return this.getNextAvailableAddressRec(calculatedAddress, emailDomain, call +1);
+    }
 }

@@ -22,7 +22,7 @@ export class Organisation<WasPersisted extends boolean> {
         public kuerzel?: string,
         public typ?: OrganisationsTyp,
         public traegerschaft?: Traegerschaft,
-        public emaildomain?: string,
+        public emailDomain?: string,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -37,7 +37,7 @@ export class Organisation<WasPersisted extends boolean> {
         kuerzel?: string,
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
-        emaildomain?: string,
+        emailDomain?: string,
     ): Organisation<WasPersisted> {
         return new Organisation(
             id,
@@ -51,7 +51,7 @@ export class Organisation<WasPersisted extends boolean> {
             kuerzel,
             typ,
             traegerschaft,
-            emaildomain,
+            emailDomain,
         );
     }
 
@@ -64,7 +64,7 @@ export class Organisation<WasPersisted extends boolean> {
         kuerzel?: string,
         typ?: OrganisationsTyp,
         traegerschaft?: Traegerschaft,
-        emaildomain?: string,
+        emailDomain?: string,
     ): Organisation<false> | DomainError {
         const organisation: Organisation<false> = new Organisation(
             undefined,
@@ -78,7 +78,7 @@ export class Organisation<WasPersisted extends boolean> {
             kuerzel,
             typ,
             traegerschaft,
-            emaildomain,
+            emailDomain,
         );
 
         const validationError: void | OrganisationSpecificationError = organisation.validateFieldNames();
