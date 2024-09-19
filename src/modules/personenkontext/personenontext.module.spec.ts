@@ -22,7 +22,6 @@ describe('PersonKontextModule', () => {
     });
 
     describe('when module is initialized', () => {
-
         it('should resolve PersonenkontextRepo', () => {
             expect(module.get(PersonenkontextRepo)).toBeInstanceOf(PersonenkontextRepo);
         });
