@@ -67,7 +67,7 @@ export class LdapEventHandler {
         event: PersonenkontextCreatedMigrationEvent,
     ): Promise<void> {
         this.logger.info(
-            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Recieved PersonenkontextCreatedMigrationEvent`,
+            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
         );
 
         if (event.createdKontextRolle.rollenart == RollenArt.LEHR) {

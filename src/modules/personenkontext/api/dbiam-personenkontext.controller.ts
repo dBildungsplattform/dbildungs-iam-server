@@ -128,7 +128,7 @@ export class DBiamPersonenkontextController {
             params.organisationId,
             params.rolleId,
         );
-        if (isPersonkontextAlreadyExisting == true) {
+        if (isPersonkontextAlreadyExisting) {
             this.logger.error(
                 `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Kontext Already exist`,
             );

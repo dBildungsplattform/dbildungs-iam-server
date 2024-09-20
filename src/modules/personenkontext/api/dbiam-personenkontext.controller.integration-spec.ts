@@ -439,39 +439,5 @@ describe('dbiam Personenkontext API', () => {
 
             expect(response.status).toBe(500);
         });
-
-        /*
-        it('should return error, if personenkontext was not added', async () => {
-            const person: Person<true> = await createPerson();
-            const organisation: Organisation<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
-            );
-            const rolle: Rolle<true> = await rolleRepo.save(
-                DoFactory.createRolle(false, {
-                    administeredBySchulstrukturknoten: organisation.id,
-                    rollenart: RollenArt.LEHR,
-                }),
-            );
-
-            // Error can only occur when database write fails, therefore it needs to be mocked
-            const personenkontextUpdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
-            personenkontextUpdateMock.update.mockResolvedValueOnce([]);
-            jest.spyOn(personenkontextFactory, 'createNewPersonenkontexteUpdate').mockReturnValueOnce(
-                personenkontextUpdateMock,
-            );
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .post('/dbiam/personenkontext')
-                .send({
-                    personId: person.id,
-                    organisationId: organisation.id,
-                    rolleId: rolle.id,
-                    email: 'test@schule-sh.de',
-                });
-
-            expect(response.status).toBe(400);
-            expect(response.text).toBe('{"code":400,"i18nKey":"PERSONENKONTEXTE_UPDATE_ERROR"}');
-        });
-        */
     });
 });

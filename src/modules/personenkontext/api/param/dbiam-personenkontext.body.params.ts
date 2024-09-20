@@ -28,7 +28,6 @@ export class DbiamPersonenkontextMigrationBodyParams {
     public readonly befristung?: Date;
 
     @IsString()
-    @IsOptional()
     @ApiProperty({ required: false })
     public readonly email?: string;
 }
