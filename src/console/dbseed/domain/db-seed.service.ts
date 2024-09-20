@@ -95,6 +95,7 @@ export class DbSeedService {
             data.kuerzel,
             data.typ,
             data.traegerschaft,
+            data.emailDomain,
         );
 
         if (organisation instanceof DomainError) {
