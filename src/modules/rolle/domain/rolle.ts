@@ -186,16 +186,6 @@ export class Rolle<WasPersisted extends boolean> {
             return new EntityNotFoundError('ServiceProvider', missingIds.join(', '));
         }
 
-        // Check if any of the service providers are already attached
-        const alreadyAttachedIds: string[] = serviceProviderIds.filter((id: string) =>
-            this.serviceProviderIds.includes(id),
-        );
-        if (alreadyAttachedIds.length > 0) {
-            return new EntityAlreadyExistsError(
-                `Rolle ServiceProvider Verknüpfung for IDs: ${alreadyAttachedIds.join(', ')}`,
-            );
-        }
-
         // Attach the service providers by pushing the new IDs
         this.serviceProviderIds.push(...serviceProviderIds);
     }
