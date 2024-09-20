@@ -6,13 +6,13 @@ export class PersonMetadataBodyParams {
     @IsDIN91379A()
     @IsNotEmpty()
     @MinLength(2)
-    @ApiProperty({ required: true })
+    @ApiProperty({ required: false })
     public readonly familienname!: string;
 
     @IsDIN91379A()
     @IsNotEmpty()
     @MinLength(2)
-    @ApiProperty({ required: true })
+    @ApiProperty({ required: false })
     public readonly vorname!: string;
 
     @IsString()

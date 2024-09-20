@@ -28,6 +28,7 @@ import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-pe
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { PersonMetadataRequiredError } from '../domain/person-metadata-required.error.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -475,21 +476,18 @@ export class PersonRepository {
         revision: string,
         permissions: PersonPermissions,
     ): Promise<Person<true> | DomainError> {
-        const personFound: Option<Person<true>> = await this.findById(personId);
-
+        let personFound: Option<Person<true>> = await this.findById(personId);
         if (!personFound) {
             return new EntityNotFoundError('Person', personId);
         }
 
-        //Permissions: Only the admin can update the personalnummer.
+        //Permissions: Only the admin can update the person metadata.
         if (!(await permissions.canModifyPerson(personId))) {
-            return new MissingPermissionsError('Not allowed to update the Personalnummer for the person.');
+            return new MissingPermissionsError('Not allowed to update the person metadata for the person.');
         }
 
-        //check if an update for firstname & lastname & personalnummer
         if (!familienname && !vorname && !personalnummer) {
-            //return error one of the metadata has to be set.
-            // return new PersonalnummerRequiredError();
+            return new PersonMetadataRequiredError();
         }
 
         //Update personalnummer
@@ -499,10 +497,11 @@ export class PersonRepository {
             }
             personFound.personalnummer = personalnummer;
         }
-
-        const oldUsername: string | undefined = personFound.referrer;
+        //Existing user muss have a referrer.
+        const oldUsername: string = personFound.referrer!;
         const oldVorname: string | undefined = personFound.vorname;
         const oldFamilienname: string | undefined = personFound.familienname;
+
         const error: void | DomainError = personFound.update(
             revision,
             familienname,
@@ -533,30 +532,42 @@ export class PersonRepository {
         }
 
         if (personFound.updatedAt.getTime() > lastModified.getTime()) {
-            // The existing data is newer than the incoming update
             return new PersonUpdateOutdatedError();
         }
         //check if the username needs to be updated
         if (this.hasUsernameChanged(oldVorname, oldFamilienname, vorname, familienname)) {
-            const usernameError: void | DomainError = await personFound.generateNewUsername(this.usernameGenerator);
-            if (usernameError instanceof DomainError) {
-                return usernameError;
+            const usernameGeneratedResult: Person<true> | DomainError = await this.generateUsername(
+                personFound,
+                oldUsername,
+            );
+            if (usernameGeneratedResult instanceof DomainError) {
+                return usernameGeneratedResult;
             }
 
-            if (oldUsername == undefined || personFound.username == undefined) {
-                //throw;
-                return new PersonUpdateOutdatedError();
-            }
-            const kcUsernameUpdated: Result<void, DomainError> = await this.kcUserService.updateUsername(
-                oldUsername,
-                personFound.username,
-            );
-            if (!kcUsernameUpdated.ok) {
-                return kcUsernameUpdated.error;
-            }
+            personFound = usernameGeneratedResult;
         }
 
         const savedPerson: Person<true> | DomainError = await this.save(personFound);
         return savedPerson;
+    }
+
+    private async generateUsername(
+        updatedPerson: Person<true>,
+        oldUsername: string,
+    ): Promise<Person<true> | DomainError> {
+        const usernameError: void | DomainError = await updatedPerson.generateNewUsername(this.usernameGenerator);
+        if (usernameError instanceof DomainError) {
+            return usernameError;
+        }
+        //Username cannot be undefined
+        const kcUsernameUpdated: Result<void, DomainError> = await this.kcUserService.updateUsername(
+            oldUsername,
+            updatedPerson.username!,
+        );
+        if (!kcUsernameUpdated.ok) {
+            return kcUsernameUpdated.error;
+        }
+
+        return updatedPerson;
     }
 }

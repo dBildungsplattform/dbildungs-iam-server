@@ -46,7 +46,7 @@ export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError>
             PersonMetadataRequiredError.name,
             new DbiamPersonError({
                 code: 400,
-                i18nKey: PersonErrorI18nTypes.PERSONALNUMMER_REQUIRED,
+                i18nKey: PersonErrorI18nTypes.PERSONALNUMMER_OR_VORNAME_OR_FAMILIENNAME_REQUIRED,
             }),
         ],
         [
