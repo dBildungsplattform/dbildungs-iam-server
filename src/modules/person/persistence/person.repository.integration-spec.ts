@@ -122,18 +122,23 @@ describe('PersonRepository Integration', () => {
     });
 
     type SavedPersonProps = { keycloackID: string };
-    async function savePerson(props: Partial<SavedPersonProps> = {}): Promise<Person<true>> {
+    async function savePerson(
+        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string }> = {},
+    ): Promise<Person<true>> {
         usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
         };
 
+        const vorname: string = props.vorname ?? faker.person.firstName();
+        const familienname: string = props.familienname ?? faker.person.lastName();
+
         const personProps: {
             keycloackID: string;
         } = { ...defaultProps, ...props };
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-            familienname: faker.person.lastName(),
-            vorname: faker.person.firstName(),
+            familienname,
+            vorname,
         });
 
         if (person instanceof DomainError) {
@@ -1321,13 +1326,13 @@ describe('PersonRepository Integration', () => {
 
     describe('createPersonScope', () => {
         it('should create a scope with the correct filters and sorting', async () => {
-            const person: Person<true> = await savePerson();
+            await savePerson({ vorname: 'Alice', familienname: 'Smith' });
+            await savePerson({ vorname: 'Bob', familienname: 'Johnson' });
+            await savePerson({ vorname: 'Charlie', familienname: 'Brown' });
 
             const permittedOrgas: PermittedOrgas = { all: true };
 
             const queryParams: PersonenQueryParams = {
-                vorname: person.vorname,
-                familienname: person.familienname,
                 offset: 0,
                 limit: 10,
                 sortField: SortFieldPersonFrontend.VORNAME,
@@ -1339,25 +1344,29 @@ describe('PersonRepository Integration', () => {
             expect(result).toBeDefined();
 
             const [persons, total]: [Person<true>[], number] = result;
-            const [firstPerson]: Person<true>[] | undefined = persons;
 
-            expect(firstPerson?.vorname).toBe(person.vorname);
-            expect(firstPerson?.familienname).toBe(person.familienname);
-            expect(total).toBe(1);
+            expect(total).toBe(3);
+
+            expect(persons[0]?.vorname).toBe('Alice');
+            expect(persons[1]?.vorname).toBe('Bob');
+            expect(persons[2]?.vorname).toBe('Charlie');
         });
-        it('should create return the suchFilter', async () => {
-            const person: Person<true> = await savePerson();
+
+        it('should return the suchFilter', async () => {
+            await savePerson({ vorname: 'Alice', familienname: 'Smith' });
+            const person2: Person<true> = await savePerson({ vorname: 'Bob', familienname: 'Johnson' });
+            await savePerson({ vorname: 'Charlie', familienname: 'Brown' });
 
             const permittedOrgas: PermittedOrgas = { all: true };
 
             const queryParams: PersonenQueryParams = {
-                vorname: person.vorname,
-                familienname: person.familienname,
+                vorname: person2.vorname,
+                familienname: person2.familienname,
                 offset: 0,
                 limit: 10,
                 sortField: SortFieldPersonFrontend.VORNAME,
                 sortOrder: ScopeOrder.ASC,
-                suchFilter: person.vorname,
+                suchFilter: person2.vorname,
             };
 
             const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
@@ -1365,11 +1374,11 @@ describe('PersonRepository Integration', () => {
             expect(result).toBeDefined();
 
             const [persons, total]: [Person<true>[], number] = result;
-            const [firstPerson]: Person<true>[] | undefined = persons;
 
-            expect(firstPerson?.vorname).toBe(person.vorname);
-            expect(firstPerson?.familienname).toBe(person.familienname);
             expect(total).toBe(1);
+
+            expect(persons[0]?.vorname).toBe('Bob');
+            expect(persons[0]?.familienname).toBe('Johnson');
         });
         it('should return undefeined if PermittedOrgas is placed', async () => {
             const person: Person<true> = await savePerson();
@@ -1397,26 +1406,31 @@ describe('PersonRepository Integration', () => {
             expect(firstPerson?.familienname).toBe(undefined);
             expect(total).toBe(0);
         });
-    });
-    it('should use default sortField and sortOrder when not provided', async () => {
-        const person1: Person<true> = await savePerson();
 
-        const permittedOrgas: PermittedOrgas = { all: true };
+        it('should use default sortField and sortOrder when not provided', async () => {
+            await savePerson({ vorname: 'Alice', familienname: 'Smith' });
+            await savePerson({ vorname: 'Bob', familienname: 'Johnson' });
+            await savePerson({ vorname: 'Charlie', familienname: 'Brown' });
 
-        const queryParams: PersonenQueryParams = {
-            offset: 0,
-            limit: 10,
-            vorname: person1.vorname,
-            // sortField and sortOrder are not provided
-        };
+            const permittedOrgas: PermittedOrgas = { all: true };
 
-        const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+            const queryParams: PersonenQueryParams = {
+                offset: 0,
+                limit: 10,
+                // sortField and sortOrder are not provided
+            };
 
-        expect(result).toBeDefined();
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
 
-        const [persons, total]: [Person<true>[], number] = result;
+            expect(result).toBeDefined();
 
-        expect(total).toBeGreaterThanOrEqual(1);
-        expect(persons[0]?.vorname).toBe(person1.vorname);
+            const [persons, total]: [Person<true>[], number] = result;
+
+            expect(total).toBe(3);
+
+            expect(persons[0]?.vorname).toBe('Alice');
+            expect(persons[1]?.vorname).toBe('Bob');
+            expect(persons[2]?.vorname).toBe('Charlie');
+        });
     });
 });
