@@ -10,7 +10,6 @@ import {
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { ApiOkResponsePaginated, DisablePagingInterceptor, RawPagedResponse } from '../../../shared/paging/index.js';
 import { PersonenQueryParams } from './personen-query.param.js';
-import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { Person } from '../domain/person.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
@@ -22,7 +21,6 @@ import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { SortFieldPersonFrontend } from '../domain/person.enums.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('personen-frontend')
@@ -62,25 +60,7 @@ export class PersonFrontendController {
             throw new UnauthorizedException('NOT_AUTHORIZED');
         }
 
-        const scope: PersonScope = new PersonScope()
-            .setScopeWhereOperator(ScopeOperator.AND)
-            .findBy({
-                vorname: queryParams.vorname,
-                familienname: queryParams.familienname,
-                geburtsdatum: undefined,
-                organisationen: permittedOrgas.all ? undefined : permittedOrgas.orgaIds,
-            })
-            .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
-
-            //.sortBy('familienname', ScopeOrder.ASC)
-            .paged(queryParams.offset, queryParams.limit);
-
-        const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
-        const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
-        scope.sortBy(sortField, sortOrder);
-        if (queryParams.suchFilter) {
-            scope.findBySearchString(queryParams.suchFilter);
-        }
+        const scope: PersonScope = this.personRepository.createPersonScope(queryParams, permittedOrgas);
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 

@@ -25,6 +25,8 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonenQueryParams } from '../api/personen-query.param.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -442,5 +444,28 @@ export class PersonRepository {
         person.keycloakUserId = creationResult.value;
 
         return person;
+    }
+
+    public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
+        const scope: PersonScope = new PersonScope()
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .findBy({
+                vorname: queryParams.vorname,
+                familienname: queryParams.familienname,
+                geburtsdatum: undefined,
+                organisationen: permittedOrgas.all ? undefined : permittedOrgas.orgaIds,
+            })
+            .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
+            .paged(queryParams.offset, queryParams.limit);
+
+        const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
+        const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
+        scope.sortBy(sortField, sortOrder);
+
+        if (queryParams.suchFilter) {
+            scope.findBySearchString(queryParams.suchFilter);
+        }
+
+        return scope;
     }
 }
