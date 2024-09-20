@@ -64,7 +64,12 @@ export class DBiamPersonenkontextRepo {
             };
         }
 
-        if (!(await this.canModifyPersonenkontext(personenkontext, permissions))) {
+        if (
+            !(await permissions.hasSystemrechtAtOrganisation(
+                personenkontext.organisationId,
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ))
+        ) {
             return {
                 ok: false,
                 error: new MissingPermissionsError('Access denied'),
@@ -181,18 +186,6 @@ export class DBiamPersonenkontextRepo {
         );
 
         return !!personenKontext;
-    }
-
-    private async canModifyPersonenkontext(
-        entity: PersonenkontextEntity,
-        permissions: PersonPermissions,
-    ): Promise<boolean> {
-        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
-
-        return organisationIDs.includes(entity.organisationId);
     }
 
     public async hasSystemrechtAtOrganisation(

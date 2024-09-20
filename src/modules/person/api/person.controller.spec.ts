@@ -140,7 +140,7 @@ describe('PersonController', () => {
                     username: 'fixedusername',
                     hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue([faker.string.uuid()]);
                 personRepositoryMock.create.mockResolvedValue(person);
                 await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
                     PersonendatensatzResponse,
@@ -166,7 +166,7 @@ describe('PersonController', () => {
                     username: 'fixedusername',
                     hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
                 personRepositoryMock.create.mockResolvedValue(person);
                 await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
@@ -183,7 +183,10 @@ describe('PersonController', () => {
                     },
                     geburt: {},
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [faker.string.uuid()],
+                });
                 personRepositoryMock.create.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
@@ -211,10 +214,16 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 const person: Person<true> = getPerson();
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [faker.string.uuid()],
+                });
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 const orgaId: OrganisationID[] = [faker.string.uuid()];
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce(orgaId);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: orgaId,
+                });
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
                 personRepositoryMock.create.mockResolvedValue(new KeycloakClientError(''));
                 await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
@@ -224,7 +233,10 @@ describe('PersonController', () => {
             });
 
             it('should throw HttpException', async () => {
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [faker.string.uuid()],
+                });
                 usernameGeneratorService.generateUsername.mockResolvedValue({
                     ok: false,
                     error: new KeycloakClientError(''),
@@ -236,7 +248,10 @@ describe('PersonController', () => {
             });
 
             it('should throw HttpException when no user has no PERSONEN_VERWALTEN permission on any organisations', async () => {
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [],
+                });
                 await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
                 );
@@ -252,7 +267,10 @@ describe('PersonController', () => {
                     },
                     geburt: {},
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [faker.string.uuid()],
+                });
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
                 await expect(personController.createPerson(bodyParams, personPermissionsMock)).rejects.toThrow(
@@ -359,6 +377,7 @@ describe('PersonController', () => {
 
         it('should get all persons', async () => {
             personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 queryParams,
@@ -374,9 +393,10 @@ describe('PersonController', () => {
 
         it('should get all persons when organisationIds is found and is ROOT', async () => {
             personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
-                personController.ROOT_ORGANISATION_ID,
-            ]);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [personController.ROOT_ORGANISATION_ID],
+            });
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 queryParams,
                 personPermissionsMock,

@@ -24,8 +24,6 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { OrganisationID, PersonenkontextID } from '../../../shared/types/aggregate-ids.types.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
@@ -37,6 +35,10 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import {
+    createAndPersistOrganisation,
+    createAndPersistRootOrganisation,
+} from '../../../../test/utils/organisation-test-helper.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -47,7 +49,6 @@ describe('dbiam Personenkontext Repo', () => {
     let personenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
-    let organisationRepo: OrganisationRepo;
     let organisationRepository: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let rolleFactory: RolleFactory;
@@ -119,7 +120,6 @@ describe('dbiam Personenkontext Repo', () => {
         em = module.get(EntityManager);
         personFactory = module.get(PersonFactory);
         personRepo = module.get(PersonRepository);
-        organisationRepo = module.get(OrganisationRepo);
         organisationRepository = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
         rolleFactory = module.get(RolleFactory);
@@ -144,23 +144,6 @@ describe('dbiam Personenkontext Repo', () => {
         }
 
         return person;
-    }
-
-    async function createOrganisation(
-        parentOrga: OrganisationID | undefined,
-        isRoot: boolean,
-        typ: OrganisationsTyp,
-    ): Promise<OrganisationID> {
-        const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
-            administriertVon: parentOrga,
-            zugehoerigZu: parentOrga,
-            typ,
-        });
-        if (isRoot) organisation.id = organisationRepo.ROOT_ORGANISATION_ID;
-
-        const result: OrganisationDo<true> = await organisationRepo.save(organisation);
-
-        return result.id;
     }
 
     async function createRolle(
@@ -362,7 +345,7 @@ describe('dbiam Personenkontext Repo', () => {
     describe('findByIDAuthorized', () => {
         it('should succeed if the user is authorized', async () => {
             const person: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
+            const rootOrga: OrganisationID = (await createAndPersistRootOrganisation(em, organisationRepository)).id;
             const rolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
@@ -384,7 +367,7 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should return EntityNotFoundError if not found', async () => {
             const person: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
+            const rootOrga: OrganisationID = (await createAndPersistRootOrganisation(em, organisationRepository)).id;
             const sysadmin: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
@@ -405,7 +388,8 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should return MissingPermissionsError if not authorized', async () => {
             const person: Person<true> = await createPerson();
-            const schule: OrganisationID = await createOrganisation(undefined, false, OrganisationsTyp.SCHULE);
+            const schule: OrganisationID = (await createAndPersistOrganisation(em, undefined, OrganisationsTyp.SCHULE))
+                .id;
             const lehrer: Rolle<true> = await createRolle(schule, RollenArt.LEHR, []);
             const personenkontext: Personenkontext<true> = await personenkontextRepoInternal.save(
                 createPersonenkontext(false, { personId: person.id, organisationId: schule, rolleId: lehrer.id }),
@@ -427,9 +411,11 @@ describe('dbiam Personenkontext Repo', () => {
     describe('findByPersonAuthorized', () => {
         it('should return all personenkontexte for a person when authorized', async () => {
             const adminUser: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
-            const schuleA: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
-            const schuleB: OrganisationID = await createOrganisation(rootOrga, false, OrganisationsTyp.SCHULE);
+            const rootOrga: OrganisationID = (await createAndPersistRootOrganisation(em, organisationRepository)).id;
+            const schuleA: OrganisationID = (await createAndPersistOrganisation(em, rootOrga, OrganisationsTyp.SCHULE))
+                .id;
+            const schuleB: OrganisationID = (await createAndPersistOrganisation(em, rootOrga, OrganisationsTyp.SCHULE))
+                .id;
             const lehrerRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
@@ -504,7 +490,7 @@ describe('dbiam Personenkontext Repo', () => {
 
         it('should return empty array, when person has no kontexte but user is admin', async () => {
             const adminUser: Person<true> = await createPerson();
-            const rootOrga: OrganisationID = await createOrganisation(undefined, true, OrganisationsTyp.ROOT);
+            const rootOrga: OrganisationID = (await createAndPersistRootOrganisation(em, organisationRepository)).id;
             const adminRolle: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ]);
