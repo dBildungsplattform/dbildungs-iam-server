@@ -1472,5 +1472,26 @@ describe('PersonRepository Integration', () => {
             );
             expect(result).toBeInstanceOf(DomainError);
         });
+
+        it('should return DomainError if keycloak cannot update the username', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+            usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername1' });
+
+            kcUserServiceMock.updateUsername.mockResolvedValueOnce({
+                ok: false,
+                error: new EntityNotFoundError(`Keycloak User could not be found`),
+            });
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '',
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+            expect(result).toBeInstanceOf(DomainError);
+        });
     });
 });
