@@ -11,7 +11,6 @@ import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulcon
 import { ApiOkResponsePaginated, DisablePagingInterceptor, RawPagedResponse } from '../../../shared/paging/index.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { Person } from '../domain/person.js';
-import { PersonScope } from '../persistence/person.scope.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -60,9 +59,10 @@ export class PersonFrontendController {
             throw new UnauthorizedException('NOT_AUTHORIZED');
         }
 
-        const scope: PersonScope = this.personRepository.createPersonScope(queryParams, permittedOrgas);
-
-        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+        const [persons, total]: Counted<Person<true>> = await this.personRepository.findbyPersonFrontend(
+            queryParams,
+            permittedOrgas,
+        );
 
         const response: RawPagedResponse<PersonendatensatzResponse> = new RawPagedResponse({
             offset: queryParams.offset ?? 0,

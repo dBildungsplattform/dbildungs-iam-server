@@ -26,7 +26,6 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { SortFieldPersonFrontend } from '../domain/person.enums.js';
-import { PersonenQueryParams } from '../api/personen-query.param.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -106,6 +105,17 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
 
 export type PersonEventPayload = {
     personenkontexte: [{ id: string; organisationId: string; rolleId: string }];
+};
+export type PersonenQueryParams = {
+    vorname?: string;
+    familienname?: string;
+    organisationIDs?: string[];
+    rolleIDs?: string[];
+    offset?: number;
+    limit?: number;
+    sortField?: SortFieldPersonFrontend;
+    sortOrder?: ScopeOrder;
+    suchFilter?: string;
 };
 
 @Injectable()
@@ -444,6 +454,18 @@ export class PersonRepository {
         person.keycloakUserId = creationResult.value;
 
         return person;
+    }
+
+    public async findbyPersonFrontend(
+        queryParams: PersonenQueryParams,
+        permittedOrgas: PermittedOrgas,
+    ): Promise<Counted<Person<true>>> {
+        const scope: PersonScope = this.createPersonScope(queryParams, permittedOrgas);
+
+        const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
+        const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+
+        return [persons, total];
     }
 
     public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
