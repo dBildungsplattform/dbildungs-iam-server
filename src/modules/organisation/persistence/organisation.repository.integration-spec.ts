@@ -727,9 +727,11 @@ describe('OrganisationRepository', () => {
                     name: 'test',
                 }),
             );
-            for (const organisation of organisations) {
-                await sut.save(organisation);
-            }
+            await Promise.all(
+                organisations.map(async (organisation: Organisation<false>) => {
+                    await sut.save(organisation);
+                }),
+            );
         });
 
         it('should return all organisations when no limit and offset are provided', async () => {
@@ -754,10 +756,11 @@ describe('OrganisationRepository', () => {
                 DoFactory.createOrganisationAggregate(false, { name: 'AnotherTest', kennung: 'KENNUNG2' }),
                 DoFactory.createOrganisationAggregate(false, { name: 'TestName2', kennung: 'DIFFERENTKENNUNG' }),
             ];
-
+            /* eslint-disable no-await-in-loop */
             for (const organisation of organisations) {
                 await sut.save(organisation);
             }
+            /* eslint-disable no-await-in-loop */
         });
 
         it('should return organisations that match the search string in name', async () => {
