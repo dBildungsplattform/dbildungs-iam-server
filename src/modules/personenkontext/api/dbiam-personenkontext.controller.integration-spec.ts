@@ -409,7 +409,7 @@ describe('dbiam Personenkontext API', () => {
                     rolleId: rolle.id,
                 });
 
-            expect(response.status).toBe(500);
+            expect(response.status).toBe(400);
         });
 
         it('should return error if Email is Provided but Rollenart is Not LEHR', async () => {
