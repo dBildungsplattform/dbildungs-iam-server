@@ -392,7 +392,7 @@ describe('Rolle Aggregate', () => {
                     false,
                 );
 
-                const result: void | DomainError = rolle.detatchServiceProvider(serviceProviderIdToDetach);
+                const result: void | DomainError = rolle.detatchServiceProvider([serviceProviderIdToDetach]);
 
                 expect(result).not.toBeInstanceOf(DomainError);
                 expect(rolle.serviceProviderIds.includes(serviceProviderIdToDetach)).toBeFalsy();
@@ -415,9 +415,104 @@ describe('Rolle Aggregate', () => {
                     false,
                 );
 
-                const result: void | DomainError = rolle.detatchServiceProvider(serviceProviderIdToDetach);
+                const result: void | DomainError = rolle.detatchServiceProvider([serviceProviderIdToDetach]);
 
                 expect(result).toBeInstanceOf(DomainError);
+            });
+        });
+    });
+
+    describe('updateServiceProviders', () => {
+        describe('when only adding service providers', () => {
+            it('should successfully add new service providers', async () => {
+                const rolle: Rolle<true> = rolleFactory.construct(
+                    faker.string.uuid(),
+                    faker.date.anytime(),
+                    faker.date.anytime(),
+                    '',
+                    '',
+                    RollenArt.LEHR,
+                    [], // initialize with empty serviceProviderIds
+                    [],
+                    [],
+                    false,
+                );
+
+                const newServiceProviderId: string = faker.string.uuid();
+                const existingServiceProviderId: string = faker.string.uuid();
+
+                // Existing state
+                rolle.serviceProviderIds = [existingServiceProviderId];
+
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
+                    new Map([[newServiceProviderId, DoFactory.createServiceProvider(true)]]),
+                );
+
+                // Call updateServiceProviders with a new ID to add
+                await rolle.updateServiceProviders([existingServiceProviderId, newServiceProviderId]);
+
+                expect(rolle.serviceProviderIds).toContain(newServiceProviderId);
+            });
+        });
+
+        describe('when both adding and removing service providers', () => {
+            it('should successfully add and remove service providers', async () => {
+                const rolle: Rolle<true> = rolleFactory.construct(
+                    faker.string.uuid(),
+                    faker.date.anytime(),
+                    faker.date.anytime(),
+                    '',
+                    '',
+                    RollenArt.LEHR,
+                    [], // initialize with empty serviceProviderIds
+                    [],
+                    [],
+                    false,
+                );
+
+                const serviceProviderToAdd: string = faker.string.uuid();
+                const serviceProviderToRemove: string = faker.string.uuid();
+                const existingServiceProviderId: string = faker.string.uuid();
+
+                // Existing state
+                rolle.serviceProviderIds = [existingServiceProviderId, serviceProviderToRemove];
+
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
+                    new Map([[serviceProviderToAdd, DoFactory.createServiceProvider(true)]]),
+                );
+
+                // Call updateServiceProviders with both IDs to add and remove
+                await rolle.updateServiceProviders([existingServiceProviderId, serviceProviderToAdd]);
+
+                expect(rolle.serviceProviderIds).toContain(serviceProviderToAdd);
+                expect(rolle.serviceProviderIds).not.toContain(serviceProviderToRemove);
+            });
+        });
+
+        describe('when no changes are needed', () => {
+            it('should not call attach or detach methods', async () => {
+                const rolle: Rolle<true> = rolleFactory.construct(
+                    faker.string.uuid(),
+                    faker.date.anytime(),
+                    faker.date.anytime(),
+                    '',
+                    '',
+                    RollenArt.LEHR,
+                    [], // initialize with empty serviceProviderIds
+                    [],
+                    [],
+                    false,
+                );
+
+                const existingServiceProviderId: string = faker.string.uuid();
+
+                // Existing state
+                rolle.serviceProviderIds = [existingServiceProviderId];
+
+                // Call updateServiceProviders with the same IDs (no changes)
+                await rolle.updateServiceProviders([existingServiceProviderId]);
+
+                expect(rolle.serviceProviderIds).toContain(existingServiceProviderId);
             });
         });
     });
