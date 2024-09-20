@@ -15,6 +15,7 @@ import {
     mapAggregateToData,
     mapEntityToAggregate,
     mapEntityToAggregateInplace,
+    PersonenQueryParams,
     PersonRepository,
 } from './person.repository.js';
 import { Person } from '../domain/person.js';
@@ -29,7 +30,7 @@ import {
     EntityNotFoundError,
     KeycloakClientError,
 } from '../../../shared/error/index.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -44,6 +45,14 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { SortFieldPersonFrontend } from '../domain/person.enums.js';
+//import { Organisation } from '../../organisation/domain/organisation.js';
+//import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+
+//import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+
+//import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -55,17 +64,22 @@ describe('PersonRepository Integration', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let eventServiceMock: DeepMocked<EventService>;
 
+    //let organisationRepository: OrganisationRepository;
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
             providers: [
                 PersonRepo,
                 PersonRepository,
+                OrganisationRepository,
+
                 ConfigService,
                 {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
+
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
@@ -88,6 +102,7 @@ describe('PersonRepository Integration', () => {
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         eventServiceMock = module.get(EventService);
+        //organisationRepository = module.get(OrganisationRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -1302,5 +1317,106 @@ describe('PersonRepository Integration', () => {
 
             expect(exists).toBe(false);
         });
+    });
+
+    describe('createPersonScope', () => {
+        it('should create a scope with the correct filters and sorting', async () => {
+            const person: Person<true> = await savePerson();
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                vorname: person.vorname,
+                familienname: person.familienname,
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.VORNAME,
+                sortOrder: ScopeOrder.ASC,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+            const [firstPerson]: Person<true>[] | undefined = persons;
+
+            expect(firstPerson?.vorname).toBe(person.vorname);
+            expect(firstPerson?.familienname).toBe(person.familienname);
+            expect(total).toBe(1);
+        });
+        it('should create return the suchFilter', async () => {
+            const person: Person<true> = await savePerson();
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                vorname: person.vorname,
+                familienname: person.familienname,
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.VORNAME,
+                sortOrder: ScopeOrder.ASC,
+                suchFilter: person.vorname,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+            const [firstPerson]: Person<true>[] | undefined = persons;
+
+            expect(firstPerson?.vorname).toBe(person.vorname);
+            expect(firstPerson?.familienname).toBe(person.familienname);
+            expect(total).toBe(1);
+        });
+        it('should return undefeined if PermittedOrgas is placed', async () => {
+            const person: Person<true> = await savePerson();
+
+            const permittedOrgas: PermittedOrgas = { all: false, orgaIds: [] };
+
+            const queryParams: PersonenQueryParams = {
+                vorname: person.vorname,
+                familienname: person.familienname,
+                organisationIDs: undefined,
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.VORNAME,
+                sortOrder: ScopeOrder.ASC,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+            const [firstPerson]: Person<true>[] | undefined = persons;
+
+            expect(firstPerson?.vorname).toBe(undefined);
+            expect(firstPerson?.familienname).toBe(undefined);
+            expect(total).toBe(0);
+        });
+    });
+    it('should use default sortField and sortOrder when not provided', async () => {
+        const person1: Person<true> = await savePerson();
+
+        const permittedOrgas: PermittedOrgas = { all: true };
+
+        const queryParams: PersonenQueryParams = {
+            offset: 0,
+            limit: 10,
+            vorname: person1.vorname,
+            // sortField and sortOrder are not provided
+        };
+
+        const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+        expect(result).toBeDefined();
+
+        const [persons, total]: [Person<true>[], number] = result;
+
+        expect(total).toBeGreaterThanOrEqual(1);
+        expect(persons[0]?.vorname).toBe(person1.vorname);
     });
 });
