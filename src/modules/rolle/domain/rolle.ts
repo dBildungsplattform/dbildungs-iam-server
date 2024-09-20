@@ -217,4 +217,35 @@ export class Rolle<WasPersisted extends boolean> {
         // Filter out all the serviceProviderIds that need to be detached
         this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => !serviceProviderIds.includes(id));
     }
+
+    public async updateServiceProviders(serviceProviderIds: string[]): Promise<void | DomainError> {
+        // Fetch current state of service providers from the DB (those already attached)
+        const existingServiceProviderIds: string[] = this.serviceProviderIds;
+
+        // Identify the service provider IDs to add (those in the new state but not in the current state)
+        const serviceProviderIdsToAdd: string[] = serviceProviderIds.filter(
+            (id: string) => !existingServiceProviderIds.includes(id),
+        );
+
+        // Identify the service provider IDs to remove (those in the current state but not in the new state)
+        const serviceProviderIdsToRemove: string[] = existingServiceProviderIds.filter(
+            (id: string) => !serviceProviderIds.includes(id),
+        );
+
+        // If there are IDs to add, call the attach method
+        if (serviceProviderIdsToAdd.length > 0) {
+            const result: void | DomainError = await this.attachServiceProviders(serviceProviderIdsToAdd);
+            if (result instanceof DomainError) {
+                return result;
+            }
+        }
+
+        // If there are IDs to remove, call the detach method
+        if (serviceProviderIdsToRemove.length > 0) {
+            const result: void | DomainError = this.detatchServiceProvider(serviceProviderIdsToRemove);
+            if (result instanceof DomainError) {
+                return result; // Return error if detachment failed
+            }
+        }
+    }
 }

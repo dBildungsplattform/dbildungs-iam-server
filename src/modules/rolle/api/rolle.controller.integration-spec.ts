@@ -494,7 +494,7 @@ describe('Rolle API', () => {
                 );
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: serviceProvider.id,
+                    serviceProviderIds: [serviceProvider.id],
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .post(`/rolle/${rolle.id}/serviceProviders`)
@@ -513,7 +513,7 @@ describe('Rolle API', () => {
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: serviceProvider.id,
+                    serviceProviderIds: [serviceProvider.id],
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .post(`/rolle/${rolle.id}/serviceProviders`)
@@ -527,7 +527,7 @@ describe('Rolle API', () => {
             it('should return 404', async () => {
                 const validButNonExistingUUID: string = faker.string.uuid();
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: faker.string.uuid(),
+                    serviceProviderIds: [faker.string.uuid()],
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .post(`/rolle/${validButNonExistingUUID}/serviceProviders`)
@@ -541,7 +541,7 @@ describe('Rolle API', () => {
             it('should return 404', async () => {
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: faker.string.uuid(),
+                    serviceProviderIds: [faker.string.uuid()],
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .post(`/rolle/${rolle.id}/serviceProviders`)

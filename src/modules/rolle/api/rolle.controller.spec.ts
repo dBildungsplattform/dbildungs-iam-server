@@ -91,10 +91,13 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 };
                 //mock get-rolle
                 rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
-                //mock call to get sp (direct in controller-method)
-                serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
 
-                await expect(rolleController.addServiceProvidersById(rolleByIdParams, params)).rejects.toThrow(Error);
+                // Mock the call to find service providers by IDs, returning an empty map
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map());
+
+                await expect(rolleController.updateServiceProvidersById(rolleByIdParams, params)).rejects.toThrow(
+                    Error,
+                );
             });
         });
     });

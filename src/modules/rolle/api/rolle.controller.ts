@@ -255,14 +255,14 @@ export class RolleController {
     @Put(':rolleId/serviceProviders')
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Add a service-provider to a rolle by id.' })
-    @ApiOkResponse({ description: 'Adding service-provider finished successfully.', type: ServiceProviderResponse })
+    @ApiOkResponse({ description: 'Adding service-provider finished successfully.', type: [ServiceProviderResponse] })
     @ApiNotFoundResponse({ description: 'The rolle or the service-provider to add does not exist.' })
     @ApiBadRequestResponse({ description: 'The service-provider is already attached to rolle.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error, the service-provider may could not be found after attaching to rolle.',
     })
-    public async addServiceProvidersById(
+    public async updateServiceProvidersById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Body() spBodyParams: RolleServiceProviderQueryParams,
     ): Promise<ServiceProviderResponse[]> {
@@ -274,7 +274,7 @@ export class RolleController {
                 ),
             );
         }
-        const result: void | DomainError = await rolle.attachServiceProviders(spBodyParams.serviceProviderIds);
+        const result: void | DomainError = await rolle.updateServiceProviders(spBodyParams.serviceProviderIds);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
