@@ -203,7 +203,7 @@ export class EmailEventHandler {
 
         const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
         const rollenIds: string[] = [];
-        personenkontexte.map((pk: Personenkontext<true>) => {
+        personenkontexte.forEach((pk: Personenkontext<true>) => {
             rolleIdPKMap.set(pk.rolleId, pk);
             rollenIds.push(pk.rolleId);
         });
