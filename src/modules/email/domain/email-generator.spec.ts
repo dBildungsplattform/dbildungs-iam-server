@@ -9,6 +9,7 @@ import {
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EmailGenerator } from './email-generator.js';
 import { EmailRepo } from '../persistence/email.repo.js';
+import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeded.error.js';
 
 describe('EmailGenerator', () => {
     let module: TestingModule;
@@ -247,6 +248,17 @@ describe('EmailGenerator', () => {
                 await expect(sut.generateAvailableAddress('Max', 'Mustermann', 'schule-sh.de')).resolves.toStrictEqual({
                     ok: true,
                     value: 'max.mustermann2@schule-sh.de',
+                });
+            });
+        });
+
+        describe('when username exists and max attempts for generation exceeded', () => {
+            it('should append and increase counter and return name', async () => {
+                emailRepoMock.existsEmailAddress.mockResolvedValue(true); //mock all attempts => maxmustermann1, maxmustermann2, ...  already exists
+
+                await expect(sut.generateAvailableAddress('Max', 'Mustermann', 'schule-sh.de')).resolves.toStrictEqual({
+                    ok: false,
+                    error: new EmailAddressGenerationAttemptsExceededError('max.mustermann'),
                 });
             });
         });

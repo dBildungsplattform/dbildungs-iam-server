@@ -5,8 +5,11 @@ import {
 } from '../../../shared/error/index.js';
 import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 import { EmailRepo } from '../persistence/email.repo.js';
+import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeded.error.js';
 
 export class EmailGenerator {
+    private static MAX_ATTEMPTS_ADDRESS_GENERATION: number = 50;
+
     public constructor(private emailRepo: EmailRepo) {}
 
     public isEqual(address: string, firstname: string, lastname: string, emailDomain: string): boolean {
@@ -73,11 +76,16 @@ export class EmailGenerator {
 
         if (!createdAddress.ok) return createdAddress;
 
-        const nextAddressName: string = await this.getNextAvailableAddress(createdAddress.value, emailDomain);
+        const nextAvailableAddressResult: Result<string> = await this.getNextAvailableAddress(
+            createdAddress.value,
+            emailDomain,
+        );
+
+        if (!nextAvailableAddressResult.ok) return nextAvailableAddressResult;
 
         return {
             ok: true,
-            value: nextAddressName + '@' + emailDomain,
+            value: nextAvailableAddressResult.value + '@' + emailDomain,
         };
     }
 
@@ -92,34 +100,29 @@ export class EmailGenerator {
         return removedDiacritics.join('-');
     }
 
-    private async getNextAvailableAddress(calculatedAddress: string, emailDomain: string): Promise<string> {
-        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + '@' + emailDomain))) {
-            return calculatedAddress;
-        }
-        let counter: number = 1;
-        // eslint-disable-next-line no-await-in-loop
-        while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + '@' + emailDomain)) {
-            counter = counter + 1;
-        }
-        return calculatedAddress + counter;
-    }
-
-    private async getNextAvailableAddressRec(calculatedAddress: string, emailDomain: string, call: number): Promise<Result<string>> {
-        if (call > 50) {
-            return { ok: false, error: new InvalidNameError('Could not generate valid username, max attempts exceeded') };
+    private async getNextAvailableAddress(
+        calculatedAddress: string,
+        emailDomain: string,
+        call: number = 0,
+    ): Promise<Result<string>> {
+        if (call > EmailGenerator.MAX_ATTEMPTS_ADDRESS_GENERATION) {
+            return {
+                ok: false,
+                error: new EmailAddressGenerationAttemptsExceededError(calculatedAddress),
+            };
         }
         let counterAsStr: string = '';
         if (call > 0) {
-            counterAsStr = '' + call
+            counterAsStr = '' + call;
         }
 
         if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + counterAsStr + '@' + emailDomain))) {
             return {
                 ok: true,
-                value: calculatedAddress,
+                value: calculatedAddress + counterAsStr,
             };
         }
 
-        return this.getNextAvailableAddressRec(calculatedAddress, emailDomain, call +1);
+        return this.getNextAvailableAddress(calculatedAddress, emailDomain, call + 1);
     }
 }
