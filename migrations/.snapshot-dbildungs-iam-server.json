@@ -3696,8 +3696,8 @@
           "nullable": true,
           "mappedType": "string"
         },
-        "system": {
-          "name": "system",
+        "external_system": {
+          "name": "external_system",
           "type": "service_provider_system_enum",
           "unsigned": false,
           "autoincrement": false,

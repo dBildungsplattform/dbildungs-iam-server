@@ -14,7 +14,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public logoMimeType: string | undefined,
         public keycloakGroup: string | undefined,
         public keycloakRole: string | undefined,
-        public system: ServiceProviderSystem,
+        public externalSystem: ServiceProviderSystem,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -30,7 +30,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
         keycloakRole: string | undefined,
-        system: ServiceProviderSystem,
+        externalSystem: ServiceProviderSystem,
     ): ServiceProvider<WasPersisted> {
         return new ServiceProvider(
             id,
@@ -45,7 +45,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             logoMimeType,
             keycloakGroup,
             keycloakRole,
-            system,
+            externalSystem,
         );
     }
 
@@ -59,7 +59,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
         keycloakRole: string | undefined,
-        system: ServiceProviderSystem,
+        externalSystem: ServiceProviderSystem,
     ): ServiceProvider<false> {
         return new ServiceProvider(
             undefined,
@@ -74,7 +74,7 @@ export class ServiceProvider<WasPersisted extends boolean> {
             logoMimeType,
             keycloakGroup,
             keycloakRole,
-            system,
+            externalSystem,
         );
     }
 }

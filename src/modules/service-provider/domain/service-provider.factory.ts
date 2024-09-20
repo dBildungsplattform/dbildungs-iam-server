@@ -17,7 +17,7 @@ export class ServiceProviderFactory {
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
         keycloakRole: string | undefined,
-        system: ServiceProviderSystem,
+        externalSystem: ServiceProviderSystem,
     ): ServiceProvider<true> {
         return ServiceProvider.construct(
             id,
@@ -32,7 +32,7 @@ export class ServiceProviderFactory {
             logoMimeType,
             keycloakGroup,
             keycloakRole,
-            system,
+            externalSystem,
         );
     }
 
@@ -46,7 +46,7 @@ export class ServiceProviderFactory {
         logoMimeType: string | undefined,
         keycloakGroup: string | undefined,
         keycloakRole: string | undefined,
-        system: ServiceProviderSystem,
+        externalSystem: ServiceProviderSystem,
     ): ServiceProvider<false> {
         return ServiceProvider.createNew(
             name,
@@ -58,7 +58,7 @@ export class ServiceProviderFactory {
             logoMimeType,
             keycloakGroup,
             keycloakRole,
-            system,
+            externalSystem,
         );
     }
 }

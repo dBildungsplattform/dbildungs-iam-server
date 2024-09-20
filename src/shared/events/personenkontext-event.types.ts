@@ -22,5 +22,5 @@ export type PersonenkontextEventKontextData = {
     orgaTyp?: OrganisationsTyp;
     orgaKennung?: string;
 
-    serviceProviderSystems: ServiceProviderSystem[];
+    serviceProviderExternalSystems: ServiceProviderSystem[];
 };

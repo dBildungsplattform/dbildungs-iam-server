@@ -25,5 +25,5 @@ export class ServiceProviderFile {
 
     public keycloakRole?: string;
 
-    public system?: ServiceProviderSystem;
+    public externalSystem?: ServiceProviderSystem;
 }

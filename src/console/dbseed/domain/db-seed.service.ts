@@ -197,7 +197,7 @@ export class DbSeedService {
                 file.logoMimeType,
                 file.keycloakGroup,
                 file.keycloakRole,
-                file.system ?? ServiceProviderSystem.NONE,
+                file.externalSystem ?? ServiceProviderSystem.NONE,
             );
 
             const persistedServiceProvider: ServiceProvider<true> =

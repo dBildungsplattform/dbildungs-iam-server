@@ -37,7 +37,7 @@ describe('ServiceProviderFactory', () => {
                 const id: string = faker.string.uuid();
                 const keycloakGroup: string = faker.string.alpha();
                 const keycloakRole: string = faker.string.alpha();
-                const system: ServiceProviderSystem = faker.helpers.enumValue(ServiceProviderSystem);
+                const externalSystem: ServiceProviderSystem = faker.helpers.enumValue(ServiceProviderSystem);
                 const example: ServiceProvider<true> = {
                     id: id,
                     createdAt: created,
@@ -51,7 +51,7 @@ describe('ServiceProviderFactory', () => {
                     logoMimeType: undefined,
                     keycloakGroup: keycloakGroup,
                     keycloakRole: keycloakRole,
-                    system: system,
+                    externalSystem: externalSystem,
                 };
                 const serviceProvider: ServiceProvider<true> = sut.construct(
                     id,
@@ -66,7 +66,7 @@ describe('ServiceProviderFactory', () => {
                     undefined,
                     keycloakGroup,
                     keycloakRole,
-                    system,
+                    externalSystem,
                 );
 
                 expect(serviceProvider).toEqual(example);

@@ -254,7 +254,7 @@ export class ItsLearningPersonsEventHandler {
         // Only keep personenkontexte, have a serviceprovider with itslearning-system
         const filteredKontexte: [...T] = kontexte.map((pks: PersonenkontextUpdatedData[]) =>
             pks.filter((pk: PersonenkontextUpdatedData) =>
-                pk.serviceProviderSystems.includes(ServiceProviderSystem.ITSLEARNING),
+                pk.serviceProviderExternalSystems.includes(ServiceProviderSystem.ITSLEARNING),
             ),
         ) as [...T];
 

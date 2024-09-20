@@ -37,5 +37,5 @@ export class ServiceProviderEntity extends TimestampedEntity {
     public keycloakRole?: string;
 
     @Enum({ items: () => ServiceProviderSystem, nativeEnumName: 'service_provider_system_enum' })
-    public system!: ServiceProviderSystem;
+    public externalSystem!: ServiceProviderSystem;
 }

@@ -50,8 +50,8 @@ export class PersonDeleteService {
                                               rolleId: personenKontext.rolleId,
                                               orgaId: personenKontext.organisationId,
                                               rolle: rolle.rollenart,
-                                              serviceProviderSystems: rolle.serviceProviderData.map(
-                                                  (sp: ServiceProvider<true>) => sp.system,
+                                              serviceProviderExternalSystems: rolle.serviceProviderData.map(
+                                                  (sp: ServiceProvider<true>) => sp.externalSystem,
                                               ),
                                           })
                                         : reject(),
