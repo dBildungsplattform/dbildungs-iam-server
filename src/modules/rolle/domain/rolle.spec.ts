@@ -14,7 +14,6 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.error.js';
-import { EntityAlreadyExistsError } from '../../../shared/error/entity-already-exists.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 describe('Rolle Aggregate', () => {
@@ -544,7 +543,7 @@ describe('Rolle Aggregate', () => {
                 );
 
                 // Simulate attach method returning a DomainError
-                const attachError: EntityAlreadyExistsError = new EntityAlreadyExistsError('Error attaching');
+                const attachError: EntityNotFoundError = new EntityNotFoundError('Error attaching');
                 const attachSpy: jest.SpyInstance = jest
                     .spyOn(rolle, 'attachServiceProviders')
                     .mockResolvedValue(attachError);
