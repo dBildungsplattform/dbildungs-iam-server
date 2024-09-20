@@ -79,6 +79,7 @@ export class PersonenkontexteUpdate {
         );
     }
 
+    /* eslint-disable no-await-in-loop */
     private async getSentPersonenkontexte(): Promise<Personenkontext<boolean>[] | PersonenkontexteUpdateError> {
         const personenKontexte: Personenkontext<boolean>[] = [];
         for (const pkBodyParam of this.dBiamPersonenkontextBodyParams) {
@@ -112,6 +113,7 @@ export class PersonenkontexteUpdate {
         return personenKontexte;
     }
 
+    /* eslint-disable no-await-in-loop */
     private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
         const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
 
@@ -221,8 +223,10 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 try {
+                    /* eslint-disable no-await-in-loop */
                     await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
                     deletedPKs.push(existingPK);
+                    /* eslint-disable no-await-in-loop */
                 } catch (err) {
                     this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
                 }
@@ -232,6 +236,7 @@ export class PersonenkontexteUpdate {
         return deletedPKs;
     }
 
+    /* eslint-disable no-await-in-loop */
     private async add(
         existingPKs: Personenkontext<true>[],
         sentPKs: Personenkontext<boolean>[],
@@ -258,6 +263,7 @@ export class PersonenkontexteUpdate {
                 }
             }
         }
+        /* eslint-disable no-await-in-loop */
 
         return createdPKs;
     }

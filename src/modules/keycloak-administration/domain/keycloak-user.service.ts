@@ -446,7 +446,7 @@ export class KeycloakUserService {
             if (groupsToProcess.length === 0) {
                 return { ok: true, value: undefined };
             }
-
+            /* eslint-disable no-await-in-loop */
             for (const group of groupsToProcess) {
                 if (action === 'assign') {
                     await kcAdminClientResult.value.users.addToGroup({ id: foundUserId, groupId: group.id! });
@@ -454,7 +454,7 @@ export class KeycloakUserService {
                     await kcAdminClientResult.value.users.delFromGroup({ id: foundUserId, groupId: group.id! });
                 }
             }
-
+            /* eslint-disable no-await-in-loop */
             return { ok: true, value: undefined };
         } catch (err) {
             this.logger.error(`Failed to ${action} groups for user ${userId}: ${JSON.stringify(err)}`);
