@@ -1192,8 +1192,8 @@
           ],
           "mappedType": "enum"
         },
-        "emaildomain": {
-          "name": "emaildomain",
+        "email_domain": {
+          "name": "email_domain",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
