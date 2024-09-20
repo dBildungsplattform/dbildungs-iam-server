@@ -402,7 +402,7 @@ export class OrganisationRepository {
             await this.findRootDirectChildren();
 
         let parentOrgaId: OrganisationID | undefined = organisationId;
-
+        /* eslint-disable no-await-in-loop */
         while (parentOrgaId) {
             const result: Option<Organisation<true>> = await this.findById(parentOrgaId);
 
@@ -414,6 +414,7 @@ export class OrganisationRepository {
 
             parentOrgaId = result?.administriertVon;
         }
+        /* eslint-disable no-await-in-loop */
 
         return RootDirectChildrenType.OEFFENTLICH;
     }

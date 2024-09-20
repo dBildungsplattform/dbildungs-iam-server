@@ -731,10 +731,11 @@ describe('OrganisationRepository', () => {
                 DoFactory.createOrganisationAggregate(false, { name: 'AnotherTest', kennung: 'KENNUNG2' }),
                 DoFactory.createOrganisationAggregate(false, { name: 'TestName2', kennung: 'DIFFERENTKENNUNG' }),
             ];
-
+            /* eslint-disable no-await-in-loop */
             for (const organisation of organisations) {
                 await sut.save(organisation);
             }
+            /* eslint-disable no-await-in-loop */
         });
 
         it('should return organisations that match the search string in name', async () => {

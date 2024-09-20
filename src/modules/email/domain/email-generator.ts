@@ -95,9 +95,12 @@ export class EmailGenerator {
             return calculatedAddress;
         }
         let counter: number = 1;
+        // leave as is because of the sequncial nature and assumintion of limits similar names
+        /* eslint-disable no-await-in-loop */
         while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + EmailGenerator.EMAIL_SUFFIX)) {
             counter = counter + 1;
         }
+        /* eslint-disable no-await-in-loop */
         return calculatedAddress + counter;
     }
 }
