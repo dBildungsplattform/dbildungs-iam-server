@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { PersonService } from './domain/person.service.js';
 import { PersonModule } from './person.module.js';
-import { PersonPersistenceMapperProfile } from './persistence/person-persistence.mapper.profile.js';
 import { EventModule } from '../../core/eventbus/index.js';
 
 describe('PersonModule', () => {
