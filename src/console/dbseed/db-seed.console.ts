@@ -71,11 +71,13 @@ export class DbSeedConsole extends CommandRunner {
             this.logger.info(`Following files from ${subDir} will be processed:`);
             entityFileNames.forEach((n: string) => this.logger.info(n));
             try {
+                /* eslint-disable no-await-in-loop */
                 for (const entityFileName of entityFileNames) {
                     await this.readAndProcessEntityFile(directory, subDir, entityFileName);
                 }
                 await this.orm.em.flush();
                 this.logger.info(`Created seed data from ${subDir} successfully.`);
+                /* eslint-disable no-await-in-loop */
             } catch (err) {
                 this.logger.error('Seed data could not be created!');
                 this.logger.error(String(err));
