@@ -1,4 +1,4 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityDictionary, EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -108,7 +108,10 @@ export class OrganisationRepository {
                 FROM sub_organisations;
             `;
 
-            rawResult = await this.em.execute(query, [ids]);
+            const rawEntities: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [ids]);
+            rawResult = rawEntities.map((data: EntityDictionary<OrganisationEntity>) =>
+                this.em.map(OrganisationEntity, data),
+            );
         }
 
         return rawResult.map(mapEntityToAggregate);
@@ -134,7 +137,10 @@ export class OrganisationRepository {
                 FROM parent_organisations;
             `;
 
-            rawResult = await this.em.execute(query, [ids]);
+            const rawEntities: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [ids]);
+            rawResult = rawEntities.map((data: EntityDictionary<OrganisationEntity>) =>
+                this.em.map(OrganisationEntity, data),
+            );
         }
 
         return rawResult.map(mapEntityToAggregate);
