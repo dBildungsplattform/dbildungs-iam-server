@@ -57,9 +57,6 @@ export class DbiamPersonenuebersicht {
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
-        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
-            return new EntityNotFoundError('Organisation', 'no permitted organisations found');
-        }
 
         const personenKontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
         const rollenIdsForKontexte: RolleID[] = personenKontexte.map(
