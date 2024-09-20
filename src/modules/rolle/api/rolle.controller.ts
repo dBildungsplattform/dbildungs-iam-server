@@ -322,6 +322,7 @@ export class RolleController {
         @Query() spBodyParams: RolleServiceProviderQueryParams,
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+
         if (!rolle) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
