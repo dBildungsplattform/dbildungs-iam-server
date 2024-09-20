@@ -175,19 +175,22 @@ export class Rolle<WasPersisted extends boolean> {
     }
 
     public async attachServiceProviders(serviceProviderIds: string[]): Promise<void | DomainError> {
-        // Fetch the service providers for the provided IDs using the findByIds method
         const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
             serviceProviderIds,
         );
 
-        // Find any IDs that were not found in the database
         const missingIds: string[] = serviceProviderIds.filter((id: string) => !serviceProviderMap.has(id));
         if (missingIds.length > 0) {
             return new EntityNotFoundError('ServiceProvider', missingIds.join(', '));
         }
 
-        // Attach the service providers by pushing the new IDs
-        this.serviceProviderIds.push(...serviceProviderIds);
+        const uniqueIds: Set<string> = new Set(serviceProviderIds);
+
+        // Filter out any IDs that are already in this.serviceProviderIds to avoid duplicates.
+        const newIds: string[] = [...uniqueIds].filter((id: string) => !this.serviceProviderIds.includes(id));
+
+        // Attach the new unique IDs
+        this.serviceProviderIds.push(...newIds);
     }
 
     public detatchServiceProvider(serviceProviderIds: string[]): void | DomainError {
