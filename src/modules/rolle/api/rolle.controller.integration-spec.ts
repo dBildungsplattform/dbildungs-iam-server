@@ -601,7 +601,7 @@ describe('Rolle API', () => {
                     .query(queryString)
                     .send();
 
-                expect(response.status).toBe(500);
+                expect(response.status).toBe(404);
             });
         });
     });
