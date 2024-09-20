@@ -1,4 +1,4 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityDictionary, EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -17,12 +17,6 @@ import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
-
-type OrganisationUnderScoreAttributes = {
-    administriert_von: OrganisationID;
-    zugehoerig_zu: OrganisationID;
-    email_domain: string;
-};
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -53,26 +47,6 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.typ,
         entity.traegerschaft,
         entity.emailDomain,
-    );
-}
-
-export function mapEntityWithUnderScoreAttributesToAggregate(entity: OrganisationEntity): Organisation<true> {
-    const underScoreAttributes: OrganisationUnderScoreAttributes =
-        entity as unknown as OrganisationUnderScoreAttributes;
-
-    return Organisation.construct(
-        entity.id,
-        entity.createdAt,
-        entity.updatedAt,
-        underScoreAttributes.administriert_von,
-        underScoreAttributes.zugehoerig_zu,
-        entity.kennung,
-        entity.name,
-        entity.namensergaenzung,
-        entity.kuerzel,
-        entity.typ,
-        entity.traegerschaft,
-        underScoreAttributes.email_domain,
     );
 }
 
@@ -188,9 +162,11 @@ export class OrganisationRepository {
             FROM parent_organisations ORDER BY depth;
         `;
 
-        const rawResult: OrganisationEntity[] = await this.em.execute(query, [id]);
+        const rawResult: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [id]);
 
-        const res: Organisation<true>[] = rawResult.map(mapEntityWithUnderScoreAttributesToAggregate);
+        const res: Organisation<true>[] = rawResult
+            .map((data: EntityDictionary<OrganisationEntity>) => this.em.map(OrganisationEntity, data))
+            .map(mapEntityToAggregate);
 
         return res;
     }
