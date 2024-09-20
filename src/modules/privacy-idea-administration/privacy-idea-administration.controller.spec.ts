@@ -75,6 +75,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
+            personPermissionsMock = createMock<PersonPermissions>();
 
             serviceMock.initializeSoftwareToken.mockResolvedValue('token123');
             const response: string = await sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock);
@@ -89,17 +90,6 @@ describe('PrivacyIdeaAdministrationController', () => {
 
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
-            );
-        });
-
-        it('should return user not found if referrer is undefined', async () => {
-            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
-                ok: true,
-                value: getPerson(true),
-            });
-
-            await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
-                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
         });
     });
@@ -183,6 +173,35 @@ describe('PrivacyIdeaAdministrationController', () => {
             await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
                 new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
+        });
+
+        it('should return user not found if referrer is undefined', async () => {
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: getPerson(true),
+            });
+
+            await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+
+        it('should return user not found if referrer is undefined self service', async () => {
+            personRepository.findById.mockResolvedValueOnce(getPerson(true));
+            personPermissionsMock.personFields.id = 'user1';
+
+            await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+
+        it('should return valid response if referrer is valid self service', async () => {
+            personRepository.findById.mockResolvedValueOnce(getPerson(false));
+            personPermissionsMock.personFields.id = 'user1';
+
+            serviceMock.getTwoAuthState.mockResolvedValue(undefined);
+            const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
+            expect(response).toEqual(new TokenStateResponse(undefined));
         });
     });
     describe('PrivacyIdeaAdministrationController resetToken', () => {
@@ -355,6 +374,46 @@ describe('PrivacyIdeaAdministrationController', () => {
                 SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                     SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(entityCouldNotBeCreatedError),
                 ),
+            );
+        });
+    });
+
+    describe('PrivacyIdeaAdministrationController verify', () => {
+        it('should successfully verify token', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+            const person: Person<true> = getPerson();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+
+            await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
+        });
+
+        it('should return forbidden insufficient permissions', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: false,
+                error: new Error('Forbidden access'),
+            });
+
+            await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
+                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+            );
+        });
+
+        it('should return user not found if referrer is undefined', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: true,
+                value: getPerson(true),
+            });
+
+            await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
         });
     });

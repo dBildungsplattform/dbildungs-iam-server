@@ -76,6 +76,7 @@ export class Rolle<WasPersisted extends boolean> {
         if (!NameValidator.isNameValid(name)) {
             return new NameForRolleWithTrailingSpaceError();
         }
+
         const rolleToUpdate: Rolle<true> = new Rolle(
             organisationRepo,
             serviceProviderRepo,
@@ -91,12 +92,18 @@ export class Rolle<WasPersisted extends boolean> {
             istTechnisch,
             serviceProviderData ?? [],
         );
-        //Replace service providers with new ones.
-        for (const serviceProviderId of serviceProviderIds) {
-            const result: void | DomainError = await rolleToUpdate.attachServiceProvider(serviceProviderId);
-            if (result instanceof DomainError) {
-                return result;
-            }
+        //Replace service providers with new ones
+        const attachmentResults: (void | DomainError)[] = await Promise.all(
+            serviceProviderIds.map(async (serviceProviderId: string) => {
+                return rolleToUpdate.attachServiceProvider(serviceProviderId);
+            }),
+        );
+
+        const error: void | DomainError = attachmentResults.find(
+            (result: void | DomainError) => result instanceof DomainError,
+        );
+        if (error instanceof DomainError) {
+            return error;
         }
         return rolleToUpdate;
     }
