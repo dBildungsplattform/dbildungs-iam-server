@@ -262,7 +262,7 @@ export class RolleController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error, the service-provider may could not be found after attaching to rolle.',
     })
-    public async addServiceProviderById(
+    public async addServiceProvidersById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Body() spBodyParams: RolleServiceProviderQueryParams,
     ): Promise<ServiceProviderResponse[]> {
