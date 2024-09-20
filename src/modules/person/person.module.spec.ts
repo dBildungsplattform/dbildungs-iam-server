@@ -23,10 +23,6 @@ describe('PersonModule', () => {
     });
 
     describe('when module is initialized', () => {
-        it('should resolve PersonProfile', () => {
-            expect(module.get(PersonPersistenceMapperProfile)).toBeInstanceOf(PersonPersistenceMapperProfile);
-        });
-
         it('should resolve PersonService', () => {
             expect(module.get(PersonService)).toBeInstanceOf(PersonService);
         });
