@@ -1,7 +1,7 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { KeycloakClientError } from '../../../shared/error/index.js';
-import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
+import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { KeycloakGroupRoleService } from '../../keycloak-administration/domain/keycloak-group-role.service.js';
 import { CreateGroupAndRoleHandler } from './service-provider-event-handler.js';
 
@@ -21,7 +21,7 @@ describe('CreateGroupAndRoleHandler', () => {
         const roleName: string = 'testRole';
         const groupId: string = 'groupId';
         const encodedRoleName: string = encodeURIComponent(roleName);
-        const event: CreateGroupAndRoleEvent = new CreateGroupAndRoleEvent(groupName, roleName);
+        const event: GroupAndRoleCreatedEvent = new GroupAndRoleCreatedEvent(groupName, roleName);
 
         it('should successfully create group, role, and add role to group', async () => {
             keycloakGroupRoleServiceMock.createGroup.mockResolvedValue({ ok: true, value: groupId });

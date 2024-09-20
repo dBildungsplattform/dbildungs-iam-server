@@ -5,7 +5,6 @@ import {
     MapperTestModule,
     KeycloakConfigTestModule,
 } from '../../../test/utils/index.js';
-import { PersonenkontextUc } from '../personenkontext/api/personenkontext.uc.js';
 import { PersonenKontextApiModule } from './personenkontext-api.module.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
@@ -13,7 +12,6 @@ import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 import { PersonRepo } from '../person/persistence/person.repo.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { createMock } from '@golevelup/ts-jest';
-import { OrganisationRepo } from '../organisation/persistence/organisation.repo.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
 
 describe('PersonenKontextApiModule', () => {
@@ -25,10 +23,6 @@ describe('PersonenKontextApiModule', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
-                },
-                {
-                    provide: OrganisationRepo,
-                    useValue: createMock<OrganisationRepo>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
@@ -56,10 +50,6 @@ describe('PersonenKontextApiModule', () => {
     describe('when module is initialized', () => {
         it('should resolve PersonkontextController', () => {
             expect(module.get(PersonenkontextController)).toBeInstanceOf(PersonenkontextController);
-        });
-
-        it('should resolve PersonkontextUc', () => {
-            expect(module.get(PersonenkontextUc)).toBeInstanceOf(PersonenkontextUc);
         });
 
         it('should resolve PersonkontextUc', () => {

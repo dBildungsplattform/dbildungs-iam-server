@@ -18,6 +18,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { DbiamPersonenkontextWorkflowController } from './dbiam-personenkontext-workflow.controller.js';
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 import { PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
+import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
 
 describe('DbiamPersonenkontextWorkflowController Test', () => {
     let module: TestingModule;
@@ -81,7 +82,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
             });
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
@@ -102,7 +103,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
             const randomName: string = faker.company.name();
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, { name: organisationName });
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
@@ -125,7 +126,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
             });
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
@@ -144,7 +145,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, { name: faker.company.name() });
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([]);
@@ -169,7 +170,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
             const rolleId: string = rolle.id;
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const params: FindDbiamPersonenkontextWorkflowBodyParams = {
@@ -198,6 +199,9 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     lastModified: new Date(),
                     personenkontexte: [],
                 };
+                const queryParams: DbiamUpdatePersonenkontexteQueryParams = {
+                    personalnummer: '1234',
+                };
                 const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError(
                     'Update error message',
                 );
@@ -206,7 +210,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
 
-                await expect(sut.commit(params, bodyParams, personpermissions)).rejects.toThrow(
+                await expect(sut.commit(params, queryParams, bodyParams, personpermissions)).rejects.toThrow(
                     PersonenkontexteUpdateError,
                 );
             });

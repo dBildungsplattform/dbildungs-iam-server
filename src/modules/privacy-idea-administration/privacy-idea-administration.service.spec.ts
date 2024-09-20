@@ -2,18 +2,23 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 
-import { AxiosResponse } from 'axios';
+import { AxiosHeaders, AxiosResponse, AxiosError } from 'axios';
 import { Observable, of, throwError } from 'rxjs';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { ResetTokenPayload, ResetTokenResponse } from './privacy-idea-api.types.js';
 import {
     AssignTokenResponse,
     PrivacyIdeaToken,
     TokenOTPSerialResponse,
     TokenVerificationResponse,
     User,
+    VerificationResponse,
 } from './privacy-idea-api.types.js';
 import { TokenError } from './api/error/token.error.js';
 import { ConfigTestModule } from '../../../test/utils/index.js';
+import { TokenResetError } from './api/error/token-reset.error.js';
+import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
+import { SoftwareTokenVerificationError } from './api/error/software-token-verification.error.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -61,6 +66,22 @@ export const mockUser: User = {
     username: 'johndoe',
 };
 
+export const mockVerificationResponseErrorCode905: VerificationResponse = {
+    detail: null,
+    id: 2,
+    jsonrpc: '2.0',
+    result: {
+        status: false,
+        error: {
+            code: 905,
+            message: 'Specific error message for code 905',
+        },
+    },
+    time: 1627891255,
+    version: '1.0',
+    signature: 'hijklmn789012',
+};
+
 const mockJWTTokenResponse = (): Observable<AxiosResponse> =>
     of({ data: { result: { value: { token: `jwt-token` } } } } as AxiosResponse);
 
@@ -72,10 +93,24 @@ const mockUserResponse = (): Observable<AxiosResponse> =>
 const mockGoogleImageResponse = (): Observable<AxiosResponse> =>
     of({ data: { detail: { googleurl: { img: `base64img` } } } } as AxiosResponse);
 
+export const mockVerificationError905Response = (): AxiosError<VerificationResponse> => {
+    const error: AxiosError<VerificationResponse> = new AxiosError<VerificationResponse>(`Mock error`);
+    error.response = { data: mockVerificationResponseErrorCode905 } as AxiosResponse;
+    return error;
+};
+
 const mockEmptyPostResponse = (): Observable<AxiosResponse> => of({} as AxiosResponse);
 
-const mockTokenResponse = (): Observable<AxiosResponse> =>
-    of({ data: { result: { value: { tokens: [mockPrivacyIdeaToken] } } } } as AxiosResponse);
+const mockTokenResponse = (verify: boolean = false): Observable<AxiosResponse> => {
+    if (verify) {
+        const verifyToken: PrivacyIdeaToken = { ...mockPrivacyIdeaToken, rollout_state: 'verify' };
+        return of({ data: { result: { value: { tokens: [verifyToken] } } } } as AxiosResponse);
+    }
+    return of({ data: { result: { value: { tokens: [mockPrivacyIdeaToken] } } } } as AxiosResponse);
+};
+
+export const mockVerficationTokenResponse = (status: boolean = true): Observable<AxiosResponse> =>
+    of({ data: { result: { status: status } } } as AxiosResponse);
 
 const mockErrorResponse = (): never => {
     throw new Error(mockErrorMsg);
@@ -272,14 +307,26 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockReturnValueOnce(mockEmptyPostResponse());
             httpServiceMock.post.mockReturnValueOnce(mockGoogleImageResponse());
 
-            const result: string = await service.initializeSoftwareToken(`test-user`);
+            const result: string = await service.initializeSoftwareToken(`test-user`, false);
+            expect(result).toBe(`base64img`);
+        });
+
+        it(`should initialize a software token while deleting old verify token`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.delete.mockReturnValueOnce(of({} as AxiosResponse));
+            httpServiceMock.post.mockReturnValueOnce(mockGoogleImageResponse());
+
+            const result: string = await service.initializeSoftwareToken(`test-user`, false);
             expect(result).toBe(`base64img`);
         });
 
         it(`should throw an error if the jwt token request causes error throw`, async () => {
             httpServiceMock.post.mockImplementationOnce(mockErrorResponse);
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Error fetching JWT token: ${mockErrorMsg}`,
             );
         });
@@ -287,7 +334,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         it(`should throw an error if the jwt token request causes throw`, async () => {
             httpServiceMock.post.mockImplementationOnce(mockNonErrorThrow);
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Error fetching JWT token: Unknown error occurred`,
             );
         });
@@ -296,7 +343,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
             httpServiceMock.get.mockImplementationOnce(mockErrorResponse);
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Error checking user exists: ${mockErrorMsg}`,
             );
         });
@@ -305,7 +352,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
             httpServiceMock.get.mockImplementationOnce(mockNonErrorThrow);
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Error checking user exists: Unknown error occurred`,
             );
         });
@@ -315,7 +362,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(mockEmptyUserResponse());
             httpServiceMock.post.mockImplementationOnce(mockErrorResponse);
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Error adding user: ${mockErrorMsg}`,
             );
         });
@@ -325,8 +372,32 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.get.mockReturnValueOnce(mockEmptyUserResponse());
             httpServiceMock.post.mockImplementationOnce(mockNonErrorThrow);
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Error adding user: Unknown error occurred`,
+            );
+        });
+
+        it(`should throw an error if the jwt token request causes error throw`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.delete.mockImplementationOnce(mockErrorResponse);
+
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
+                `Error initializing token: Error deleting token: ${mockErrorMsg}`,
+            );
+        });
+
+        it(`should throw an error if the jwt token request causes non error throw`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.delete.mockImplementationOnce(mockNonErrorThrow);
+
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
+                `Error initializing token: Error deleting token: Unknown error occurred`,
             );
         });
 
@@ -336,7 +407,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockReturnValueOnce(mockEmptyPostResponse());
             httpServiceMock.post.mockImplementationOnce(mockErrorResponse);
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Error requesting 2fa token: ${mockErrorMsg}`,
             );
         });
@@ -347,7 +418,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.post.mockReturnValueOnce(mockEmptyPostResponse());
             httpServiceMock.post.mockImplementationOnce(mockNonErrorThrow);
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Error requesting 2fa token: Unknown error occurred`,
             );
         });
@@ -361,7 +432,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 throw 'This is a non-Error throw';
             });
 
-            await expect(service.initializeSoftwareToken(`test-user`)).rejects.toThrow(
+            await expect(service.initializeSoftwareToken(`test-user`, false)).rejects.toThrow(
                 `Error initializing token: Unknown error occurred`,
             );
         });
@@ -385,23 +456,140 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             expect(result).toBe(undefined);
         });
 
-        it(`should throw an error if the two auth state request causes error throw`, async () => {
+        it(`should throw an error if the user token request causes error throw`, async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
             httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
             httpServiceMock.get.mockImplementationOnce(mockErrorResponse);
 
             await expect(service.getTwoAuthState(`test-user`)).rejects.toThrow(
-                `Error getting two auth state: ${mockErrorMsg}`,
+                `Error getting two auth state: Error getting user tokens: ${mockErrorMsg}`,
             );
         });
 
-        it(`sshould throw an error if the two auth state request causes non error throw`, async () => {
+        it(`should throw an error if the user token request causes non error throw`, async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
             httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
             httpServiceMock.get.mockImplementationOnce(mockNonErrorThrow);
 
             await expect(service.getTwoAuthState(`test-user`)).rejects.toThrow(
+                `Error getting two auth state: Error getting user tokens: Unknown error occurred`,
+            );
+        });
+
+        it(`should throw an error if the getUserTokens causes non error throw`, async () => {
+            jest.spyOn(
+                service as unknown as { getUserTokens: () => Promise<string> },
+                'getUserTokens',
+            ).mockImplementationOnce(() => {
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                throw 'This is a non-Error throw';
+            });
+
+            await expect(service.getTwoAuthState(`test-user`)).rejects.toThrow(
                 `Error getting two auth state: Unknown error occurred`,
+            );
+        });
+    });
+    describe('resetToken', () => {
+        it('should reset token successfully', async () => {
+            const mockResetUser: string = 'testUser';
+            const mockJWTToken: string = 'mockJWTToken';
+            const mockTwoAuthState: ResetTokenPayload = createMock<ResetTokenPayload>();
+            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+
+            jest.spyOn(
+                service as unknown as { getJWTToken: () => Promise<string> },
+                'getJWTToken',
+            ).mockResolvedValueOnce(mockJWTToken);
+            jest.spyOn(
+                service as unknown as { getTwoAuthState: (user: string) => Promise<ResetTokenPayload | null> },
+                'getTwoAuthState',
+            ).mockResolvedValueOnce(mockTwoAuthState);
+            jest.spyOn(
+                service as unknown as { unassignToken: (serial: string, token: string) => Promise<ResetTokenResponse> },
+                'unassignToken',
+            ).mockResolvedValueOnce(mockResetTokenResponse);
+
+            const response: ResetTokenResponse = await service.resetToken(mockResetUser);
+            expect(response).toEqual(mockResetTokenResponse);
+            expect(service.getTwoAuthState).toHaveBeenCalledWith(mockResetUser);
+            expect(service.unassignToken).toHaveBeenCalledWith(mockTwoAuthState.serial, mockJWTToken);
+        });
+
+        it('should throw an error if twoAuthState is not found', async () => {
+            const mockResetUser: string = 'testUser';
+            const mockJWTToken: string = 'mockJWTToken';
+
+            jest.spyOn(
+                service as unknown as { getJWTToken: () => Promise<string> },
+                'getJWTToken',
+            ).mockResolvedValueOnce(mockJWTToken);
+            jest.spyOn(
+                service as unknown as { getTwoAuthState: (user: string) => Promise<ResetTokenPayload | null> },
+                'getTwoAuthState',
+            ).mockResolvedValueOnce(null);
+
+            await expect(service.resetToken(mockResetUser)).rejects.toThrow(new TokenResetError());
+        });
+
+        it('should throw an error if unassignToken fails', async () => {
+            const mockResetUser: string = 'testUser';
+            const mockJWTToken: string = 'mockJWTToken';
+            const mockTwoAuthState: ResetTokenPayload = createMock<ResetTokenPayload>();
+
+            jest.spyOn(
+                service as unknown as { getJWTToken: () => Promise<string> },
+                'getJWTToken',
+            ).mockResolvedValueOnce(mockJWTToken);
+            jest.spyOn(
+                service as unknown as { getTwoAuthState: (user: string) => Promise<ResetTokenPayload | null> },
+                'getTwoAuthState',
+            ).mockResolvedValueOnce(mockTwoAuthState);
+            jest.spyOn(service, 'unassignToken').mockRejectedValue(new Error('unassignToken error'));
+
+            await expect(service.resetToken(mockResetUser)).rejects.toThrow(new TokenResetError());
+        });
+    });
+
+    describe('unassignToken', () => {
+        it('should unassign token successfully', async () => {
+            const mockSerial: string = 'mockSerial';
+            const mockToken: string = 'mockJWTToken';
+            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+            const mockResetTokenResponsePromise: AxiosResponse<ResetTokenResponse> = {
+                data: mockResetTokenResponse,
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: {
+                    headers: new AxiosHeaders({ 'Content-Type': 'application/json' }),
+                },
+            };
+            httpServiceMock.post.mockReturnValue(of(mockResetTokenResponsePromise));
+
+            const response: ResetTokenResponse = await service.unassignToken(mockSerial, mockToken);
+            expect(response).toEqual(mockResetTokenResponse);
+        });
+
+        it('should throw an error if unassignToken fails', async () => {
+            const mockSerial: string = 'mockSerial';
+            const mockToken: string = 'mockJWTToken';
+
+            httpServiceMock.post.mockReturnValue(throwError(() => new Error('unassignToken error')));
+
+            await expect(service.unassignToken(mockSerial, mockToken)).rejects.toThrow(
+                'Error unassigning token: unassignToken error',
+            );
+        });
+
+        it('should throw an error if unassignToken fails with non error throw', async () => {
+            const mockSerial: string = 'mockSerial';
+            const mockToken: string = 'mockJWTToken';
+
+            httpServiceMock.post.mockImplementationOnce(mockNonErrorThrow);
+
+            await expect(service.unassignToken(mockSerial, mockToken)).rejects.toThrow(
+                'Error unassigning token: Unknown error occurred',
             );
         });
     });
@@ -532,6 +720,79 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                     'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
                     'general-token-error',
                 ),
+            );
+        });
+    });
+
+    describe(`verifyToken`, () => {
+        it(`should verify token`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.post.mockReturnValueOnce(mockVerficationTokenResponse());
+
+            await service.verifyTokenEnrollment(`test-user`, `123456`);
+        });
+
+        it(`should throw domainerror when result status is false`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.post.mockReturnValueOnce(mockVerficationTokenResponse(false));
+
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
+                SoftwareTokenVerificationError,
+            );
+        });
+
+        it(`should throw domainerror with wrong otp`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.post.mockReturnValueOnce(throwError(() => mockVerificationError905Response()));
+
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(OTPnotValidError);
+        });
+
+        it(`should throw error when axios error occurs`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.post.mockReturnValueOnce(throwError(() => new AxiosError('Mock error')));
+
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
+                'Error verifying token: Mock error',
+            );
+        });
+
+        it(`should throw an error if there is no token to verify`, async () => {
+            jest.spyOn(
+                service as unknown as { getTokenToVerify: () => Promise<PrivacyIdeaToken | undefined> },
+                'getTokenToVerify',
+            ).mockResolvedValueOnce(undefined);
+
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow('No token to verify');
+        });
+
+        it(`should throw an error if the verify request causes error throw`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.post.mockImplementationOnce(mockErrorResponse);
+
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
+                `Error verifying token: ${mockErrorMsg}`,
+            );
+        });
+
+        it(`sshould throw an error if the tverify request causes non error throw`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockUserResponse());
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.post.mockImplementationOnce(mockNonErrorThrow);
+
+            await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
+                `Error verifying token: Unknown error occurred`,
             );
         });
     });

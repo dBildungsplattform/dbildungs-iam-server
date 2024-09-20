@@ -306,7 +306,7 @@ describe('OrganisationController', () => {
                 ];
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                permissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
                 organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
                 organisationRepositoryMock.findByIds.mockResolvedValue(selectedOrganisationMap);
@@ -337,7 +337,6 @@ describe('OrganisationController', () => {
             it('should find all organizations that match with Klasse Typ', async () => {
                 const queryParams: FindOrganisationQueryParams = {
                     typ: OrganisationsTyp.KLASSE,
-                    searchString: faker.lorem.word(),
                     systemrechte: [],
                     administriertVon: [faker.string.uuid(), faker.string.uuid()],
                 };
@@ -348,7 +347,7 @@ describe('OrganisationController', () => {
                 ];
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+                permissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
 
                 organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
 

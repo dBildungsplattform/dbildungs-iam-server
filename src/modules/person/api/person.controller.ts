@@ -1,5 +1,3 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import {
     Body,
     Controller,
@@ -7,7 +5,7 @@ import {
     Get,
     HttpCode,
     HttpStatus,
-    Inject,
+    NotImplementedException,
     Param,
     Patch,
     Post,
@@ -28,23 +26,20 @@ import {
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
+    ApiOperation,
+    ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
-import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
-import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
-import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
@@ -53,9 +48,8 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { PersonFactory } from '../domain/person.factory.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
@@ -81,13 +75,11 @@ export class PersonController {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
-        private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
         private keycloakUserService: KeycloakUserService,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
     ) {
@@ -108,17 +100,17 @@ export class PersonController {
     ): Promise<PersonendatensatzResponse> {
         // Find all organisations where user has permission
         const isMigrationCall: boolean = !(!params.hashedPassword && !params.username);
-        let organisationIDs: OrganisationID[];
+        let permittedOrgas: PermittedOrgas;
 
         if (isMigrationCall === true) {
-            organisationIDs = await permissions.getOrgIdsWithSystemrecht(
+            permittedOrgas = await permissions.getOrgIdsWithSystemrecht(
                 [RollenSystemRecht.MIGRATION_DURCHFUEHREN],
                 true,
             );
         } else {
-            organisationIDs = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
+            permittedOrgas = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
         }
-        if (organisationIDs.length < 1) {
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length < 1) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person')),
             );
@@ -220,44 +212,16 @@ export class PersonController {
      */
     @Post(':personId/personenkontexte')
     @HttpCode(200)
+    @ApiOperation({ deprecated: true })
+    @ApiParam({ name: 'personId', type: String })
     @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
     @ApiBadRequestResponse({ description: 'The personenkontext already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the personenkontext.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the personenkontext.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create personenkontext for person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the personenkontext.' })
-    public async createPersonenkontext(
-        @Param() pathParams: PersonByIdParams,
-        @Body() bodyParams: CreatePersonenkontextBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<PersonenkontextResponse> {
-        const personenkontextDto: CreatePersonenkontextDto = this.mapper.map(
-            bodyParams,
-            CreatePersonenkontextBodyParams,
-            CreatePersonenkontextDto,
-        );
-        //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            pathParams.personId,
-            permissions,
-        );
-        if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', pathParams.personId),
-                ),
-            );
-        }
-        personenkontextDto.personId = personResult.value.id;
-
-        const result: CreatedPersonenkontextDto | SchulConnexError =
-            await this.personenkontextUc.createPersonenkontext(personenkontextDto);
-
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
-        }
-
-        return this.mapper.map(result, CreatedPersonenkontextDto, PersonenkontextResponse);
+    public createPersonenkontext(): Promise<PersonenkontextResponse> {
+        throw new NotImplementedException();
     }
 
     @Get(':personId/personenkontexte')
@@ -326,21 +290,17 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
         // Find all organisations where user has permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
 
-        // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
-        }
-
         // Find all Personen on child-orgas (+root orgas)
-        const scope: PersonScope = new PersonScope()
-            .findBy({ organisationen: organisationIDs })
-            .sortBy('vorname', ScopeOrder.ASC)
-            .paged(queryParams.offset, queryParams.limit);
+        const scope: PersonScope = new PersonScope();
+        if (!permittedOrgas.all) {
+            scope.findBy({ organisationen: permittedOrgas.orgaIds });
+        }
+        scope.sortBy('vorname', ScopeOrder.ASC).paged(queryParams.offset, queryParams.limit);
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 

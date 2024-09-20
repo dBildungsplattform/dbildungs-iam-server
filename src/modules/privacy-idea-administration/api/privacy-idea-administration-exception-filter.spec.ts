@@ -11,6 +11,9 @@ import { SerialInUseError } from './error/serial-in-use.error.js';
 import { SerialNotFoundError } from './error/serial-not-found.error.js';
 import { TokenError } from './error/token.error.js';
 import { PrivacyIdeaAdministrationExceptionFilter } from './privacy-idea-administration-exception-filter.js';
+import { TokenResetError } from './error/token-reset.error.js';
+import { TwoAuthStateError } from './error/two-auth-state.error.js';
+import { SoftwareTokenVerificationError } from './error/software-token-verification.error.js';
 
 describe('PrivacyIdeaAdministrationExceptionFilter', () => {
     let filter: PrivacyIdeaAdministrationExceptionFilter;
@@ -99,6 +102,38 @@ describe('PrivacyIdeaAdministrationExceptionFilter', () => {
             });
         });
 
+        describe('when filter catches TokenResetError', () => {
+            it('should respond with TokenResetError mapped error', () => {
+                const error: TokenResetError = new TokenResetError();
+
+                filter.catch(error, argumentsHost);
+
+                expect(responseMock.status).toHaveBeenCalledWith(400);
+                expect(responseMock.json).toHaveBeenCalledWith(
+                    new DbiamPrivacyIdeaAdministrationError({
+                        code: 400,
+                        i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.TOKEN_RESET_ERROR,
+                    }),
+                );
+            });
+        });
+
+        describe('when filter catches TwoAuthStateError', () => {
+            it('should respond with TwoAuthStateError mapped error', () => {
+                const error: TwoAuthStateError = new TwoAuthStateError();
+
+                filter.catch(error, argumentsHost);
+
+                expect(responseMock.status).toHaveBeenCalledWith(400);
+                expect(responseMock.json).toHaveBeenCalledWith(
+                    new DbiamPrivacyIdeaAdministrationError({
+                        code: 400,
+                        i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.TWO_AUTH_STATE_ERROR,
+                    }),
+                );
+            });
+        });
+
         describe('when filter catches undefined error', () => {
             it('should respond with a general PrivacyIdeaAdministrationError', () => {
                 const error: TokenError = new TokenError('Undefined error', '');
@@ -107,6 +142,22 @@ describe('PrivacyIdeaAdministrationExceptionFilter', () => {
 
                 expect(responseMock.status).toHaveBeenCalledWith(statusCode);
                 expect(responseMock.json).toHaveBeenCalledWith(generalBadRequestError);
+            });
+        });
+
+        describe('when filter catches SoftwareTokenVerificationError', () => {
+            it('should respond with SoftwareTokenVerificationError mapped error', () => {
+                const error: SoftwareTokenVerificationError = new SoftwareTokenVerificationError();
+
+                filter.catch(error, argumentsHost);
+
+                expect(responseMock.status).toHaveBeenCalledWith(400);
+                expect(responseMock.json).toHaveBeenCalledWith(
+                    new DbiamPrivacyIdeaAdministrationError({
+                        code: 400,
+                        i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.SOFTWARE_TOKEN_VERIFICATION_ERROR,
+                    }),
+                );
             });
         });
     });
