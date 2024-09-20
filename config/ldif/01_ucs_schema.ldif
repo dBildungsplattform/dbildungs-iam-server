@@ -10,36 +10,3 @@ olcAttributeTypes: ( 1.3.6.1.4.1.10176.1010.1.51 NAME 'mailForwardCopyToSelf' EQ
 olcAttributeTypes: ( 1.3.6.1.4.1.10176.1010.1.60 NAME 'univentionMailHomeServer' DESC 'home server of users mailbox' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} SINGLE-VALUE )
 olcAttributeTypes: ( 1.3.6.1.4.1.10176.1010.1.92 NAME 'univentionMailUserQuota' DESC 'Mailbox hard quota limit in MB' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
 olcObjectClasses: ( 1.3.6.1.4.1.10176.1010.2.1 NAME 'univentionMail' DESC 'Univention Mail Preferences' SUP top AUXILIARY MUST uid MAY ( univentionMailHomeServer $ mailPrimaryAddress $ mailAlternativeAddress $ mailGlobalSpamFolder $ univentionMailUserQuota $ mailForwardAddress $ mailForwardCopyToSelf ) )
-
-# Load memberof modules
-# memberOf already loaded, is in here for documentation purposes
-# dn: cn=module,cn=config
-# cn: module
-# objectClass: olcModuleList
-# olcModuleLoad: memberof
-# olcmoduleload: refint
-# olcModulePath: /opt/bitnami/openldap/lib/openldap
-
-#memberof overlay
-#dn: olcOverlay=memberof,olcDatabase={1}mdb,cn=config
-#objectClass: olcMemberOf
-#objectClass: olcOverlayConfig
-#objectClass: olcConfig
-#objectClass: top
-#olcOverlay: memberof
-#olcMemberOfDangling: ignore
-#olcMemberOfRefInt: TRUE
-#olcMemberOfGroupOC: groupOfUniqueNames
-#olcMemberOfMemberAD: uniqueMember
-#olcMemberOfMemberOfAD: memberOf
-
-#refint overlay
-#dn: olcOverlay=refint,olcDatabase={1}mdb,cn=config
-#objectClass: olcOverlayConfig
-##objectClass: olcRefintConfig
-#olcOverlay: refint
-#olcRefintAttribute: owner
-#olcRefintAttribute: manager
-#olcRefintAttribute: uniqueMember
-#olcRefintAttribute: member
-#olcRefintAttribute: memberOf
