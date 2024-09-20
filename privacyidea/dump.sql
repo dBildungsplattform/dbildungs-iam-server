@@ -1537,9 +1537,6 @@ CREATE TABLE `tokenowner` (
 
 LOCK TABLES `tokenowner` WRITE;
 /*!40000 ALTER TABLE `tokenowner` DISABLE KEYS */;
-INSERT INTO `tokenowner` VALUES
-(1,1,'mariadb_resolver','1',1),
-(2,2,'mariadb_resolver','2',1);
 /*!40000 ALTER TABLE `tokenowner` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1656,7 +1653,8 @@ LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
 (1,'autotester'),
-(2,'faltmann');
+(2,'faltmann'),
+(3,'test');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
