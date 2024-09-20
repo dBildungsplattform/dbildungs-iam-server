@@ -24,6 +24,9 @@ import { OrganisationRepository } from '../../../organisation/persistence/organi
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { DBiamPersonenuebersichtResponse } from './dbiam-personenuebersicht.response.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
+import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
+import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
+import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -228,6 +231,44 @@ describe('Personenuebersicht API Mocked', () => {
                 expect(result.zuordnungen).toHaveLength(1);
                 expect(result.zuordnungen).toContainEqual(expect.objectContaining({ editable: false }));
             });
+        });
+    });
+
+    describe('when an entity is not found when searching all personenkontexte', () => {
+        it('should return Error', async () => {
+            const bodyParams: PersonenuebersichtBodyParams = { personIds: [faker.string.uuid()] };
+            const person: Person<true> = createPerson();
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const rollenMap: Map<string, Rolle<true>> = new Map();
+            rollenMap.set(faker.string.numeric(), rolle);
+            const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+            const orgaMap: Map<string, Organisation<true>> = new Map();
+            orgaMap.set(orga.id, orga);
+            const pk: Personenkontext<true> = createPersonenkontext(
+                true,
+                personRepositoryMock,
+                organisationRepositoryMock,
+                rolleRepoMock,
+                {
+                    personId: person.id,
+                    rolleId: rolle.id,
+                    organisationId: orga.id,
+                },
+            );
+
+            jest.spyOn(DbiamPersonenuebersicht.prototype, 'createZuordnungenForKontexte').mockImplementation(() => {
+                return new EntityNotFoundError();
+            });
+
+            personRepositoryMock.findByIds.mockResolvedValueOnce([person]);
+            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
+            organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [orga.id] });
+
+            await expect(sut.findPersonenuebersichten(bodyParams, personPermissionsMock)).rejects.toThrow(
+                HttpException,
+            );
         });
     });
 });
