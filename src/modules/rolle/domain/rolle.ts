@@ -181,25 +181,6 @@ export class Rolle<WasPersisted extends boolean> {
         this.serviceProviderIds.push(serviceProviderId);
     }
 
-    public async attachServiceProviders(serviceProviderIds: string[]): Promise<void | DomainError> {
-        const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
-            serviceProviderIds,
-        );
-
-        const missingIds: string[] = serviceProviderIds.filter((id: string) => !serviceProviderMap.has(id));
-        if (missingIds.length > 0) {
-            return new EntityNotFoundError('ServiceProvider', missingIds.join(', '));
-        }
-
-        const uniqueIds: Set<string> = new Set(serviceProviderIds);
-
-        // Filter out any IDs that are already in this.serviceProviderIds to avoid duplicates.
-        const newIds: string[] = [...uniqueIds].filter((id: string) => !this.serviceProviderIds.includes(id));
-
-        // Attach the new unique IDs
-        this.serviceProviderIds.push(...newIds);
-    }
-
     public detatchServiceProvider(serviceProviderIds: string[]): void | DomainError {
         // Find any serviceProviderIds that are not currently attached
         const missingServiceProviderIds: string[] = serviceProviderIds.filter(
@@ -219,33 +200,15 @@ export class Rolle<WasPersisted extends boolean> {
     }
 
     public async updateServiceProviders(serviceProviderIds: string[]): Promise<void | DomainError> {
-        // Fetch current state of service providers from the DB (those already attached)
-        const existingServiceProviderIds: string[] = this.serviceProviderIds;
-
-        // Identify the service provider IDs to add (those in the new state but not in the current state)
-        const serviceProviderIdsToAdd: string[] = serviceProviderIds.filter(
-            (id: string) => !existingServiceProviderIds.includes(id),
+        const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            serviceProviderIds,
         );
 
-        // Identify the service provider IDs to remove (those in the current state but not in the new state)
-        const serviceProviderIdsToRemove: string[] = existingServiceProviderIds.filter(
-            (id: string) => !serviceProviderIds.includes(id),
-        );
-
-        // If there are IDs to add, call the attach method
-        if (serviceProviderIdsToAdd.length > 0) {
-            const result: void | DomainError = await this.attachServiceProviders(serviceProviderIdsToAdd);
-            if (result instanceof DomainError) {
-                return result;
-            }
+        const missingIds: string[] = serviceProviderIds.filter((id: string) => !serviceProviderMap.has(id));
+        if (missingIds.length > 0) {
+            return new EntityNotFoundError('ServiceProvider', missingIds.join(', '));
         }
 
-        // If there are IDs to remove, call the detach method
-        if (serviceProviderIdsToRemove.length > 0) {
-            const result: void | DomainError = this.detatchServiceProvider(serviceProviderIdsToRemove);
-            if (result instanceof DomainError) {
-                return result; // Return error if detachment failed
-            }
-        }
+        this.serviceProviderIds = serviceProviderIds;
     }
 }

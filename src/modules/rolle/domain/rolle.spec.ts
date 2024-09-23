@@ -446,7 +446,10 @@ describe('Rolle Aggregate', () => {
                 rolle.serviceProviderIds = [existingServiceProviderId];
 
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
-                    new Map([[newServiceProviderId, DoFactory.createServiceProvider(true)]]),
+                    new Map([
+                        [newServiceProviderId, DoFactory.createServiceProvider(true)],
+                        [existingServiceProviderId, DoFactory.createServiceProvider(true)],
+                    ]),
                 );
 
                 // Call updateServiceProviders with a new ID to add
@@ -479,7 +482,11 @@ describe('Rolle Aggregate', () => {
                 rolle.serviceProviderIds = [existingServiceProviderId, serviceProviderToRemove];
 
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
-                    new Map([[serviceProviderToAdd, DoFactory.createServiceProvider(true)]]),
+                    new Map([
+                        [serviceProviderToAdd, DoFactory.createServiceProvider(true)],
+                        [serviceProviderToRemove, DoFactory.createServiceProvider(true)],
+                        [existingServiceProviderId, DoFactory.createServiceProvider(true)],
+                    ]),
                 );
 
                 // Call updateServiceProviders with both IDs to add and remove
@@ -490,35 +497,11 @@ describe('Rolle Aggregate', () => {
             });
         });
 
-        describe('when no changes are needed', () => {
-            it('should not call attach or detach methods', async () => {
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    '',
-                    '',
-                    RollenArt.LEHR,
-                    [], // initialize with empty serviceProviderIds
-                    [],
-                    [],
-                    false,
-                );
-
-                const existingServiceProviderId: string = faker.string.uuid();
-
-                // Existing state
-                rolle.serviceProviderIds = [existingServiceProviderId];
-
-                // Call updateServiceProviders with the same IDs (no changes)
-                await rolle.updateServiceProviders([existingServiceProviderId]);
-
-                expect(rolle.serviceProviderIds).toContain(existingServiceProviderId);
-            });
-        });
-
         describe('when attaching fails', () => {
-            it('should return an error if attachServiceProviders fails', async () => {
+            it('should throw an error if any service provider does not exist', async () => {
+                const serviceProvider1: string = faker.string.uuid();
+                const nonExistentProvider: string = faker.string.uuid();
+
                 const rolle: Rolle<true> = rolleFactory.construct(
                     faker.string.uuid(),
                     faker.date.anytime(),
@@ -526,73 +509,21 @@ describe('Rolle Aggregate', () => {
                     '',
                     '',
                     RollenArt.LEHR,
-                    [], // initialize with empty serviceProviderIds
+                    [],
                     [],
                     [],
                     false,
                 );
 
-                const serviceProviderToAdd: string = faker.string.uuid();
-                const existingServiceProviderId: string = faker.string.uuid();
+                // Simulate the repository failing to find the non-existent provider
+                serviceProviderRepoMock.findByIds.mockResolvedValue(new Map());
 
-                // Existing state
-                rolle.serviceProviderIds = [existingServiceProviderId];
-
-                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
-                    new Map([[serviceProviderToAdd, DoFactory.createServiceProvider(true)]]),
-                );
-
-                // Simulate attach method returning a DomainError
-                const attachError: EntityNotFoundError = new EntityNotFoundError('Error attaching');
-                const attachSpy: jest.SpyInstance = jest
-                    .spyOn(rolle, 'attachServiceProviders')
-                    .mockResolvedValue(attachError);
-
-                // Call updateServiceProviders
                 const result: void | DomainError = await rolle.updateServiceProviders([
-                    existingServiceProviderId,
-                    serviceProviderToAdd,
+                    serviceProvider1,
+                    nonExistentProvider,
                 ]);
 
-                expect(attachSpy).toHaveBeenCalledWith([serviceProviderToAdd]);
-                expect(result).toBeInstanceOf(DomainError);
-                expect(result).toEqual(attachError);
-            });
-        });
-
-        describe('when detaching fails', () => {
-            it('should return an error if detatchServiceProvider fails', async () => {
-                const rolle: Rolle<true> = rolleFactory.construct(
-                    faker.string.uuid(),
-                    faker.date.anytime(),
-                    faker.date.anytime(),
-                    '',
-                    '',
-                    RollenArt.LEHR,
-                    [], // initialize with empty serviceProviderIds
-                    [],
-                    [],
-                    false,
-                );
-
-                const serviceProviderToRemove: string = faker.string.uuid();
-                const existingServiceProviderId: string = faker.string.uuid();
-
-                // Existing state
-                rolle.serviceProviderIds = [existingServiceProviderId, serviceProviderToRemove];
-
-                // Simulate detach method returning a DomainError
-                const detachError: EntityNotFoundError = new EntityNotFoundError('Error detaching');
-                const detachSpy: jest.SpyInstance = jest
-                    .spyOn(rolle, 'detatchServiceProvider')
-                    .mockReturnValue(detachError);
-
-                // Call updateServiceProviders
-                const result: void | DomainError = await rolle.updateServiceProviders([existingServiceProviderId]);
-
-                expect(detachSpy).toHaveBeenCalledWith([serviceProviderToRemove]);
-                expect(result).toBeInstanceOf(DomainError);
-                expect(result).toEqual(detachError);
+                expect(result).toBeInstanceOf(EntityNotFoundError);
             });
         });
     });
