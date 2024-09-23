@@ -1,9 +1,9 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 import { uniq } from 'lodash-es';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, lastValueFrom } from 'rxjs';
 import { PrivacyIdeaConfig } from '../../shared/config/privacyidea.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
@@ -14,7 +14,9 @@ import { HardwareTokenServiceError } from './api/error/hardware-token-service.er
 import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
 import { SerialInUseError } from './api/error/serial-in-use.error.js';
 import { SerialNotFoundError } from './api/error/serial-not-found.error.js';
+import { SoftwareTokenVerificationError } from './api/error/software-token-verification.error.js';
 import { TokenResetError } from './api/error/token-reset.error.js';
+import { TokenError } from './api/error/token.error.js';
 import { TwoAuthStateError } from './api/error/two-auth-state.error.js';
 import {
     AssignTokenPayload,
@@ -29,6 +31,7 @@ import {
     TokenOTPSerialResponse,
     TokenVerificationResponse,
     UserResponse,
+    VerificationResponse,
 } from './privacy-idea-api.types.js';
 
 @Injectable()
@@ -50,14 +53,19 @@ export class PrivacyIdeaAdministrationService {
         this.privacyIdeaConfig = configService.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA');
     }
 
-    public async initializeSoftwareToken(user: string): Promise<string> {
+    public async initializeSoftwareToken(user: string, selfService: boolean): Promise<string> {
         try {
             const token: string = await this.getJWTToken();
 
             if (!(await this.checkUserExists(user))) {
                 await this.addUser(user);
+            } else {
+                const oldTokenToVerify: PrivacyIdeaToken | undefined = await this.getTokenToVerify(user);
+                if (oldTokenToVerify) {
+                    await this.deleteToken(oldTokenToVerify.serial);
+                }
             }
-            const response: InitSoftwareToken = await this.initToken(user, token);
+            const response: InitSoftwareToken = await this.initToken(user, token, selfService);
             return response.detail.googleurl.img;
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -101,6 +109,7 @@ export class PrivacyIdeaAdministrationService {
     private async initToken(
         user: string,
         token: string,
+        selfService: boolean,
         genkey: number = 1,
         keysize: number = 20,
         description: string = 'Description of the token',
@@ -112,9 +121,10 @@ export class PrivacyIdeaAdministrationService {
         rollover: number = 0,
     ): Promise<InitSoftwareToken> {
         const url: string = this.privacyIdeaConfig.ENDPOINT + '/token/init';
-        const headers: { Authorization: string; 'Content-Type': string } = {
+        const headers: { Authorization: string; 'Content-Type': string; SelfService: string } = {
             Authorization: `${token}`,
             'Content-Type': 'application/json',
+            SelfService: selfService.toString(),
         };
 
         const payload: InitSoftwareTokenPayload = {
@@ -145,8 +155,22 @@ export class PrivacyIdeaAdministrationService {
     }
 
     public async getTwoAuthState(userName: string): Promise<PrivacyIdeaToken | undefined> {
+        try {
+            return (await this.getUserTokens(userName)).filter(
+                (x: PrivacyIdeaToken) => x.rollout_state !== 'verify',
+            )[0];
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error getting two auth state: ${error.message}`);
+            } else {
+                throw new Error(`Error getting two auth state: Unknown error occurred`);
+            }
+        }
+    }
+
+    private async getUserTokens(userName: string): Promise<PrivacyIdeaToken[]> {
         if (!(await this.checkUserExists(userName))) {
-            return undefined;
+            return [];
         }
         const token: string = await this.getJWTToken();
         const url: string = this.privacyIdeaConfig.ENDPOINT + '/token';
@@ -160,12 +184,12 @@ export class PrivacyIdeaAdministrationService {
             const response: AxiosResponse<PrivacyIdeaResponseTokens> = await firstValueFrom(
                 this.httpService.get(url, { headers: headers, params: params }),
             );
-            return response.data.result.value.tokens[0];
+            return response.data.result.value.tokens;
         } catch (error) {
             if (error instanceof Error) {
-                throw new Error(`Error getting two auth state: ${error.message}`);
+                throw new Error(`Error getting user tokens: ${error.message}`);
             } else {
-                throw new Error(`Error getting two auth state: Unknown error occurred`);
+                throw new Error(`Error getting user tokens: Unknown error occurred`);
             }
         }
     }
@@ -338,6 +362,48 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
+    public async verifyTokenEnrollment(userName: string, otp: string): Promise<void> {
+        const tokenToVerify: PrivacyIdeaToken | undefined = await this.getTokenToVerify(userName);
+        if (!tokenToVerify) {
+            throw new Error('No token to verify');
+        }
+        const token: string = await this.getJWTToken();
+        const url: string = this.privacyIdeaConfig.ENDPOINT + '/token/init';
+        const headers: { Authorization: string; 'Content-Type': string } = {
+            Authorization: `${token}`,
+            'Content-Type': 'application/json',
+        };
+        const payload: { serial: string; verify: string; type: string } = {
+            serial: tokenToVerify.serial,
+            verify: otp,
+            type: 'totp',
+        };
+
+        try {
+            const response: AxiosResponse<VerificationResponse> | null = await lastValueFrom(
+                this.httpService.post(url, payload, { headers: headers }).pipe(
+                    catchError((error: AxiosError<VerificationResponse>) => {
+                        if (error.response?.data.result.error?.code === 905) {
+                            throw new OTPnotValidError();
+                        }
+                        throw error;
+                    }),
+                ),
+            );
+            if (!response.data.result.status) {
+                throw new SoftwareTokenVerificationError();
+            }
+        } catch (error) {
+            if (error instanceof TokenError) {
+                throw error;
+            } else if (error instanceof Error) {
+                throw new Error(`Error verifying token: ${error.message}`);
+            } else {
+                throw new Error(`Error verifying token: Unknown error occurred`);
+            }
+        }
+    }
+
     public async requires2fa(personId: string): Promise<boolean> {
         const rolleIds: Array<string> = uniq(
             (await this.personenkontextService.findPersonenkontexteByPersonId(personId)).map(
@@ -347,5 +413,27 @@ export class PrivacyIdeaAdministrationService {
         const serviceProviders: ServiceProvider<true>[] =
             await this.serviceProviderService.getServiceProvidersByRolleIds(rolleIds);
         return serviceProviders.some((sp: ServiceProvider<true>) => sp.requires2fa);
+    }
+
+    private async getTokenToVerify(userName: string): Promise<PrivacyIdeaToken | undefined> {
+        return (await this.getUserTokens(userName)).filter((x: PrivacyIdeaToken) => x.rollout_state === 'verify')[0];
+    }
+
+    private async deleteToken(serial: string): Promise<void> {
+        const token: string = await this.getJWTToken();
+        const url: string = this.privacyIdeaConfig.ENDPOINT + `/token/${serial}`;
+        const headers: { Authorization: string } = {
+            Authorization: `${token}`,
+        };
+
+        try {
+            await firstValueFrom(this.httpService.delete(url, { headers: headers }));
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error deleting token: ${error.message}`);
+            } else {
+                throw new Error(`Error deleting token: Unknown error occurred`);
+            }
+        }
     }
 }

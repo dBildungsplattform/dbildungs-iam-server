@@ -1,22 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PrivacyIdeaAdministrationController } from './privacy-idea-administration.controller.js';
-import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { TokenStateResponse } from './token-state.response.js';
-import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
-import { ResetTokenResponse } from './privacy-idea-api.types.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
-import { PersonRepository } from '../person/persistence/person.repository.js';
-import { Person } from '../person/domain/person.js';
 import { faker } from '@faker-js/faker';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { PersonPermissions } from '../authentication/domain/person-permissions.js';
+import { Person } from '../person/domain/person.js';
+import { PersonRepository } from '../person/persistence/person.repository.js';
 import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
 import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
 import { TokenError } from './api/error/token.error.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
-import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
-import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
 import { TokenRequiredResponse } from './api/token-required.response.js';
+import { PrivacyIdeaAdministrationController } from './privacy-idea-administration.controller.js';
+import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
+import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
+import { TokenStateResponse } from './token-state.response.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -76,6 +75,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: true,
                 value: person,
             });
+            personPermissionsMock = createMock<PersonPermissions>();
 
             serviceMock.initializeSoftwareToken.mockResolvedValue('token123');
             const response: string = await sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock);
@@ -90,17 +90,6 @@ describe('PrivacyIdeaAdministrationController', () => {
 
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
-            );
-        });
-
-        it('should return user not found if referrer is undefined', async () => {
-            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
-                ok: true,
-                value: getPerson(true),
-            });
-
-            await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
-                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
         });
     });
@@ -190,6 +179,35 @@ describe('PrivacyIdeaAdministrationController', () => {
             await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
                 new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
+        });
+
+        it('should return user not found if referrer is undefined', async () => {
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: getPerson(true),
+            });
+
+            await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+
+        it('should return user not found if referrer is undefined self service', async () => {
+            personRepository.findById.mockResolvedValueOnce(getPerson(true));
+            personPermissionsMock.personFields.id = 'user1';
+
+            await expect(sut.getTwoAuthState('user1', personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
+            );
+        });
+
+        it('should return valid response if referrer is valid self service', async () => {
+            personRepository.findById.mockResolvedValueOnce(getPerson(false));
+            personPermissionsMock.personFields.id = 'user1';
+
+            serviceMock.getTwoAuthState.mockResolvedValue(undefined);
+            const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
+            expect(response).toEqual(new TokenStateResponse(undefined));
         });
     });
     describe('PrivacyIdeaAdministrationController resetToken', () => {
@@ -362,6 +380,46 @@ describe('PrivacyIdeaAdministrationController', () => {
                 SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                     SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(entityCouldNotBeCreatedError),
                 ),
+            );
+        });
+    });
+
+    describe('PrivacyIdeaAdministrationController verify', () => {
+        it('should successfully verify token', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+            const person: Person<true> = getPerson();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+
+            await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
+        });
+
+        it('should return forbidden insufficient permissions', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: false,
+                error: new Error('Forbidden access'),
+            });
+
+            await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
+                new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+            );
+        });
+
+        it('should return user not found if referrer is undefined', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: true,
+                value: getPerson(true),
+            });
+
+            await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
+                new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
         });
     });
