@@ -1019,6 +1019,8 @@ CREATE TABLE `policy` (
 
 LOCK TABLES `policy` WRITE;
 /*!40000 ALTER TABLE `policy` DISABLE KEYS */;
+INSERT INTO `policy` VALUES
+(1,1,0,'self-service','enrollment','verify_enrollment=totp hotp','','','','','','','','',1);
 /*!40000 ALTER TABLE `policy` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1049,6 +1051,9 @@ CREATE TABLE `policycondition` (
 
 LOCK TABLES `policycondition` WRITE;
 /*!40000 ALTER TABLE `policycondition` DISABLE KEYS */;
+INSERT INTO `policycondition` VALUES
+(9,1,'HTTP Request header','SelfService','equals','true',1),
+(10,1,'tokeninfo','tokenkind','equals','software',0);
 /*!40000 ALTER TABLE `policycondition` ENABLE KEYS */;
 UNLOCK TABLES;
 
