@@ -146,7 +146,7 @@ export class ItsLearningOrganisationsEventHandler {
         const params: UpdateGroupParams = {
             id: event.organisationId,
             name: event.name,
-            type: 'Course',
+            type: 'Unspecified',
             parentId: event.administriertVon,
         };
 
