@@ -13,9 +13,7 @@ import { RolleController } from './rolle.controller.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 
