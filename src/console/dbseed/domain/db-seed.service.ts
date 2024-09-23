@@ -96,6 +96,7 @@ export class DbSeedService {
             data.kuerzel,
             data.typ,
             data.traegerschaft,
+            data.emailDomain,
         );
 
         if (organisation instanceof DomainError) {
@@ -123,10 +124,11 @@ export class DbSeedService {
         ) as EntityFile<OrganisationFile>;
 
         const entities: OrganisationFile[] = plainToInstance(OrganisationFile, organisationFile.entities);
-
+        /* eslint-disable no-await-in-loop */
         for (const organisation of entities) {
             await this.constructAndPersistOrganisation(organisation);
         }
+        /* eslint-disable no-await-in-loop */
         this.logger.info(`Insert ${entities.length} entities of type Organisation`);
     }
 
@@ -135,13 +137,11 @@ export class DbSeedService {
         const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
         for (const file of files) {
             const serviceProviderUUIDs: string[] = [];
+            const serviceProviderData: ServiceProvider<true>[] = [];
+            /* eslint-disable no-await-in-loop */
             for (const spId of file.serviceProviderIds) {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderUUIDs.push(sp.id);
-            }
-            const serviceProviderData: ServiceProvider<true>[] = [];
-            for (const spId of file.serviceProviderIds) {
-                const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderData.push(sp);
             }
             const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(
@@ -220,6 +220,7 @@ export class DbSeedService {
     public async seedPerson(fileContentAsStr: string): Promise<void> {
         const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
         const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        /* eslint-disable no-await-in-loop */
         for (const file of files) {
             const creationParams: PersonCreationParams = {
                 familienname: file.familienname,
@@ -244,6 +245,7 @@ export class DbSeedService {
                 password: file.password,
                 personalnummer: file.personalnummer,
             };
+            /* eslint-disable no-await-in-loop */
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
             if (person instanceof DomainError) {
                 this.logger.error('Could not create person:');

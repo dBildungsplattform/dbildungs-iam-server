@@ -1236,6 +1236,15 @@
             "06"
           ],
           "mappedType": "enum"
+        },
+        "email_domain": {
+          "name": "email_domain",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
         }
       },
       "name": "organisation",

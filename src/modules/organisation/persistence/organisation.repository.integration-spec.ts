@@ -414,7 +414,7 @@ describe('OrganisationRepository', () => {
         });
     });
 
-    describe('findParentOrgasForIds', () => {
+    describe('findParentOrgas-Methods', () => {
         type CreateOrgaTreeResult = {
             root: Organisation<true>;
             traeger: Organisation<true>;
@@ -469,41 +469,78 @@ describe('OrganisationRepository', () => {
             return { root, traeger, schule };
         }
 
-        describe('when no input IDs are given', () => {
-            it('should return empty array', async () => {
-                const result: Organisation<true>[] = await sut.findParentOrgasForIds([]);
+        describe('findParentOrgasForIds', () => {
+            describe('when no input IDs are given', () => {
+                it('should return empty array', async () => {
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIds([]);
 
-                expect(result).toHaveLength(0);
+                    expect(result).toHaveLength(0);
+                });
+            });
+
+            describe('when leaf organisation', () => {
+                it('should return all organisations', async () => {
+                    const { schule }: CreateOrgaTreeResult = await createOrgaTree();
+
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIds([schule.id]);
+
+                    expect(result).toHaveLength(3);
+                });
+            });
+
+            describe('when multiple organisation', () => {
+                it('should not return duplicate organisations', async () => {
+                    const { root, traeger, schule }: CreateOrgaTreeResult = await createOrgaTree();
+
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIds([
+                        root.id,
+                        traeger.id,
+                        schule.id,
+                    ]);
+
+                    expect(result).toHaveLength(3);
+                });
+            });
+
+            describe('when root organisation', () => {
+                it('should return only root', async () => {
+                    const { root }: CreateOrgaTreeResult = await createOrgaTree();
+
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIds([root.id]);
+
+                    expect(result).toHaveLength(1);
+                });
             });
         });
 
-        describe('when leaf organisation', () => {
-            it('should return all organisations', async () => {
-                const { schule }: CreateOrgaTreeResult = await createOrgaTree();
+        describe('findParentOrgasForIdSorted', () => {
+            describe('when leaf organisation', () => {
+                it('should return all organisations sorted by depth asc', async () => {
+                    const { root, traeger, schule }: CreateOrgaTreeResult = await createOrgaTree();
 
-                const result: Organisation<true>[] = await sut.findParentOrgasForIds([schule.id]);
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIdSortedByDepthAsc(schule.id);
 
-                expect(result).toHaveLength(3);
+                    expect(result).toHaveLength(3);
+                    expect(result[0]).toMatchObject({
+                        id: schule.id,
+                    });
+                    expect(result[1]).toMatchObject({
+                        id: traeger.id,
+                    });
+                    expect(result[2]).toMatchObject({
+                        id: root.id,
+                    });
+                });
             });
-        });
 
-        describe('when multiple organisation', () => {
-            it('should not return duplicate organisations', async () => {
-                const { root, traeger, schule }: CreateOrgaTreeResult = await createOrgaTree();
+            describe('when root organisation', () => {
+                it('should return only root', async () => {
+                    const { root }: CreateOrgaTreeResult = await createOrgaTree();
 
-                const result: Organisation<true>[] = await sut.findParentOrgasForIds([root.id, traeger.id, schule.id]);
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIdSortedByDepthAsc(root.id);
 
-                expect(result).toHaveLength(3);
-            });
-        });
-
-        describe('when root organisation', () => {
-            it('should return only root', async () => {
-                const { root }: CreateOrgaTreeResult = await createOrgaTree();
-
-                const result: Organisation<true>[] = await sut.findParentOrgasForIds([root.id]);
-
-                expect(result).toHaveLength(1);
+                    expect(result).toHaveLength(1);
+                });
             });
         });
     });
@@ -727,9 +764,11 @@ describe('OrganisationRepository', () => {
                     name: 'test',
                 }),
             );
-            for (const organisation of organisations) {
-                await sut.save(organisation);
-            }
+            await Promise.all(
+                organisations.map(async (organisation: Organisation<false>) => {
+                    await sut.save(organisation);
+                }),
+            );
         });
 
         it('should return all organisations when no limit and offset are provided', async () => {
@@ -754,10 +793,11 @@ describe('OrganisationRepository', () => {
                 DoFactory.createOrganisationAggregate(false, { name: 'AnotherTest', kennung: 'KENNUNG2' }),
                 DoFactory.createOrganisationAggregate(false, { name: 'TestName2', kennung: 'DIFFERENTKENNUNG' }),
             ];
-
+            /* eslint-disable no-await-in-loop */
             for (const organisation of organisations) {
                 await sut.save(organisation);
             }
+            /* eslint-disable no-await-in-loop */
         });
 
         it('should return organisations that match the search string in name', async () => {
