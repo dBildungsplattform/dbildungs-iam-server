@@ -7,7 +7,7 @@ describe('GetDataForUserAction', () => {
         it('should return object', () => {
             const action: GetDataForUserAction = new GetDataForUserAction({
                 contextId: faker.string.uuid(),
-                userId: faker.string.uuid(),
+                userName: faker.internet.userName(),
                 login: '',
                 password: '',
             });
@@ -20,7 +20,7 @@ describe('GetDataForUserAction', () => {
         it('should return GetDataForUserResponse', () => {
             const action: GetDataForUserAction = new GetDataForUserAction({
                 contextId: faker.string.uuid(),
-                userId: faker.string.uuid(),
+                userName: faker.internet.userName(),
                 login: '',
                 password: '',
             });

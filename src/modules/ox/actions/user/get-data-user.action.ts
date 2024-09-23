@@ -1,7 +1,7 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
 import { OxBaseAction } from '../ox-base-action.js';
-import { UserIdParams } from './ox-user.types.js';
+import { UserNameParams } from './ox-user.types.js';
 
 export type GetDataForUserResponse = {
     id: string;
@@ -10,6 +10,7 @@ export type GetDataForUserResponse = {
     username: string;
     primaryEmail: string;
     mailenabled: boolean;
+    aliases: string[];
 };
 
 export type GetDataForUserResponseBody = {
@@ -35,7 +36,7 @@ export class GetDataForUserAction extends OxBaseAction<GetDataForUserResponseBod
 
     public override soapServiceName: string = 'OXUserService';
 
-    public constructor(private readonly params: UserIdParams) {
+    public constructor(private readonly params: UserNameParams) {
         super();
     }
 
@@ -51,7 +52,7 @@ export class GetDataForUserAction extends OxBaseAction<GetDataForUserResponseBod
                 },
 
                 'tns:user': {
-                    'ns6:id': this.params.userId,
+                    'ns6:name': this.params.userName,
                 },
 
                 'tns:auth': {
@@ -72,6 +73,7 @@ export class GetDataForUserAction extends OxBaseAction<GetDataForUserResponseBod
                 username: body.getDataResponse.return.name,
                 primaryEmail: body.getDataResponse.return.primaryEmail,
                 mailenabled: body.getDataResponse.return.mailenabled,
+                aliases: body.getDataResponse.return.aliases,
             },
         };
     }
