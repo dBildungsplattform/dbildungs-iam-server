@@ -54,7 +54,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
-    public async handlePersonenkontextCreatedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
+    public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
         );

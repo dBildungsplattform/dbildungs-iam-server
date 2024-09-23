@@ -54,14 +54,14 @@ export class EmailEventHandler {
             const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
             if (existingEmail) {
                 this.logger.info(
-                    `Existing email found for personId:${event.personId}, address:${existingEmail.currentAddress}`,
+                    `Existing email found for personId:${event.personId}, address:${existingEmail.address}`,
                 );
                 if (existingEmail.enabledOrRequested) {
                     existingEmail.disable();
                     const persistenceResult: EmailAddress<true> | DomainError =
                         await this.emailRepo.save(existingEmail);
                     if (persistenceResult instanceof EmailAddress) {
-                        this.logger.info(`Disabled and saved address:${persistenceResult.currentAddress}`);
+                        this.logger.info(`Disabled and saved address:${persistenceResult.address}`);
                     } else {
                         this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
                     }

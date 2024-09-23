@@ -117,7 +117,7 @@ describe('OxEventHandler', () => {
 
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
-            await sut.handlePersonenkontextCreatedEvent(event);
+            await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
             expect(oxServiceMock.send).not.toHaveBeenCalled();
@@ -134,7 +134,7 @@ describe('OxEventHandler', () => {
             serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
             personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-            await sut.handlePersonenkontextCreatedEvent(event);
+            await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
             expect(loggerMock.info).toHaveBeenLastCalledWith(`Person with id:${personId} does not need an email`);
@@ -153,7 +153,7 @@ describe('OxEventHandler', () => {
                 },
             });
 
-            await sut.handlePersonenkontextCreatedEvent(event);
+            await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(ExistsUserAction));
             expect(oxServiceMock.send).toHaveBeenCalledTimes(1);
@@ -168,7 +168,7 @@ describe('OxEventHandler', () => {
             serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
             personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-            await sut.handlePersonenkontextCreatedEvent(event);
+            await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
             expect(loggerMock.error).toHaveBeenLastCalledWith(`Person not found for personId:${personId}`);
@@ -181,7 +181,7 @@ describe('OxEventHandler', () => {
             person.email = undefined;
             personRepositoryMock.findById.mockResolvedValueOnce(person);
 
-            await sut.handlePersonenkontextCreatedEvent(event);
+            await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
             expect(loggerMock.error).toHaveBeenLastCalledWith(`Person with personId:${personId} has no email-address`);
@@ -212,7 +212,7 @@ describe('OxEventHandler', () => {
                     mailenabled: true,
                 },
             });
-            await sut.handlePersonenkontextCreatedEvent(event);
+            await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenLastCalledWith(
@@ -246,7 +246,7 @@ describe('OxEventHandler', () => {
                     mailenabled: true,
                 },
             });
-            await sut.handlePersonenkontextCreatedEvent(event);
+            await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenLastCalledWith(
@@ -275,7 +275,7 @@ describe('OxEventHandler', () => {
                 ok: false,
                 error: new OxError('Request failed'),
             });
-            await sut.handlePersonenkontextCreatedEvent(event);
+            await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.error).toHaveBeenLastCalledWith(`Could not create user in OX, error: Request failed`);

@@ -401,9 +401,7 @@ describe('Email Event Handler', () => {
                     expect(loggerMock.info).toHaveBeenCalledWith(
                         `Received PersonRenamedEvent, personId:${event.personId}`,
                     );
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Disabled and saved address:${emailAddress.currentAddress}`,
-                    );
+                    expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
                     expect(loggerMock.info).toHaveBeenCalledWith(
                         `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
                     );
