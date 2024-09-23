@@ -80,39 +80,41 @@ export class ItsLearningPersonsEventHandler {
             return this.logger.info('Not enabled, ignoring event.');
         }
 
-        const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
+        return this.mutex.runExclusive(async () => {
+            const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
 
-        if (!person) {
-            return this.logger.error(`Person with ID ${event.personId} could not be found.`);
-        }
+            if (!person) {
+                return this.logger.error(`Person with ID ${event.personId} could not be found.`);
+            }
 
-        if (!person.referrer) {
-            return this.logger.error(`Person with ID ${person.id} has no username!`);
-        }
+            if (!person.referrer) {
+                return this.logger.error(`Person with ID ${person.id} has no username!`);
+            }
 
-        const personResult: Result<PersonResponse, DomainError> = await this.itsLearningService.send(
-            new ReadPersonAction(person.id),
-        );
+            const readPersonResult: Result<PersonResponse, DomainError> = await this.itsLearningService.send(
+                new ReadPersonAction(person.id),
+            );
 
-        if (!personResult.ok) {
-            return this.logger.info(`Person with ID ${event.personId} is not in itslearning, ignoring.`);
-        }
+            if (!readPersonResult.ok) {
+                return this.logger.info(`Person with ID ${event.personId} is not in itslearning, ignoring.`);
+            }
 
-        const createAction: CreatePersonAction = new CreatePersonAction({
-            id: person.id,
-            firstName: person.vorname,
-            lastName: person.familienname,
-            username: person.referrer,
-            institutionRoleType: personResult.value.institutionRole,
+            const createAction: CreatePersonAction = new CreatePersonAction({
+                id: person.id,
+                firstName: person.vorname,
+                lastName: person.familienname,
+                username: person.referrer,
+                institutionRoleType: readPersonResult.value.institutionRole,
+            });
+
+            const createPersonResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
+
+            if (!createPersonResult.ok) {
+                return this.logger.error(`Person with ID ${person.id} could not be updated in itsLearning!`);
+            }
+
+            this.logger.info(`Person with ID ${person.id} updated in itsLearning!`);
         });
-
-        const createResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
-
-        if (!createResult.ok) {
-            return this.logger.error(`Person with ID ${person.id} could not be updated in itsLearning!`);
-        }
-
-        this.logger.info(`Person with ID ${person.id} updated in itsLearning!`);
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
