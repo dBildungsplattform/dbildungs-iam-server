@@ -185,7 +185,7 @@ export class PersonenkontextController {
         const organisations: Organisation<true>[] = [];
         const personenkontexte: Personenkontext<true>[] =
             await this.personenkontextService.findPersonenkontexteByPersonId(personByIdParams.personId);
-
+        /* eslint-disable no-await-in-loop */
         for (const personenkontext of personenkontexte) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
             if (!rolle) continue;
@@ -201,6 +201,7 @@ export class PersonenkontextController {
                 }
             }
         }
+        /* eslint-disable no-await-in-loop */
         const systemrechtResponse: SystemrechtResponse = new SystemrechtResponse();
 
         const organisationResponses: OrganisationResponseLegacy[] = organisations.map(

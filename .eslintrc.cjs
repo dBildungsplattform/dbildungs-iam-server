@@ -30,6 +30,7 @@ module.exports = {
         'class-methods-use-this': 'off',
         'no-param-reassign': 'warn',
         'no-underscore-dangle': 'error',
+        'no-await-in-loop': 'error',
         '@typescript-eslint/no-inferrable-types': ['off'],
         '@typescript-eslint/typedef': [
             'warn',
@@ -67,6 +68,13 @@ module.exports = {
                 // you should turn the original rule off *only* for test files
                 '@typescript-eslint/unbound-method': 'off',
                 'jest/unbound-method': 'error',
+            },
+        },
+        {
+            files: ['test-migrations/**/*.ts', 'migrations/**/*.ts' ],
+            rules: {
+                'no-await-in-loop': 'off',
+                '@typescript-eslint/require-await': 'off',
             },
         },
     ],

@@ -71,9 +71,11 @@ export class UsernameGeneratorService {
             return calculatedUsername;
         }
         let counter: number = 1;
+        /* eslint-disable no-await-in-loop */
         while (await this.usernameExists(calculatedUsername + counter)) {
             counter = counter + 1;
         }
+        /* eslint-disable no-await-in-loop */
         return calculatedUsername + counter;
     }
 
