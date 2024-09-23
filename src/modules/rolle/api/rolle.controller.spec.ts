@@ -100,21 +100,6 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
     });
 
     describe('/GET rolle mocked Rolle-repo', () => {
-        describe('when rolle and serviceProvider exists, attachment is done, but retrieving SP afterwards fails', () => {
-            it('should return 500', async () => {
-                const params: RolleNameQueryParams = {
-                    searchStr: faker.string.alpha(),
-                };
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
-
-                //mock getRollenByName
-                rolleRepoMock.findByName.mockResolvedValueOnce(undefined);
-                //mock call to get sp (direct in controller-method)
-                serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
-                await expect(rolleController.findRollen(params, permissions)).resolves.not.toThrow(Error);
-            });
-        });
         describe('createRolle', () => {
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
                 const createRolleParams: CreateRolleBodyParams = {

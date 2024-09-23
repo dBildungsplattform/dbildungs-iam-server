@@ -483,7 +483,7 @@ describe('PersonenkontextWorkflow', () => {
         it('should return an empty array if no organisations with system rights are found', async () => {
             rolleRepoMock.find.mockResolvedValue([createMock<Rolle<true>>()]);
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue([]);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize('organisation-id');
 
@@ -498,7 +498,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue([rolle]);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(['org-id']);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             organisationRepoMock.findById.mockResolvedValue(undefined);
 
@@ -516,7 +516,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(['some-other-org-id']);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(false);
 
             anlage.initialize('organisation-id');
 
@@ -550,7 +550,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize(organisation.id);
 
@@ -565,7 +565,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([organisation.id]);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize(organisation.id);
 
@@ -607,7 +607,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             organisationRepoMock.findById.mockResolvedValue(organisation);
             rolleRepoMock.findById.mockResolvedValue(rolle1);
@@ -646,7 +646,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue(orgsWithRecht);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             organisationRepoMock.findById.mockResolvedValue(organisation);
             rolleRepoMock.findById.mockResolvedValue(rolle1);

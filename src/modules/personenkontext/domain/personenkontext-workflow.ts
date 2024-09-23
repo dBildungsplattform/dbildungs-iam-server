@@ -3,7 +3,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -107,26 +106,13 @@ export class PersonenkontextWorkflowAggregate {
         rolleName?: string,
         limit?: number,
     ): Promise<Rolle<true>[]> {
-        let rollen: Option<Rolle<true>[]>;
-
-        if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, false);
-        } else {
-            rollen = await this.rolleRepo.find(false);
-        }
-
-        if (!rollen) {
-            return [];
-        }
-
-        // Retrieve all organisations that the admin has access to
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
-
-        // If the admin has no right on any orga then return an empty array
-        if (!orgsWithRecht || orgsWithRecht.length === 0) {
+        if (
+            !this.selectedOrganisationId ||
+            !(await permissions.hasSystemrechtAtOrganisation(
+                this.selectedOrganisationId,
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ))
+        ) {
             return [];
         }
 
@@ -140,36 +126,48 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
+        let rollen: Option<Rolle<true>[]>;
+
+        if (rolleName) {
+            rollen = await this.rolleRepo.findByName(rolleName, false);
+        } else {
+            rollen = await this.rolleRepo.find(false);
+        }
+
+        if (!rollen) {
+            return [];
+        }
+
         let allowedRollen: Rolle<true>[] = [];
         // If the user has rights for this specific organization or any of its children, return the filtered roles
-        if (orgsWithRecht.includes(organisation.id)) {
-            const allowedRollenPromises: Promise<Rolle<true> | null>[] = rollen.map(async (rolle: Rolle<true>) => {
-                // Check if the rolle can be assigned to the target organisation
-                const referenceCheckError: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
 
-                // If the reference check passes and the organisation matches the role type
-                if (!referenceCheckError) {
-                    return rolle;
-                }
-                return null;
-            });
+        const allowedRollenPromises: Promise<Rolle<true> | null>[] = rollen.map(async (rolle: Rolle<true>) => {
+            // Check if the rolle can be assigned to the target organisation
+            const referenceCheckError: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
 
-            // Resolve all the promises and filter out any null values (roles that can't be assigned)
-            const resolvedRollen: Rolle<true>[] = (await Promise.all(allowedRollenPromises)).filter(
-                (rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null,
-            );
+            // If the reference check passes and the organisation matches the role type
+            if (!referenceCheckError) {
+                return rolle;
+            }
+            return null;
+        });
 
-            allowedRollen = resolvedRollen;
-        }
+        // Resolve all the promises and filter out any null values (roles that can't be assigned)
+        const resolvedRollen: Rolle<true>[] = (await Promise.all(allowedRollenPromises)).filter(
+            (rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null,
+        );
+
+        allowedRollen = resolvedRollen;
+        allowedRollen = allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
+            a.name.localeCompare(b.name, 'de', { numeric: true }),
+        );
 
         if (limit) {
             allowedRollen = allowedRollen.slice(0, limit);
         }
 
         // Sort the Roles by name
-        return allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
-            a.name.localeCompare(b.name, 'de', { numeric: true }),
-        );
+        return allowedRollen;
     }
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
