@@ -46,7 +46,6 @@ import { isEnum } from 'class-validator';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { PersonIdResponse } from '../../person/api/person-id.response.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
