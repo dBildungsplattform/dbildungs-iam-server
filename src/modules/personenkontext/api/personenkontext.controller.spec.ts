@@ -248,9 +248,10 @@ describe('PersonenkontextController', () => {
                 };
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue([
-                    mockPersonenkontext.organisationId,
-                ]);
+                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [mockPersonenkontext.organisationId],
+                });
 
                 personenkontextService.findAllPersonenkontexte.mockResolvedValue(personenkontexte);
 
@@ -259,7 +260,7 @@ describe('PersonenkontextController', () => {
                     permissionsMock,
                 );
 
-                expect(permissionsMock.getOrgIdsWithSystemrechtDeprecated).toHaveBeenCalledWith(
+                expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
                     [RollenSystemRecht.PERSONEN_VERWALTEN],
                     true,
                 );
