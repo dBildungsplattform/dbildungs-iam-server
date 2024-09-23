@@ -18,7 +18,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextResponse } from './response/dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { DbiamPersonenkontextMigrationBodyParams } from './param/dbiam-personenkontext.body.params.js';
+import { DbiamPersonenkontextMigrationBodyParams } from './param/dbiam-personenkontext-migration.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';

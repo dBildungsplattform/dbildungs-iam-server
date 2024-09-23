@@ -15,7 +15,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
-import { DbiamPersonenkontextMigrationBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -669,7 +669,7 @@ describe('PersonenkontextWorkflow', () => {
             const personId: string = faker.string.uuid();
             const lastModified: Date = faker.date.recent();
             const count: number = 1;
-            const personenkontexte: DbiamPersonenkontextMigrationBodyParams[] = [];
+            const personenkontexte: DbiamPersonenkontextBodyParams[] = [];
 
             const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
             const updateResult: Personenkontext<true>[] = [personenkontext];
@@ -693,7 +693,7 @@ describe('PersonenkontextWorkflow', () => {
             const personId: string = faker.string.uuid();
             const lastModified: Date = faker.date.recent();
             const count: number = 1;
-            const personenkontexte: DbiamPersonenkontextMigrationBodyParams[] = [];
+            const personenkontexte: DbiamPersonenkontextBodyParams[] = [];
 
             const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError('Error message');
             dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValue({
@@ -716,7 +716,7 @@ describe('PersonenkontextWorkflow', () => {
         const personId: string = faker.string.uuid();
         const lastModified: Date = faker.date.recent();
         const count: number = 0;
-        const personenkontexte: DbiamPersonenkontextMigrationBodyParams[] = [];
+        const personenkontexte: DbiamPersonenkontextBodyParams[] = [];
 
         dbiamPersonenkontextFactoryMock.createNewPersonenkontexteUpdate.mockReturnValue({
             update: jest.fn().mockResolvedValue([]),
