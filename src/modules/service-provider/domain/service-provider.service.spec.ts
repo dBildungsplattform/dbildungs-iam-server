@@ -7,6 +7,15 @@ import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
 
+// helper to mock output of some repos
+function getIdMap<T>(arr: Array<T & { id: string }>): Map<string, T> {
+    const map: Map<string, T> = new Map();
+    arr.forEach((value: T & { id: string }) => {
+        map.set(value.id, value);
+    });
+    return map;
+}
+
 describe('ServiceProviderService', () => {
     let service: ServiceProviderService;
     let rolleRepo: DeepMocked<RolleRepo>;
@@ -45,9 +54,17 @@ describe('ServiceProviderService', () => {
             rolleRepo.findById.mockImplementation((id: string) =>
                 Promise.resolve(rollen.find((r: Rolle<true>) => r.id === id)),
             );
+            rolleRepo.findByIds.mockImplementation((ids: Array<string>) => {
+                return Promise.resolve(getIdMap(rollen.filter((r: Rolle<true>) => ids.includes(r.id))));
+            });
             serviceProviderRepo.findById.mockImplementation((id: string) =>
                 Promise.resolve(serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id)),
             );
+            serviceProviderRepo.findByIds.mockImplementation((ids: Array<string>) => {
+                return Promise.resolve(
+                    getIdMap(serviceProviders.filter((r: ServiceProvider<true>) => ids.includes(r.id))),
+                );
+            });
         });
 
         afterEach(() => {
