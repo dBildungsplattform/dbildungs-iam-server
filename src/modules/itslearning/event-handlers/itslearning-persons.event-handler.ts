@@ -6,12 +6,15 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import {
     PersonenkontextUpdatedData,
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { CreateMembershipsAction } from '../actions/create-memberships.action.js';
 import { CreatePersonAction } from '../actions/create-person.action.js';
@@ -19,7 +22,7 @@ import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { IMSESRoleType, IMSESInstitutionRoleType } from '../types/role.enum.js';
+import { IMSESInstitutionRoleType, IMSESRoleType } from '../types/role.enum.js';
 
 // Maps our roles to itsLearning roles
 const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, IMSESInstitutionRoleType> = {
@@ -61,11 +64,55 @@ export class ItsLearningPersonsEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly itsLearningService: ItsLearningIMSESService,
+        private readonly personRepo: PersonRepository,
         configService: ConfigService<ServerConfig>,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
         this.ENABLED = itsLearningConfig.ENABLED === 'true';
+    }
+
+    @EventHandler(PersonRenamedEvent)
+    public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
+        this.logger.info(`Received PersonRenamedEvent, ${event.personId}`);
+
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event.');
+        }
+
+        const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
+
+        if (!person) {
+            return this.logger.error(`Person with ID ${event.personId} could not be found.`);
+        }
+
+        if (!person.referrer) {
+            return this.logger.error(`Person with ID ${person.id} has no username!`);
+        }
+
+        const personResult: Result<PersonResponse, DomainError> = await this.itsLearningService.send(
+            new ReadPersonAction(person.id),
+        );
+
+        if (!personResult.ok) {
+            return this.logger.info(`Person with ID ${event.personId} is not in itslearning, ignoring.`);
+        }
+
+        const createAction: CreatePersonAction = new CreatePersonAction({
+            id: person.id,
+            firstName: person.vorname,
+            lastName: person.familienname,
+            username: person.referrer,
+            institutionRoleType: personResult.value.institutionRole,
+        });
+
+        const createResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
+
+        if (!createResult.ok) {
+            return this.logger.error(`Person with ID ${person.id} could not be updated in itsLearning!`);
+        }
+
+        this.logger.info(`Person with ID ${person.id} updated in itsLearning!`);
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
