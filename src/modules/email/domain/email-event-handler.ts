@@ -8,7 +8,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { DomainError } from '../../../shared/error/index.js';
-import { PersonID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailRepo } from '../persistence/email.repo.js';
@@ -24,6 +24,11 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { OxUserAttributesCreatedEvent } from '../../../shared/events/ox-user-attributes-created.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+
+type RolleWithPK = {
+    rolle: Rolle<true>;
+    personenkontext: Personenkontext<true>;
+};
 
 @Injectable()
 export class EmailEventHandler {
@@ -42,8 +47,12 @@ export class EmailEventHandler {
     public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
         this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
 
-        const rollen: Rolle<true>[] = await this.getRollenForPerson(event.personId);
-        if (await this.anyRolleReferencesEmailServiceProvider(rollen)) {
+        const rollenWithPK: Map<string, RolleWithPK> = await this.getRollenWithPKForPerson(event.personId);
+        const rollen: Rolle<true>[] = Array.from(rollenWithPK.values(), (value: RolleWithPK) => {
+            return value.rolle;
+        });
+        const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
+        if (rollenIdWithSPReference) {
             const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
             if (existingEmail) {
                 this.logger.info(
@@ -60,22 +69,43 @@ export class EmailEventHandler {
                     }
                 }
             }
-            this.logger.info(`Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`);
-            await this.createNewEmail(event.personId);
+            const pkForRolleWithSPReference: RolleWithPK | undefined = rollenWithPK.get(rollenIdWithSPReference);
+            if (pkForRolleWithSPReference) {
+                this.logger.info(
+                    `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
+                );
+                await this.createNewEmail(event.personId, pkForRolleWithSPReference.personenkontext.organisationId);
+            }
+        } else {
+            this.logger.info(`Renamed person with personId:${event.personId} has no SP with Email, nothing to do`);
         }
     }
 
-    private async getRollenForPerson(personId: PersonID): Promise<Rolle<true>[]> {
+    private async getRollenWithPKForPerson(personId: PersonID): Promise<Map<string, RolleWithPK>> {
         const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
-        const rollenIds: string[] = [];
-        for (const personenkontext of personenkontexte) {
-            rollenIds.push(personenkontext.rolleId);
-        }
-        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
+        const rollenIdPKMap: Map<string, Personenkontext<true>> = new Map<string, Personenkontext<true>>();
 
-        return Array.from(rollenMap.values(), (value: Rolle<true>) => {
+        for (const personenkontext of personenkontexte) {
+            rollenIdPKMap.set(personenkontext.rolleId, personenkontext);
+        }
+        const rollenIds: string[] = Array.from(rollenIdPKMap.keys(), (value: string) => {
             return value;
         });
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
+
+        const resMap: Map<string, RolleWithPK> = new Map<string, RolleWithPK>();
+        rollenIds.forEach((rollenId: string) => {
+            const pk: Personenkontext<true> | undefined = rollenIdPKMap.get(rollenId);
+            const rolle: Rolle<true> | undefined = rollenMap.get(rollenId);
+            if (pk && rolle) {
+                resMap.set(rollenId, {
+                    rolle: rolle,
+                    personenkontext: pk,
+                });
+            }
+        });
+
+        return resMap;
     }
 
     @EventHandler(PersonenkontextCreatedMigrationEvent)
@@ -148,13 +178,17 @@ export class EmailEventHandler {
         this.logger.info(`Successfully deactivated email-address:${event.emailAddress}`);
     }
 
-    private async anyRolleReferencesEmailServiceProvider(rollen: Rolle<true>[]): Promise<boolean> {
-        const pro: Promise<boolean>[] = rollen.map((rolle: Rolle<true>) =>
+    private async getAnyRolleReferencesEmailServiceProvider(rollen: Rolle<true>[]): Promise<Option<string>> {
+        const pro: Promise<Option<string>>[] = rollen.map((rolle: Rolle<true>) =>
             this.rolleReferencesEmailServiceProvider(rolle),
         );
-        const results: boolean[] = await Promise.all(pro);
+        const rolleIds: Option<string>[] = await Promise.all(pro);
 
-        return results.some((r: boolean) => r);
+        for (const rolleId of rolleIds) {
+            if (rolleId) return rolleId;
+        }
+
+        return undefined;
     }
 
     @EventHandler(RolleUpdatedEvent)
@@ -210,25 +244,39 @@ export class EmailEventHandler {
     }
 
     private async handlePerson(personId: PersonID): Promise<void> {
+        const rolleIdPKMap: Map<string, Personenkontext<true>> = new Map<string, Personenkontext<true>>();
+
         const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
-        const rollenIds: string[] = personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId);
+        const rollenIds: string[] = [];
+        personenkontexte.forEach((pk: Personenkontext<true>) => {
+            rolleIdPKMap.set(pk.rolleId, pk);
+            rollenIds.push(pk.rolleId);
+        });
         const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
         const rollen: Rolle<true>[] = Array.from(rollenMap.values(), (value: Rolle<true>) => {
             return value;
         });
 
-        const needsEmail: boolean = await this.anyRolleReferencesEmailServiceProvider(rollen);
+        const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
 
-        if (needsEmail) {
+        if (rollenIdWithSPReference) {
+            const pkOfRolleWithSPReference: Personenkontext<true> | undefined =
+                rolleIdPKMap.get(rollenIdWithSPReference);
+            if (!pkOfRolleWithSPReference) {
+                this.logger.error(
+                    `Rolle with id:${rollenIdWithSPReference} references SP, but the wrapping PK could not be found`,
+                );
+                return;
+            }
             this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
-            await this.createOrEnableEmail(personId);
+            await this.createOrEnableEmail(personId, pkOfRolleWithSPReference.organisationId);
         } else {
             //currently no else for calling disablingEmail is necessary, emails are only disabled, when the person is deleted not by PK-events
             this.logger.info(`Person with id:${personId} does not need an email`);
         }
     }
 
-    private async createOrEnableEmail(personId: PersonID): Promise<void> {
+    private async createOrEnableEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
         const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(personId);
 
         if (existingEmail) {
@@ -255,12 +303,12 @@ export class EmailEventHandler {
             }
         } else {
             this.logger.info(`No existing email found for personId:${personId}, creating a new one`);
-            await this.createNewEmail(personId);
+            await this.createNewEmail(personId, organisationId);
         }
     }
 
-    private async createNewEmail(personId: PersonID): Promise<void> {
-        const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId);
+    private async createNewEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
+        const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
             this.logger.error(`Could not create email, error is ${email.error.message}`);
             return;
@@ -284,7 +332,7 @@ export class EmailEventHandler {
         }
     }
 
-    private async rolleReferencesEmailServiceProvider(rolle: Rolle<true>): Promise<boolean> {
+    private async rolleReferencesEmailServiceProvider(rolle: Rolle<true>): Promise<Option<string>> {
         const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
             rolle.serviceProviderIds,
         );
@@ -295,6 +343,12 @@ export class EmailEventHandler {
             },
         );
 
-        return serviceProviders.some((sp: ServiceProvider<true>) => sp.kategorie === ServiceProviderKategorie.EMAIL);
+        const references: boolean = serviceProviders.some(
+            (sp: ServiceProvider<true>) => sp.kategorie === ServiceProviderKategorie.EMAIL,
+        );
+
+        if (references) return rolle.id;
+
+        return undefined;
     }
 }

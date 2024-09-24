@@ -161,8 +161,8 @@ describe('Email Event Handler', () => {
             fakeEmailAddressString = faker.internet.email();
             event = createMock<PersonenkontextUpdatedEvent>({ person: { id: fakePersonId } });
 
-            personenkontexte = [createMock<Personenkontext<true>>()];
-            rolle = createMock<Rolle<true>>({ serviceProviderIds: [] });
+            personenkontexte = [createMock<Personenkontext<true>>({ rolleId: fakeRolleId })];
+            rolle = createMock<Rolle<true>>({ id: fakeRolleId, serviceProviderIds: [] });
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
             sp = createMock<ServiceProvider<true>>({
@@ -456,6 +456,7 @@ describe('Email Event Handler', () => {
 
     describe('handlePersonRenamedEvent', () => {
         let fakePersonId: PersonID;
+        let fakeRolleId: RolleID;
         let fakeEmailAddress: string;
         let event: PersonRenamedEvent;
         let personenkontext: Personenkontext<true>;
@@ -467,19 +468,19 @@ describe('Email Event Handler', () => {
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
+            fakeRolleId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
             event = new PersonRenamedEvent(fakePersonId);
-            personenkontext = createMock<Personenkontext<true>>();
-            rolle = createMock<Rolle<true>>({ id: faker.string.uuid() });
+            personenkontext = createMock<Personenkontext<true>>({ rolleId: fakeRolleId });
+            rolle = createMock<Rolle<true>>({ id: fakeRolleId });
             rollenMap = new Map<string, Rolle<true>>();
-            rollenMap.set(faker.string.uuid(), rolle);
+            rollenMap.set(fakeRolleId, rolle);
             sp = createMock<ServiceProvider<true>>({
                 kategorie: ServiceProviderKategorie.EMAIL,
             });
             spMap = new Map<string, ServiceProvider<true>>();
             spMap.set(sp.id, sp);
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-            serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
             emailAddress = EmailAddress.construct(
                 faker.string.uuid(),
                 faker.date.past(),
@@ -516,6 +517,25 @@ describe('Email Event Handler', () => {
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
                         `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
+                    );
+                });
+            });
+
+            describe('when NO rolle is referencing a SP with Email kategorie', () => {
+                it('should log info only', async () => {
+                    dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([personenkontext]);
+                    rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
+                    serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map<string, ServiceProvider<true>>());
+
+                    await emailEventHandler.handlePersonRenamedEvent(event);
+
+                    expect(emailRepoMock.findByPerson).toHaveBeenCalledTimes(0);
+                    expect(emailRepoMock.save).toHaveBeenCalledTimes(0);
+                    expect(loggerMock.info).toHaveBeenCalledWith(
+                        `Received PersonRenamedEvent, personId:${event.personId}`,
+                    );
+                    expect(loggerMock.info).toHaveBeenLastCalledWith(
+                        `Renamed person with personId:${event.personId} has no SP with Email, nothing to do`,
                     );
                 });
             });
