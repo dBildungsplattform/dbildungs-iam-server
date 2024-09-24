@@ -48,6 +48,7 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rolle as SchulConnexRolle } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
@@ -944,10 +945,41 @@ describe('PersonRepository Integration', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should return person', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
-                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([person1.id]);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
+
+                const organisation: OrganisationEntity = await createAndPersistOrganisation(
+                    em,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+
+                const rolleData: RequiredEntityData<RolleEntity> = {
+                    name: 'Testrolle',
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.ORGADMIN,
+                    istTechnisch: false,
+                };
+                const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
+                await em.persistAndFlush(rolleEntity);
+
+                const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
+                    organisationId: organisation.id,
+                    personId: person1.id,
+                    rolleId: rolleEntity.id,
+                    rolle: SchulConnexRolle.LEHRENDER,
+                };
+                const personenkontextEntity: PersonenkontextEntity = em.create(
+                    PersonenkontextEntity,
+                    personenkontextData,
+                );
+                await em.persistAndFlush(personenkontextEntity);
+
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
 
                 kcUserServiceMock.findById.mockResolvedValue({
                     ok: true,
@@ -962,7 +994,6 @@ describe('PersonRepository Integration', () => {
                     },
                 });
 
-                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
                 const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
 
                 expect(result.ok).toBeTruthy();
@@ -1051,7 +1082,7 @@ describe('PersonRepository Integration', () => {
                 expect(result.ok).toBeTruthy();
             });
 
-            it.skip('should delete the person as admin of organisation', async () => {
+            it('should delete the person as admin of organisation', async () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
@@ -1085,11 +1116,17 @@ describe('PersonRepository Integration', () => {
                 const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
                 await em.persistAndFlush(rolleEntity);
 
-                const personenkontextEntity: PersonenkontextEntity = new PersonenkontextEntity();
-                personenkontextEntity.personId = em.getReference(PersonEntity, person1.id, { wrapped: true });
-                personenkontextEntity.organisationId = organisation.id;
-                personenkontextEntity.rolleId = em.getReference(RolleEntity, rolleEntity.id, { wrapped: true });
-                await em.persistAndFlush(personenkontextEntity);
+                const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
+                    organisationId: organisation.id,
+                    personId: person1.id,
+                    rolleId: rolleEntity.id,
+                    rolle: SchulConnexRolle.LEHRENDER,
+                };
+                const personenkontextEntity: PersonenkontextEntity = em.create(
+                    PersonenkontextEntity,
+                    personenkontextData,
+                );
+                await em.persistAndFlush(personenkontextEntity)
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
                     orgaIds: [organisation.id],

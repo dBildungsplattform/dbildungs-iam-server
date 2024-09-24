@@ -138,7 +138,10 @@ describe('PersonController', () => {
                     username: 'fixedusername',
                     hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [faker.string.uuid()],
+                });
                 personRepositoryMock.create.mockResolvedValue(person);
                 await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
                     PersonendatensatzResponse,
