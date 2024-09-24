@@ -469,6 +469,7 @@ describe('PersonenkontextWorkflow', () => {
 
     describe('findRollenForOrganisation', () => {
         it('should return an empty array if no roles are found by name', async () => {
+            anlage.initialize('organisation-id');
             rolleRepoMock.findByName.mockResolvedValue(undefined);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(
