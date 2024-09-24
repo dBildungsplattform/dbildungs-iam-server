@@ -198,6 +198,7 @@ export class DbSeedService {
                 file.keycloakGroup,
                 file.keycloakRole,
                 file.externalSystem ?? ServiceProviderSystem.NONE,
+                file.requires2fa,
             );
 
             const persistedServiceProvider: ServiceProvider<true> =

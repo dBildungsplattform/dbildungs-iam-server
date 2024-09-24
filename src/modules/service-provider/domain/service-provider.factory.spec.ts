@@ -52,6 +52,7 @@ describe('ServiceProviderFactory', () => {
                     keycloakGroup: keycloakGroup,
                     keycloakRole: keycloakRole,
                     externalSystem: externalSystem,
+                    requires2fa: false,
                 };
                 const serviceProvider: ServiceProvider<true> = sut.construct(
                     id,
@@ -67,6 +68,7 @@ describe('ServiceProviderFactory', () => {
                     keycloakGroup,
                     keycloakRole,
                     externalSystem,
+                    false,
                 );
 
                 expect(serviceProvider).toEqual(example);

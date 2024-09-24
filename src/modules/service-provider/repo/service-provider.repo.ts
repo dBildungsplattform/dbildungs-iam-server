@@ -28,6 +28,7 @@ export function mapAggregateToData(
         keycloakGroup: serviceProvider.keycloakGroup,
         keycloakRole: serviceProvider.keycloakRole,
         externalSystem: serviceProvider.externalSystem,
+        requires2fa: serviceProvider.requires2fa,
     };
 }
 
@@ -46,6 +47,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.keycloakGroup,
         entity.keycloakRole,
         entity.externalSystem,
+        entity.requires2fa,
     );
 }
 

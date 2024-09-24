@@ -90,6 +90,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
                 sp.keycloakGroup,
                 sp.keycloakRole,
                 sp.externalSystem,
+                sp.requires2fa,
             );
         },
     );

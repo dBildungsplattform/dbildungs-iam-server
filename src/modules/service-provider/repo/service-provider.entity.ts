@@ -38,4 +38,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
 
     @Enum({ items: () => ServiceProviderSystem, nativeEnumName: 'service_provider_system_enum' })
     public externalSystem!: ServiceProviderSystem;
+
+    @Property()
+    public requires2fa!: boolean;
 }

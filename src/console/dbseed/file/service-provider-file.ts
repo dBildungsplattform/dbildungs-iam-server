@@ -26,4 +26,6 @@ export class ServiceProviderFile {
     public keycloakRole?: string;
 
     public externalSystem?: ServiceProviderSystem;
+
+    public requires2fa!: boolean;
 }
