@@ -4,16 +4,20 @@ import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
-import { EmailAddress } from './email-address.js';
+import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
-import { InvalidNameError } from '../../../shared/error/index.js';
+import { EntityNotFoundError, InvalidNameError } from '../../../shared/error/index.js';
 import { EmailGenerator } from './email-generator.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
 
 describe('EmailFactory', () => {
     let module: TestingModule;
     let sut: EmailFactory;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -27,9 +31,15 @@ describe('EmailFactory', () => {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
+                },
             ],
         }).compile();
         personRepositoryMock = module.get(PersonRepository);
+        organisationRepositoryMock = module.get(OrganisationRepository);
+
         sut = module.get(EmailFactory);
     });
 
@@ -67,7 +77,7 @@ describe('EmailFactory', () => {
                     faker.date.recent(),
                     personId,
                     address,
-                    true,
+                    EmailAddressStatus.ENABLED,
                 );
 
                 expect(email.personId).toStrictEqual(personId);
@@ -78,7 +88,7 @@ describe('EmailFactory', () => {
     });
 
     describe('createNew', () => {
-        describe('when person is found and address generation succeeds ', () => {
+        describe('when person is found and address generation succeeds', () => {
             it('should return new Email', async () => {
                 const person: Person<true> = getPerson();
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
@@ -93,11 +103,17 @@ describe('EmailFactory', () => {
                     },
                 );
 
-                const creationResult: Result<EmailAddress<false>> = await sut.createNew(person.id);
+                organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
+                    createMock<Organisation<true>>({
+                        emailDomain: '@schule-sh.de',
+                    }),
+                ]);
+
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(person.id, faker.string.uuid());
 
                 if (!creationResult.ok) throw new Error();
                 expect(creationResult.value.personId).toStrictEqual(person.id);
-                expect(creationResult.value.currentAddress).toStrictEqual(
+                expect(creationResult.value.address).toStrictEqual(
                     `${person.vorname}.${person.familienname}@schule-sh.de`,
                 );
             });
@@ -107,15 +123,61 @@ describe('EmailFactory', () => {
             it('should return error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
-                const creationResult: Result<EmailAddress<false>> = await sut.createNew(faker.string.uuid());
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                );
 
                 expect(creationResult.ok).toBeFalsy();
+            });
+        });
+
+        describe('when organisation is not found', () => {
+            it('should return EntityNotFoundError', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
+                organisationRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                );
+
+                expect(creationResult.ok).toBeFalsy();
+                if (creationResult.ok) throw Error();
+                expect(creationResult.error).toBeInstanceOf(EntityNotFoundError);
+            });
+        });
+
+        describe('when neither organisation nor any parent has a valid email-domain', () => {
+            it('should return EmailDomainNotFoundError', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
+                organisationRepositoryMock.findById.mockResolvedValueOnce(
+                    createMock<Organisation<true>>({ emailDomain: undefined }),
+                );
+                organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
+                    createMock<Organisation<true>>({ emailDomain: undefined }),
+                ]);
+
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                );
+
+                expect(creationResult.ok).toBeFalsy();
+                if (creationResult.ok) throw Error();
+                expect(creationResult.error).toBeInstanceOf(EmailDomainNotFoundError);
             });
         });
 
         describe('when address generation fails', () => {
             it('should return error', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
+                organisationRepositoryMock.findById.mockResolvedValueOnce(
+                    createMock<Organisation<true>>({ emailDomain: undefined }),
+                );
+                organisationRepositoryMock.findParentOrgasForIdSortedByDepthAsc.mockResolvedValueOnce([
+                    createMock<Organisation<true>>({ emailDomain: faker.internet.email() }),
+                ]);
 
                 jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementation(
                     // eslint-disable-next-line @typescript-eslint/require-await
@@ -127,7 +189,10 @@ describe('EmailFactory', () => {
                     },
                 );
 
-                const creationResult: Result<EmailAddress<false>> = await sut.createNew(faker.string.uuid());
+                const creationResult: Result<EmailAddress<false>> = await sut.createNew(
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                );
 
                 expect(creationResult.ok).toBeFalsy();
             });

@@ -9,8 +9,8 @@ import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from './personenkon
 @Injectable()
 export class PersonenkontextFactory {
     public constructor(
-        private readonly personRepo: PersonRepository,
-        private readonly organisationRepo: OrganisationRepository,
+        private readonly personRepository: PersonRepository,
+        private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
     ) {}
 
@@ -28,10 +28,11 @@ export class PersonenkontextFactory {
         jahrgangsstufe?: Jahrgangsstufe,
         sichtfreigabe?: SichtfreigabeType,
         loeschungZeitpunkt?: Date,
+        befristung?: Date,
     ): Personenkontext<WasPersisted> {
         return Personenkontext.construct(
-            this.personRepo,
-            this.organisationRepo,
+            this.personRepository,
+            this.organisationRepository,
             this.rolleRepo,
             id,
             createdAt,
@@ -46,6 +47,7 @@ export class PersonenkontextFactory {
             sichtfreigabe,
             loeschungZeitpunkt,
             revision,
+            befristung,
         );
     }
 
@@ -59,10 +61,11 @@ export class PersonenkontextFactory {
         jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
+        befristung: Date | undefined = undefined,
     ): Personenkontext<false> {
         return Personenkontext.createNew(
-            this.personRepo,
-            this.organisationRepo,
+            this.personRepository,
+            this.organisationRepository,
             this.rolleRepo,
             personId,
             organisationId,
@@ -73,6 +76,7 @@ export class PersonenkontextFactory {
             jahrgangsstufe,
             sichtfreigabe,
             loeschungZeitpunkt,
+            befristung,
         );
     }
 }

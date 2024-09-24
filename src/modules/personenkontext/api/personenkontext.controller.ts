@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Put, Query, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    NotImplementedException,
+    Param,
+    Put,
+    Query,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -8,6 +20,8 @@ import {
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
+    ApiOperation,
+    ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -21,7 +35,6 @@ import { PersonendatensatzResponseAutomapper } from '../../person/api/personenda
 import { PersonenkontextQueryParams } from './param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from './response/personenkontext.response.js';
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
-import { UpdatePersonenkontextBodyParams } from './param/update-personenkontext.body.params.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 
 import { SystemrechtResponse } from './response/personenkontext-systemrecht.response.js';
@@ -121,7 +134,7 @@ export class PersonenkontextController {
         @Query() queryParams: PersonenkontextQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextdatensatzResponse>> {
-        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrechtDeprecated(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
@@ -172,7 +185,7 @@ export class PersonenkontextController {
         const organisations: Organisation<true>[] = [];
         const personenkontexte: Personenkontext<true>[] =
             await this.personenkontextService.findPersonenkontexteByPersonId(personByIdParams.personId);
-
+        /* eslint-disable no-await-in-loop */
         for (const personenkontext of personenkontexte) {
             const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(personenkontext.rolleId);
             if (!rolle) continue;
@@ -188,6 +201,7 @@ export class PersonenkontextController {
                 }
             }
         }
+        /* eslint-disable no-await-in-loop */
         const systemrechtResponse: SystemrechtResponse = new SystemrechtResponse();
 
         const organisationResponses: OrganisationResponseLegacy[] = organisations.map(
@@ -199,6 +213,8 @@ export class PersonenkontextController {
     }
 
     @Put(':personenkontextId')
+    @ApiOperation({ deprecated: true })
+    @ApiParam({ name: 'personenkontextId', type: String })
     @ApiOkResponse({
         description: 'The personenkontext was successfully updated.',
         type: PersonenkontextResponse,
@@ -208,50 +224,8 @@ export class PersonenkontextController {
     @ApiNotFoundResponse({ description: 'The personenkontext was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
     @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
-    public async updatePersonenkontextWithId(
-        @Param() params: FindPersonenkontextByIdParams,
-        @Body() body: UpdatePersonenkontextBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<PersonendatensatzResponseAutomapper> {
-        // Check permissions
-        const result: Result<unknown, DomainError> = await this.personenkontextRepo.findByIDAuthorized(
-            params.personenkontextId,
-            permissions,
-        );
-        if (!result.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
-            );
-        }
-
-        //!!! Note: rename this
-        const updateParams: UpdatePersonenkontextBodyParams = body;
-        updateParams.id = params.personenkontextId;
-
-        const updateResult: Result<
-            Personenkontext<true>,
-            DomainError
-        > = await this.personenkontextService.updatePersonenkontext(updateParams);
-
-        if (!updateResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult.error),
-            );
-        }
-
-        const personResult: Result<Person<true>, DomainError> = await this.personService.findPersonById(
-            updateResult.value.personId,
-        );
-
-        if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personResult.error),
-            );
-        }
-
-        return new PersonendatensatzResponseAutomapper(new PersonResponseAutomapper(personResult.value), [
-            await this.personApiMapper.mapToPersonenkontextResponse(updateResult.value),
-        ]);
+    public updatePersonenkontextWithId(): Promise<PersonendatensatzResponseAutomapper> {
+        throw new NotImplementedException();
     }
 
     @Delete(':personenkontextId')

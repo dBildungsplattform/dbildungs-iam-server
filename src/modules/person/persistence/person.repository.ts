@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,20 +11,24 @@ import {
     EntityNotFoundError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonPermissions, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { Person } from '../domain/person.js';
+import { Person, LockInfo } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.enabled) return emailAddress.address;
+        if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
     return undefined;
 }
@@ -83,6 +88,8 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
+        undefined,
+        undefined,
         getEnabledEmailAddress(entity),
     );
 }
@@ -94,6 +101,10 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
 
     return person;
 }
+
+export type PersonEventPayload = {
+    personenkontexte: [{ id: string; organisationId: string; rolleId: string }];
+};
 
 @Injectable()
 export class PersonRepository {
@@ -113,17 +124,15 @@ export class PersonRepository {
         requiredRight: RollenSystemRecht = RollenSystemRecht.PERSONEN_VERWALTEN,
     ): Promise<PersonScope> {
         // Find all organisations where user has the required permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
-            [requiredRight],
-            true,
-        );
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([requiredRight], true);
 
         // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
+        if (permittedOrgas.all) {
+            return new PersonScope();
         }
-
-        return new PersonScope().findBy({ organisationen: organisationIDs }).setScopeWhereOperator(ScopeOperator.AND);
+        return new PersonScope()
+            .findBy({ organisationen: permittedOrgas.orgaIds })
+            .setScopeWhereOperator(ScopeOperator.AND);
     }
 
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
@@ -144,17 +153,46 @@ export class PersonRepository {
 
     public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
         const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
-        const person: Person<true> | undefined = persons[0];
-
+        let person: Person<true> | undefined = persons[0];
         if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+        person = await this.extendPersonWithKeycloakData(person);
 
         return { ok: true, value: person };
     }
 
-    public async checkIfDeleteIsAllowed(
+    public async extendPersonWithKeycloakData(person: Person<true>): Promise<Person<true>> {
+        if (!person.keycloakUserId) {
+            return person;
+        }
+
+        const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.kcUserService.findById(
+            person.keycloakUserId,
+        );
+
+        person.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
+        person.isLocked = false;
+
+        if (!keyCloakUserDataResponse.ok) {
+            return person;
+        }
+        if (keyCloakUserDataResponse.value.attributes) {
+            const attributes: Record<string, string[]> = keyCloakUserDataResponse.value.attributes;
+            const lockedFrom: string | undefined = attributes[LockKeys.LockedFrom]?.toString();
+            const lockedTimeStamp: string | undefined = attributes[LockKeys.Timestamp]?.toString();
+            const lockInfo: LockInfo = {
+                lock_locked_from: lockedFrom ?? '',
+                lock_timestamp: lockedTimeStamp ?? '',
+            };
+            person.lockInfo = lockInfo;
+        }
+        person.isLocked = keyCloakUserDataResponse.value.enabled === false;
+        return person;
+    }
+
+    private async checkIfDeleteIsAllowed(
         personId: string,
         permissions: PersonPermissions,
     ): Promise<Result<Person<true>>> {
@@ -163,7 +201,7 @@ export class PersonRepository {
             permissions,
             RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
         );
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
         const person: Person<true> | undefined = persons[0];
@@ -175,7 +213,11 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
-    public async deletePerson(personId: string, permissions: PersonPermissions): Promise<Result<void, DomainError>> {
+    public async deletePerson(
+        personId: string,
+        permissions: PersonPermissions,
+        removedPersonenkontexts: PersonenkontextEventKontextData[],
+    ): Promise<Result<void, DomainError>> {
         // First check if the user has permission to view the person
         const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
 
@@ -200,6 +242,18 @@ export class PersonRepository {
         // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
 
+        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                familienname: person.familienname,
+                vorname: person.vorname,
+                email: person.email,
+            },
+            [],
+            removedPersonenkontexts,
+            [],
+        );
+        this.eventService.publish(personenkontextUpdatedEvent);
         // Delete email-addresses if any, must happen before person deletion to get the referred email-address
         if (person.email) {
             this.eventService.publish(new PersonDeletedEvent(personId, person.email));
@@ -231,23 +285,62 @@ export class PersonRepository {
     }
 
     public async create(person: Person<false>, hashedPassword?: string): Promise<Person<true> | DomainError> {
-        let personWithKeycloakUser: Person<false> | DomainError;
-        if (!hashedPassword) {
-            personWithKeycloakUser = await this.createKeycloakUser(person, this.kcUserService);
-        } else {
-            personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
-                person,
-                hashedPassword,
-                this.kcUserService,
-            );
-        }
-        if (personWithKeycloakUser instanceof DomainError) {
-            return personWithKeycloakUser;
-        }
-        const personEntity: PersonEntity = this.em.create(PersonEntity, mapAggregateToData(personWithKeycloakUser));
-        await this.em.persistAndFlush(personEntity);
+        const transaction: EntityManager = this.em.fork();
+        await transaction.begin();
 
-        return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
+        try {
+            if (person.personalnummer) {
+                // Check if personalnummer already exists
+                const existingPerson: Loaded<PersonEntity, never, '*', never> | null = await transaction.findOne(
+                    PersonEntity,
+                    { personalnummer: person.personalnummer },
+                );
+                if (existingPerson) {
+                    await transaction.rollback();
+                    return new DuplicatePersonalnummerError(`Personalnummer ${person.personalnummer} already exists.`);
+                }
+            }
+
+            // Create DB person
+            const personEntity: PersonEntity = transaction.create(PersonEntity, mapAggregateToData(person)).assign({
+                id: randomUUID(), // Generate ID here instead of at insert-time
+            });
+            transaction.persist(personEntity);
+
+            const persistedPerson: Person<true> = mapEntityToAggregateInplace(personEntity, person);
+
+            // Take ID from person to create keycloak user
+            let personWithKeycloakUser: Person<true> | DomainError;
+            if (!hashedPassword) {
+                personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+            } else {
+                personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
+                    persistedPerson,
+                    hashedPassword,
+                    this.kcUserService,
+                );
+            }
+
+            // -> When keycloak fails, rollback
+            if (personWithKeycloakUser instanceof DomainError) {
+                await transaction.rollback();
+                return personWithKeycloakUser;
+            }
+
+            // Take ID from keycloak and update user
+            personEntity.assign(mapAggregateToData(personWithKeycloakUser));
+
+            // Commit
+            await transaction.commit();
+
+            // Return mapped person
+            return mapEntityToAggregateInplace(personEntity, personWithKeycloakUser);
+        } catch (e) {
+            // Any other errors
+            // -> rollback and rethrow
+            await transaction.rollback();
+            throw e;
+        }
     }
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
@@ -287,15 +380,18 @@ export class PersonRepository {
     }
 
     private async createKeycloakUser(
-        person: Person<boolean>,
+        person: Person<true>,
         kcUserService: KeycloakUserService,
-    ): Promise<Person<boolean> | DomainError> {
+    ): Promise<Person<true> | DomainError> {
         if (person.keycloakUserId || !person.newPassword || !person.username) {
             return new EntityCouldNotBeCreated('Person');
         }
 
         person.referrer = person.username;
-        const userDo: User<false> = User.createNew(person.username, undefined);
+        const userDo: User<false> = User.createNew(person.username, undefined, {
+            ID_ITSLEARNING: [person.id],
+            ID_OX: [person.id],
+        });
 
         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
         if (!creationResult.ok) {
@@ -324,15 +420,17 @@ export class PersonRepository {
     }
 
     private async createKeycloakUserWithHashedPassword(
-        person: Person<boolean>,
+        person: Person<true>,
         hashedPassword: string,
         kcUserService: KeycloakUserService,
-    ): Promise<Person<boolean> | DomainError> {
+    ): Promise<Person<true> | DomainError> {
         if (person.keycloakUserId || !person.username) {
             return new EntityCouldNotBeCreated('Person');
         }
         person.referrer = person.username;
-        const userDo: User<false> = User.createNew(person.username, undefined);
+        const userDo: User<false> = User.createNew(person.username, undefined, {
+            ID_ITSLEARNING: [person.id],
+        });
 
         const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
             userDo,

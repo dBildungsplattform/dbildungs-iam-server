@@ -412,6 +412,159 @@ describe('OrganisationRepository', () => {
                 expect(result).toHaveLength(1);
             });
         });
+
+        it('should map column names correctly', async () => {
+            const [, traegerId]: [string, string, string] = await createOrgaTree();
+
+            const result: Organisation<true>[] = await sut.findChildOrgasForIds([traegerId]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]?.createdAt).not.toBeUndefined();
+            expect(result[0]?.updatedAt).not.toBeUndefined();
+            expect(result[0]?.administriertVon).not.toBeUndefined();
+            expect(result[0]?.zugehoerigZu).not.toBeUndefined();
+        });
+    });
+
+    describe('findParentOrgas-Methods', () => {
+        type CreateOrgaTreeResult = {
+            root: Organisation<true>;
+            traeger: Organisation<true>;
+            schule: Organisation<true>;
+        };
+        async function createOrgaTree(): Promise<CreateOrgaTreeResult> {
+            const root: Organisation<true> = Organisation.construct(
+                sut.ROOT_ORGANISATION_ID,
+                faker.date.past(),
+                faker.date.recent(),
+                undefined,
+                undefined,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+            );
+
+            const traeger: Organisation<true> = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                root.id,
+                root.id,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+            );
+
+            const schule: Organisation<true> = Organisation.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                traeger.id,
+                traeger.id,
+                faker.string.numeric(6),
+                faker.string.alphanumeric(10),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                OrganisationsTyp.ROOT,
+            );
+
+            await em.persistAndFlush([
+                em.create(OrganisationEntity, mapAggregateToData(root)),
+                em.create(OrganisationEntity, mapAggregateToData(traeger)),
+                em.create(OrganisationEntity, mapAggregateToData(schule)),
+            ]);
+
+            return { root, traeger, schule };
+        }
+
+        describe('findParentOrgasForIds', () => {
+            describe('when no input IDs are given', () => {
+                it('should return empty array', async () => {
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIds([]);
+
+                    expect(result).toHaveLength(0);
+                });
+            });
+
+            describe('when leaf organisation', () => {
+                it('should return all organisations', async () => {
+                    const { schule }: CreateOrgaTreeResult = await createOrgaTree();
+
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIds([schule.id]);
+
+                    expect(result).toHaveLength(3);
+                });
+            });
+
+            describe('when multiple organisation', () => {
+                it('should not return duplicate organisations', async () => {
+                    const { root, traeger, schule }: CreateOrgaTreeResult = await createOrgaTree();
+
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIds([
+                        root.id,
+                        traeger.id,
+                        schule.id,
+                    ]);
+
+                    expect(result).toHaveLength(3);
+                });
+            });
+
+            describe('when root organisation', () => {
+                it('should return only root', async () => {
+                    const { root }: CreateOrgaTreeResult = await createOrgaTree();
+
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIds([root.id]);
+
+                    expect(result).toHaveLength(1);
+                });
+            });
+        });
+
+        describe('findParentOrgasForIdSorted', () => {
+            describe('when leaf organisation', () => {
+                it('should return all organisations sorted by depth asc', async () => {
+                    const { root, traeger, schule }: CreateOrgaTreeResult = await createOrgaTree();
+
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIdSortedByDepthAsc(schule.id);
+
+                    expect(result).toHaveLength(3);
+                    expect(result[0]).toMatchObject({
+                        id: schule.id,
+                    });
+                    expect(result[1]).toMatchObject({
+                        id: traeger.id,
+                    });
+                    expect(result[2]).toMatchObject({
+                        id: root.id,
+                    });
+                });
+            });
+
+            describe('when root organisation', () => {
+                it('should return only root', async () => {
+                    const { root }: CreateOrgaTreeResult = await createOrgaTree();
+
+                    const result: Organisation<true>[] = await sut.findParentOrgasForIdSortedByDepthAsc(root.id);
+
+                    expect(result).toHaveLength(1);
+                });
+            });
+        });
+
+        it('should map column names correctly', async () => {
+            const { root }: CreateOrgaTreeResult = await createOrgaTree();
+
+            const result: Organisation<true>[] = await sut.findParentOrgasForIds([root.id]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]?.createdAt).not.toBeUndefined();
+            expect(result[0]?.updatedAt).not.toBeUndefined();
+        });
     });
 
     describe('findRootDirectChildren', () => {
@@ -633,9 +786,11 @@ describe('OrganisationRepository', () => {
                     name: 'test',
                 }),
             );
-            for (const organisation of organisations) {
-                await sut.save(organisation);
-            }
+            await Promise.all(
+                organisations.map(async (organisation: Organisation<false>) => {
+                    await sut.save(organisation);
+                }),
+            );
         });
 
         it('should return all organisations when no limit and offset are provided', async () => {
@@ -660,10 +815,11 @@ describe('OrganisationRepository', () => {
                 DoFactory.createOrganisationAggregate(false, { name: 'AnotherTest', kennung: 'KENNUNG2' }),
                 DoFactory.createOrganisationAggregate(false, { name: 'TestName2', kennung: 'DIFFERENTKENNUNG' }),
             ];
-
+            /* eslint-disable no-await-in-loop */
             for (const organisation of organisations) {
                 await sut.save(organisation);
             }
+            /* eslint-disable no-await-in-loop */
         });
 
         it('should return organisations that match the search string in name', async () => {
@@ -806,6 +962,62 @@ describe('OrganisationRepository', () => {
                     }),
                 );
             });
+        });
+    });
+
+    describe('isOrgaAParentOfOrgaB', () => {
+        it('should return true if A is parent of B', async () => {
+            const orgaA: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orgaA instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaA));
+            await em.persistAndFlush(mappedOrgaA);
+            const orgaB: Organisation<false> | DomainError = Organisation.createNew(
+                mappedOrgaA.id,
+                mappedOrgaA.id,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orgaB instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaB));
+            await em.persistAndFlush(mappedOrgaB);
+
+            await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(true);
+        });
+
+        it('should return false if A is not parent of B', async () => {
+            const orgaA: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orgaA instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaA));
+            await em.persistAndFlush(mappedOrgaA);
+            const orgaB: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orgaB instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaB));
+            await em.persistAndFlush(mappedOrgaB);
+
+            await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(false);
         });
     });
 });

@@ -22,11 +22,11 @@ import { DBiamFindPersonenuebersichtByPersonIdParams } from './dbiam-find-person
 import { Person } from '../../domain/person.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
-import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
 import { DBiamPersonenuebersichtResponse } from './dbiam-personenuebersicht.response.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { EntityNotFoundError } from '../../../../shared/error/index.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
+import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -138,7 +138,7 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([orga.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([orga.id]);
 
                 await expect(sut.findPersonenuebersichtenByPerson(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
@@ -174,7 +174,7 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([orga.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([orga.id]);
 
                 const result: DBiamPersonenuebersichtResponse = await sut.findPersonenuebersichtenByPerson(
                     params,
@@ -213,7 +213,7 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([faker.string.uuid()]);
 
                 const result: DBiamPersonenuebersichtResponse = await sut.findPersonenuebersichtenByPerson(
                     params,
@@ -226,7 +226,7 @@ describe('Personenuebersicht API Mocked', () => {
 
         describe('when an entity is not found when searching all personenkontexte', () => {
             it('should return Error', async () => {
-                const queryParams: PersonenuebersichtQueryParams = {
+                const bodyParams: PersonenuebersichtBodyParams = {
                     offset: 0,
                     limit: 100,
                 };
@@ -259,9 +259,9 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([orga.id]);
+                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([orga.id]);
 
-                await expect(sut.findPersonenuebersichten(queryParams, personPermissionsMock)).rejects.toThrow(
+                await expect(sut.findPersonenuebersichten(bodyParams, personPermissionsMock)).rejects.toThrow(
                     HttpException,
                 );
             });

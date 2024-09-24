@@ -1,4 +1,4 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityDictionary, EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -29,6 +29,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         kuerzel: organisation.kuerzel,
         typ: organisation.typ,
         traegerschaft: organisation.traegerschaft,
+        emailDomain: organisation.emailDomain,
     };
 }
 
@@ -45,6 +46,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.kuerzel,
         entity.typ,
         entity.traegerschaft,
+        entity.emailDomain,
     );
 }
 
@@ -65,7 +67,6 @@ export class OrganisationRepository {
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
             mapEntityToAggregate(entity),
         );
-
         return [organisations, total];
     }
 
@@ -109,10 +110,71 @@ export class OrganisationRepository {
                 FROM sub_organisations;
             `;
 
-            rawResult = await this.em.execute(query, [ids]);
+            const rawEntities: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [ids]);
+            rawResult = rawEntities.map((data: EntityDictionary<OrganisationEntity>) =>
+                this.em.map(OrganisationEntity, data),
+            );
         }
 
         return rawResult.map(mapEntityToAggregate);
+    }
+
+    public async findParentOrgasForIds(ids: OrganisationID[]): Promise<Organisation<true>[]> {
+        let rawResult: OrganisationEntity[];
+
+        if (ids.length === 0) {
+            return [];
+        } else {
+            const query: string = `
+                WITH RECURSIVE parent_organisations AS (
+                    SELECT *
+                    FROM public.organisation
+                    WHERE id IN (?)
+                    UNION ALL
+                    SELECT o.*
+                    FROM public.organisation o
+                    INNER JOIN parent_organisations po ON po.administriert_von = o.id
+                )
+                SELECT DISTINCT ON (id) *
+                FROM parent_organisations;
+            `;
+
+            const rawEntities: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [ids]);
+            rawResult = rawEntities.map((data: EntityDictionary<OrganisationEntity>) =>
+                this.em.map(OrganisationEntity, data),
+            );
+        }
+
+        return rawResult.map(mapEntityToAggregate);
+    }
+
+    /**
+     * Searches for all upper level organisations for a given organisation by its organisationID
+     * and returns an array sorted by the depth ascending. Element at index 0 is always the organisationIDs organisation,
+     * this way the lowest child is always included. Its direct parent will be at index 1 and so on.
+     */
+    public async findParentOrgasForIdSortedByDepthAsc(id: OrganisationID): Promise<Organisation<true>[]> {
+        const query: string = `
+             WITH RECURSIVE parent_organisations AS (
+                SELECT *, 0 as depth
+                FROM public.organisation
+                WHERE id = (?)
+                UNION ALL
+                SELECT o.*, depth + 1
+                FROM public.organisation o
+                INNER JOIN parent_organisations po ON po.administriert_von = o.id
+            )
+            SELECT *
+            FROM parent_organisations ORDER BY depth;
+        `;
+
+        const rawResult: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [id]);
+
+        const res: Organisation<true>[] = rawResult
+            .map((data: EntityDictionary<OrganisationEntity>) => this.em.map(OrganisationEntity, data))
+            .map(mapEntityToAggregate);
+
+        return res;
     }
 
     public async isOrgaAParentOfOrgaB(
@@ -188,15 +250,12 @@ export class OrganisationRepository {
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
-        if (searchStr) {
-            // searchStr is set, the scope is not paged
-            scope
-                .searchString(searchStr)
-                .setScopeWhereOperator(ScopeOperator.AND)
-                .excludeTyp([excludeOrganisationType]);
-        } else {
-            scope.excludeTyp([excludeOrganisationType]).paged(0, limit);
-        }
+
+        scope
+            .searchString(searchStr)
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .paged(0, limit)
+            .excludeTyp([excludeOrganisationType]);
 
         let foundOrganisations: Organisation<true>[] = [];
         [foundOrganisations] = await this.findBy(scope);
@@ -311,7 +370,7 @@ export class OrganisationRepository {
             await this.findRootDirectChildren();
 
         let parentOrgaId: OrganisationID | undefined = organisationId;
-
+        /* eslint-disable no-await-in-loop */
         while (parentOrgaId) {
             const result: Option<Organisation<true>> = await this.findById(parentOrgaId);
 
@@ -323,6 +382,7 @@ export class OrganisationRepository {
 
             parentOrgaId = result?.administriertVon;
         }
+        /* eslint-disable no-await-in-loop */
 
         return RootDirectChildrenType.OEFFENTLICH;
     }

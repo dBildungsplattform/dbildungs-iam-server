@@ -31,7 +31,7 @@ import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-updat
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { DBiamPersonResponse } from './response/dbiam-person.response.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
-import { DbiamCreatePersonWithContextBodyParams } from './param/dbiam-create-person-with-context.body.params.js';
+import { DbiamCreatePersonWithPersonenkontexteBodyParams } from './param/dbiam-create-person-with-personenkontexte.body.params.js';
 import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
 import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
@@ -39,6 +39,8 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
@@ -83,6 +85,7 @@ export class DbiamPersonenkontextWorkflowController {
         const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
             permissions,
             params.organisationName,
+            undefined,
             params.limit,
         );
 
@@ -132,6 +135,7 @@ export class DbiamPersonenkontextWorkflowController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
     public async commit(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
+        @Query() queryParams: DbiamUpdatePersonenkontexteQueryParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
@@ -144,6 +148,7 @@ export class DbiamPersonenkontextWorkflowController {
                     bodyParams.count,
                     bodyParams.personenkontexte,
                     permissions,
+                    queryParams.personalnummer || undefined,
                 );
 
         if (updateResult instanceof PersonenkontexteUpdateError) {
@@ -204,21 +209,32 @@ export class DbiamPersonenkontextWorkflowController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while creating person with personenkontext.',
     })
-    public async createPersonWithKontext(
-        @Body() params: DbiamCreatePersonWithContextBodyParams,
+    public async createPersonWithPersonenkontexte(
+        @Body() params: DbiamCreatePersonWithPersonenkontexteBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonResponse> {
         //Check all references & permissions then save person
-        const savedPersonWithPersonenkontext: PersonPersonenkontext | DomainError | PersonenkontextCommitError =
-            await this.personenkontextCreationService.createPersonWithPersonenkontext(
-                permissions,
-                params.vorname,
-                params.familienname,
-                params.organisationId,
-                params.rolleId,
-            );
+        const savedPersonWithPersonenkontext:
+            | PersonPersonenkontext
+            | DomainError
+            | PersonenkontextCommitError
+            | DuplicatePersonalnummerError = await this.personenkontextCreationService.createPersonWithPersonenkontexte(
+            permissions,
+            params.vorname,
+            params.familienname,
+            params.createPersonenkontexte,
+            params.personalnummer || undefined,
+            params.befristung || undefined,
+        );
 
         if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
+            throw savedPersonWithPersonenkontext;
+        }
+        if (savedPersonWithPersonenkontext instanceof PersonenkontexteUpdateError) {
+            throw savedPersonWithPersonenkontext;
+        }
+
+        if (savedPersonWithPersonenkontext instanceof DuplicatePersonalnummerError) {
             throw savedPersonWithPersonenkontext;
         }
 
@@ -230,7 +246,7 @@ export class DbiamPersonenkontextWorkflowController {
 
         return new DBiamPersonResponse(
             savedPersonWithPersonenkontext.person,
-            savedPersonWithPersonenkontext.personenkontext,
+            savedPersonWithPersonenkontext.personenkontexte,
         );
     }
 }

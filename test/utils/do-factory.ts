@@ -13,6 +13,7 @@ import { DoBase } from '../../src/shared/types/do-base.js';
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import {
     ServiceProviderKategorie,
+    ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
 import { Person } from '../../src/modules/person/domain/person.js';
@@ -63,6 +64,7 @@ export class DoFactory {
             kuerzel: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
             traegerschaft: Traegerschaft.SONSTIGE,
+            emailDomain: faker.internet.email(),
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
@@ -79,6 +81,9 @@ export class DoFactory {
             createdDate: withId ? faker.date.past() : undefined,
             username: faker.internet.userName(),
             email: faker.internet.email(),
+            externalSystemIDs: {},
+            enabled: true,
+            attributes: {},
         };
 
         return Object.assign(Object.create(User.prototype) as User<boolean>, user, props);
@@ -123,6 +128,7 @@ export class DoFactory {
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
+            serviceProviderData: [],
         };
         return Object.assign(Object.create(RolleAggregate.prototype) as RolleAggregate<boolean>, rolle, props);
     }
@@ -147,6 +153,8 @@ export class DoFactory {
                 'base64',
             ),
             providedOnSchulstrukturknoten: faker.string.uuid(),
+            externalSystem: ServiceProviderSystem.NONE,
+            requires2fa: true,
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,

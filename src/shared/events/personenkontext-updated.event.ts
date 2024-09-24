@@ -1,35 +1,28 @@
-import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
-import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
-import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../types/index.js';
 import { BaseEvent } from './base-event.js';
 
 import { type Organisation } from '../../modules/organisation/domain/organisation.js';
 import { type Person } from '../../modules/person/domain/person.js';
 import { type Personenkontext } from '../../modules/personenkontext/domain/personenkontext.js';
 import { type Rolle } from '../../modules/rolle/domain/rolle.js';
+import { type ServiceProvider } from '../../modules/service-provider/domain/service-provider.js';
+import {
+    type PersonenkontextEventKontextData,
+    type PersonenkontextEventPersonData,
+} from './personenkontext-event.types.js';
 
-export type PersonenkontextUpdatedPersonData = {
-    id: PersonID;
-    vorname: string;
-    familienname: string;
-    referrer?: string;
-};
+export type PersonenkontextUpdatedPersonData = PersonenkontextEventPersonData;
 
-export type PersonenkontextUpdatedData = {
-    id: PersonenkontextID;
-    rolleId: RolleID;
-    rolle: RollenArt;
-    orgaId: OrganisationID;
-    orgaTyp?: OrganisationsTyp;
-    orgaKennung?: string;
-};
+export type PersonenkontextUpdatedData = PersonenkontextEventKontextData;
 
-function mapPersonToData(person: Person<true>): PersonenkontextUpdatedPersonData {
+function mapPersonToData(person: Person<true>, ldapEntryUUID?: string): PersonenkontextUpdatedPersonData {
     return {
         id: person.id,
         vorname: person.vorname,
         familienname: person.familienname,
         referrer: person.referrer,
+        ldapEntryUUID: ldapEntryUUID,
+        keycloakUserId: person.keycloakUserId,
+        email: person.email,
     };
 }
 
@@ -37,7 +30,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
     Personenkontext<true>,
     Organisation<true>,
     Rolle<true>,
-]): PersonenkontextUpdatedData {
+]): PersonenkontextEventKontextData {
     return {
         id: pk.id,
         rolleId: pk.rolleId,
@@ -45,15 +38,16 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
         orgaId: pk.organisationId,
         orgaTyp: orga.typ,
         orgaKennung: orga.kennung,
+        serviceProviderExternalSystems: rolle.serviceProviderData.map((sp: ServiceProvider<true>) => sp.externalSystem),
     };
 }
 
 export class PersonenkontextUpdatedEvent extends BaseEvent {
     public constructor(
-        public readonly person: PersonenkontextUpdatedPersonData,
-        public readonly newKontexte: PersonenkontextUpdatedData[],
-        public readonly removedKontexte: PersonenkontextUpdatedData[],
-        public readonly currentKontexte: PersonenkontextUpdatedData[],
+        public readonly person: PersonenkontextEventPersonData,
+        public readonly newKontexte: PersonenkontextEventKontextData[],
+        public readonly removedKontexte: PersonenkontextEventKontextData[],
+        public readonly currentKontexte: PersonenkontextEventKontextData[],
     ) {
         super();
     }
@@ -63,9 +57,10 @@ export class PersonenkontextUpdatedEvent extends BaseEvent {
         newKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
         removedKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
         currentKontexte: [Personenkontext<true>, Organisation<true>, Rolle<true>][],
+        ldapEntryUUID?: string,
     ): PersonenkontextUpdatedEvent {
         return new PersonenkontextUpdatedEvent(
-            mapPersonToData(person),
+            mapPersonToData(person, ldapEntryUUID),
             newKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             removedKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             currentKontexte.map(mapPersonenkontextAndRolleAggregateToData),

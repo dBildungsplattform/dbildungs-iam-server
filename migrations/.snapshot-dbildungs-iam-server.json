@@ -136,6 +136,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -210,6 +219,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -328,6 +346,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -402,6 +429,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -542,6 +578,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -616,6 +661,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -748,6 +802,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -822,6 +885,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -946,6 +1018,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -1020,6 +1101,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -1146,6 +1236,15 @@
             "06"
           ],
           "mappedType": "enum"
+        },
+        "email_domain": {
+          "name": "email_domain",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
         }
       },
       "name": "organisation",
@@ -1250,6 +1349,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -1324,6 +1432,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -1701,6 +1818,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -1776,6 +1902,15 @@
             "HINWEISE",
             "ANGEBOTE"
           ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
         }
       }
     },
@@ -1828,14 +1963,20 @@
           "nullable": true,
           "mappedType": "uuid"
         },
-        "enabled": {
-          "name": "enabled",
-          "type": "boolean",
+        "status": {
+          "name": "status",
+          "type": "email_address_status_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "mappedType": "boolean"
+          "nativeEnumName": "email_address_status_enum",
+          "enumItems": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ],
+          "mappedType": "enum"
         }
       },
       "name": "email_address",
@@ -1945,6 +2086,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -2019,6 +2169,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -2183,6 +2342,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -2257,6 +2425,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -2418,6 +2595,16 @@
           "nullable": false,
           "default": "'1'",
           "mappedType": "string"
+        },
+        "befristung": {
+          "name": "befristung",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
         }
       },
       "name": "personenkontext",
@@ -2549,6 +2736,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -2623,6 +2819,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -2749,6 +2954,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -2823,6 +3037,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -2954,6 +3177,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -3028,6 +3260,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -3242,6 +3483,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -3316,6 +3566,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -3445,6 +3704,21 @@
           "primary": false,
           "nullable": true,
           "mappedType": "string"
+        },
+        "external_system": {
+          "name": "external_system",
+          "type": "service_provider_system_enum",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "nativeEnumName": "service_provider_system_enum",
+          "enumItems": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ],
+          "mappedType": "enum"
         }
       },
       "name": "service_provider",
@@ -3529,6 +3803,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -3603,6 +3886,15 @@
             "VERWALTUNG",
             "HINWEISE",
             "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
           ]
         }
       }
@@ -3736,6 +4028,15 @@
             "VOLL"
           ]
         },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED"
+          ]
+        },
         "rollen_art_enum": {
           "name": "rollen_art_enum",
           "schema": "public",
@@ -3811,6 +4112,15 @@
             "HINWEISE",
             "ANGEBOTE"
           ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
         }
       }
     }
@@ -3879,6 +4189,15 @@
         "UNBE",
         "TEIL",
         "VOLL"
+      ]
+    },
+    "email_address_status_enum": {
+      "name": "email_address_status_enum",
+      "schema": "public",
+      "items": [
+        "ENABLED",
+        "DISABLED",
+        "REQUESTED"
       ]
     },
     "rollen_art_enum": {
@@ -3955,6 +4274,15 @@
         "VERWALTUNG",
         "HINWEISE",
         "ANGEBOTE"
+      ]
+    },
+    "service_provider_system_enum": {
+      "name": "service_provider_system_enum",
+      "schema": "public",
+      "items": [
+        "NONE",
+        "EMAIL",
+        "ITSLEARNING"
       ]
     }
   }

@@ -9,11 +9,13 @@ export class DBiamPersonResponse {
     @ApiProperty()
     public person!: PersonResponse;
 
-    @ApiProperty()
-    public DBiamPersonenkontextResponse!: DBiamPersonenkontextResponse;
+    @ApiProperty({ type: DBiamPersonenkontextResponse, isArray: true })
+    public dBiamPersonenkontextResponses: DBiamPersonenkontextResponse[];
 
-    public constructor(person: Person<true>, personenkontext: Personenkontext<true>) {
+    public constructor(person: Person<true>, personenkontexte: Personenkontext<true>[]) {
         this.person = new PersonendatensatzResponse(person, true).person;
-        this.DBiamPersonenkontextResponse = new DBiamPersonenkontextResponse(personenkontext);
+        this.dBiamPersonenkontextResponses = personenkontexte.map(
+            (pk: Personenkontext<true>) => new DBiamPersonenkontextResponse(pk),
+        );
     }
 }
