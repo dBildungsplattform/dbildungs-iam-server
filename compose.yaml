@@ -124,6 +124,7 @@ services:
       - PI_PAGE_TITLE=pivacyIDEA
       - PI_SECRET_KEY=secret
       - PI_PEPPER=pepper
+      - PI_LOGLEVEL=DEBUG
     depends_on:
       maria-db:
         condition: service_healthy

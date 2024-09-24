@@ -9,7 +9,8 @@
             "kategorie": "UNTERRICHT",
             "logoMimeType": "image/png",
             "logoBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==",
-            "providedOnSchulstrukturknoten": 1
+            "providedOnSchulstrukturknoten": 1,
+            "requires2fa": true
         },
         {
             "id": 1,
@@ -17,7 +18,8 @@
             "target": "URL",
             "url": "https://example.com/",
             "kategorie": "UNTERRICHT",
-            "providedOnSchulstrukturknoten": 1
+            "providedOnSchulstrukturknoten": 1,
+            "requires2fa": false
         }
     ]
 }

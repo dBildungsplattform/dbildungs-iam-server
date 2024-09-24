@@ -31,4 +31,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
 
     @Property({ nullable: true })
     public keycloakRole?: string;
+
+    @Property()
+    public requires2fa!: boolean;
 }
