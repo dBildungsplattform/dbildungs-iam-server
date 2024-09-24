@@ -1,24 +1,28 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { HttpService } from '@nestjs/axios';
-import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
-
-import { AxiosHeaders, AxiosResponse, AxiosError } from 'axios';
-import { Observable, of, throwError } from 'rxjs';
+import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { ResetTokenPayload, ResetTokenResponse } from './privacy-idea-api.types.js';
+import { HttpService } from '@nestjs/axios';
+import { Test, TestingModule } from '@nestjs/testing';
+import { AxiosError, AxiosHeaders, AxiosResponse } from 'axios';
+import { Observable, of, throwError } from 'rxjs';
+import { ConfigTestModule, DoFactory } from '../../../test/utils/index.js';
+import { PersonenkontextService } from '../personenkontext/domain/personenkontext.service.js';
+import { ServiceProvider } from '../service-provider/domain/service-provider.js';
+import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
+import { SoftwareTokenVerificationError } from './api/error/software-token-verification.error.js';
+import { TokenResetError } from './api/error/token-reset.error.js';
+import { TokenError } from './api/error/token.error.js';
+import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import {
     AssignTokenResponse,
     PrivacyIdeaToken,
+    ResetTokenPayload,
+    ResetTokenResponse,
     TokenOTPSerialResponse,
     TokenVerificationResponse,
     User,
     VerificationResponse,
 } from './privacy-idea-api.types.js';
-import { TokenError } from './api/error/token.error.js';
-import { ConfigTestModule } from '../../../test/utils/index.js';
-import { TokenResetError } from './api/error/token-reset.error.js';
-import { OTPnotValidError } from './api/error/otp-not-valid.error.js';
-import { SoftwareTokenVerificationError } from './api/error/software-token-verification.error.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -286,6 +290,8 @@ const mockAssignTokenResponse: AssignTokenResponse = {
 describe(`PrivacyIdeaAdministrationService`, () => {
     let service: PrivacyIdeaAdministrationService;
     let httpServiceMock: DeepMocked<HttpService>;
+    let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
+    let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -293,11 +299,15 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             providers: [
                 PrivacyIdeaAdministrationService,
                 { provide: HttpService, useValue: createMock<HttpService>() },
+                { provide: ServiceProviderService, useValue: createMock<ServiceProviderService>() },
+                { provide: PersonenkontextService, useValue: createMock<PersonenkontextService>() },
             ],
         }).compile();
 
         service = module.get<PrivacyIdeaAdministrationService>(PrivacyIdeaAdministrationService);
         httpServiceMock = module.get(HttpService);
+        serviceProviderServiceMock = module.get(ServiceProviderService);
+        personenkontextServiceMock = module.get(PersonenkontextService);
     });
 
     describe(`initializeSoftwareToken`, () => {
@@ -490,6 +500,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             );
         });
     });
+
     describe('resetToken', () => {
         it('should reset token successfully', async () => {
             const mockResetUser: string = 'testUser';
@@ -593,6 +604,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             );
         });
     });
+
     describe('assignHardwareToken', () => {
         it('should assign hardware token successfully', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
@@ -794,6 +806,30 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             await expect(service.verifyTokenEnrollment(`test-user`, `123456`)).rejects.toThrow(
                 `Error verifying token: Unknown error occurred`,
             );
+        });
+    });
+
+    describe('requires2fa', () => {
+        const personId: string = faker.string.uuid();
+
+        beforeEach(() => {
+            personenkontextServiceMock.findPersonenkontexteByPersonId.mockResolvedValueOnce([
+                DoFactory.createPersonenkontext(true),
+            ]);
+        });
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it.each([true, false])('should return %s depending on 2fa requirement', async (requires2fa: boolean) => {
+            const serviceProviders: Array<ServiceProvider<true>> = [
+                DoFactory.createServiceProvider(true, { requires2fa }),
+            ];
+            serviceProviderServiceMock.getServiceProvidersByRolleIds.mockResolvedValueOnce(serviceProviders);
+
+            const result: boolean = await service.requires2fa(personId);
+
+            expect(result).toBe(requires2fa);
         });
     });
 });
