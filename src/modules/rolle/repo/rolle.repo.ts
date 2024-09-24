@@ -8,7 +8,7 @@ import {
 } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
-import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenMerkmal, RollenSort, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
@@ -25,6 +25,7 @@ import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkonte
 
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -223,6 +224,8 @@ export class RolleRepo {
         searchStr?: string,
         limit?: number,
         offset?: number,
+        sortField?: RollenSort,
+        sortOrder?: ScopeOrder,
     ): Promise<[Option<Rolle<true>[]>, number]> {
         const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_VERWALTEN],
@@ -247,6 +250,7 @@ export class RolleRepo {
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
                 limit: limit,
                 offset: offset,
+                orderBy: sortField ? { [sortField]: sortOrder === ScopeOrder.ASC ? 'ASC' : 'DESC' } : undefined,
             },
         );
 

@@ -96,6 +96,8 @@ export class RolleController {
             queryParams.searchStr,
             queryParams.limit,
             queryParams.offset,
+            queryParams.sortField,
+            queryParams.sortOrder,
         );
 
         if (!rollen || rollen.length === 0) {

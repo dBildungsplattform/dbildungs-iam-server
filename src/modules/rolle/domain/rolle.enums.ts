@@ -25,3 +25,11 @@ export enum RollenSystemRecht {
     SCHULTRAEGER_VERWALTEN = 'SCHULTRAEGER_VERWALTEN',
     MIGRATION_DURCHFUEHREN = 'MIGRATION_DURCHFUEHREN',
 }
+
+export enum RollenSort {
+    ADMINISTERED_BY_SCHULSTRUKTURKNOTEN_NAME = 'administeredBySchulstrukturknotenName',
+    NAME = 'name',
+    ROLLENART = 'rollenart',
+    SERVICE_PROVIDERS = 'serviceProviders',
+    MERKMALE = 'merkmale',
+}
