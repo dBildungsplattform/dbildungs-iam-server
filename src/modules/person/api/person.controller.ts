@@ -43,7 +43,7 @@ import { PersonenkontextResponse } from '../../personenkontext/api/response/pers
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { LockInfo, Person } from '../domain/person.js';
+import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
@@ -65,6 +65,7 @@ import { PersonLockResponse } from './person-lock.response.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { UserLock } from '../../keycloak-administration/domain/user.lock.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -435,15 +436,22 @@ export class PersonController {
             throw new PersonDomainError(`Person with id ${personId} has no keycloak id`, personId);
         }
 
-        const lockInfo: LockInfo = {
-            lock_locked_from: lockUserBodyParams.locked_from,
-            lock_timestamp: new Date().toISOString(),
+        // const lockInfo: LockInfo = {
+        //     lock_locked_from: lockUserBodyParams.locked_from,
+        //     lock_timestamp: new Date().toISOString(),
+        // };
+
+        const userLock: UserLock<false> = {
+            personId: personId,
+            locked_by: lockUserBodyParams.locked_from,
+            locked_until: new Date(lockUserBodyParams.locked_until),
         };
 
         const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(
+            personId,
             personResult.value.keycloakUserId,
             !lockUserBodyParams.lock,
-            lockInfo,
+            userLock,
         );
         if (!result.ok) {
             throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);
