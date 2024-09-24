@@ -95,6 +95,7 @@ export class DbSeedService {
             data.kuerzel,
             data.typ,
             data.traegerschaft,
+            data.emailDomain,
         );
 
         if (organisation instanceof DomainError) {
@@ -195,6 +196,7 @@ export class DbSeedService {
                 file.logoMimeType,
                 file.keycloakGroup,
                 file.keycloakRole,
+                file.requires2fa,
             );
 
             const persistedServiceProvider: ServiceProvider<true> =

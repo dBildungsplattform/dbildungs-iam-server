@@ -6,6 +6,7 @@ import { EmailFactory } from './domain/email.factory.js';
 import { createMock } from '@golevelup/ts-jest';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
+import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 
 describe('EmailModule', () => {
     let module: TestingModule;
@@ -17,6 +18,7 @@ describe('EmailModule', () => {
                 EmailRepo,
                 EmailFactory,
                 PersonRepository,
+                OrganisationRepository,
                 {
                     provide: ClassLogger,
                     useValue: createMock<ClassLogger>(),
