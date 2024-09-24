@@ -6,13 +6,10 @@ import {
     HttpException,
     HttpStatus,
     Post,
-    Query,
     Put,
+    Query,
     UseFilters,
 } from '@nestjs/common';
-import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
-import { Public } from '../authentication/api/public.decorator.js';
-import { PrivacyIdeaToken, ResetTokenResponse, AssignTokenResponse } from './privacy-idea-api.types.js';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -21,23 +18,28 @@ import {
     ApiInternalServerErrorResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
+    ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { TokenStateResponse } from './token-state.response.js';
-import { TokenInitBodyParams } from './token-init.body.params.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
+import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
+import { Public } from '../authentication/api/public.decorator.js';
+import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { Person } from '../person/domain/person.js';
 import { PersonRepository } from '../person/persistence/person.repository.js';
-import { TokenVerifyBodyParams } from './token-verify.params.js';
 import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
 import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
 import { TokenError } from './api/error/token.error.js';
 import { PrivacyIdeaAdministrationExceptionFilter } from './api/privacy-idea-administration-exception-filter.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
-import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
-import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
+import { TokenRequiredResponse } from './api/token-required.response.js';
+import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
+import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
+import { TokenInitBodyParams } from './token-init.body.params.js';
+import { TokenStateResponse } from './token-state.response.js';
+import { TokenVerifyBodyParams } from './token-verify.params.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
@@ -70,12 +72,12 @@ export class PrivacyIdeaAdministrationController {
 
     @Get('state')
     @HttpCode(HttpStatus.OK)
-    @ApiCreatedResponse({ description: 'The token was successfully created.', type: TokenStateResponse })
+    @ApiCreatedResponse({ description: 'The token state was successfully returned.', type: TokenStateResponse })
     @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create token.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to create token.' })
-    @ApiNotFoundResponse({ description: 'Insufficient permissions to create token.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a token.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get token state.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get token state.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to get token state.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while retrieving token state.' })
     public async getTwoAuthState(
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
@@ -173,6 +175,27 @@ export class PrivacyIdeaAdministrationController {
         const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
 
         await this.privacyIdeaAdministrationService.verifyTokenEnrollment(referrer, params.otp);
+    }
+
+    @Get('required')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description: 'The requirement was successfully returned.',
+        type: TokenRequiredResponse,
+    })
+    @ApiBadRequestResponse({ description: 'A username was not given or not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get requirement information.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get requirement information.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to get requirement information.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting requirement information.' })
+    public async requiresTwoFactorAuthentication(
+        @Query('personId') personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<TokenRequiredResponse> {
+        if (personId !== permissions.personFields.id) await this.getReferrerIfAllowedOrSelf(personId, permissions);
+
+        const requires2fa: boolean = await this.privacyIdeaAdministrationService.requires2fa(personId);
+        return new TokenRequiredResponse(requires2fa);
     }
 
     private async getReferrerIfAllowed(personId: string, permissions: PersonPermissions): Promise<string> {

@@ -152,6 +152,7 @@ export class DoFactory {
                 'base64',
             ),
             providedOnSchulstrukturknoten: faker.string.uuid(),
+            requires2fa: true,
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,
