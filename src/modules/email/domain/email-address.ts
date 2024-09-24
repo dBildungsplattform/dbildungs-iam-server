@@ -29,7 +29,12 @@ export class EmailAddress<WasPersisted extends boolean> {
         return new EmailAddress(id, createdAt, updatedAt, personId, address, enabled, oxUserId);
     }
 
-    public static createNew(personId: PersonID, address: string, enabled: EmailAddressStatus, oxUserId?: string): EmailAddress<false> {
+    public static createNew(
+        personId: PersonID,
+        address: string,
+        enabled: EmailAddressStatus,
+        oxUserId?: string,
+    ): EmailAddress<false> {
         return new EmailAddress(undefined, undefined, undefined, personId, address, enabled, oxUserId);
     }
 

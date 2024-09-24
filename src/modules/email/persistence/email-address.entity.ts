@@ -23,5 +23,4 @@ export class EmailAddressEntity extends TimestampedEntity {
 
     @Enum({ items: () => EmailAddressStatus, nativeEnumName: 'email_address_status_enum' })
     public status!: EmailAddressStatus;
-
 }

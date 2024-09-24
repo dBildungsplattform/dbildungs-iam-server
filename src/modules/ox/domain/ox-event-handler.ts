@@ -24,7 +24,7 @@ import { EmailAddressChangedEvent } from '../../../shared/events/email-address-c
 import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
 import { GetDataForUserAction, GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
-import {UserIdParams, UserNameParams} from '../actions/user/ox-user.types.js';
+import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 
 @Injectable()
 export class OxEventHandler extends PersonenkontextCreatedEventHandler {
@@ -81,7 +81,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             `Received EmailAddressChangedEvent, personId:${event.personId}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
         );
 
-       /* if (!this.ENABLED) {
+        /* if (!this.ENABLED) {
             this.logger.info('Not enabled, ignoring event');
             return;
         }*/
@@ -89,7 +89,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         await this.onNeedsChangedEmail(event.personId);
     }
 
-   /* @EventHandler(EmailAddressGeneratedEvent)
+    /* @EventHandler(EmailAddressGeneratedEvent)
     public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
@@ -204,7 +204,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         const getDataParams: UserIdParams = {
             contextId: this.contextID,
             //userId: person.oxUserId,
-            userId: '19',   //fake just for testing
+            userId: '19', //fake just for testing
             login: this.authUser,
             password: this.authPassword,
         };

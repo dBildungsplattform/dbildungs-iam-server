@@ -1,41 +1,43 @@
-import {randomUUID} from 'node:crypto';
-import {EntityManager, Loaded, RequiredEntityData} from '@mikro-orm/postgresql';
-import {Injectable} from '@nestjs/common';
-import {ConfigService} from '@nestjs/config';
-import {DataConfig} from '../../../shared/config/data.config.js';
-import {ServerConfig} from '../../../shared/config/server.config.js';
+import { randomUUID } from 'node:crypto';
+import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { DataConfig } from '../../../shared/config/data.config.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
 import {
     DomainError,
     EntityCouldNotBeCreated,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
 } from '../../../shared/error/index.js';
-import {ScopeOperator, ScopeOrder} from '../../../shared/persistence/scope.enums.js';
-import {PersonID} from '../../../shared/types/aggregate-ids.types.js';
-import {PermittedOrgas, PersonPermissions} from '../../authentication/domain/person-permissions.js';
-import {KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User} from '../../keycloak-administration/index.js';
-import {RollenSystemRecht} from '../../rolle/domain/rolle.enums.js';
-import {LockInfo, Person} from '../domain/person.js';
-import {PersonEntity} from './person.entity.js';
-import {PersonScope} from './person.scope.js';
-import {EventService} from '../../../core/eventbus/index.js';
-import {PersonDeletedEvent} from '../../../shared/events/person-deleted.event.js';
-import {PersonRenamedEvent} from '../../../shared/events/person-renamed-event.js';
-import {PersonenkontextUpdatedEvent} from '../../../shared/events/personenkontext-updated.event.js';
-import {PersonenkontextEventKontextData} from '../../../shared/events/personenkontext-event.types.js';
-import {DuplicatePersonalnummerError} from '../../../shared/error/duplicate-personalnummer.error.js';
-import { EmailAddressStatus} from '../../email/domain/email-address.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { LockInfo, Person } from '../domain/person.js';
+import { PersonEntity } from './person.entity.js';
+import { PersonScope } from './person.scope.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.status === EmailAddressStatus.ENABLED || emailAddress.status === EmailAddressStatus.REQUESTED) return emailAddress.address;
+        if (emailAddress.status === EmailAddressStatus.ENABLED || emailAddress.status === EmailAddressStatus.REQUESTED)
+            return emailAddress.address;
     }
     return undefined;
 }
 
-export function getOxUserId(entity: PersonEntity): string| undefined {
+export function getOxUserId(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.status === EmailAddressStatus.ENABLED || emailAddress.status === EmailAddressStatus.REQUESTED) return emailAddress.oxUserId;
+        if (emailAddress.status === EmailAddressStatus.ENABLED || emailAddress.status === EmailAddressStatus.REQUESTED)
+            return emailAddress.oxUserId;
     }
     return undefined;
 }
