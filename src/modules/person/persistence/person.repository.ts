@@ -471,7 +471,7 @@ export class PersonRepository {
         personId: string,
         familienname: string,
         vorname: string,
-        personalnummer: string,
+        personalnummer: string | undefined,
         lastModified: Date,
         revision: string,
         permissions: PersonPermissions,
