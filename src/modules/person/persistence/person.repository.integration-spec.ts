@@ -1126,7 +1126,7 @@ describe('PersonRepository Integration', () => {
                     PersonenkontextEntity,
                     personenkontextData,
                 );
-                await em.persistAndFlush(personenkontextEntity)
+                await em.persistAndFlush(personenkontextEntity);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                     all: false,
                     orgaIds: [organisation.id],
