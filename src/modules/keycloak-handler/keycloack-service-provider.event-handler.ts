@@ -61,12 +61,14 @@ export class KeycloackServiceProviderHandler {
         const currentRolleIDs: RolleID[] = currentKontexte
             .map((kontext: PersonenkontextUpdatedData) => kontext.rolleId)
             .filter((id: RolleID) => id && !newRolleIDs.includes(id));
-
+        /* eslint-disable no-await-in-loop */
         if (person.keycloakUserId) {
+            const promises: Promise<void>[] = [];
+
             if (newRolleIDs.length > 0 && currentKontexte.length) {
                 for (const newRolle of newRolleIDs) {
                     if (!deleteRolleIDs.includes(newRolle)) {
-                        await this.updateUserGroups(person.keycloakUserId, currentRolleIDs, newRolle);
+                        promises.push(this.updateUserGroups(person.keycloakUserId, currentRolleIDs, newRolle));
                     }
                 }
             }
@@ -74,11 +76,14 @@ export class KeycloackServiceProviderHandler {
             if (deleteRolleIDs.length > 0 && removedKontexte.length) {
                 for (const deleteRolle of deleteRolleIDs) {
                     if (!newRolleIDs.includes(deleteRolle)) {
-                        await this.updateUserGroups(person.keycloakUserId, currentRolleIDs, deleteRolle, true);
+                        promises.push(this.updateUserGroups(person.keycloakUserId, currentRolleIDs, deleteRolle, true));
                     }
                 }
             }
+
+            await Promise.all(promises);
         }
+        /* eslint-disable no-await-in-loop */
     }
 
     private async updateUserGroups(
