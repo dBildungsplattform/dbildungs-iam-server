@@ -50,6 +50,7 @@ describe('ServiceProviderFactory', () => {
                     logoMimeType: undefined,
                     keycloakGroup: keycloakGroup,
                     keycloakRole: keycloakRole,
+                    requires2fa: false,
                 };
                 const serviceProvider: ServiceProvider<true> = sut.construct(
                     id,
@@ -64,6 +65,7 @@ describe('ServiceProviderFactory', () => {
                     undefined,
                     keycloakGroup,
                     keycloakRole,
+                    false,
                 );
 
                 expect(serviceProvider).toEqual(example);

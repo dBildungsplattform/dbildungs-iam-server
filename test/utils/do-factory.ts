@@ -63,6 +63,7 @@ export class DoFactory {
             kuerzel: faker.lorem.word(),
             typ: OrganisationsTyp.SONSTIGE,
             traegerschaft: Traegerschaft.SONSTIGE,
+            emailDomain: faker.internet.email(),
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
         };
@@ -151,6 +152,7 @@ export class DoFactory {
                 'base64',
             ),
             providedOnSchulstrukturknoten: faker.string.uuid(),
+            requires2fa: true,
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,

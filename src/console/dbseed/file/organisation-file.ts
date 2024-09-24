@@ -18,4 +18,6 @@ export class OrganisationFile {
     public typ?: OrganisationsTyp;
 
     public traegerschaft?: Traegerschaft;
+
+    public emailDomain?: string;
 }
