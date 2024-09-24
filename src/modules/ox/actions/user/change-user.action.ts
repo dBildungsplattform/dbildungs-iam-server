@@ -23,36 +23,25 @@ export type ChangeUserResponse = {
 };
 
 export type ChangeUserResponseBody = {
-    createResponse: {
-        return: {
-            id: string;
-            aliases: [];
-            email1: string;
-            email2: string;
-            email3: string;
-            primaryEmail: string;
-
-            name: string;
-            given_name: string;
-            sur_name: string;
-            mailenabled: boolean;
-        };
-    };
+    body: undefined,
 };
 
+/*type Alias = {
+    'ns6:aliases': string;
+}
 type TnsUsrData = {
-    [key: string]: any;
-    'tns:aliases'?: object;
+    [key: string]: string | object | undefined;
+    aliases?: Alias[];
 };
 type TnsChange = {
-    [key: string]: any;
+    [key: string]: string | object;
     'tns:usrdata': TnsUsrData;
 };
 type ChangeRequestObj = {
     'tns:change': TnsChange;
-};
+};*/
 
-export class ChangeUserAction extends OxBaseAction<ChangeUserResponseBody, ChangeUserResponse> {
+export class ChangeUserAction extends OxBaseAction<ChangeUserResponseBody, void> {
     public override action: string = 'http://soap.admin.openexchange.com/change';
 
     public override soapServiceName: string = 'OXUserService';
@@ -62,13 +51,13 @@ export class ChangeUserAction extends OxBaseAction<ChangeUserResponseBody, Chang
     }
 
     public override buildRequest(): object {
-        const aliasesObj: object[] = [];
+      /*  const aliasesObj: Alias[] = [];
         for (const alias of this.params.aliases) {
             aliasesObj.push({
                 'ns6:aliases': alias,
             });
-        }
-        const requestObj: ChangeRequestObj = {
+        }*/
+        const requestObj: object = {
             'tns:change': {
                 '@_xmlns:tns': TNS_SCHEMA,
                 '@_xmlns:ns2': NS2_SCHEMA,
@@ -83,6 +72,7 @@ export class ChangeUserAction extends OxBaseAction<ChangeUserResponseBody, Chang
                     'ns6:name': this.params.username,
                     'ns6:primaryEmail': this.params.primaryEmail,
                     'ns6:defaultSenderAddress': this.params.defaultSenderAddress,
+                    'ns6:aliases': this.params.aliases,
                 },
 
                 'tns:auth': {
@@ -91,22 +81,24 @@ export class ChangeUserAction extends OxBaseAction<ChangeUserResponseBody, Chang
                 },
             },
         };
-        requestObj['tns:change']['tns:usrdata']['tns:aliases'] = aliasesObj;
+        //requestObj['tns:change']['tns:usrdata']
+      /*  const usrDataWithoutAliasesObj = {
+                'ns6:email1': this.params.email1,
+                'ns6:name': this.params.username,
+                'ns6:primaryEmail': this.params.primaryEmail,
+                'ns6:defaultSenderAddress': this.params.defaultSenderAddress,
+            };
+        const usrDataObj: TnsUsrData = { usrDataWithoutAliasesObj, aliasesObj};
+        requestObj['tns:change']['tns:usrdata'] = usrDataObj;*/
 
         return requestObj;
     }
 
-    public override parseBody(body: ChangeUserResponseBody): Result<ChangeUserResponse, DomainError> {
+    public override parseBody(): Result<void, DomainError> {
+        // response does not contain relevant data
         return {
             ok: true,
-            value: {
-                id: body.createResponse.return.id,
-                firstname: body.createResponse.return.given_name,
-                lastname: body.createResponse.return.sur_name,
-                username: body.createResponse.return.name,
-                primaryEmail: body.createResponse.return.primaryEmail,
-                mailenabled: body.createResponse.return.mailenabled,
-            },
+            value: undefined,
         };
     }
 }

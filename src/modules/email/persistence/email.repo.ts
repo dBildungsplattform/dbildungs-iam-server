@@ -14,6 +14,7 @@ function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntity
         id: emailAddress.id,
         personId: rel(PersonEntity, emailAddress.personId),
         address: emailAddress.address,
+        oxUserId: emailAddress.oxUserID ?? undefined,
         status: emailAddress.status,
     };
 }
@@ -26,6 +27,7 @@ function mapEntityToAggregate(entity: EmailAddressEntity): EmailAddress<boolean>
         entity.personId.id,
         entity.address,
         entity.status,
+        entity.oxUserId,
     );
 }
 

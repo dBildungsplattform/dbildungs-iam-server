@@ -1900,6 +1900,15 @@
           "nullable": true,
           "mappedType": "uuid"
         },
+        "ox_user_id": {
+          "name": "ox_user_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
         "status": {
           "name": "status",
           "type": "email_address_status_enum",

@@ -1,7 +1,7 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
 import { OxBaseAction } from '../ox-base-action.js';
-import { UserNameParams } from './ox-user.types.js';
+import {UserIdParams} from './ox-user.types.js';
 
 export type GetDataForUserResponse = {
     id: string;
@@ -36,7 +36,7 @@ export class GetDataForUserAction extends OxBaseAction<GetDataForUserResponseBod
 
     public override soapServiceName: string = 'OXUserService';
 
-    public constructor(private readonly params: UserNameParams) {
+    public constructor(private readonly params: UserIdParams) {
         super();
     }
 
@@ -52,7 +52,7 @@ export class GetDataForUserAction extends OxBaseAction<GetDataForUserResponseBod
                 },
 
                 'tns:user': {
-                    'ns6:name': this.params.userName,
+                    'ns6:id': this.params.userId,
                 },
 
                 'tns:auth': {

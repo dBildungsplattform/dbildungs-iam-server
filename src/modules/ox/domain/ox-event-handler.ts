@@ -21,10 +21,10 @@ import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { OxUserCreatedEvent } from '../../../shared/events/ox-user-created.event.js';
 import { OXContextID, OXContextName } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
-import { ChangeUserAction, ChangeUserParams, ChangeUserResponse } from '../actions/user/change-user.action.js';
+import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
 import { GetDataForUserAction, GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
-import { UserNameParams } from '../actions/user/ox-user.types.js';
+import {UserIdParams, UserNameParams} from '../actions/user/ox-user.types.js';
 
 @Injectable()
 export class OxEventHandler extends PersonenkontextCreatedEventHandler {
@@ -58,21 +58,38 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         this.contextName = oxConfig.CONTEXT_NAME;
     }
 
+    //Just for simplified testing, will be removed before merge on main
+    @EventHandler(EmailAddressGeneratedEvent)
+    public fake(event: EmailAddressGeneratedEvent): void {
+        this.logger.info(
+            `FAKE: Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
+        );
+        this.eventService.publish(
+            new EmailAddressChangedEvent(
+                '4e814e40-70e3-4369-ab6d-adcef9bcc53e',
+                '1',
+                'aob.meier@schule-sh.de',
+                '2',
+                'bob.meier@schule-sh.de',
+            ),
+        );
+    }
+
     @EventHandler(EmailAddressChangedEvent)
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressChangedEvent, personId:${event.personId}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
         );
 
-        if (!this.ENABLED) {
+       /* if (!this.ENABLED) {
             this.logger.info('Not enabled, ignoring event');
             return;
-        }
+        }*/
 
-        await this.handlePerson(event.personId);
+        await this.onNeedsChangedEmail(event.personId);
     }
 
-    @EventHandler(EmailAddressGeneratedEvent)
+   /* @EventHandler(EmailAddressGeneratedEvent)
     public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
@@ -84,7 +101,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         }
 
         await this.handlePerson(event.personId);
-    }
+    }*/
 
     protected async onNeedsEmail(personId: PersonID): Promise<void> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
@@ -146,6 +163,9 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
 
         this.logger.info(`User created in OX, userId:${result.value.id}, email:${result.value.primaryEmail}`);
 
+        person.oxUserId = result.value.id;
+        await this.personRepository.update(person);
+
         this.eventService.publish(
             new OxUserCreatedEvent(
                 personId,
@@ -170,10 +190,21 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             this.logger.error(`Person with personId:${personId} has no email-address`);
             return;
         }
+        if (!person.oxUserId) {
+            this.logger.error(`Person with personId:${personId} has no OXUserId`);
+            return;
+        }
+        if (!person.referrer) {
+            this.logger.error(
+                `Person with personId:${personId} has no keycloakUsername/referrer: Cannot Change Email-Address In OX`,
+            );
+            return;
+        }
 
-        const getDataParams: UserNameParams = {
+        const getDataParams: UserIdParams = {
             contextId: this.contextID,
-            userName: person.vorname,
+            //userId: person.oxUserId,
+            userId: '19',   //fake just for testing
             login: this.authUser,
             password: this.authPassword,
         };
@@ -184,7 +215,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
 
         if (!getDataResult.ok) {
             this.logger.error(
-                `Cannot get data for user with name:${person.vorname} from OX, Aborting Email-Address Change`,
+                `Cannot get data for user with username:${person.referrer} from OX, Aborting Email-Address Change`,
             );
             return;
         }
@@ -204,7 +235,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
 
         const action: ChangeUserAction = new ChangeUserAction(params);
 
-        const result: Result<ChangeUserResponse, DomainError> = await this.oxService.send(action);
+        const result: Result<void, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
             this.logger.error(`Could not change email-address for user in OX, error: ${result.error.message}`);
@@ -212,7 +243,7 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
         }
 
         this.logger.info(
-            `Changed primary email-address in OX for user, userId:${result.value.id}, email:${result.value.primaryEmail}`,
+            `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${person.email}`,
         );
 
         if (!person.referrer) {
@@ -225,11 +256,11 @@ export class OxEventHandler extends PersonenkontextCreatedEventHandler {
             new OxUserChangedEvent(
                 personId,
                 person.referrer,
-                result.value.id,
-                result.value.username,
+                getDataResult.value.id,
+                getDataResult.value.username,
                 this.contextID,
                 this.contextName,
-                result.value.primaryEmail,
+                getDataResult.value.primaryEmail,
             ),
         );
     }

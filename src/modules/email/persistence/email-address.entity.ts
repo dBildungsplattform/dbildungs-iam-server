@@ -18,6 +18,10 @@ export class EmailAddressEntity extends TimestampedEntity {
     @Property({ primary: true, nullable: false, unique: true })
     public address!: string;
 
+    @Property({ nullable: true })
+    public oxUserId?: string;
+
     @Enum({ items: () => EmailAddressStatus, nativeEnumName: 'email_address_status_enum' })
     public status!: EmailAddressStatus;
+
 }
