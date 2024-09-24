@@ -41,7 +41,7 @@ export class UserLockRepository {
     }
 
     public async findById(id: string): Promise<Option<UserLock<true>>> {
-        const user: Option<UserLockEntity> = await this.em.findOne(UserLockEntity, { id });
+        const user: Option<UserLockEntity> = await this.em.findOne(UserLockEntity, { personId: id });
         if (user) {
             return mapEntityToAggregate(user);
         }
@@ -93,7 +93,7 @@ export class UserLockRepository {
     }
 
     public async deleteUserLock(personId: string): Promise<Result<void, DomainError>> {
-        await this.em.nativeDelete(UserLockEntity, personId);
+        await this.em.nativeDelete(UserLockEntity, { personId: personId });
         return { ok: true, value: undefined };
     }
 }
