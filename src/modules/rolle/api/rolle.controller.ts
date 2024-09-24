@@ -60,6 +60,8 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { RollenMerkmal, RollenSort } from '../domain/rolle.enums.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -90,25 +92,35 @@ export class RolleController {
         @Query() queryParams: RolleNameQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<RolleWithServiceProvidersResponse>> {
+        const shouldSortBySchulstrukturknotenName: boolean =
+            queryParams.sortField === RollenSort.ADMINISTERED_BY_SCHULSTRUKTURKNOTEN_NAME;
+        const shouldSortByServiceProviders: boolean = queryParams.sortField === RollenSort.SERVICE_PROVIDERS;
+        const shouldSortByMerkmale: boolean = queryParams.sortField === RollenSort.MERKMALE;
+
         const [rollen, total]: [Option<Rolle<true>[]>, number] = await this.rolleRepo.findRollenAuthorized(
             permissions,
             false,
             queryParams.searchStr,
             queryParams.limit,
             queryParams.offset,
-            queryParams.sortField,
-            queryParams.sortOrder,
+            shouldSortBySchulstrukturknotenName || shouldSortByServiceProviders || shouldSortByMerkmale
+                ? undefined
+                : queryParams.sortField,
+            shouldSortBySchulstrukturknotenName || shouldSortByServiceProviders || shouldSortByMerkmale
+                ? undefined
+                : queryParams.sortOrder,
         );
 
         if (!rollen || rollen.length === 0) {
             const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
                 total: 0,
-                offset: 0,
+                offset: queryParams.offset ?? 0,
                 limit: queryParams.limit ?? 0,
                 items: [],
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
+
         const administeredBySchulstrukturknotenIds: string[] = rollen.map(
             (r: Rolle<true>) => r.administeredBySchulstrukturknoten,
         );
@@ -116,24 +128,62 @@ export class RolleController {
             administeredBySchulstrukturknotenIds,
         );
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
-        const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
-            (r: Rolle<true>) => {
-                const sps: ServiceProvider<true>[] = r.serviceProviderIds
-                    .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
-                    .filter(Boolean) as ServiceProvider<true>[];
+        let rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map((r: Rolle<true>) => {
+            let sps: ServiceProvider<true>[] = r.serviceProviderIds
+                .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
+                .filter(Boolean) as ServiceProvider<true>[];
 
-                const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
-                    r.administeredBySchulstrukturknoten,
-                );
+            sps = sps.sort((a: ServiceProvider<true>, b: ServiceProvider<true>) =>
+                queryParams.sortOrder === ScopeOrder.ASC ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name),
+            );
 
-                return new RolleWithServiceProvidersResponse(
-                    r,
-                    sps,
-                    administeredBySchulstrukturknoten?.name,
-                    administeredBySchulstrukturknoten?.kennung,
-                );
-            },
-        );
+            const sortedMerkmale: RollenMerkmal[] = r.merkmale.sort((a: RollenMerkmal, b: RollenMerkmal) =>
+                queryParams.sortOrder === ScopeOrder.ASC ? a.localeCompare(b) : b.localeCompare(a),
+            );
+
+            const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
+                r.administeredBySchulstrukturknoten,
+            );
+
+            return new RolleWithServiceProvidersResponse(
+                r,
+                sps,
+                sortedMerkmale,
+                administeredBySchulstrukturknoten?.name,
+                administeredBySchulstrukturknoten?.kennung,
+            );
+        });
+
+        if (shouldSortBySchulstrukturknotenName) {
+            rollenWithServiceProvidersResponses = rollenWithServiceProvidersResponses.sort((a, b) => {
+                const nameA = a.administeredBySchulstrukturknotenName ?? '';
+                const nameB = b.administeredBySchulstrukturknotenName ?? '';
+                return queryParams.sortOrder === ScopeOrder.ASC
+                    ? nameA.localeCompare(nameB)
+                    : nameB.localeCompare(nameA);
+            });
+        }
+
+        if (shouldSortByServiceProviders) {
+            rollenWithServiceProvidersResponses = rollenWithServiceProvidersResponses.sort((a, b) => {
+                const serviceProviderNameA = a.serviceProviders[0]?.name ?? '';
+                const serviceProviderNameB = b.serviceProviders[0]?.name ?? '';
+                return queryParams.sortOrder === ScopeOrder.ASC
+                    ? serviceProviderNameA.localeCompare(serviceProviderNameB)
+                    : serviceProviderNameB.localeCompare(serviceProviderNameA);
+            });
+        }
+
+        if (shouldSortByMerkmale) {
+            rollenWithServiceProvidersResponses = rollenWithServiceProvidersResponses.sort((a, b) => {
+                const merkmalA = a.merkmale[0] ?? '';
+                const merkmalB = b.merkmale[0] ?? '';
+                return queryParams.sortOrder === ScopeOrder.ASC
+                    ? merkmalA.localeCompare(merkmalB)
+                    : merkmalB.localeCompare(merkmalA);
+            });
+        }
+
         const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
             total: total,
             offset: queryParams.offset ?? 0,
