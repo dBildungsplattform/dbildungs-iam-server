@@ -412,6 +412,18 @@ describe('OrganisationRepository', () => {
                 expect(result).toHaveLength(1);
             });
         });
+
+        it('should map column names correctly', async () => {
+            const [, traegerId]: [string, string, string] = await createOrgaTree();
+
+            const result: Organisation<true>[] = await sut.findChildOrgasForIds([traegerId]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]?.createdAt).not.toBeUndefined();
+            expect(result[0]?.updatedAt).not.toBeUndefined();
+            expect(result[0]?.administriertVon).not.toBeUndefined();
+            expect(result[0]?.zugehoerigZu).not.toBeUndefined();
+        });
     });
 
     describe('findParentOrgas-Methods', () => {
@@ -542,6 +554,16 @@ describe('OrganisationRepository', () => {
                     expect(result).toHaveLength(1);
                 });
             });
+        });
+
+        it('should map column names correctly', async () => {
+            const { root }: CreateOrgaTreeResult = await createOrgaTree();
+
+            const result: Organisation<true>[] = await sut.findParentOrgasForIds([root.id]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]?.createdAt).not.toBeUndefined();
+            expect(result[0]?.updatedAt).not.toBeUndefined();
         });
     });
 
