@@ -27,7 +27,6 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
-import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { Observable } from 'rxjs';
@@ -312,63 +311,229 @@ describe('Rolle API', () => {
             expect(pagedResponse.items).toContainEqual(expect.objectContaining({ name: testRolle.name }));
         });
 
-        it('should return rollen with serviceproviders', async () => {
-            const [sp1, sp2, sp3]: [ServiceProvider<true>, ServiceProvider<true>, ServiceProvider<true>] =
-                await Promise.all([
-                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                    serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
-                ]);
+        it('should sort rollen by first service provider name in des order', async () => {
+            const [sp1, sp2]: [ServiceProvider<true>, ServiceProvider<true>] = await Promise.all([
+                serviceProviderRepo.save(DoFactory.createServiceProvider(false, { name: 'A Provider' })),
+                serviceProviderRepo.save(DoFactory.createServiceProvider(false, { name: 'B Provider' })),
+            ]);
 
             const orgaIds: string[] = (
                 await Promise.all([
-                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp1.id] })),
-                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp2.id, sp3.id] })),
-                    rolleRepo.save(DoFactory.createRolle(false)),
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp1.id, sp2.id] })),
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp2.id] })),
                 ])
             ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds,
+            });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
+                .query({ sortField: 'serviceProviders', sortOrder: 'desc' })
                 .send();
 
             expect(response.status).toBe(200);
             expect(response.body).toBeInstanceOf(Object);
+
             const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
                 response.body as PagedResponse<RolleWithServiceProvidersResponse>;
-            expect(pagedResponse.items).toHaveLength(3);
 
-            pagedResponse.items.forEach((item: RolleWithServiceProvidersResponse) => {
-                item.serviceProviders.sort((a: ServiceProviderIdNameResponse, b: ServiceProviderIdNameResponse) =>
-                    a.id.localeCompare(b.id),
-                );
+            expect(pagedResponse.items).toBeDefined();
+            expect(pagedResponse.items).toHaveLength(2);
+
+            expect(pagedResponse.items[0]?.serviceProviders[0]?.name).toBe('B Provider');
+            expect(pagedResponse.items[0]?.serviceProviders[1]?.name).toBe('A Provider');
+            expect(pagedResponse.items[1]?.serviceProviders[0]?.name).toBe('B Provider');
+        });
+
+        it('should sort rollen by administeredBySchulstrukturknotenName in asc order', async () => {
+            const org1: OrganisationEntity = new OrganisationEntity();
+            org1.name = 'A School';
+            const org2: OrganisationEntity = new OrganisationEntity();
+            org2.name = 'B School';
+            await em.persistAndFlush([org1, org2]);
+
+            await rolleRepo.save(DoFactory.createRolle(false, { administeredBySchulstrukturknoten: org1.id }));
+            await rolleRepo.save(DoFactory.createRolle(false, { administeredBySchulstrukturknoten: org2.id }));
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [org1.id, org2.id],
             });
 
-            expect(pagedResponse.items).toContainEqual(
-                expect.objectContaining({ serviceProviders: [{ id: sp1.id, name: sp1.name }] }),
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ sortField: 'administeredBySchulstrukturknotenName', sortOrder: 'asc' })
+                .send();
+
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items[0]?.administeredBySchulstrukturknotenName).toBe('A School');
+            expect(pagedResponse.items[1]?.administeredBySchulstrukturknotenName).toBe('B School');
+        });
+
+        it('should sort rollen by first service provider name in desc order', async () => {
+            const [sp1, sp2]: [ServiceProvider<true>, ServiceProvider<true>] = await Promise.all([
+                serviceProviderRepo.save(DoFactory.createServiceProvider(false, { name: 'A Provider' })),
+                serviceProviderRepo.save(DoFactory.createServiceProvider(false, { name: 'B Provider' })),
+            ]);
+            const orgaIds: string[] = (
+                await Promise.all([
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp1.id, sp2.id] })),
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp2.id] })),
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [] })),
+                ])
+            ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds,
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ sortField: 'serviceProviders', sortOrder: 'desc' })
+                .send();
+
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items).toBeDefined();
+            expect(pagedResponse.items).toHaveLength(3);
+
+            expect(pagedResponse.items[0]?.serviceProviders[0]?.name).toBe('B Provider');
+            expect(pagedResponse.items[1]?.serviceProviders[0]?.name).toBe('B Provider');
+            expect(pagedResponse.items[2]?.serviceProviders[0]?.name).toBe(undefined);
+        });
+        it('should sort rollen by first service provider name in asc order', async () => {
+            const [sp1, sp2]: [ServiceProvider<true>, ServiceProvider<true>] = await Promise.all([
+                serviceProviderRepo.save(DoFactory.createServiceProvider(false, { name: 'A Provider' })),
+                serviceProviderRepo.save(DoFactory.createServiceProvider(false, { name: 'B Provider' })),
+            ]);
+            const orgaIds: string[] = (
+                await Promise.all([
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp1.id, sp2.id] })),
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp2.id] })),
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [] })),
+                ])
+            ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds,
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ sortField: 'serviceProviders', sortOrder: 'asc' })
+                .send();
+
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items).toBeDefined();
+            expect(pagedResponse.items).toHaveLength(3);
+
+            expect(pagedResponse.items[0]?.serviceProviders[0]?.name).toBe(undefined);
+
+            expect(pagedResponse.items[1]?.serviceProviders[0]?.name).toBe('A Provider');
+            expect(pagedResponse.items[2]?.serviceProviders[0]?.name).toBe('B Provider');
+        });
+
+        it('should sort rollen by merkmale in desc order', async () => {
+            const rolle1: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, { merkmale: [RollenMerkmal.KOPERS_PFLICHT] }),
             );
-            expect(pagedResponse.items).toContainEqual(
-                expect.objectContaining({
-                    serviceProviders: [
-                        { id: sp2.id, name: sp2.name },
-                        { id: sp3.id, name: sp3.name },
-                    ].sort(
-                        (
-                            a: {
-                                id: string;
-                                name: string;
-                            },
-                            b: {
-                                id: string;
-                                name: string;
-                            },
-                        ) => a.id.localeCompare(b.id),
-                    ),
+            const rolle2: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.KOPERS_PFLICHT],
                 }),
             );
-            expect(pagedResponse.items).toContainEqual(expect.objectContaining({ serviceProviders: [] }));
+            const rolle3: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    merkmale: [],
+                }),
+            );
+            const rolle4: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    merkmale: [],
+                }),
+            );
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [
+                    rolle1.administeredBySchulstrukturknoten,
+                    rolle2.administeredBySchulstrukturknoten,
+                    rolle3.administeredBySchulstrukturknoten,
+                    rolle4.administeredBySchulstrukturknoten,
+                ],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ sortField: 'merkmale', sortOrder: 'desc' })
+                .send();
+
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items).toBeDefined();
+            expect(pagedResponse.items).toHaveLength(4);
+
+            expect(pagedResponse.items[0]?.merkmale[0]).toBe(RollenMerkmal.KOPERS_PFLICHT);
+            expect(pagedResponse.items[1]?.merkmale[1]).toBe(RollenMerkmal.BEFRISTUNG_PFLICHT);
+            expect(pagedResponse.items[2]?.merkmale[0]).toBe(undefined);
+            expect(pagedResponse.items[3]?.merkmale[0]).toBe(undefined);
+        });
+        it('should sort rollen by merkmale in asc order', async () => {
+            const rolle1: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, { merkmale: [RollenMerkmal.KOPERS_PFLICHT] }),
+            );
+            const rolle2: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.KOPERS_PFLICHT],
+                }),
+            );
+            const rolle3: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    merkmale: [],
+                }),
+            );
+            const rolle4: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    merkmale: [],
+                }),
+            );
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [
+                    rolle1.administeredBySchulstrukturknoten,
+                    rolle2.administeredBySchulstrukturknoten,
+                    rolle3.administeredBySchulstrukturknoten,
+                    rolle4.administeredBySchulstrukturknoten,
+                ],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ sortField: 'merkmale', sortOrder: 'asc' })
+                .send();
+
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+
+            expect(pagedResponse.items).toBeDefined();
+            expect(pagedResponse.items).toHaveLength(4);
+
+            expect(pagedResponse.items[2]?.merkmale[0]).toBe(RollenMerkmal.BEFRISTUNG_PFLICHT);
+            expect(pagedResponse.items[3]?.merkmale[0]).toBe(RollenMerkmal.KOPERS_PFLICHT);
+            expect(pagedResponse.items[0]?.merkmale[0]).toBe(undefined);
+            expect(pagedResponse.items[1]?.merkmale[0]).toBe(undefined);
         });
     });
 

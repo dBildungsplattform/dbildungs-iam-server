@@ -21,8 +21,9 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenMerkmal, RollenSort, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -351,6 +352,61 @@ describe('RolleRepo', () => {
 
             expect(rolleResult).toHaveLength(1);
             expect(total).toBe(1);
+        });
+        it('should order the rollen by the given sortField in ascending order', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+
+            await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, name: 'A' }),
+            );
+            await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, name: 'B' }),
+            );
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
+
+            const [rolleResultAsc]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                false,
+                undefined,
+                10,
+                0,
+                'name' as RollenSort,
+                ScopeOrder.ASC,
+            );
+
+            expect(rolleResultAsc?.length).toBe(2);
+            expect(rolleResultAsc?.[0]?.name).toBe('A');
+            expect(rolleResultAsc?.[1]?.name).toBe('B');
+        });
+
+        it('should order the rollen by the given sortField in descending order', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+
+            await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, name: 'A' }),
+            );
+            await sut.save(
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, name: 'B' }),
+            );
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
+
+            const [rolleResultDesc]: [Option<Rolle<true>[]>, number] = await sut.findRollenAuthorized(
+                permissions,
+                false,
+                undefined,
+                10,
+                0,
+                'name' as RollenSort,
+                ScopeOrder.DESC,
+            );
+
+            expect(rolleResultDesc?.length).toBe(2);
+            expect(rolleResultDesc?.[0]?.name).toBe('B');
+            expect(rolleResultDesc?.[1]?.name).toBe('A');
         });
     });
     describe('findByName', () => {
