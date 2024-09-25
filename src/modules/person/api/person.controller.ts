@@ -441,7 +441,7 @@ export class PersonController {
         //     lock_timestamp: new Date().toISOString(),
         // };
 
-        const userLock: UserLock<false> = {
+        const userLock: UserLock<true> = {
             personId: personId,
             locked_by: lockUserBodyParams.locked_from,
             locked_until: new Date(lockUserBodyParams.locked_until),

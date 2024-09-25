@@ -497,7 +497,7 @@ export class KeycloakUserService {
         personId: string,
         keyCloakUserId: string,
         enabled: boolean,
-        userLock: UserLock<false>,
+        userLock: UserLock<true>,
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();

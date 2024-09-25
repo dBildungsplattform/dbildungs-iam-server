@@ -693,6 +693,7 @@ describe('PersonController', () => {
             const lockUserBodyParams: LockUserBodyParams = {
                 lock: true,
                 locked_from: 'Theo Tester',
+                locked_until: new Date(),
             };
             it('should return a success message', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
@@ -715,6 +716,7 @@ describe('PersonController', () => {
             const lockUserBodyParams: LockUserBodyParams = {
                 lock: false,
                 locked_from: 'Theo Tester',
+                locked_until: new Date(),
             };
             it('should return a success message', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
@@ -736,6 +738,7 @@ describe('PersonController', () => {
             const lockUserBodyParams: LockUserBodyParams = {
                 lock: false,
                 locked_from: '2024-01-01T00:00:00Z',
+                locked_until: new Date(),
             };
             it('should throw an error', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
@@ -752,6 +755,7 @@ describe('PersonController', () => {
             const lockUserBodyParams: LockUserBodyParams = {
                 lock: false,
                 locked_from: '2024-01-01T00:00:00Z',
+                locked_until: new Date(),
             };
             const person: Person<true> = getPerson();
             person.keycloakUserId = undefined;
@@ -775,6 +779,7 @@ describe('PersonController', () => {
                 const lockUserBodyParams: LockUserBodyParams = {
                     lock: false,
                     locked_from: '2024-01-01T00:00:00Z',
+                    locked_until: new Date(),
                 };
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,

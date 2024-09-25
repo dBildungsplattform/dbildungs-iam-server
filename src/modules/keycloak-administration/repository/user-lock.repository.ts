@@ -48,7 +48,7 @@ export class UserLockRepository {
         return null;
     }
 
-    public async createUserLock(userLock: UserLock<false>): Promise<UserLock<true> | DomainError> {
+    public async createUserLock(userLock: UserLock<true>): Promise<UserLock<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
 
