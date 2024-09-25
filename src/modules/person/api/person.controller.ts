@@ -68,6 +68,7 @@ import { PersonDeleteService } from '../person-deletion/person-delete.service.js
 import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -83,6 +84,7 @@ export class PersonController {
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
         private keycloakUserService: KeycloakUserService,
+        private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
     ) {
@@ -467,6 +469,13 @@ export class PersonController {
         @Body() body: PersonByPersonalnummerBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void | DomainError> {
+        if (
+            !(await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(
+                params.personId,
+            ))
+        ) {
+            throw new PersonDomainError('Person hat keine koperspflichtige Rolle', undefined);
+        }
         const result: Person<true> | DomainError = await this.personRepository.updatePersonalnummer(
             params.personId,
             body.personalnummer,
