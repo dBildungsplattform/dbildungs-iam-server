@@ -92,4 +92,8 @@ export class EmailAddress<WasPersisted extends boolean> {
     public get oxUserID(): Option<string> {
         return this.oxUserId;
     }
+
+    public set oxUserID(oxUserId: string) {
+        this.oxUserId = oxUserId;
+    }
 }

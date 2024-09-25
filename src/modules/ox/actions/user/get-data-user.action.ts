@@ -17,7 +17,7 @@ export type GetDataForUserResponseBody = {
     getDataResponse: {
         return: {
             id: string;
-            aliases: [];
+            aliases: string[];
             email1: string;
             email2: string;
             email3: string;

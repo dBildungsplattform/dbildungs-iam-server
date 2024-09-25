@@ -6,14 +6,13 @@ import { AuthParams, OxBaseAction } from '../ox-base-action.js';
 export type CreateUserParams = AuthParams & {
     contextId: string;
 
-    displayName: string;
-    email1: string;
-    username: string;
+    displayName: string; //has to be unique in OX
+    email1: string; //has to be unique in OX
+    username: string; //has to be unique in OX
     firstname: string;
-    givenname: string;
     mailEnabled: boolean;
     lastname: string;
-    primaryEmail: string;
+    primaryEmail: string; //has to be unique in OX
     userPassword: string;
 };
 
@@ -67,7 +66,7 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
                 'tns:usrdata': {
                     'ns6:display_name': this.params.displayName,
                     'ns6:email1': this.params.email1,
-                    'ns6:given_name': this.params.givenname,
+                    'ns6:given_name': this.params.firstname,
                     'ns6:mailenabled': this.params.mailEnabled,
                     'ns6:name': this.params.username,
                     'ns6:sur_name': this.params.lastname,
@@ -87,7 +86,7 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
         return {
             ok: true,
             value: {
-                id: body.createResponse.return.id,
+                id: String(body.createResponse.return.id),
                 firstname: body.createResponse.return.given_name,
                 lastname: body.createResponse.return.sur_name,
                 username: body.createResponse.return.name,

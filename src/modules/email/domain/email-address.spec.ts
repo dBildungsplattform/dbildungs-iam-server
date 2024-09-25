@@ -93,4 +93,22 @@ describe('EmailAddress Aggregate', () => {
             });
         });
     });
+
+    describe('setOxUserId', () => {
+        describe('when called', () => {
+            it('should set oxUserId', () => {
+                const oxUserId: string = faker.string.numeric();
+                const fakeEmail: string = faker.internet.email();
+                const emailAddress: EmailAddress<false> = EmailAddress.createNew(
+                    personId,
+                    fakeEmail,
+                    EmailAddressStatus.ENABLED,
+                );
+
+                emailAddress.oxUserID = oxUserId;
+
+                expect(emailAddress.oxUserID).toStrictEqual(oxUserId);
+            });
+        });
+    });
 });
