@@ -29,6 +29,8 @@ import {
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
     KeycloakClientError,
+    MismatchedRevisionError,
+    MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
@@ -45,6 +47,8 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -108,7 +112,10 @@ describe('PersonRepository Integration', () => {
     });
 
     type SavedPersonProps = { keycloackID: string };
-    async function savePerson(props: Partial<SavedPersonProps> = {}): Promise<Person<true>> {
+    async function savePerson(
+        withPersonalnummer: boolean = false,
+        props: Partial<SavedPersonProps> = {},
+    ): Promise<Person<true>> {
         usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
@@ -120,6 +127,7 @@ describe('PersonRepository Integration', () => {
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
             familienname: faker.person.lastName(),
             vorname: faker.person.firstName(),
+            personalnummer: withPersonalnummer ? faker.finance.pin(7) : undefined,
         });
 
         if (person instanceof DomainError) {
@@ -181,7 +189,7 @@ describe('PersonRepository Integration', () => {
             it('should return found person', async () => {
                 const nokeyclockID: SavedPersonProps = { keycloackID: '' };
 
-                const personSaved: Person<true> = await savePerson(nokeyclockID);
+                const personSaved: Person<true> = await savePerson(false, nokeyclockID);
 
                 const foundPerson: Option<Person<true>> = await sut.findById(personSaved.id);
 
@@ -1350,6 +1358,121 @@ describe('PersonRepository Integration', () => {
             const exists: boolean = await sut.exists(nonExistentId);
 
             expect(exists).toBe(false);
+        });
+    });
+    describe('updatePersonalnummer', () => {
+        it('should return the updated person', async () => {
+            const person: Person<true> = await savePerson(true);
+            const newPersonalnummer: string = faker.finance.pin(7);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                newPersonalnummer,
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+            if (result instanceof DomainError) {
+                throw result;
+            }
+
+            expect(person.id).toBe(result.id);
+            expect(person.personalnummer).not.toBeNull();
+            expect(person.personalnummer).not.toEqual(newPersonalnummer);
+            expect(result.personalnummer).toEqual(newPersonalnummer);
+        });
+
+        it('should return EntityNotFound when person does not exit', async () => {
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                faker.string.uuid(),
+                faker.finance.pin(7),
+                faker.date.anytime(),
+                '1',
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(EntityNotFoundError);
+        });
+
+        it('should return MissingPermissionsError if the admin does not have permissions to update the Personalnummer', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(false);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                faker.finance.pin(7),
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(MissingPermissionsError);
+        });
+
+        it('should return PersonalnummerRequiredError when personalnummer was not provided', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                '',
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(PersonalnummerRequiredError);
+        });
+
+        it('should return DuplicatePersonalnummerError when the new personalnummer is already assigned', async () => {
+            const person: Person<true> = await savePerson(true);
+            const person2: Person<true> = await savePerson(true);
+            if (!person2.personalnummer) {
+                throw new PersonalnummerRequiredError();
+            }
+
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                person2.personalnummer,
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+        });
+
+        it('should return PersonalnummerUpdateOutdatedError if there is a newer updated version', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                faker.finance.pin(7),
+                faker.date.past(),
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(PersonalnummerUpdateOutdatedError);
+        });
+
+        it('should return MismatchedRevisionError if the revision is incorrect', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonalnummer(
+                person.id,
+                faker.finance.pin(7),
+                person.updatedAt,
+                '2',
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(MismatchedRevisionError);
         });
     });
 });
