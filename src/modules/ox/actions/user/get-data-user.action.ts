@@ -63,6 +63,10 @@ export class GetDataForUserAction extends OxBaseAction<GetDataForUserResponseBod
         };
     }
 
+    public override isArrayOverride(tagName: string): boolean {
+        return ['aliases'].includes(tagName);
+    }
+
     public override parseBody(body: GetDataForUserResponseBody): Result<GetDataForUserResponse, DomainError> {
         return {
             ok: true,

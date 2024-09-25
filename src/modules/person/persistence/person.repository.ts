@@ -28,16 +28,14 @@ import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.status === EmailAddressStatus.ENABLED || emailAddress.status === EmailAddressStatus.REQUESTED)
-            return emailAddress.address;
+        if (emailAddress.status !== EmailAddressStatus.FAILED) return emailAddress.address;
     }
     return undefined;
 }
 
 export function getOxUserId(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.status === EmailAddressStatus.ENABLED || emailAddress.status === EmailAddressStatus.REQUESTED)
-            return emailAddress.oxUserId;
+        if (emailAddress.status !== EmailAddressStatus.FAILED) return emailAddress.oxUserId;
     }
     return undefined;
 }

@@ -34,7 +34,7 @@ import { PersonID, RolleID } from '../../../shared/types/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxUserAttributesCreatedEvent } from '../../../shared/events/ox-user-attributes-created.event.js';
+import { OxUserAttributesChangedEvent } from '../../../shared/events/ox-user-attributes-changed.event.js';
 import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 
@@ -580,7 +580,7 @@ describe('Email Event Handler', () => {
         let fakeOXUserName: OXUserName;
         let fakeOXContextName: OXContextName;
         let fakeEmail: string;
-        let event: OxUserAttributesCreatedEvent;
+        let event: OxUserAttributesChangedEvent;
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
@@ -588,7 +588,7 @@ describe('Email Event Handler', () => {
             fakeOXUserName = fakeKeycloakUsername;
             fakeOXContextName = 'context1';
             fakeEmail = faker.internet.email();
-            event = new OxUserAttributesCreatedEvent(
+            event = new OxUserAttributesChangedEvent(
                 fakePersonId,
                 fakeKeycloakUsername,
                 fakeOXUserName,
@@ -601,7 +601,7 @@ describe('Email Event Handler', () => {
             it('should log error', async () => {
                 emailRepoMock.findByPerson.mockResolvedValueOnce(undefined);
 
-                await emailEventHandler.handleOxUserAttributesCreatedEvent(event);
+                await emailEventHandler.handleOxUserAttributesChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
                     `Cannot find email-address for person with personId:${event.personId}, enabling not possible`,
@@ -622,7 +622,7 @@ describe('Email Event Handler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>({}));
 
-                await emailEventHandler.handleOxUserAttributesCreatedEvent(event);
+                await emailEventHandler.handleOxUserAttributesChangedEvent(event);
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(
                     `Mismatch between requested(${emailAddress}) and received(${event.emailAddress}) address from OX`,
@@ -645,7 +645,7 @@ describe('Email Event Handler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeUpdated('EmailAddress', '1'));
 
-                await emailEventHandler.handleOxUserAttributesCreatedEvent(event);
+                await emailEventHandler.handleOxUserAttributesChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
                     `Could not enable email, error is EmailAddress with ID 1 could not be updated`,
@@ -664,7 +664,7 @@ describe('Email Event Handler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(emailMock);
 
-                await emailEventHandler.handleOxUserAttributesCreatedEvent(event);
+                await emailEventHandler.handleOxUserAttributesChangedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
                     `Changed email-address:${fakeEmail} from REQUESTED to ENABLED`,

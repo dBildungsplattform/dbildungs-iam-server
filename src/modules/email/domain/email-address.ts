@@ -4,6 +4,7 @@ export enum EmailAddressStatus {
     ENABLED = 'ENABLED',
     DISABLED = 'DISABLED',
     REQUESTED = 'REQUESTED',
+    FAILED = 'FAILED',
 }
 
 export class EmailAddress<WasPersisted extends boolean> {

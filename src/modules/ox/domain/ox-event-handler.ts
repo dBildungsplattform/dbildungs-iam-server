@@ -14,7 +14,6 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { ExistsUserAction, ExistsUserResponse } from '../actions/user/exists-user.action.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { OxUserCreatedEvent } from '../../../shared/events/ox-user-created.event.js';
 import { OXContextID, OXContextName } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
@@ -53,7 +52,7 @@ export class OxEventHandler {
         this.contextName = oxConfig.CONTEXT_NAME;
     }
 
-    /* //Just for simplified testing, will be removed before merge on main
+    /*    //Just for simplified testing, will be removed before merge on main
     @EventHandler(EmailAddressGeneratedEvent)
     public fake(event: EmailAddressGeneratedEvent): void {
         this.logger.info(
@@ -77,11 +76,11 @@ export class OxEventHandler {
         );
 
         if (!this.ENABLED) {
-            this.logger.info('Not enabled, ignoring event');
-            return;
+            return this.logger.info('Not enabled, ignoring event');
+            //await this.createOxUser(event.personId); //remove before merge
         }
 
-        await this.changedEmail(event.personId);
+        await this.changeOxUser(event.personId);
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
@@ -91,14 +90,13 @@ export class OxEventHandler {
         );
 
         if (!this.ENABLED) {
-            this.logger.info('Not enabled, ignoring event');
-            return;
+            return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.createEmail(event.personId);
+        await this.createOxUser(event.personId);
     }
 
-    private async createEmail(personId: PersonID): Promise<void> {
+    private async createOxUser(personId: PersonID): Promise<void> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
@@ -163,7 +161,7 @@ export class OxEventHandler {
         }
 
         this.eventService.publish(
-            new OxUserCreatedEvent(
+            new OxUserChangedEvent(
                 personId,
                 person.referrer,
                 result.value.id,
@@ -175,7 +173,7 @@ export class OxEventHandler {
         );
     }
 
-    private async changedEmail(personId: PersonID): Promise<void> {
+    private async changeOxUser(personId: PersonID): Promise<void> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
@@ -198,7 +196,7 @@ export class OxEventHandler {
         const getDataParams: UserIdParams = {
             contextId: this.contextID,
             userId: person.oxUserId,
-            //userId: '19', //fake just for testing
+            //userId: '24',
             login: this.authUser,
             password: this.authPassword,
         };

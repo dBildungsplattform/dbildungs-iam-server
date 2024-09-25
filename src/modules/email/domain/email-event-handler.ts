@@ -21,7 +21,8 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxUserAttributesCreatedEvent } from '../../../shared/events/ox-user-attributes-created.event.js';
+import { OxUserAttributesChangedEvent } from '../../../shared/events/ox-user-attributes-changed.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -41,7 +42,6 @@ export class EmailEventHandler {
     ) {}
 
     @EventHandler(PersonRenamedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
     public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
         this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
 
@@ -72,7 +72,15 @@ export class EmailEventHandler {
                 this.logger.info(
                     `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
                 );
-                await this.createNewEmail(event.personId, pkForRolleWithSPReference.personenkontext.organisationId);
+                if (existingEmail) {
+                    await this.createChangeEmail(
+                        event.personId,
+                        pkForRolleWithSPReference.personenkontext.organisationId,
+                        existingEmail,
+                    );
+                } else {
+                    await this.createNewEmail(event.personId, pkForRolleWithSPReference.personenkontext.organisationId);
+                }
             }
         } else {
             this.logger.info(`Renamed person with personId:${event.personId} has no SP with Email, nothing to do`);
@@ -167,10 +175,10 @@ export class EmailEventHandler {
         await Promise.all(handlePersonPromises);
     }
 
-    @EventHandler(OxUserAttributesCreatedEvent)
-    public async handleOxUserAttributesCreatedEvent(event: OxUserAttributesCreatedEvent): Promise<void> {
+    @EventHandler(OxUserAttributesChangedEvent)
+    public async handleOxUserAttributesChangedEvent(event: OxUserAttributesChangedEvent): Promise<void> {
         this.logger.info(
-            `Received OxUserAttributesCreatedEvent personId:${event.personId}, keycloakUsername: ${event.keycloakUsername}, userName:${event.userName}, contextName:${event.contextName}, email:${event.emailAddress}`,
+            `Received OxUserAttributesChangedEvent personId:${event.personId}, keycloakUsername: ${event.keycloakUsername}, userName:${event.userName}, contextName:${event.contextName}, email:${event.emailAddress}`,
         );
         const email: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
 
@@ -280,6 +288,36 @@ export class EmailEventHandler {
                     persistenceResult.id,
                     persistenceResult.address,
                     persistenceResult.enabled,
+                ),
+            );
+        } else {
+            this.logger.error(`Could not persist email, error is ${persistenceResult.message}`);
+        }
+    }
+
+    private async createChangeEmail(
+        personId: PersonID,
+        organisationId: OrganisationID,
+        oldEmail: EmailAddress<true>,
+    ): Promise<void> {
+        const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
+        if (!email.ok) {
+            this.logger.error(`Could not create email, error is ${email.error.message}`);
+            return;
+        }
+        email.value.request();
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
+        if (persistenceResult instanceof EmailAddress) {
+            this.logger.info(
+                `Successfully persisted email with Request status for address:${persistenceResult.address}`,
+            );
+            this.eventService.publish(
+                new EmailAddressChangedEvent(
+                    personId,
+                    oldEmail.id,
+                    oldEmail.address,
+                    persistenceResult.id,
+                    persistenceResult.address,
                 ),
             );
         } else {
