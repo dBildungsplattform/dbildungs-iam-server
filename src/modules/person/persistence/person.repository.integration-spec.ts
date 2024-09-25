@@ -823,9 +823,9 @@ describe('PersonRepository Integration', () => {
             });
         });
 
-        describe('when NO enabled emailAddress is in collection', () => {
+        describe('when only failed emailAddresses are in collection', () => {
             it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.DISABLED);
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
                 const result: string | undefined = getEnabledEmailAddress(personEntity);
@@ -866,9 +866,9 @@ describe('PersonRepository Integration', () => {
             });
         });
 
-        describe('when NO enabled emailAddress is in collection', () => {
+        describe('when only failed emailAddresses are in collection', () => {
             it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.DISABLED);
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
                 const result: string | undefined = getOxUserId(personEntity);
