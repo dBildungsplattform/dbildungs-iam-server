@@ -28,7 +28,7 @@ import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-pe
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
-import { PersonMetadataRequiredError } from '../domain/person-metadata-required.error.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -486,8 +486,15 @@ export class PersonRepository {
             return new MissingPermissionsError('Not allowed to update the person metadata for the person.');
         }
 
-        if (!familienname && !vorname && !personalnummer) {
-            return new PersonMetadataRequiredError();
+        const hasUsernameChanged: boolean = this.hasNameChanged(
+            personFound.vorname,
+            personFound.familienname,
+            vorname,
+            familienname,
+        );
+
+        if (!hasUsernameChanged && !personalnummer) {
+            return new PersonalnummerRequiredError();
         }
 
         //Update personalnummer
@@ -497,54 +504,57 @@ export class PersonRepository {
             }
             personFound.personalnummer = personalnummer;
         }
-        //Existing user muss have a referrer.
-        const oldUsername: string = personFound.referrer!;
-        const oldVorname: string | undefined = personFound.vorname;
-        const oldFamilienname: string | undefined = personFound.familienname;
+        //Update name
+        if (hasUsernameChanged) {
+            //Existing user muss have a referrer.
+            const oldUsername: string = personFound.referrer!;
+            const oldVorname: string | undefined = personFound.vorname;
+            const oldFamilienname: string | undefined = personFound.familienname;
 
-        const error: void | DomainError = personFound.update(
-            revision,
-            familienname,
-            vorname,
-            personFound.referrer,
-            personFound.stammorganisation,
-            personFound.initialenFamilienname,
-            personFound.initialenVorname,
-            personFound.rufname,
-            personFound.nameTitel,
-            personFound.nameAnrede,
-            personFound.namePraefix,
-            personFound.nameSuffix,
-            personFound.nameSortierindex,
-            personFound.geburtsdatum,
-            personFound.geburtsort,
-            personFound.geschlecht,
-            personFound.lokalisierung,
-            personFound.vertrauensstufe,
-            personFound.auskunftssperre,
-            personFound.personalnummer,
-            personFound.lockInfo,
-            personFound.isLocked,
-            personFound.email,
-        );
-        if (error instanceof DomainError) {
-            return error;
-        }
-
-        if (personFound.updatedAt.getTime() > lastModified.getTime()) {
-            return new PersonUpdateOutdatedError();
-        }
-        //check if the username needs to be updated
-        if (this.hasUsernameChanged(oldVorname, oldFamilienname, vorname, familienname)) {
-            const usernameGeneratedResult: Person<true> | DomainError = await this.generateUsername(
-                personFound,
-                oldUsername,
+            const error: void | DomainError = personFound.update(
+                revision,
+                familienname,
+                vorname,
+                personFound.referrer,
+                personFound.stammorganisation,
+                personFound.initialenFamilienname,
+                personFound.initialenVorname,
+                personFound.rufname,
+                personFound.nameTitel,
+                personFound.nameAnrede,
+                personFound.namePraefix,
+                personFound.nameSuffix,
+                personFound.nameSortierindex,
+                personFound.geburtsdatum,
+                personFound.geburtsort,
+                personFound.geschlecht,
+                personFound.lokalisierung,
+                personFound.vertrauensstufe,
+                personFound.auskunftssperre,
+                personFound.personalnummer,
+                personFound.lockInfo,
+                personFound.isLocked,
+                personFound.email,
             );
-            if (usernameGeneratedResult instanceof DomainError) {
-                return usernameGeneratedResult;
+            if (error instanceof DomainError) {
+                return error;
             }
 
-            personFound = usernameGeneratedResult;
+            if (personFound.updatedAt.getTime() > lastModified.getTime()) {
+                return new PersonUpdateOutdatedError();
+            }
+            //check if the username needs to be updated
+            if (this.hasUsernameChanged(oldVorname, oldFamilienname, vorname, familienname)) {
+                const usernameGeneratedResult: Person<true> | DomainError = await this.generateUsername(
+                    personFound,
+                    oldUsername,
+                );
+                if (usernameGeneratedResult instanceof DomainError) {
+                    return usernameGeneratedResult;
+                }
+
+                personFound = usernameGeneratedResult;
+            }
         }
 
         const savedPerson: Person<true> | DomainError = await this.save(personFound);
@@ -569,5 +579,14 @@ export class PersonRepository {
         }
 
         return updatedPerson;
+    }
+
+    private hasNameChanged(
+        oldVorname: string,
+        oldFamilienname: string,
+        newVorname: string,
+        newFamilienname: string,
+    ): boolean {
+        return oldVorname !== newVorname || oldFamilienname !== newFamilienname;
     }
 }

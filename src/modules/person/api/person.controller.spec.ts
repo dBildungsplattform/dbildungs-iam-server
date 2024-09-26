@@ -36,8 +36,8 @@ import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { PersonMetadataRequiredError } from '../domain/person-metadata-required.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -838,10 +838,11 @@ describe('PersonController', () => {
             );
         });
 
-        it('should throw PersonMetadataRequiredError when personalnummer or faminlienname or vorname was not provided', async () => {
+        it('should throw PersonalnummerRequiredError when personalnummer was not provided and faminlienname or vorname did not change', async () => {
+            const person: Person<true> = getPerson();
             const bodyWithInvalidPersonalnummer: PersonMetadataBodyParams = {
-                familienname: '',
-                vorname: '',
+                familienname: person.familienname,
+                vorname: person.vorname,
                 personalnummer: '',
                 lastModified: faker.date.recent(),
                 revision: '1',
@@ -849,10 +850,10 @@ describe('PersonController', () => {
             dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValueOnce(
                 true,
             );
-            personRepositoryMock.updatePersonMetadata.mockResolvedValue(new PersonMetadataRequiredError());
+            personRepositoryMock.updatePersonMetadata.mockResolvedValue(new PersonalnummerRequiredError());
             await expect(
                 personController.updateMetadata(params, bodyWithInvalidPersonalnummer, personPermissionsMock),
-            ).rejects.toThrow(PersonMetadataRequiredError);
+            ).rejects.toThrow(PersonalnummerRequiredError);
         });
 
         it('should throw HttpException when revision is incorrect', async () => {

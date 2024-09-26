@@ -47,8 +47,8 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonMetadataRequiredError } from '../domain/person-metadata-required.error.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1377,21 +1377,21 @@ describe('PersonRepository Integration', () => {
             expect(result).toBeInstanceOf(MissingPermissionsError);
         });
 
-        it('should return MetadataRequiredError when personalnummer or faminlienname or vorname was not provided', async () => {
+        it('should return PersonalnummerRequiredError when personalnummer was not provided and faminlienname or vorname did not change', async () => {
             const person: Person<true> = await savePerson(true);
             personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                '',
-                '',
+                person.familienname,
+                person.vorname,
                 '',
                 person.updatedAt,
                 person.revision,
                 personPermissionsMock,
             );
 
-            expect(result).toBeInstanceOf(PersonMetadataRequiredError);
+            expect(result).toBeInstanceOf(PersonalnummerRequiredError);
         });
 
         it('should return DuplicatePersonalnummerError when the new personalnummer is already assigned', async () => {
