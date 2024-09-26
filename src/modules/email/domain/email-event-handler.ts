@@ -13,7 +13,7 @@ import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
-import { EmailAddress } from './email-address.js';
+import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -23,6 +23,8 @@ import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { OxUserAttributesChangedEvent } from '../../../shared/events/ox-user-attributes-changed.event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -112,6 +114,49 @@ export class EmailEventHandler {
         });
 
         return resMap;
+    }
+
+    @EventHandler(PersonenkontextCreatedMigrationEvent)
+    public async handlePersonenkontextCreatedMigrationEvent(
+        event: PersonenkontextCreatedMigrationEvent,
+    ): Promise<void> {
+        this.logger.info(
+            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
+        );
+        if (event.email && event.createdKontextRolle.rollenart == RollenArt.LEHR) {
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Rollenart is LEHR, trying to persist Email`,
+            );
+            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(
+                event.createdKontext.personId,
+            );
+            if (!existingEmail) {
+                const newEmail: EmailAddress<false> = EmailAddress.createNew(
+                    event.createdKontext.personId,
+                    event.email,
+                    EmailAddressStatus.ENABLED,
+                );
+                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(newEmail);
+
+                if (persistenceResult instanceof DomainError) {
+                    return this.logger.error(
+                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Could not persist existing email, error is ${persistenceResult.message}`,
+                    );
+                } else {
+                    return this.logger.info(
+                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Successfully persisted Email ${persistenceResult.address}`,
+                    );
+                }
+            } else {
+                return this.logger.info(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting persist Email Operation, Email already exists`,
+                );
+            }
+        } else {
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Do Nothing because Rollenart is Not LEHR`,
+            );
+        }
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)

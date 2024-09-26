@@ -60,7 +60,6 @@ export class OxEventHandler {
 
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
-            //await this.createOxUser(event.personId); //remove before merge
         }
 
         await this.changeOxUser(event.personId);
