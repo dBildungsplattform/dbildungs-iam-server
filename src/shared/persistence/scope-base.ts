@@ -17,7 +17,7 @@ export abstract class ScopeBase<T extends AnyEntity> {
 
     public setScopeWhereOperator(operator: ScopeOperator): this {
         if (this.scopeWhereOperator) {
-            throw new Error('Scope where operator is already set');
+            throw new Error('Scope where operator is already set. Scope Operator can not be nested');
         }
         this.scopeWhereOperator = operator;
         return this;
