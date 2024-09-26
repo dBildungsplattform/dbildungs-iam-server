@@ -48,6 +48,7 @@ describe('PersonController', () => {
     let keycloakUserService: DeepMocked<KeycloakUserService>;
     let personDeleteServiceMock: DeepMocked<PersonDeleteService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -93,6 +94,10 @@ describe('PersonController', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
+                {
+                    provide: DBiamPersonenkontextService,
+                    useValue: createMock<DBiamPersonenkontextService>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
@@ -102,6 +107,7 @@ describe('PersonController', () => {
         rolleRepoMock = module.get(RolleRepo);
         personDeleteServiceMock = module.get(PersonDeleteService);
         keycloakUserService = module.get(KeycloakUserService);
+        dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
     });
 
     function getPerson(): Person<true> {

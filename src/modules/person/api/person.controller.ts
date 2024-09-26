@@ -65,9 +65,11 @@ import { PersonLockResponse } from './person-lock.response.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
-import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
+import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
+import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -83,6 +85,7 @@ export class PersonController {
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
         private keycloakUserService: KeycloakUserService,
+        private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
     ) {
