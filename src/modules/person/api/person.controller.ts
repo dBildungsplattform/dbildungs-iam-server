@@ -65,6 +65,10 @@ import { PersonLockResponse } from './person-lock.response.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
+import { DbiamPersonError } from './dbiam-person.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
 import { UserLock } from '../../keycloak-administration/domain/user.lock.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
@@ -81,6 +85,7 @@ export class PersonController {
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
         private keycloakUserService: KeycloakUserService,
+        private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
     ) {
@@ -457,5 +462,44 @@ export class PersonController {
             throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);
         }
         return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
+    }
+
+    @Patch(':personId/personalnummer')
+    @ApiNoContentResponse({
+        description: 'The personalnummer was successfully updated.',
+    })
+    @ApiBadRequestResponse({ description: 'Request has a wrong format.', type: DbiamPersonError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the personalnummer.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to update the personalnummer.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the personalnummer.' })
+    public async updatePersonalnummer(
+        @Param() params: PersonByIdParams,
+        @Body() body: PersonByPersonalnummerBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void | DomainError> {
+        if (
+            !(await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(
+                params.personId,
+            ))
+        ) {
+            throw new PersonDomainError('Person hat keine koperspflichtige Rolle', undefined);
+        }
+        const result: Person<true> | DomainError = await this.personRepository.updatePersonalnummer(
+            params.personId,
+            body.personalnummer,
+            body.lastModified,
+            body.revision,
+            permissions,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof PersonDomainError || result instanceof DuplicatePersonalnummerError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
     }
 }

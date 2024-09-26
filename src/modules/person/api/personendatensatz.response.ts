@@ -40,6 +40,7 @@ export class PersonendatensatzResponse {
             personalnummer: person.personalnummer,
             isLocked: person.isLocked,
             userLock: person.userLock,
+            lastModified: person.updatedAt,
         };
 
         this.person = personResponse;
