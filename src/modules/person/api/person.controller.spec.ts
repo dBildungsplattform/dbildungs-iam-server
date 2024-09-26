@@ -5,7 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 import { Personenstatus, Rolle, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
-import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonController } from './person.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
@@ -25,7 +25,6 @@ import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError }
 import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
-import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
@@ -34,6 +33,7 @@ import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
@@ -99,6 +99,10 @@ describe('PersonController', () => {
                     provide: DBiamPersonenkontextService,
                     useValue: createMock<DBiamPersonenkontextService>(),
                 },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
@@ -138,25 +142,23 @@ describe('PersonController', () => {
     });
 
     describe('createPerson', () => {
-        describe('when is authorized migration call with username & password', () => {
+        describe('when is authorized migration user', () => {
             it('should return PersonendatensatzResponse', async () => {
                 const person: Person<true> = getPerson();
-                const params: CreatePersonBodyParams = {
-                    name: {
-                        vorname: person.vorname,
-                        familienname: person.familienname,
-                    },
-                    geburt: {},
+                const params: CreatePersonMigrationBodyParams = {
+                    personId: faker.string.uuid(),
+                    familienname: person.familienname,
+                    vorname: person.vorname,
                     username: 'fixedusername',
                     hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrechtDeprecated.mockResolvedValue([faker.string.uuid()]);
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 personRepositoryMock.create.mockResolvedValue(person);
-                await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
-                    PersonendatensatzResponse,
-                );
+                await expect(
+                    personController.createPersonMigration(params, personPermissionsMock),
+                ).resolves.toBeInstanceOf(PersonendatensatzResponse);
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
-                const result: PersonendatensatzResponse = await personController.createPerson(
+                const result: PersonendatensatzResponse = await personController.createPersonMigration(
                     params,
                     personPermissionsMock,
                 );
@@ -164,21 +166,19 @@ describe('PersonController', () => {
                 expect(result.person.name.familienname).toEqual(person.familienname);
             });
         });
-        describe('when is not authorized migration call with username & password', () => {
+        describe('when is not authorized migration user', () => {
             it('should return error', async () => {
                 const person: Person<true> = getPerson();
-                const params: CreatePersonBodyParams = {
-                    name: {
-                        vorname: person.vorname,
-                        familienname: person.familienname,
-                    },
-                    geburt: {},
+                const params: CreatePersonMigrationBodyParams = {
+                    personId: faker.string.uuid(),
+                    familienname: person.familienname,
+                    vorname: person.vorname,
                     username: 'fixedusername',
                     hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
                 personRepositoryMock.create.mockResolvedValue(person);
-                await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
+                await expect(personController.createPersonMigration(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
                 );
             });
@@ -186,24 +186,21 @@ describe('PersonController', () => {
         describe('when creating a person is successful', () => {
             it('should return PersonendatensatzResponse', async () => {
                 const person: Person<true> = getPerson();
-                const params: CreatePersonBodyParams = {
-                    name: {
-                        vorname: person.vorname,
-                        familienname: person.familienname,
-                    },
-                    geburt: {},
+                const params: CreatePersonMigrationBodyParams = {
+                    personId: faker.string.uuid(),
+                    familienname: person.familienname,
+                    vorname: person.vorname,
+                    username: 'fixedusername',
+                    hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
-                    all: false,
-                    orgaIds: [faker.string.uuid()],
-                });
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 personRepositoryMock.create.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                await expect(personController.createPerson(params, personPermissionsMock)).resolves.toBeInstanceOf(
-                    PersonendatensatzResponse,
-                );
+                await expect(
+                    personController.createPersonMigration(params, personPermissionsMock),
+                ).resolves.toBeInstanceOf(PersonendatensatzResponse);
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
-                const result: PersonendatensatzResponse = await personController.createPerson(
+                const result: PersonendatensatzResponse = await personController.createPersonMigration(
                     params,
                     personPermissionsMock,
                 );
@@ -214,20 +211,18 @@ describe('PersonController', () => {
 
         describe('when creating a person is not successful', () => {
             personPermissionsMock = createMock<PersonPermissions>();
-            const params: CreatePersonBodyParams = {
-                name: {
-                    vorname: faker.person.firstName(),
-                    familienname: faker.person.lastName(),
-                },
-                geburt: {},
+
+            const params: CreatePersonMigrationBodyParams = {
+                personId: faker.string.uuid(),
+                familienname: faker.person.firstName(),
+                vorname: faker.person.lastName(),
+                username: 'fixedusername',
+                hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
             };
 
-            it('should throw HttpException', async () => {
+            it('should throw HttpException when create operation fails', async () => {
                 const person: Person<true> = getPerson();
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
-                    all: false,
-                    orgaIds: [faker.string.uuid()],
-                });
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 const orgaId: OrganisationID[] = [faker.string.uuid()];
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
@@ -236,55 +231,26 @@ describe('PersonController', () => {
                 });
                 usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
                 personRepositoryMock.create.mockResolvedValue(new KeycloakClientError(''));
-                await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
+                await expect(personController.createPersonMigration(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
                 );
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
             });
 
-            it('should throw HttpException', async () => {
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
-                    all: false,
-                    orgaIds: [faker.string.uuid()],
-                });
-                usernameGeneratorService.generateUsername.mockResolvedValue({
-                    ok: false,
-                    error: new KeycloakClientError(''),
-                });
-                await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-                expect(personRepositoryMock.create).not.toHaveBeenCalled();
-            });
-
-            it('should throw HttpException when no user has no PERSONEN_VERWALTEN permission on any organisations', async () => {
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
-                    all: false,
-                    orgaIds: [],
-                });
-                await expect(personController.createPerson(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-                expect(personRepositoryMock.create).not.toHaveBeenCalled();
-            });
-
-            it('should throw FamiliennameForPersonWithTrailingSpaceError when familienname has trailing space', async () => {
+            it('should throw HttpException when familienname has trailing space', async () => {
                 const person: Person<true> = getPerson();
-                const bodyParams: CreatePersonBodyParams = {
-                    name: {
-                        vorname: 'vorname',
-                        familienname: 'familienname ',
-                    },
-                    geburt: {},
+                const bodyParams: CreatePersonMigrationBodyParams = {
+                    personId: faker.string.uuid(),
+                    familienname: 'familienname ',
+                    vorname: faker.person.lastName(),
+                    username: 'fixedusername',
+                    hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
                 };
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
-                    all: false,
-                    orgaIds: [faker.string.uuid()],
-                });
+                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
-                await expect(personController.createPerson(bodyParams, personPermissionsMock)).rejects.toThrow(
-                    FamiliennameForPersonWithTrailingSpaceError,
+                await expect(personController.createPersonMigration(bodyParams, personPermissionsMock)).rejects.toThrow(
+                    HttpException,
                 );
                 expect(personRepositoryMock.create).toHaveBeenCalledTimes(0);
             });

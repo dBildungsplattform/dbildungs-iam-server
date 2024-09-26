@@ -9,6 +9,7 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -58,6 +59,79 @@ export class LdapEventHandler {
         const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByPersonId(event.personId);
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
+        }
+    }
+
+    @EventHandler(PersonenkontextCreatedMigrationEvent)
+    public async handlePersonenkontextCreatedMigrationEvent(
+        event: PersonenkontextCreatedMigrationEvent,
+    ): Promise<void> {
+        this.logger.info(
+            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
+        );
+
+        if (event.createdKontextRolle.rollenart == RollenArt.LEHR) {
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / RollenArt is LEHR, trying to create Lehrer`,
+            );
+            if (!event.createdKontextPerson.referrer) {
+                this.logger.error(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Username missing`,
+                );
+                return;
+            }
+            if (!event.createdKontextOrga.kennung) {
+                this.logger.error(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Orga Kennung missing`,
+                );
+                return;
+            }
+            const isLehrerExistingResult: Result<boolean> = await this.ldapClientService.isLehrerExisting(
+                event.createdKontextPerson.referrer,
+                event.createdKontextOrga.kennung,
+            );
+            if (!isLehrerExistingResult.ok) {
+                this.logger.error(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Check Lehrer existing call failed: ${isLehrerExistingResult.error.message}`,
+                );
+                return;
+            }
+
+            if (isLehrerExistingResult.value == true) {
+                this.logger.info(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting createLehrer Operation, LDAP Entry already exists`,
+                );
+                return;
+            }
+
+            const personData: PersonData = {
+                id: event.createdKontextPerson.id,
+                vorname: event.createdKontextPerson.vorname,
+                familienname: event.createdKontextPerson.familienname,
+                referrer: event.createdKontextPerson.referrer,
+                ldapEntryUUID: event.createdKontextPerson.id, //Matches The legacy ldapEntryUUID
+            };
+
+            const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(
+                personData,
+                {
+                    kennung: event.createdKontextOrga.kennung,
+                },
+                event.email,
+            );
+            if (!creationResult.ok) {
+                this.logger.error(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Create Lehrer Operation failed: ${creationResult.error.message}`,
+                );
+                return;
+            }
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Successfully created LDAP Entry Lehrer`,
+            );
+        } else {
+            this.logger.info(
+                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / 'Do Nothing because Rollenart is Not LEHR'`,
+            );
         }
     }
 
