@@ -23,6 +23,8 @@ describe('ScopeBase', () => {
 
     it('should set scope where operator', () => {
         scope.setScopeWhereOperator(ScopeOperator.AND);
-        expect(() => scope.setScopeWhereOperator(ScopeOperator.OR)).toThrow('Scope where operator is already set');
+        expect(() => scope.setScopeWhereOperator(ScopeOperator.OR)).toThrow(
+            'Scope where operator is already set. Scope Operator can not be nested',
+        );
     });
 });
