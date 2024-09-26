@@ -4,6 +4,7 @@ import {
     EntityName,
     ForeignKeyConstraintViolationException,
     Loaded,
+    LockMode,
     RequiredEntityData,
 } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
@@ -25,6 +26,7 @@ import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkonte
 
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -99,6 +101,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
         entity.id,
         entity.createdAt,
         entity.updatedAt,
+        entity.version,
         entity.name,
         entity.administeredBySchulstrukturknoten,
         entity.rollenart,
@@ -283,6 +286,7 @@ export class RolleRepo {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        version: number,
         isAlreadyAssigned: boolean,
         permissions: PersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
@@ -307,6 +311,7 @@ export class RolleRepo {
             id,
             authorizedRole.createdAt,
             authorizedRole.updatedAt,
+            version,
             name,
             authorizedRole.administeredBySchulstrukturknoten,
             authorizedRole.rollenart,
@@ -364,8 +369,14 @@ export class RolleRepo {
             populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
-        rolleEntity.assign(mapAggregateToData(rolle), { updateNestedEntities: true });
+        try {
+            //Check version
+            await this.em.lock(rolleEntity, LockMode.OPTIMISTIC, rolle.version);
+        } catch (ex) {
+            throw new RolleUpdateOutdatedError();
+        }
 
+        rolleEntity.assign(mapAggregateToData(rolle), { updateNestedEntities: true });
         await this.em.persistAndFlush(rolleEntity);
 
         return mapEntityToAggregate(rolleEntity, this.rolleFactory);

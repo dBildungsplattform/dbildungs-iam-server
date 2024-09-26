@@ -351,6 +351,7 @@ export class RolleController {
             params.merkmale,
             params.systemrechte,
             params.serviceProviderIds,
+            params.version,
             isAlreadyAssigned,
             permissions,
         );
