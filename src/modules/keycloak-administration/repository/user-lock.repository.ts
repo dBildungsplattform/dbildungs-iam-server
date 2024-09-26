@@ -84,11 +84,11 @@ export class UserLockRepository {
     }
 
     public async update(userLock: UserLock<true>): Promise<UserLock<true> | DomainError> {
-        const userLockEntity: Loaded<UserLockEntity> = await this.em.findOneOrFail(UserLockEntity, userLock.personId);
-
+        const userLockEntity: Loaded<UserLockEntity> = await this.em.findOneOrFail(UserLockEntity, {
+            personId: userLock.personId,
+        });
         userLockEntity.assign(mapAggregateToData(userLock));
         await this.em.persistAndFlush(userLockEntity);
-
         return mapEntityToAggregate(userLockEntity);
     }
 
