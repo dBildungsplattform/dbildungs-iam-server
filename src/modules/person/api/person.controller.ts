@@ -65,7 +65,6 @@ import { PersonLockResponse } from './person-lock.response.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
-import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
@@ -471,6 +470,14 @@ export class PersonController {
         @Body() body: PersonMetadataBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse | DomainError> {
+        if (
+            body.personalnummer &&
+            !(await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(
+                params.personId,
+            ))
+        ) {
+            throw new PersonDomainError('Person hat keine koperspflichtige Rolle', undefined);
+        }
         const result: Person<true> | DomainError = await this.personRepository.updatePersonMetadata(
             params.personId,
             body.familienname,
