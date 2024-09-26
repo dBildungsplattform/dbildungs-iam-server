@@ -193,4 +193,8 @@ export class Rolle<WasPersisted extends boolean> {
         }
         this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => id !== serviceProviderId);
     }
+
+    public setVersionForUpdate(version: number): void {
+        this.version = version;
+    }
 }

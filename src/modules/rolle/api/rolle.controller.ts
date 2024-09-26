@@ -60,6 +60,7 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -264,7 +265,7 @@ export class RolleController {
     })
     public async addServiceProviderById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Body() spBodyParams: RolleServiceProviderQueryParams,
+        @Body() spBodyParams: RolleServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
@@ -280,6 +281,7 @@ export class RolleController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+        rolle.setVersionForUpdate(spBodyParams.version);
         await this.rolleRepo.save(rolle);
         const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
             spBodyParams.serviceProviderId,

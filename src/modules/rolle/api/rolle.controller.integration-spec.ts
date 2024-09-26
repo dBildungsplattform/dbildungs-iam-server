@@ -24,7 +24,6 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { Rolle } from '../domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { PagedResponse } from '../../../shared/paging/index.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
@@ -45,6 +44,7 @@ import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -493,8 +493,9 @@ describe('Rolle API', () => {
                     DoFactory.createServiceProvider(false),
                 );
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-                const params: RolleServiceProviderQueryParams = {
+                const params: RolleServiceProviderBodyParams = {
                     serviceProviderId: serviceProvider.id,
+                    version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .post(`/rolle/${rolle.id}/serviceProviders`)
@@ -512,8 +513,9 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
-                const params: RolleServiceProviderQueryParams = {
+                const params: RolleServiceProviderBodyParams = {
                     serviceProviderId: serviceProvider.id,
+                    version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .post(`/rolle/${rolle.id}/serviceProviders`)
@@ -526,8 +528,9 @@ describe('Rolle API', () => {
         describe('when rolle does not exist', () => {
             it('should return 404', async () => {
                 const validButNonExistingUUID: string = faker.string.uuid();
-                const params: RolleServiceProviderQueryParams = {
+                const params: RolleServiceProviderBodyParams = {
                     serviceProviderId: faker.string.uuid(),
+                    version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .post(`/rolle/${validButNonExistingUUID}/serviceProviders`)
@@ -540,8 +543,9 @@ describe('Rolle API', () => {
         describe('when serviceProvider does not exist', () => {
             it('should return 404', async () => {
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-                const params: RolleServiceProviderQueryParams = {
+                const params: RolleServiceProviderBodyParams = {
                     serviceProviderId: faker.string.uuid(),
+                    version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .post(`/rolle/${rolle.id}/serviceProviders`)
