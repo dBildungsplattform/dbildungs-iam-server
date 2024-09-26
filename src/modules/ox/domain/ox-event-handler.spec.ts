@@ -77,6 +77,15 @@ describe('OxEventHandler', () => {
         eventServiceMock = module.get(EventService);
     });
 
+    function getRequestedEmailAddresses(address?: string): EmailAddress<true>[] {
+        const emailAddress: EmailAddress<true> = createMock<EmailAddress<true>>({
+            get address(): string {
+                return address ?? faker.internet.email();
+            },
+        });
+        return [emailAddress];
+    }
+
     afterAll(async () => {
         await module.close();
     });
@@ -170,7 +179,7 @@ describe('OxEventHandler', () => {
 
         it('should log info and publish OxUserCreatedEvent on success', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
+            emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -201,7 +210,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when persisting oxUserId fails', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
+            emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -237,7 +246,7 @@ describe('OxEventHandler', () => {
 
         it('should log error on failure', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
+            emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -336,8 +345,21 @@ describe('OxEventHandler', () => {
             expect(loggerMock.error).toHaveBeenLastCalledWith(`Person with personId:${personId} has no OXUserId`);
         });
 
+        it('should log error when no requestedEmailAddress is found for person', async () => {
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPerson.mockResolvedValueOnce(undefined);
+
+            await sut.handleEmailAddressChangedEvent(event);
+
+            expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `No requested email-address found for personId:${personId}`,
+            );
+        });
+
         it('should log error when getData for user request fails', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPerson.mockResolvedValueOnce(getRequestedEmailAddresses());
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: false,
@@ -354,6 +376,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when changeUser request fails', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPerson.mockResolvedValueOnce(getRequestedEmailAddresses());
 
             //mock getData
             oxServiceMock.send.mockResolvedValueOnce({
@@ -379,6 +402,7 @@ describe('OxEventHandler', () => {
 
         it('should publish OxUserChangedEvent on success', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPerson.mockResolvedValueOnce(getRequestedEmailAddresses(email));
 
             //mock getData
             oxServiceMock.send.mockResolvedValueOnce({
@@ -402,7 +426,7 @@ describe('OxEventHandler', () => {
             expect(oxServiceMock.send).toHaveBeenCalledTimes(2);
             expect(loggerMock.error).toHaveBeenCalledTimes(0);
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${person.email}`,
+                `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${email}`,
             );
             expect(eventServiceMock.publish).toHaveBeenLastCalledWith(
                 expect.objectContaining({

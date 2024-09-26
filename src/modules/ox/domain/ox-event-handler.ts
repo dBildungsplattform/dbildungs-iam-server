@@ -21,7 +21,7 @@ import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event
 import { GetDataForUserAction, GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
 import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddress } from '../../email/domain/email-address.js';
+import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -51,23 +51,6 @@ export class OxEventHandler {
         this.contextID = oxConfig.CONTEXT_ID;
         this.contextName = oxConfig.CONTEXT_NAME;
     }
-
-    /*    //Just for simplified testing, will be removed before merge on main
-    @EventHandler(EmailAddressGeneratedEvent)
-    public fake(event: EmailAddressGeneratedEvent): void {
-        this.logger.info(
-            `FAKE: Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
-        );
-        this.eventService.publish(
-            new EmailAddressChangedEvent(
-                '4e814e40-70e3-4369-ab6d-adcef9bcc53e',
-                '1',
-                'aob.meier@schule-sh.de',
-                '2',
-                'bob.meier@schule-sh.de',
-            ),
-        );
-    }*/
 
     @EventHandler(EmailAddressChangedEvent)
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
@@ -109,7 +92,7 @@ export class OxEventHandler {
             return this.logger.error(`Person with personId:${personId} has no referrer: cannot create OXEmailAddress`);
         }
 
-        const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(personId);
+        const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
         if (!emailAddress) {
             return this.logger.error(`EmailAddress for person with personId:${personId} could not be found.`);
         }
@@ -177,21 +160,28 @@ export class OxEventHandler {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
-            this.logger.error(`Person not found for personId:${personId}`);
-            return;
+            return this.logger.error(`Person not found for personId:${personId}`);
         }
         if (!person.email) {
-            this.logger.error(`Person with personId:${personId} has no email-address`);
-            return;
+            return this.logger.error(`Person with personId:${personId} has no email-address`);
         }
         if (!person.referrer) {
-            this.logger.error(`Person with personId:${personId} has no referrer: Cannot Change Email-Address In OX`);
-            return;
+            return this.logger.error(
+                `Person with personId:${personId} has no referrer: Cannot Change Email-Address In OX`,
+            );
         }
         if (!person.oxUserId) {
-            this.logger.error(`Person with personId:${personId} has no OXUserId`);
-            return;
+            return this.logger.error(`Person with personId:${personId} has no OXUserId`);
         }
+
+        const requestedEmailAddresses: Option<EmailAddress<true>[]> = await this.emailRepo.findByPerson(
+            personId,
+            EmailAddressStatus.REQUESTED,
+        );
+        if (!requestedEmailAddresses || !requestedEmailAddresses[0]) {
+            return this.logger.error(`No requested email-address found for personId:${personId}`);
+        }
+        const requestedEmailAddressString: string = requestedEmailAddresses[0].address;
 
         const getDataParams: UserIdParams = {
             contextId: this.contextID,
@@ -211,15 +201,15 @@ export class OxEventHandler {
             );
         }
         const newAliasesArray: string[] = getDataResult.value.aliases;
-        newAliasesArray.push(person.email);
+        newAliasesArray.push(requestedEmailAddressString);
 
         const params: ChangeUserParams = {
             contextId: this.contextID,
             username: getDataResult.value.username,
-            defaultSenderAddress: person.email,
-            email1: person.email,
+            defaultSenderAddress: requestedEmailAddressString,
+            email1: requestedEmailAddressString,
             aliases: newAliasesArray,
-            primaryEmail: person.email,
+            primaryEmail: requestedEmailAddressString,
             login: this.authUser,
             password: this.authPassword,
         };
@@ -235,7 +225,7 @@ export class OxEventHandler {
         }
 
         this.logger.info(
-            `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${person.email}`,
+            `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${requestedEmailAddressString}`,
         );
 
         this.eventService.publish(
@@ -246,7 +236,7 @@ export class OxEventHandler {
                 getDataResult.value.username,
                 this.contextID,
                 this.contextName,
-                getDataResult.value.primaryEmail,
+                requestedEmailAddressString,
             ),
         );
     }

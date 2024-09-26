@@ -8,13 +8,14 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 
-function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
+export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
+    const oxUserIdStr: string | undefined = emailAddress.oxUserID ? emailAddress.oxUserID + '' : undefined;
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: emailAddress.id,
         personId: rel(PersonEntity, emailAddress.personId),
         address: emailAddress.address,
-        oxUserId: emailAddress.oxUserID ?? undefined,
+        oxUserId: oxUserIdStr,
         status: emailAddress.status,
     };
 }
@@ -38,17 +39,51 @@ export class EmailRepo {
         private readonly logger: ClassLogger,
     ) {}
 
-    public async findByPerson(personId: PersonID): Promise<Option<EmailAddress<true>>> {
+    public async findEnabledByPerson(personId: PersonID): Promise<Option<EmailAddress<true>>> {
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
             EmailAddressEntity,
             {
                 personId: { $eq: personId },
+                status: { $eq: EmailAddressStatus.ENABLED },
             },
             {},
         );
         if (!emailAddressEntity) return undefined;
 
         return mapEntityToAggregate(emailAddressEntity);
+    }
+
+    public async findRequestedByPerson(personId: PersonID): Promise<Option<EmailAddress<true>>> {
+        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
+            EmailAddressEntity,
+            {
+                personId: { $eq: personId },
+                status: { $eq: EmailAddressStatus.REQUESTED },
+            },
+            {},
+        );
+        if (!emailAddressEntity) return undefined;
+
+        return mapEntityToAggregate(emailAddressEntity);
+    }
+
+    public async findByPerson(personId: PersonID, status?: EmailAddressStatus): Promise<Option<EmailAddress<true>[]>> {
+        const emailAddressEntities: Option<EmailAddressEntity[]> = await this.em.find(
+            EmailAddressEntity,
+            {
+                personId: { $eq: personId },
+            },
+            {},
+        );
+        if (!emailAddressEntities || emailAddressEntities.length === 0) return undefined;
+
+        if (status) {
+            const filtered: EmailAddress<true>[] = emailAddressEntities
+                .map(mapEntityToAggregate)
+                .filter((ea: EmailAddress<true>) => ea.status === status);
+            return filtered.length === 0 ? undefined : filtered;
+        }
+        return emailAddressEntities.map(mapEntityToAggregate);
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {

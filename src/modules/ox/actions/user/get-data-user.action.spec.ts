@@ -56,4 +56,17 @@ describe('GetDataUserAction', () => {
             });
         });
     });
+
+    describe('isArrayOverride', () => {
+        it('should return true for tag "aliases"', () => {
+            const action: GetDataForUserAction = new GetDataForUserAction({
+                contextId: faker.string.uuid(),
+                userId: faker.string.uuid(),
+                login: '',
+                password: '',
+            });
+
+            expect(action.isArrayOverride('aliases')).toBe(true);
+        });
+    });
 });

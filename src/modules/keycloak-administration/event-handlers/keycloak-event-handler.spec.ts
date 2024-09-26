@@ -63,7 +63,7 @@ describe('KeycloakEventHandler', () => {
                 ),
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received OxUserChangedEvent personId:${fakePersonID}, userId:${fakeOXUserID}, userName:${fakeOXUserName} contextId:${fakeOXContextID}, contextName:${fakeOXContextName}`,
+                `Received OxUserChangedEvent personId:${fakePersonID}, userId:${fakeOXUserID}, userName:${fakeOXUserName} contextId:${fakeOXContextID}, contextName:${fakeOXContextName}, primaryEmail:${fakeEmail}`,
             );
             expect(keycloakUserServiceMock.updateOXUserAttributes).toHaveBeenCalledTimes(1);
         });

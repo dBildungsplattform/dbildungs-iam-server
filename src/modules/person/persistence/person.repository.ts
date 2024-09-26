@@ -31,7 +31,7 @@ import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.err
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.status !== EmailAddressStatus.FAILED) return emailAddress.address;
+        if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
     return undefined;
 }

@@ -51,7 +51,7 @@ export class EmailEventHandler {
         });
         const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
         if (rollenIdWithSPReference) {
-            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
+            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(event.personId);
             if (existingEmail) {
                 this.logger.info(
                     `Existing email found for personId:${event.personId}, address:${existingEmail.address}`,
@@ -180,11 +180,11 @@ export class EmailEventHandler {
         this.logger.info(
             `Received OxUserAttributesChangedEvent personId:${event.personId}, keycloakUsername: ${event.keycloakUsername}, userName:${event.userName}, contextName:${event.contextName}, email:${event.emailAddress}`,
         );
-        const email: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(event.personId);
+        const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
 
         if (!email) {
             return this.logger.error(
-                `Cannot find email-address for person with personId:${event.personId}, enabling not possible`,
+                `Cannot find requested email-address for person with personId:${event.personId}, enabling not possible`,
             );
         }
 
@@ -197,6 +197,7 @@ export class EmailEventHandler {
         }
 
         email.enable();
+        email.oxUserID = event.userId;
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
 
         if (persistenceResult instanceof DomainError) {
@@ -240,7 +241,7 @@ export class EmailEventHandler {
     }
 
     private async createOrEnableEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
-        const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByPerson(personId);
+        const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
 
         if (existingEmail) {
             this.logger.info(`Existing email found for personId:${personId}`);
@@ -302,14 +303,14 @@ export class EmailEventHandler {
     ): Promise<void> {
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
-            this.logger.error(`Could not create email, error is ${email.error.message}`);
+            this.logger.error(`Could not create change-email, error is ${email.error.message}`);
             return;
         }
         email.value.request();
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
         if (persistenceResult instanceof EmailAddress) {
             this.logger.info(
-                `Successfully persisted email with Request status for address:${persistenceResult.address}`,
+                `Successfully persisted change-email with Request status for address:${persistenceResult.address}`,
             );
             this.eventService.publish(
                 new EmailAddressChangedEvent(
@@ -321,7 +322,7 @@ export class EmailEventHandler {
                 ),
             );
         } else {
-            this.logger.error(`Could not persist email, error is ${persistenceResult.message}`);
+            this.logger.error(`Could not persist change-email, error is ${persistenceResult.message}`);
         }
     }
 

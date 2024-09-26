@@ -10,7 +10,6 @@ import {
     ManyToOne,
     OneToMany,
     Property,
-    QueryOrder,
 } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { DataProviderEntity } from '../../../persistence/data-provider.entity.js';
@@ -141,7 +140,6 @@ export class PersonEntity extends TimestampedEntity {
         cascade: [],
         orphanRemoval: false,
         eager: true,
-        orderBy: { updatedAt: QueryOrder.desc },
     })
     public emailAddresses: Collection<EmailAddressEntity> = new Collection<EmailAddressEntity>(this);
 }
