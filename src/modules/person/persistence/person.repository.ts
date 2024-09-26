@@ -276,7 +276,11 @@ export class PersonRepository {
         return !!person;
     }
 
-    public async create(person: Person<false>, hashedPassword?: string): Promise<Person<true> | DomainError> {
+    public async create(
+        person: Person<false>,
+        hashedPassword?: string,
+        personId?: string,
+    ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
 
@@ -295,7 +299,7 @@ export class PersonRepository {
 
             // Create DB person
             const personEntity: PersonEntity = transaction.create(PersonEntity, mapAggregateToData(person)).assign({
-                id: randomUUID(), // Generate ID here instead of at insert-time
+                id: personId ?? randomUUID(), // Generate ID here instead of at insert-time
             });
             transaction.persist(personEntity);
 
