@@ -621,6 +621,7 @@ describe('Rolle API', () => {
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
                 serviceProviderIds: [serviceProvider.id],
+                version: 1,
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -644,6 +645,7 @@ describe('Rolle API', () => {
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
                 serviceProviderIds: [],
+                version: 1,
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -674,6 +676,7 @@ describe('Rolle API', () => {
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
                 serviceProviderIds: [],
+                version: 1,
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -730,6 +733,7 @@ describe('Rolle API', () => {
                     merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                     systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
                     serviceProviderIds: [],
+                    version: 1,
                 };
 
                 const response: Response = await request(app.getHttpServer() as App)
@@ -766,6 +770,7 @@ describe('Rolle API', () => {
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
                 systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
                 serviceProviderIds: [serviceProvider.id],
+                version: 1,
             };
 
             const response: Response = await request(app.getHttpServer() as App)
