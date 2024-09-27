@@ -2483,6 +2483,7 @@
           "piservicepass" : "${PI_ADMIN_PASSWORD}",
           "piserver" : "${PI_BASE_URL}",
           "piserviceaccount" : "${PI_ADMIN_USER}",
+          "pidefaultmessage" : "Diese Aktion setzt eine Zwei-Faktor-Authentifizierung voraus. Bitte geben Sie das Einmalpasswort von Ihrem Security-Token ein.",
           "preftokentype" : "OTP",
           "pirealm" : "${PI_REALM}",
           "pidolog" : "true",
