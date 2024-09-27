@@ -480,7 +480,7 @@ export class PersonRepository {
         revision: string,
         permissions: PersonPermissions,
     ): Promise<Person<true> | DomainError> {
-        let personFound: Option<Person<true>> = await this.findById(personId);
+        const personFound: Option<Person<true>> = await this.findById(personId);
         if (!personFound) {
             return new EntityNotFoundError('Person', personId);
         }
@@ -547,42 +547,26 @@ export class PersonRepository {
             if (personFound.updatedAt.getTime() > lastModified.getTime()) {
                 return new PersonUpdateOutdatedError();
             }
-            //check if the username needs to be updated
-            if (this.hasUsernameChanged(oldVorname, oldFamilienname, vorname, familienname)) {
-                const usernameGeneratedResult: Person<true> | DomainError = await this.generateUsername(
-                    personFound,
-                    oldUsername,
-                );
-                if (usernameGeneratedResult instanceof DomainError) {
-                    return usernameGeneratedResult;
-                }
 
-                personFound = usernameGeneratedResult;
+            if (this.hasUsernameChanged(oldVorname, oldFamilienname, vorname, familienname)) {
+                //Generate new username
+                const newUsername: string | DomainError = await personFound.generateNewUsername(this.usernameGenerator);
+                if (newUsername instanceof DomainError) {
+                    return newUsername;
+                }
+                //Update username in kc
+                const kcUsernameUpdated: Result<void, DomainError> = await this.kcUserService.updateUsername(
+                    oldUsername,
+                    newUsername,
+                );
+                if (!kcUsernameUpdated.ok) {
+                    return kcUsernameUpdated.error;
+                }
             }
         }
 
         const savedPerson: Person<true> | DomainError = await this.save(personFound);
         return savedPerson;
-    }
-
-    private async generateUsername(
-        updatedPerson: Person<true>,
-        oldUsername: string,
-    ): Promise<Person<true> | DomainError> {
-        const usernameError: void | DomainError = await updatedPerson.generateNewUsername(this.usernameGenerator);
-        if (usernameError instanceof DomainError) {
-            return usernameError;
-        }
-        //Username cannot be undefined
-        const kcUsernameUpdated: Result<void, DomainError> = await this.kcUserService.updateUsername(
-            oldUsername,
-            updatedPerson.username!,
-        );
-        if (!kcUsernameUpdated.ok) {
-            return kcUsernameUpdated.error;
-        }
-
-        return updatedPerson;
     }
 
     private hasNameChanged(

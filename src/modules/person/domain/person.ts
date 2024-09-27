@@ -282,7 +282,7 @@ export class Person<WasPersisted extends boolean> {
         });
     }
 
-    public async generateNewUsername(usernameGenerator: UsernameGeneratorService): Promise<void | DomainError> {
+    public async generateNewUsername(usernameGenerator: UsernameGeneratorService): Promise<string | DomainError> {
         const result: Result<string, DomainError> = await usernameGenerator.generateUsername(
             this.vorname,
             this.familienname,
@@ -292,5 +292,7 @@ export class Person<WasPersisted extends boolean> {
         }
         this.username = result.value;
         this.referrer = result.value;
+
+        return result.value;
     }
 }
