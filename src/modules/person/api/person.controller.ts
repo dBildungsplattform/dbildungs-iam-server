@@ -426,13 +426,8 @@ export class PersonController {
             throw new PersonDomainError(`Person with id ${personId} has no keycloak id`, personId);
         }
 
-        // const lockInfo: LockInfo = {
-        //     lock_locked_from: lockUserBodyParams.locked_from,
-        //     lock_timestamp: new Date().toISOString(),
-        // };
-
         const userLock: UserLock<true> = {
-            personId: personId,
+            person: personId,
             locked_by: lockUserBodyParams.locked_from,
             locked_until: new Date(lockUserBodyParams.locked_until),
         };
