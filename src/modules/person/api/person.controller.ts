@@ -35,14 +35,14 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
-import { CreatePersonBodyParams } from './create-person.body.params.js';
+import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { LockInfo, Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
@@ -65,6 +65,11 @@ import { PersonLockResponse } from './person-lock.response.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
+import { DbiamPersonError } from './dbiam-person.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -79,7 +84,9 @@ export class PersonController {
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
+        private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
+        private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
     ) {
@@ -94,63 +101,46 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
-    public async createPerson(
-        @Body() params: CreatePersonBodyParams,
+    public async createPersonMigration(
+        @Body() params: CreatePersonMigrationBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
-        // Find all organisations where user has permission
-        const isMigrationCall: boolean = !(!params.hashedPassword && !params.username);
-        let permittedOrgas: PermittedOrgas;
-
-        if (isMigrationCall === true) {
-            permittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-                [RollenSystemRecht.MIGRATION_DURCHFUEHREN],
-                true,
-            );
-        } else {
-            permittedOrgas = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
-        }
-        if (!permittedOrgas.all && permittedOrgas.orgaIds.length < 1) {
+        const isMigrationUser: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.MIGRATION_DURCHFUEHREN,
+        ]);
+        if (!isMigrationUser) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person')),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Migrationsrecht Required For This Endpoint'),
+                ),
             );
         }
         const person: Person<false> | DomainError = await this.personFactory.createNew({
-            vorname: params.name.vorname,
-            familienname: params.name.familienname,
-            initialenFamilienname: params.name.initialenfamilienname,
-            initialenVorname: params.name.initialenvorname,
-            rufname: params.name.rufname,
-            nameTitel: params.name.titel,
-            nameAnrede: params.name.anrede,
-            namePraefix: params.name.namenspraefix,
-            nameSuffix: params.name.namenssuffix,
-            nameSortierindex: params.name.sortierindex,
-            auskunftssperre: params.auskunftssperre,
-            geburtsdatum: params.geburt?.datum,
-            geburtsort: params.geburt?.geburtsort,
+            vorname: params.vorname,
+            familienname: params.familienname,
             username: params.username,
             personalnummer: params.personalnummer,
-            ...params,
         });
         if (person instanceof DomainError) {
-            if (person instanceof PersonDomainError) {
-                throw person;
-            }
-
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
             );
         }
 
-        const result: Person<true> | DomainError = await this.personRepository.create(person, params.hashedPassword);
+        const result: Person<true> | DomainError = await this.personRepository.create(
+            person,
+            params.hashedPassword,
+            params.personId,
+        );
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
-
-        return new PersonendatensatzResponse(result, isMigrationCall === true ? false : true);
+        this.logger.info(
+            `MIGRATION: Create Person Operation / personId: ${params.personId} / Successfully Created Person`,
+        );
+        return new PersonendatensatzResponse(result, false);
     }
 
     @Delete(':personId')
@@ -449,5 +439,44 @@ export class PersonController {
             throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);
         }
         return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
+    }
+
+    @Patch(':personId/personalnummer')
+    @ApiNoContentResponse({
+        description: 'The personalnummer was successfully updated.',
+    })
+    @ApiBadRequestResponse({ description: 'Request has a wrong format.', type: DbiamPersonError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the personalnummer.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to update the personalnummer.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the personalnummer.' })
+    public async updatePersonalnummer(
+        @Param() params: PersonByIdParams,
+        @Body() body: PersonByPersonalnummerBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void | DomainError> {
+        if (
+            !(await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(
+                params.personId,
+            ))
+        ) {
+            throw new PersonDomainError('Person hat keine koperspflichtige Rolle', undefined);
+        }
+        const result: Person<true> | DomainError = await this.personRepository.updatePersonalnummer(
+            params.personId,
+            body.personalnummer,
+            body.lastModified,
+            body.revision,
+            permissions,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof PersonDomainError || result instanceof DuplicatePersonalnummerError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
     }
 }

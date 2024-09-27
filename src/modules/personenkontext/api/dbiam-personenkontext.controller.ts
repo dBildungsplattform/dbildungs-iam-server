@@ -10,7 +10,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, EntityCouldNotBeCreated, MissingPermissionsError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -18,16 +18,24 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { Personenkontext } from '../domain/personenkontext.js';
 import { DBiamPersonenkontextResponse } from './response/dbiam-personenkontext.response.js';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { DbiamPersonenkontextBodyParams } from './param/dbiam-personenkontext.body.params.js';
+import { DbiamPersonenkontextMigrationBodyParams } from './param/dbiam-personenkontext-migration.body.params.js';
 import { DBiamFindPersonenkontexteByPersonIdParams } from './param/dbiam-find-personenkontext-by-personid.params.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { PersonenkontexteUpdate } from '../domain/personenkontexte-update.js';
-import { DbiamPersonenkontextFactory } from '../domain/dbiam-personenkontext.factory.js';
-import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
-import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -42,7 +50,12 @@ import { PersonenkontextCommitError } from '../domain/error/personenkontext-comm
 export class DBiamPersonenkontextController {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
-        private readonly personenkontextFactory: DbiamPersonenkontextFactory,
+        private readonly personenkontextFactory: PersonenkontextFactory,
+        private readonly personenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
+        private readonly organisationRepo: OrganisationRepository,
+        private readonly personRepo: PersonRepository,
+        private readonly eventService: EventService,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Get(':personId')
@@ -82,51 +95,109 @@ export class DBiamPersonenkontextController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create personenkontext.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to create personenkontext.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating personenkontext.' })
-    public async createPersonenkontext(
-        @Body() params: DbiamPersonenkontextBodyParams,
+    public async createPersonenkontextMigration(
+        @Body() params: DbiamPersonenkontextMigrationBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenkontextResponse> {
-        // Get existing personenkontexte
-        const existingPKs: DbiamPersonenkontextBodyParams[] = await this.personenkontextRepo.findByPerson(
-            params.personId,
-        );
-
-        // Add new PK to list
-        existingPKs.push({
-            personId: params.personId,
-            organisationId: params.organisationId,
-            rolleId: params.rolleId,
-            befristung: params.befristung,
-        });
-
-        // Update
-        const personenkontextUpdate: PersonenkontexteUpdate =
-            this.personenkontextFactory.createNewPersonenkontexteUpdate(
-                params.personId,
-                new Date(),
-                existingPKs.length - 1,
-                existingPKs,
-                permissions,
+        const isMigrationUser: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.MIGRATION_DURCHFUEHREN,
+        ]);
+        if (!isMigrationUser) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Migrationsrecht Required For This Endpoint'),
+                ),
             );
-
-        const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError =
-            await personenkontextUpdate.update();
-
-        if (updateResult instanceof DomainError) {
-            throw updateResult;
         }
 
-        const newPersonenkontext: Personenkontext<true> | undefined = updateResult.find(
-            (pk: Personenkontext<true>) =>
-                pk.personId === params.personId &&
-                pk.organisationId === params.organisationId &&
-                pk.rolleId === params.rolleId,
+        const kontextToCreate: Personenkontext<false> = this.personenkontextFactory.createNew(
+            params.personId,
+            params.organisationId,
+            params.rolleId,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            params.befristung,
         );
 
-        if (!newPersonenkontext) {
-            throw new PersonenkontextCommitError();
+        const isPersonkontextAlreadyExisting: boolean = await this.personenkontextRepo.exists(
+            params.personId,
+            params.organisationId,
+            params.rolleId,
+        );
+        if (isPersonkontextAlreadyExisting) {
+            this.logger.error(
+                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Kontext Already exist`,
+            );
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeCreated(`Kontext Already Exists`),
+                ),
+            );
         }
 
-        return new DBiamPersonenkontextResponse(newPersonenkontext);
+        const rolle: Option<Rolle<true>> = await kontextToCreate.getRolle();
+        if (!rolle) {
+            this.logger.error(
+                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Rolle does not exist`,
+            );
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeCreated('Rolle does not exist'),
+                ),
+            );
+        }
+
+        const orga: Option<Organisation<true>> = await this.organisationRepo.findById(params.organisationId);
+        if (!orga) {
+            this.logger.error(
+                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Orga does not exist`,
+            );
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeCreated('Orga does not exist'),
+                ),
+            );
+        }
+
+        const person: Option<Person<true>> = await this.personRepo.findById(params.personId);
+        if (!person) {
+            this.logger.error(
+                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Person does not exist`,
+            );
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityCouldNotBeCreated('Person does not exist'),
+                ),
+            );
+        }
+
+        if (
+            (params.email && rolle.rollenart != RollenArt.LEHR) ||
+            (!params.email && rolle.rollenart == RollenArt.LEHR)
+        ) {
+            this.logger.error(
+                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / An Email Must Only Be Provided For a Lehrerkontext`,
+            );
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new PersonenkontextSpecificationError('An Email Must Only Be Provided For a Lehrerkontext'),
+                ),
+            );
+        }
+
+        const createdKontext: Personenkontext<true> = await this.personenkontextRepoInternal.save(kontextToCreate);
+        this.logger.info(
+            `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / New Kontext has been saved to DB successfully`,
+        );
+
+        this.eventService.publish(
+            new PersonenkontextCreatedMigrationEvent(createdKontext, person, rolle, orga, params.email),
+        );
+
+        return new DBiamPersonenkontextResponse(createdKontext);
     }
 }
