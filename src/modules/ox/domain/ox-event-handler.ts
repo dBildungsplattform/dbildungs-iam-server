@@ -130,8 +130,10 @@ export class OxEventHandler {
         const result: Result<CreateUserResponse, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
-            this.logger.error(`Could not create user in OX, error: ${result.error.message}`);
-            return;
+            emailAddress.failed();
+            await this.emailRepo.save(emailAddress);
+
+            return this.logger.error(`Could not create user in OX, error: ${result.error.message}`);
         }
 
         this.logger.info(`User created in OX, userId:${result.value.id}, email:${result.value.primaryEmail}`);
@@ -139,6 +141,8 @@ export class OxEventHandler {
         emailAddress.oxUserID = result.value.id;
         const emailAddressUpdateResult: EmailAddress<true> | DomainError = await this.emailRepo.save(emailAddress);
         if (emailAddressUpdateResult instanceof DomainError) {
+            emailAddress.failed();
+            await this.emailRepo.save(emailAddress);
             this.logger.error(`Persisting oxUserId on emailAddress for personId:${personId} failed`);
         }
 
@@ -195,6 +199,8 @@ export class OxEventHandler {
         const getDataResult: Result<GetDataForUserResponse, DomainError> = await this.oxService.send(getDataAction);
 
         if (!getDataResult.ok) {
+            requestedEmailAddresses[0].failed();
+            await this.emailRepo.save(requestedEmailAddresses[0]);
             return this.logger.error(
                 `Cannot get data for user with username:${person.referrer} from OX, Aborting Email-Address Change`,
             );
@@ -218,6 +224,9 @@ export class OxEventHandler {
         const result: Result<void, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
+            requestedEmailAddresses[0].failed();
+            await this.emailRepo.save(requestedEmailAddresses[0]);
+
             return this.logger.error(
                 `Could not change email-address for oxUserId:${person.oxUserId} in OX, error: ${result.error.message}`,
             );

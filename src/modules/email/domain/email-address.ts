@@ -60,6 +60,13 @@ export class EmailAddress<WasPersisted extends boolean> {
         return oldValue;
     }
 
+    public failed(): boolean {
+        const oldValue: boolean = this.enabled;
+        this.addressStatus = EmailAddressStatus.FAILED;
+
+        return oldValue;
+    }
+
     public get enabled(): boolean {
         return this.addressStatus === EmailAddressStatus.ENABLED;
     }

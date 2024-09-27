@@ -319,8 +319,7 @@ export class EmailEventHandler {
     private async createNewEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
-            this.logger.error(`Could not create email, error is ${email.error.message}`);
-            return;
+            return this.logger.error(`Could not create email, error is ${email.error.message}`);
         }
         email.value.request();
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
@@ -348,8 +347,7 @@ export class EmailEventHandler {
     ): Promise<void> {
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
-            this.logger.error(`Could not create change-email, error is ${email.error.message}`);
-            return;
+            return this.logger.error(`Could not create change-email, error is ${email.error.message}`);
         }
         email.value.request();
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
