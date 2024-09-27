@@ -490,78 +490,96 @@ export class PersonRepository {
             return new MissingPermissionsError('Not allowed to update the person metadata for the person.');
         }
 
-        const hasUsernameChanged: boolean = this.hasNameChanged(
+        const hasNameChanged: boolean = this.hasNameChanged(
             personFound.vorname,
             personFound.familienname,
             vorname,
             familienname,
         );
 
-        if (!hasUsernameChanged && !personalnummer) {
+        const hasUsernameChanged: boolean = this.hasUsernameChanged(
+            personFound.vorname,
+            personFound.familienname,
+            vorname,
+            familienname,
+        );
+
+        if (!hasNameChanged && !personalnummer) {
             return new PersonalnummerRequiredError();
         }
+
+        if (personFound.updatedAt.getTime() > lastModified.getTime()) {
+            return new PersonUpdateOutdatedError();
+        }
+
+        let newPersonalnummer: string | undefined = undefined;
+        let newVorname: string | undefined = undefined;
+        let newFamilienname: string | undefined = undefined;
+        const oldUsername: string = personFound.referrer!;
+        let username: string = oldUsername;
 
         //Update personalnummer
         if (personalnummer) {
             if (await this.isPersonalnummerAlreadayAssigned(personalnummer)) {
                 return new DuplicatePersonalnummerError(`Personalnummer ${personalnummer} already exists.`);
             }
-            personFound.personalnummer = personalnummer;
+            newPersonalnummer = personalnummer;
         }
         //Update name
-        if (hasUsernameChanged) {
-            //Existing user muss have a referrer.
-            const oldUsername: string = personFound.referrer!;
-            const oldVorname: string | undefined = personFound.vorname;
-            const oldFamilienname: string | undefined = personFound.familienname;
+        if (hasNameChanged) {
+            newVorname = vorname;
+            newFamilienname = familienname;
 
-            const error: void | DomainError = personFound.update(
-                revision,
-                familienname,
-                vorname,
-                personFound.referrer,
-                personFound.stammorganisation,
-                personFound.initialenFamilienname,
-                personFound.initialenVorname,
-                personFound.rufname,
-                personFound.nameTitel,
-                personFound.nameAnrede,
-                personFound.namePraefix,
-                personFound.nameSuffix,
-                personFound.nameSortierindex,
-                personFound.geburtsdatum,
-                personFound.geburtsort,
-                personFound.geschlecht,
-                personFound.lokalisierung,
-                personFound.vertrauensstufe,
-                personFound.auskunftssperre,
-                personFound.personalnummer,
-                personFound.lockInfo,
-                personFound.isLocked,
-                personFound.email,
-            );
-            if (error instanceof DomainError) {
-                return error;
-            }
-
-            if (personFound.updatedAt.getTime() > lastModified.getTime()) {
-                return new PersonUpdateOutdatedError();
-            }
-
-            if (this.hasUsernameChanged(oldVorname, oldFamilienname, vorname, familienname)) {
+            if (hasUsernameChanged) {
                 //Generate new username
-                const newUsername: string | DomainError = await personFound.generateNewUsername(this.usernameGenerator);
-                if (newUsername instanceof DomainError) {
-                    return newUsername;
-                }
-                //Update username in kc
-                const kcUsernameUpdated: Result<void, DomainError> = await this.kcUserService.updateUsername(
-                    oldUsername,
-                    newUsername,
+                const result: Result<string, DomainError> = await this.usernameGenerator.generateUsername(
+                    vorname,
+                    familienname,
                 );
-                if (!kcUsernameUpdated.ok) {
-                    return kcUsernameUpdated.error;
+                if (!result.ok) {
+                    return result.error;
                 }
+                username = result.value;
+            }
+        }
+
+        const error: void | DomainError = personFound.update(
+            revision,
+            newFamilienname,
+            newVorname,
+            username,
+            personFound.stammorganisation,
+            personFound.initialenFamilienname,
+            personFound.initialenVorname,
+            personFound.rufname,
+            personFound.nameTitel,
+            personFound.nameAnrede,
+            personFound.namePraefix,
+            personFound.nameSuffix,
+            personFound.nameSortierindex,
+            personFound.geburtsdatum,
+            personFound.geburtsort,
+            personFound.geschlecht,
+            personFound.lokalisierung,
+            personFound.vertrauensstufe,
+            personFound.auskunftssperre,
+            newPersonalnummer,
+            personFound.lockInfo,
+            personFound.isLocked,
+            personFound.email,
+        );
+        if (error instanceof DomainError) {
+            return error;
+        }
+
+        //Update username in kc
+        if (hasUsernameChanged) {
+            const kcUsernameUpdated: Result<void, DomainError> = await this.kcUserService.updateUsername(
+                oldUsername,
+                username,
+            );
+            if (!kcUsernameUpdated.ok) {
+                return kcUsernameUpdated.error;
             }
         }
 

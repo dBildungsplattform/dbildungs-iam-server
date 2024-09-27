@@ -269,7 +269,7 @@ export class Person<WasPersisted extends boolean> {
         this.vertrauensstufe = vertrauensstufe;
         this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
-        this.personalnummer = personalnummer;
+        this.personalnummer = personalnummer ?? this.personalnummer;
         this.lockInfo = lockInfo;
         this.isLocked = isLocked;
         this.email = email;
@@ -280,19 +280,5 @@ export class Person<WasPersisted extends boolean> {
             length: { min: 10, max: 10 },
             casing: 'mixed',
         });
-    }
-
-    public async generateNewUsername(usernameGenerator: UsernameGeneratorService): Promise<string | DomainError> {
-        const result: Result<string, DomainError> = await usernameGenerator.generateUsername(
-            this.vorname,
-            this.familienname,
-        );
-        if (!result.ok) {
-            return result.error;
-        }
-        this.username = result.value;
-        this.referrer = result.value;
-
-        return result.value;
     }
 }

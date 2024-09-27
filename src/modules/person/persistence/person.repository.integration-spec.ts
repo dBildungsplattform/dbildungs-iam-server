@@ -1405,8 +1405,8 @@ describe('PersonRepository Integration', () => {
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                '',
-                '',
+                faker.name.lastName(),
+                faker.name.firstName(),
                 person2.personalnummer,
                 person.updatedAt,
                 person.revision,
@@ -1422,8 +1422,8 @@ describe('PersonRepository Integration', () => {
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                '',
-                '',
+                faker.name.lastName(),
+                faker.name.firstName(),
                 faker.finance.pin(7),
                 faker.date.past(),
                 person.revision,
@@ -1439,8 +1439,8 @@ describe('PersonRepository Integration', () => {
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                '',
-                '',
+                person.familienname,
+                person.vorname,
                 faker.finance.pin(7),
                 person.updatedAt,
                 '2',
