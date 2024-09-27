@@ -14,11 +14,9 @@ import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-pe
 import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('UserLockRepository', () => {
-    let module: TestingModule;
     let sut: UserLockRepository;
-    //let em: EntityManager;
-    //let configService: ConfigService;
     let orm: MikroORM;
+    let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -37,8 +35,6 @@ describe('UserLockRepository', () => {
         }).compile();
 
         sut = module.get(UserLockRepository);
-        //em = module.get(EntityManager);
-        //configService = module.get(ConfigService);
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);

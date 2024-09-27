@@ -52,35 +52,26 @@ export class UserLockRepository {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
 
-        try {
-            // Check if personalnummer already exists
-            const existingUserLock: Loaded<UserLockEntity, never, '*', never> | null = await transaction.findOne(
-                UserLockEntity,
-                { personId: userLock.personId },
-            );
-            if (existingUserLock) {
-                await transaction.rollback();
-                return new DuplicatePersonalnummerError(`User-Lock ${userLock.personId} already exists.`);
-            }
-
-            // Create DB userLock
-            const userLockEntity: UserLockEntity = transaction
-                .create(UserLockEntity, mapAggregateToData(userLock))
-                .assign({
-                    id: randomUUID(), // Generate ID here instead of at insert-time
-                });
-            transaction.persist(userLockEntity);
-            // Commit
-            await transaction.commit();
-
-            // Return mapped userLock
-            return mapEntityToAggregateInplace(userLockEntity, userLock);
-        } catch (e) {
-            // Any other errors
-            // -> rollback and rethrow
+        // Check if personalnummer already exists
+        const existingUserLock: Loaded<UserLockEntity, never, '*', never> | null = await transaction.findOne(
+            UserLockEntity,
+            { personId: userLock.personId },
+        );
+        if (existingUserLock) {
             await transaction.rollback();
-            throw e;
+            return new DuplicatePersonalnummerError(`User-Lock ${userLock.personId} already exists.`);
         }
+
+        // Create DB userLock
+        const userLockEntity: UserLockEntity = transaction.create(UserLockEntity, mapAggregateToData(userLock)).assign({
+            id: randomUUID(), // Generate ID here instead of at insert-time
+        });
+        transaction.persist(userLockEntity);
+        // Commit
+        await transaction.commit();
+
+        // Return mapped userLock
+        return mapEntityToAggregateInplace(userLockEntity, userLock);
     }
 
     public async update(userLock: UserLock<true>): Promise<UserLock<true> | DomainError> {
