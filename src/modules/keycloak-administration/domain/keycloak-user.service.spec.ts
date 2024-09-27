@@ -1288,13 +1288,16 @@ describe('KeycloakUserService', () => {
                     const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                         'person-id',
                         'user-id',
-                        true,
+                        false,
                         lockMock,
                     );
 
                     expect(result).toStrictEqual({ ok: true, value: undefined });
                     expect(keyCloakAdminClient.users.update).toHaveBeenCalledTimes(1);
-                    expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
+                    expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith(
+                        { id: 'user-id' },
+                        { enabled: false },
+                    );
                 },
             );
 
