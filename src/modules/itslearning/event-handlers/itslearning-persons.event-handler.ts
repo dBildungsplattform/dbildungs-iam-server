@@ -14,8 +14,6 @@ import {
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { Person } from '../../person/domain/person.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { CreateMembershipParams, CreateMembershipsAction } from '../actions/create-memberships.action.js';
@@ -67,7 +65,6 @@ export class ItsLearningPersonsEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly itsLearningService: ItsLearningIMSESService,
-        private readonly personRepo: PersonRepository,
         configService: ConfigService<ServerConfig>,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
@@ -84,18 +81,12 @@ export class ItsLearningPersonsEventHandler {
         }
 
         return this.mutex.runExclusive(async () => {
-            const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
-
-            if (!person) {
-                return this.logger.error(`Person with ID ${event.personId} could not be found.`);
-            }
-
-            if (!person.referrer) {
-                return this.logger.error(`Person with ID ${person.id} has no username!`);
+            if (!event.referrer) {
+                return this.logger.error(`Person with ID ${event.personId} has no username!`);
             }
 
             const readPersonResult: Result<PersonResponse, DomainError> = await this.itsLearningService.send(
-                new ReadPersonAction(person.id),
+                new ReadPersonAction(event.personId),
             );
 
             if (!readPersonResult.ok) {
@@ -103,20 +94,20 @@ export class ItsLearningPersonsEventHandler {
             }
 
             const createAction: CreatePersonAction = new CreatePersonAction({
-                id: person.id,
-                firstName: person.vorname,
-                lastName: person.familienname,
-                username: person.referrer,
+                id: event.personId,
+                firstName: event.vorname,
+                lastName: event.familienname,
+                username: event.referrer,
                 institutionRoleType: readPersonResult.value.institutionRole,
             });
 
             const createPersonResult: Result<void, DomainError> = await this.itsLearningService.send(createAction);
 
             if (!createPersonResult.ok) {
-                return this.logger.error(`Person with ID ${person.id} could not be updated in itsLearning!`);
+                return this.logger.error(`Person with ID ${event.personId} could not be updated in itsLearning!`);
             }
 
-            this.logger.info(`Person with ID ${person.id} updated in itsLearning!`);
+            this.logger.info(`Person with ID ${event.personId} updated in itsLearning!`);
         });
     }
 

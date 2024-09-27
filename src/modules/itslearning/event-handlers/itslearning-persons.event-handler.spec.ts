@@ -13,7 +13,6 @@ import {
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
 import { Person } from '../../person/domain/person.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { CreateMembershipsAction } from '../actions/create-memberships.action.js';
@@ -42,7 +41,6 @@ describe('ItsLearning Persons Event Handler', () => {
     let sut: ItsLearningPersonsEventHandler;
     let itsLearningServiceMock: DeepMocked<ItsLearningIMSESService>;
     let loggerMock: DeepMocked<ClassLogger>;
-    let personRepoMock: DeepMocked<PersonRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -53,16 +51,11 @@ describe('ItsLearning Persons Event Handler', () => {
                     provide: ItsLearningIMSESService,
                     useValue: createMock<ItsLearningIMSESService>(),
                 },
-                {
-                    provide: PersonRepository,
-                    useValue: createMock<PersonRepository>(),
-                },
             ],
         }).compile();
 
         sut = module.get(ItsLearningPersonsEventHandler);
         itsLearningServiceMock = module.get(ItsLearningIMSESService);
-        personRepoMock = module.get(PersonRepository);
         loggerMock = module.get(ClassLogger);
     });
 
@@ -308,7 +301,6 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should send person to itsLearning', async () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
-            personRepoMock.findById.mockResolvedValueOnce(person);
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: true,
                 value: personResponse,
@@ -318,7 +310,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 value: undefined,
             } satisfies Result<void, DomainError>); // Create person
 
-            await sut.personRenamedEventHandler(new PersonRenamedEvent(person.id));
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person));
 
             expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -336,7 +328,6 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should log error if person could not be updated', async () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
-            personRepoMock.findById.mockResolvedValueOnce(person);
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: true,
                 value: personResponse,
@@ -346,7 +337,7 @@ describe('ItsLearning Persons Event Handler', () => {
                 error: createMock(),
             } satisfies Result<void, DomainError>); // Create person
 
-            await sut.personRenamedEventHandler(new PersonRenamedEvent(person.id));
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person));
 
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `Person with ID ${person.id} could not be updated in itsLearning!`,
@@ -354,20 +345,10 @@ describe('ItsLearning Persons Event Handler', () => {
         });
 
         describe('when person is invalid', () => {
-            it("should log error, if person doesn't exist", async () => {
-                const [person]: [Person<true>, PersonResponse] = createPersonAndResponse({ referrer: undefined });
-                personRepoMock.findById.mockResolvedValueOnce(undefined);
-
-                await sut.personRenamedEventHandler(new PersonRenamedEvent(person.id));
-
-                expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${person.id} could not be found.`);
-            });
-
             it('should log error, if person has no referrer', async () => {
                 const [person]: [Person<true>, PersonResponse] = createPersonAndResponse({ referrer: undefined });
-                personRepoMock.findById.mockResolvedValueOnce(person);
 
-                await sut.personRenamedEventHandler(new PersonRenamedEvent(person.id));
+                await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person));
 
                 expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${person.id} has no username!`);
             });
@@ -376,13 +357,12 @@ describe('ItsLearning Persons Event Handler', () => {
         describe("when person doesn't exist in itslearning", () => {
             it('should log info', async () => {
                 const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
-                personRepoMock.findById.mockResolvedValueOnce(person);
                 itsLearningServiceMock.send.mockResolvedValueOnce({
                     ok: false,
                     error: createMock(),
                 } satisfies Result<PersonResponse, DomainError>); // Read person
 
-                await sut.personRenamedEventHandler(new PersonRenamedEvent(person.id));
+                await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person));
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Person with ID ${person.id} is not in itslearning, ignoring.`,
@@ -392,8 +372,9 @@ describe('ItsLearning Persons Event Handler', () => {
 
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
+            const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
 
-            await sut.personRenamedEventHandler(new PersonRenamedEvent(faker.string.uuid()));
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person));
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
         });
