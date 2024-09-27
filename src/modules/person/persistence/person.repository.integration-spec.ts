@@ -46,6 +46,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
@@ -81,6 +82,10 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
+                },
+                {
+                    provide: UserLockRepository,
+                    useValue: createMock<UserLockRepository>(),
                 },
             ],
         }).compile();
@@ -963,7 +968,7 @@ describe('PersonRepository Integration', () => {
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
-                person1.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
+                person1.userLock = { person: person1.id, locked_by: '', locked_until: new Date() };
                 person1.isLocked = false;
 
                 kcUserServiceMock.findById.mockResolvedValue({

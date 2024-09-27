@@ -23,6 +23,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -65,6 +66,10 @@ describe('EmailRepo', () => {
                                 value: faker.string.alphanumeric(16),
                             }),
                     }),
+                },
+                {
+                    provide: UserLockRepository,
+                    useValue: createMock<UserLockRepository>(),
                 },
             ],
         }).compile();
