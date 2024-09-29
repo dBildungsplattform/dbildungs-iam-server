@@ -6,10 +6,10 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
-import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
+import { OrganisationSortField, OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
@@ -17,6 +17,7 @@ import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { FindOrganisationQueryParams } from '../api/find-organisation-query.param.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -385,5 +386,46 @@ export class OrganisationRepository {
         /* eslint-disable no-await-in-loop */
 
         return RootDirectChildrenType.OEFFENTLICH;
+    }
+
+    public async findByQueryParams(
+        queryParams: FindOrganisationQueryParams,
+        validOrgaIDs: OrganisationID[],
+    ): Promise<Counted<Organisation<true>>> {
+        const scope: OrganisationScope = new OrganisationScope();
+
+        if (queryParams.typ === OrganisationsTyp.KLASSE) {
+            scope
+                .findBy({
+                    kennung: queryParams.kennung,
+                    name: queryParams.name,
+                    typ: queryParams.typ,
+                })
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .findByAdministriertVonArray(queryParams.administriertVon)
+                .searchStringAdministriertVon(queryParams.searchString)
+                .excludeTyp(queryParams.excludeTyp)
+                .byIDs(validOrgaIDs)
+                .paged(queryParams.offset, queryParams.limit);
+        } else {
+            scope
+                .findBy({
+                    kennung: queryParams.kennung,
+                    name: queryParams.name,
+                    typ: queryParams.typ,
+                })
+                .setScopeWhereOperator(ScopeOperator.AND)
+                .findByAdministriertVonArray(queryParams.administriertVon)
+                .searchString(queryParams.searchString)
+                .excludeTyp(queryParams.excludeTyp)
+                .byIDs(validOrgaIDs)
+                .paged(queryParams.offset, queryParams.limit);
+        }
+
+        const sortField: OrganisationSortField = queryParams.sortField || OrganisationSortField.NAME;
+        const scopeOrder: ScopeOrder = queryParams.scopeOrder || ScopeOrder.ASC;
+        scope.sortBy(sortField, scopeOrder);
+
+        return this.findBy(scope);
     }
 }

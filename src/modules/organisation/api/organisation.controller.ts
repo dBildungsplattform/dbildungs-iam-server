@@ -37,9 +37,9 @@ import { OrganisationByIdParams } from './organisation-by-id.params.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
 import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
-import { OrganisationScope } from '../persistence/organisation.scope.js';
+
 import { Organisation } from '../domain/organisation.js';
-import { ScopeOperator } from '../../../shared/persistence/index.js';
+
 import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -50,7 +50,7 @@ import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
-import { OrganisationsTyp } from '../domain/organisation.enums.js';
+
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OrganisationService } from '../domain/organisation.service.js';
@@ -267,38 +267,9 @@ export class OrganisationController {
             true,
         );
 
-        const scope: OrganisationScope = new OrganisationScope();
-
         // Define scope based on the organisation type
-        if (queryParams.typ === OrganisationsTyp.KLASSE) {
-            scope
-                .findBy({
-                    kennung: queryParams.kennung,
-                    name: queryParams.name,
-                    typ: queryParams.typ,
-                })
-                .setScopeWhereOperator(ScopeOperator.AND)
-                .findByAdministriertVonArray(queryParams.administriertVon)
-                .searchStringAdministriertVon(queryParams.searchString)
-                .excludeTyp(queryParams.excludeTyp)
-                .byIDs(validOrgaIDs)
-                .paged(queryParams.offset, queryParams.limit);
-        } else {
-            scope
-                .findBy({
-                    kennung: queryParams.kennung,
-                    name: queryParams.name,
-                    typ: queryParams.typ,
-                })
-                .setScopeWhereOperator(ScopeOperator.AND)
-                .findByAdministriertVonArray(queryParams.administriertVon)
-                .searchString(queryParams.searchString)
-                .excludeTyp(queryParams.excludeTyp)
-                .byIDs(validOrgaIDs)
-                .paged(queryParams.offset, queryParams.limit);
-        }
-
-        const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepository.findBy(scope);
+        const [organisations, total]: [Organisation<true>[], number] =
+            await this.organisationRepository.findByQueryParams(queryParams, validOrgaIDs);
 
         // Create a Map from the existing organisations
         const organisationMap: Map<string, Organisation<true>> = new Map(

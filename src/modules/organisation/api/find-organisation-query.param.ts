@@ -1,10 +1,11 @@
 import { AutoMap } from '@automapper/classes';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationsTyp, OrganisationsTypName } from '../domain/organisation.enums.js';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OrganisationSortField, OrganisationsTyp, OrganisationsTypName } from '../domain/organisation.enums.js';
 import { RollenSystemRecht, RollenSystemRechtTypName } from '../../rolle/domain/rolle.enums.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @AutoMap()
@@ -97,4 +98,20 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         isArray: true,
     })
     public readonly organisationIds?: string[];
+
+    @IsOptional()
+    @IsEnum(OrganisationSortField)
+    @ApiPropertyOptional({
+        enum: OrganisationSortField,
+        description: 'Field to sort by.',
+    })
+    public readonly sortField?: OrganisationSortField;
+
+    @IsOptional()
+    @IsEnum(ScopeOrder)
+    @ApiPropertyOptional({
+        enum: ScopeOrder,
+        description: 'Order to sort by.',
+    })
+    public readonly scopeOrder?: ScopeOrder;
 }
