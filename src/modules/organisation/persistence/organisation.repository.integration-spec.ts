@@ -24,6 +24,8 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { FindOrganisationQueryParams } from '../api/find-organisation-query.param.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -1018,6 +1020,47 @@ describe('OrganisationRepository', () => {
             await em.persistAndFlush(mappedOrgaB);
 
             await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(false);
+        });
+    });
+    describe('findByQueryParams', () => {
+        it('should build the correct scope for KLASSE organisations', async () => {
+            const queryParams: FindOrganisationQueryParams = {
+                typ: OrganisationsTyp.KLASSE,
+                kennung: 'TEST',
+                name: 'TestName',
+                administriertVon: [faker.string.uuid()],
+                searchString: 'TestSearch',
+                excludeTyp: [OrganisationsTyp.SONSTIGE],
+                offset: 0,
+                limit: 10,
+                systemrechte: [],
+            };
+            const validOrgaIDs: OrganisationID[] = [faker.string.uuid()];
+
+            const result: Counted<Organisation<true>> = await sut.findByQueryParams(queryParams, validOrgaIDs);
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(2);
+        });
+
+        it('should build the correct scope for non-KLASSE organisations', async () => {
+            const queryParams: FindOrganisationQueryParams = {
+                typ: OrganisationsTyp.SCHULE,
+                kennung: 'TEST',
+                name: 'TestName',
+                administriertVon: [faker.string.uuid()],
+                searchString: 'TestSearch',
+                excludeTyp: [OrganisationsTyp.SONSTIGE],
+                offset: 0,
+                limit: 10,
+                systemrechte: [],
+            };
+            const validOrgaIDs: OrganisationID[] = [faker.string.uuid()];
+
+            const result: Counted<Organisation<true>> = await sut.findByQueryParams(queryParams, validOrgaIDs);
+
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(2);
         });
     });
 });
