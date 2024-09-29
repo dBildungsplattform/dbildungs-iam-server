@@ -320,6 +320,7 @@ describe('OrganisationController', () => {
                 );
 
                 expect(organisationRepositoryMock.findByQueryParams).toHaveBeenCalledTimes(1);
+                expect(organisationRepositoryMock.findByQueryParams).toHaveBeenCalledWith(queryParams, []);
 
                 expect(result.items.length).toEqual(3);
             });
