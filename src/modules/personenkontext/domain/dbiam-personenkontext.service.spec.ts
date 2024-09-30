@@ -1,3 +1,4 @@
+// eslint-disable-next-line max-classes-per-file
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
