@@ -484,7 +484,7 @@
         "requiredActions": [],
         "clientRoles": {
           "realm-management": [
-            "manage-realm"
+            "manage-clients"
           ]
         },
         "notBefore": 0,
