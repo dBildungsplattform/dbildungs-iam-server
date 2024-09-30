@@ -26,6 +26,7 @@ import { PersonenkontextPersistenceModule } from './persistence/PersonenkontextP
         DBiamPersonenkontextService,
         DbiamPersonenkontextFactory,
         PersonenkontextPersistenceModule,
+        PersonenkontextSpecificationsModule,
     ],
 })
 export class PersonenKontextModule {}
