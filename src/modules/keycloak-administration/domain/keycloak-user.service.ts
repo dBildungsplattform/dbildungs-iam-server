@@ -22,11 +22,6 @@ export type FindUserFilter = {
     email?: string;
 };
 
-export enum LockKeys {
-    LockedFrom = 'lock_locked_from',
-    Timestamp = 'lock_timestamp',
-}
-
 @Injectable()
 export class KeycloakUserService {
     public constructor(
@@ -497,7 +492,7 @@ export class KeycloakUserService {
         personId: string,
         keyCloakUserId: string,
         enabled: boolean,
-        userLock: UserLock<true>,
+        userLock: UserLock,
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -523,36 +518,6 @@ export class KeycloakUserService {
             };
         }
     }
-
-    // private async updateCustomAttributes(
-    //     kcAdminClient: KeycloakAdminClient,
-    //     userId: string,
-    //     customAttributes: Record<string, string>,
-    // ): Promise<void> {
-    //     const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
-    //     if (user) {
-    //         user.attributes = user.attributes ?? {};
-    //         for (const key in customAttributes) {
-    //             if (customAttributes.hasOwnProperty(key)) {
-    //                 user.attributes[key] = [customAttributes[key]];
-    //             }
-    //         }
-    //         await kcAdminClient.users.update({ id: userId }, user);
-    //     }
-    // }
-
-    // private async removeLockedAttributes(kcAdminClient: KeycloakAdminClient, userId: string): Promise<void> {
-    //     const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
-    //     if (user) {
-    //         user.attributes = user.attributes ?? {};
-    //         const filteredAttributes: Record<string, string[]> = Object.fromEntries(
-    //             Object.entries(user.attributes).filter(([key]: string[]) => !(key! in LockKeys)),
-    //         );
-
-    //         user.attributes = filteredAttributes;
-    //         await kcAdminClient.users.update({ id: userId }, user);
-    //     }
-    // }
 
     public async getKeyCloakUserData(userId: string): Promise<UserRepresentation | undefined> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =

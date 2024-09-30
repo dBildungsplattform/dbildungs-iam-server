@@ -67,13 +67,13 @@ describe('UserLockRepository', () => {
         it('should return UserLock when found by person', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
-            const userLock: UserLock<true> = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
+            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
 
-            const createdUserLock: UserLock<true> | DomainError = await sut.createUserLock(userLock);
+            const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
             if (createdUserLock instanceof DomainError) throw new Error();
             expect(createdUserLock).toBeTruthy();
 
-            const foundUserLock: Option<UserLock<true>> = await sut.findById(userLock.person);
+            const foundUserLock: Option<UserLock> = await sut.findById(userLock.person);
 
             expect(foundUserLock).toBeTruthy();
             expect(foundUserLock?.person).toEqual(userLock.person);
@@ -81,7 +81,7 @@ describe('UserLockRepository', () => {
 
         it('should return null when userLock is not found by person', async () => {
             const person: string = faker.string.uuid();
-            const foundUserLock: Option<UserLock<true>> = await sut.findById(person);
+            const foundUserLock: Option<UserLock> = await sut.findById(person);
 
             expect(foundUserLock).toBeNull();
         });
@@ -91,9 +91,9 @@ describe('UserLockRepository', () => {
         it('should create and return a UserLock', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
-            const userLock: UserLock<true> = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
+            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
 
-            const createdUserLock: UserLock<true> | DomainError = await sut.createUserLock(userLock);
+            const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
             if (createdUserLock instanceof DomainError) throw new Error();
             expect(createdUserLock).toBeTruthy();
 
@@ -105,21 +105,21 @@ describe('UserLockRepository', () => {
         it('should update an existing UserLock', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
-            const userLock: UserLock<true> = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
+            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
 
-            const createdUserLock: UserLock<true> | DomainError = await sut.createUserLock(userLock);
+            const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
             if (createdUserLock instanceof DomainError) throw new Error();
             expect(createdUserLock).toBeTruthy();
 
             createdUserLock.locked_by = faker.string.uuid();
-            const updatedUserLock: UserLock<true> | DomainError = await sut.update(createdUserLock);
+            const updatedUserLock: UserLock | DomainError = await sut.update(createdUserLock);
             if (updatedUserLock instanceof DomainError) throw new Error();
             expect(updatedUserLock).toBeTruthy();
             expect(updatedUserLock.locked_by).toEqual(createdUserLock.locked_by);
         });
 
         it('should throw error when trying to update a non-existent UserLock', async () => {
-            const nonExistentUserLock: UserLock<true> = UserLock.construct(
+            const nonExistentUserLock: UserLock = UserLock.construct(
                 faker.string.uuid(),
                 faker.string.uuid(),
                 new Date(),
@@ -133,16 +133,16 @@ describe('UserLockRepository', () => {
         it('should delete UserLock by person', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
-            const userLock: UserLock<true> = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
+            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
 
-            const createdUserLock: UserLock<true> | DomainError = await sut.createUserLock(userLock);
+            const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
             if (createdUserLock instanceof DomainError) throw new Error();
             expect(createdUserLock).toBeTruthy();
 
             const result: Result<void, DomainError> = await sut.deleteUserLock(createdUserLock.person);
             expect(result.ok).toBe(true);
 
-            const foundUserLock: Option<UserLock<true>> = await sut.findById(createdUserLock.person);
+            const foundUserLock: Option<UserLock> = await sut.findById(createdUserLock.person);
             expect(foundUserLock).toBeNull();
         });
     });

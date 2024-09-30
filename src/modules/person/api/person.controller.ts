@@ -426,10 +426,10 @@ export class PersonController {
             throw new PersonDomainError(`Person with id ${personId} has no keycloak id`, personId);
         }
 
-        const userLock: UserLock<true> = {
+        const userLock: UserLock = {
             person: personId,
             locked_by: lockUserBodyParams.locked_from,
-            locked_until: new Date(lockUserBodyParams.locked_until),
+            locked_until: lockUserBodyParams.locked_until,
         };
 
         const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(
