@@ -27,7 +27,6 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
@@ -55,7 +54,6 @@ describe('PersonController', () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule],
             providers: [
-                PersonApiMapperProfile,
                 PersonController,
                 PersonFactory,
                 PersonApiMapper,
@@ -141,7 +139,7 @@ describe('PersonController', () => {
         expect(personController).toBeDefined();
     });
 
-    describe('createPerson', () => {
+    describe('createPersonMigration', () => {
         describe('when is authorized migration user', () => {
             it('should return PersonendatensatzResponse', async () => {
                 const person: Person<true> = getPerson();
