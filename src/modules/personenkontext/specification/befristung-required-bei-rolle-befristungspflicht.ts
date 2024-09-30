@@ -2,7 +2,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import {Injectable} from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CheckBefristungSpecification {

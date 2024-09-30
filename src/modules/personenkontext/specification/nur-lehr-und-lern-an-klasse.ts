@@ -6,7 +6,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import {Injectable} from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 
 /**
  * Only needs to be checked when referenced organisation is of type KLASSE.

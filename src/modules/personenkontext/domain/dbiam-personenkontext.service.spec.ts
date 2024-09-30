@@ -11,8 +11,8 @@ import { DBiamPersonenkontextService } from './dbiam-personenkontext.service.js'
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { PersonenkontextSpecificationsModule } from '../specification/PersonenkontextSpecificationsModule';
-import { RolleModule } from '../../rolle/rolle.module';
+import { PersonenkontextSpecificationsModule } from '../specification/PersonenkontextSpecificationsModule.js';
+import { RolleModule } from '../../rolle/rolle.module.js';
 import { Module } from '@nestjs/common';
 import { OrganisationModule } from '../../organisation/organisation.module.js';
 import { PersonenkontextPersistenceModule } from '../persistence/PersonenkontextPersistenceModule.js';
