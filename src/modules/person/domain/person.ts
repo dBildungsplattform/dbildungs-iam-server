@@ -5,7 +5,7 @@ import { UsernameGeneratorService } from './username-generator.service.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
-import { UserLock } from '../../keycloak-administration/domain/user.lock.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
@@ -31,7 +31,7 @@ export type PersonCreationParams = {
     username?: string;
     password?: string;
     personalnummer?: string;
-    userLock?: UserLock<true>;
+    userLock?: UserLock;
     isLocked?: boolean;
 };
 
@@ -71,7 +71,7 @@ export class Person<WasPersisted extends boolean> {
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
         public personalnummer?: string,
-        public userLock?: UserLock<true>,
+        public userLock?: UserLock,
         public isLocked?: boolean,
         public email?: string,
     ) {
@@ -112,7 +112,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
-        userLock?: UserLock<true>,
+        userLock?: UserLock,
         isLocked?: boolean,
         email?: string,
     ): Person<WasPersisted> {
@@ -231,7 +231,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
-        userLock?: UserLock<true>,
+        userLock?: UserLock,
         isLocked?: boolean,
         email?: string,
     ): void | DomainError {

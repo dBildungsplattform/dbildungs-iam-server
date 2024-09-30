@@ -15,7 +15,7 @@ import { KeycloakAdministrationService } from './keycloak-admin-client.service.j
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
 import { ExternalSystemIDs, User } from './user.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
-import { UserLock } from './user.lock.js';
+import { UserLock } from './user-lock.js';
 
 export type FindUserFilter = {
     username?: string;

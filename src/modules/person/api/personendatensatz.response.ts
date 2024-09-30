@@ -3,6 +3,7 @@ import { PersonResponse } from './person.response.js';
 import { Person } from '../domain/person.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonNameParams } from './person-name.params.js';
+import { UserLockParams } from '../../keycloak-administration/api/user-lock.params.js';
 
 export class PersonendatensatzResponse {
     @ApiProperty()
@@ -25,6 +26,11 @@ export class PersonendatensatzResponse {
             datum: person.geburtsdatum,
             geburtsort: person.geburtsort,
         };
+        const userLockParams: UserLockParams = {
+            personId: person.id,
+            locked_by: person.userLock?.locked_by,
+            locked_until: person.userLock?.locked_until?.toISOString(),
+        };
         const personResponse: PersonResponse = {
             id: person.id,
             referrer: person.referrer,
@@ -39,7 +45,7 @@ export class PersonendatensatzResponse {
             startpasswort: withStartPasswort === true ? person.newPassword : undefined,
             personalnummer: person.personalnummer,
             isLocked: person.isLocked,
-            userLock: person.userLock,
+            userLock: userLockParams,
             lastModified: person.updatedAt,
         };
 

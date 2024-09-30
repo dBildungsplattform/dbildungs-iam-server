@@ -70,7 +70,7 @@ import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.bod
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
-import { UserLock } from '../../keycloak-administration/domain/user.lock.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -428,8 +428,9 @@ export class PersonController {
 
         const userLock: UserLock = {
             person: personId,
-            locked_by: lockUserBodyParams.locked_from,
+            locked_by: lockUserBodyParams.locked_by,
             locked_until: lockUserBodyParams.locked_until,
+            created_at: undefined,
         };
 
         const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(

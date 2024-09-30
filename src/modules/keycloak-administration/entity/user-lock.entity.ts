@@ -7,9 +7,9 @@ export class UserLockEntity extends TimestampedEntity {
     @ManyToOne({ entity: () => PersonEntity })
     public readonly person!: Rel<PersonEntity>;
 
-    @Property({ nullable: true })
+    @Property({ nullable: false })
     public locked_by!: string;
 
     @Property({ nullable: true })
-    public locked_until!: Date;
+    public locked_until?: Date;
 }

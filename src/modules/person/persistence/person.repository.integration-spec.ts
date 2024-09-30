@@ -968,7 +968,12 @@ describe('PersonRepository Integration', () => {
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
-                person1.userLock = { person: person1.id, locked_by: '', locked_until: new Date() };
+                person1.userLock = {
+                    person: person1.id,
+                    locked_by: '',
+                    locked_until: new Date(),
+                    created_at: new Date(),
+                };
                 person1.isLocked = false;
 
                 kcUserServiceMock.findById.mockResolvedValue({

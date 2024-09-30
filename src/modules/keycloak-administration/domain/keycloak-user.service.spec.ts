@@ -17,7 +17,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { type FindUserFilter, KeycloakUserService } from './keycloak-user.service.js';
 import { User } from './user.js';
-import { UserLock } from './user.lock.js';
+import { UserLock } from './user-lock.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
 
 describe('KeycloakUserService', () => {
@@ -1259,7 +1259,7 @@ describe('KeycloakUserService', () => {
                     ok: true,
                     value: keyCloakAdminClient,
                 });
-                const lockMock: UserLock<true> = createMock<UserLock<true>>();
+                const lockMock: UserLock = createMock<UserLock>();
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
@@ -1284,7 +1284,7 @@ describe('KeycloakUserService', () => {
                         value: keyCloakAdminClient,
                     });
 
-                    const lockMock: UserLock<true> = createMock<UserLock<true>>();
+                    const lockMock: UserLock = createMock<UserLock>();
                     const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                         'person-id',
                         'user-id',
@@ -1304,7 +1304,7 @@ describe('KeycloakUserService', () => {
             it('should return error if update fails', async () => {
                 kcUsersMock.update.mockRejectedValueOnce(new Error('Update failed'));
 
-                const lockMock: UserLock<true> = createMock<UserLock<true>>();
+                const lockMock: UserLock = createMock<UserLock>();
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
@@ -1324,7 +1324,7 @@ describe('KeycloakUserService', () => {
                     error: new KeycloakClientError('Could not authenticate'),
                 });
 
-                const lockMock: UserLock<true> = createMock<UserLock<true>>();
+                const lockMock: UserLock = createMock<UserLock>();
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',

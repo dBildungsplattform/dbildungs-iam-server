@@ -6,11 +6,9 @@ import {
     DoFactory,
 } from '../../../../test/utils/index.js';
 import { UserLockRepository } from './user-lock.repository.js';
-import { ConfigService } from '@nestjs/config';
 import { MikroORM } from '@mikro-orm/core';
-import { createMock } from '@golevelup/ts-jest';
 import { faker } from '@faker-js/faker';
-import { UserLock } from '../domain/user.lock.js';
+import { UserLock } from '../domain/user-lock.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
@@ -30,17 +28,7 @@ describe('UserLockRepository', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [
-                UserLockRepository,
-                {
-                    provide: ConfigService,
-                    useValue: createMock<ConfigService>({
-                        getOrThrow: jest.fn().mockReturnValue({
-                            ROOT_ORGANISATION_ID: faker.string.uuid(),
-                        }),
-                    }),
-                },
-            ],
+            providers: [UserLockRepository],
         }).compile();
 
         sut = module.get(UserLockRepository);
@@ -67,7 +55,7 @@ describe('UserLockRepository', () => {
         it('should return UserLock when found by person', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
-            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
+            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date(), new Date());
 
             const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
             if (createdUserLock instanceof DomainError) throw new Error();
@@ -91,7 +79,7 @@ describe('UserLockRepository', () => {
         it('should create and return a UserLock', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
-            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
+            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date(), new Date());
 
             const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
             if (createdUserLock instanceof DomainError) throw new Error();
@@ -105,7 +93,7 @@ describe('UserLockRepository', () => {
         it('should update an existing UserLock', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
-            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
+            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date(), new Date());
 
             const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
             if (createdUserLock instanceof DomainError) throw new Error();
@@ -123,6 +111,7 @@ describe('UserLockRepository', () => {
                 faker.string.uuid(),
                 faker.string.uuid(),
                 new Date(),
+                new Date(),
             );
 
             await expect(sut.update(nonExistentUserLock)).rejects.toThrowError();
@@ -133,7 +122,7 @@ describe('UserLockRepository', () => {
         it('should delete UserLock by person', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
-            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date());
+            const userLock: UserLock = UserLock.construct(newPerson.id, faker.string.uuid(), new Date(), new Date());
 
             const createdUserLock: UserLock | DomainError = await sut.createUserLock(userLock);
             if (createdUserLock instanceof DomainError) throw new Error();

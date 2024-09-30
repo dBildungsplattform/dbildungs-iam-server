@@ -3,12 +3,12 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
-import { UserLock } from '../domain/user.lock.js';
+import { UserLock } from '../domain/user-lock.js';
 import { UserLockEntity } from '../entity/user-lock.entity.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 
 export function mapEntityToAggregate(entity: UserLockEntity): UserLock {
-    return UserLock.construct(entity.person.id, entity.locked_by, entity.locked_until);
+    return UserLock.construct(entity.person.id, entity.locked_by, entity.locked_until, entity.createdAt);
 }
 
 export function mapAggregateToData(userLock: UserLock): RequiredEntityData<UserLockEntity> {
