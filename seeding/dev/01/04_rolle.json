@@ -13,7 +13,8 @@
         "SCHULEN_VERWALTEN",
         "KLASSEN_VERWALTEN",
         "SCHULTRAEGER_VERWALTEN",
-        "PERSONEN_SOFORT_LOESCHEN"
+        "PERSONEN_SOFORT_LOESCHEN",
+        "IMPORT_DURCHFUEHREN"
       ],
       "serviceProviderIds": [
         0,
