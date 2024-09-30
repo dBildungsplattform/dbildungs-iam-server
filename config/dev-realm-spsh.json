@@ -833,7 +833,7 @@
         "enabled": true,
         "alwaysDisplayInConsole": false,
         "clientAuthenticatorType": "client-jwt",
-        "secret": "**********",
+        "secret": "spsh-service-client-secret",
         "redirectUris": [
           "/*"
         ],
