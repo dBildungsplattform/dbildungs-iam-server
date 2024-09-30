@@ -3,7 +3,9 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import {Injectable} from "@nestjs/common";
 
+@Injectable()
 export class CheckRollenartLernSpecification {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,

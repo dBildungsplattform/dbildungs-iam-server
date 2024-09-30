@@ -8,11 +8,13 @@ import { CheckRollenartLernSpecification } from './nur-rolle-lern.js';
 import { UpdateInvalidRollenartForLernError } from '../domain/error/update-invalid-rollenart-for-lern.error.js';
 import { CheckBefristungSpecification } from './befristung-required-bei-rolle-befristungspflicht.js';
 import { PersonenkontextBefristungRequiredError } from '../domain/error/personenkontext-befristung-required.error.js';
+import {Injectable} from "@nestjs/common";
 
 /**
  * 'This specification is not extending CompositeSpecification, but combines specifications for Personenkontexte
  * referencing Klassen and returns dedicated errors instead of simply true or false.'
  */
+@Injectable()
 export class PersonenkontextKlasseSpecification {
     public constructor(
         protected readonly nurLehrUndLernAnKlasse: NurLehrUndLernAnKlasse,
