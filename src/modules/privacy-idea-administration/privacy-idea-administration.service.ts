@@ -89,15 +89,19 @@ export class PrivacyIdeaAdministrationService {
 
         try {
             const response: AxiosResponse<AuthenticaitonResponse> = await firstValueFrom(
-                this.httpService.post(url, authPayload, {
-                    headers: { 'Content-Type': 'application/json' },
-                }),
+                this.httpService
+                    .post(url, authPayload, {
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+                    .pipe(catchError((error: AxiosError) => this.handleConnectionError(error))),
             );
             this.tokenExpiryTimestampMs = now + PrivacyIdeaAdministrationService.AUTHORIZATION_TIMEBOX_MS;
             this.jwtToken = response.data.result.value.token;
             return this.jwtToken;
         } catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof PIUnavailableError) {
+                throw error;
+            } else if (error instanceof Error) {
                 throw new Error(`Error fetching JWT token: ${error.message}`);
             } else {
                 throw new Error(`Error fetching JWT token: Unknown error occurred`);
@@ -159,7 +163,11 @@ export class PrivacyIdeaAdministrationService {
                 (x: PrivacyIdeaToken) => x.rollout_state !== 'verify',
             )[0];
         } catch (error) {
-            throw new TokenStateError(error instanceof Error ? error.message : undefined);
+            if (error instanceof PIUnavailableError) {
+                throw error;
+            } else {
+                throw new TokenStateError(error instanceof Error ? error.message : undefined);
+            }
         }
     }
 
@@ -177,11 +185,15 @@ export class PrivacyIdeaAdministrationService {
         };
         try {
             const response: AxiosResponse<PrivacyIdeaResponseTokens> = await firstValueFrom(
-                this.httpService.get(url, { headers: headers, params: params }),
+                this.httpService
+                    .get(url, { headers: headers, params: params })
+                    .pipe(catchError((error: AxiosError) => this.handleConnectionError(error))),
             );
             return response.data.result.value.tokens;
         } catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof PIUnavailableError) {
+                throw error;
+            } else if (error instanceof Error) {
                 throw new Error(`Error getting user tokens: ${error.message}`);
             } else {
                 throw new Error(`Error getting user tokens: Unknown error occurred`);
@@ -207,7 +219,9 @@ export class PrivacyIdeaAdministrationService {
             );
             return response.data.result.value.length > 0;
         } catch (error) {
-            if (error instanceof Error) {
+            if (error instanceof PIUnavailableError) {
+                throw error;
+            } else if (error instanceof Error) {
                 throw new Error(`Error checking user exists: ${error.message}`);
             } else {
                 throw new Error(`Error checking user exists: Unknown error occurred`);
