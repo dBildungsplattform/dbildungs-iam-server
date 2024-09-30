@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, FilterQuery, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -152,6 +152,30 @@ export class PersonRepository {
         }
 
         return null;
+    }
+
+    public async findByIds(ids: string[], permissions: PersonPermissions): Promise<Person<true>[]> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+
+        if (!permittedOrgas.all && !permittedOrgas.orgaIds.length) {
+            return [];
+        }
+
+        let organisationWhereClause: FilterQuery<PersonEntity> = {};
+        if (!permittedOrgas.all) {
+            organisationWhereClause = {
+                personenKontexte: { $some: { organisationId: { $in: permittedOrgas.orgaIds } } },
+            };
+        }
+
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, {
+            $and: [{ id: { $in: ids } }, organisationWhereClause],
+        });
+
+        return personEntities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
     }
 
     public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
