@@ -33,6 +33,9 @@ import {
     UserResponse,
     VerificationResponse,
 } from './privacy-idea-api.types.js';
+import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
+import { TokenStateError } from './api/error/token-state.error.js';
+import { PIUnavailableError } from './api/error/pi-unavailable.error.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -68,11 +71,7 @@ export class PrivacyIdeaAdministrationService {
             const response: InitSoftwareToken = await this.initToken(user, token, selfService);
             return response.detail.googleurl.img;
         } catch (error: unknown) {
-            if (error instanceof Error) {
-                throw new Error(`Error initializing token: ${error.message}`);
-            } else {
-                throw new Error(`Error initializing token: Unknown error occurred`);
-            }
+            throw new SoftwareTokenInitializationError(error instanceof Error ? error.message : undefined);
         }
     }
 
@@ -160,11 +159,7 @@ export class PrivacyIdeaAdministrationService {
                 (x: PrivacyIdeaToken) => x.rollout_state !== 'verify',
             )[0];
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Error getting two auth state: ${error.message}`);
-            } else {
-                throw new Error(`Error getting two auth state: Unknown error occurred`);
-            }
+            throw new TokenStateError(error instanceof Error ? error.message : undefined);
         }
     }
 
@@ -206,7 +201,9 @@ export class PrivacyIdeaAdministrationService {
 
         try {
             const response: AxiosResponse<UserResponse> = await firstValueFrom(
-                this.httpService.get(url, { headers: headers, params: params }),
+                this.httpService
+                    .get(url, { headers: headers, params: params })
+                    .pipe(catchError((error: AxiosError) => this.handleConnectionError(error))),
             );
             return response.data.result.value.length > 0;
         } catch (error) {
@@ -434,6 +431,14 @@ export class PrivacyIdeaAdministrationService {
             } else {
                 throw new Error(`Error deleting token: Unknown error occurred`);
             }
+        }
+    }
+
+    private handleConnectionError(error: AxiosError): never {
+        if (error.code === 'ECONNREFUSED ') {
+            throw new PIUnavailableError();
+        } else {
+            throw error;
         }
     }
 }
