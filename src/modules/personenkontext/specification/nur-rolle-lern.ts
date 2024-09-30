@@ -46,11 +46,7 @@ export class CheckRollenartLernSpecification {
         const containsMixedRollen: boolean =
             hasAnyLernInSent && sentRollen.some((rolle: Rolle<true>) => rolle.rollenart !== RollenArt.LERN);
 
-        if (containsMixedRollen) {
-            return false;
-        }
-
-        return true;
+        return !containsMixedRollen;
     }
 
     private async getUniqueRollenFromPersonenkontexte(
