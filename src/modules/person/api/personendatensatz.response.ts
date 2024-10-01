@@ -30,6 +30,7 @@ export class PersonendatensatzResponse {
             personId: person.id,
             locked_by: person.userLock?.locked_by,
             locked_until: person.userLock?.locked_until?.toISOString(),
+            created_at: person.userLock?.created_at?.toISOString(),
         };
         const personResponse: PersonResponse = {
             id: person.id,

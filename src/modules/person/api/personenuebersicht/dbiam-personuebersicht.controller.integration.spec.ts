@@ -96,10 +96,6 @@ describe('Personenuebersicht API', () => {
                     provide: UserLockRepository,
                     useValue: createMock<UserLockRepository>(),
                 },
-                {
-                    provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
-                },
                 ServiceProviderRepo,
                 PersonRepository,
                 RolleFactory,

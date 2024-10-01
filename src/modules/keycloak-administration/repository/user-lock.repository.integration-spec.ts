@@ -51,7 +51,7 @@ describe('UserLockRepository', () => {
         expect(sut).toBeDefined();
     });
 
-    describe('findById', () => {
+    describe('findPersonById', () => {
         it('should return UserLock when found by person', async () => {
             const newPerson: PersonEntity = createPersonEntity();
             await em.persistAndFlush(newPerson);
@@ -61,7 +61,7 @@ describe('UserLockRepository', () => {
             if (createdUserLock instanceof DomainError) throw new Error();
             expect(createdUserLock).toBeTruthy();
 
-            const foundUserLock: Option<UserLock> = await sut.findById(userLock.person);
+            const foundUserLock: Option<UserLock> = await sut.findPersonById(userLock.person);
 
             expect(foundUserLock).toBeTruthy();
             expect(foundUserLock?.person).toEqual(userLock.person);
@@ -69,7 +69,7 @@ describe('UserLockRepository', () => {
 
         it('should return null when userLock is not found by person', async () => {
             const person: string = faker.string.uuid();
-            const foundUserLock: Option<UserLock> = await sut.findById(person);
+            const foundUserLock: Option<UserLock> = await sut.findPersonById(person);
 
             expect(foundUserLock).toBeNull();
         });
@@ -128,10 +128,9 @@ describe('UserLockRepository', () => {
             if (createdUserLock instanceof DomainError) throw new Error();
             expect(createdUserLock).toBeTruthy();
 
-            const result: Result<void, DomainError> = await sut.deleteUserLock(createdUserLock.person);
-            expect(result.ok).toBe(true);
+            await sut.deleteUserLock(createdUserLock.person);
 
-            const foundUserLock: Option<UserLock> = await sut.findById(createdUserLock.person);
+            const foundUserLock: Option<UserLock> = await sut.findPersonById(createdUserLock.person);
             expect(foundUserLock).toBeNull();
         });
     });

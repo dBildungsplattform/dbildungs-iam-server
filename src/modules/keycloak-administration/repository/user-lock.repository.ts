@@ -1,11 +1,9 @@
 import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { DataConfig } from '../../../shared/config/data.config.js';
-import { ServerConfig } from '../../../shared/config/server.config.js';
 import { UserLock } from '../domain/user-lock.js';
 import { UserLockEntity } from '../entity/user-lock.entity.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 export function mapEntityToAggregate(entity: UserLockEntity): UserLock {
     return UserLock.construct(entity.person.id, entity.locked_by, entity.locked_until, entity.createdAt);
@@ -29,16 +27,9 @@ export function mapEntityToAggregateInplace(entity: UserLockEntity, userLock: Us
 
 @Injectable()
 export class UserLockRepository {
-    public readonly ROOT_ORGANISATION_ID: string;
+    public constructor(private readonly em: EntityManager) {}
 
-    public constructor(
-        private readonly em: EntityManager,
-        config: ConfigService<ServerConfig>,
-    ) {
-        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
-    }
-
-    public async findById(id: string): Promise<Option<UserLock>> {
+    public async findPersonById(id: PersonID): Promise<Option<UserLock>> {
         const user: Option<UserLockEntity> = await this.em.findOne(UserLockEntity, { person: id });
         if (user) {
             return mapEntityToAggregate(user);
@@ -62,8 +53,7 @@ export class UserLockRepository {
         return mapEntityToAggregate(userLockEntity);
     }
 
-    public async deleteUserLock(personId: string): Promise<Result<void, DomainError>> {
+    public async deleteUserLock(personId: string): Promise<void> {
         await this.em.nativeDelete(UserLockEntity, { person: personId });
-        return { ok: true, value: undefined };
     }
 }
