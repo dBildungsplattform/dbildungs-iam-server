@@ -144,9 +144,9 @@ describe('ItsLearning Persons Event Handler', () => {
 
             it('should set memberships', async () => {
                 itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
-                itslearningMembershipRepoMock.setMemberships.mockRejectedValueOnce({
+                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
                     ok: true,
-                    value: { deleted: 1, updated: 2 },
+                    value: { deleted: 0, updated: 1 },
                 } satisfies Result<SetMembershipsResult, DomainError>);
 
                 await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(person.id));
@@ -167,7 +167,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             it('should log error if setting memberships failed', async () => {
                 itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
-                itslearningMembershipRepoMock.setMemberships.mockRejectedValueOnce({
+                itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
                     ok: false,
                     error: new ItsLearningError('Error Test'),
                 } satisfies Result<SetMembershipsResult, DomainError>);
@@ -230,6 +230,8 @@ describe('ItsLearning Persons Event Handler', () => {
 
         describe('when not enabled', () => {
             it('should log info and return', async () => {
+                sut.ENABLED = false;
+
                 await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(faker.string.uuid()));
 
                 expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
