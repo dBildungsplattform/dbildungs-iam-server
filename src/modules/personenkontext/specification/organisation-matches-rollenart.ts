@@ -5,8 +5,12 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { Injectable } from '@nestjs/common';
 
 /**
- * Only needs to be checked when referenced organisation is of type KLASSE.
- * Needs to be refactored into a specification
+ * Checks if the organisation matches the rollenart.
+ *
+ * Sysadmins can only exist on LAND or ROOT organisations.
+ * LEIT can only exist on Schools.
+ * LERN (students) only exist on forms
+ * LEHR (teachers) only exist on schools.
  */
 @Injectable()
 export class OrganisationMatchesRollenart {
