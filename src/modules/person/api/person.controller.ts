@@ -70,6 +70,8 @@ import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.bod
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -89,6 +91,7 @@ export class PersonController {
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
+        private readonly eventService: EventService,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
@@ -439,6 +442,30 @@ export class PersonController {
             throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);
         }
         return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
+    }
+
+    @Post(':personId/sync')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'User will be synced.' })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    @ApiBadGatewayResponse({ description: 'A downstream server returned an error.' })
+    public async syncPerson(
+        @Param('personId') personId: string,
+        // @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        // const hasSyncRecht: boolean = await permissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SYNC_PERSON])
+        // if (!hasSyncRecht) {
+        //     throw new NotFoundOrNoPermissionError(personId);
+        // }
+
+        const person: Option<Person<true>> = await this.personRepository.findById(personId);
+        if (!person) {
+            throw new NotFoundOrNoPermissionError(personId);
+        }
+
+        this.eventService.publish(new PersonExternalSystemsSyncEvent(personId));
     }
 
     @Patch(':personId/personalnummer')
