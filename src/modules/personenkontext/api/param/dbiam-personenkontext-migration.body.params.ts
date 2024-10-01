@@ -2,7 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/index.js';
-import { PersonenkontextMigrationRuntype, PersonenkontextMigrationRuntypeTypName } from '../../domain/personenkontext.enums.js';
+import {
+    PersonenkontextMigrationRuntype,
+    PersonenkontextMigrationRuntypeTypName,
+} from '../../domain/personenkontext.enums.js';
 
 export class DbiamPersonenkontextMigrationBodyParams {
     @IsString()
