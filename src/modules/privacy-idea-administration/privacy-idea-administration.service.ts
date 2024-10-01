@@ -449,7 +449,7 @@ export class PrivacyIdeaAdministrationService {
     }
 
     private handleConnectionError(error: AxiosError): never {
-        if (error.code === 'ECONNREFUSED ') {
+        if (error.code === 'ECONNREFUSED') {
             throw new PIUnavailableError();
         } else {
             throw error;
