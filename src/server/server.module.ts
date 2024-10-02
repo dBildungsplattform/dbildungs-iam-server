@@ -35,6 +35,7 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
 import { EmailModule } from '../modules/email/email.module.js';
 import { OxModule } from '../modules/ox/ox.module.js';
 import { KeycloakHandlerModule } from '../modules/keycloak-handler/keycloak-handler.module.js';
+import { ImportApiModule } from '../modules/import/import-api.module.js';
 
 @Module({
     imports: [
@@ -92,6 +93,7 @@ import { KeycloakHandlerModule } from '../modules/keycloak-handler/keycloak-hand
         OxModule,
         PrivacyIdeaAdministrationModule,
         KeycloakHandlerModule,
+        ImportApiModule,
     ],
     providers: [
         {
