@@ -651,7 +651,7 @@ describe('Rolle API', () => {
         });
     });
 
-    describe('/POST rolleId/serviceProviders', () => {
+    describe('/PUT rolleId/serviceProviders', () => {
         describe('when rolle and serviceProvider exist', () => {
             it('should return 201 and add serviceProvider', async () => {
                 const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
@@ -659,10 +659,10 @@ describe('Rolle API', () => {
                 );
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: serviceProvider.id,
+                    serviceProviderIds: [serviceProvider.id],
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .put(`/rolle/${rolle.id}/serviceProviders`)
                     .send(params);
 
                 expect(response.status).toBe(201);
@@ -670,7 +670,7 @@ describe('Rolle API', () => {
         });
 
         describe('when rolle and serviceProvider exist, but serviceProvider is already attached', () => {
-            it('should return 400', async () => {
+            it('should return 201', async () => {
                 const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                     DoFactory.createServiceProvider(false),
                 );
@@ -678,13 +678,13 @@ describe('Rolle API', () => {
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: serviceProvider.id,
+                    serviceProviderIds: [serviceProvider.id],
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .put(`/rolle/${rolle.id}/serviceProviders`)
                     .send(params);
 
-                expect(response.status).toBe(400);
+                expect(response.status).toBe(201);
             });
         });
 
@@ -692,10 +692,10 @@ describe('Rolle API', () => {
             it('should return 404', async () => {
                 const validButNonExistingUUID: string = faker.string.uuid();
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: faker.string.uuid(),
+                    serviceProviderIds: [faker.string.uuid()],
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .post(`/rolle/${validButNonExistingUUID}/serviceProviders`)
+                    .put(`/rolle/${validButNonExistingUUID}/serviceProviders`)
                     .send(params);
 
                 expect(response.status).toBe(404);
@@ -706,10 +706,10 @@ describe('Rolle API', () => {
             it('should return 404', async () => {
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: faker.string.uuid(),
+                    serviceProviderIds: [faker.string.uuid()],
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .put(`/rolle/${rolle.id}/serviceProviders`)
                     .send(params);
 
                 expect(response.status).toBe(404);
@@ -726,8 +726,12 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
+
+                const queryString: string = `serviceProviderIds[]=${serviceProvider.id}`;
+
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/rolle/${rolle.id}/serviceProviders?serviceProviderId=${serviceProvider.id}`)
+                    .delete(`/rolle/${rolle.id}/serviceProviders`)
+                    .query(queryString)
                     .send();
 
                 expect(response.status).toBe(200);
@@ -737,10 +741,13 @@ describe('Rolle API', () => {
         describe('when rolle does not exist', () => {
             it('should return 404', async () => {
                 const validButNonExistingUUID: string = faker.string.uuid();
+                const serviceProviderId: string = faker.string.uuid();
+
+                const queryString: string = `serviceProviderIds[]=${serviceProviderId}`;
+
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(
-                        `/rolle/${validButNonExistingUUID}/serviceProviders?serviceProviderId=${faker.string.uuid()}`,
-                    )
+                    .delete(`/rolle/${validButNonExistingUUID}/serviceProviders`)
+                    .query(queryString)
                     .send();
 
                 expect(response.status).toBe(404);
@@ -750,8 +757,13 @@ describe('Rolle API', () => {
         describe('when serviceProvider does not exist', () => {
             it('should return 500', async () => {
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const nonExistingServiceProviderId: string = faker.string.uuid();
+
+                const queryString: string = `serviceProviderIds[]=${nonExistingServiceProviderId}`;
+
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/rolle/${rolle.id}/serviceProviders?serviceProviderId=${faker.string.uuid()}`)
+                    .delete(`/rolle/${rolle.id}/serviceProviders`)
+                    .query(queryString)
                     .send();
 
                 expect(response.status).toBe(404);

@@ -13,9 +13,7 @@ import { RolleController } from './rolle.controller.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 
@@ -79,7 +77,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
         jest.resetAllMocks();
     });
 
-    describe('/POST rolleId/serviceProviders mocked SP-repo', () => {
+    describe('/PUT rolleId/serviceProviders mocked SP-repo', () => {
         describe('when rolle and serviceProvider exists, attachment is done, but retrieving SP afterwards fails', () => {
             it('should return 500', async () => {
                 const rolleId: string = faker.string.uuid();
@@ -87,34 +85,22 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     rolleId: rolleId,
                 };
                 const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: faker.string.uuid(),
+                    serviceProviderIds: [faker.string.uuid()],
                 };
                 //mock get-rolle
                 rolleRepoMock.findById.mockResolvedValueOnce(createMock<Rolle<true>>());
-                //mock call to get sp (direct in controller-method)
-                serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
 
-                await expect(rolleController.addServiceProviderById(rolleByIdParams, params)).rejects.toThrow(Error);
+                // Mock the call to find service providers by IDs, returning an empty map
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map());
+
+                await expect(rolleController.updateServiceProvidersById(rolleByIdParams, params)).rejects.toThrow(
+                    Error,
+                );
             });
         });
     });
 
     describe('/GET rolle mocked Rolle-repo', () => {
-        describe('when rolle and serviceProvider exists, attachment is done, but retrieving SP afterwards fails', () => {
-            it('should return 500', async () => {
-                const params: RolleNameQueryParams = {
-                    searchStr: faker.string.alpha(),
-                };
-                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissions.getOrgIdsWithSystemrechtDeprecated.mockResolvedValueOnce([]);
-
-                //mock getRollenByName
-                rolleRepoMock.findByName.mockResolvedValueOnce(undefined);
-                //mock call to get sp (direct in controller-method)
-                serviceProviderRepoMock.findById.mockResolvedValueOnce(undefined);
-                await expect(rolleController.findRollen(params, permissions)).resolves.not.toThrow(Error);
-            });
-        });
         describe('createRolle', () => {
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
                 const createRolleParams: CreateRolleBodyParams = {
