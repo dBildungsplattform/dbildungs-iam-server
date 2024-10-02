@@ -12,6 +12,7 @@ import { Injectable } from '@nestjs/common';
  * LERN (students) only exist on forms
  * LEHR (teachers) only exist on schools.
  */
+
 @Injectable()
 export class OrganisationMatchesRollenart {
     public isSatisfiedBy(organisation: Organisation<true>, rolle: Rolle<true>): boolean {
