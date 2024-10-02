@@ -1519,32 +1519,14 @@ describe('KeycloakUserService', () => {
             newUsername = faker.internet.userName();
         });
 
-        describe('when user could not be updated', () => {
-            it('should return error result', async () => {
-                kcUsersMock.find.mockResolvedValueOnce([
-                    {
-                        username: faker.string.alphanumeric(),
-                        email: faker.internet.email(),
-                        id: faker.string.uuid(),
-                        createdTimestamp: faker.date.recent().getTime(),
-                    },
-                ]);
-
-                kcUsersMock.update.mockRejectedValueOnce(new Error());
-
-                const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
-
-                expect(res.ok).toBeFalsy();
-            });
-        });
-
         describe('when updating user is successful', () => {
-            it('should log info', async () => {
+            it('should return undefined and no errors', async () => {
+                const kcId: string = faker.string.uuid();
                 kcUsersMock.find.mockResolvedValueOnce([
                     {
                         username: faker.string.alphanumeric(),
                         email: faker.internet.email(),
-                        id: faker.string.uuid(),
+                        id: kcId,
                         createdTimestamp: faker.date.recent().getTime(),
                     },
                 ]);
@@ -1553,17 +1535,52 @@ describe('KeycloakUserService', () => {
 
                 const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
 
-                expect(res.ok).toBeTruthy();
+                expect(res).toEqual({
+                    ok: true,
+                    value: undefined,
+                });
+                expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
+                expect(kcUsersMock.update).toHaveBeenCalledWith({ id: kcId }, { username: newUsername });
+            });
+        });
+
+        describe('when user could not be updated', () => {
+            it('should return error result', async () => {
+                const kcId: string = faker.string.uuid();
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        id: kcId,
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+                const kcError: DomainError = new KeycloakClientError('Could not update username');
+                kcUsersMock.update.mockRejectedValueOnce(kcError);
+
+                const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: kcError,
+                });
+                expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
+                expect(kcUsersMock.update).toHaveBeenCalledWith({ id: kcId }, { username: newUsername });
             });
         });
 
         describe('when user does not exist', () => {
-            it('should return error', async () => {
-                kcUsersMock.find.mockRejectedValueOnce(new Error());
+            it('should return EntityNotFoundError', async () => {
+                const kcError: DomainError = new KeycloakClientError('Keycloak request failed');
+                kcUsersMock.find.mockRejectedValueOnce(kcError);
 
                 const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
 
-                expect(res.ok).toBeFalsy();
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: kcError,
+                });
+                expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
             });
         });
 
@@ -1579,6 +1596,7 @@ describe('KeycloakUserService', () => {
                 const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
 
                 expect(res).toBe(error);
+                expect(kcUsersMock.find).not.toHaveBeenCalledWith({ username: username, exact: true });
             });
         });
     });

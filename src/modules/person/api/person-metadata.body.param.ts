@@ -23,7 +23,7 @@ export class PersonMetadataBodyParams {
     @IsDate()
     @IsOptional()
     @ApiProperty({
-        required: false,
+        required: true,
         description: 'Date of the most recent changed Personalnummer',
     })
     public readonly lastModified!: Date;

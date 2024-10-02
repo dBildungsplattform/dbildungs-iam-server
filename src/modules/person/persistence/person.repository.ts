@@ -29,6 +29,7 @@ import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -378,12 +379,7 @@ export class PersonRepository {
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
-        const isPersonRenamedEventNecessary: boolean = this.hasUsernameChanged(
-            personEntity.vorname,
-            personEntity.familienname,
-            person.vorname,
-            person.familienname,
-        );
+        const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
         if (person.newPassword) {
             const setPasswordResult: Result<string, DomainError> = await this.kcUserService.setPassword(
                 person.keycloakUserId!,
@@ -405,21 +401,16 @@ export class PersonRepository {
         return mapEntityToAggregate(personEntity);
     }
 
-    private hasUsernameChanged(
-        oldVorname: string,
-        oldFamilienname: string,
-        newVorname: string,
-        newFamilienname: string,
-    ): boolean {
-        const oldVornameLowerCase: string = oldVorname.toLowerCase();
-        const oldFamiliennameLowerCase: string = oldFamilienname.toLowerCase();
-        const newVornameLowerCase: string = newVorname.toLowerCase();
-        const newFamiliennameLowerCase: string = newFamilienname.toLowerCase();
+    private hasChangedNames(personEntity: PersonEntity, person: Person<true>): boolean {
+        const oldVorname: string = personEntity.vorname.toLowerCase();
+        const oldFamilienname: string = personEntity.familienname.toLowerCase();
+        const newVorname: string = person.vorname.toLowerCase();
+        const newFamilienname: string = person.familienname.toLowerCase();
 
         //only look for first letter, because username is firstname[0] + lastname
-        if (oldVornameLowerCase[0] !== newVornameLowerCase[0]) return true;
+        if (oldVorname[0] !== newVorname[0]) return true;
 
-        return oldFamiliennameLowerCase !== newFamiliennameLowerCase;
+        return oldFamilienname !== newFamilienname;
     }
 
     private async createKeycloakUser(
@@ -618,5 +609,21 @@ export class PersonRepository {
         newFamilienname: string,
     ): boolean {
         return oldVorname !== newVorname || oldFamilienname !== newFamilienname;
+    }
+
+    private hasUsernameChanged(
+        oldVorname: string,
+        oldFamilienname: string,
+        newVorname: string,
+        newFamilienname: string,
+    ): boolean {
+        const oldVornameLowerCase: string = oldVorname.toLowerCase();
+        const oldFamiliennameLowerCase: string = oldFamilienname.toLowerCase();
+        const newVornameLowerCase: string = toDIN91379SearchForm(newVorname).toLowerCase();
+        const newFamiliennameLowerCase: string = toDIN91379SearchForm(newFamilienname).toLowerCase();
+
+        if (oldVornameLowerCase[0] !== newVornameLowerCase[0]) return true;
+
+        return oldFamiliennameLowerCase !== newFamiliennameLowerCase;
     }
 }
