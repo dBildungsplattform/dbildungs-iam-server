@@ -301,7 +301,7 @@ export class OrganisationRepository {
         if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
             const organisationIds: string[] = permittedOrgas.all
                 ? searchOptions.organisationIds
-                : searchOptions.organisationIds?.filter((id: string) => permittedOrgas.orgaIds.includes(id)) || [];
+                : searchOptions.organisationIds.filter((id: string) => permittedOrgas.orgaIds.includes(id));
             const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
                 .select('*')
                 .where({ id: { $in: organisationIds } })
