@@ -103,6 +103,7 @@
       }
     ],
     "client": {
+      "nextcloud-bildungsablage-test": [],
       "realm-management": [
         {
           "id": "24a98f94-221b-497d-95af-9f75c232410c",
@@ -1107,6 +1108,60 @@
           "acr",
           "roles",
           "profile",
+          "email"
+        ],
+        "optionalClientScopes": [
+          "address",
+          "phone",
+          "offline_access",
+          "microprofile-jwt"
+        ]
+      },
+      {
+        "id": "8d129be5-0cde-44e7-b9de-59797f650e4b",
+        "clientId": "${KC_NEXTCLOUD_CLIENT_ID}",
+        "name": "NextCloud-Dateiablage",
+        "description": "",
+        "rootUrl": "",
+        "adminUrl": "",
+        "baseUrl": "",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": false,
+        "clientAuthenticatorType": "client-secret",
+        "secret": "${KC_NEXTCLOUD_CLIENT_SECRET}",
+        "redirectUris": [
+          "https://sh.lumaserv.dev/*"
+        ],
+        "webOrigins": [
+          "/*"
+        ],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": true,
+        "implicitFlowEnabled": true,
+        "directAccessGrantsEnabled": true,
+        "serviceAccountsEnabled": false,
+        "publicClient": false,
+        "frontchannelLogout": true,
+        "protocol": "openid-connect",
+        "attributes": {
+          "oidc.ciba.grant.enabled": "false",
+          "client.secret.creation.time": "1727879436",
+          "backchannel.logout.session.required": "true",
+          "oauth2.device.authorization.grant.enabled": "false",
+          "backchannel.logout.revoke.offline.tokens": "false"
+        },
+        "authenticationFlowBindingOverrides": {},
+        "fullScopeAllowed": true,
+        "nodeReRegistrationTimeout": -1,
+        "defaultClientScopes": [
+          "web-origins",
+          "acr",
+          "roles",
+          "profile",
+          "basic",
           "email"
         ],
         "optionalClientScopes": [
