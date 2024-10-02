@@ -617,8 +617,8 @@ export class PersonRepository {
         newVorname: string,
         newFamilienname: string,
     ): boolean {
-        const oldVornameLowerCase: string = oldVorname.toLowerCase();
-        const oldFamiliennameLowerCase: string = oldFamilienname.toLowerCase();
+        const oldVornameLowerCase: string = toDIN91379SearchForm(oldVorname).toLowerCase();
+        const oldFamiliennameLowerCase: string = toDIN91379SearchForm(oldFamilienname).toLowerCase();
         const newVornameLowerCase: string = toDIN91379SearchForm(newVorname).toLowerCase();
         const newFamiliennameLowerCase: string = toDIN91379SearchForm(newFamilienname).toLowerCase();
 
