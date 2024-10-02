@@ -8,7 +8,7 @@ import { PersonenkontextKlasseSpecification } from './personenkontext-klasse-spe
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { OrganisationModule } from '../../organisation/organisation.module.js';
 import { PersonenkontextPersistenceModule } from '../persistence/PersonenkontextPersistenceModule.js';
-import { PersonenkontextSpecification } from './PersonenkontextSpecification.js';
+import { PersonenkontextSpecification } from './personenkontext-specification.js';
 
 @Module({
     imports: [RolleModule, OrganisationModule, PersonenkontextPersistenceModule],
