@@ -780,32 +780,26 @@ describe('PersonController', () => {
         };
         personPermissionsMock = createMock<PersonPermissions>();
 
-        describe('when person exists', () => {
+        describe('when person exists and user has permissions', () => {
             const person: Person<true> = getPerson();
             it('should publish event', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
 
-                await personController.syncPerson(
-                    params.personId,
-                    // personPermissionsMock,
-                );
+                await personController.syncPerson(params.personId, personPermissionsMock);
 
-                expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
+                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(expect.any(PersonExternalSystemsSyncEvent));
             });
         });
 
-        describe('when person does not exists', () => {
+        describe('when person does not exists or user is missing permissions', () => {
             it('should return error', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: createMock() });
 
-                const promise: Promise<void> = personController.syncPerson(
-                    params.personId,
-                    // personPermissionsMock,
-                );
+                const syncPromise: Promise<void> = personController.syncPerson(params.personId, personPermissionsMock);
 
-                await expect(promise).rejects.toEqual(new NotFoundOrNoPermissionError(params.personId));
-                expect(personRepositoryMock.findById).toHaveBeenCalledTimes(1);
+                await expect(syncPromise).rejects.toEqual(new NotFoundOrNoPermissionError(params.personId));
+                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
                 expect(eventServiceMock.publish).not.toHaveBeenCalled();
             });
         });

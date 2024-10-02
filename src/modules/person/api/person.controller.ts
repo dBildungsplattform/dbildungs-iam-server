@@ -453,15 +453,15 @@ export class PersonController {
     @ApiBadGatewayResponse({ description: 'A downstream server returned an error.' })
     public async syncPerson(
         @Param('personId') personId: string,
-        // @Permissions() permissions: PersonPermissions,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        // const hasSyncRecht: boolean = await permissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SYNC_PERSON])
-        // if (!hasSyncRecht) {
-        //     throw new NotFoundOrNoPermissionError(personId);
-        // }
-
-        const person: Option<Person<true>> = await this.personRepository.findById(personId);
-        if (!person) {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+            // TODO SPSH-1136 Update the RollenSystemRecht
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+        );
+        if (!personResult.ok) {
             throw new NotFoundOrNoPermissionError(personId);
         }
 
