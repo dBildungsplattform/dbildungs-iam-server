@@ -124,7 +124,7 @@ export class PersonRepository {
 
     private async getPersonScopeWithPermissions(
         permissions: PersonPermissions,
-        requiredRights: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_VERWALTEN],
+        requiredRights: RollenSystemRecht[],
     ): Promise<PersonScope> {
         // Find all organisations where user has the required permission
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(requiredRights, true);
