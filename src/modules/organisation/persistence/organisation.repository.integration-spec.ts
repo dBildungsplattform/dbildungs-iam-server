@@ -1223,6 +1223,62 @@ describe('OrganisationRepository', () => {
             expect(result[0].some((org: Organisation<true>) => org.id === orgas[1]!.id)).toBeTruthy();
         });
 
+        it('should merge results of organistations for IDs an other organisations correctly', async () => {
+            const orgas: OrganisationEntity[] = [];
+
+            for (let i: number = 0; i < 5; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    sut.ROOT_ORGANISATION_ID,
+                    sut.ROOT_ORGANISATION_ID,
+                    'dummy-kennung',
+                    'dummy-name',
+                );
+                if (orga instanceof DomainError) {
+                    return;
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+
+            for (let i: number = 0; i < 5; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    sut.ROOT_ORGANISATION_ID,
+                    sut.ROOT_ORGANISATION_ID,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                );
+                if (orga instanceof DomainError) {
+                    return;
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+                personPermissions,
+                [RollenSystemRecht.SCHULEN_VERWALTEN],
+                {
+                    kennung: 'dummy-kennung',
+                    name: 'dummy-name',
+                    organisationIds: [orgas[1]!.id, orgas[7]!.id, orgas[8]!.id],
+                    limit: 5,
+                },
+            );
+
+            expect(result[1]).toBe(7);
+            expect(result[0].length).toBe(5);
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[0]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[1]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[7]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[8]!.id)).toBeTruthy();
+        });
+
         it('should return all authorized organisations with correct type and parent', async () => {
             const orgas: OrganisationEntity[] = [];
             const orgaLand: Organisation<false> | DomainError = Organisation.createNew(
