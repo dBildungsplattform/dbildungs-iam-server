@@ -78,23 +78,30 @@ export class OxEventHandler {
         await this.createOxUser(event.personId);
     }
 
+    private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
+        const requestedEmailAddresses: Option<EmailAddress<true>[]> =
+            await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId, EmailAddressStatus.REQUESTED);
+        if (!requestedEmailAddresses || !requestedEmailAddresses[0]) {
+            this.logger.error(`No requested email-address found for personId:${personId}`);
+            return undefined;
+        }
+        return requestedEmailAddresses[0];
+    }
+
     private async createOxUser(personId: PersonID): Promise<void> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
             return this.logger.error(`Person not found for personId:${personId}`);
         }
-        if (!person.email) {
-            return this.logger.error(`Person with personId:${personId} has no email-address`);
-        }
         if (!person.referrer) {
             return this.logger.error(`Person with personId:${personId} has no referrer: cannot create OXEmailAddress`);
         }
 
-        const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
-        if (!emailAddress) {
-            return this.logger.error(`EmailAddress for person with personId:${personId} could not be found.`);
-        }
+        const mostRecentRequestedEmailAddress: Option<EmailAddress<true>> =
+            await this.getMostRecentRequestedEmailAddress(personId);
+        if (!mostRecentRequestedEmailAddress) return;
+        const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
 
         const existsParams: UserNameParams = {
             contextId: this.contextID,
@@ -115,12 +122,12 @@ export class OxEventHandler {
         const params: CreateUserParams = {
             contextId: this.contextID,
             displayName: person.referrer,
-            email1: person.email,
+            email1: requestedEmailAddressString,
             username: person.referrer,
             firstname: person.vorname,
             mailEnabled: true,
             lastname: person.familienname,
-            primaryEmail: person.email,
+            primaryEmail: requestedEmailAddressString,
             userPassword: 'TestPassword1',
             login: this.authUser,
             password: this.authPassword,
@@ -130,19 +137,21 @@ export class OxEventHandler {
         const result: Result<CreateUserResponse, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
-            emailAddress.failed();
-            await this.emailRepo.save(emailAddress);
+            mostRecentRequestedEmailAddress.failed();
+            await this.emailRepo.save(mostRecentRequestedEmailAddress);
 
             return this.logger.error(`Could not create user in OX, error: ${result.error.message}`);
         }
 
         this.logger.info(`User created in OX, userId:${result.value.id}, email:${result.value.primaryEmail}`);
 
-        emailAddress.oxUserID = result.value.id;
-        const emailAddressUpdateResult: EmailAddress<true> | DomainError = await this.emailRepo.save(emailAddress);
+        mostRecentRequestedEmailAddress.oxUserID = result.value.id;
+        const emailAddressUpdateResult: EmailAddress<true> | DomainError = await this.emailRepo.save(
+            mostRecentRequestedEmailAddress,
+        );
         if (emailAddressUpdateResult instanceof DomainError) {
-            emailAddress.failed();
-            await this.emailRepo.save(emailAddress);
+            mostRecentRequestedEmailAddress.failed();
+            await this.emailRepo.save(mostRecentRequestedEmailAddress);
             this.logger.error(`Persisting oxUserId on emailAddress for personId:${personId} failed`);
         }
 
@@ -165,9 +174,6 @@ export class OxEventHandler {
         if (!person) {
             return this.logger.error(`Person not found for personId:${personId}`);
         }
-        if (!person.email) {
-            return this.logger.error(`Person with personId:${personId} has no email-address`);
-        }
         if (!person.referrer) {
             return this.logger.error(
                 `Person with personId:${personId} has no referrer: Cannot Change Email-Address In OX`,
@@ -177,19 +183,14 @@ export class OxEventHandler {
             return this.logger.error(`Person with personId:${personId} has no OXUserId`);
         }
 
-        const requestedEmailAddresses: Option<EmailAddress<true>[]> = await this.emailRepo.findByPerson(
-            personId,
-            EmailAddressStatus.REQUESTED,
-        );
-        if (!requestedEmailAddresses || !requestedEmailAddresses[0]) {
-            return this.logger.error(`No requested email-address found for personId:${personId}`);
-        }
-        const requestedEmailAddressString: string = requestedEmailAddresses[0].address;
+        const mostRecentRequestedEmailAddress: Option<EmailAddress<true>> =
+            await this.getMostRecentRequestedEmailAddress(personId);
+        if (!mostRecentRequestedEmailAddress) return;
+        const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
 
         const getDataParams: UserIdParams = {
             contextId: this.contextID,
             userId: person.oxUserId,
-            //userId: '24',
             login: this.authUser,
             password: this.authPassword,
         };
@@ -199,8 +200,8 @@ export class OxEventHandler {
         const getDataResult: Result<GetDataForUserResponse, DomainError> = await this.oxService.send(getDataAction);
 
         if (!getDataResult.ok) {
-            requestedEmailAddresses[0].failed();
-            await this.emailRepo.save(requestedEmailAddresses[0]);
+            mostRecentRequestedEmailAddress.failed();
+            await this.emailRepo.save(mostRecentRequestedEmailAddress);
             return this.logger.error(
                 `Cannot get data for user with username:${person.referrer} from OX, Aborting Email-Address Change`,
             );
@@ -224,8 +225,8 @@ export class OxEventHandler {
         const result: Result<void, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
-            requestedEmailAddresses[0].failed();
-            await this.emailRepo.save(requestedEmailAddresses[0]);
+            mostRecentRequestedEmailAddress.failed();
+            await this.emailRepo.save(mostRecentRequestedEmailAddress);
 
             return this.logger.error(
                 `Could not change email-address for oxUserId:${person.oxUserId} in OX, error: ${result.error.message}`,

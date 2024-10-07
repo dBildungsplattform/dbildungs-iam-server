@@ -1,4 +1,4 @@
-import { EntityManager, rel, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, QueryOrder, rel, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from './email-address.entity.js';
@@ -67,13 +67,16 @@ export class EmailRepo {
         return mapEntityToAggregate(emailAddressEntity);
     }
 
-    public async findByPerson(personId: PersonID, status?: EmailAddressStatus): Promise<Option<EmailAddress<true>[]>> {
+    public async findByPersonSortedByUpdatedAtDesc(
+        personId: PersonID,
+        status?: EmailAddressStatus,
+    ): Promise<Option<EmailAddress<true>[]>> {
         const emailAddressEntities: Option<EmailAddressEntity[]> = await this.em.find(
             EmailAddressEntity,
             {
                 personId: { $eq: personId },
             },
-            {},
+            { orderBy: { updatedAt: QueryOrder.DESC } },
         );
         if (!emailAddressEntities || emailAddressEntities.length === 0) return undefined;
 

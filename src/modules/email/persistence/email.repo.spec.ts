@@ -187,7 +187,9 @@ describe('EmailRepo', () => {
                 email.value.request();
                 const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
                 if (savedEmail instanceof DomainError) throw new Error();
-                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPerson(person.id);
+                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
+                    person.id,
+                );
                 if (!foundEmails) throw Error();
 
                 expect(foundEmails).toBeTruthy();
@@ -197,7 +199,9 @@ describe('EmailRepo', () => {
 
         describe('when no status is provided and person does NOT exist', () => {
             it('should return undefined', async () => {
-                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPerson(faker.string.uuid());
+                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
+                    faker.string.uuid(),
+                );
 
                 expect(foundEmails).toBeUndefined();
             });
@@ -213,7 +217,7 @@ describe('EmailRepo', () => {
                 email.value.request();
                 const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
                 if (savedEmail instanceof DomainError) throw new Error();
-                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPerson(
+                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     person.id,
                     EmailAddressStatus.ENABLED,
                 );
@@ -232,7 +236,7 @@ describe('EmailRepo', () => {
                 email.value.enable();
                 const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
                 if (savedEmail instanceof DomainError) throw new Error();
-                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPerson(
+                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     person.id,
                     EmailAddressStatus.ENABLED,
                 );
@@ -245,7 +249,7 @@ describe('EmailRepo', () => {
 
         describe('when status is provided and person does NOT exist', () => {
             it('should return undefined', async () => {
-                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPerson(
+                const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     faker.string.uuid(),
                     EmailAddressStatus.ENABLED,
                 );

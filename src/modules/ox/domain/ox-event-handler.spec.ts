@@ -143,16 +143,6 @@ describe('OxEventHandler', () => {
             expect(loggerMock.error).toHaveBeenLastCalledWith(`Person not found for personId:${personId}`);
         });
 
-        it('should log error when person has no email-address set', async () => {
-            person.email = undefined;
-            personRepositoryMock.findById.mockResolvedValueOnce(person);
-
-            await sut.handleEmailAddressGeneratedEvent(event);
-
-            expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`Person with personId:${personId} has no email-address`);
-        });
-
         it('should log error when person has no referrer set', async () => {
             person.referrer = undefined;
             personRepositoryMock.findById.mockResolvedValueOnce(person);
@@ -167,19 +157,19 @@ describe('OxEventHandler', () => {
 
         it('should log error when EmailAddress for person cannot be found', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPerson.mockResolvedValueOnce(undefined);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(undefined);
 
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `EmailAddress for person with personId:${personId} could not be found.`,
+                `No requested email-address found for personId:${personId}`,
             );
         });
 
         it('should log info and publish OxUserCreatedEvent on success', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -210,7 +200,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when persisting oxUserId fails', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -246,7 +236,7 @@ describe('OxEventHandler', () => {
 
         it('should log error on failure', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(createMock<EmailAddress<true>>());
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -313,16 +303,6 @@ describe('OxEventHandler', () => {
             expect(loggerMock.error).toHaveBeenLastCalledWith(`Person not found for personId:${personId}`);
         });
 
-        it('should log error when person has no email-address set', async () => {
-            person.email = undefined;
-            personRepositoryMock.findById.mockResolvedValueOnce(person);
-
-            await sut.handleEmailAddressChangedEvent(event);
-
-            expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`Person with personId:${personId} has no email-address`);
-        });
-
         it('should log error when person has no referrer set', async () => {
             person.referrer = undefined;
             personRepositoryMock.findById.mockResolvedValueOnce(person);
@@ -347,7 +327,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when no requestedEmailAddress is found for person', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPerson.mockResolvedValueOnce(undefined);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(undefined);
 
             await sut.handleEmailAddressChangedEvent(event);
 
@@ -359,7 +339,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when getData for user request fails', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPerson.mockResolvedValueOnce(getRequestedEmailAddresses());
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(getRequestedEmailAddresses());
 
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: false,
@@ -376,7 +356,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when changeUser request fails', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPerson.mockResolvedValueOnce(getRequestedEmailAddresses());
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(getRequestedEmailAddresses());
 
             //mock getData
             oxServiceMock.send.mockResolvedValueOnce({
@@ -402,7 +382,7 @@ describe('OxEventHandler', () => {
 
         it('should publish OxUserChangedEvent on success', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPerson.mockResolvedValueOnce(getRequestedEmailAddresses(email));
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(getRequestedEmailAddresses(email));
 
             //mock getData
             oxServiceMock.send.mockResolvedValueOnce({

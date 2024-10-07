@@ -261,7 +261,7 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                emailRepoMock.findByPerson.mockResolvedValueOnce(undefined); //no existing email is found
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(undefined); //no existing email is found
 
                 const persistenceResult: EmailAddress<true> = getEmail();
                 emailRepoMock.save.mockResolvedValueOnce(persistenceResult); //mock: error during saving the entity
@@ -296,7 +296,7 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                emailRepoMock.findByPerson.mockResolvedValueOnce(undefined); //no existing email is found
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(undefined); //no existing email is found
 
                 // eslint-disable-next-line @typescript-eslint/require-await
                 emailFactoryMock.createNew.mockImplementationOnce(async (personId: PersonID) => {
@@ -320,7 +320,7 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                emailRepoMock.findByPerson.mockResolvedValueOnce(undefined); //no existing email is found
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(undefined); //no existing email is found
 
                 emailRepoMock.save.mockResolvedValueOnce(new EmailAddressNotFoundError(fakeEmailAddressString)); //mock: error during saving the entity
 
@@ -386,7 +386,7 @@ describe('Email Event Handler', () => {
             );
 
             // eslint-disable-next-line @typescript-eslint/require-await
-            emailRepoMock.findByPerson.mockImplementationOnce(async () => {
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockImplementationOnce(async () => {
                 return undefined;
             });
             emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>());
@@ -413,7 +413,7 @@ describe('Email Event Handler', () => {
             );
 
             // eslint-disable-next-line @typescript-eslint/require-await
-            emailRepoMock.findByPerson.mockImplementationOnce(async () => {
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockImplementationOnce(async () => {
                 return undefined;
             });
             emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeCreated(''));
@@ -621,7 +621,7 @@ describe('Email Event Handler', () => {
 
                     await emailEventHandler.handlePersonRenamedEvent(event);
 
-                    expect(emailRepoMock.findByPerson).toHaveBeenCalledTimes(0);
+                    expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(0);
                     expect(emailRepoMock.save).toHaveBeenCalledTimes(0);
                     expect(loggerMock.info).toHaveBeenCalledWith(
                         `Received PersonRenamedEvent, personId:${event.personId}`,
