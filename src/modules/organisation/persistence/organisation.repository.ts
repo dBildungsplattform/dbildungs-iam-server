@@ -94,9 +94,7 @@ export class OrganisationRepository {
         return [organisations, total];
     }
 
-    public async save(
-        organisation: Organisation<boolean>,
-    ): Promise<Organisation<true> | OrganisationSpecificationError> {
+    public async save(organisation: Organisation<boolean>): Promise<Organisation<true>> {
         if (organisation.id) {
             return this.update(organisation);
         } else {
