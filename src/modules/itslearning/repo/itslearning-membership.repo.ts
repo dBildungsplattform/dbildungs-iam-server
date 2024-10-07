@@ -105,7 +105,7 @@ export class ItslearningMembershipRepo {
         // Generate memberships to create/update
         const membershipsToCreateOrUpdate: CreateMembershipParams[] = Array.from(membershipsByOrga.entries()).map(
             ([orga, rolle]: [OrganisationID, RollenArt]) => ({
-                id: `membership-${orga}`,
+                id: `membership-${personId}-${orga}`,
                 groupId: orga,
                 personId: personId,
                 roleType: rollenartToIMSESRole(rolle),
