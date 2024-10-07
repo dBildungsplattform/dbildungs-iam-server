@@ -15,7 +15,6 @@ describe('PersonenkontextQueryParams', () => {
             sichtfreigabe: SichtfreigabeType.JA,
             personenstatus: Personenstatus.AKTIV,
             referrer: 'referrer',
-
         };
         const mappedParams: PersonenkontextQueryParams = plainToInstance(
             PersonenkontextQueryParams,
