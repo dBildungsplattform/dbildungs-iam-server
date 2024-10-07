@@ -71,9 +71,9 @@ export class EmailEventHandler {
             }
             const pkForRolleWithSPReference: RolleWithPK | undefined = rollenWithPK.get(rollenIdWithSPReference);
             if (pkForRolleWithSPReference) {
-                this.logger.info(
+                /*   this.logger.info(
                     `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
-                );
+                );*/
                 if (existingEmail) {
                     await this.createChangeEmail(
                         event.personId,

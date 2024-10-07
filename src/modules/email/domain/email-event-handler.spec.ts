@@ -518,9 +518,6 @@ describe('Email Event Handler', () => {
                         `Received PersonRenamedEvent, personId:${event.personId}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
-                    );
                 });
             });
 
@@ -548,9 +545,6 @@ describe('Email Event Handler', () => {
                         `Received PersonRenamedEvent, personId:${event.personId}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
-                    );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         'Could not create change-email, error is EmailAddress could not be created',
                     );
@@ -578,9 +572,6 @@ describe('Email Event Handler', () => {
                         `Received PersonRenamedEvent, personId:${event.personId}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
-                    );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         'Could not persist change-email, error is EmailAddress could not be created',
                     );
@@ -606,9 +597,6 @@ describe('Email Event Handler', () => {
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
                         `Received PersonRenamedEvent, personId:${event.personId}`,
-                    );
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
                     );
                 });
             });
@@ -654,9 +642,6 @@ describe('Email Event Handler', () => {
                     );
                     expect(loggerMock.error).toHaveBeenCalledWith(
                         `Could not disable email, error is requested EmailAddress with the address:${fakeEmailAddress} was not found`,
-                    );
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Creating new email-address for personId:${event.personId}, due to PersonRenamedEvent`,
                     );
                 });
             });

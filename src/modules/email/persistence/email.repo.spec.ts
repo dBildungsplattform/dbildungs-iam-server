@@ -24,6 +24,7 @@ import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { mapAggregateToData } from './email.repo.js';
+import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-already-has-enabled-email-address.error.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -330,6 +331,30 @@ describe('EmailRepo', () => {
                 const persistenceResult: EmailAddress<true> | DomainError = await sut.save(emailAddress);
 
                 expect(persistenceResult).toBeInstanceOf(EmailAddressNotFoundError);
+            });
+        });
+
+        describe('when address with status ENABLED is already present for person', () => {
+            it('should return PersonAlreadyHasEnabledEmailAddressError', async () => {
+                const person: Person<true> = await createPerson();
+                const organisation: Organisation<true> = await createOrganisation();
+                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
+                if (!email.ok) throw Error();
+                email.value.enable();
+                const persistedValidEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
+                if (persistedValidEmail instanceof DomainError) throw new Error();
+
+                const person2: Person<true> = await createPerson();
+                const email2: Result<EmailAddress<false>> = await emailFactory.createNew(person2.id, organisation.id);
+                if (!email2.ok) throw Error();
+                email2.value.enable();
+                const persistedValidEmail2: EmailAddress<true> | DomainError = await sut.save(email.value);
+
+                const error: PersonAlreadyHasEnabledEmailAddressError = new PersonAlreadyHasEnabledEmailAddressError(
+                    person.id,
+                    email.value.address,
+                );
+                expect(persistedValidEmail2).toEqual(error);
             });
         });
     });

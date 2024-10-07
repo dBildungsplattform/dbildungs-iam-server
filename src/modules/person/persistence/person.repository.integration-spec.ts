@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Collection, EntityManager, MikroORM, rel, RequiredEntityData } from '@mikro-orm/core';
+import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -1210,7 +1210,7 @@ describe('PersonRepository Integration', () => {
 
                     const emailAddress: EmailAddressEntity = new EmailAddressEntity();
                     emailAddress.address = faker.internet.email();
-                    emailAddress.personId = rel(PersonEntity, person.id);
+                    emailAddress.personId = ref(PersonEntity, person.id);
                     emailAddress.status = EmailAddressStatus.ENABLED;
 
                     const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
