@@ -71,21 +71,26 @@ export class PersonenkontextWorkflowAggregate {
         // If no organizations were found, return an empty array
         if (allOrganisationsExceptKlassen.length === 0) return [];
 
+        // Return only the orgas that the admin have rights on
+        let filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
+            (orga: Organisation<true>) => permittedOrgas.all || permittedOrgas.orgaIds.includes(orga.id),
+        );
+
         // If organisationId is provided and it's not in the filtered results, fetch it explicitly
         if (
             this.selectedOrganisationId &&
-            !allOrganisationsExceptKlassen.find((orga: Organisation<true>) => orga.id === organisationId)
+            !filteredOrganisations.find((orga: Organisation<true>) => orga.id === organisationId)
         ) {
             const selectedOrg: Option<Organisation<true>> = await this.organisationRepository.findById(
                 this.selectedOrganisationId,
             );
             if (selectedOrg) {
-                allOrganisationsExceptKlassen = [selectedOrg, ...allOrganisationsExceptKlassen]; // Add the selected org at the beginning
+                filteredOrganisations = [selectedOrg, ...filteredOrganisations]; // Add the selected org at the beginning
             }
         }
 
         // Sort the filtered organizations, handling undefined kennung and name
-        allOrganisationsExceptKlassen.sort((a: Organisation<boolean>, b: Organisation<boolean>) => {
+        filteredOrganisations.sort((a: Organisation<boolean>, b: Organisation<boolean>) => {
             if (a.name && b.name) {
                 const aTitle: string = a.kennung ? `${a.kennung} (${a.name})` : a.name;
                 const bTitle: string = b.kennung ? `${b.kennung} (${b.name})` : b.name;
@@ -98,7 +103,7 @@ export class PersonenkontextWorkflowAggregate {
         });
 
         // Return the organizations that the admin has rights to
-        return allOrganisationsExceptKlassen;
+        return filteredOrganisations;
     }
 
     public async findRollenForOrganisation(

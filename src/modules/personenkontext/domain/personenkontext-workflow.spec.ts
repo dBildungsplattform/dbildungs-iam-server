@@ -502,6 +502,32 @@ describe('PersonenkontextWorkflow', () => {
 
             expect(result.length).toBe(0); // Verify that the result is empty
         });
+
+        it('should filter organisations by permittedOrgaIds when all permissions are not granted', async () => {
+            const organisation1: Organisation<true> = DoFactory.createOrganisation(true, { name: 'Org 1' });
+            const organisation2: Organisation<true> = DoFactory.createOrganisation(true, { name: 'Org 2' });
+            const permittedOrgaIds: string[] = [organisation1.id]; // Only Org 1 is permitted
+
+            // Mock the repository to return both organisations
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([
+                organisation1,
+                organisation2,
+            ]);
+
+            // Mock permissions to indicate that all organisations are not permitted
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: permittedOrgaIds, // Only permit Org 1
+            });
+
+            const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+            );
+
+            // Ensure only the permitted organisation is returned
+            expect(result.length).toEqual(1); // Only Org 1 should be returned
+        });
     });
 
     describe('findRollenForOrganisation', () => {

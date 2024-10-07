@@ -261,7 +261,7 @@ export class OrganisationRepository {
     public async findByNameOrKennungAndExcludeByOrganisationType(
         excludeOrganisationType: OrganisationsTyp,
         searchStr?: string,
-        permittedOrgaIds?: string[], // New optional parameter for permitted organization IDs
+        permittedOrgaIds?: string[],
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
