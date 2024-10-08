@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, FilterQuery, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, FilterQuery, Loaded, QBFilterQuery, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -15,7 +15,7 @@ import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enu
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonPermissions, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Person, LockInfo } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
@@ -528,5 +528,23 @@ export class PersonRepository {
 
         const savedPerson: Person<true> | DomainError = await this.save(personFound);
         return savedPerson;
+    }
+
+    public async getKoPersUserLockList(): Promise<string[]> {
+        const filters: QBFilterQuery<PersonEntity> = {
+            $and: [
+                { personalnummer: { $eq: null } },
+                {
+                    personenKontexte: {
+                        createdAt: { $gt: new Date(new Date().setDate(new Date().getDate() - 56)) },
+                        rolleId: {
+                            merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
+                        },
+                    },
+                },
+            ],
+        };
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        return personEntities.map((person: PersonEntity) => person.keycloakUserId);
     }
 }
