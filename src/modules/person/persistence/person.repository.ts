@@ -31,6 +31,7 @@ import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.err
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
+        // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
         if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
     return undefined;

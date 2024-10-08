@@ -47,7 +47,7 @@ export class EmailRepo {
                 personId: { $eq: personId },
                 status: { $eq: EmailAddressStatus.ENABLED },
             },
-            {}, //populate: ['personId']
+            {},
         );
         if (!emailAddressEntity) return undefined;
 
