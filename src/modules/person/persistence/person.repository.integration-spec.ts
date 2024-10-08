@@ -14,7 +14,6 @@ import {
     mapAggregateToData,
     mapEntityToAggregate,
     mapEntityToAggregateInplace,
-    PersonenQueryParams,
     PersonRepository,
 } from './person.repository.js';
 import { Person } from '../domain/person.js';
@@ -27,11 +26,12 @@ import {
     DomainError,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
+    InvalidNameError,
     KeycloakClientError,
     MismatchedRevisionError,
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -46,23 +46,16 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { SortFieldPersonFrontend } from '../domain/person.enums.js';
-//import { Organisation } from '../../organisation/domain/organisation.js';
-//import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-
-//import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-
-//import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle as SchulConnexRolle } from '../../personenkontext/domain/personenkontext.enums.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rolle as SchulConnexRolle } from '../../personenkontext/domain/personenkontext.enums.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
-import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -78,21 +71,16 @@ describe('PersonRepository Integration', () => {
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personenkontextFactory: PersonenkontextFactory;
 
-    //let organisationRepository: OrganisationRepository;
-
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
             providers: [
                 PersonRepository,
-                OrganisationRepository,
-
                 ConfigService,
                 {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
-
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
@@ -122,7 +110,6 @@ describe('PersonRepository Integration', () => {
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
         eventServiceMock = module.get(EventService);
-        //organisationRepository = module.get(OrganisationRepository);
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
         dbiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
@@ -148,22 +135,19 @@ describe('PersonRepository Integration', () => {
     type SavedPersonProps = { keycloackID: string };
     async function savePerson(
         withPersonalnummer: boolean = false,
-        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string }> = {},
+        props: Partial<SavedPersonProps> = {},
     ): Promise<Person<true>> {
         usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
         };
 
-        const vorname: string = props.vorname ?? faker.person.firstName();
-        const familienname: string = props.familienname ?? faker.person.lastName();
-
         const personProps: {
             keycloackID: string;
         } = { ...defaultProps, ...props };
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-            familienname,
-            vorname,
+            familienname: faker.person.lastName(),
+            vorname: faker.person.firstName(),
             personalnummer: withPersonalnummer ? faker.finance.pin(7) : undefined,
         });
 
@@ -1385,293 +1369,249 @@ describe('PersonRepository Integration', () => {
             expect(exists).toBe(false);
         });
     });
+    describe('findByIds', () => {
+        it('should return a list of persons', async () => {
+            const person1: Person<true> = await savePerson();
+            const person2: Person<true> = await savePerson();
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-    describe('createPersonScope', () => {
-        it('should create a scope with the correct filters and sorting', async () => {
-            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
-            await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
-            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+            const persons: Person<true>[] = await sut.findByIds([person1.id, person2.id], personPermissionsMock);
 
-            const permittedOrgas: PermittedOrgas = { all: true };
+            expect(persons).toHaveLength(2);
+            expect(persons.some((p: Person<true>) => p.id === person1.id)).toBe(true);
+            expect(persons.some((p: Person<true>) => p.id === person2.id)).toBe(true);
+        });
+        it('should return an empty list of persons', async () => {
+            const person1: Person<true> = await savePerson();
+            const person2: Person<true> = await savePerson();
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
-            const queryParams: PersonenQueryParams = {
-                offset: 0,
-                limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
-                sortOrder: ScopeOrder.ASC,
-            };
+            const persons: Person<true>[] = await sut.findByIds([person1.id, person2.id], personPermissionsMock);
 
-            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+            expect(persons).toHaveLength(0);
+        });
+        it('should return a list of persons with one person', async () => {
+            const person1: Person<true> = await savePerson();
+            const person2: Person<true> = await savePerson();
 
-            expect(result).toBeDefined();
+            const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
+                faker.string.alpha(5),
+                faker.string.uuid(),
+                RollenArt.LEHR,
+                [],
+                [],
+                [],
+                [],
+                false,
+            );
 
-            const [persons, total]: [Person<true>[], number] = result;
+            if (rolle instanceof DomainError) {
+                return;
+            }
+            const savedRolle: Rolle<true> = await rolleRepo.save(rolle);
 
-            expect(total).toBe(3);
+            const savedOrganisation: OrganisationEntity = await createAndPersistOrganisation(
+                em,
+                faker.string.uuid(),
+                OrganisationsTyp.SONSTIGE,
+                true,
+            );
+            await dbiamPersonenkontextRepoInternal.save(
+                personenkontextFactory.createNew(person1.id, savedOrganisation.id, savedRolle.id),
+            );
 
-            expect(persons[0]?.vorname).toBe('Alice');
-            expect(persons[1]?.vorname).toBe('Bob');
-            expect(persons[2]?.vorname).toBe('Charlie');
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [savedOrganisation.id],
+            });
+
+            const persons: Person<true>[] = await sut.findByIds([person1.id, person2.id], personPermissionsMock);
+
+            expect(persons).toHaveLength(1);
+            expect(persons[0]?.id).toEqual(person1.id);
+        });
+    });
+
+    describe('updatePersonMetadata', () => {
+        it('should return the updated person', async () => {
+            const person: Person<true> = await savePerson(true);
+            const newFamilienname: string = faker.name.lastName();
+            const newVorname: string = faker.name.firstName();
+            const newPersonalnummer: string = faker.finance.pin(7);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+            usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername1' });
+            kcUserServiceMock.updateUsername.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                newFamilienname,
+                newVorname,
+                newPersonalnummer,
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+            if (result instanceof DomainError) {
+                throw result;
+            }
+
+            expect(person.id).toBe(result.id);
+            expect(result.familienname).toEqual(newFamilienname);
+            expect(result.vorname).toEqual(newVorname);
+            expect(result.referrer).toEqual('testusername1');
+
+            expect(person.personalnummer).not.toEqual(newPersonalnummer);
+            expect(result.personalnummer).toEqual(newPersonalnummer);
         });
 
-        it('should return the suchFilter', async () => {
-            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
-            const person2: Person<true> = await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
-            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+        it('should return EntityNotFound when person does not exit', async () => {
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                faker.string.uuid(),
+                faker.name.lastName(),
+                faker.name.firstName(),
+                faker.finance.pin(7),
+                faker.date.anytime(),
+                '1',
+                personPermissionsMock,
+            );
 
-            const permittedOrgas: PermittedOrgas = { all: true };
-
-            const queryParams: PersonenQueryParams = {
-                vorname: person2.vorname,
-                familienname: person2.familienname,
-                offset: 0,
-                limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
-                sortOrder: ScopeOrder.ASC,
-                suchFilter: person2.vorname,
-            };
-
-            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
-
-            expect(result).toBeDefined();
-
-            const [persons, total]: [Person<true>[], number] = result;
-
-            expect(total).toBe(1);
-
-            expect(persons[0]?.vorname).toBe('Bob');
-            expect(persons[0]?.familienname).toBe('Johnson');
-        });
-        it('should return undefeined if PermittedOrgas is placed', async () => {
-            const person: Person<true> = await savePerson();
-
-            const permittedOrgas: PermittedOrgas = { all: false, orgaIds: [] };
-
-            const queryParams: PersonenQueryParams = {
-                vorname: person.vorname,
-                familienname: person.familienname,
-                organisationIDs: undefined,
-                offset: 0,
-                limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
-                sortOrder: ScopeOrder.ASC,
-            };
-
-            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
-
-            expect(result).toBeDefined();
-
-            const [persons, total]: [Person<true>[], number] = result;
-            const [firstPerson]: Person<true>[] | undefined = persons;
-
-            expect(firstPerson?.vorname).toBe(undefined);
-            expect(firstPerson?.familienname).toBe(undefined);
-            expect(total).toBe(0);
+            expect(result).toBeInstanceOf(EntityNotFoundError);
         });
 
-        it('should use default sortField and sortOrder when not provided', async () => {
-            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
-            await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
-            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+        it('should return MissingPermissionsError if the admin does not have permissions to update the person metadata', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(false);
 
-            const permittedOrgas: PermittedOrgas = { all: true };
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                faker.finance.pin(7),
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
 
-            const queryParams: PersonenQueryParams = {
-                offset: 0,
-                limit: 10,
-                // sortField and sortOrder are not provided
-            };
-
-            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
-
-            expect(result).toBeDefined();
-
-            const [persons, total]: [Person<true>[], number] = result;
-
-            expect(total).toBe(3);
-
-            expect(persons[0]?.vorname).toBe('Alice');
-            expect(persons[1]?.vorname).toBe('Bob');
-            expect(persons[2]?.vorname).toBe('Charlie');
+            expect(result).toBeInstanceOf(MissingPermissionsError);
         });
 
-        describe('findByIds', () => {
-            it('should return a list of persons', async () => {
-                const person1: Person<true> = await savePerson();
-                const person2: Person<true> = await savePerson();
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+        it('should return PersonalnummerRequiredError when personalnummer was not provided and faminlienname or vorname did not change', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
-                const persons: Person<true>[] = await sut.findByIds([person1.id, person2.id], personPermissionsMock);
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                person.familienname,
+                person.vorname,
+                '',
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
 
-                expect(persons).toHaveLength(2);
-                expect(persons.some((p: Person<true>) => p.id === person1.id)).toBe(true);
-                expect(persons.some((p: Person<true>) => p.id === person2.id)).toBe(true);
-            });
-            it('should return an empty list of persons', async () => {
-                const person1: Person<true> = await savePerson();
-                const person2: Person<true> = await savePerson();
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-
-                const persons: Person<true>[] = await sut.findByIds([person1.id, person2.id], personPermissionsMock);
-
-                expect(persons).toHaveLength(0);
-            });
-            it('should return a list of persons with one person', async () => {
-                const person1: Person<true> = await savePerson();
-                const person2: Person<true> = await savePerson();
-
-                const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
-                    faker.string.alpha(5),
-                    faker.string.uuid(),
-                    RollenArt.LEHR,
-                    [],
-                    [],
-                    [],
-                    [],
-                    false,
-                );
-
-                if (rolle instanceof DomainError) {
-                    return;
-                }
-                const savedRolle: Rolle<true> = await rolleRepo.save(rolle);
-
-                const savedOrganisation: OrganisationEntity = await createAndPersistOrganisation(
-                    em,
-                    faker.string.uuid(),
-                    OrganisationsTyp.SONSTIGE,
-                    true,
-                );
-                await dbiamPersonenkontextRepoInternal.save(
-                    personenkontextFactory.createNew(person1.id, savedOrganisation.id, savedRolle.id),
-                );
-
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
-                    all: false,
-                    orgaIds: [savedOrganisation.id],
-                });
-
-                const persons: Person<true>[] = await sut.findByIds([person1.id, person2.id], personPermissionsMock);
-
-                expect(persons).toHaveLength(1);
-                expect(persons[0]?.id).toEqual(person1.id);
-            });
+            expect(result).toBeInstanceOf(PersonalnummerRequiredError);
         });
 
-        describe('updatePersonalnummer', () => {
-            it('should return the updated person', async () => {
-                const person: Person<true> = await savePerson(true);
-                const newPersonalnummer: string = faker.finance.pin(7);
-                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+        it('should return DuplicatePersonalnummerError when the new personalnummer is already assigned', async () => {
+            const person: Person<true> = await savePerson(true);
+            const person2: Person<true> = await savePerson(true);
+            if (!person2.personalnummer) {
+                return;
+            }
 
-                const result: Person<true> | DomainError = await sut.updatePersonalnummer(
-                    person.id,
-                    newPersonalnummer,
-                    person.updatedAt,
-                    person.revision,
-                    personPermissionsMock,
-                );
-                if (result instanceof DomainError) {
-                    throw result;
-                }
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
 
-                expect(person.id).toBe(result.id);
-                expect(person.personalnummer).not.toBeNull();
-                expect(person.personalnummer).not.toEqual(newPersonalnummer);
-                expect(result.personalnummer).toEqual(newPersonalnummer);
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                person2.personalnummer,
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+        });
+
+        it('should return PersonUpdateOutdatedError if there is a newer updated version', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                faker.finance.pin(7),
+                faker.date.past(),
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(PersonUpdateOutdatedError);
+        });
+
+        it('should return MismatchedRevisionError if the revision is incorrect', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                person.familienname,
+                person.vorname,
+                faker.finance.pin(7),
+                person.updatedAt,
+                '2',
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(MismatchedRevisionError);
+        });
+
+        it('should return DomainError if it cannot generate new username', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+            usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                ok: false,
+                error: new InvalidNameError('Could not generate valid username'),
             });
-
-            it('should return EntityNotFound when person does not exit', async () => {
-                const result: Person<true> | DomainError = await sut.updatePersonalnummer(
-                    faker.string.uuid(),
-                    faker.finance.pin(7),
-                    faker.date.anytime(),
-                    '1',
-                    personPermissionsMock,
-                );
-
-                expect(result).toBeInstanceOf(EntityNotFoundError);
+            kcUserServiceMock.updateUsername.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
             });
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '',
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+            expect(result).toBeInstanceOf(DomainError);
+        });
 
-            it('should return MissingPermissionsError if the admin does not have permissions to update the Personalnummer', async () => {
-                const person: Person<true> = await savePerson(true);
-                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(false);
+        it('should return DomainError if keycloak cannot update the username', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+            usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername1' });
 
-                const result: Person<true> | DomainError = await sut.updatePersonalnummer(
-                    person.id,
-                    faker.finance.pin(7),
-                    person.updatedAt,
-                    person.revision,
-                    personPermissionsMock,
-                );
-
-                expect(result).toBeInstanceOf(MissingPermissionsError);
+            kcUserServiceMock.updateUsername.mockResolvedValueOnce({
+                ok: false,
+                error: new EntityNotFoundError(`Keycloak User could not be found`),
             });
-
-            it('should return PersonalnummerRequiredError when personalnummer was not provided', async () => {
-                const person: Person<true> = await savePerson(true);
-                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
-
-                const result: Person<true> | DomainError = await sut.updatePersonalnummer(
-                    person.id,
-                    '',
-                    person.updatedAt,
-                    person.revision,
-                    personPermissionsMock,
-                );
-
-                expect(result).toBeInstanceOf(PersonalnummerRequiredError);
-            });
-
-            it('should return DuplicatePersonalnummerError when the new personalnummer is already assigned', async () => {
-                const person: Person<true> = await savePerson(true);
-                const person2: Person<true> = await savePerson(true);
-                if (!person2.personalnummer) {
-                    throw new PersonalnummerRequiredError();
-                }
-
-                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
-
-                const result: Person<true> | DomainError = await sut.updatePersonalnummer(
-                    person.id,
-                    person2.personalnummer,
-                    person.updatedAt,
-                    person.revision,
-                    personPermissionsMock,
-                );
-
-                expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
-            });
-
-            it('should return PersonalnummerUpdateOutdatedError if there is a newer updated version', async () => {
-                const person: Person<true> = await savePerson(true);
-                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
-
-                const result: Person<true> | DomainError = await sut.updatePersonalnummer(
-                    person.id,
-                    faker.finance.pin(7),
-                    faker.date.past(),
-                    person.revision,
-                    personPermissionsMock,
-                );
-
-                expect(result).toBeInstanceOf(PersonalnummerUpdateOutdatedError);
-            });
-
-            it('should return MismatchedRevisionError if the revision is incorrect', async () => {
-                const person: Person<true> = await savePerson(true);
-                personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
-
-                const result: Person<true> | DomainError = await sut.updatePersonalnummer(
-                    person.id,
-                    faker.finance.pin(7),
-                    person.updatedAt,
-                    '2',
-                    personPermissionsMock,
-                );
-
-                expect(result).toBeInstanceOf(MismatchedRevisionError);
-            });
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '',
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+            expect(result).toBeInstanceOf(DomainError);
         });
     });
 });
