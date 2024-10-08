@@ -566,10 +566,8 @@ describe('Rolle API', () => {
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
 
-                const queryString: string = `serviceProviderIds[]=${serviceProvider.id}`;
-
                 const params: RolleServiceProviderBodyParams = {
-                    serviceProviderId: serviceProvider.id,
+                    serviceProviderIds: [serviceProvider.id],
                     version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
@@ -583,12 +581,8 @@ describe('Rolle API', () => {
         describe('when rolle does not exist', () => {
             it('should return 404', async () => {
                 const validButNonExistingUUID: string = faker.string.uuid();
-                const serviceProviderId: string = faker.string.uuid();
-
-                const queryString: string = `serviceProviderIds[]=${serviceProviderId}`;
-
                 const params: RolleServiceProviderBodyParams = {
-                    serviceProviderId: faker.string.uuid(),
+                    serviceProviderIds: [faker.string.uuid()],
                     version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
@@ -604,10 +598,8 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
                 const nonExistingServiceProviderId: string = faker.string.uuid();
 
-                const queryString: string = `serviceProviderIds[]=${nonExistingServiceProviderId}`;
-
                 const params: RolleServiceProviderBodyParams = {
-                    serviceProviderId: faker.string.uuid(),
+                    serviceProviderIds: [nonExistingServiceProviderId],
                     version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)

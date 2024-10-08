@@ -1,16 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
+import { IsNumber, IsUUID, IsArray, ArrayNotEmpty } from 'class-validator';
 
 export class RolleServiceProviderBodyParams {
-    @IsString()
-    @IsNotEmpty()
-    @IsUUID()
+    @IsArray()
+    @ArrayNotEmpty()
+    @IsUUID('all', { each: true })
     @ApiProperty({
-        description: 'The id for the service provider.',
+        description: 'An array of ids for the service providers.',
         required: true,
         nullable: false,
+        isArray: true,
+        type: String,
     })
-    public readonly serviceProviderId!: string;
+    public readonly serviceProviderIds!: string[];
 
     @IsNumber()
     @ApiProperty({ description: 'The version for the rolle.', required: true })

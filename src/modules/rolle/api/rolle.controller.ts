@@ -264,7 +264,7 @@ export class RolleController {
     })
     public async updateServiceProvidersById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Body() spBodyParams: RolleServiceProviderQueryParams,
+        @Body() spBodyParams: RolleServiceProviderBodyParams,
     ): Promise<ServiceProviderResponse[]> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
