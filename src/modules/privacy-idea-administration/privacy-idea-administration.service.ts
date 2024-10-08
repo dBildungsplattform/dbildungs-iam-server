@@ -33,6 +33,9 @@ import {
     UserResponse,
     VerificationResponse,
 } from './privacy-idea-api.types.js';
+import { EventHandler } from '../../core/eventbus/decorators/event-handler.decorator.js';
+import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -45,6 +48,7 @@ export class PrivacyIdeaAdministrationService {
     private readonly privacyIdeaConfig: PrivacyIdeaConfig;
 
     public constructor(
+        private readonly logger: ClassLogger,
         private readonly httpService: HttpService,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly personenkontextService: PersonenkontextService,
@@ -435,5 +439,31 @@ export class PrivacyIdeaAdministrationService {
                 throw new Error(`Error deleting token: Unknown error occurred`);
             }
         }
+    }
+
+    private async deleteUser(username: string): Promise<void> {
+        const jwt: string = await this.getJWTToken();
+        const resolvername: string = this.privacyIdeaConfig.USER_RESOLVER;
+        const url: string = this.privacyIdeaConfig.ENDPOINT + `/user/${resolvername}/${username}`;
+        const headers: { Authorization: string } = {
+            Authorization: `${jwt}`,
+        };
+
+        try {
+            await firstValueFrom(this.httpService.delete(url, { headers: headers }));
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error deleting privacyIDEA user: ${error.message}`);
+            } else {
+                throw new Error(`Error deleting privacyIDEA user: Unknown error occurred`);
+            }
+        }
+    }
+
+    @EventHandler(PersonDeletedEvent)
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
+        this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
+        await this.resetToken(event.referrer);
+        await this.deleteUser(event.referrer);
     }
 }
