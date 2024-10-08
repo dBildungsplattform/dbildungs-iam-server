@@ -15,11 +15,18 @@ import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportDataItem } from './import-data-item.js';
 import { faker } from '@faker-js/faker';
-import { PersonenkontextCreationService } from '../../personenkontext/domain/personenkontext-creation.service.js';
+import { PersonenkontextCreationService, PersonPersonenkontext } from '../../personenkontext/domain/personenkontext-creation.service.js';
 import { DbiamCreatePersonenkontextBodyParams } from '../../personenkontext/api/param/dbiam-create-personenkontext.body.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 export type OrganisationByIdAndName = Pick<Organisation<true>, 'id' | 'name'>;
+export type TextFilePersonFields = {
+    klasse: string;
+    vorname: string;
+    familienname: string;
+    username: string;
+    password: string;
+};
 
 export class ImportWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -117,25 +124,33 @@ export class ImportWorkflowAggregate {
             }
         });
         // Get all import data items with importvorgangId
+        const textFilePersonFieldsList: TextFilePersonFields[] = [];
         const offset: number = 0;
         const limit: number = 30;
         const [importDataItems, totalItems]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId, offset, limit);
         //create Person With PKs
         const promises = importDataItems.map((importDataItem: ImportDataItem<true>) => {
-            const klasse: OrganisationByIdAndName |undefined = klassenByIDandName.find((organisationByIdAndName: OrganisationByIdAndName) => organisationByIdAndName.name?.toLocaleLowerCase() == importDataItem.organisation?.toLocaleLowerCase());
-            if (!klasse){
+            const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
+                (organisationByIdAndName: OrganisationByIdAndName) =>
+                    organisationByIdAndName.name?.toLocaleLowerCase() ==
+                    importDataItem.organisation?.toLocaleLowerCase(),
+            );
+            if (!klasse) {
                 //TODO return error: something went wrong
                 return;
             }
 
-            const createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[] = [{
-                organisationId: organisationId,
-                rolleId: rolleId
-            }, {
-                organisationId: klasse.id,
-                rolleId: rolleId
-            }];
+            const createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[] = [
+                {
+                    organisationId: organisationId,
+                    rolleId: rolleId,
+                },
+                {
+                    organisationId: klasse.id,
+                    rolleId: rolleId,
+                },
+            ];
 
             return this.personenkontextCreationService.createPersonWithPersonenkontexte(
                 permissions,
@@ -145,7 +160,17 @@ export class ImportWorkflowAggregate {
             );
         });
 
-        const savedPersonWithPersonenkontext = await Promise.all(promises);
+        const savedPersonWithPersonenkontext: (DomainError | PersonPersonenkontext | undefined)[] = await Promise.all(promises);
+        savedPersonWithPersonenkontext.map((personPersonenkontext: DomainError | PersonPersonenkontext | undefined) => {
+            if (personPersonenkontext !== undefined && !(personPersonenkontext instanceof DomainError)) {
+                const klassenName: string = personPersonenkontext.personenkontexte.map((value: Personkontext<true>) => {
+                    if ()
+                })
+                textFilePersonFieldsList.push({
+                    klasse:
+                })
+            }
+        })
 
         //Save Benutzer + Passwort in the Liste
         //Create text file.
@@ -224,19 +249,19 @@ export class ImportWorkflowAggregate {
         );
     }
 
-    private async buildPersonenkontexteForSchueler(
-        parentOrganisationId: string,
-    ): Promise<DbiamCreatePersonenkontextBodyParams> {
-        // Check if logged in person has permission
-        const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtRootOrganisation([
-            RollenSystemRecht.IMPORT_DURCHFUEHREN,
-        ]);
+    // private async buildPersonenkontexteForSchueler(
+    //     parentOrganisationId: string,
+    // ): Promise<DbiamCreatePersonenkontextBodyParams> {
+    //     // Check if logged in person has permission
+    //     const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+    //         RollenSystemRecht.IMPORT_DURCHFUEHREN,
+    //     ]);
 
-        // Missing permission on orga
-        if (!hasPermissionAtOrga) {
-            return new MissingPermissionsError('Unauthorized to import data');
-        }
+    //     // Missing permission on orga
+    //     if (!hasPermissionAtOrga) {
+    //         return new MissingPermissionsError('Unauthorized to import data');
+    //     }
 
-        return undefined;
-    }
+    //     return undefined;
+    // }
 }
