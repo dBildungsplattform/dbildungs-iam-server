@@ -6,12 +6,18 @@ import {
     ApiForbiddenResponse,
     ApiNotFoundResponse,
     ApiInternalServerErrorResponse,
+    ApiBearerAuth,
+    ApiOAuth2,
+    ApiTags,
 } from '@nestjs/swagger';
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError } from '../../shared/error/domain.error.js';
 
 @Controller({ path: 'cron' })
+@ApiBearerAuth()
+@ApiOAuth2(['openid'])
+@ApiTags('cron')
 export class CronController {
     public constructor(
         private readonly keyCloakUserService: KeycloakUserService,
