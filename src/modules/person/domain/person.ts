@@ -241,7 +241,6 @@ export class Person<WasPersisted extends boolean> {
                 `Revision ${revision} does not match revision ${this.revision} of stored person.`,
             );
         }
-
         const newRevision: string = (parseInt(this.revision) + 1).toString();
 
         if (vorname && !NameValidator.isNameValid(vorname)) {
@@ -270,7 +269,7 @@ export class Person<WasPersisted extends boolean> {
         this.vertrauensstufe = vertrauensstufe;
         this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
-        this.personalnummer = personalnummer;
+        this.personalnummer = personalnummer ?? this.personalnummer;
         this.lockInfo = lockInfo;
         this.isLocked = isLocked;
         this.email = email;

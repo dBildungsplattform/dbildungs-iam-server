@@ -27,6 +27,7 @@ describe('configloader', () => {
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
                     DB_NAME: 'test-db',
                     USE_SSL: false,
                 },
@@ -55,6 +56,7 @@ describe('configloader', () => {
                     ENABLED: 'true',
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
+                    ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
                 },
@@ -123,6 +125,7 @@ describe('configloader', () => {
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
                     DB_NAME: 'test-db',
                     USE_SSL: false,
                     SECRET: 'gehaim',
@@ -157,6 +160,7 @@ describe('configloader', () => {
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
                 },

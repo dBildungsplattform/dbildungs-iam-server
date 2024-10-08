@@ -111,7 +111,11 @@ export class LdapClientService {
         });
     }
 
-    public async createLehrer(person: PersonData, organisation: OrganisationData): Promise<Result<PersonData>> {
+    public async createLehrer(
+        person: PersonData,
+        organisation: OrganisationData,
+        mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
+    ): Promise<Result<PersonData>> {
         if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         if (!person.referrer) {
             return {
@@ -156,6 +160,8 @@ export class LdapClientService {
                 sn: person.familienname,
                 employeeNumber: person.id,
                 objectclass: ['inetOrgPerson', 'univentionMail'],
+                mailPrimaryAddress: mail ?? ``,
+                mailAlternativeAddress: mail ?? ``,
             };
 
             const controls: Control[] = [];
@@ -167,6 +173,26 @@ export class LdapClientService {
             this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
             return { ok: true, value: person };
+        });
+    }
+
+    public async isLehrerExisting(referrer: string, orgaKennung: string): Promise<Result<boolean>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: isLehrerExisting');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResultLehrer: SearchResult = await client.search(
+                `cn=lehrer,ou=${orgaKennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
+                {
+                    filter: `(uid=${referrer})`,
+                },
+            );
+            if (searchResultLehrer.searchEntries.length > 0) {
+                return { ok: true, value: true };
+            }
+            return { ok: true, value: false };
         });
     }
 

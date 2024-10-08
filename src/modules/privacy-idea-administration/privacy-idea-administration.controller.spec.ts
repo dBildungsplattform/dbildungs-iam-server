@@ -1,21 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PrivacyIdeaAdministrationController } from './privacy-idea-administration.controller.js';
-import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { TokenStateResponse } from './token-state.response.js';
-import { AssignTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
-import { ResetTokenResponse } from './privacy-idea-api.types.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
-import { PersonRepository } from '../person/persistence/person.repository.js';
-import { Person } from '../person/domain/person.js';
 import { faker } from '@faker-js/faker';
+import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { PersonPermissions } from '../authentication/domain/person-permissions.js';
+import { Person } from '../person/domain/person.js';
+import { PersonRepository } from '../person/persistence/person.repository.js';
 import { AssignHardwareTokenBodyParams } from './api/assign-hardware-token.body.params.js';
 import { AssignHardwareTokenResponse } from './api/assign-hardware-token.response.js';
 import { TokenError } from './api/error/token.error.js';
-import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
-import { EntityCouldNotBeCreated } from '../../shared/error/entity-could-not-be-created.error.js';
-import { EntityCouldNotBeUpdated } from '../../shared/error/entity-could-not-be-updated.error.js';
+import { TokenRequiredResponse } from './api/token-required.response.js';
+import { PrivacyIdeaAdministrationController } from './privacy-idea-administration.controller.js';
+import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
+import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
+import { TokenStateResponse } from './token-state.response.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -53,9 +53,9 @@ describe('PrivacyIdeaAdministrationController', () => {
             ],
         }).compile();
 
-        sut = module.get(PrivacyIdeaAdministrationController);
-        serviceMock = module.get(PrivacyIdeaAdministrationService);
-        personRepository = module.get(PersonRepository);
+        sut = module.get<PrivacyIdeaAdministrationController>(PrivacyIdeaAdministrationController);
+        serviceMock = module.get<DeepMocked<PrivacyIdeaAdministrationService>>(PrivacyIdeaAdministrationService);
+        personRepository = module.get<DeepMocked<PersonRepository>>(PersonRepository);
     });
 
     afterAll(async () => {
@@ -97,11 +97,13 @@ describe('PrivacyIdeaAdministrationController', () => {
     describe('PrivacyIdeaAdministrationController getTwoAuthState', () => {
         it('should successfully retrieve token state', async () => {
             const person: Person<true> = getPerson();
+            const twoFaRequired: boolean = true;
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });
+            serviceMock.requires2fa.mockResolvedValueOnce(twoFaRequired);
 
             const mockTokenState: PrivacyIdeaToken = {
                 serial: 'serial123',
@@ -133,6 +135,8 @@ describe('PrivacyIdeaAdministrationController', () => {
                 user_realm: '',
                 username: '',
             };
+            personPermissionsMock = createMock<PersonPermissions>();
+
             serviceMock.getTwoAuthState.mockResolvedValue(mockTokenState);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
             expect(response).toEqual(new TokenStateResponse(mockTokenState));
@@ -140,6 +144,7 @@ describe('PrivacyIdeaAdministrationController', () => {
 
         it('should successfully retrieve empty token state when user is undefined', async () => {
             const person: Person<true> = getPerson();
+            const twoFaRequired: boolean = true;
 
             personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
@@ -149,6 +154,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             personPermissionsMock = createMock<PersonPermissions>();
 
             serviceMock.getTwoAuthState.mockResolvedValue(undefined);
+            serviceMock.requires2fa.mockResolvedValue(twoFaRequired);
             const response: TokenStateResponse = await sut.getTwoAuthState('user1', personPermissionsMock);
             expect(response).toEqual(new TokenStateResponse(undefined));
         });
@@ -415,6 +421,22 @@ describe('PrivacyIdeaAdministrationController', () => {
             await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('User not found.', HttpStatus.BAD_REQUEST),
             );
+        });
+    });
+
+    describe('requires2fa', () => {
+        beforeEach(() => {
+            jest.restoreAllMocks();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: getPerson() });
+        });
+
+        it.each([[true], [false]])('should return %s', async (expected: boolean) => {
+            serviceMock.requires2fa.mockResolvedValueOnce(expected);
+            const expectedResponse: TokenRequiredResponse = new TokenRequiredResponse(expected);
+
+            const actual: TokenRequiredResponse = await sut.requiresTwoFactorAuthentication('', personPermissionsMock);
+
+            expect(actual).toStrictEqual(expectedResponse);
         });
     });
 });

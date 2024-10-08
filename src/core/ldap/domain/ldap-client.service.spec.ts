@@ -162,6 +162,49 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    describe('isLehrerExisting', () => {
+        it('when lehrer exists should return true', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.add.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
+                );
+                return clientMock;
+            });
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting('user123', '1234');
+
+            expect(result.ok).toBeTruthy();
+            if (result.ok) {
+                expect(result.value).toBeTruthy();
+            }
+        });
+        it('when lehrer does not exists should return false', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.add.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                return clientMock;
+            });
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting('user123', '1234');
+
+            expect(result.ok).toBeTruthy();
+            if (result.ok) {
+                expect(result.value).toBeFalsy();
+            }
+        });
+        it('when bind returns error', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockRejectedValueOnce(new Error());
+                clientMock.add.mockResolvedValueOnce();
+                return clientMock;
+            });
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting('user123', '1234');
+
+            expect(result.ok).toBeFalsy();
+        });
+    });
+
     describe('creation', () => {
         describe('organisation', () => {
             it('when called with valid organisation should return truthy result', async () => {

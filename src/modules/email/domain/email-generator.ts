@@ -5,18 +5,19 @@ import {
 } from '../../../shared/error/index.js';
 import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 import { EmailRepo } from '../persistence/email.repo.js';
+import { EmailAddressGenerationAttemptsExceededError } from '../error/email-address-generation-attempts-exceeded.error.js';
 
 export class EmailGenerator {
-    private static EMAIL_SUFFIX: string = '@schule-sh.de';
+    private static MAX_ATTEMPTS_ADDRESS_GENERATION: number = 50;
 
     public constructor(private emailRepo: EmailRepo) {}
 
-    public isEqual(address: string, firstname: string, lastname: string): boolean {
+    public isEqual(address: string, firstname: string, lastname: string, emailDomain: string): boolean {
         const createAddress: Result<string> = this.generateAddress(firstname, lastname);
 
         if (!createAddress.ok) return false;
 
-        return address === createAddress.value + EmailGenerator.EMAIL_SUFFIX;
+        return address === createAddress.value + '@' + emailDomain;
     }
 
     public generateAddress(firstname: string, lastname: string): Result<string> {
@@ -66,16 +67,25 @@ export class EmailGenerator {
         };
     }
 
-    public async generateAvailableAddress(firstname: string, lastname: string): Promise<Result<string>> {
+    public async generateAvailableAddress(
+        firstname: string,
+        lastname: string,
+        emailDomain: string,
+    ): Promise<Result<string>> {
         const createdAddress: Result<string> = this.generateAddress(firstname, lastname);
 
         if (!createdAddress.ok) return createdAddress;
 
-        const nextAddressName: string = await this.getNextAvailableAddress(createdAddress.value);
+        const nextAvailableAddressResult: Result<string> = await this.getNextAvailableAddress(
+            createdAddress.value,
+            emailDomain,
+        );
+
+        if (!nextAvailableAddressResult.ok) return nextAvailableAddressResult;
 
         return {
             ok: true,
-            value: nextAddressName + EmailGenerator.EMAIL_SUFFIX,
+            value: nextAvailableAddressResult.value + '@' + emailDomain,
         };
     }
 
@@ -90,17 +100,29 @@ export class EmailGenerator {
         return removedDiacritics.join('-');
     }
 
-    private async getNextAvailableAddress(calculatedAddress: string): Promise<string> {
-        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + EmailGenerator.EMAIL_SUFFIX))) {
-            return calculatedAddress;
+    private async getNextAvailableAddress(
+        calculatedAddress: string,
+        emailDomain: string,
+        call: number = 0,
+    ): Promise<Result<string>> {
+        if (call > EmailGenerator.MAX_ATTEMPTS_ADDRESS_GENERATION) {
+            return {
+                ok: false,
+                error: new EmailAddressGenerationAttemptsExceededError(calculatedAddress),
+            };
         }
-        let counter: number = 1;
-        // leave as is because of the sequncial nature and assumintion of limits similar names
-        /* eslint-disable no-await-in-loop */
-        while (await this.emailRepo.existsEmailAddress(calculatedAddress + counter + EmailGenerator.EMAIL_SUFFIX)) {
-            counter = counter + 1;
+        let counterAsStr: string = '';
+        if (call > 0) {
+            counterAsStr = '' + call;
         }
-        /* eslint-disable no-await-in-loop */
-        return calculatedAddress + counter;
+
+        if (!(await this.emailRepo.existsEmailAddress(calculatedAddress + counterAsStr + '@' + emailDomain))) {
+            return {
+                ok: true,
+                value: calculatedAddress + counterAsStr,
+            };
+        }
+
+        return this.getNextAvailableAddress(calculatedAddress, emailDomain, call + 1);
     }
 }

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Person, PersonCreationParams } from './person.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, InvalidCharacterSetError } from '../../../shared/error/index.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
@@ -100,6 +100,24 @@ describe('Person', () => {
                 expect(person.newPassword).toBeDefined();
                 expect(person.isNewPasswordTemporary).toEqual(true);
                 expect(person.revision).toEqual('1');
+            });
+
+            it('should return error if username generation fails', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({
+                    ok: false,
+                    error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
+                });
+                // Extracted so that the coverage analysis picks up on the file imported and doesn't complain about it not being covered
+                const creationParams: PersonCreationParams = {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                };
+                const person: Person<false> | DomainError = await Person.createNew(
+                    usernameGeneratorService,
+                    creationParams,
+                );
+
+                expect(person).toBeInstanceOf(DomainError);
             });
         });
         describe('with fixed password & username', () => {
