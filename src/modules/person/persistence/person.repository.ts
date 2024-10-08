@@ -127,10 +127,10 @@ export class PersonRepository {
 
     private async getPersonScopeWithPermissions(
         permissions: PersonPermissions,
-        requiredRight: RollenSystemRecht = RollenSystemRecht.PERSONEN_VERWALTEN,
+        requiredRights: RollenSystemRecht[],
     ): Promise<PersonScope> {
         // Find all organisations where user has the required permission
-        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([requiredRight], true);
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(requiredRights, true);
 
         // Check if user has permission on root organisation
         if (permittedOrgas.all) {
@@ -181,8 +181,12 @@ export class PersonRepository {
         return personEntities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
     }
 
-    public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
-        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
+    public async getPersonIfAllowed(
+        personId: string,
+        permissions: PersonPermissions,
+        requiredRights: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_VERWALTEN],
+    ): Promise<Result<Person<true>>> {
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions, requiredRights);
         scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
@@ -227,10 +231,9 @@ export class PersonRepository {
         permissions: PersonPermissions,
     ): Promise<Result<Person<true>>> {
         // Check if the user has permission to delete immediately
-        const scope: PersonScope = await this.getPersonScopeWithPermissions(
-            permissions,
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions, [
             RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
-        );
+        ]);
         scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);

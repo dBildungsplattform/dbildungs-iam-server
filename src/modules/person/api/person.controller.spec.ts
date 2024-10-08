@@ -36,6 +36,9 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
+import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
 describe('PersonController', () => {
@@ -49,6 +52,7 @@ describe('PersonController', () => {
     let personDeleteServiceMock: DeepMocked<PersonDeleteService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
+    let eventServiceMock: DeepMocked<EventService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -101,6 +105,10 @@ describe('PersonController', () => {
                     provide: ClassLogger,
                     useValue: createMock<ClassLogger>(),
                 },
+                {
+                    provide: EventService,
+                    useValue: createMock<EventService>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
@@ -111,6 +119,7 @@ describe('PersonController', () => {
         personDeleteServiceMock = module.get(PersonDeleteService);
         keycloakUserService = module.get(KeycloakUserService);
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
+        eventServiceMock = module.get(EventService);
     });
 
     function getPerson(): Person<true> {
@@ -761,6 +770,37 @@ describe('PersonController', () => {
                 await expect(
                     personController.lockPerson(params.personId, lockUserBodyParams, personPermissionsMock),
                 ).rejects.toThrow(PersonDomainError);
+            });
+        });
+    });
+
+    describe('syncPerson', () => {
+        const params: PersonByIdParams = {
+            personId: faker.string.uuid(),
+        };
+        personPermissionsMock = createMock<PersonPermissions>();
+
+        describe('when person exists and user has permissions', () => {
+            const person: Person<true> = getPerson();
+            it('should publish event', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+
+                await personController.syncPerson(params.personId, personPermissionsMock);
+
+                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(expect.any(PersonExternalSystemsSyncEvent));
+            });
+        });
+
+        describe('when person does not exists or user is missing permissions', () => {
+            it('should return error', async () => {
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: false, error: createMock() });
+
+                const syncPromise: Promise<void> = personController.syncPerson(params.personId, personPermissionsMock);
+
+                await expect(syncPromise).rejects.toEqual(new NotFoundOrNoPermissionError(params.personId));
+                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                expect(eventServiceMock.publish).not.toHaveBeenCalled();
             });
         });
     });
