@@ -76,12 +76,12 @@ describe('RolleRepo', () => {
 
         it('should update an existing rolle', async () => {
             const existingRolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
-            const update: Rolle<false> = DoFactory.createRolle(false);
-            update.id = existingRolle.id;
+            existingRolle.name = faker.name.firstName();
 
             const savedRolle: Rolle<true> = await sut.save(existingRolle);
 
-            expect(savedRolle).toEqual(existingRolle);
+            expect(savedRolle.id).toEqual(existingRolle.id);
+            expect(savedRolle.name).toEqual(existingRolle.name);
         });
 
         it('should save with service provider', async () => {
