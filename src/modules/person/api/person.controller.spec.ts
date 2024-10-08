@@ -33,10 +33,10 @@ import { PersonDeleteService } from '../person-deletion/person-delete.service.js
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
+import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -765,11 +765,13 @@ describe('PersonController', () => {
         });
     });
 
-    describe('updatePersonalnummer', () => {
+    describe('updateMetadata', () => {
         const params: PersonByIdParams = {
             personId: faker.string.uuid(),
         };
-        const body: PersonByPersonalnummerBodyParams = {
+        const body: PersonMetadataBodyParams = {
+            familienname: faker.name.lastName(),
+            vorname: faker.name.firstName(),
             personalnummer: faker.finance.pin(7),
             lastModified: faker.date.recent(),
             revision: '1',
@@ -781,27 +783,30 @@ describe('PersonController', () => {
             dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValueOnce(
                 true,
             );
-            personRepositoryMock.updatePersonalnummer.mockResolvedValue(person);
-            await expect(personController.updatePersonalnummer(params, body, personPermissionsMock)).resolves.toBe(
-                undefined,
+            personRepositoryMock.updatePersonMetadata.mockResolvedValue(person);
+            await expect(personController.updateMetadata(params, body, personPermissionsMock)).resolves.toBeInstanceOf(
+                PersonendatensatzResponse,
             );
-            expect(personRepositoryMock.updatePersonalnummer).toHaveBeenCalledTimes(1);
+            expect(personRepositoryMock.updatePersonMetadata).toHaveBeenCalledTimes(1);
         });
 
         it('should throw DuplicatePersonalnummerError when Personalnummer is already assigned', async () => {
-            personRepositoryMock.updatePersonalnummer.mockResolvedValue(
-                new DuplicatePersonalnummerError('Personalnummer already exists'),
-            );
             dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValueOnce(
                 true,
             );
-            await expect(personController.updatePersonalnummer(params, body, personPermissionsMock)).rejects.toThrow(
+            personRepositoryMock.updatePersonMetadata.mockResolvedValue(
+                new DuplicatePersonalnummerError('Personalnummer already exists'),
+            );
+            await expect(personController.updateMetadata(params, body, personPermissionsMock)).rejects.toThrow(
                 DuplicatePersonalnummerError,
             );
         });
 
-        it('should throw PersonalnummerRequiredError when Personalnummer was not provided', async () => {
-            const bodyWithInvalidPersonalnummer: PersonByPersonalnummerBodyParams = {
+        it('should throw PersonalnummerRequiredError when personalnummer was not provided and faminlienname or vorname did not change', async () => {
+            const person: Person<true> = getPerson();
+            const bodyWithInvalidPersonalnummer: PersonMetadataBodyParams = {
+                familienname: person.familienname,
+                vorname: person.vorname,
                 personalnummer: '',
                 lastModified: faker.date.recent(),
                 revision: '1',
@@ -809,14 +814,16 @@ describe('PersonController', () => {
             dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValueOnce(
                 true,
             );
-            personRepositoryMock.updatePersonalnummer.mockResolvedValue(new PersonalnummerRequiredError());
+            personRepositoryMock.updatePersonMetadata.mockResolvedValue(new PersonalnummerRequiredError());
             await expect(
-                personController.updatePersonalnummer(params, bodyWithInvalidPersonalnummer, personPermissionsMock),
+                personController.updateMetadata(params, bodyWithInvalidPersonalnummer, personPermissionsMock),
             ).rejects.toThrow(PersonalnummerRequiredError);
         });
 
         it('should throw HttpException when revision is incorrect', async () => {
-            const bodyWithInvalidRevision: PersonByPersonalnummerBodyParams = {
+            const bodyWithInvalidRevision: PersonMetadataBodyParams = {
+                familienname: faker.name.lastName(),
+                vorname: faker.name.firstName(),
                 personalnummer: '',
                 lastModified: faker.date.recent(),
                 revision: '2',
@@ -824,9 +831,9 @@ describe('PersonController', () => {
             dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValueOnce(
                 true,
             );
-            personRepositoryMock.updatePersonalnummer.mockResolvedValue(new MismatchedRevisionError(''));
+            personRepositoryMock.updatePersonMetadata.mockResolvedValue(new MismatchedRevisionError(''));
             await expect(
-                personController.updatePersonalnummer(params, bodyWithInvalidRevision, personPermissionsMock),
+                personController.updateMetadata(params, bodyWithInvalidRevision, personPermissionsMock),
             ).rejects.toThrow(HttpException);
         });
 
@@ -834,7 +841,7 @@ describe('PersonController', () => {
             dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValueOnce(
                 false,
             );
-            await expect(personController.updatePersonalnummer(params, body, personPermissionsMock)).rejects.toThrow(
+            await expect(personController.updateMetadata(params, body, personPermissionsMock)).rejects.toThrow(
                 PersonDomainError,
             );
         });
