@@ -531,12 +531,15 @@ export class PersonRepository {
     }
 
     public async getKoPersUserLockList(): Promise<string[]> {
+        const daysAgo: Date = new Date();
+        daysAgo.setDate(daysAgo.getDate() - 56);
+
         const filters: QBFilterQuery<PersonEntity> = {
             $and: [
                 { personalnummer: { $eq: null } },
                 {
                     personenKontexte: {
-                        createdAt: { $gt: new Date(new Date().setDate(new Date().getDate() - 56)) },
+                        createdAt: { $lte: daysAgo }, //Check that createdAt is older than 56 days
                         rolleId: {
                             merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
                         },
@@ -544,6 +547,7 @@ export class PersonRepository {
                 },
             ],
         };
+
         const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return personEntities.map((person: PersonEntity) => person.keycloakUserId);
     }

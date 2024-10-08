@@ -44,7 +44,8 @@ export class CronController {
             );
 
             const allSuccessful: boolean = results.every(
-                (result: PromiseSettledResult<Result<void, DomainError>>) => result.status === 'fulfilled',
+                (result: PromiseSettledResult<Result<void, DomainError>>) =>
+                    result.status === 'fulfilled' && result.value.ok === true,
             );
 
             if (allSuccessful) {

@@ -38,7 +38,7 @@ import { EmailAddressEntity } from '../../email/persistence/email-address.entity
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { createAndPersistOrganisation } from '../../../../test/utils/organisation-test-helper.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -55,6 +55,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1544,6 +1545,68 @@ describe('PersonRepository Integration', () => {
             );
 
             expect(result).toBeInstanceOf(MismatchedRevisionError);
+        });
+    });
+    describe('getKoPersUserLockList', () => {
+        it('should return a list of keycloakUserIds for persons older than 56 days without a personalnummer', async () => {
+            // Create the date 56 days ago
+            const daysAgo: Date = new Date();
+            daysAgo.setDate(daysAgo.getDate() - 56);
+
+            // Create sample person data
+            const person1: Person<true> = await savePerson(false, { keycloackID: 'user1' });
+            const person2: Person<true> = await savePerson(false, { keycloackID: 'user2' });
+            const person3: Person<true> = await savePerson(false, { keycloackID: 'user3' }); // Person with a recent context
+
+            await em.persistAndFlush(person1);
+            await em.persistAndFlush(person2);
+            await em.persistAndFlush(person3);
+
+            // Create roles
+            const rolle1: Rolle<false> = DoFactory.createRolle(false, {
+                rollenart: RollenArt.LEHR,
+                merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+            });
+
+            const rolle2: Rolle<false> = DoFactory.createRolle(false, {
+                rollenart: RollenArt.LEHR,
+                merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+            });
+
+            await em.persistAndFlush(rolle1);
+            await em.persistAndFlush(rolle2);
+
+            // Create Personenkontext with older creation date (56 days ago)
+            const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                personId: person1.id,
+                rolleId: rolle1.id!,
+                createdAt: daysAgo,
+            });
+
+            const personenKontext2: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                personId: person2.id,
+                rolleId: rolle2.id!,
+                createdAt: daysAgo,
+            });
+
+            // Create a Personenkontext with a recent creation date (not older than 56 days)
+            const personenKontext3: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                personId: person3.id,
+                rolleId: rolle2.id!,
+                createdAt: new Date(), // created today
+            });
+
+            await em.persistAndFlush(personenKontext1);
+            await em.persistAndFlush(personenKontext2);
+            await em.persistAndFlush(personenKontext3);
+
+            // Execute the method under test
+            const lockList: string[] = await sut.getKoPersUserLockList();
+
+            // Assertions
+            expect(lockList).toContain(person1.keycloakUserId); // person1 should be in the list
+            expect(lockList).toContain(person2.keycloakUserId); // person2 should also be in the list
+            expect(lockList).not.toContain(person3.keycloakUserId); // person3 should NOT be in the list
         });
     });
 });
