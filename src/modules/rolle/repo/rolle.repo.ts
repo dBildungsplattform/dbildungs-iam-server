@@ -4,7 +4,6 @@ import {
     EntityName,
     ForeignKeyConstraintViolationException,
     Loaded,
-    LockMode,
     RequiredEntityData,
 } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
@@ -59,6 +58,7 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
         systemrechte,
         serviceProvider,
         istTechnisch: rolle.istTechnisch,
+        version: rolle.version,
     };
 }
 
@@ -369,12 +369,11 @@ export class RolleRepo {
             populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
-        try {
-            //Check version
-            await this.em.lock(rolleEntity, LockMode.OPTIMISTIC, rolle.version);
-        } catch (ex) {
+
+        if (rolleEntity.version !== rolle.version) {
             throw new RolleUpdateOutdatedError();
         }
+        rolle.version = rolle.version + 1;
 
         rolleEntity.assign(mapAggregateToData(rolle), { updateNestedEntities: true });
         await this.em.persistAndFlush(rolleEntity);

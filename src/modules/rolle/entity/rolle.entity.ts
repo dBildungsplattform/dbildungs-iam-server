@@ -57,6 +57,6 @@ export class RolleEntity extends TimestampedEntity {
     })
     public istTechnisch!: boolean;
 
-    @Property({ type: new BigIntType('number'), defaultRaw: '1', version: true })
+    @Property({ type: new BigIntType('number'), defaultRaw: '1', concurrencyCheck: true })
     public version!: number & Opt;
 }

@@ -41,7 +41,6 @@ import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
@@ -307,7 +306,7 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
     public async removeServiceProviderById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Query() spBodyParams: RolleServiceProviderQueryParams,
+        @Query() spBodyParams: RolleServiceProviderBodyParams,
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
@@ -323,6 +322,7 @@ export class RolleController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+        rolle.setVersionForUpdate(spBodyParams.version);
         await this.rolleRepo.save(rolle);
     }
 
