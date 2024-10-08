@@ -306,6 +306,7 @@ export class OrganisationRepository {
             const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
                 .select('*')
                 .where({ id: { $in: organisationIds } })
+                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
                 .limit(searchOptions.limit);
             entitiesForIds = (await queryForIds.getResultAndCount())[0];
         }
@@ -347,8 +348,8 @@ export class OrganisationRepository {
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
-            .limit(searchOptions.limit)
-            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }]);
+            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
+            .limit(searchOptions.limit);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
         let result: OrganisationEntity[] = [...entitiesForIds];
