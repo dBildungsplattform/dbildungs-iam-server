@@ -306,7 +306,7 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
     public async removeServiceProviderById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
-        @Query() spBodyParams: RolleServiceProviderBodyParams,
+        @Body() spBodyParams: RolleServiceProviderBodyParams,
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {

@@ -5,7 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    // DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
     MapperTestModule,
@@ -49,7 +49,7 @@ describe('RolleRepo', () => {
         serviceProviderRepo = module.get(ServiceProviderRepo);
 
         await DatabaseTestModule.setupDatabase(orm);
-    }, 10000000);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
         await orm.close();
