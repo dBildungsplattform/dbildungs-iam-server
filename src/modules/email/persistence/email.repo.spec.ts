@@ -260,6 +260,34 @@ describe('EmailRepo', () => {
         });
     });
 
+    describe('findByAddress', () => {
+        describe('when email-address with address exists', () => {
+            it('should return EmailAddress', async () => {
+                const person: Person<true> = await createPerson();
+                const organisation: Organisation<true> = await createOrganisation();
+                await organisationRepository.save(organisation);
+                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
+                if (!email.ok) throw new Error();
+
+                const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
+                if (savedEmail instanceof DomainError) throw new Error();
+                const searchResult: Option<EmailAddress<true>> = await sut.findByAddress(email.value.address);
+
+                if (!searchResult) throw Error();
+
+                expect(searchResult.address).toStrictEqual(email.value.address);
+            });
+        });
+
+        describe('when email-address with address does NOT exist', () => {
+            it('should return undefined', async () => {
+                const searchResult: Option<EmailAddress<true>> = await sut.findByAddress(faker.internet.email());
+
+                expect(searchResult).toBeUndefined();
+            });
+        });
+    });
+
     describe('deactivateEmailAddress', () => {
         describe('when email-address exists', () => {
             it('should disable it and return EmailAddressEntity', async () => {
