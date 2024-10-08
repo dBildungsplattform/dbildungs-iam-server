@@ -6,6 +6,7 @@ import {
     RequiredEntityData,
     SelectQueryBuilder,
     EntityDictionary,
+    QueryOrder,
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -310,7 +311,12 @@ export class OrganisationRepository {
             andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
         }
         if (searchOptions.searchString) {
-            andClauses.push({ name: { $ilike: `%${searchOptions.searchString}%` } });
+            andClauses.push({
+                $or: [
+                    { name: { $ilike: `%${searchOptions.searchString}%` } },
+                    { kennung: { $ilike: `%${searchOptions.searchString}%` } },
+                ],
+            });
         }
         if (searchOptions.excludeTyp) {
             andClauses.push({ typ: { $nin: searchOptions.excludeTyp } });
@@ -332,7 +338,8 @@ export class OrganisationRepository {
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
-            .limit(searchOptions.limit);
+            .limit(searchOptions.limit)
+            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }]);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
