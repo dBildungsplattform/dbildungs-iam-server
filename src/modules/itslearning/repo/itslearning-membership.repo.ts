@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ItsLearningConfig } from '../../../shared/config/itslearning.config.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -8,7 +11,7 @@ import { CreateMembershipParams, CreateMembershipsAction } from '../actions/crea
 import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js';
 import { MembershipResponse, ReadMembershipsForPersonAction } from '../actions/read-memberships-for-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { higherRollenart, rollenartToIMSESRole } from './role-utils.js';
+import { determineHighestRollenart, higherRollenart, rollenartToIMSESRole } from './role-utils.js';
 
 export type SetMembershipParams = {
     organisationId: OrganisationID;
@@ -22,10 +25,17 @@ export type SetMembershipsResult = {
 
 @Injectable()
 export class ItslearningMembershipRepo {
+    private readonly ROOT_NAMES: string[];
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly itslearningService: ItsLearningIMSESService,
-    ) {}
+        configService: ConfigService<ServerConfig>,
+    ) {
+        const itslearningConfig: ItsLearningConfig = configService.getOrThrow('ITSLEARNING');
+
+        this.ROOT_NAMES = [itslearningConfig.ROOT, itslearningConfig.ROOT_OEFFENTLICH, itslearningConfig.ROOT_ERSATZ];
+    }
 
     public readMembershipsForPerson(personId: PersonID): Promise<Result<MembershipResponse[], DomainError>> {
         return this.itslearningService.send(new ReadMembershipsForPersonAction(personId));
@@ -79,6 +89,14 @@ export class ItslearningMembershipRepo {
         for (const membership of memberships) {
             const currentRole: RollenArt = membershipsByOrga.get(membership.organisationId) ?? RollenArt.EXTERN;
             membershipsByOrga.set(membership.organisationId, higherRollenart(currentRole, membership.role));
+        }
+
+        // Determine highest rollenart and add memberships for the root nodes
+        const highestRollenart: RollenArt = determineHighestRollenart(Array.from(membershipsByOrga.values()));
+        for (const m of currentMemberships.value) {
+            if (this.ROOT_NAMES.includes(m.groupId)) {
+                membershipsByOrga.set(m.groupId, highestRollenart);
+            }
         }
 
         // Find memberships in itslearning that we don't know about

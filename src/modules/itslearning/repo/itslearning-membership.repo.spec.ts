@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { LoggingTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
 import { CreateMembershipParams, CreateMembershipsAction } from '../actions/create-memberships.action.js';
@@ -23,7 +23,7 @@ describe('Itslearning Person Repo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [LoggingTestModule],
+            imports: [ConfigTestModule, LoggingTestModule],
             providers: [
                 ItslearningMembershipRepo,
                 {
@@ -203,6 +203,21 @@ describe('Itslearning Person Repo', () => {
                 expect(setResult).toEqual({ ok: true, value: { updated: 0, deleted: 1 } });
             });
 
+            it('should try to remove the root memberships', async () => {
+                const personId: string = faker.string.uuid();
+                const existingMemberships: MembershipResponse[] = [
+                    { id: 'sh-test', groupId: 'sh', role: faker.helpers.enumValue(IMSESRoleType) },
+                    { id: 'oeffentlich-test', groupId: 'oeffentlich', role: faker.helpers.enumValue(IMSESRoleType) },
+                    { id: 'ersatz-test', groupId: 'ersatz', role: faker.helpers.enumValue(IMSESRoleType) },
+                ];
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: existingMemberships }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined }); // Remove Memberships
+
+                const setResult: Result<SetMembershipsResult, DomainError> = await sut.setMemberships(personId, []);
+
+                expect(setResult).toEqual({ ok: true, value: { updated: 3, deleted: 0 } });
+            });
+
             it('should log error if memberships could not be removed', async () => {
                 const error: DomainError = new ItsLearningError('Error Test');
                 const personId: string = faker.string.uuid();
@@ -237,6 +252,21 @@ describe('Itslearning Person Repo', () => {
                 );
 
                 expect(setResult).toEqual({ ok: true, value: { updated: 1, deleted: 0 } });
+            });
+
+            it('should try to update the root memberships', async () => {
+                const personId: string = faker.string.uuid();
+                const existingMemberships: MembershipResponse[] = [
+                    { id: 'sh-test', groupId: 'sh', role: faker.helpers.enumValue(IMSESRoleType) },
+                    { id: 'oeffentlich-test', groupId: 'oeffentlich', role: faker.helpers.enumValue(IMSESRoleType) },
+                    { id: 'ersatz-test', groupId: 'ersatz', role: faker.helpers.enumValue(IMSESRoleType) },
+                ];
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: existingMemberships }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined }); // Remove Memberships
+
+                const setResult: Result<SetMembershipsResult, DomainError> = await sut.setMemberships(personId, []);
+
+                expect(setResult).toEqual({ ok: true, value: { updated: 3, deleted: 0 } });
             });
 
             it('should log error if memberships could not be removed', async () => {
