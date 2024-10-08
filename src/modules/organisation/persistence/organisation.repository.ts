@@ -1,4 +1,12 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import {
+    EntityManager,
+    Loaded,
+    QBFilterQuery,
+    QueryBuilder,
+    RequiredEntityData,
+    SelectQueryBuilder,
+    EntityDictionary,
+} from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -17,6 +25,8 @@ import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -29,6 +39,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         kuerzel: organisation.kuerzel,
         typ: organisation.typ,
         traegerschaft: organisation.traegerschaft,
+        emailDomain: organisation.emailDomain,
     };
 }
 
@@ -45,8 +56,21 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.kuerzel,
         entity.typ,
         entity.traegerschaft,
+        entity.emailDomain,
     );
 }
+
+export type OrganisationSeachOptions = {
+    readonly kennung?: string;
+    readonly name?: string;
+    readonly searchString?: string;
+    readonly typ?: OrganisationsTyp;
+    readonly excludeTyp?: OrganisationsTyp[];
+    readonly administriertVon?: string[];
+    readonly organisationIds?: string[];
+    readonly offset?: number;
+    readonly limit?: number;
+};
 
 @Injectable()
 export class OrganisationRepository {
@@ -108,7 +132,10 @@ export class OrganisationRepository {
                 FROM sub_organisations;
             `;
 
-            rawResult = await this.em.execute(query, [ids]);
+            const rawEntities: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [ids]);
+            rawResult = rawEntities.map((data: EntityDictionary<OrganisationEntity>) =>
+                this.em.map(OrganisationEntity, data),
+            );
         }
 
         return rawResult.map(mapEntityToAggregate);
@@ -134,10 +161,42 @@ export class OrganisationRepository {
                 FROM parent_organisations;
             `;
 
-            rawResult = await this.em.execute(query, [ids]);
+            const rawEntities: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [ids]);
+            rawResult = rawEntities.map((data: EntityDictionary<OrganisationEntity>) =>
+                this.em.map(OrganisationEntity, data),
+            );
         }
 
         return rawResult.map(mapEntityToAggregate);
+    }
+
+    /**
+     * Searches for all upper level organisations for a given organisation by its organisationID
+     * and returns an array sorted by the depth ascending. Element at index 0 is always the organisationIDs organisation,
+     * this way the lowest child is always included. Its direct parent will be at index 1 and so on.
+     */
+    public async findParentOrgasForIdSortedByDepthAsc(id: OrganisationID): Promise<Organisation<true>[]> {
+        const query: string = `
+             WITH RECURSIVE parent_organisations AS (
+                SELECT *, 0 as depth
+                FROM public.organisation
+                WHERE id = (?)
+                UNION ALL
+                SELECT o.*, depth + 1
+                FROM public.organisation o
+                INNER JOIN parent_organisations po ON po.administriert_von = o.id
+            )
+            SELECT *
+            FROM parent_organisations ORDER BY depth;
+        `;
+
+        const rawResult: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [id]);
+
+        const res: Organisation<true>[] = rawResult
+            .map((data: EntityDictionary<OrganisationEntity>) => this.em.map(OrganisationEntity, data))
+            .map(mapEntityToAggregate);
+
+        return res;
     }
 
     public async isOrgaAParentOfOrgaB(
@@ -177,14 +236,6 @@ export class OrganisationRepository {
         );
 
         return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
-    }
-
-    public async find(limit?: number, offset?: number): Promise<Organisation<true>[]> {
-        const organisations: OrganisationEntity[] = await this.em.findAll(OrganisationEntity, {
-            limit: limit,
-            offset: offset,
-        });
-        return organisations.map(mapEntityToAggregate);
     }
 
     public async findById(id: string): Promise<Option<Organisation<true>>> {
@@ -232,6 +283,83 @@ export class OrganisationRepository {
         });
 
         return organisations.map(mapEntityToAggregate);
+    }
+
+    public async findAuthorized(
+        personPermissions: PersonPermissions,
+        systemrechte: RollenSystemRecht[],
+        searchOptions: OrganisationSeachOptions,
+    ): Promise<Counted<Organisation<true>>> {
+        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+            return [[], 0];
+        }
+
+        let entitiesForIds: OrganisationEntity[] = [];
+        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
+
+        if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
+            const organisationIds: string[] = permittedOrgas.all
+                ? searchOptions.organisationIds
+                : searchOptions.organisationIds.filter((id: string) => permittedOrgas.orgaIds.includes(id));
+            const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
+                .select('*')
+                .where({ id: { $in: organisationIds } })
+                .limit(searchOptions.limit);
+            entitiesForIds = (await queryForIds.getResultAndCount())[0];
+        }
+
+        let whereClause: QBFilterQuery<OrganisationEntity> = {};
+        const andClauses: QBFilterQuery<OrganisationEntity>[] = [];
+        if (searchOptions.kennung) {
+            andClauses.push({ kennung: searchOptions.kennung });
+        }
+        if (searchOptions.name) {
+            andClauses.push({ name: searchOptions.name });
+        }
+        if (searchOptions.typ) {
+            andClauses.push({ typ: searchOptions.typ });
+        }
+        if (searchOptions.administriertVon) {
+            andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
+        }
+        if (searchOptions.searchString) {
+            andClauses.push({ name: { $ilike: `%${searchOptions.searchString}%` } });
+        }
+        if (searchOptions.excludeTyp) {
+            andClauses.push({ typ: { $nin: searchOptions.excludeTyp } });
+        }
+        if (andClauses.length > 0) {
+            whereClause = { $and: andClauses };
+        }
+        // return only permitted organisations
+        if (!permittedOrgas.all) {
+            whereClause = { $and: [whereClause, { id: { $in: permittedOrgas.orgaIds } }] };
+        }
+
+        const query: SelectQueryBuilder<OrganisationEntity> = qb
+            .select('*')
+            .where(whereClause)
+            .offset(searchOptions.offset)
+            .limit(searchOptions.limit);
+        const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
+
+        let result: OrganisationEntity[] = [...entitiesForIds];
+        let duplicates: number = 0;
+        for (const entity of entities) {
+            if (!entitiesForIds.find((orga: OrganisationEntity) => orga.id === entity.id)) {
+                result.push(entity);
+            } else {
+                duplicates++;
+            }
+        }
+        if (searchOptions.limit && entitiesForIds.length > 0) {
+            result = result.slice(0, searchOptions.limit);
+        }
+        const organisations: Organisation<true>[] = result.map((entity: OrganisationEntity) =>
+            mapEntityToAggregate(entity),
+        );
+        return [organisations, total + entitiesForIds.length - duplicates];
     }
 
     public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {
