@@ -18,7 +18,6 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { PersonRepo } from '../../person/persistence/person.repo.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
@@ -77,10 +76,6 @@ describe('PersonenkontexteUpdate', () => {
                 {
                     provide: DBiamPersonenkontextRepoInternal,
                     useValue: createMock<DBiamPersonenkontextRepoInternal>(),
-                },
-                {
-                    provide: PersonRepo,
-                    useValue: createMock<PersonRepo>(),
                 },
                 {
                     provide: PersonRepository,
