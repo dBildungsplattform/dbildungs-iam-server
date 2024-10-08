@@ -1554,38 +1554,46 @@ describe('PersonRepository Integration', () => {
             daysAgo.setDate(daysAgo.getDate() - 56);
 
             // Create sample person data
-            const person1: Person<true> = await savePerson(false, { keycloackID: 'user1' });
-            const person2: Person<true> = await savePerson(false, { keycloackID: 'user2' });
-            const person3: Person<true> = await savePerson(false, { keycloackID: 'user3' }); // Person with a recent context
-
-            await em.persistAndFlush(person1);
-            await em.persistAndFlush(person2);
-            await em.persistAndFlush(person3);
+            const person1: Person<true> = await savePerson(true);
+            const person2: Person<true> = await savePerson(true);
+            const person3: Person<true> = await savePerson(true);
 
             // Create roles
             const rolle1: Rolle<false> = DoFactory.createRolle(false, {
+                name: 'rolle1',
                 rollenart: RollenArt.LEHR,
                 merkmale: [RollenMerkmal.KOPERS_PFLICHT],
             });
 
             const rolle2: Rolle<false> = DoFactory.createRolle(false, {
-                rollenart: RollenArt.LEHR,
+                name: 'rolle2',
+                rollenart: RollenArt.LERN,
                 merkmale: [RollenMerkmal.KOPERS_PFLICHT],
             });
 
-            await em.persistAndFlush(rolle1);
-            await em.persistAndFlush(rolle2);
+            await rolleRepo.save(rolle1);
+            await rolleRepo.save(rolle2);
+
+            const rolle1Result: Option<Rolle<true>[]> = await rolleRepo.findByName('rolle1', false);
+            const rolle2Result: Option<Rolle<true>[]> = await rolleRepo.findByName('rolle1', false);
+
+            let rolle1Id: string = '';
+            let rolle2Id: string = '';
+            if (rolle1Result != null && rolle2Result != null) {
+                rolle1Id = rolle1Result[0]!.id;
+                rolle2Id = rolle1Result[0]!.id;
+            }
 
             // Create Personenkontext with older creation date (56 days ago)
             const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person1.id,
-                rolleId: rolle1.id!,
+                rolleId: rolle1Id,
                 createdAt: daysAgo,
             });
 
             const personenKontext2: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person2.id,
-                rolleId: rolle2.id!,
+                rolleId: rolle2Id,
                 createdAt: daysAgo,
             });
 
@@ -1596,9 +1604,9 @@ describe('PersonRepository Integration', () => {
                 createdAt: new Date(), // created today
             });
 
-            await em.persistAndFlush(personenKontext1);
-            await em.persistAndFlush(personenKontext2);
-            await em.persistAndFlush(personenKontext3);
+            await dbiamPersonenkontextRepoInternal.save(personenKontext1);
+            await dbiamPersonenkontextRepoInternal.save(personenKontext2);
+            await dbiamPersonenkontextRepoInternal.save(personenKontext3);
 
             // Execute the method under test
             const lockList: string[] = await sut.getKoPersUserLockList();
