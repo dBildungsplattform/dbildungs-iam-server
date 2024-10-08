@@ -114,6 +114,11 @@ export class EmailRepo {
         return emailAddressEntity;
     }
 
+    /**
+     * Creates or updates entity in database. If the emailAddress parameter has status enabled or requested
+     * and the referenced person already has an enabled email-address, PersonAlreadyHasEnabledEmailAddressError is returned.
+     * @param emailAddress
+     */
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
         if (emailAddress.enabledOrRequested) {
             const enabledEmailAddressExists: Option<EmailAddress<true>> = await this.findEnabledByPerson(
