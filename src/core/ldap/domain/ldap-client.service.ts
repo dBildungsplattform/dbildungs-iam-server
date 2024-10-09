@@ -158,7 +158,6 @@ export class LdapClientService {
             const entry: LdapPersonEntry = {
                 cn: person.vorname,
                 sn: person.familienname,
-                employeeNumber: person.id,
                 objectclass: ['inetOrgPerson', 'univentionMail'],
                 mailPrimaryAddress: mail ?? ``,
                 mailAlternativeAddress: mail ?? ``,
@@ -266,18 +265,18 @@ export class LdapClientService {
                 };
             }
 
-            const currentEmailAddressArray: string[] = searchResult.searchEntries[0]['mailPrimaryAddress'] as string[];
+            const currentEmailAddressArray: string = searchResult.searchEntries[0]['mailPrimaryAddress'] as string;
             const currentEmailAddress: string = currentEmailAddressArray[0] ?? newEmailAddress;
 
             await client.modify(searchResult.searchEntries[0].dn, [
                 new Change({
-                    operation: 'add',
+                    operation: 'replace',
                     modification: new Attribute({ type: 'mailPrimaryAddress', values: [newEmailAddress] }),
                 }),
             ]);
             await client.modify(searchResult.searchEntries[0].dn, [
                 new Change({
-                    operation: 'add',
+                    operation: 'replace',
                     modification: new Attribute({ type: 'mailAlternativeAddress', values: [currentEmailAddress] }),
                 }),
             ]);

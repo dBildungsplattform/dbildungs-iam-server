@@ -1,7 +1,6 @@
 export type LdapPersonEntry = {
     cn: string;
     sn: string;
-    employeeNumber: string;
     mailPrimaryAddress?: string;
     mailAlternativeAddress?: string;
     objectclass: string[];
