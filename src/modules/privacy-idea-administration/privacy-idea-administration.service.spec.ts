@@ -298,7 +298,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ConfigTestModule, ClassLogger],
+            imports: [ConfigTestModule],
             providers: [
                 PrivacyIdeaAdministrationService,
                 { provide: HttpService, useValue: createMock<HttpService>() },
