@@ -317,6 +317,7 @@
         ],
         "security-admin-console": [],
         "spsh": [],
+        "spsh-no2fa": [],
         "admin-cli": [],
         "spsh-admin": [],
         "account-console": [],
@@ -802,6 +803,121 @@
           "offline_access",
           "microprofile-jwt"
         ]
+      },
+      {
+        "id": "00ef4c4a-c09f-45de-99ee-a992903b544a",
+        "clientId": "spsh-no2fa",
+        "name": "Schulportal SH (no 2FA)",
+        "description": "DELETE in production, this is only for testing and development",
+        "rootUrl": "https://localhost:8099",
+        "adminUrl": "",
+        "baseUrl": "https://localhost:8099/",
+        "surrogateAuthRequired": false,
+        "enabled": true,
+        "alwaysDisplayInConsole": false,
+        "clientAuthenticatorType": "client-secret",
+        "secret": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M",
+        "redirectUris": [
+          "https://127.0,0.1:8099/*",
+          "http://localhost:9090/*",
+          "/*",
+          "http://127.0,0.1:9090/*"
+        ],
+        "webOrigins": [
+          "+"
+        ],
+        "notBefore": 0,
+        "bearerOnly": false,
+        "consentRequired": false,
+        "standardFlowEnabled": true,
+        "implicitFlowEnabled": false,
+        "directAccessGrantsEnabled": true,
+        "serviceAccountsEnabled": true,
+        "publicClient": false,
+        "frontchannelLogout": true,
+        "protocol": "openid-connect",
+        "attributes": {
+          "oidc.ciba.grant.enabled": "false",
+          "client.secret.creation.time": "1696586327",
+          "backchannel.logout.session.required": "true",
+          "acr.loa.map": "{\"gold\":\"10\"}",
+          "post.logout.redirect.uris": "+",
+          "oauth2.device.authorization.grant.enabled": "false",
+          "display.on.consent.screen": "false",
+          "backchannel.logout.revoke.offline.tokens": "false",
+          "default.acr.values": "0"
+        },
+        "authenticationFlowBindingOverrides": {
+          "browser": "2e19a392-6bf3-4ea4-a599-ac39bcdfd827"
+        },
+        "fullScopeAllowed": true,
+        "nodeReRegistrationTimeout": -1,
+        "protocolMappers": [
+          {
+            "id": "2d906f0a-9200-49eb-94de-1b9ab0e59546",
+            "name": "Client ID",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "client_id",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "client_id",
+              "jsonType.label": "String",
+              "userinfo.token.claim": "true"
+            }
+          },
+          {
+            "id": "435ad85e-0c6d-487f-b4ac-042afc4525ce",
+            "name": "Client IP Address",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientAddress",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientAddress",
+              "jsonType.label": "String",
+              "userinfo.token.claim": "true"
+            }
+          },
+          {
+            "id": "9be4bfba-7320-444f-b213-181b033c2917",
+            "name": "Client Host",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-usersessionmodel-note-mapper",
+            "consentRequired": false,
+            "config": {
+              "user.session.note": "clientHost",
+              "id.token.claim": "true",
+              "access.token.claim": "true",
+              "claim.name": "clientHost",
+              "jsonType.label": "String",
+              "userinfo.token.claim": "true"
+            }
+          }
+        ],
+        "defaultClientScopes": [
+          "web-origins",
+          "acr",
+          "roles",
+          "profile",
+          "basic",
+          "email"
+        ],
+        "optionalClientScopes": [
+          "address",
+          "phone",
+          "offline_access",
+          "microprofile-jwt"
+        ],
+        "access": {
+          "view": true,
+          "configure": true,
+          "manage": true
+        }
       },
       {
         "id": "f45add8b-ab22-4742-afb4-cefa9bc12331",
