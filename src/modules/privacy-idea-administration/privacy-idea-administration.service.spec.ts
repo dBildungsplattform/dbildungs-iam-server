@@ -24,6 +24,7 @@ import {
     VerificationResponse,
 } from './privacy-idea-api.types.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
+import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -834,6 +835,27 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const result: boolean = await service.requires2fa(personId);
 
             expect(result).toBe(requires2fa);
+        });
+    });
+
+    describe('handlePersonDeletedEvent', () => {
+        let personId: string;
+        let referrer: string;
+        let emailAddress: string;
+        let event: PersonDeletedEvent;
+
+        beforeEach(() => {
+            personId = faker.string.uuid();
+            referrer = faker.string.alpha();
+            emailAddress = faker.internet.email();
+            event = new PersonDeletedEvent(personId, referrer, emailAddress);
+        });
+
+        describe('when deletion is successful', () => {
+            it('should log info', async () => {
+                await service.handlePersonDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(`Received PersonDeletedEvent, personId:${personId}`);
+            });
         });
     });
 });
