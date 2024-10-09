@@ -441,7 +441,7 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    public async deleteUser(username: string): Promise<void> {
+    private async deleteUser(username: string): Promise<void> {
         const jwt: string = await this.getJWTToken();
         const resolvername: string = this.privacyIdeaConfig.USER_RESOLVER;
         const url: string = this.privacyIdeaConfig.ENDPOINT + `/user/${resolvername}/${username}`;
