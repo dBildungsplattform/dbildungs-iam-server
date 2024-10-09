@@ -23,6 +23,7 @@ import {
     User,
     VerificationResponse,
 } from './privacy-idea-api.types.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -292,15 +293,17 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     let httpServiceMock: DeepMocked<HttpService>;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ConfigTestModule],
+            imports: [ConfigTestModule, ClassLogger],
             providers: [
                 PrivacyIdeaAdministrationService,
                 { provide: HttpService, useValue: createMock<HttpService>() },
                 { provide: ServiceProviderService, useValue: createMock<ServiceProviderService>() },
                 { provide: PersonenkontextService, useValue: createMock<PersonenkontextService>() },
+                { provide: ClassLogger, useValue: createMock<ClassLogger>() },
             ],
         }).compile();
 
@@ -308,6 +311,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         httpServiceMock = module.get(HttpService);
         serviceProviderServiceMock = module.get(ServiceProviderService);
         personenkontextServiceMock = module.get(PersonenkontextService);
+        loggerMock = module.get(ClassLogger);
     });
 
     describe(`initializeSoftwareToken`, () => {
