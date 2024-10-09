@@ -48,20 +48,13 @@ import { OrganisationEntity } from '../../organisation/persistence/organisation.
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { SortFieldPersonFrontend } from '../domain/person.enums.js';
-//import { Organisation } from '../../organisation/domain/organisation.js';
-//import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-
-//import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-
-//import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle as SchulConnexRolle } from '../../personenkontext/domain/personenkontext.enums.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
@@ -78,8 +71,6 @@ describe('PersonRepository Integration', () => {
     let rolleRepo: RolleRepo;
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personenkontextFactory: PersonenkontextFactory;
-
-    //let organisationRepository: OrganisationRepository;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -993,7 +984,6 @@ describe('PersonRepository Integration', () => {
                     organisationId: organisation.id,
                     personId: person1.id,
                     rolleId: rolleEntity.id,
-                    rolle: SchulConnexRolle.LEHRENDER,
                 };
                 const personenkontextEntity: PersonenkontextEntity = em.create(
                     PersonenkontextEntity,
@@ -1145,7 +1135,6 @@ describe('PersonRepository Integration', () => {
                     organisationId: organisation.id,
                     personId: person1.id,
                     rolleId: rolleEntity.id,
-                    rolle: SchulConnexRolle.LEHRENDER,
                 };
                 const personenkontextEntity: PersonenkontextEntity = em.create(
                     PersonenkontextEntity,
