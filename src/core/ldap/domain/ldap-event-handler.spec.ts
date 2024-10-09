@@ -14,18 +14,15 @@ import { LdapModule } from '../ldap.module.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClientService } from './ldap-client.service.js';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { faker } from '@faker-js/faker';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
-import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.js';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { RootDirectChildrenType } from '../../../modules/organisation/domain/organisation.enums.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
@@ -275,7 +272,7 @@ describe('LDAP Event Handler', () => {
         });
     });
 
-    describe('handleSchuleCreatedEvent', () => {
+   /* describe('handleSchuleCreatedEvent', () => {
         describe('when type is SCHULE and creation is successful', () => {
             it('should execute without errors', async () => {
                 const event: SchuleCreatedEvent = new SchuleCreatedEvent(
@@ -377,7 +374,7 @@ describe('LDAP Event Handler', () => {
             expect(loggerMock.error).toHaveBeenCalledWith('Schule has no kennung. Aborting.');
             expect(ldapClientServiceMock.deleteOrganisation).not.toHaveBeenCalled();
         });
-    });
+    });*/
 
     describe('handlePersonDeletedEvent', () => {
         describe('when calling LdapClientService.deleteLehrerByPersonId is successful', () => {

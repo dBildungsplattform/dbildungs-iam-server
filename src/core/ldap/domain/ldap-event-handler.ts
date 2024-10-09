@@ -1,58 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventHandler } from '../../eventbus/decorators/event-handler.decorator.js';
 import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
-import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
+import {OrganisationRepository} from "../../../modules/organisation/persistence/organisation.repository.js";
 
 @Injectable()
 export class LdapEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly ldapClientService: LdapClientService,
+        private readonly organisationRepository: OrganisationRepository,
     ) {}
-
-    @EventHandler(SchuleCreatedEvent)
-    public async handleSchuleCreatedEvent(event: SchuleCreatedEvent): Promise<void> {
-        this.logger.info(`Received SchuleCreatedEvent, organisationId:${event.organisationId}`);
-
-        if (!event.kennung) {
-            return this.logger.error('Schule has no kennung. Aborting.');
-        }
-        this.logger.info(`Kennung of organisation is:${event.kennung}`);
-
-        this.logger.info(`Call LdapClientService because ${event.name} type is SCHULE`);
-        const creationResult: Result<void> = await this.ldapClientService.createOrganisation({
-            kennung: event.kennung,
-        });
-        if (!creationResult.ok) {
-            this.logger.error(creationResult.error.message);
-        }
-    }
-
-    @EventHandler(SchuleDeletedEvent)
-    public async handleSchuleDeletedEvent(event: SchuleDeletedEvent): Promise<void> {
-        this.logger.info(`Received SchuleDeletedEvent, organisationId:${event.organisationId}`);
-
-        if (!event.kennung) {
-            return this.logger.error('Schule has no kennung. Aborting.');
-        }
-        this.logger.info(`Kennung of organisation is:${event.kennung}`);
-        this.logger.info(`Call LdapClientService because ${event.name} type is SCHULE`);
-        const creationResult: Result<void> = await this.ldapClientService.deleteOrganisation({
-            kennung: event.kennung,
-        });
-        if (!creationResult.ok) {
-            this.logger.error(creationResult.error.message);
-        }
-    }
 
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
@@ -88,8 +53,7 @@ export class LdapEventHandler {
                 return;
             }
             const isLehrerExistingResult: Result<boolean> = await this.ldapClientService.isLehrerExisting(
-                event.createdKontextPerson.referrer,
-                event.createdKontextOrga.kennung,
+                event.createdKontextPerson.referrer
             );
             if (!isLehrerExistingResult.ok) {
                 this.logger.error(
@@ -115,9 +79,6 @@ export class LdapEventHandler {
 
             const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(
                 personData,
-                {
-                    kennung: event.createdKontextOrga.kennung,
-                },
                 event.email,
             );
             if (!creationResult.ok) {
@@ -148,9 +109,7 @@ export class LdapEventHandler {
                 .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                 .map(async (pk: PersonenkontextEventKontextData) => {
                     this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
-                    const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(event.person, {
-                        kennung: pk.orgaKennung,
-                    });
+                    const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(event.person);
                     if (!deletionResult.ok) {
                         this.logger.error(deletionResult.error.message);
                     }
@@ -163,9 +122,8 @@ export class LdapEventHandler {
                 .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                 .map(async (pk: PersonenkontextEventKontextData) => {
                     this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
-                    const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(event.person, {
-                        kennung: pk.orgaKennung,
-                    });
+                    const emailDomain: string | undefined = await this.organisationRepository.findEmailDomainForOrganisation(pk.orgaId);
+                    const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(event.person, undefined, emailDomain);
                     if (!creationResult.ok) {
                         this.logger.error(creationResult.error.message);
                     }
