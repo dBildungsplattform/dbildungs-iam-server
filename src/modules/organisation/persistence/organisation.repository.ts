@@ -204,8 +204,7 @@ export class OrganisationRepository {
      * @param id start of search (leaf)
      */
     public async findEmailDomainForOrganisation(id: OrganisationID): Promise<string | undefined> {
-        const organisations: Organisation<true>[] =
-            await this.findParentOrgasForIdSortedByDepthAsc(id);
+        const organisations: Organisation<true>[] = await this.findParentOrgasForIdSortedByDepthAsc(id);
         const emailDomain: Option<string> = this.getDomainRecursive(organisations);
 
         return emailDomain ?? undefined;

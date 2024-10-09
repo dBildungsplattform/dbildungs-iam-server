@@ -9,7 +9,7 @@ import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
-import {OrganisationRepository} from "../../../modules/organisation/persistence/organisation.repository.js";
+import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -53,7 +53,7 @@ export class LdapEventHandler {
                 return;
             }
             const isLehrerExistingResult: Result<boolean> = await this.ldapClientService.isLehrerExisting(
-                event.createdKontextPerson.referrer
+                event.createdKontextPerson.referrer,
             );
             if (!isLehrerExistingResult.ok) {
                 this.logger.error(
@@ -122,8 +122,13 @@ export class LdapEventHandler {
                 .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                 .map(async (pk: PersonenkontextEventKontextData) => {
                     this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
-                    const emailDomain: string | undefined = await this.organisationRepository.findEmailDomainForOrganisation(pk.orgaId);
-                    const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(event.person, undefined, emailDomain);
+                    const emailDomain: string | undefined =
+                        await this.organisationRepository.findEmailDomainForOrganisation(pk.orgaId);
+                    const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(
+                        event.person,
+                        undefined,
+                        emailDomain,
+                    );
                     if (!creationResult.ok) {
                         this.logger.error(creationResult.error.message);
                     }

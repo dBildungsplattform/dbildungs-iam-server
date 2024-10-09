@@ -48,14 +48,13 @@ export class EmailFactory {
                 error: new EntityNotFoundError('Organisation', organisationId),
             };
         }
-        const emailDomain: string | undefined = await this.organisationRepository.findEmailDomainForOrganisation(organisation.id);
+        const emailDomain: string | undefined = await this.organisationRepository.findEmailDomainForOrganisation(
+            organisation.id,
+        );
         if (!emailDomain) {
             return {
                 ok: false,
-                error: new EmailDomainNotFoundError(
-                    personId,
-                    organisation.id,
-                ),
+                error: new EmailDomainNotFoundError(personId, organisation.id),
             };
         }
 

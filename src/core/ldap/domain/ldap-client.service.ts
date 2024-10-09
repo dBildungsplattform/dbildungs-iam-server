@@ -57,6 +57,7 @@ export class LdapClientService {
         }
         return rootName;
     }
+
     public async createLehrer(
         person: PersonData,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
@@ -78,12 +79,9 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResultLehrer: SearchResult = await client.search(
-                `ou=${rootName},dc=schule-sh,dc=de`,
-                {
-                    filter: `(cn=${person.referrer})`,
-                },
-            );
+            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName},dc=schule-sh,dc=de`, {
+                filter: `(cn=${person.referrer})`,
+            });
             if (searchResultLehrer.searchEntries.length > 0) {
                 return {
                     ok: false,
@@ -118,12 +116,9 @@ export class LdapClientService {
             if (!bindResult.ok) return bindResult;
 
             const rootName: string = this.getRootName(domain);
-            const searchResultLehrer: SearchResult = await client.search(
-                `ou=${rootName},dc=schule-sh,dc=de`,
-                {
-                    filter: `(cn=${referrer})`,
-                },
-            );
+            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName},dc=schule-sh,dc=de`, {
+                filter: `(cn=${referrer})`,
+            });
             if (searchResultLehrer.searchEntries.length > 0) {
                 return { ok: true, value: true };
             }
@@ -182,7 +177,11 @@ export class LdapClientService {
         });
     }
 
-    public async changeEmailAddressByPersonId(personId: PersonID, newEmailAddress: string, domain?: string): Promise<Result<PersonID>> {
+    public async changeEmailAddressByPersonId(
+        personId: PersonID,
+        newEmailAddress: string,
+        domain?: string,
+    ): Promise<Result<PersonID>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: changeEmailAddress');
             const client: Client = this.ldapClient.getClient();

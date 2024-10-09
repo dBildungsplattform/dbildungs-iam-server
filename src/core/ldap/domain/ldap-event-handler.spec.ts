@@ -272,7 +272,7 @@ describe('LDAP Event Handler', () => {
         });
     });
 
-   /* describe('handleSchuleCreatedEvent', () => {
+    /* describe('handleSchuleCreatedEvent', () => {
         describe('when type is SCHULE and creation is successful', () => {
             it('should execute without errors', async () => {
                 const event: SchuleCreatedEvent = new SchuleCreatedEvent(

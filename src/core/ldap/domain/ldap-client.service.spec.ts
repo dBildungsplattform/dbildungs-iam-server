@@ -35,7 +35,7 @@ describe('LDAP Client Service', () => {
     let eventServiceMock: DeepMocked<EventService>;
     let clientMock: DeepMocked<Client>;
 
- /*   let organisation: Organisation<true>;
+    /*   let organisation: Organisation<true>;
     let invalidOrganisation: Organisation<true>;*/
     let person: Person<true>;
     let personWithoutReferrer: Person<true>;
@@ -202,7 +202,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('creation', () => {
-       /* describe('organisation', () => {
+        /* describe('organisation', () => {
             it('when called with valid organisation should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
@@ -274,7 +274,7 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeTruthy();
             });
 
-           /* it('when called with valid person and an organisation without kennung should return error result', async () => {
+            /* it('when called with valid person and an organisation without kennung should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
@@ -327,9 +327,7 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.createLehrer(
-                    personWithoutReferrer,
-                );
+                const result: Result<PersonData> = await ldapClientService.createLehrer(personWithoutReferrer);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -361,7 +359,7 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeTruthy();
             });
 
-           /* it('when called with valid person and an organisation without kennung should return error result', async () => {
+            /* it('when called with valid person and an organisation without kennung should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.add.mockResolvedValueOnce();
@@ -378,9 +376,7 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.deleteLehrer(
-                    personWithoutReferrer
-                );
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(personWithoutReferrer);
 
                 expect(result.ok).toBeFalsy();
             });
