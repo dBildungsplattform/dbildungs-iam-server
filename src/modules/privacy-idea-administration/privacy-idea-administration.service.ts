@@ -441,7 +441,7 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    private async deleteUser(username: string): Promise<void> {
+    public async deleteUser(username: string): Promise<void> {
         const jwt: string = await this.getJWTToken();
         const resolvername: string = this.privacyIdeaConfig.USER_RESOLVER;
         const url: string = this.privacyIdeaConfig.ENDPOINT + `/user/${resolvername}/${username}`;
@@ -463,7 +463,10 @@ export class PrivacyIdeaAdministrationService {
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
-        await this.resetToken(event.referrer);
+        const userTokens: PrivacyIdeaToken[] = await this.getUserTokens(event.referrer);
+        if (userTokens !== undefined && userTokens.length > 0) {
+            await this.resetToken(event.referrer);
+        }
         await this.deleteUser(event.referrer);
     }
 }

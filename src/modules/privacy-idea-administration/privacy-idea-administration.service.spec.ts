@@ -851,10 +851,21 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             event = new PersonDeletedEvent(personId, referrer, emailAddress);
         });
 
-        describe('when deletion is successful', () => {
-            it('should log info', async () => {
+        describe('when person has privacyIDEA tokens', () => {
+            it('should reset privacyIDEA tokens and delete person', async () => {
                 await service.handlePersonDeletedEvent(event);
                 expect(loggerMock.info).toHaveBeenCalledWith(`Received PersonDeletedEvent, personId:${personId}`);
+                expect(service.resetToken).toHaveBeenCalledTimes(1);
+                expect(service.deleteUser).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when person has no privacyIDEA tokens', () => {
+            it('should delete person', async () => {
+                await service.handlePersonDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(`Received PersonDeletedEvent, personId:${personId}`);
+                expect(service.resetToken).toHaveBeenCalledTimes(0);
+                expect(service.deleteUser).toHaveBeenCalledTimes(1);
             });
         });
     });
