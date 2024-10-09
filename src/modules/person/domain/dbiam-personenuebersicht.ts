@@ -14,6 +14,9 @@ import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { DBiamPersonenEmailResponse } from '../api/personenuebersicht/dbiam-personen-email.response.js';
+import { EmailAddress } from '../../email/domain/email-address.js';
 
 export class DbiamPersonenuebersicht {
     public readonly ROOT_ORGANISATION_ID: string;
@@ -23,6 +26,7 @@ export class DbiamPersonenuebersicht {
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
+        private readonly emailRepo: EmailRepo,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -33,6 +37,7 @@ export class DbiamPersonenuebersicht {
         dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         organisationRepository: OrganisationRepository,
         rolleRepo: RolleRepo,
+        emailRepo: EmailRepo,
         configService: ConfigService<ServerConfig>,
     ): DbiamPersonenuebersicht {
         return new DbiamPersonenuebersicht(
@@ -40,11 +45,12 @@ export class DbiamPersonenuebersicht {
             dbiamPersonenkontextRepo,
             organisationRepository,
             rolleRepo,
+            emailRepo,
             configService,
         );
     }
 
-    public async getPersonenkontexte(
+    public async getPersonenkontexteAndEmail(
         personId: PersonID,
         permissions: PersonPermissions,
     ): Promise<DBiamPersonenuebersichtResponse | EntityNotFoundError> {
@@ -81,7 +87,16 @@ export class DbiamPersonenuebersicht {
             return result;
         }
 
-        return new DBiamPersonenuebersichtResponse(person, result[0], result[1]);
+        let emailAddressResponse: DBiamPersonenEmailResponse | undefined = undefined;
+
+        if (person.email) {
+            const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(person.email);
+            if (emailAddress) {
+                emailAddressResponse = new DBiamPersonenEmailResponse(emailAddress.status, emailAddress.address);
+            }
+        }
+
+        return new DBiamPersonenuebersichtResponse(person, result[0], result[1], emailAddressResponse);
     }
 
     public createZuordnungenForKontexte(

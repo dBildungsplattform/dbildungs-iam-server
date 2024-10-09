@@ -14,6 +14,7 @@ import { DBiamPersonenzuordnungResponse } from '../api/personenuebersicht/dbiam-
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
 
 describe('DbiamPersonenUebersicht', () => {
     let module: TestingModule;
@@ -22,6 +23,7 @@ describe('DbiamPersonenUebersicht', () => {
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let emailRepoMock: DeepMocked<EmailRepo>;
     let configServiceMock: DeepMocked<ConfigService>;
 
     beforeAll(async () => {
@@ -48,6 +50,10 @@ describe('DbiamPersonenUebersicht', () => {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
+                {
+                    provide: EmailRepo,
+                    useValue: createMock<EmailRepo>(),
+                },
             ],
         }).compile();
         sut = module.get(PersonService);
@@ -56,6 +62,7 @@ describe('DbiamPersonenUebersicht', () => {
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         rolleRepoMock = module.get(RolleRepo);
         organisationRepositoryMock = module.get(OrganisationRepository);
+        emailRepoMock = module.get(EmailRepo);
         configServiceMock = module.get(ConfigService);
     });
 
@@ -110,6 +117,7 @@ describe('DbiamPersonenUebersicht', () => {
                 dbiamPersonenkontextRepoMock,
                 organisationRepositoryMock,
                 rolleRepoMock,
+                emailRepoMock,
                 configServiceMock,
             );
         });

@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Collection, EntityManager, MikroORM, rel, RequiredEntityData } from '@mikro-orm/core';
+import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -10,7 +10,8 @@ import {
 } from '../../../../test/utils/index.js';
 import { PersonEntity } from './person.entity.js';
 import {
-    getEnabledEmailAddress,
+    getEmailAddress,
+    getOxUserId,
     mapAggregateToData,
     mapEntityToAggregate,
     mapEntityToAggregateInplace,
@@ -170,6 +171,15 @@ describe('PersonRepository Integration', () => {
         } else {
             return savedPerson;
         }
+    }
+
+    function makeEmailAddress(status?: EmailAddressStatus, address?: string, oxUserId?: string): EmailAddressEntity {
+        const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+        emailAddressEntity.status = status ?? EmailAddressStatus.ENABLED;
+        emailAddressEntity.address = address ?? faker.internet.email();
+        emailAddressEntity.oxUserId = oxUserId ?? faker.string.numeric();
+
+        return emailAddressEntity;
     }
 
     describe('findByKeycloakUserId', () => {
@@ -834,25 +844,68 @@ describe('PersonRepository Integration', () => {
 
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.status = EmailAddressStatus.ENABLED;
-                emailAddressEntity.address = faker.internet.email();
+                const emailAddressEntity: EmailAddressEntity = makeEmailAddress();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getEmailAddress(personEntity);
 
                 expect(result).toBeDefined();
             });
         });
 
-        describe('when NO enabled emailAddress is in collection', () => {
+        describe('when no enabled emailAddress is in collection', () => {
+            it('should return most recent one (updatedAt)', () => {
+                const emailAddressEntityFailed: EmailAddressEntity = makeEmailAddress(EmailAddressStatus.FAILED);
+                const emailAddressEntityRequested: EmailAddressEntity = makeEmailAddress(EmailAddressStatus.REQUESTED);
+                personEntity.emailAddresses.add(emailAddressEntityFailed); //first added is most recent (email-address are orderedBy updatedAt on PersonEntity
+                personEntity.emailAddresses.add(emailAddressEntityRequested);
+
+                const result: string | undefined = getEmailAddress(personEntity);
+
+                if (!result) throw Error();
+
+                expect(result).toStrictEqual(emailAddressEntityFailed.address);
+            });
+        });
+
+        describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.status = EmailAddressStatus.DISABLED;
-                emailAddressEntity.address = faker.internet.email();
+                const result: string | undefined = getEmailAddress(personEntity);
+
+                expect(result).toBeUndefined();
+            });
+        });
+    });
+
+    describe('getOxUserId', () => {
+        let personEntity: PersonEntity;
+
+        beforeEach(() => {
+            personEntity = em.create(
+                PersonEntity,
+                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
+            );
+            personEntity.emailAddresses = new Collection<EmailAddressEntity>(personEntity);
+        });
+
+        describe('when enabled emailAddress is in collection', () => {
+            it('should return address of enabled address', () => {
+                const emailAddressEntity: EmailAddressEntity = makeEmailAddress();
+
                 personEntity.emailAddresses.add(emailAddressEntity);
 
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toBeDefined();
+            });
+        });
+
+        describe('when no eanbled emailAddress is in collection', () => {
+            it('should return most recent one (last updatedAt)', () => {
+                const emailAddressEntityFailed: EmailAddressEntity = makeEmailAddress(EmailAddressStatus.FAILED);
+                personEntity.emailAddresses.add(emailAddressEntityFailed);
+
+                const result: string | undefined = getOxUserId(personEntity);
 
                 expect(result).toBeUndefined();
             });
@@ -860,7 +913,7 @@ describe('PersonRepository Integration', () => {
 
         describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getOxUserId(personEntity);
 
                 expect(result).toBeUndefined();
             });
@@ -1162,7 +1215,7 @@ describe('PersonRepository Integration', () => {
 
                     const emailAddress: EmailAddressEntity = new EmailAddressEntity();
                     emailAddress.address = faker.internet.email();
-                    emailAddress.personId = rel(PersonEntity, person.id);
+                    emailAddress.personId = ref(PersonEntity, person.id);
                     emailAddress.status = EmailAddressStatus.ENABLED;
 
                     const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);

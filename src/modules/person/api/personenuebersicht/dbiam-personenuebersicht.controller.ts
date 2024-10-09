@@ -31,6 +31,7 @@ import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.j
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
+import { EmailRepo } from '../../../email/persistence/email.repo.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('dbiam-personenuebersicht')
@@ -45,6 +46,7 @@ export class DBiamPersonenuebersichtController {
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepository: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly emailRepo: EmailRepo,
         private config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -89,6 +91,7 @@ export class DBiamPersonenuebersichtController {
                 this.dbiamPersonenkontextRepo,
                 this.organisationRepository,
                 this.rolleRepository,
+                this.emailRepo,
                 this.config,
             );
 
@@ -133,10 +136,11 @@ export class DBiamPersonenuebersichtController {
             this.dbiamPersonenkontextRepo,
             this.organisationRepository,
             this.rolleRepository,
+            this.emailRepo,
             this.config,
         );
         const response: DBiamPersonenuebersichtResponse | EntityNotFoundError =
-            await dbiamPersonenUebersicht.getPersonenkontexte(params.personId, permissions);
+            await dbiamPersonenUebersicht.getPersonenkontexteAndEmail(params.personId, permissions);
 
         if (response instanceof EntityNotFoundError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

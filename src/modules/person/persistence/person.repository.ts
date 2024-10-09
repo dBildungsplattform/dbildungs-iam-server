@@ -13,10 +13,10 @@ import {
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { Person, LockInfo } from '../domain/person.js';
+import { LockInfo, Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
@@ -31,9 +31,22 @@ import { UsernameGeneratorService } from '../domain/username-generator.service.j
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 
-export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
+/**
+ * Return email-address for person, if an enabled email-address exists, return it.
+ * If no enabled email-address exists, return the latest changed one (updatedAt), order is done on PersonEntity.
+ * @param entity
+ */
+export function getEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
+        // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
         if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
+    }
+    return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
+}
+
+export function getOxUserId(entity: PersonEntity): string | undefined {
+    for (const emailAddress of entity.emailAddresses) {
+        if (emailAddress.status !== EmailAddressStatus.FAILED) return emailAddress.oxUserId;
     }
     return undefined;
 }
@@ -95,7 +108,8 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.personalnummer,
         undefined,
         undefined,
-        getEnabledEmailAddress(entity),
+        getEmailAddress(entity),
+        getOxUserId(entity),
     );
 }
 
@@ -410,8 +424,8 @@ export class PersonRepository {
         const newVorname: string = person.vorname.toLowerCase();
         const newFamilienname: string = person.familienname.toLowerCase();
 
-        //only look for first letter, because username is firstname[0] + lastname
-        if (oldVorname[0] !== newVorname[0]) return true;
+        //NOT only look for first letter, because email-address is full-firstname.full-lastname@domain.de
+        if (oldVorname !== newVorname) return true;
 
         return oldFamilienname !== newFamilienname;
     }

@@ -10,7 +10,7 @@ import {
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
 import { PersonApiModule } from '../../person-api.module.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { faker } from '@faker-js/faker';
 import { RolleFactory } from '../../../rolle/domain/rolle.factory.js';
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
@@ -27,6 +27,8 @@ import { Organisation } from '../../../organisation/domain/organisation.js';
 import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
+import { EmailRepo } from '../../../email/persistence/email.repo.js';
+import { EmailAddress, EmailAddressStatus } from '../../../email/domain/email-address.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -74,6 +76,7 @@ describe('Personenuebersicht API Mocked', () => {
 
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let emailRepoMock: DeepMocked<EmailRepo>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
@@ -94,6 +97,8 @@ describe('Personenuebersicht API Mocked', () => {
             .useValue(createMock<OrganisationRepository>())
             .overrideProvider(PersonRepository)
             .useValue(createMock<PersonRepository>())
+            .overrideProvider(EmailRepo)
+            .useValue(createMock<EmailRepo>())
 
             .compile();
 
@@ -102,6 +107,7 @@ describe('Personenuebersicht API Mocked', () => {
         organisationRepositoryMock = module.get(OrganisationRepository);
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         personRepositoryMock = module.get(PersonRepository);
+        emailRepoMock = module.get(EmailRepo);
         personPermissionsMock = createMock<PersonPermissions>();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -188,6 +194,66 @@ describe('Personenuebersicht API Mocked', () => {
                 );
                 expect(result.zuordnungen).toHaveLength(1);
                 expect(result.zuordnungen).toContainEqual(expect.objectContaining({ editable: true }));
+            });
+        });
+
+        describe('when permissions are checked and requesting person has PERSONEN_VERWALTEN on same organisation as person and email-address is available', () => {
+            it('should return personenkontext and email-address with status', async () => {
+                const params: DBiamFindPersonenuebersichtByPersonIdParams = {
+                    personId: faker.string.uuid(),
+                };
+                const person: Person<true> = createPerson();
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const rollenMap: Map<string, Rolle<true>> = new Map();
+                rollenMap.set(rolle.id, rolle);
+                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+                const orgaMap: Map<string, Organisation<true>> = new Map();
+                orgaMap.set(orga.id, orga);
+                const pk: Personenkontext<true> = createPersonenkontext(
+                    true,
+                    personRepositoryMock,
+                    organisationRepositoryMock,
+                    rolleRepoMock,
+                    {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: orga.id,
+                    },
+                );
+
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
+                organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [orga.id],
+                });
+
+                const fakeEmailAddress: string = faker.internet.email();
+                person.email = fakeEmailAddress;
+                emailRepoMock.findByAddress.mockResolvedValueOnce(
+                    createMock<EmailAddress<true>>({
+                        get address(): string {
+                            return fakeEmailAddress;
+                        },
+                        get status(): EmailAddressStatus {
+                            return EmailAddressStatus.ENABLED;
+                        },
+                    }),
+                );
+
+                const result: DBiamPersonenuebersichtResponse = await sut.findPersonenuebersichtenByPerson(
+                    params,
+                    personPermissionsMock,
+                );
+
+                if (!result.email) throw Error();
+
+                expect(result.zuordnungen).toHaveLength(1);
+                expect(result.zuordnungen).toContainEqual(expect.objectContaining({ editable: true }));
+                expect(result.email.address).toStrictEqual(fakeEmailAddress);
+                expect(result.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
             });
         });
 
