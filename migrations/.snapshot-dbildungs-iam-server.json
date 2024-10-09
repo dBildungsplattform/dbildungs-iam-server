@@ -2523,23 +2523,6 @@
           "nullable": true,
           "mappedType": "string"
         },
-        "rolle": {
-          "name": "rolle",
-          "type": "text",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "enumItems": [
-            "LERN",
-            "LEHR",
-            "EXTERN",
-            "ORGADMIN",
-            "LEIT",
-            "SYSADMIN"
-          ],
-          "mappedType": "enum"
-        },
         "personenstatus": {
           "name": "personenstatus",
           "type": "personenstatus_enum",
