@@ -25,6 +25,7 @@ import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-meta
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -120,7 +121,11 @@ export class EmailEventHandler {
         this.logger.info(
             `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
         );
-        if (event.email && event.createdKontextRolle.rollenart == RollenArt.LEHR) {
+        if (
+            event.email &&
+            event.createdKontextRolle.rollenart == RollenArt.LEHR &&
+            event.migrationRunType === PersonenkontextMigrationRuntype.STANDARD
+        ) {
             this.logger.info(
                 `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Rollenart is LEHR, trying to persist Email`,
             );
@@ -150,9 +155,18 @@ export class EmailEventHandler {
                 );
             }
         } else {
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Do Nothing because Rollenart is Not LEHR`,
-            );
+            if (event.migrationRunType !== PersonenkontextMigrationRuntype.STANDARD) {
+                this.logger.info(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / No Action because PersonenkontextMigrationRuntype is Not STANDARD`,
+                );
+                return;
+            }
+            if (event.createdKontextRolle.rollenart !== RollenArt.LEHR) {
+                this.logger.info(
+                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / No Action because Rollenart is Not LEHR`,
+                );
+                return;
+            }
         }
     }
 
