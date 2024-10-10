@@ -23,6 +23,8 @@ import {
     User,
     VerificationResponse,
 } from './privacy-idea-api.types.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -292,6 +294,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     let httpServiceMock: DeepMocked<HttpService>;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -301,6 +304,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 { provide: HttpService, useValue: createMock<HttpService>() },
                 { provide: ServiceProviderService, useValue: createMock<ServiceProviderService>() },
                 { provide: PersonenkontextService, useValue: createMock<PersonenkontextService>() },
+                { provide: ClassLogger, useValue: createMock<ClassLogger>() },
             ],
         }).compile();
 
@@ -308,6 +312,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         httpServiceMock = module.get(HttpService);
         serviceProviderServiceMock = module.get(ServiceProviderService);
         personenkontextServiceMock = module.get(PersonenkontextService);
+        loggerMock = module.get(ClassLogger);
     });
 
     describe(`initializeSoftwareToken`, () => {
@@ -830,6 +835,95 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const result: boolean = await service.requires2fa(personId);
 
             expect(result).toBe(requires2fa);
+        });
+    });
+
+    describe('deleteUser', () => {
+        const personId: string = faker.string.uuid();
+        const referrer: string = faker.string.alpha();
+        const emailAddress: string = faker.internet.email();
+        const event: PersonDeletedEvent = new PersonDeletedEvent(personId, referrer, emailAddress);
+
+        beforeEach(() => {
+            jest.spyOn(
+                service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
+                'getUserTokens',
+            ).mockResolvedValueOnce([]);
+        });
+
+        it(`should delete user`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.delete.mockReturnValueOnce(mockEmptyPostResponse());
+            await service.handlePersonDeletedEvent(event);
+        });
+
+        it(`should throw an error if the delete user causes error throw`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.delete.mockImplementationOnce(mockErrorResponse);
+
+            await expect(service.handlePersonDeletedEvent(event)).rejects.toThrow(
+                `Error deleting privacyIDEA user: ${mockErrorMsg}`,
+            );
+        });
+
+        it(`should throw an error if the delete user request causes non error throw`, async () => {
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            httpServiceMock.delete.mockImplementationOnce(mockNonErrorThrow);
+
+            await expect(service.handlePersonDeletedEvent(event)).rejects.toThrow(
+                `Error deleting privacyIDEA user: Unknown error occurred`,
+            );
+        });
+    });
+
+    describe('handlePersonDeletedEvent', () => {
+        let personId: string;
+        let referrer: string;
+        let emailAddress: string;
+        let event: PersonDeletedEvent;
+        const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+
+        beforeEach(() => {
+            personId = faker.string.uuid();
+            referrer = faker.string.alpha();
+            emailAddress = faker.internet.email();
+            event = new PersonDeletedEvent(personId, referrer, emailAddress);
+            jest.spyOn(
+                service as unknown as { resetToken: (username: string) => Promise<ResetTokenResponse> },
+                'resetToken',
+            ).mockResolvedValueOnce(mockResetTokenResponse);
+        });
+
+        describe('when person has privacyIDEA tokens', () => {
+            it('should reset privacyIDEA tokens and delete person', async () => {
+                jest.spyOn(
+                    service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
+                    'getUserTokens',
+                ).mockResolvedValueOnce([mockPrivacyIdeaToken]);
+                const spy: jest.SpyInstance = jest
+                    .spyOn(service as unknown as { deleteUser: (username: string) => Promise<void> }, 'deleteUser')
+                    .mockResolvedValueOnce();
+                await service.handlePersonDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(`Received PersonDeletedEvent, personId:${personId}`);
+                expect(service.resetToken).toHaveBeenCalledTimes(1);
+                expect(spy).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when person has no privacyIDEA tokens', () => {
+            it('should delete person', async () => {
+                jest.spyOn(
+                    service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
+                    'getUserTokens',
+                ).mockResolvedValueOnce([]);
+                const spy: jest.SpyInstance = jest
+                    .spyOn(service as unknown as { deleteUser: (username: string) => Promise<void> }, 'deleteUser')
+                    .mockResolvedValueOnce();
+                await service.handlePersonDeletedEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(`Received PersonDeletedEvent, personId:${personId}`);
+                expect(service.resetToken).toHaveBeenCalledTimes(0);
+                expect(spy).toHaveBeenCalledTimes(1);
+            });
         });
     });
 });
