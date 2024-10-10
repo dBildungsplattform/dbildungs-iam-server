@@ -3,7 +3,6 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
-import { PersonApiMapperProfile } from './person-api.mapper.profile.js';
 import { PersonFrontendController } from './person.frontend.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { Person } from '../domain/person.js';
@@ -24,7 +23,6 @@ describe('PersonFrontendController', () => {
             imports: [MapperTestModule, ConfigTestModule],
             providers: [
                 PersonFrontendController,
-                PersonApiMapperProfile,
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
@@ -97,15 +95,17 @@ describe('PersonFrontendController', () => {
 
         it('should get all persons', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
 
-            personRepositoryMock.findBy.mockResolvedValue([[person1, person2], 2]);
+            personRepositoryMock.findbyPersonFrontend.mockResolvedValue([[person1, person2], 2]);
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 queryParams,
                 personPermissions,
             );
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(personRepositoryMock.findbyPersonFrontend).toHaveBeenCalledTimes(1);
             expect(result.total).toEqual(2);
             expect(result.limit).toEqual(2);
             expect(result.offset).toEqual(0);
@@ -117,15 +117,17 @@ describe('PersonFrontendController', () => {
             const suchFilter: string = 'Max';
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
 
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
-            personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
+            personRepositoryMock.findbyPersonFrontend.mockResolvedValue([[person1], 1]);
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 { ...queryParams, suchFilter },
                 personPermissions,
             );
 
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(personRepositoryMock.findbyPersonFrontend).toHaveBeenCalledTimes(1);
             expect(result.total).toEqual(1);
             expect(result.limit).toEqual(1);
             expect(result.offset).toEqual(0);
@@ -135,16 +137,18 @@ describe('PersonFrontendController', () => {
 
         it('should filter person with the given rolle id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
 
-            personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
+            personRepositoryMock.findbyPersonFrontend.mockResolvedValue([[person1], 1]);
             const rolleID: string = personenkontext1.rolleId;
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 { ...queryParams, rolleIDs: [rolleID] },
                 personPermissions,
             );
 
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(personRepositoryMock.findbyPersonFrontend).toHaveBeenCalledTimes(1);
             expect(result.total).toEqual(1);
             expect(result.limit).toEqual(1);
             expect(result.offset).toEqual(0);
@@ -155,16 +159,18 @@ describe('PersonFrontendController', () => {
 
         it('should filter person rolleID undefined', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([personController.ROOT_ORGANISATION_ID]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
 
-            personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
+            personRepositoryMock.findbyPersonFrontend.mockResolvedValue([[person1], 1]);
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 { ...queryParams, rolleIDs: undefined },
                 personPermissions,
             );
 
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(personRepositoryMock.findbyPersonFrontend).toHaveBeenCalledTimes(1);
             expect(result.total).toEqual(1);
             expect(result.limit).toEqual(1);
             expect(result.offset).toEqual(0);
@@ -176,19 +182,19 @@ describe('PersonFrontendController', () => {
         it('should filter person with the given orgnisation id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
             const organisationID: string = personenkontext1.organisationId;
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([
-                personController.ROOT_ORGANISATION_ID,
-                organisationID,
-            ]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [organisationID],
+            });
 
-            personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
+            personRepositoryMock.findbyPersonFrontend.mockResolvedValue([[person1], 1]);
 
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 { ...queryParams, organisationIDs: [organisationID] },
                 personPermissions,
             );
 
-            expect(personRepositoryMock.findBy).toHaveBeenCalledTimes(1);
+            expect(personRepositoryMock.findbyPersonFrontend).toHaveBeenCalledTimes(1);
             expect(result.total).toEqual(1);
             expect(result.limit).toEqual(1);
             expect(result.offset).toEqual(0);
@@ -199,7 +205,10 @@ describe('PersonFrontendController', () => {
 
         it('should throw an error when organisationID is not in the permissions', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [],
+            });
 
             personRepositoryMock.findBy.mockResolvedValue([[person1], 1]);
 

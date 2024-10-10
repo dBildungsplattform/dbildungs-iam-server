@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, FilterQuery, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -9,22 +9,32 @@ import {
     EntityCouldNotBeCreated,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
+    MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonPermissions, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { Person } from '../domain/person.js';
+import { Person, LockInfo } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.enabled) return emailAddress.address;
+        if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
     return undefined;
 }
@@ -84,6 +94,8 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
+        undefined,
+        undefined,
         getEnabledEmailAddress(entity),
     );
 }
@@ -96,6 +108,21 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
     return person;
 }
 
+export type PersonEventPayload = {
+    personenkontexte: [{ id: string; organisationId: string; rolleId: string }];
+};
+export type PersonenQueryParams = {
+    vorname?: string;
+    familienname?: string;
+    organisationIDs?: string[];
+    rolleIDs?: string[];
+    offset?: number;
+    limit?: number;
+    sortField?: SortFieldPersonFrontend;
+    sortOrder?: ScopeOrder;
+    suchFilter?: string;
+};
+
 @Injectable()
 export class PersonRepository {
     public readonly ROOT_ORGANISATION_ID: string;
@@ -104,6 +131,7 @@ export class PersonRepository {
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
         private readonly eventService: EventService,
+        private usernameGenerator: UsernameGeneratorService,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -111,20 +139,18 @@ export class PersonRepository {
 
     private async getPersonScopeWithPermissions(
         permissions: PersonPermissions,
-        requiredRight: RollenSystemRecht = RollenSystemRecht.PERSONEN_VERWALTEN,
+        requiredRights: RollenSystemRecht[],
     ): Promise<PersonScope> {
         // Find all organisations where user has the required permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
-            [requiredRight],
-            true,
-        );
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(requiredRights, true);
 
         // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
+        if (permittedOrgas.all) {
+            return new PersonScope();
         }
-
-        return new PersonScope().findBy({ organisationen: organisationIDs }).setScopeWhereOperator(ScopeOperator.AND);
+        return new PersonScope()
+            .findBy({ organisationen: permittedOrgas.orgaIds })
+            .setScopeWhereOperator(ScopeOperator.AND);
     }
 
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
@@ -143,28 +169,94 @@ export class PersonRepository {
         return null;
     }
 
-    public async getPersonIfAllowed(personId: string, permissions: PersonPermissions): Promise<Result<Person<true>>> {
-        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions);
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+    // When implementing this on 30.09 we are still using 'referrer', but since we want in the future to use 'username' i already did this here
+    public async findByUsername(username: string): Promise<Option<Person<true>>> {
+        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { referrer: username });
+        if (person) {
+            return mapEntityToAggregate(person);
+        }
+
+        return null;
+    }
+
+    public async findByIds(ids: string[], permissions: PersonPermissions): Promise<Person<true>[]> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
+
+        if (!permittedOrgas.all && !permittedOrgas.orgaIds.length) {
+            return [];
+        }
+
+        let organisationWhereClause: FilterQuery<PersonEntity> = {};
+        if (!permittedOrgas.all) {
+            organisationWhereClause = {
+                personenKontexte: { $some: { organisationId: { $in: permittedOrgas.orgaIds } } },
+            };
+        }
+
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, {
+            $and: [{ id: { $in: ids } }, organisationWhereClause],
+        });
+
+        return personEntities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+    }
+
+    public async getPersonIfAllowed(
+        personId: string,
+        permissions: PersonPermissions,
+        requiredRights: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_VERWALTEN],
+    ): Promise<Result<Person<true>>> {
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions, requiredRights);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
-        const person: Person<true> | undefined = persons[0];
-
+        let person: Person<true> | undefined = persons[0];
         if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+        person = await this.extendPersonWithKeycloakData(person);
 
         return { ok: true, value: person };
     }
 
-    public async checkIfDeleteIsAllowed(
+    public async extendPersonWithKeycloakData(person: Person<true>): Promise<Person<true>> {
+        if (!person.keycloakUserId) {
+            return person;
+        }
+
+        const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.kcUserService.findById(
+            person.keycloakUserId,
+        );
+
+        person.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
+        person.isLocked = false;
+
+        if (!keyCloakUserDataResponse.ok) {
+            return person;
+        }
+        if (keyCloakUserDataResponse.value.attributes) {
+            const attributes: Record<string, string[]> = keyCloakUserDataResponse.value.attributes;
+            const lockedFrom: string | undefined = attributes[LockKeys.LockedFrom]?.toString();
+            const lockedTimeStamp: string | undefined = attributes[LockKeys.Timestamp]?.toString();
+            const lockInfo: LockInfo = {
+                lock_locked_from: lockedFrom ?? '',
+                lock_timestamp: lockedTimeStamp ?? '',
+            };
+            person.lockInfo = lockInfo;
+        }
+        person.isLocked = keyCloakUserDataResponse.value.enabled === false;
+        return person;
+    }
+
+    private async checkIfDeleteIsAllowed(
         personId: string,
         permissions: PersonPermissions,
     ): Promise<Result<Person<true>>> {
         // Check if the user has permission to delete immediately
-        const scope: PersonScope = await this.getPersonScopeWithPermissions(
-            permissions,
+        const scope: PersonScope = await this.getPersonScopeWithPermissions(permissions, [
             RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
-        );
-        scope.findBy({ id: personId }).sortBy('vorname', ScopeOrder.ASC);
+        ]);
+        scope.findBy({ ids: [personId] }).sortBy('vorname', ScopeOrder.ASC);
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
         const person: Person<true> | undefined = persons[0];
@@ -176,7 +268,11 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
-    public async deletePerson(personId: string, permissions: PersonPermissions): Promise<Result<void, DomainError>> {
+    public async deletePerson(
+        personId: string,
+        permissions: PersonPermissions,
+        removedPersonenkontexts: PersonenkontextEventKontextData[],
+    ): Promise<Result<void, DomainError>> {
         // First check if the user has permission to view the person
         const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
 
@@ -201,6 +297,18 @@ export class PersonRepository {
         // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
 
+        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                familienname: person.familienname,
+                vorname: person.vorname,
+                email: person.email,
+            },
+            [],
+            removedPersonenkontexts,
+            [],
+        );
+        this.eventService.publish(personenkontextUpdatedEvent);
         // Delete email-addresses if any, must happen before person deletion to get the referred email-address
         if (person.email) {
             this.eventService.publish(new PersonDeletedEvent(personId, person.email));
@@ -231,14 +339,30 @@ export class PersonRepository {
         return !!person;
     }
 
-    public async create(person: Person<false>, hashedPassword?: string): Promise<Person<true> | DomainError> {
+    public async create(
+        person: Person<false>,
+        hashedPassword?: string,
+        personId?: string,
+    ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
 
         try {
+            if (person.personalnummer) {
+                // Check if personalnummer already exists
+                const existingPerson: Loaded<PersonEntity, never, '*', never> | null = await transaction.findOne(
+                    PersonEntity,
+                    { personalnummer: person.personalnummer },
+                );
+                if (existingPerson) {
+                    await transaction.rollback();
+                    return new DuplicatePersonalnummerError(`Personalnummer ${person.personalnummer} already exists.`);
+                }
+            }
+
             // Create DB person
             const personEntity: PersonEntity = transaction.create(PersonEntity, mapAggregateToData(person)).assign({
-                id: randomUUID(), // Generate ID here instead of at insert-time
+                id: personId ?? randomUUID(), // Generate ID here instead of at insert-time
             });
             transaction.persist(personEntity);
 
@@ -262,7 +386,7 @@ export class PersonRepository {
                 return personWithKeycloakUser;
             }
 
-            // take ID from keycloak and update user
+            // Take ID from keycloak and update user
             personEntity.assign(mapAggregateToData(personWithKeycloakUser));
 
             // Commit
@@ -296,7 +420,7 @@ export class PersonRepository {
         await this.em.persistAndFlush(personEntity);
 
         if (isPersonRenamedEventNecessary) {
-            this.eventService.publish(new PersonRenamedEvent(person.id));
+            this.eventService.publish(PersonRenamedEvent.fromPerson(person));
         }
 
         return mapEntityToAggregate(personEntity);
@@ -324,7 +448,8 @@ export class PersonRepository {
 
         person.referrer = person.username;
         const userDo: User<false> = User.createNew(person.username, undefined, {
-            ID_ITSLEARNING: person.id,
+            ID_ITSLEARNING: [person.id],
+            ID_OX: [person.id],
         });
 
         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
@@ -363,7 +488,7 @@ export class PersonRepository {
         }
         person.referrer = person.username;
         const userDo: User<false> = User.createNew(person.username, undefined, {
-            ID_ITSLEARNING: person.id,
+            ID_ITSLEARNING: [person.id],
         });
 
         const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
@@ -376,5 +501,189 @@ export class PersonRepository {
         person.keycloakUserId = creationResult.value;
 
         return person;
+    }
+
+    public async findbyPersonFrontend(
+        queryParams: PersonenQueryParams,
+        permittedOrgas: PermittedOrgas,
+    ): Promise<Counted<Person<true>>> {
+        const scope: PersonScope = this.createPersonScope(queryParams, permittedOrgas);
+
+        const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
+        const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+
+        return [persons, total];
+    }
+
+    public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
+        const scope: PersonScope = new PersonScope()
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .findBy({
+                vorname: queryParams.vorname,
+                familienname: queryParams.familienname,
+                geburtsdatum: undefined,
+                organisationen: permittedOrgas.all ? undefined : permittedOrgas.orgaIds,
+            })
+            .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
+            .paged(queryParams.offset, queryParams.limit);
+
+        const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
+        const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
+        scope.sortBy(sortField, sortOrder);
+
+        if (queryParams.suchFilter) {
+            scope.findBySearchString(queryParams.suchFilter);
+        }
+
+        return scope;
+    }
+
+    public async isPersonalnummerAlreadayAssigned(personalnummer: string): Promise<boolean> {
+        const person: Option<Loaded<PersonEntity, never, '*', never>> = await this.em.findOne(PersonEntity, {
+            personalnummer: personalnummer,
+        });
+
+        return !!person;
+    }
+
+    public async updatePersonMetadata(
+        personId: string,
+        familienname: string,
+        vorname: string,
+        personalnummer: string | undefined,
+        lastModified: Date,
+        revision: string,
+        permissions: PersonPermissions,
+    ): Promise<Person<true> | DomainError> {
+        const personFound: Option<Person<true>> = await this.findById(personId);
+        if (!personFound) {
+            return new EntityNotFoundError('Person', personId);
+        }
+
+        //Permissions: Only the admin can update the person metadata.
+        if (!(await permissions.canModifyPerson(personId))) {
+            return new MissingPermissionsError('Not allowed to update the person metadata for the person.');
+        }
+
+        const hasNameChanged: boolean = this.hasNameChanged(
+            personFound.vorname,
+            personFound.familienname,
+            vorname,
+            familienname,
+        );
+
+        const hasUsernameChanged: boolean = this.hasUsernameChanged(
+            personFound.vorname,
+            personFound.familienname,
+            vorname,
+            familienname,
+        );
+
+        if (!hasNameChanged && !personalnummer) {
+            return new PersonalnummerRequiredError();
+        }
+
+        if (personFound.updatedAt.getTime() > lastModified.getTime()) {
+            return new PersonUpdateOutdatedError();
+        }
+
+        let newPersonalnummer: string | undefined = undefined;
+        let newVorname: string | undefined = undefined;
+        let newFamilienname: string | undefined = undefined;
+        const oldUsername: string = personFound.referrer!;
+        let username: string = oldUsername;
+
+        //Update personalnummer
+        if (personalnummer) {
+            if (await this.isPersonalnummerAlreadayAssigned(personalnummer)) {
+                return new DuplicatePersonalnummerError(`Personalnummer ${personalnummer} already exists.`);
+            }
+            newPersonalnummer = personalnummer;
+        }
+        //Update name
+        if (hasNameChanged) {
+            newVorname = vorname;
+            newFamilienname = familienname;
+
+            if (hasUsernameChanged) {
+                //Generate new username
+                const result: Result<string, DomainError> = await this.usernameGenerator.generateUsername(
+                    vorname,
+                    familienname,
+                );
+                if (!result.ok) {
+                    return result.error;
+                }
+                username = result.value;
+            }
+        }
+
+        const error: void | DomainError = personFound.update(
+            revision,
+            newFamilienname,
+            newVorname,
+            username,
+            personFound.stammorganisation,
+            personFound.initialenFamilienname,
+            personFound.initialenVorname,
+            personFound.rufname,
+            personFound.nameTitel,
+            personFound.nameAnrede,
+            personFound.namePraefix,
+            personFound.nameSuffix,
+            personFound.nameSortierindex,
+            personFound.geburtsdatum,
+            personFound.geburtsort,
+            personFound.geschlecht,
+            personFound.lokalisierung,
+            personFound.vertrauensstufe,
+            personFound.auskunftssperre,
+            newPersonalnummer,
+            personFound.lockInfo,
+            personFound.isLocked,
+            personFound.email,
+        );
+        if (error instanceof DomainError) {
+            return error;
+        }
+
+        //Update username in kc
+        if (hasUsernameChanged) {
+            const kcUsernameUpdated: Result<void, DomainError> = await this.kcUserService.updateUsername(
+                oldUsername,
+                username,
+            );
+            if (!kcUsernameUpdated.ok) {
+                return kcUsernameUpdated.error;
+            }
+        }
+
+        const savedPerson: Person<true> | DomainError = await this.save(personFound);
+        return savedPerson;
+    }
+
+    private hasNameChanged(
+        oldVorname: string,
+        oldFamilienname: string,
+        newVorname: string,
+        newFamilienname: string,
+    ): boolean {
+        return oldVorname !== newVorname || oldFamilienname !== newFamilienname;
+    }
+
+    private hasUsernameChanged(
+        oldVorname: string,
+        oldFamilienname: string,
+        newVorname: string,
+        newFamilienname: string,
+    ): boolean {
+        const oldVornameLowerCase: string = toDIN91379SearchForm(oldVorname).toLowerCase();
+        const oldFamiliennameLowerCase: string = toDIN91379SearchForm(oldFamilienname).toLowerCase();
+        const newVornameLowerCase: string = toDIN91379SearchForm(newVorname).toLowerCase();
+        const newFamiliennameLowerCase: string = toDIN91379SearchForm(newFamilienname).toLowerCase();
+
+        if (oldVornameLowerCase[0] !== newVornameLowerCase[0]) return true;
+
+        return oldFamiliennameLowerCase !== newFamiliennameLowerCase;
     }
 }

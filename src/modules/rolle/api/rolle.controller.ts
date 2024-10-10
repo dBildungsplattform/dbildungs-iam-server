@@ -58,6 +58,8 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -71,6 +73,7 @@ export class RolleController {
         private readonly orgService: OrganisationService,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepository: OrganisationRepository,
     ) {}
 
     @Get()
@@ -104,6 +107,12 @@ export class RolleController {
             };
             return new PagedResponse(pagedRolleWithServiceProvidersResponse);
         }
+        const administeredBySchulstrukturknotenIds: string[] = rollen.map(
+            (r: Rolle<true>) => r.administeredBySchulstrukturknoten,
+        );
+        const administeredOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
+            administeredBySchulstrukturknotenIds,
+        );
         const serviceProviders: ServiceProvider<true>[] = await this.serviceProviderRepo.find();
         const rollenWithServiceProvidersResponses: RolleWithServiceProvidersResponse[] = rollen.map(
             (r: Rolle<true>) => {
@@ -111,7 +120,16 @@ export class RolleController {
                     .map((id: string) => serviceProviders.find((sp: ServiceProvider<true>) => sp.id === id))
                     .filter(Boolean) as ServiceProvider<true>[];
 
-                return new RolleWithServiceProvidersResponse(r, sps);
+                const administeredBySchulstrukturknoten: Organisation<true> | undefined = administeredOrganisations.get(
+                    r.administeredBySchulstrukturknoten,
+                );
+
+                return new RolleWithServiceProvidersResponse(
+                    r,
+                    sps,
+                    administeredBySchulstrukturknoten?.name,
+                    administeredBySchulstrukturknoten?.kennung,
+                );
             },
         );
         const pagedRolleWithServiceProvidersResponse: Paged<RolleWithServiceProvidersResponse> = {
@@ -178,6 +196,7 @@ export class RolleController {
             params.merkmale,
             params.systemrechte,
             [],
+            [],
             false,
         );
 
@@ -233,20 +252,20 @@ export class RolleController {
         };
     }
 
-    @Post(':rolleId/serviceProviders')
+    @Put(':rolleId/serviceProviders')
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Add a service-provider to a rolle by id.' })
-    @ApiOkResponse({ description: 'Adding service-provider finished successfully.', type: ServiceProviderResponse })
+    @ApiOkResponse({ description: 'Adding service-provider finished successfully.', type: [ServiceProviderResponse] })
     @ApiNotFoundResponse({ description: 'The rolle or the service-provider to add does not exist.' })
     @ApiBadRequestResponse({ description: 'The service-provider is already attached to rolle.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve service-providers for rolle.' })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error, the service-provider may could not be found after attaching to rolle.',
     })
-    public async addServiceProviderById(
+    public async updateServiceProvidersById(
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Body() spBodyParams: RolleServiceProviderQueryParams,
-    ): Promise<ServiceProviderResponse> {
+    ): Promise<ServiceProviderResponse[]> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (!rolle) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -255,27 +274,41 @@ export class RolleController {
                 ),
             );
         }
-        const result: void | DomainError = await rolle.attachServiceProvider(spBodyParams.serviceProviderId);
+        const result: void | DomainError = await rolle.updateServiceProviders(spBodyParams.serviceProviderIds);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
         await this.rolleRepo.save(rolle);
-        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
-            spBodyParams.serviceProviderId,
+
+        const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            spBodyParams.serviceProviderIds,
         );
-        if (!serviceProvider) {
+
+        // Check if all provided IDs are in the map
+        const missingServiceProviderIds: string[] = spBodyParams.serviceProviderIds.filter(
+            (id: string) => !serviceProviderMap.has(id),
+        );
+
+        if (missingServiceProviderIds.length > 0) {
+            // If some IDs are missing, throw an error with details about the missing IDs
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 new SchulConnexError({
                     code: 500,
                     subcode: '00',
                     titel: 'Service-Provider nicht gefunden',
-                    beschreibung: 'Der Service-Provider konnte nach Zuweisung zur Rolle nicht gefunden werden!',
+                    beschreibung: `Die folgenden Service-Provider-IDs konnten nicht gefunden werden: ${missingServiceProviderIds.join(', ')}`,
                 }),
             );
         }
-        return new ServiceProviderResponse(serviceProvider);
+        // Convert the Map of service providers to an array of ServiceProviderResponse objects
+        const serviceProviderResponses: ServiceProviderResponse[] = Array.from(serviceProviderMap.values()).map(
+            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
+        );
+
+        // Return the array of ServiceProviderResponse objects
+        return serviceProviderResponses;
     }
 
     @Delete(':rolleId/serviceProviders')
@@ -289,6 +322,7 @@ export class RolleController {
         @Query() spBodyParams: RolleServiceProviderQueryParams,
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+
         if (!rolle) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -296,7 +330,7 @@ export class RolleController {
                 ),
             );
         }
-        const result: void | DomainError = rolle.detatchServiceProvider(spBodyParams.serviceProviderId);
+        const result: void | DomainError = rolle.detatchServiceProvider(spBodyParams.serviceProviderIds);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),

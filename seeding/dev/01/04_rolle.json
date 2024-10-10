@@ -13,7 +13,8 @@
         "SCHULEN_VERWALTEN",
         "KLASSEN_VERWALTEN",
         "SCHULTRAEGER_VERWALTEN",
-        "PERSONEN_SOFORT_LOESCHEN"
+        "PERSONEN_SOFORT_LOESCHEN",
+        "PERSON_SYNCHRONISIEREN"
       ],
       "serviceProviderIds": [
         0,
@@ -27,7 +28,8 @@
         8,
         9,
         10,
-        11
+        11,
+        12
       ]
     },
     {
@@ -54,14 +56,14 @@
         0,
         1,
         2,
-        3,
         4,
         6,
         7,
         8,
         9,
         10,
-        11
+        11,
+        12
       ]
     },
     {
@@ -78,14 +80,14 @@
         0,
         1,
         2,
-        3,
         4,
         6,
         7,
         8,
         9,
         10,
-        11
+        11,
+        12
       ]
     },
     {
@@ -113,12 +115,13 @@
           "SCHULEN_VERWALTEN",
           "KLASSEN_VERWALTEN",
           "SCHULTRAEGER_VERWALTEN",
-          "MIGRATION_DURCHFUEHREN"
+          "MIGRATION_DURCHFUEHREN",
+          "PERSON_SYNCHRONISIEREN"
         ],
         "serviceProviderIds": [],
         "istTechnisch": true
-      },
-      {
+    },
+    {
         "id": 6,
         "administeredBySchulstrukturknoten": 0,
         "name": "Schulbegleitung",
@@ -126,6 +129,28 @@
         "merkmale": [],
         "systemrechte": [],
         "serviceProviderIds": []
-      }
+    },
+    {
+        "id": 7,
+        "administeredBySchulstrukturknoten": 0,
+        "name": "itslearning Admin",
+        "rollenart": "LEIT",
+        "merkmale": [],
+        "systemrechte": [],
+        "serviceProviderIds": [
+            3
+        ]
+    },
+    {
+        "id": 8,
+        "administeredBySchulstrukturknoten": 0,
+        "name": "itslearning Lehrkraft",
+        "rollenart": "LEHR",
+        "merkmale": [],
+        "systemrechte": [],
+        "serviceProviderIds": [
+            3
+        ]
+    }
   ]
 }

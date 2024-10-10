@@ -1,6 +1,6 @@
 import { Cascade, DateTimeType, Entity, Enum, Index, ManyToOne, Opt, Property, Ref, Unique } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { AutoMap } from '@automapper/classes';
@@ -44,11 +44,6 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @Property({ nullable: true })
     public mandant?: string;
 
-    // Will be removed in favor of `rolleId`.
-    @AutoMap(() => String)
-    @Enum({ nullable: false, items: () => Rolle })
-    public rolle!: Rolle;
-
     @AutoMap(() => String)
     @Enum({ nullable: true, items: () => Personenstatus, nativeEnumName: 'personenstatus_enum' })
     public personenstatus?: Personenstatus;
@@ -68,4 +63,8 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @AutoMap(() => String)
     @Property({ nullable: false, default: '1' })
     public revision!: string & Opt;
+
+    @AutoMap(() => Date)
+    @Property({ nullable: true, type: DateTimeType })
+    public readonly befristung?: Date;
 }

@@ -34,6 +34,7 @@ import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js'
 import { LdapModule } from '../core/ldap/ldap.module.js';
 import { EmailModule } from '../modules/email/email.module.js';
 import { OxModule } from '../modules/ox/ox.module.js';
+import { KeycloakHandlerModule } from '../modules/keycloak-handler/keycloak-handler.module.js';
 
 @Module({
     imports: [
@@ -51,6 +52,7 @@ import { OxModule } from '../modules/ox/ox.module.js';
                 const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
+                    user: dbConfig.USERNAME,
                     password: dbConfig.SECRET,
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
@@ -89,6 +91,7 @@ import { OxModule } from '../modules/ox/ox.module.js';
         EmailModule,
         OxModule,
         PrivacyIdeaAdministrationModule,
+        KeycloakHandlerModule,
     ],
     providers: [
         {

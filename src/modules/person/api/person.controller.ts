@@ -1,5 +1,3 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
 import {
     Body,
     Controller,
@@ -7,7 +5,7 @@ import {
     Get,
     HttpCode,
     HttpStatus,
-    Inject,
+    NotImplementedException,
     Param,
     Patch,
     Post,
@@ -18,6 +16,7 @@ import {
 } from '@nestjs/common';
 import {
     ApiAcceptedResponse,
+    ApiBadGatewayResponse,
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiCreatedResponse,
@@ -27,34 +26,30 @@ import {
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
+    ApiOperation,
+    ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
-import { CreatePersonBodyParams } from './create-person.body.params.js';
-import { CreatePersonenkontextBodyParams } from '../../personenkontext/api/param/create-personenkontext.body.params.js';
-import { CreatePersonenkontextDto } from '../../personenkontext/api/create-personenkontext.dto.js';
-import { CreatedPersonenkontextDto } from '../../personenkontext/api/created-personenkontext.dto.js';
+import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
-import { PersonenkontextUc } from '../../personenkontext/api/personenkontext.uc.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { Person } from '../domain/person.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { LockInfo, Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
 import { PersonFactory } from '../domain/person.factory.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { OrganisationID } from '../../../shared/types/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { ConfigService } from '@nestjs/config';
@@ -64,6 +59,19 @@ import { PersonExceptionFilter } from './person-exception-filter.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { LockUserBodyParams } from './lock-user.body.params.js';
+import { PersonLockResponse } from './person-lock.response.js';
+import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
+import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DbiamPersonError } from './dbiam-person.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
+import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -74,13 +82,16 @@ export class PersonController {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
-        private readonly personenkontextUc: PersonenkontextUc,
         private readonly personRepository: PersonRepository,
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
+        private readonly personDeleteService: PersonDeleteService,
+        private readonly logger: ClassLogger,
+        private keycloakUserService: KeycloakUserService,
+        private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
+        private readonly eventService: EventService,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
@@ -93,63 +104,46 @@ export class PersonController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create the person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
-    public async createPerson(
-        @Body() params: CreatePersonBodyParams,
+    public async createPersonMigration(
+        @Body() params: CreatePersonMigrationBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
-        // Find all organisations where user has permission
-        const isMigrationCall: boolean = !(!params.hashedPassword && !params.username);
-        let organisationIDs: OrganisationID[];
-
-        if (isMigrationCall === true) {
-            organisationIDs = await permissions.getOrgIdsWithSystemrecht(
-                [RollenSystemRecht.MIGRATION_DURCHFUEHREN],
-                true,
-            );
-        } else {
-            organisationIDs = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.PERSONEN_VERWALTEN], true);
-        }
-        if (organisationIDs.length < 1) {
+        const isMigrationUser: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.MIGRATION_DURCHFUEHREN,
+        ]);
+        if (!isMigrationUser) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person')),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Migrationsrecht Required For This Endpoint'),
+                ),
             );
         }
         const person: Person<false> | DomainError = await this.personFactory.createNew({
-            vorname: params.name.vorname,
-            familienname: params.name.familienname,
-            initialenFamilienname: params.name.initialenfamilienname,
-            initialenVorname: params.name.initialenvorname,
-            rufname: params.name.rufname,
-            nameTitel: params.name.titel,
-            nameAnrede: params.name.anrede,
-            namePraefix: params.name.namenspraefix,
-            nameSuffix: params.name.namenssuffix,
-            nameSortierindex: params.name.sortierindex,
-            auskunftssperre: params.auskunftssperre,
-            geburtsdatum: params.geburt?.datum,
-            geburtsort: params.geburt?.geburtsort,
+            vorname: params.vorname,
+            familienname: params.familienname,
             username: params.username,
             personalnummer: params.personalnummer,
-            ...params,
         });
         if (person instanceof DomainError) {
-            if (person instanceof PersonDomainError) {
-                throw person;
-            }
-
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
             );
         }
 
-        const result: Person<true> | DomainError = await this.personRepository.create(person, params.hashedPassword);
+        const result: Person<true> | DomainError = await this.personRepository.create(
+            person,
+            params.hashedPassword,
+            params.personId,
+        );
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
-
-        return new PersonendatensatzResponse(result, isMigrationCall === true ? false : true);
+        this.logger.info(
+            `MIGRATION: Create Person Operation / personId: ${params.personId} / Successfully Created Person`,
+        );
+        return new PersonendatensatzResponse(result, false);
     }
 
     @Delete(':personId')
@@ -166,7 +160,7 @@ export class PersonController {
         @Param() params: PersonByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const response: Result<void, DomainError> = await this.personRepository.deletePerson(
+        const response: Result<void, DomainError> = await this.personDeleteService.deletePerson(
             params.personId,
             permissions,
         );
@@ -201,7 +195,9 @@ export class PersonController {
                 ),
             );
         }
-        return new PersonendatensatzResponse(personResult.value, false);
+
+        const response: PersonendatensatzResponse = new PersonendatensatzResponse(personResult.value, false);
+        return response;
     }
 
     /**
@@ -209,44 +205,16 @@ export class PersonController {
      */
     @Post(':personId/personenkontexte')
     @HttpCode(200)
+    @ApiOperation({ deprecated: true })
+    @ApiParam({ name: 'personId', type: String })
     @ApiOkResponse({ description: 'The personenkontext was successfully created.' })
     @ApiBadRequestResponse({ description: 'The personenkontext already exists.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the personenkontext.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the personenkontext.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to create personenkontext for person.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the personenkontext.' })
-    public async createPersonenkontext(
-        @Param() pathParams: PersonByIdParams,
-        @Body() bodyParams: CreatePersonenkontextBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<PersonenkontextResponse> {
-        const personenkontextDto: CreatePersonenkontextDto = this.mapper.map(
-            bodyParams,
-            CreatePersonenkontextBodyParams,
-            CreatePersonenkontextDto,
-        );
-        //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
-            pathParams.personId,
-            permissions,
-        );
-        if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', pathParams.personId),
-                ),
-            );
-        }
-        personenkontextDto.personId = personResult.value.id;
-
-        const result: CreatedPersonenkontextDto | SchulConnexError =
-            await this.personenkontextUc.createPersonenkontext(personenkontextDto);
-
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
-        }
-
-        return this.mapper.map(result, CreatedPersonenkontextDto, PersonenkontextResponse);
+    public createPersonenkontext(): Promise<PersonenkontextResponse> {
+        throw new NotImplementedException();
     }
 
     @Get(':personId/personenkontexte')
@@ -315,21 +283,17 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
         // Find all organisations where user has permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
         );
 
-        // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
-        }
-
         // Find all Personen on child-orgas (+root orgas)
-        const scope: PersonScope = new PersonScope()
-            .findBy({ organisationen: organisationIDs })
-            .sortBy('vorname', ScopeOrder.ASC)
-            .paged(queryParams.offset, queryParams.limit);
+        const scope: PersonScope = new PersonScope();
+        if (!permittedOrgas.all) {
+            scope.findBy({ organisationen: permittedOrgas.orgaIds });
+        }
+        scope.sortBy('vorname', ScopeOrder.ASC).paged(queryParams.offset, queryParams.limit);
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
@@ -437,5 +401,114 @@ export class PersonController {
         }
 
         return { ok: true, value: personResult.value.newPassword! };
+    }
+
+    @Put(':personId/lock-user')
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiOkResponse({ description: 'User has been successfully updated.', type: PersonLockResponse })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    @ApiBadGatewayResponse({ description: 'A downstream server returned an error.' })
+    public async lockPerson(
+        @Param('personId') personId: string,
+        @Body() lockUserBodyParams: LockUserBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<PersonLockResponse> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+        );
+
+        if (!personResult.ok) {
+            throw new NotFoundOrNoPermissionError(personId);
+        }
+
+        if (!personResult.value?.keycloakUserId) {
+            throw new PersonDomainError(`Person with id ${personId} has no keycloak id`, personId);
+        }
+
+        const lockInfo: LockInfo = {
+            lock_locked_from: lockUserBodyParams.locked_from,
+            lock_timestamp: new Date().toISOString(),
+        };
+
+        const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(
+            personResult.value.keycloakUserId,
+            !lockUserBodyParams.lock,
+            lockInfo,
+        );
+        if (!result.ok) {
+            throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);
+        }
+        return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
+    }
+
+    @Post(':personId/sync')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'User will be synced.' })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    @ApiBadGatewayResponse({ description: 'A downstream server returned an error.' })
+    public async syncPerson(
+        @Param('personId') personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+            [RollenSystemRecht.PERSON_SYNCHRONISIEREN],
+        );
+        if (!personResult.ok) {
+            throw new NotFoundOrNoPermissionError(personId);
+        }
+
+        this.eventService.publish(new PersonExternalSystemsSyncEvent(personId));
+    }
+
+    @Patch(':personId/metadata')
+    @ApiOkResponse({
+        description: 'The metadata for user was successfully updated.',
+        type: PersonendatensatzResponse,
+    })
+    @ApiBadRequestResponse({ description: 'Request has a wrong format.', type: DbiamPersonError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the metadata.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to update the metadata.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the metadata for user.' })
+    public async updateMetadata(
+        @Param() params: PersonByIdParams,
+        @Body() body: PersonMetadataBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<PersonendatensatzResponse | DomainError> {
+        if (
+            body.personalnummer &&
+            !(await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(
+                params.personId,
+            ))
+        ) {
+            throw new PersonDomainError('Person hat keine koperspflichtige Rolle', undefined);
+        }
+        const result: Person<true> | DomainError = await this.personRepository.updatePersonMetadata(
+            params.personId,
+            body.familienname,
+            body.vorname,
+            body.personalnummer,
+            body.lastModified,
+            body.revision,
+            permissions,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof PersonDomainError || result instanceof DuplicatePersonalnummerError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+
+        return new PersonendatensatzResponse(result, false);
     }
 }

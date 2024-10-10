@@ -16,8 +16,6 @@ import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js'
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationResponse } from './organisation.response.js';
-import { OrganisationScope } from '../persistence/organisation.scope.js';
-import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
@@ -30,6 +28,8 @@ import { OrganisationService } from '../domain/organisation.service.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ParentOrganisationenResponse } from './organisation.parents.response.js';
+import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -253,13 +253,36 @@ describe('OrganisationController', () => {
 
     describe('findOrganizations', () => {
         describe('when finding organizations with given query params', () => {
-            it('should find all organizations that match', async () => {
+            it('should find all organizations that match and handle provided IDs', async () => {
+                const organisationIds: string[] = [faker.string.uuid(), faker.string.uuid()];
+
                 const queryParams: FindOrganisationQueryParams = {
                     typ: OrganisationsTyp.SONSTIGE,
                     searchString: faker.lorem.word(),
                     systemrechte: [],
                     administriertVon: [faker.string.uuid(), faker.string.uuid()],
+                    // Assuming you have a field for organisationIds in your query params
+                    organisationIds: organisationIds,
                 };
+
+                const selectedOrganisationMap: Map<string, Organisation<true>> = new Map(
+                    organisationIds.map((id: string) => [
+                        id,
+                        DoFactory.createOrganisationAggregate(true, {
+                            id: id,
+                            createdAt: faker.date.recent(),
+                            updatedAt: faker.date.recent(),
+                            administriertVon: faker.string.uuid(),
+                            zugehoerigZu: faker.string.uuid(),
+                            kennung: faker.lorem.word(),
+                            name: faker.lorem.word(),
+                            namensergaenzung: faker.lorem.word(),
+                            kuerzel: faker.lorem.word(),
+                            typ: OrganisationsTyp.SCHULE,
+                            traegerschaft: Traegerschaft.LAND,
+                        }),
+                    ]),
+                );
 
                 const mockedRepoResponse: Counted<Organisation<true>> = [
                     [
@@ -276,62 +299,23 @@ describe('OrganisationController', () => {
                             typ: OrganisationsTyp.SCHULE,
                             traegerschaft: Traegerschaft.LAND,
                         }),
+                        ...selectedOrganisationMap.values(),
                     ],
-                    1,
+                    selectedOrganisationMap.size + 1,
                 ];
 
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
 
-                organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
+                organisationRepositoryMock.findAuthorized.mockResolvedValue(mockedRepoResponse);
 
                 const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(
                     queryParams,
                     permissionsMock,
                 );
 
-                expect(organisationRepositoryMock.findBy).toHaveBeenCalledTimes(1);
-                expect(organisationRepositoryMock.findBy).toHaveBeenCalledWith(
-                    new OrganisationScope()
-                        .findBy({
-                            kennung: queryParams.kennung,
-                            name: queryParams.name,
-                            typ: queryParams.typ,
-                        })
-                        .setScopeWhereOperator(ScopeOperator.AND)
-                        .findByAdministriertVonArray(queryParams.administriertVon)
-                        .searchString(queryParams.searchString)
-                        .byIDs([])
-                        .paged(queryParams.offset, queryParams.limit),
-                );
+                expect(organisationRepositoryMock.findAuthorized).toHaveBeenCalledTimes(1);
 
-                expect(result.items.length).toEqual(1);
-            });
-            it('should find all organizations that match with Klasse Typ', async () => {
-                const queryParams: FindOrganisationQueryParams = {
-                    typ: OrganisationsTyp.KLASSE,
-                    searchString: faker.lorem.word(),
-                    systemrechte: [],
-                    administriertVon: [faker.string.uuid(), faker.string.uuid()],
-                };
-
-                const mockedRepoResponse: Counted<Organisation<true>> = [
-                    [DoFactory.createOrganisationAggregate(true)],
-                    1,
-                ];
-
-                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-                permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
-
-                organisationRepositoryMock.findBy.mockResolvedValue(mockedRepoResponse);
-
-                const result: Paged<OrganisationResponse> = await organisationController.findOrganizations(
-                    queryParams,
-                    permissionsMock,
-                );
-
-                expect(organisationRepositoryMock.findBy).toHaveBeenCalledTimes(1);
-                expect(result.items.length).toEqual(1);
+                expect(result.items.length).toEqual(3);
             });
         });
     });
@@ -394,6 +378,35 @@ describe('OrganisationController', () => {
         });
     });
 
+    describe('getParents', () => {
+        it('should return the parent organisations', async () => {
+            const ids: Array<string> = [faker.string.uuid(), faker.string.uuid(), faker.string.uuid()];
+            const mockBody: ParentOrganisationsByIdsBodyParams = { organisationIds: ids };
+            const mockedRepoResponse: Array<Organisation<true>> = ids.map((id: string) =>
+                Organisation.construct(
+                    id,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.ROOT,
+                ),
+            );
+            organisationRepositoryMock.findParentOrgasForIds.mockResolvedValue(mockedRepoResponse);
+
+            const result: ParentOrganisationenResponse = await organisationController.getParentsByIds(mockBody);
+
+            expect(organisationRepositoryMock.findParentOrgasForIds).toHaveBeenCalledTimes(1);
+            expect(organisationRepositoryMock.findParentOrgasForIds).toHaveBeenCalledWith(ids);
+            expect(result).toBeInstanceOf(ParentOrganisationenResponse);
+            expect(result.parents[0]?.id).toBe(ids[0]);
+        });
+    });
+
     describe('getRootOrganisation', () => {
         it('should return the root organisation if it exists', async () => {
             const response: Organisation<true> = DoFactory.createOrganisation(true);
@@ -429,6 +442,7 @@ describe('OrganisationController', () => {
                     limit: 10,
                     offset: 0,
                     total: 2,
+                    pageTotal: 2,
                 };
                 const organisatonResponse: OrganisationResponse[] = organisations.items.map(
                     (item: Organisation<true>) => new OrganisationResponse(item),
@@ -474,6 +488,7 @@ describe('OrganisationController', () => {
                     limit: 10,
                     offset: 0,
                     total: 2,
+                    pageTotal: 2,
                 };
                 const organisatonResponse: OrganisationResponse[] = organisations.items.map(
                     (item: Organisation<true>) => new OrganisationResponse(item),

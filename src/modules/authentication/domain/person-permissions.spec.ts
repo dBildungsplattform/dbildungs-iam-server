@@ -5,10 +5,10 @@ import { PersonPermissionsRepo } from './person-permission.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Person } from '../../person/domain/person.js';
-import { PersonFields, PersonPermissions } from './person-permissions.js';
+import { PermittedOrgas, PersonFields, PersonPermissions } from './person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { RolleID } from '../../../shared/types/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonenkontextRolleFieldsResponse } from '../api/personen-kontext-rolle-fields.response.js';
@@ -139,7 +139,34 @@ describe('PersonPermissions', () => {
     });
 
     describe('getOrgIdsWithSystemrecht', () => {
-        it('should return organisations', async () => {
+        it('should return { all: true } if person has rights at root', async () => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+            const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
+                [RollenSystemRecht.PERSONEN_VERWALTEN],
+                true,
+            );
+
+            expect(permittedOrgas.all).toBe(true);
+        });
+        it('should return orgas with children', async () => {
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
                 faker.date.past(),
@@ -153,6 +180,7 @@ describe('PersonPermissions', () => {
             );
             const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+            dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
             rolleRepoMock.findByIds.mockResolvedValueOnce(
                 new Map([['1', createMock<Rolle<true>>({ hasSystemRecht: () => true })]]),
             );
@@ -166,17 +194,19 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht(
+            const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
                 [RollenSystemRecht.PERSONEN_VERWALTEN],
                 true,
             );
-            expect(ids).toContain('1');
-            expect(ids).toContain('2');
-        });
-    });
 
-    describe('getOrgIdsWithSystemrecht without Children', () => {
-        it('should return organisations', async () => {
+            if (permittedOrgas.all) {
+                fail('permittedOrgas.all should be false');
+            }
+            expect(permittedOrgas.orgaIds).toContain('1');
+            expect(permittedOrgas.orgaIds).toContain('2');
+        });
+
+        it('should return organisations without children', async () => {
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
                 faker.date.past(),
@@ -200,8 +230,15 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            const ids: OrganisationID[] = await personPermissions.getOrgIdsWithSystemrecht([]);
-            expect(ids).toContain('1');
+
+            const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht([
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+            if (permittedOrgas.all) {
+                fail('permittedOrgas.all should be false');
+            }
+            expect(permittedOrgas.orgaIds).toContain('1');
+            expect(permittedOrgas.orgaIds).not.toContain('2');
         });
     });
 

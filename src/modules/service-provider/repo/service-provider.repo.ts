@@ -3,8 +3,11 @@ import { Injectable } from '@nestjs/common';
 
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
-import { CreateGroupAndRoleEvent } from '../../../shared/events/kc-group-and-role-event.js';
+import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { EventService } from '../../../core/eventbus/index.js';
+
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -24,6 +27,8 @@ export function mapAggregateToData(
         logoMimeType: serviceProvider.logoMimeType,
         keycloakGroup: serviceProvider.keycloakGroup,
         keycloakRole: serviceProvider.keycloakRole,
+        externalSystem: serviceProvider.externalSystem,
+        requires2fa: serviceProvider.requires2fa,
     };
 }
 
@@ -41,6 +46,8 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.logoMimeType,
         entity.keycloakGroup,
         entity.keycloakRole,
+        entity.externalSystem,
+        entity.requires2fa,
     );
 }
 
@@ -111,7 +118,7 @@ export class ServiceProviderRepo {
 
         if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
             this.eventService.publish(
-                new CreateGroupAndRoleEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
+                new GroupAndRoleCreatedEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
             );
         }
 
@@ -128,5 +135,29 @@ export class ServiceProviderRepo {
         await this.em.persistAndFlush(serviceProviderEntity);
 
         return mapEntityToAggregate(serviceProviderEntity);
+    }
+
+    public async fetchRolleServiceProvidersWithoutPerson(
+        rolleId: RolleID | RolleID[],
+    ): Promise<ServiceProvider<true>[]> {
+        const rolleServiceProviderEntities: RolleServiceProviderEntity[] = await this.em.find(
+            RolleServiceProviderEntity,
+            {
+                rolle: {
+                    id: Array.isArray(rolleId) ? { $in: rolleId } : rolleId,
+                },
+            },
+            {
+                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+            },
+        );
+
+        const serviceProviders: ServiceProvider<true>[] = rolleServiceProviderEntities.map(
+            (rolleServiceProviderEntity: RolleServiceProviderEntity) => {
+                return mapEntityToAggregate(rolleServiceProviderEntity.serviceProvider);
+            },
+        );
+
+        return serviceProviders;
     }
 }

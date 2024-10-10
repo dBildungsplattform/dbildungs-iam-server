@@ -28,6 +28,8 @@ export type PersonenkontextRolleFields = {
     rolle: RolleFields;
 };
 
+export type PermittedOrgas = { all: true } | { all: false; orgaIds: OrganisationID[] };
+
 export class PersonPermissions implements IPersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
@@ -62,13 +64,13 @@ export class PersonPermissions implements IPersonPermissions {
         });
     }
 
-    /**
-     * @deprecated Inefficient
-     */
     public async getOrgIdsWithSystemrecht(
         systemrechte: RollenSystemRecht[],
         withChildren: boolean = false,
-    ): Promise<OrganisationID[]> {
+    ): Promise<PermittedOrgas> {
+        if (await this.hasSystemrechteAtRootOrganisation(systemrechte)) {
+            return { all: true };
+        }
         const organisationIDs: Set<OrganisationID> = new Set();
 
         const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
@@ -91,7 +93,10 @@ export class PersonPermissions implements IPersonPermissions {
             childOrgas.forEach((orga: Organisation<true>) => organisationIDs.add(orga.id));
         }
 
-        return Array.from(organisationIDs);
+        return {
+            all: false,
+            orgaIds: Array.from(organisationIDs),
+        };
     }
 
     public async hasSystemrechteAtOrganisation(

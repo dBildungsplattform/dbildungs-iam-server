@@ -3,7 +3,7 @@
     "entities": [
         {
             "id": 0,
-            "kennung": "0701114",
+            "kennung": null,
             "name": "Land Schleswig-Holstein",
             "kuerzel": "Root",
             "typ": "ROOT",
@@ -12,21 +12,23 @@
         },
         {
             "id": 1,
-            "kennung": "0702224",
+            "kennung": null,
             "name": "Öffentliche Schulen Land Schleswig-Holstein",
             "kuerzel": "Öffentl. Schulen",
             "typ": "LAND",
             "administriertVon": 0,
-            "zugehoerigZu": 0
+            "zugehoerigZu": 0,
+            "emailDomain": "schule-sh.de"
         },
         {
             "id": 2,
-            "kennung": "0703334",
+            "kennung": null,
             "name": "Ersatzschulen Land Schleswig-Holstein",
             "kuerzel": "Ersatzschulen",
             "typ": "LAND",
             "administriertVon": 0,
-            "zugehoerigZu": 0
+            "zugehoerigZu": 0,
+            "emailDomain": "ersatzschule-sh.de"
         },
         {
             "id": 3,
@@ -147,6 +149,16 @@
             "typ": "KLASSE",
             "administriertVon": 9,
             "zugehoerigZu": 9
+        },
+        {
+            "id": 15,
+            "kennung": "0799801",
+            "name": "Duborg-Skolen",
+            "namensergaenzung": "Keine",
+            "kuerzel": "07998-1",
+            "typ": "SCHULE",
+            "administriertVon": 2,
+            "zugehoerigZu": 2
         }
     ]
 }
