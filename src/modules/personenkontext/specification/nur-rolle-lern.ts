@@ -3,7 +3,9 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class CheckRollenartLernSpecification {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
@@ -44,11 +46,7 @@ export class CheckRollenartLernSpecification {
         const containsMixedRollen: boolean =
             hasAnyLernInSent && sentRollen.some((rolle: Rolle<true>) => rolle.rollenart !== RollenArt.LERN);
 
-        if (containsMixedRollen) {
-            return false;
-        }
-
-        return true;
+        return !containsMixedRollen;
     }
 
     private async getUniqueRollenFromPersonenkontexte(
