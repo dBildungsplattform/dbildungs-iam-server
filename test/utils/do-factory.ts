@@ -229,7 +229,7 @@ export class DoFactory {
             createdAt: withId ? faker.date.past() : undefined,
             updatedAt: withId ? faker.date.recent() : undefined,
             klasse: faker.lorem.word({ length: 2 }),
-            personalnummer: faker.string.numeric({ length: 7 }),
+            personalnummer: undefined,
         };
         return Object.assign(Object.create(ImportDataItem.prototype) as ImportDataItem<boolean>, person, props);
     }

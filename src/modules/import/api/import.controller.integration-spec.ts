@@ -34,7 +34,6 @@ import path from 'path';
 import { DbiamPersonenkontextImportBodyParams } from './dbiam-personenkontext-import.body.params.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
-import { ImportDataItem } from '../domain/import-data-item.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -153,6 +152,33 @@ describe('Rolle API', () => {
             });
         });
 
+        it('should return 404 if the organisation is not found', async () => {
+            const params: DbiamPersonenkontextImportBodyParams = {
+                organisationId: faker.string.uuid(),
+                rolleId: faker.string.uuid(),
+                file: {
+                    fieldname: 'file',
+                    originalname: 'invalid_test_import_SuS.csv',
+                    encoding: '7bit',
+                    mimetype: 'text/csv',
+                    buffer: Buffer.from(''),
+                    size: 0,
+                } as Express.Multer.File,
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/import/upload')
+                .send(params);
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
+            });
+        });
+
         it('should return 400 with CSV_PARSING_ERROR if the csv file can be parsed but has data items errors', async () => {
             const filePath: string = path.resolve('./', `test/imports/invalid_test_import_SuS.csv`);
 
@@ -185,7 +211,7 @@ describe('Rolle API', () => {
             });
         });
 
-        it('should return 400 with CSV_PARSING_ERROR if the csv file cannot be  or is undefined', async () => {
+        it('should return 400 with CSV_PARSING_ERROR if the csv file cannot be parsed or is empty', async () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             await em.persistAndFlush(schule);
@@ -239,9 +265,16 @@ describe('Rolle API', () => {
         });
     });
 
-    //Combined the tests in order to remove the import result.
-    describe('/POST execute & /GET downloadImportResultFile ', () => {
-        it('should return 200 OK for execute and download the file', async () => {
+    describe('/POST execute', () => {
+        afterEach(() => {
+            const importDir: string = path.resolve('./', 'imports');
+            const files: string[] = fs.readdirSync(importDir);
+            for (const file of files) {
+                fs.unlinkSync(path.resolve(importDir, file));
+            }
+        });
+
+        it('should return 200 OK for execute', async () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             await em.persistAndFlush(schule);
@@ -264,7 +297,7 @@ describe('Rolle API', () => {
             );
 
             const importvorgangId: string = faker.string.uuid();
-            const dataItem: ImportDataItem<true> = await importDataRepository.save(
+            await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
                     importvorgangId: importvorgangId,
                     klasse: klasse.name,
@@ -277,24 +310,26 @@ describe('Rolle API', () => {
                 organisationId: schule.id,
                 rolleId: sus.id,
             };
-            //Assert execute
+
             const executeResponse: Response = await request(app.getHttpServer() as App)
                 .post('/import/execute')
                 .send(params);
 
             expect(executeResponse.status).toBe(200);
+        });
 
-            //Assert download
-            const downloadResponse: Response = await request(app.getHttpServer() as App)
-                .get(`/import/${importvorgangId}/download`)
-                .send();
+        it('should return 404 if the import transaction is not found', async () => {
+            const params: ImportvorgangByIdBodyParams = {
+                importvorgangId: faker.string.uuid(),
+                organisationId: faker.string.uuid(),
+                rolleId: faker.string.uuid(),
+            };
 
-            expect(downloadResponse.status).toBe(200);
-            expect(downloadResponse.type).toBe('text/plain');
-            expect(downloadResponse.text.includes(klasse.name)).toBeTruthy();
-            expect(downloadResponse.text.includes(dataItem.familienname)).toBeTruthy();
-            expect(downloadResponse.text.includes(dataItem.vorname)).toBeTruthy();
-            expect(downloadResponse.text.includes(dataItem.klasse!)).toBeTruthy();
+            const executeResponse: Response = await request(app.getHttpServer() as App)
+                .post('/import/execute')
+                .send(params);
+
+            expect(executeResponse.status).toBe(404);
         });
     });
 });

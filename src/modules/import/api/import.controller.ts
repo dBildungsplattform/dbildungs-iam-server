@@ -141,9 +141,18 @@ export class ImportController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<StreamableFile> {
         const importWorkflow: ImportWorkflowAggregate = this.importWorkflowFactory.createNew();
-        const result: Result<ReadStream> = await importWorkflow.getFile(params.importvorgangId, permissions);
+        const result: Result<ReadStream> = await importWorkflow.getImportResultTextFile(
+            params.importvorgangId,
+            permissions,
+        );
         if (!result.ok) {
-            throw result.error;
+            if (result.error instanceof ImportDomainError) {
+                throw result.error;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
+            );
         } else {
             //TODO: Delete DataItems & File
             const fileName: string = importWorkflow.getFileName(params.importvorgangId);

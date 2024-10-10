@@ -221,7 +221,10 @@ export class ImportWorkflowAggregate {
         return undefined;
     }
 
-    public async getFile(importvorgangId: string, permissions: PersonPermissions): Promise<Result<ReadStream>> {
+    public async getImportResultTextFile(
+        importvorgangId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<ReadStream>> {
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
         if (permissionCheckError) {
             return {
