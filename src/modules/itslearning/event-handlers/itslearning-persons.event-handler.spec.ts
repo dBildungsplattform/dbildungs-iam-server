@@ -21,6 +21,7 @@ import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData> | undefined): PersonenkontextUpdatedData {
     return {
@@ -263,39 +264,81 @@ describe('ItsLearning Persons Event Handler', () => {
     });
 
     describe('emailAddressGeneratedEventHandler', () => {
+        const personId: string = faker.string.uuid();
+        const emailId: string = faker.string.uuid();
+        const email: string = faker.internet.email();
+        const generatedEvent: EmailAddressGeneratedEvent = new EmailAddressGeneratedEvent(
+            personId,
+            emailId,
+            email,
+            true,
+        );
+
         it('should update email', async () => {
-            const personId: string = faker.string.uuid();
-            const emailId: string = faker.string.uuid();
-            const email: string = faker.internet.email();
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
 
-            await sut.emailAddressGeneratedEventHandler(new EmailAddressGeneratedEvent(personId, emailId, email, true));
+            await sut.emailAddressGeneratedEventHandler(generatedEvent);
 
             expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(personId, email);
             expect(loggerMock.info).toHaveBeenCalledWith(`Updated E-Mail for person with ID ${personId}!`);
         });
 
         it('should log error, if email could not be updated', async () => {
-            const personId: string = faker.string.uuid();
-            const emailId: string = faker.string.uuid();
-            const email: string = faker.internet.email();
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Update email
 
-            await sut.emailAddressGeneratedEventHandler(new EmailAddressGeneratedEvent(personId, emailId, email, true));
+            await sut.emailAddressGeneratedEventHandler(generatedEvent);
 
             expect(loggerMock.error).toHaveBeenCalledWith(`Could not update E-Mail for person with ID ${personId}!`);
         });
 
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
-            const personId: string = faker.string.uuid();
-            const emailId: string = faker.string.uuid();
-            const email: string = faker.internet.email();
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
 
-            await sut.emailAddressGeneratedEventHandler(new EmailAddressGeneratedEvent(personId, emailId, email, true));
+            await sut.emailAddressGeneratedEventHandler(generatedEvent);
 
-            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring email update.');
+        });
+    });
+
+    describe('emailAddressChangedEventHandler', () => {
+        const personId: string = faker.string.uuid();
+        const oldEmailId: string = faker.string.uuid();
+        const oldEmail: string = faker.internet.email();
+        const newEmailId: string = faker.string.uuid();
+        const newEmail: string = faker.internet.email();
+        const changedEvent: EmailAddressChangedEvent = new EmailAddressChangedEvent(
+            personId,
+            oldEmailId,
+            oldEmail,
+            newEmailId,
+            newEmail,
+        );
+
+        it('should update email', async () => {
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
+
+            await sut.emailAddressChangedEventHandler(changedEvent);
+
+            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(personId, newEmail);
+            expect(loggerMock.info).toHaveBeenCalledWith(`Updated E-Mail for person with ID ${personId}!`);
+        });
+
+        it('should log error, if email could not be updated', async () => {
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Update email
+
+            await sut.emailAddressChangedEventHandler(changedEvent);
+
+            expect(loggerMock.error).toHaveBeenCalledWith(`Could not update E-Mail for person with ID ${personId}!`);
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
+
+            await sut.emailAddressChangedEventHandler(changedEvent);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring email update.');
         });
     });
 
