@@ -198,7 +198,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -408,7 +409,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -640,7 +642,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -864,7 +867,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -1080,7 +1084,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -1420,7 +1425,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -1889,7 +1895,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -2157,7 +2164,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -2413,7 +2421,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -2790,7 +2799,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -3008,7 +3018,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -3068,7 +3079,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ],
           "mappedType": "enum"
         }
@@ -3231,7 +3243,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -3537,7 +3550,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -3866,7 +3880,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -4091,7 +4106,8 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN"
           ]
         },
         "service_provider_target_enum": {
@@ -4254,7 +4270,8 @@
         "SCHULEN_VERWALTEN",
         "KLASSEN_VERWALTEN",
         "SCHULTRAEGER_VERWALTEN",
-        "MIGRATION_DURCHFUEHREN"
+        "MIGRATION_DURCHFUEHREN",
+        "PERSON_SYNCHRONISIEREN"
       ]
     },
     "service_provider_target_enum": {
