@@ -226,7 +226,8 @@ export class ImportWorkflowAggregate {
         }
 
         try {
-            const file: ReadStream = createReadStream(this.getSafeFilePath(importvorgangId));
+            const fileName: string = this.getSafeFilePath(importvorgangId);
+            const file: ReadStream = createReadStream(fileName);
             return {
                 ok: true,
                 value: file,
