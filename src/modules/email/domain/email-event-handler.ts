@@ -21,7 +21,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxUserAttributesChangedEvent } from '../../../shared/events/ox-user-attributes-changed.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -72,7 +72,7 @@ export class EmailEventHandler {
             const pkForRolleWithSPReference: RolleWithPK | undefined = rollenWithPK.get(rollenIdWithSPReference);
             if (pkForRolleWithSPReference) {
                 if (existingEmail) {
-                    await this.createChangeEmail(
+                    await this.changeEmail(
                         event.personId,
                         pkForRolleWithSPReference.personenkontext.organisationId,
                         existingEmail,
@@ -217,10 +217,10 @@ export class EmailEventHandler {
         await Promise.all(handlePersonPromises);
     }
 
-    @EventHandler(OxUserAttributesChangedEvent)
-    public async handleOxUserAttributesChangedEvent(event: OxUserAttributesChangedEvent): Promise<void> {
+    @EventHandler(OxMetadataInKeycloakChangedEvent)
+    public async handleOxUserAttributesChangedEvent(event: OxMetadataInKeycloakChangedEvent): Promise<void> {
         this.logger.info(
-            `Received OxUserAttributesChangedEvent personId:${event.personId}, keycloakUsername: ${event.keycloakUsername}, userName:${event.userName}, contextName:${event.contextName}, email:${event.emailAddress}`,
+            `Received OxUserAttributesChangedEvent personId:${event.personId}, keycloakUsername: ${event.keycloakUsername}, userName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.emailAddress}`,
         );
         const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
 
@@ -239,7 +239,7 @@ export class EmailEventHandler {
         }
 
         email.enable();
-        email.oxUserID = event.userId;
+        email.oxUserID = event.oxUserId;
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
 
         if (persistenceResult instanceof DomainError) {
@@ -337,7 +337,7 @@ export class EmailEventHandler {
         }
     }
 
-    private async createChangeEmail(
+    private async changeEmail(
         personId: PersonID,
         organisationId: OrganisationID,
         oldEmail: EmailAddress<true>,

@@ -412,10 +412,10 @@ describe('OxEventHandler', () => {
                 expect.objectContaining({
                     personId: personId,
                     keycloakUsername: referrer,
-                    userId: oxUserId,
-                    userName: oxUserName,
-                    contextId: contextId,
-                    contextName: contextName,
+                    oxUserId: oxUserId,
+                    oxUserName: oxUserName,
+                    oxContextId: contextId,
+                    oxContextName: contextName,
                     primaryEmail: email,
                 }),
             );

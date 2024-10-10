@@ -34,7 +34,7 @@ import { PersonID, RolleID } from '../../../shared/types/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxUserAttributesChangedEvent } from '../../../shared/events/ox-user-attributes-changed.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
 import { OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
@@ -771,7 +771,7 @@ describe('Email Event Handler', () => {
         let fakeOXUserName: OXUserName;
         let fakeOXContextName: OXContextName;
         let fakeEmail: string;
-        let event: OxUserAttributesChangedEvent;
+        let event: OxMetadataInKeycloakChangedEvent;
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
@@ -780,7 +780,7 @@ describe('Email Event Handler', () => {
             fakeOXUserName = fakeKeycloakUsername;
             fakeOXContextName = 'context1';
             fakeEmail = faker.internet.email();
-            event = new OxUserAttributesChangedEvent(
+            event = new OxMetadataInKeycloakChangedEvent(
                 fakePersonId,
                 fakeKeycloakUsername,
                 fakeOXUserId,
