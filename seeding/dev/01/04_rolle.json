@@ -149,6 +149,16 @@
         "serviceProviderIds": [
             3
         ]
+    },
+    {
+        "id": 9,
+        "administeredBySchulstrukturknoten": 0,
+        "name": "Technischer Nutzer",
+        "rollenart": "SYSADMIN",
+        "merkmale": [],
+        "systemrechte": [],
+        "serviceProviderIds": [],
+        "istTechnisch": true
     }
   ]
 }
