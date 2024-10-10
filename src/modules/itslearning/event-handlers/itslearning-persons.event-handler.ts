@@ -18,6 +18,8 @@ import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { PersonResponse } from '../actions/read-person.action.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 @Injectable()
 export class ItsLearningPersonsEventHandler {
@@ -65,6 +67,20 @@ export class ItsLearningPersonsEventHandler {
         }
 
         this.logger.info(`Person with ID ${event.personId} updated in itsLearning!`);
+    }
+
+    @EventHandler(EmailAddressGeneratedEvent)
+    public async emailAddressGeneratedEventHandler(event: EmailAddressGeneratedEvent): Promise<void> {
+        this.logger.info(`Received EmailAddressGeneratedEvent, ${event.personId}`);
+
+        await this.updateEmail(event.personId, event.address);
+    }
+
+    @EventHandler(EmailAddressChangedEvent)
+    public async emailAddressChangedEventHandler(event: EmailAddressChangedEvent): Promise<void> {
+        this.logger.info(`Received EmailAddressChangedEvent, ${event.personId}`);
+
+        await this.updateEmail(event.personId, event.newAddress);
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
@@ -150,6 +166,23 @@ export class ItsLearningPersonsEventHandler {
             this.logger.info(`Person with ID ${personID} deleted.`);
         } else {
             this.logger.error(`Could not delete person with ID ${personID} from itsLearning.`);
+        }
+    }
+
+    /**
+     * Updates the email for the person
+     */
+    private async updateEmail(personId: PersonID, email: string): Promise<void> {
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring email update.');
+        }
+
+        const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(personId, email);
+
+        if (updateError) {
+            this.logger.error(`Could not update E-Mail for person with ID ${personId}!`);
+        } else {
+            this.logger.info(`Updated E-Mail for person with ID ${personId}!`);
         }
     }
 
