@@ -23,6 +23,7 @@ import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { EventService } from '../../eventbus/services/event.service.js';
+import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -35,11 +36,8 @@ describe('LDAP Client Service', () => {
     let eventServiceMock: DeepMocked<EventService>;
     let clientMock: DeepMocked<Client>;
 
-    /*   let organisation: Organisation<true>;
-    let invalidOrganisation: Organisation<true>;*/
     let person: Person<true>;
     let personWithoutReferrer: Person<true>;
-    //let ouKennung: string;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -74,28 +72,6 @@ describe('LDAP Client Service', () => {
         eventServiceMock = module.get(EventService);
         clientMock = createMock<Client>();
 
-        //ouKennung = faker.string.numeric({ length: 7 });
-        /*organisation = Organisation.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            undefined,
-            undefined,
-            ouKennung,
-            faker.company.name(),
-            undefined,
-            undefined,
-            OrganisationsTyp.SCHULE,
-            undefined,
-        );
-        invalidOrganisation = DoFactory.createOrganisationAggregate(true, {
-            id: faker.string.uuid(),
-            name: faker.company.name(),
-            kennung: undefined,
-            typ: OrganisationsTyp.SCHULE,
-            createdAt: faker.date.past(),
-            updatedAt: faker.date.recent(),
-        });*/
         person = Person.construct(
             faker.string.uuid(),
             faker.date.past(),
@@ -138,24 +114,6 @@ describe('LDAP Client Service', () => {
 
     it('should be defined', () => {
         expect(em).toBeDefined();
-    });
-
-    describe('bind', () => {
-        /*describe('when error is thrown inside', () => {
-            it('should return error result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockRejectedValueOnce(new Error());
-                    clientMock.add.mockResolvedValueOnce();
-                    return clientMock;
-                });
-
-                const result: Result<void> = await ldapClientService.createOrganisation({
-                    kennung: faker.string.numeric({ length: 7 }),
-                });
-
-                expect(result.ok).toBeFalsy();
-            });
-        });*/
     });
 
     describe('isLehrerExisting', () => {
@@ -202,62 +160,11 @@ describe('LDAP Client Service', () => {
     });
 
     describe('creation', () => {
-        /* describe('organisation', () => {
-            it('when called with valid organisation should return truthy result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
-                    clientMock.add.mockResolvedValueOnce();
-                    return clientMock;
-                });
-
-                const result: Result<void> = await ldapClientService.createOrganisation({
-                    kennung: faker.string.numeric({ length: 7 }),
-                });
-
-                expect(result.ok).toBeTruthy();
-            });
-
-            it('when called with organisation without kennung should return error result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
-                    clientMock.add.mockResolvedValueOnce();
-                    return clientMock;
-                });
-                const result: Result<void> = await ldapClientService.createOrganisation({
-                    kennung: undefined,
-                });
-
-                expect(result).toEqual({
-                    ok: false,
-                    error: new KennungRequiredForSchuleError(),
-                });
-            });
-        });*/
-
         describe('lehrer', () => {
-            /*it('when called with valid person and organisation should return truthy result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValue();
-                    clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
-                    ); //mock existsSchule
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
-
-                    return clientMock;
-                });
-                const result: Result<PersonData> = await ldapClientService.createLehrer(person);
-
-                expect(result.ok).toBeTruthy();
-            });*/
-
             it('when called with extra entryUUID should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
-                    ); //mock existsSchule
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
 
                     return clientMock;
@@ -269,51 +176,82 @@ describe('LDAP Client Service', () => {
                     referrer: faker.lorem.word(),
                     ldapEntryUUID: faker.string.uuid(),
                 };
+                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
                 const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer);
 
                 expect(result.ok).toBeTruthy();
+                expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
             });
 
-            /* it('when called with valid person and an organisation without kennung should return error result', async () => {
+            it('when called WITHOUT entryUUID should use person.id and return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.createLehrer(person);
+                const testLehrer: PersonData = {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.lorem.word(),
+                };
+                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
+                const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer);
 
-                expect(result.ok).toBeFalsy();
+                expect(result.ok).toBeTruthy();
+                expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
             });
 
-            it('when schule is not found for lehrer', async () => {
+            it('when called with explicit domain "ersatzschule-sh.de" should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: schule is NOT present
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
 
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.createLehrer(person);
+                const testLehrer: PersonData = {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.lorem.word(),
+                    ldapEntryUUID: faker.string.uuid(),
+                };
+                const fakeErsatzSchuleAddressDomain: string = 'ersatzschule-sh.de';
+                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=ersatzSchulen,dc=schule-sh,dc=de';
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    testLehrer,
+                    undefined,
+                    fakeErsatzSchuleAddressDomain,
+                );
 
-                expect(result.ok).toBeFalsy();
-            });*/
+                expect(result.ok).toBeTruthy();
+                expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
+            });
 
             it('when lehrer already exists', async () => {
+                const lehrerUid: string = 'uid=' + person.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
-                    ); //mock: schule is present
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    dn: lehrerUid,
+                                }),
+                            ],
+                        }),
                     ); //mock: lehrer already exists
 
                     return clientMock;
                 });
                 const result: Result<PersonData> = await ldapClientService.createLehrer(person);
 
-                expect(result.ok).toBeFalsy();
+                expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Lehrer ${lehrerUid} exists, nothing to create`);
+                expect(result.ok).toBeTruthy();
             });
 
             it('when called with person without referrer should return error result', async () => {
@@ -358,17 +296,6 @@ describe('LDAP Client Service', () => {
 
                 expect(result.ok).toBeTruthy();
             });
-
-            /* it('when called with valid person and an organisation without kennung should return error result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
-                    clientMock.add.mockResolvedValueOnce();
-                    return clientMock;
-                });
-                const result: Result<PersonData> = await ldapClientService.deleteLehrer(person);
-
-                expect(result.ok).toBeFalsy();
-            });*/
 
             it('when called with person without referrer should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
@@ -439,52 +366,6 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeFalsy();
             });
         });
-
-        /*describe('delete organisation', () => {
-            it('when called with valid organisation should return truthy result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
-                    clientMock.del.mockResolvedValueOnce();
-                    return clientMock;
-                });
-
-                const result: Result<void> = await ldapClientService.deleteOrganisation({
-                    kennung: faker.string.numeric({ length: 7 }),
-                });
-
-                expect(result.ok).toBeTruthy();
-            });
-
-            it('when called with organisation without kennung should return error result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
-                    clientMock.add.mockResolvedValueOnce();
-                    return clientMock;
-                });
-
-                const result: Result<void> = await ldapClientService.deleteOrganisation({
-                    kennung: undefined,
-                });
-
-                expect(result).toEqual({
-                    ok: false,
-                    error: new KennungRequiredForSchuleError(),
-                });
-            });
-
-            it('when bind returns error', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockRejectedValueOnce(new Error());
-                    clientMock.add.mockResolvedValueOnce();
-                    return clientMock;
-                });
-                const result: Result<void> = await ldapClientService.deleteOrganisation({
-                    kennung: faker.string.numeric({ length: 7 }),
-                });
-
-                expect(result.ok).toBeFalsy();
-            });
-        });*/
     });
 
     describe('changeEmailAddressByPersonId', () => {
@@ -614,6 +495,24 @@ describe('LDAP Client Service', () => {
                             mailAlternativeAddress: newEmailAddress,
                         }),
                     );
+                });
+            });
+
+            describe('but email-address cannot be splitted/ is invalid', () => {
+                it('should return LdapEmailAddressError and log error about invalid emailAddress', async () => {
+                    const invalidEmailAddress: string = 'noValidEmailAddress';
+                    const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
+                        fakePersonID,
+                        invalidEmailAddress,
+                    );
+
+                    if (result.ok) throw Error();
+
+                    expect(result.error).toBeInstanceOf(LdapEmailAddressError);
+                    expect(loggerMock.error).toHaveBeenLastCalledWith(
+                        `LDAP: Invalid email-address:${invalidEmailAddress}`,
+                    );
+                    expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
                 });
             });
         });

@@ -141,6 +141,7 @@ export class LdapEventHandler {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
         );
+
         await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.address);
     }
 }
