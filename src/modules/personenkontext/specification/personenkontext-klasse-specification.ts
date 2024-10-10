@@ -24,10 +24,10 @@ export class PersonenkontextKlasseSpecification {
     ) {}
 
     public async returnsError(p: Personenkontext<boolean>): Promise<Option<DomainError>> {
-        if (!(await this.nurRollenartLern.checkRollenartLern([p]))) {
+        if (!(await this.nurRollenartLern.isSatisfiedBy([p]))) {
             return new UpdateInvalidRollenartForLernError();
         }
-        if (!(await this.befristungRequired.checkBefristung([p]))) {
+        if (!(await this.befristungRequired.isSatisfiedBy([p]))) {
             return new PersonenkontextBefristungRequiredError();
         }
         if (!(await this.nurLehrUndLernAnKlasse.isSatisfiedBy(p))) {

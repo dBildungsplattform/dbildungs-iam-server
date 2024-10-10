@@ -4,15 +4,18 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Injectable } from '@nestjs/common';
+import { CollectionSpecification } from '../../specification/specifications.js';
 
 @Injectable()
-export class CheckRollenartLernSpecification {
+export class CheckRollenartLernSpecification extends CollectionSpecification<Personenkontext<boolean>> {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
-    ) {}
+    ) {
+        super();
+    }
 
-    public async checkRollenartLern(sentPKs: Personenkontext<boolean>[]): Promise<boolean> {
+    public async isSatisfiedBy(sentPKs: Personenkontext<boolean>[]): Promise<boolean> {
         // Fetch all personenkontexte for the person
         let existingPKs: Personenkontext<true>[] = [];
 
