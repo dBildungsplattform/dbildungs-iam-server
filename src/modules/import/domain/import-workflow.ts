@@ -23,7 +23,7 @@ import { DbiamCreatePersonenkontextBodyParams } from '../../personenkontext/api/
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { createReadStream, promises as fs, ReadStream } from 'fs';
-import { join } from 'path';
+import path from 'path';
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
 import { ImportTextFileNotFoundError } from './import-text-file-notfound.error.js';
 
@@ -94,27 +94,32 @@ export class ImportWorkflowAggregate {
         }
 
         //Parse Data
-        const parsedData: ParseResult<CSVImportDataItemDTO> = await this.parseCSVFile(file);
-        //Datensätze persistieren
-        //TODO: 30 ImportDataItems per call
-        const importVorgangId: string = faker.string.uuid();
-        const promises: Promise<ImportDataItem<true>>[] = parsedData.data.map((value: CSVImportDataItemDTO) =>
-            this.importDataRepository.save(
-                ImportDataItem.createNew(
-                    importVorgangId,
-                    value.nachname,
-                    value.vorname,
-                    value.klasse,
-                    value.personalnummer,
-                ),
-            ),
-        );
-        await Promise.all(promises);
+        try {
+            const parsedData: ParseResult<CSVImportDataItemDTO> = await this.parseCSVFile(file);
 
-        return {
-            importVorgangId,
-            isValid: parsedData.errors.length === 0,
-        };
+            //Datensätze persistieren
+            //TODO: 30 ImportDataItems per call
+            const importVorgangId: string = faker.string.uuid();
+            const promises: Promise<ImportDataItem<true>>[] = parsedData.data.map((value: CSVImportDataItemDTO) =>
+                this.importDataRepository.save(
+                    ImportDataItem.createNew(
+                        importVorgangId,
+                        value.nachname,
+                        value.vorname,
+                        value.klasse,
+                        value.personalnummer,
+                    ),
+                ),
+            );
+            await Promise.all(promises);
+
+            return {
+                importVorgangId,
+                isValid: parsedData.errors.length === 0,
+            };
+        } catch (error) {
+            return new ImportCSVFileParsingError([error]);
+        }
     }
 
     public async execute(importvorgangId: string, permissions: PersonPermissions): Promise<Option<DomainError>> {
@@ -294,20 +299,16 @@ export class ImportWorkflowAggregate {
                 resolve: (
                     value: ParseResult<CSVImportDataItemDTO> | PromiseLike<ParseResult<CSVImportDataItemDTO>>,
                 ) => void,
-                reject: (reason?: ImportCSVFileParsingError) => void,
             ) => {
                 Papa.parse<CSVImportDataItemDTO>(csvContent, {
                     header: true,
-                    skipEmptyLines: true,
+                    skipEmptyLines: false,
                     transformHeader: (header: string) => header.toLowerCase().trim(),
                     transform: (value: string): string => {
                         return value.trim();
                     },
                     complete: (results: ParseResult<CSVImportDataItemDTO>) => {
                         return resolve(results);
-                    },
-                    error: (error: Error) => {
-                        return reject(new ImportCSVFileParsingError([error]));
                     },
                 });
             },
@@ -351,6 +352,6 @@ export class ImportWorkflowAggregate {
     }
 
     private getSafeFilePath(importvorgangId: string): string {
-        return join('/imports', `${importvorgangId + this.TEXT_FILENAME_NAME}`);
+        return path.resolve('./', `imports/${importvorgangId + this.TEXT_FILENAME_NAME}`);
     }
 }

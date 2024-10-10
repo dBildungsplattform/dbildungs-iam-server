@@ -82,6 +82,6 @@
         "REALM": "defrealm"
     },
     "IMPORT": {
-        "IMPORT_FILE_MAXGROESSE_IN_MB": 1
+        "IMPORT_FILE_MAXGROESSE_IN_MB": 10
     }
 }

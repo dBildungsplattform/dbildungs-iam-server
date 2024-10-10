@@ -30,9 +30,6 @@ import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulcon
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DbiamPersonenkontextImportBodyParams } from './dbiam-personenkontext-import.body.params.js';
-import { ImportConfig } from '../../../shared/config/import.config.js';
-import { ConfigService } from '@nestjs/config';
-import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -54,16 +51,7 @@ import { ImportExceptionFilter } from './import-exception-filter.js';
 @ApiOAuth2(['openid'])
 @Controller({ path: 'import' })
 export class ImportController {
-    public readonly IMPORT_FILE_MAXGROESSE_IN_BYTES: number;
-
-    public constructor(
-        private readonly importWorkflowFactory: ImportWorkflowFactory,
-        config: ConfigService<ServerConfig>,
-    ) {
-        //Move to an helper
-        const fileMaxGroesseInMB: number = config.getOrThrow<ImportConfig>('IMPORT').IMPORT_FILE_MAXGROESSE_IN_MB;
-        this.IMPORT_FILE_MAXGROESSE_IN_BYTES = fileMaxGroesseInMB * Math.pow(1024, 2);
-    }
+    public constructor(private readonly importWorkflowFactory: ImportWorkflowFactory) {}
 
     @Post('upload')
     @ApiConsumes('multipart/form-data')
@@ -80,11 +68,8 @@ export class ImportController {
                 .addFileTypeValidator({
                     fileType: 'text/csv',
                 })
-                .addMaxSizeValidator({
-                    maxSize: 1048576,
-                })
                 .build({
-                    errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+                    errorHttpStatusCode: HttpStatus.BAD_REQUEST,
                     fileIsRequired: false,
                 }),
         )
