@@ -41,6 +41,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         typ: organisation.typ,
         traegerschaft: organisation.traegerschaft,
         emailDomain: organisation.emailDomain,
+        emailAddress: organisation.emailAdress,
     };
 }
 
@@ -58,6 +59,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.typ,
         entity.traegerschaft,
         entity.emailDomain,
+        entity.emailAddress,
     );
 }
 
@@ -415,9 +417,9 @@ export class OrganisationRepository {
                 }
             }
         }
-        const organisationEntity: Organisation<true> = await this.save(organisationFound);
+        const organisationEntity: Organisation<true> | OrganisationSpecificationError =
+            await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
-
         return organisationEntity;
     }
 
