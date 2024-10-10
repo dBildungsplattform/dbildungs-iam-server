@@ -15,23 +15,37 @@ import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportDataItem } from './import-data-item.js';
 import { faker } from '@faker-js/faker';
-import { PersonenkontextCreationService, PersonPersonenkontext } from '../../personenkontext/domain/personenkontext-creation.service.js';
+import {
+    PersonenkontextCreationService,
+    PersonPersonenkontext,
+} from '../../personenkontext/domain/personenkontext-creation.service.js';
 import { DbiamCreatePersonenkontextBodyParams } from '../../personenkontext/api/param/dbiam-create-personenkontext.body.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { createReadStream, promises as fs, ReadStream } from 'fs';
+import { join } from 'path';
+import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
+import { ImportTextFileNotFoundError } from './import-text-file-notfound.error.js';
 
+export type ImportUploadResultFields = {
+    importVorgangId: string;
+    isValid: boolean;
+};
 export type OrganisationByIdAndName = Pick<Organisation<true>, 'id' | 'name'>;
 export type TextFilePersonFields = {
-    klasse: string;
+    klasse: string | undefined;
     vorname: string;
     familienname: string;
-    username: string;
-    password: string;
+    username: string | undefined;
+    password: string | undefined;
 };
 
 export class ImportWorkflowAggregate {
-    public selectedOrganisationId?: string;
+    public readonly TEXT_FILENAME_NAME: string = '_spsh_csv_import_ergebnis.txt';
 
-    public selectedRolleId?: string;
+    public selectedOrganisationId!: string;
+
+    public selectedRolleId!: string;
 
     private constructor(
         private readonly rolleRepo: RolleRepo,
@@ -60,61 +74,59 @@ export class ImportWorkflowAggregate {
         this.selectedRolleId = rolleId;
     }
 
-    // Verifies if the selected rolle and organisation can together be assigned to a kontext
-    // Check Permissions
-    // Parse data and validate every data item
-    public async isValid(file: Express.Multer.File, permissions: PersonPermissions): Promise<DomainError | boolean> {
-        if (this.selectedOrganisationId && this.selectedRolleId) {
-            const referenceCheckError: Option<DomainError> = await this.checkReferences(
-                this.selectedOrganisationId,
-                this.selectedRolleId,
-            );
-            if (referenceCheckError) {
-                return referenceCheckError;
-            }
-
-            const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
-            if (permissionCheckError) {
-                return permissionCheckError;
-            }
-
-            //Parse Data
-            const parsedData: ParseResult<CSVImportDataItemDTO> = await this.parseCSVFile(file);
-            //Datensätze persistieren
-            //TODO: 5 bis 10 Datensätze per call
-            const importVorgangId: string = faker.string.uuid();
-            const promises: Promise<ImportDataItem<true>>[] = parsedData.data.map((value: CSVImportDataItemDTO) =>
-                this.importDataRepository.create(
-                    ImportDataItem.createNew(
-                        importVorgangId,
-                        value.nachname,
-                        value.vorname,
-                        value.klasse,
-                        value.personalnummer,
-                    ),
-                ),
-            );
-            await Promise.all(promises);
-
-            return parsedData.errors.length > 0;
+    // Check References and Permissions
+    // Parse data (ToDO => next ticket: validate every data item)
+    public async isValid(
+        file: Express.Multer.File,
+        permissions: PersonPermissions,
+    ): Promise<DomainError | ImportUploadResultFields> {
+        const referenceCheckError: Option<DomainError> = await this.checkReferences(
+            this.selectedOrganisationId,
+            this.selectedRolleId,
+        );
+        if (referenceCheckError) {
+            return referenceCheckError;
         }
 
-        return false;
-    }
-
-    public async execute(
-        importvorgangId: string,
-        organisationId: string,
-        rolleId: string,
-        permissions: PersonPermissions,
-    ): Promise<Option<DomainError>> {
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
         if (permissionCheckError) {
             return permissionCheckError;
         }
-        //Klassenlist
+
+        //Parse Data
+        const parsedData: ParseResult<CSVImportDataItemDTO> = await this.parseCSVFile(file);
+        //Datensätze persistieren
+        //TODO: 30 ImportDataItems per call
+        const importVorgangId: string = faker.string.uuid();
+        const promises: Promise<ImportDataItem<true>>[] = parsedData.data.map((value: CSVImportDataItemDTO) =>
+            this.importDataRepository.save(
+                ImportDataItem.createNew(
+                    importVorgangId,
+                    value.nachname,
+                    value.vorname,
+                    value.klasse,
+                    value.personalnummer,
+                ),
+            ),
+        );
+        await Promise.all(promises);
+
+        return {
+            importVorgangId,
+            isValid: parsedData.errors.length === 0,
+        };
+    }
+
+    public async execute(importvorgangId: string, permissions: PersonPermissions): Promise<Option<DomainError>> {
+        const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
+        if (permissionCheckError) {
+            return permissionCheckError;
+        }
+
         const klassenByIDandName: OrganisationByIdAndName[] = [];
-        const klassen: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([organisationId]);
+        const klassen: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
+            this.selectedOrganisationId,
+        ]);
         klassen.forEach((value: Organisation<true>) => {
             if (value.typ === OrganisationsTyp.KLASSE) {
                 klassenByIDandName.push({
@@ -125,60 +137,112 @@ export class ImportWorkflowAggregate {
         });
         // Get all import data items with importvorgangId
         const textFilePersonFieldsList: TextFilePersonFields[] = [];
-        const offset: number = 0;
-        const limit: number = 30;
-        const [importDataItems, totalItems]: Counted<ImportDataItem<true>> =
-            await this.importDataRepository.findByImportVorgangId(importvorgangId, offset, limit);
+        //TODO: Process 30 dataItems at time
+        // const offset: number = 0;
+        // const limit: number = 30;
+        const [importDataItems, total]: Counted<ImportDataItem<true>> =
+            await this.importDataRepository.findByImportVorgangId(importvorgangId);
+        if (total === 0) {
+            return new EntityNotFoundError('ImportDataItem', importvorgangId);
+        }
         //create Person With PKs
-        const promises = importDataItems.map((importDataItem: ImportDataItem<true>) => {
-            const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
-                (organisationByIdAndName: OrganisationByIdAndName) =>
-                    organisationByIdAndName.name?.toLocaleLowerCase() ==
-                    importDataItem.organisation?.toLocaleLowerCase(),
-            );
-            if (!klasse) {
-                //TODO return error: something went wrong
-                return;
-            }
+        const promises: Promise<DomainError | PersonPersonenkontext>[] = importDataItems.map(
+            (importDataItem: ImportDataItem<true>) => {
+                const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
+                    (organisationByIdAndName: OrganisationByIdAndName) =>
+                        organisationByIdAndName.name?.toLocaleLowerCase() == importDataItem.klasse?.toLocaleLowerCase(),
+                );
+                if (!klasse) {
+                    //(ToDO => next ticket: validate every data item)
+                    throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
+                        `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.familienname} was not found`,
+                    ]);
+                }
 
-            const createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[] = [
-                {
-                    organisationId: organisationId,
-                    rolleId: rolleId,
-                },
-                {
-                    organisationId: klasse.id,
-                    rolleId: rolleId,
-                },
-            ];
+                const createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[] = [
+                    {
+                        organisationId: this.selectedOrganisationId,
+                        rolleId: this.selectedRolleId,
+                    },
+                    {
+                        organisationId: klasse.id,
+                        rolleId: this.selectedRolleId,
+                    },
+                ];
 
-            return this.personenkontextCreationService.createPersonWithPersonenkontexte(
-                permissions,
-                importDataItem.vorname,
-                importDataItem.familienname,
-                createPersonenkontexte,
-            );
-        });
+                const savedPersonWithPersonenkontext: Promise<DomainError | PersonPersonenkontext> =
+                    this.personenkontextCreationService.createPersonWithPersonenkontexte(
+                        permissions,
+                        importDataItem.vorname,
+                        importDataItem.familienname,
+                        createPersonenkontexte,
+                    );
 
-        const savedPersonWithPersonenkontext: (DomainError | PersonPersonenkontext | undefined)[] = await Promise.all(promises);
-        savedPersonWithPersonenkontext.map((personPersonenkontext: DomainError | PersonPersonenkontext | undefined) => {
-            if (personPersonenkontext !== undefined && !(personPersonenkontext instanceof DomainError)) {
-                const klassenName: string = personPersonenkontext.personenkontexte.map((value: Personkontext<true>) => {
-                    if ()
-                })
-                textFilePersonFieldsList.push({
-                    klasse:
-                })
-            }
-        })
+                return savedPersonWithPersonenkontext;
+            },
+        );
+
+        const savedPersonWithPersonenkontext: (DomainError | PersonPersonenkontext)[] = await Promise.all(promises);
 
         //Save Benutzer + Passwort in the Liste
-        //Create text file.
+        savedPersonWithPersonenkontext.map((personPersonenkontext: DomainError | PersonPersonenkontext) => {
+            if (!(personPersonenkontext instanceof DomainError)) {
+                const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
+                    (klasseByIDandName: OrganisationByIdAndName) =>
+                        personPersonenkontext.personenkontexte.some(
+                            (pk: Personenkontext<true>) => pk.organisationId === klasseByIDandName.id,
+                        ),
+                );
 
+                textFilePersonFieldsList.push({
+                    klasse: klasse?.name,
+                    vorname: personPersonenkontext.person.vorname,
+                    familienname: personPersonenkontext.person.familienname,
+                    username: personPersonenkontext.person.referrer,
+                    password: personPersonenkontext.person.newPassword,
+                });
+            }
+        });
+
+        //Create text file.
+        const fileCreated: undefined | DomainError = await this.createTextFile(
+            importvorgangId,
+            textFilePersonFieldsList,
+        );
+
+        if (fileCreated instanceof DomainError) {
+            return fileCreated;
+        }
         return undefined;
     }
 
-    // Checks if the rolle can be assigned to the target organisation
+    public async getFile(importvorgangId: string, permissions: PersonPermissions): Promise<Result<ReadStream>> {
+        const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
+        if (permissionCheckError) {
+            return {
+                ok: false,
+                error: permissionCheckError,
+            };
+        }
+
+        try {
+            const file: ReadStream = createReadStream(this.getFilePath(importvorgangId));
+            return {
+                ok: true,
+                value: file,
+            };
+        } catch (error) {
+            return {
+                ok: false,
+                error: new ImportTextFileNotFoundError([String(error)]),
+            };
+        }
+    }
+
+    public getFileName(importvorgangId: string): string {
+        return importvorgangId + this.TEXT_FILENAME_NAME;
+    }
+
     //TODO: use CheckReferences from PersonenkontextWorkflowAggregate
     private async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
         const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
@@ -249,19 +313,43 @@ export class ImportWorkflowAggregate {
         );
     }
 
-    // private async buildPersonenkontexteForSchueler(
-    //     parentOrganisationId: string,
-    // ): Promise<DbiamCreatePersonenkontextBodyParams> {
-    //     // Check if logged in person has permission
-    //     const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtRootOrganisation([
-    //         RollenSystemRecht.IMPORT_DURCHFUEHREN,
-    //     ]);
+    private async createTextFile(
+        importvorgangId: string,
+        textFilePersonFieldsList: TextFilePersonFields[],
+    ): Promise<undefined | DomainError> {
+        const schule: Option<Organisation<true>> = await this.organisationRepository.findById(
+            this.selectedOrganisationId,
+        );
+        if (!schule) {
+            return new EntityNotFoundError('Organisation', this.selectedOrganisationId);
+        }
 
-    //     // Missing permission on orga
-    //     if (!hasPermissionAtOrga) {
-    //         return new MissingPermissionsError('Unauthorized to import data');
-    //     }
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(this.selectedRolleId);
+        if (!rolle) {
+            return new EntityNotFoundError('Rolle', this.selectedRolleId);
+        }
 
-    //     return undefined;
-    // }
+        const fileName: string = this.getFilePath(importvorgangId);
+        const headerImportInfo: string = `Schule:${schule.name} - Rolle:${rolle.name}`;
+        const headerUserInfo: string = '\n\nKlasse - Vorname - Nachname - Benutzername - Passwort';
+
+        try {
+            await fs.writeFile(fileName, headerImportInfo, 'utf8');
+            await fs.appendFile(fileName, headerUserInfo, 'utf8');
+            /* eslint-disable no-await-in-loop */
+            for (const textFilePersonFields of textFilePersonFieldsList) {
+                const userInfo: string = `\n${textFilePersonFields.klasse} - ${textFilePersonFields.vorname} - ${textFilePersonFields.familienname} - ${textFilePersonFields.username} - ${textFilePersonFields.password}`;
+                await fs.appendFile(fileName, userInfo, 'utf8');
+            }
+            /* eslint-disable no-await-in-loop */
+        } catch (error) {
+            return new ImportTextFileCreationError([String(error)]);
+        }
+
+        return undefined;
+    }
+
+    private getFilePath(importvorgangId: string): string {
+        return join(process.cwd(), `/imports/${importvorgangId + this.TEXT_FILENAME_NAME}`);
+    }
 }

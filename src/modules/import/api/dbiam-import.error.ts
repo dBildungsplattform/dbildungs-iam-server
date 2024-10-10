@@ -3,7 +3,9 @@ import { DbiamError, DbiamErrorProps } from '../../../shared/error/dbiam.error.j
 
 export enum ImportErrorI18nTypes {
     IMPORT_ERROR = 'IMPORT_ERROR',
-    ADD_SYSTEMRECHT_ERROR = 'CSV_PARSING_ERROR',
+    CSV_PARSING_ERROR = 'CSV_PARSING_ERROR',
+    IMPORT_TEXT_FILE_CREATION_ERROR = 'IMPORT_TEXT_FILE_CREATION_ERROR',
+    IMPORT_TEXT_FILE_NOT_FOUND = 'IMPORT_TEXT_FILE_NOT_FOUND',
 }
 
 export type DbiamImportErrorProps = DbiamErrorProps & {

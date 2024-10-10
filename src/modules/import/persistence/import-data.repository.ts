@@ -9,7 +9,7 @@ export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): Req
         importvorgangId: importDataItem.importvorgangId,
         familienname: importDataItem.familienname,
         vorname: importDataItem.vorname,
-        organisation: importDataItem.organisation,
+        klasse: importDataItem.klasse,
         personalnummer: importDataItem.personalnummer,
     };
 }
@@ -22,19 +22,15 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.importvorgangId,
         entity.familienname,
         entity.vorname,
+        entity.klasse,
         entity.personalnummer,
     );
 }
-
-export type PersonEventPayload = {
-    personenkontexte: [{ id: string; organisationId: string; rolleId: string }];
-};
-
 @Injectable()
 export class ImportDataRepository {
     public constructor(private readonly em: EntityManager) {}
 
-    public async create(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {
+    public async save(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {
         const entity: ImportDataItemEntity = this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
 
         await this.em.persistAndFlush(entity);

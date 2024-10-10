@@ -6,7 +6,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
         public importvorgangId: string,
         public familienname: string,
         public vorname: string,
-        public organisation?: string,
+        public klasse?: string,
         public personalnummer?: string,
     ) {}
 
@@ -17,7 +17,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
         importvorgangId: string,
         familienname: string,
         vorname: string,
-        organisation?: string,
+        klasse?: string,
         personalnummer?: string,
     ): ImportDataItem<WasPersisted> {
         return new ImportDataItem(
@@ -27,7 +27,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
             importvorgangId,
             familienname,
             vorname,
-            organisation,
+            klasse,
             personalnummer,
         );
     }
@@ -36,7 +36,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
         importvorgangId: string,
         familienname: string,
         vorname: string,
-        organisation?: string,
+        klasse?: string,
         personalnummer?: string,
     ): ImportDataItem<false> {
         return new ImportDataItem(
@@ -46,7 +46,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
             importvorgangId,
             familienname,
             vorname,
-            organisation,
+            klasse,
             personalnummer,
         );
     }

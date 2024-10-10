@@ -1,6 +1,7 @@
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Property } from '@mikro-orm/core';
+import { Entity, Property } from '@mikro-orm/core';
 
+@Entity({ tableName: 'importdataitem' })
 export class ImportDataItemEntity extends TimestampedEntity {
     @Property({ columnType: 'uuid' })
     public readonly importvorgangId!: string;
@@ -12,7 +13,7 @@ export class ImportDataItemEntity extends TimestampedEntity {
     public readonly vorname!: string;
 
     @Property({ nullable: true })
-    public readonly organisation?: string;
+    public readonly klasse?: string;
 
     @Property({ nullable: true })
     public personalnummer?: string;
