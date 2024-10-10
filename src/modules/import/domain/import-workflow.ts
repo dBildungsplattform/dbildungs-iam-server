@@ -226,7 +226,7 @@ export class ImportWorkflowAggregate {
         }
 
         try {
-            const file: ReadStream = createReadStream(this.getFilePath(importvorgangId));
+            const file: ReadStream = createReadStream(this.getSafeFilePath(importvorgangId));
             return {
                 ok: true,
                 value: file,
@@ -329,7 +329,7 @@ export class ImportWorkflowAggregate {
             return new EntityNotFoundError('Rolle', this.selectedRolleId);
         }
 
-        const fileName: string = this.getFilePath(importvorgangId);
+        const fileName: string = this.getSafeFilePath(importvorgangId);
         const headerImportInfo: string = `Schule:${schule.name} - Rolle:${rolle.name}`;
         const headerUserInfo: string = '\n\nKlasse - Vorname - Nachname - Benutzername - Passwort';
 
@@ -349,7 +349,7 @@ export class ImportWorkflowAggregate {
         return undefined;
     }
 
-    private getFilePath(importvorgangId: string): string {
-        return join(process.cwd(), `/imports/${importvorgangId + this.TEXT_FILENAME_NAME}`);
+    private getSafeFilePath(importvorgangId: string): string {
+        return join('/imports', `${importvorgangId + this.TEXT_FILENAME_NAME}`);
     }
 }
