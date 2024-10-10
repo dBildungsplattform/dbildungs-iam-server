@@ -13,6 +13,8 @@ export type CreatePersonParams = {
     username: string;
 
     institutionRoleType: IMSESInstitutionRoleType;
+
+    email?: string;
 };
 
 type CreatePersonResponseBody = {
@@ -47,6 +49,7 @@ export class CreatePersonAction extends IMSESAction<CreatePersonResponseBody, vo
                     'ims2:userId': {
                         'ims1:userIdValue': this.params.username,
                     },
+                    'ims1:email': this.params.email,
                     'ims2:institutionRole': {
                         'ims2:institutionRoleType': this.params.institutionRoleType,
                         'ims2:primaryRoleType': true,
