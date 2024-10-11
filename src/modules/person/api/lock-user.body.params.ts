@@ -20,5 +20,5 @@ export class LockUserBodyParams {
     @IsOptional()
     @IsDate()
     @ApiPropertyOptional({ description: 'Required if Befristung is set' })
-    public readonly locked_until!: Date;
+    public readonly locked_until?: Date;
 }

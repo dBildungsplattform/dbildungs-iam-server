@@ -13,7 +13,7 @@ export function mapAggregateToData(userLock: UserLock): RequiredEntityData<UserL
     return {
         person: userLock.person,
         locked_by: userLock.locked_by,
-        locked_until: userLock.locked_until!,
+        locked_until: userLock.locked_until,
     };
 }
 
