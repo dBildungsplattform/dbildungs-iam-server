@@ -55,8 +55,8 @@ export class AndNotSpecification<T> extends CompositeSpecification<T> {
 
 export class AndSpecification<T> extends CompositeSpecification<T> {
     public constructor(
-        private readonly leftCondition: Specification<T>,
-        private readonly rightCondition: Specification<T>,
+        private readonly leftCondition: CompositeSpecification<T>,
+        private readonly rightCondition: CompositeSpecification<T>,
     ) {
         super();
     }
@@ -65,7 +65,6 @@ export class AndSpecification<T> extends CompositeSpecification<T> {
         return (await this.leftCondition.isSatisfiedBy(t)) && (await this.rightCondition.isSatisfiedBy(t));
     }
 }
-
 
 export class NotSpecification<T> extends CompositeSpecification<T> {
     public constructor(private readonly condition: Specification<T>) {
@@ -100,44 +99,5 @@ export class OrSpecification<T> extends CompositeSpecification<T> {
 
     public async isSatisfiedBy(t: T): Promise<boolean> {
         return (await this.leftCondition.isSatisfiedBy(t)) || (await this.rightCondition.isSatisfiedBy(t));
-    }
-}
-
-export abstract class CollectionSpecification<T> extends CompositeSpecification<T[]> {
-    public andAllElements(other: Specification<T>): ElementsSpecification<T> {
-        return new ElementsSpecification(this, other);
-    }
-
-    public andAll(other: CollectionSpecification<T>): CollectionSpecification<T> {
-        return new AndAllSpecification(this, other);
-    }
-}
-
-export class AndAllSpecification<T> extends CollectionSpecification<T> {
-    public constructor(
-        private readonly leftCondition: CollectionSpecification<T>,
-        private readonly rightCondition: CollectionSpecification<T>,
-    ) {
-        super();
-    }
-
-    public async isSatisfiedBy(t: T[]): Promise<boolean> {
-        return (await this.leftCondition.isSatisfiedBy(t)) && (await this.rightCondition.isSatisfiedBy(t));
-    }
-}
-
-export class ElementsSpecification<T> extends CompositeSpecification<T[]> {
-    public constructor(
-        private readonly leftCondition: Specification<T[]>,
-        private readonly rightCondition: Specification<T>,
-    ) {
-        super();
-    }
-
-    public override async isSatisfiedBy(l: T[]): Promise<boolean> {
-        return (
-            (await this.leftCondition.isSatisfiedBy(l)) &&
-            (await Promise.all(l.map(async (e: T) => this.rightCondition.isSatisfiedBy(e)))).every((v: boolean) => v)
-        );
     }
 }
