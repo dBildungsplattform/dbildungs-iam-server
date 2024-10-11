@@ -6,6 +6,7 @@ import {
     RequiredEntityData,
     SelectQueryBuilder,
     EntityDictionary,
+    QueryOrder,
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -280,16 +281,24 @@ export class OrganisationRepository {
     public async findByNameOrKennungAndExcludeByOrganisationType(
         excludeOrganisationType: OrganisationsTyp,
         searchStr?: string,
+        permittedOrgaIds?: string[],
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
 
+        // Set up the query with the search string, limit, and excluded type
         scope
             .searchString(searchStr)
             .setScopeWhereOperator(ScopeOperator.AND)
             .paged(0, limit)
             .excludeTyp([excludeOrganisationType]);
 
+        // If permitted organization IDs are provided, add them to the query scope
+        if (permittedOrgaIds && permittedOrgaIds.length > 0) {
+            scope.filterByIds(permittedOrgaIds);
+        }
+
+        // Execute the query and return the result
         let foundOrganisations: Organisation<true>[] = [];
         [foundOrganisations] = await this.findBy(scope);
 
@@ -324,6 +333,7 @@ export class OrganisationRepository {
             const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
                 .select('*')
                 .where({ id: { $in: organisationIds } })
+                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
                 .limit(searchOptions.limit);
             entitiesForIds = (await queryForIds.getResultAndCount())[0];
         }
@@ -343,7 +353,12 @@ export class OrganisationRepository {
             andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
         }
         if (searchOptions.searchString) {
-            andClauses.push({ name: { $ilike: `%${searchOptions.searchString}%` } });
+            andClauses.push({
+                $or: [
+                    { name: { $ilike: `%${searchOptions.searchString}%` } },
+                    { kennung: { $ilike: `%${searchOptions.searchString}%` } },
+                ],
+            });
         }
         if (searchOptions.excludeTyp) {
             andClauses.push({ typ: { $nin: searchOptions.excludeTyp } });
@@ -360,6 +375,7 @@ export class OrganisationRepository {
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
+            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
             .limit(searchOptions.limit);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
