@@ -40,9 +40,9 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
-import {EmailRepo} from "../../email/persistence/email.repo.js";
-import {PersonEmailResponse} from "./person-email-response";
-import {EmailAddressStatus} from "../../email/domain/email-address";
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from './person-email-response.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -334,11 +334,16 @@ describe('PersonController', () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
                 const fakeEmailAddress: string = faker.internet.email();
-                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue(createMock<PersonEmailResponse>({
-                    address: fakeEmailAddress,
-                    status: EmailAddressStatus.ENABLED,
-                }));
-                const personResponse: PersonendatensatzResponse = await personController.findPersonById(params, personPermissionsMock);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValue(
+                    createMock<PersonEmailResponse>({
+                        address: fakeEmailAddress,
+                        status: EmailAddressStatus.ENABLED,
+                    }),
+                );
+                const personResponse: PersonendatensatzResponse = await personController.findPersonById(
+                    params,
+                    personPermissionsMock,
+                );
 
                 if (!personResponse.person.email) throw Error();
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
