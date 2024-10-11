@@ -26,3 +26,11 @@ export enum RollenSystemRecht {
     MIGRATION_DURCHFUEHREN = 'MIGRATION_DURCHFUEHREN',
     PERSON_SYNCHRONISIEREN = 'PERSON_SYNCHRONISIEREN',
 }
+
+export enum RollenSort {
+    ADMINISTERED_BY_SCHULSTRUKTURKNOTEN_NAME = 'administeredBySchulstrukturknotenName',
+    NAME = 'name',
+    ROLLENART = 'rollenart',
+    SERVICE_PROVIDERS = 'serviceProviders',
+    MERKMALE = 'merkmale',
+}
