@@ -57,7 +57,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonalnummerUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 

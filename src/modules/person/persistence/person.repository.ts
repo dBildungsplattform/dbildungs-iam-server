@@ -637,7 +637,7 @@ export class PersonRepository {
             personFound.vertrauensstufe,
             personFound.auskunftssperre,
             newPersonalnummer,
-            personFound.lockInfo,
+            personFound.userLock,
             personFound.isLocked,
             personFound.email,
         );
