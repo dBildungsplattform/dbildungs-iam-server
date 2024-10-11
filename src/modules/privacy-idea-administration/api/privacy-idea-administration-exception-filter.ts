@@ -14,6 +14,7 @@ import { HardwareTokenServiceError } from './error/hardware-token-service.error.
 import { TokenResetError } from './error/token-reset.error.js';
 import { TwoAuthStateError } from './error/two-auth-state.error.js';
 import { SoftwareTokenVerificationError } from './error/software-token-verification.error.js';
+import { UserExistsError } from './error/userename-exists.error.js';
 
 @Catch(TokenError)
 export class PrivacyIdeaAdministrationExceptionFilter implements ExceptionFilter<TokenError> {
@@ -65,6 +66,13 @@ export class PrivacyIdeaAdministrationExceptionFilter implements ExceptionFilter
             new DbiamPrivacyIdeaAdministrationError({
                 code: 400,
                 i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.SOFTWARE_TOKEN_VERIFICATION_ERROR,
+            }),
+        ],
+        [
+            UserExistsError.name,
+            new DbiamPrivacyIdeaAdministrationError({
+                code: 400,
+                i18nKey: PrivacyIdeaAdministrationErrorI18nTypes.USERNAME_EXISTS_ERROR,
             }),
         ],
     ]);

@@ -33,6 +33,11 @@ import {
     UserResponse,
     VerificationResponse,
 } from './privacy-idea-api.types.js';
+import { DomainError } from '../../shared/error/domain.error.js';
+import { UserExistsError } from './api/error/userename-exists.error.js';
+import { PersonRenamedEvent } from '../../shared/events/person-renamed-event.js';
+import { EventHandler } from '../../core/eventbus/decorators/event-handler.decorator.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -40,7 +45,7 @@ export class PrivacyIdeaAdministrationService {
 
     private tokenExpiryTimestampMs: number = 0;
 
-    private static AUTHORIZATION_TIMEBOX_MS: number = 59 * 60 * 1000;
+    private static readonly AUTHORIZATION_TIMEBOX_MS: number = 59 * 60 * 1000;
 
     private readonly privacyIdeaConfig: PrivacyIdeaConfig;
 
@@ -48,6 +53,7 @@ export class PrivacyIdeaAdministrationService {
         private readonly httpService: HttpService,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly personenkontextService: PersonenkontextService,
+        private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
         this.privacyIdeaConfig = configService.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA');
@@ -239,6 +245,55 @@ export class PrivacyIdeaAdministrationService {
                 throw new Error(`Error adding user: Unknown error occurred`);
             }
         }
+    }
+
+    private async deleteUser(userName: string): Promise<void> {
+        const token: string = await this.getJWTToken();
+        const url: string =
+            this.privacyIdeaConfig.ENDPOINT + '/user/' + this.privacyIdeaConfig.USER_RESOLVER + '/' + userName;
+        const headers: { Authorization: string } = {
+            Authorization: `${token}`,
+        };
+        try {
+            await firstValueFrom(this.httpService.delete(url, { headers: headers }));
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error adding user: ${error.message}`);
+            } else {
+                throw new Error(`Error adding user: Unknown error occurred`);
+            }
+        }
+    }
+
+    @EventHandler(PersonRenamedEvent)
+    public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
+        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
+        if (!event.referrer) throw new Error('Referrer is missing');
+
+        await this.updateUsername(event.oldReferrer, event.referrer);
+    }
+
+    private async updateUsername(oldUserName: string, newUserName: string): Promise<Result<void, DomainError>> {
+        const token: string = await this.getJWTToken();
+        const userTokens: PrivacyIdeaToken[] = await this.getUserTokens(oldUserName);
+        await Promise.allSettled(
+            userTokens.map(async (userToken: PrivacyIdeaToken) => {
+                await this.unassignToken(userToken.serial, token);
+            }),
+        );
+        const newUserNameExists: boolean = await this.checkUserExists(newUserName);
+        if (newUserNameExists) {
+            return { ok: false, error: new UserExistsError() };
+        }
+        await this.addUser(newUserName);
+        await Promise.allSettled(
+            userTokens.map(async (userToken: PrivacyIdeaToken) => {
+                await this.assignToken(userToken.serial, token, newUserName);
+            }),
+        );
+
+        await this.deleteUser(oldUserName);
+        return { ok: true, value: undefined };
     }
 
     private async verifyTokenStatus(serial: string, token: string): Promise<TokenVerificationResponse> {

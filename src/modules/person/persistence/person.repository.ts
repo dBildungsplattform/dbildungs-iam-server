@@ -411,6 +411,10 @@ export class PersonRepository {
         }
     }
 
+    private createUsername(vorname: string, familienname: string): string {
+        return (vorname.charAt(0) + familienname).toLowerCase();
+    }
+
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
         const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
@@ -429,7 +433,11 @@ export class PersonRepository {
         await this.em.persistAndFlush(personEntity);
 
         if (isPersonRenamedEventNecessary) {
-            this.eventService.publish(PersonRenamedEvent.fromPerson(person));
+            this.eventService.publish(
+                PersonRenamedEvent.fromPerson(
+                    person,
+                    this.createUsername(personEntity.vorname, personEntity.familienname)),
+            );
         }
 
         return mapEntityToAggregate(personEntity);
