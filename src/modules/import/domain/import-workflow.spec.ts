@@ -21,11 +21,10 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import internal from 'stream';
 import { ImportDataItem } from './import-data-item.js';
-import fs, { ReadStream } from 'fs';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { ImportTextFileNotFoundError } from './import-text-file-notfound.error.js';
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
+import { Person } from '../../person/domain/person.js';
 
 describe('ImportWorkflowAggregate', () => {
     let module: TestingModule;
@@ -95,12 +94,15 @@ describe('ImportWorkflowAggregate', () => {
         });
     });
 
-    describe('isValid', () => {
+    describe('validateImport', () => {
         it('should return EntityNotFoundError if the organisation does not exist', async () => {
             const file: Express.Multer.File = createMock<Express.Multer.File>();
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
-            const result: DomainError | ImportUploadResultFields = await sut.isValid(file, personpermissionsMock);
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
             expect(result).toBeInstanceOf(EntityNotFoundError);
         });
 
@@ -109,7 +111,10 @@ describe('ImportWorkflowAggregate', () => {
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-            const result: DomainError | ImportUploadResultFields = await sut.isValid(file, personpermissionsMock);
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
             expect(result).toBeInstanceOf(EntityNotFoundError);
             expect(organisationRepoMock.findById).toHaveBeenCalledWith(SELECTED_ORGANISATION_ID);
         });
@@ -122,7 +127,10 @@ describe('ImportWorkflowAggregate', () => {
             rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(false);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
-            const result: DomainError | ImportUploadResultFields = await sut.isValid(file, personpermissionsMock);
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
             expect(result).toBeInstanceOf(EntityNotFoundError);
             expect(rolleRepoMock.findById).toHaveBeenCalledWith(SELECTED_ROLLE_ID);
         });
@@ -137,7 +145,10 @@ describe('ImportWorkflowAggregate', () => {
             rolleMock.rollenart = RollenArt.LEIT;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
-            const result: DomainError | ImportUploadResultFields = await sut.isValid(file, personpermissionsMock);
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
             expect(result).toBeInstanceOf(RolleNurAnPassendeOrganisationError);
             expect(organisationRepoMock.findById).toHaveBeenCalledWith(SELECTED_ORGANISATION_ID);
             expect(rolleRepoMock.findById).toHaveBeenCalledWith(SELECTED_ROLLE_ID);
@@ -156,7 +167,10 @@ describe('ImportWorkflowAggregate', () => {
 
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
 
-            const result: DomainError | ImportUploadResultFields = await sut.isValid(file, personpermissionsMock);
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
             expect(result).toBeInstanceOf(MissingPermissionsError);
         });
 
@@ -178,7 +192,10 @@ describe('ImportWorkflowAggregate', () => {
                 unknown
             > = jest.spyOn(Papa, 'parse');
 
-            const result: DomainError | ImportUploadResultFields = await sut.isValid(file, personpermissionsMock);
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
             expect(result).not.toBeInstanceOf(DomainError);
             expect(importDataRepositoryMock.save).toHaveBeenCalled();
             expect(personenkontextCreationServiceMock.createPersonWithPersonenkontexte).not.toHaveBeenCalled();
@@ -186,12 +203,16 @@ describe('ImportWorkflowAggregate', () => {
         });
     });
 
-    describe('execute', () => {
+    describe('executeImport', () => {
         it('should return MissingPermissionsError if the admin does not have permissions to execute the import transaction', async () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
 
-            const result: Option<DomainError> = await sut.execute(faker.string.uuid(), personpermissionsMock);
-            expect(result).toBeInstanceOf(MissingPermissionsError);
+            const result: Result<Buffer> = await sut.executeImport(faker.string.uuid(), personpermissionsMock);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new MissingPermissionsError('Unauthorized to import data'),
+            });
         });
 
         it('should return EntityNotFoundError if the import transaction does not exist', async () => {
@@ -202,14 +223,15 @@ describe('ImportWorkflowAggregate', () => {
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[], 0]);
             const importvorgangId: string = faker.string.uuid();
 
-            const result: Option<DomainError> = await sut.execute(importvorgangId, personpermissionsMock);
-            expect(result).toBeInstanceOf(EntityNotFoundError);
-            expect(result?.message).toBe(
-                `requested ImportDataItem with the following ID ${importvorgangId} was not found`,
-            );
+            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityNotFoundError('ImportDataItem', importvorgangId),
+            });
         });
 
-        it('should return EntityNotFoundError if the import transaction does not exist', async () => {
+        it('should return EntityNotFoundError if a klasse during the import execution was deleted', async () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, name: '1A' }),
@@ -226,10 +248,10 @@ describe('ImportWorkflowAggregate', () => {
                 `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.familienname} was not found`,
             ]);
 
-            await expect(sut.execute(importvorgangId, personpermissionsMock)).rejects.toThrowError(error);
+            await expect(sut.executeImport(importvorgangId, personpermissionsMock)).rejects.toThrowError(error);
         });
 
-        it('should return undefined if the import transaction was executed successfully', async () => {
+        it('should return the file buffer if the import transaction was executed successfully', async () => {
             const schule: Organisation<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.SCHULE,
             });
@@ -245,8 +267,10 @@ describe('ImportWorkflowAggregate', () => {
                 importvorgangId,
                 klasse: '1A',
             });
+
+            const person: Person<true> = DoFactory.createPerson(true);
             const pks: PersonPersonenkontext = {
-                person: DoFactory.createPerson(true),
+                person: person,
                 personenkontexte: [
                     DoFactory.createPersonenkontext(true, { organisationId: schule.id }),
                     DoFactory.createPersonenkontext(true, { organisationId: klasse.id }),
@@ -254,15 +278,25 @@ describe('ImportWorkflowAggregate', () => {
             };
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
-            organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
+            organisationRepoMock.findById.mockResolvedValueOnce(schule);
 
-            jest.spyOn(fs, 'writeFile').mockReturnValueOnce(undefined);
-            jest.spyOn(fs, 'appendFile').mockReturnValueOnce(undefined);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
-            const result: Option<DomainError> = await sut.execute(importvorgangId, personpermissionsMock);
-            expect(result).toBeUndefined();
+            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+
+            if (!result.ok) {
+                throw new Error(result.error.message);
+            }
+            expect(result.value).toBeInstanceOf(Buffer);
+
+            const resultString: string = result.value.toString('utf8');
+            expect(resultString).toContain(schule.name);
+            expect(resultString).toContain(rolle.name);
+            expect(resultString).toContain(person.vorname);
+            expect(resultString).toContain(person.familienname);
+            expect(resultString).toContain(klasse.name);
         });
 
         it('should return EntityNotFoundError if the schule is not found', async () => {
@@ -293,11 +327,12 @@ describe('ImportWorkflowAggregate', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
-            const result: Option<DomainError> = await sut.execute(importvorgangId, personpermissionsMock);
-            expect(result).toBeInstanceOf(EntityNotFoundError);
-            expect(result?.message).toBe(
-                `requested Organisation with the following ID ${SELECTED_ORGANISATION_ID} was not found`,
-            );
+            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityNotFoundError('Organisation', SELECTED_ORGANISATION_ID),
+            });
         });
 
         it('should return EntityNotFoundError if the rolle is not found', async () => {
@@ -329,9 +364,12 @@ describe('ImportWorkflowAggregate', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
-            const result: Option<DomainError> = await sut.execute(importvorgangId, personpermissionsMock);
-            expect(result).toBeInstanceOf(EntityNotFoundError);
-            expect(result?.message).toBe(`requested Rolle with the following ID ${SELECTED_ROLLE_ID} was not found`);
+            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityNotFoundError('Rolle', SELECTED_ROLLE_ID),
+            });
         });
 
         it('should return ImportTextFileCreationError if the text file cannot be created', async () => {
@@ -361,67 +399,68 @@ describe('ImportWorkflowAggregate', () => {
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
-            jest.spyOn(fs.promises, 'writeFile').mockImplementationOnce(() => {
+            jest.spyOn(Buffer, 'from').mockImplementationOnce(() => {
                 throw new Error('Error details');
             });
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
-            const result: Option<DomainError> = await sut.execute(importvorgangId, personpermissionsMock);
-
-            expect(result).toBeInstanceOf(ImportTextFileCreationError);
-            expect(result?.message).toBe('Text File for the import result could not be created');
-            expect(result?.details).toContain('Error: Error details');
-        });
-    });
-
-    describe('getImportResultTextFile', () => {
-        it('should return MissingPermissionsError if the admin does not have permissions to execute the import transaction', async () => {
-            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
-
-            const result: Result<ReadStream> = await sut.getImportResultTextFile(
-                faker.string.uuid(),
-                personpermissionsMock,
-            );
+            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
 
             expect(result).toEqual({
                 ok: false,
-                error: new MissingPermissionsError('Unauthorized to import data'),
-            });
-        });
-
-        it('should return ImportTextFileNotFoundError if the text file can not be read', async () => {
-            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-            jest.spyOn(fs, 'createReadStream').mockImplementationOnce(() => {
-                throw new Error('Error details');
-            });
-
-            const result: Result<ReadStream> = await sut.getImportResultTextFile(
-                faker.string.uuid(),
-                personpermissionsMock,
-            );
-
-            expect(result).toEqual({
-                ok: false,
-                error: new ImportTextFileNotFoundError(['Error details']),
-            });
-        });
-
-        it('should return File if all conditions pass', async () => {
-            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-            const readStream: ReadStream = createMock<ReadStream>();
-            jest.spyOn(fs, 'createReadStream').mockReturnValueOnce(readStream);
-
-            const result: Result<ReadStream> = await sut.getImportResultTextFile(
-                faker.string.uuid(),
-                personpermissionsMock,
-            );
-
-            expect(result).toEqual({
-                ok: true,
-                value: readStream,
+                error: new ImportTextFileCreationError([String('Error details')]),
             });
         });
     });
+
+    // describe('getImportResultTextFile', () => {
+    //     it('should return MissingPermissionsError if the admin does not have permissions to execute the import transaction', async () => {
+    //         personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
+
+    //         const result: Result<ReadStream> = await sut.getImportResultTextFile(
+    //             faker.string.uuid(),
+    //             personpermissionsMock,
+    //         );
+
+    //         expect(result).toEqual({
+    //             ok: false,
+    //             error: new MissingPermissionsError('Unauthorized to import data'),
+    //         });
+    //     });
+
+    //     it('should return ImportTextFileNotFoundError if the text file can not be read', async () => {
+    //         personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+    //         jest.spyOn(fs, 'createReadStream').mockImplementationOnce(() => {
+    //             throw new Error('Error details');
+    //         });
+
+    //         const result: Result<ReadStream> = await sut.getImportResultTextFile(
+    //             faker.string.uuid(),
+    //             personpermissionsMock,
+    //         );
+
+    //         expect(result).toEqual({
+    //             ok: false,
+    //             error: new ImportTextFileNotFoundError(['Error details']),
+    //         });
+    //     });
+
+    //     it('should return File if all conditions pass', async () => {
+    //         personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+    //         const readStream: ReadStream = createMock<ReadStream>();
+    //         jest.spyOn(fs, 'createReadStream').mockReturnValueOnce(readStream);
+
+    //         const result: Result<ReadStream> = await sut.getImportResultTextFile(
+    //             faker.string.uuid(),
+    //             personpermissionsMock,
+    //         );
+
+    //         expect(result).toEqual({
+    //             ok: true,
+    //             value: readStream,
+    //         });
+    //     });
+    // });
 
     describe('getFileName', () => {
         it('should return the right file name', () => {

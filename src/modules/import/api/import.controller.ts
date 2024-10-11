@@ -1,10 +1,8 @@
 import {
     Body,
     Controller,
-    Get,
     HttpCode,
     HttpStatus,
-    Param,
     ParseFilePipeBuilder,
     Post,
     Res,
@@ -38,8 +36,6 @@ import { ImportUploadResultFields, ImportWorkflowAggregate } from '../domain/imp
 import { DbiamImportError } from './dbiam-import.error.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 import { Response } from 'express';
-import { ReadStream } from 'fs';
-import { ImportvorgangByIdParams } from './importvorgang-by-id..params.js';
 import { ImportUploadResponse } from './importvorgang-upload.response.js';
 import { ImportDomainError } from '../domain/import-domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
@@ -78,7 +74,7 @@ export class ImportController {
     ): Promise<ImportUploadResponse> {
         const importWorkflow: ImportWorkflowAggregate = this.importWorkflowFactory.createNew();
         importWorkflow.initialize(body.organisationId, body.rolleId);
-        const result: DomainError | ImportUploadResultFields = await importWorkflow.isValid(file, permissions);
+        const result: DomainError | ImportUploadResultFields = await importWorkflow.validateImport(file, permissions);
         if (result instanceof DomainError) {
             if (result instanceof ImportDomainError) {
                 throw result;
@@ -92,59 +88,35 @@ export class ImportController {
         return new ImportUploadResponse(result.importVorgangId, result.isValid);
     }
 
+    @ApiProduces('text/plain')
     @Post('execute')
     @HttpCode(HttpStatus.OK)
-    @ApiOkResponse({ description: 'Import transaction was executed successfully.' })
+    @ApiOkResponse({
+        description: 'Import transaction was executed successfully. The text file can be downloaded',
+        schema: {
+            type: 'string',
+            format: 'binary',
+        },
+    })
     @ApiNotFoundResponse({ description: 'The import transaction does not exist.' })
     @ApiBadRequestResponse({
         description: 'Something went wrong with the found import transaction.',
         type: DbiamImportError,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to execute the import transaction.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to execute the import transaction.' })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while executing the import transaction.',
     })
     public async executeImport(
         @Body() body: ImportvorgangByIdBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<void> {
-        const importWorkflow: ImportWorkflowAggregate = this.importWorkflowFactory.createNew();
-        importWorkflow.initialize(body.organisationId, body.rolleId);
-        const result: Option<DomainError> = await importWorkflow.execute(body.importvorgangId, permissions);
-
-        if (result instanceof DomainError) {
-            if (result instanceof ImportDomainError) {
-                throw result;
-            }
-
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
-        }
-    }
-
-    @ApiProduces('text/plain')
-    @Get(':importvorgangId/download')
-    @ApiOkResponse({
-        description: 'The text file for the import transaction was successfully downloaded.',
-        schema: {
-            type: 'string',
-            format: 'binary',
-        },
-    })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to download the import result file.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to download the import result file.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while downloading the import result file.' })
-    public async downloadImportResultFile(
-        @Param() params: ImportvorgangByIdParams,
         @Res({ passthrough: true }) res: Response,
         @Permissions() permissions: PersonPermissions,
     ): Promise<StreamableFile> {
         const importWorkflow: ImportWorkflowAggregate = this.importWorkflowFactory.createNew();
-        const result: Result<ReadStream> = await importWorkflow.getImportResultTextFile(
-            params.importvorgangId,
-            permissions,
-        );
+        importWorkflow.initialize(body.organisationId, body.rolleId);
+        const result: Result<Buffer> = await importWorkflow.executeImport(body.importvorgangId, permissions);
+
         if (!result.ok) {
             if (result.error instanceof ImportDomainError) {
                 throw result.error;
@@ -155,7 +127,7 @@ export class ImportController {
             );
         } else {
             //TODO: Delete DataItems & File
-            const fileName: string = importWorkflow.getFileName(params.importvorgangId);
+            const fileName: string = importWorkflow.getFileName(body.importvorgangId);
             const contentDisposition: string = `attachment; filename="${fileName}"`;
             res.set({
                 'Content-Type': 'text/plain',

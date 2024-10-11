@@ -30,6 +30,7 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
 export class ImportDataRepository {
     public constructor(private readonly em: EntityManager) {}
 
+    //TODO: alle 50 Datebsätze auf einmal persistieren
     public async save(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {
         const entity: ImportDataItemEntity = this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
 

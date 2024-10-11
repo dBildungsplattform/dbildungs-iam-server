@@ -34,6 +34,7 @@ import path from 'path';
 import { DbiamPersonenkontextImportBodyParams } from './dbiam-personenkontext-import.body.params.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
+import { ImportDataItem } from '../domain/import-data-item.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -266,17 +267,10 @@ describe('Rolle API', () => {
     });
 
     describe('/POST execute', () => {
-        afterEach(() => {
-            const importDir: string = path.resolve('./', 'imports');
-            const files: string[] = fs.readdirSync(importDir);
-            for (const file of files) {
-                fs.unlinkSync(path.resolve(importDir, file));
-            }
-        });
-
-        it('should return 200 OK for execute', async () => {
+        it('should return 200 OK with the file', async () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
             await em.persistAndFlush(schule);
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
@@ -297,7 +291,7 @@ describe('Rolle API', () => {
             );
 
             const importvorgangId: string = faker.string.uuid();
-            await importDataRepository.save(
+            const importDataItem: ImportDataItem<true> = await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
                     importvorgangId: importvorgangId,
                     klasse: klasse.name,
@@ -311,11 +305,19 @@ describe('Rolle API', () => {
                 rolleId: sus.id,
             };
 
-            const executeResponse: Response = await request(app.getHttpServer() as App)
+            const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/execute')
                 .send(params);
 
-            expect(executeResponse.status).toBe(200);
+            expect(response.status).toBe(200);
+            expect(response.type).toBe('text/plain');
+
+            const resultString: string = response.text;
+            expect(resultString).toContain(schule.name);
+            expect(resultString).toContain(sus.name);
+            expect(resultString).toContain(importDataItem.vorname);
+            expect(resultString).toContain(importDataItem.familienname);
+            expect(resultString).toContain(klasse.name);
         });
 
         it('should return 404 if the import transaction is not found', async () => {

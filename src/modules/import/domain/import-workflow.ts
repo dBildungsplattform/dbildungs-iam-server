@@ -22,10 +22,7 @@ import {
 import { DbiamCreatePersonenkontextBodyParams } from '../../personenkontext/api/param/dbiam-create-personenkontext.body.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { createReadStream, promises as fs, ReadStream } from 'fs';
-import path from 'path';
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
-import { ImportTextFileNotFoundError } from './import-text-file-notfound.error.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -76,7 +73,7 @@ export class ImportWorkflowAggregate {
 
     // Check References and Permissions
     // Parse data (ToDO => next ticket: validate every data item)
-    public async isValid(
+    public async validateImport(
         file: Express.Multer.File,
         permissions: PersonPermissions,
     ): Promise<DomainError | ImportUploadResultFields> {
@@ -95,10 +92,11 @@ export class ImportWorkflowAggregate {
 
         //Parse Data
         try {
+            //Optimierungsidee: 50 ImportDataItems per call direkt einmail parsen
             const parsedData: ParseResult<CSVImportDataItemDTO> = await this.parseCSVFile(file);
 
             //Datensätze persistieren
-            //TODO: 30 ImportDataItems per call
+            //TODO: 50 ImportDataItems per call direkt einmail persistieren
             const importVorgangId: string = faker.string.uuid();
             const promises: Promise<ImportDataItem<true>>[] = parsedData.data.map((value: CSVImportDataItemDTO) =>
                 this.importDataRepository.save(
@@ -122,12 +120,15 @@ export class ImportWorkflowAggregate {
         }
     }
 
-    public async execute(importvorgangId: string, permissions: PersonPermissions): Promise<Option<DomainError>> {
+    public async executeImport(importvorgangId: string, permissions: PersonPermissions): Promise<Result<Buffer>> {
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
         if (permissionCheckError) {
-            return permissionCheckError;
+            return {
+                ok: false,
+                error: permissionCheckError,
+            };
         }
-
+        //Optimierung: private methode gibt eine map zurück
         const klassenByIDandName: OrganisationByIdAndName[] = [];
         const klassen: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
             this.selectedOrganisationId,
@@ -142,13 +143,17 @@ export class ImportWorkflowAggregate {
         });
         // Get all import data items with importvorgangId
         const textFilePersonFieldsList: TextFilePersonFields[] = [];
-        //TODO: Process 30 dataItems at time
+        //Optimierung: für das folgeTicket mit z.B. 800 Lehrer , muss der thread so manipuliert werden (sobald ein Resultat da ist, wird der nächste request abgeschickt)
+        //Optimierung: Process 10 dataItems at time for createPersonWithPersonenkontexte
         // const offset: number = 0;
-        // const limit: number = 30;
+        // const limit: number = 10;
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
         if (total === 0) {
-            return new EntityNotFoundError('ImportDataItem', importvorgangId);
+            return {
+                ok: false,
+                error: new EntityNotFoundError('ImportDataItem', importvorgangId),
+            };
         }
         //create Person With PKs
         const promises: Promise<DomainError | PersonPersonenkontext>[] = importDataItems.map(
@@ -158,7 +163,7 @@ export class ImportWorkflowAggregate {
                         organisationByIdAndName.name?.toLocaleLowerCase() == importDataItem.klasse?.toLocaleLowerCase(),
                 );
                 if (!klasse) {
-                    //(ToDO => next ticket: validate every data item)
+                    //(ToDO => next ticket: validate every data item and collect all errors even on import execution)
                     throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
                         `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.familienname} was not found`,
                     ]);
@@ -210,49 +215,14 @@ export class ImportWorkflowAggregate {
         });
 
         //Create text file.
-        const fileCreated: undefined | DomainError = await this.createTextFile(
-            importvorgangId,
-            textFilePersonFieldsList,
-        );
-
-        if (fileCreated instanceof DomainError) {
-            return fileCreated;
-        }
-        return undefined;
-    }
-
-    public async getImportResultTextFile(
-        importvorgangId: string,
-        permissions: PersonPermissions,
-    ): Promise<Result<ReadStream>> {
-        const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
-        if (permissionCheckError) {
-            return {
-                ok: false,
-                error: permissionCheckError,
-            };
-        }
-
-        try {
-            const fileName: string = this.getSafeFilePath(importvorgangId);
-            const file: ReadStream = createReadStream(fileName);
-            return {
-                ok: true,
-                value: file,
-            };
-        } catch (error) {
-            return {
-                ok: false,
-                error: new ImportTextFileNotFoundError([String(error)]),
-            };
-        }
+        return this.createTextFile(textFilePersonFieldsList);
     }
 
     public getFileName(importvorgangId: string): string {
         return importvorgangId + this.TEXT_FILENAME_NAME;
     }
 
-    //TODO: use CheckReferences from PersonenkontextWorkflowAggregate
+    //Optimierung: CheckReferences auslagern?
     private async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
         const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
             this.organisationRepository.findById(organisationId),
@@ -269,7 +239,7 @@ export class ImportWorkflowAggregate {
         // Can rolle be assigned at target orga
         const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(organisationId);
         if (!canAssignRolle) {
-            return new EntityNotFoundError('Rolle', rolleId); // Rolle does not exist for the chosen organisation
+            return new EntityNotFoundError('Rolle', rolleId);
         }
 
         //The aimed organisation needs to match the type of role to be assigned
@@ -282,12 +252,10 @@ export class ImportWorkflowAggregate {
     }
 
     private async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {
-        // Check if logged in person has permission
         const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtRootOrganisation([
             RollenSystemRecht.IMPORT_DURCHFUEHREN,
         ]);
 
-        // Missing permission on orga
         if (!hasPermissionAtOrga) {
             return new MissingPermissionsError('Unauthorized to import data');
         }
@@ -318,43 +286,48 @@ export class ImportWorkflowAggregate {
         );
     }
 
-    private async createTextFile(
-        importvorgangId: string,
-        textFilePersonFieldsList: TextFilePersonFields[],
-    ): Promise<undefined | DomainError> {
-        const schule: Option<Organisation<true>> = await this.organisationRepository.findById(
-            this.selectedOrganisationId,
-        );
-        if (!schule) {
-            return new EntityNotFoundError('Organisation', this.selectedOrganisationId);
+    private async createTextFile(textFilePersonFieldsList: TextFilePersonFields[]): Promise<Result<Buffer>> {
+        const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
+            this.organisationRepository.findById(this.selectedOrganisationId),
+            this.rolleRepo.findById(this.selectedRolleId),
+        ]);
+
+        if (!orga) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', this.selectedOrganisationId),
+            };
         }
 
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(this.selectedRolleId);
         if (!rolle) {
-            return new EntityNotFoundError('Rolle', this.selectedRolleId);
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Rolle', this.selectedRolleId),
+            };
         }
 
-        const fileName: string = this.getSafeFilePath(importvorgangId);
-        const headerImportInfo: string = `Schule:${schule.name} - Rolle:${rolle.name}`;
+        let fileContent: string = '';
+
+        const headerImportInfo: string = `Schule:${orga.name} - Rolle:${rolle.name}`;
         const headerUserInfo: string = '\n\nKlasse - Vorname - Nachname - Benutzername - Passwort';
+        fileContent += headerImportInfo + headerUserInfo;
+
+        for (const textFilePersonFields of textFilePersonFieldsList) {
+            const userInfo: string = `\n${textFilePersonFields.klasse} - ${textFilePersonFields.vorname} - ${textFilePersonFields.familienname} - ${textFilePersonFields.username} - ${textFilePersonFields.password}`;
+            fileContent += userInfo;
+        }
 
         try {
-            await fs.writeFile(fileName, headerImportInfo, 'utf8');
-            await fs.appendFile(fileName, headerUserInfo, 'utf8');
-            /* eslint-disable no-await-in-loop */
-            for (const textFilePersonFields of textFilePersonFieldsList) {
-                const userInfo: string = `\n${textFilePersonFields.klasse} - ${textFilePersonFields.vorname} - ${textFilePersonFields.familienname} - ${textFilePersonFields.username} - ${textFilePersonFields.password}`;
-                await fs.appendFile(fileName, userInfo, 'utf8');
-            }
-            /* eslint-disable no-await-in-loop */
+            const buffer: Buffer = Buffer.from(fileContent, 'utf8');
+            return {
+                ok: true,
+                value: buffer,
+            };
         } catch (error) {
-            return new ImportTextFileCreationError([String(error)]);
+            return {
+                ok: false,
+                error: new ImportTextFileCreationError([String(error)]),
+            };
         }
-
-        return undefined;
-    }
-
-    private getSafeFilePath(importvorgangId: string): string {
-        return path.resolve('./', `imports/${importvorgangId + this.TEXT_FILENAME_NAME}`);
     }
 }
