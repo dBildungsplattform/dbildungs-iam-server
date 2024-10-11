@@ -31,6 +31,7 @@ export const localFormatter: (info: winston.Logform.TransformableInfo) => string
     if (typeof info['trace'] === 'string') {
         trace = `\n    ${info['trace']}`;
     }
+    console.log(info);
 
     return `${info.level}\t ${timestamp} (${ms})\t \x1b[33m[${context}]\x1b[39m - ${message}${trace}`;
 };
