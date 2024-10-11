@@ -413,55 +413,6 @@ describe('ImportWorkflowAggregate', () => {
         });
     });
 
-    // describe('getImportResultTextFile', () => {
-    //     it('should return MissingPermissionsError if the admin does not have permissions to execute the import transaction', async () => {
-    //         personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
-
-    //         const result: Result<ReadStream> = await sut.getImportResultTextFile(
-    //             faker.string.uuid(),
-    //             personpermissionsMock,
-    //         );
-
-    //         expect(result).toEqual({
-    //             ok: false,
-    //             error: new MissingPermissionsError('Unauthorized to import data'),
-    //         });
-    //     });
-
-    //     it('should return ImportTextFileNotFoundError if the text file can not be read', async () => {
-    //         personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-    //         jest.spyOn(fs, 'createReadStream').mockImplementationOnce(() => {
-    //             throw new Error('Error details');
-    //         });
-
-    //         const result: Result<ReadStream> = await sut.getImportResultTextFile(
-    //             faker.string.uuid(),
-    //             personpermissionsMock,
-    //         );
-
-    //         expect(result).toEqual({
-    //             ok: false,
-    //             error: new ImportTextFileNotFoundError(['Error details']),
-    //         });
-    //     });
-
-    //     it('should return File if all conditions pass', async () => {
-    //         personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-    //         const readStream: ReadStream = createMock<ReadStream>();
-    //         jest.spyOn(fs, 'createReadStream').mockReturnValueOnce(readStream);
-
-    //         const result: Result<ReadStream> = await sut.getImportResultTextFile(
-    //             faker.string.uuid(),
-    //             personpermissionsMock,
-    //         );
-
-    //         expect(result).toEqual({
-    //             ok: true,
-    //             value: readStream,
-    //         });
-    //     });
-    // });
-
     describe('getFileName', () => {
         it('should return the right file name', () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
