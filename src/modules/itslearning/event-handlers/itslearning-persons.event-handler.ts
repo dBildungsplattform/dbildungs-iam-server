@@ -6,8 +6,8 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import {
     PersonenkontextUpdatedData,
@@ -77,21 +77,21 @@ export class ItsLearningPersonsEventHandler {
         });
     }
 
-    @EventHandler(EmailAddressGeneratedEvent)
-    public async emailAddressGeneratedEventHandler(event: EmailAddressGeneratedEvent): Promise<void> {
+    @EventHandler(OxUserChangedEvent)
+    public async oxUserChangedEventHandler(event: OxUserChangedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
-            this.logger.info(`Received EmailAddressGeneratedEvent, ${event.personId}`);
+            this.logger.info(`Received OxUserChangedEvent, ${event.personId}`);
 
-            await this.updateEmail(event.personId, event.address);
+            await this.updateEmail(event.personId, event.primaryEmail);
         });
     }
 
-    @EventHandler(EmailAddressChangedEvent)
-    public async emailAddressChangedEventHandler(event: EmailAddressChangedEvent): Promise<void> {
+    @EventHandler(OxMetadataInKeycloakChangedEvent)
+    public async oxMetadataInKeycloakChangedEventHandler(event: OxMetadataInKeycloakChangedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
-            this.logger.info(`Received EmailAddressChangedEvent, ${event.personId}`);
+            this.logger.info(`Received OxMetadataInKeycloakChangedEvent, ${event.personId}`);
 
-            await this.updateEmail(event.personId, event.newAddress);
+            await this.updateEmail(event.personId, event.emailAddress);
         });
     }
 

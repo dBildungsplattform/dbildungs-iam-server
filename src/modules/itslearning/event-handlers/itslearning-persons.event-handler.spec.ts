@@ -6,6 +6,8 @@ import { ConfigTestModule, DoFactory, LoggingTestModule } from '../../../../test
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import {
     PersonenkontextUpdatedData,
@@ -20,8 +22,6 @@ import { ItslearningMembershipRepo, SetMembershipsResult } from '../repo/itslear
 import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData> | undefined): PersonenkontextUpdatedData {
     return {
@@ -263,21 +263,23 @@ describe('ItsLearning Persons Event Handler', () => {
         });
     });
 
-    describe('emailAddressGeneratedEventHandler', () => {
+    describe('oxUserChangedEventHandler', () => {
         const personId: string = faker.string.uuid();
-        const emailId: string = faker.string.uuid();
         const email: string = faker.internet.email();
-        const generatedEvent: EmailAddressGeneratedEvent = new EmailAddressGeneratedEvent(
+        const generatedEvent: OxUserChangedEvent = new OxUserChangedEvent(
             personId,
-            emailId,
+            faker.internet.userName(),
+            faker.string.uuid(),
+            faker.internet.userName(),
+            faker.string.uuid(),
+            faker.string.uuid(),
             email,
-            true,
         );
 
         it('should update email', async () => {
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
 
-            await sut.emailAddressGeneratedEventHandler(generatedEvent);
+            await sut.oxUserChangedEventHandler(generatedEvent);
 
             expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(personId, email);
             expect(loggerMock.info).toHaveBeenCalledWith(`Updated E-Mail for person with ID ${personId}!`);
@@ -286,7 +288,7 @@ describe('ItsLearning Persons Event Handler', () => {
         it('should log error, if email could not be updated', async () => {
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Update email
 
-            await sut.emailAddressGeneratedEventHandler(generatedEvent);
+            await sut.oxUserChangedEventHandler(generatedEvent);
 
             expect(loggerMock.error).toHaveBeenCalledWith(`Could not update E-Mail for person with ID ${personId}!`);
         });
@@ -295,39 +297,37 @@ describe('ItsLearning Persons Event Handler', () => {
             sut.ENABLED = false;
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
 
-            await sut.emailAddressGeneratedEventHandler(generatedEvent);
+            await sut.oxUserChangedEventHandler(generatedEvent);
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring email update.');
         });
     });
 
-    describe('emailAddressChangedEventHandler', () => {
+    describe('oxMetadataInKeycloakChangedEventHandler', () => {
         const personId: string = faker.string.uuid();
-        const oldEmailId: string = faker.string.uuid();
-        const oldEmail: string = faker.internet.email();
-        const newEmailId: string = faker.string.uuid();
-        const newEmail: string = faker.internet.email();
-        const changedEvent: EmailAddressChangedEvent = new EmailAddressChangedEvent(
+        const email: string = faker.internet.email();
+        const changedEvent: OxMetadataInKeycloakChangedEvent = new OxMetadataInKeycloakChangedEvent(
             personId,
-            oldEmailId,
-            oldEmail,
-            newEmailId,
-            newEmail,
+            faker.internet.userName(),
+            faker.string.uuid(),
+            faker.internet.userName(),
+            faker.string.uuid(),
+            email,
         );
 
         it('should update email', async () => {
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
 
-            await sut.emailAddressChangedEventHandler(changedEvent);
+            await sut.oxMetadataInKeycloakChangedEventHandler(changedEvent);
 
-            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(personId, newEmail);
+            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(personId, email);
             expect(loggerMock.info).toHaveBeenCalledWith(`Updated E-Mail for person with ID ${personId}!`);
         });
 
         it('should log error, if email could not be updated', async () => {
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Update email
 
-            await sut.emailAddressChangedEventHandler(changedEvent);
+            await sut.oxMetadataInKeycloakChangedEventHandler(changedEvent);
 
             expect(loggerMock.error).toHaveBeenCalledWith(`Could not update E-Mail for person with ID ${personId}!`);
         });
@@ -336,7 +336,7 @@ describe('ItsLearning Persons Event Handler', () => {
             sut.ENABLED = false;
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
 
-            await sut.emailAddressChangedEventHandler(changedEvent);
+            await sut.oxMetadataInKeycloakChangedEventHandler(changedEvent);
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring email update.');
         });
