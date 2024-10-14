@@ -13,7 +13,7 @@ import {
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonPermissions, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Person, LockInfo } from '../domain/person.js';
@@ -26,6 +26,7 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -33,7 +34,15 @@ import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
+        // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
         if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
+    }
+    return undefined;
+}
+
+export function getOxUserId(entity: PersonEntity): string | undefined {
+    for (const emailAddress of entity.emailAddresses) {
+        if (emailAddress.status !== EmailAddressStatus.FAILED) return emailAddress.oxUserId;
     }
     return undefined;
 }
@@ -96,6 +105,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         undefined,
         undefined,
         getEnabledEmailAddress(entity),
+        getOxUserId(entity),
     );
 }
 
@@ -109,6 +119,17 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
 
 export type PersonEventPayload = {
     personenkontexte: [{ id: string; organisationId: string; rolleId: string }];
+};
+export type PersonenQueryParams = {
+    vorname?: string;
+    familienname?: string;
+    organisationIDs?: string[];
+    rolleIDs?: string[];
+    offset?: number;
+    limit?: number;
+    sortField?: SortFieldPersonFrontend;
+    sortOrder?: ScopeOrder;
+    suchFilter?: string;
 };
 
 @Injectable()
@@ -150,6 +171,16 @@ export class PersonRepository {
 
     public async findById(id: string): Promise<Option<Person<true>>> {
         const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { id });
+        if (person) {
+            return mapEntityToAggregate(person);
+        }
+
+        return null;
+    }
+
+    // When implementing this on 30.09 we are still using 'referrer', but since we want in the future to use 'username' i already did this here
+    public async findByUsername(username: string): Promise<Option<Person<true>>> {
+        const person: Option<PersonEntity> = await this.em.findOne(PersonEntity, { referrer: username });
         if (person) {
             return mapEntityToAggregate(person);
         }
@@ -410,8 +441,8 @@ export class PersonRepository {
         const newVorname: string = person.vorname.toLowerCase();
         const newFamilienname: string = person.familienname.toLowerCase();
 
-        //only look for first letter, because username is firstname[0] + lastname
-        if (oldVorname[0] !== newVorname[0]) return true;
+        //NOT only look for first letter, because email-address is full-firstname.full-lastname@domain.de
+        if (oldVorname !== newVorname) return true;
 
         return oldFamilienname !== newFamilienname;
     }
@@ -479,6 +510,41 @@ export class PersonRepository {
         person.keycloakUserId = creationResult.value;
 
         return person;
+    }
+
+    public async findbyPersonFrontend(
+        queryParams: PersonenQueryParams,
+        permittedOrgas: PermittedOrgas,
+    ): Promise<Counted<Person<true>>> {
+        const scope: PersonScope = this.createPersonScope(queryParams, permittedOrgas);
+
+        const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
+        const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+
+        return [persons, total];
+    }
+
+    public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
+        const scope: PersonScope = new PersonScope()
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .findBy({
+                vorname: queryParams.vorname,
+                familienname: queryParams.familienname,
+                geburtsdatum: undefined,
+                organisationen: permittedOrgas.all ? undefined : permittedOrgas.orgaIds,
+            })
+            .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
+            .paged(queryParams.offset, queryParams.limit);
+
+        const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
+        const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
+        scope.sortBy(sortField, sortOrder);
+
+        if (queryParams.suchFilter) {
+            scope.findBySearchString(queryParams.suchFilter);
+        }
+
+        return scope;
     }
 
     public async isPersonalnummerAlreadayAssigned(personalnummer: string): Promise<boolean> {
