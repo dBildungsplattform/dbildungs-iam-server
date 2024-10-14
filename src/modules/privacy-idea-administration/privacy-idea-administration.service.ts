@@ -33,9 +33,6 @@ import {
     UserResponse,
     VerificationResponse,
 } from './privacy-idea-api.types.js';
-import { EventHandler } from '../../core/eventbus/decorators/event-handler.decorator.js';
-import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -48,7 +45,6 @@ export class PrivacyIdeaAdministrationService {
     private readonly privacyIdeaConfig: PrivacyIdeaConfig;
 
     public constructor(
-        private readonly logger: ClassLogger,
         private readonly httpService: HttpService,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly personenkontextService: PersonenkontextService,
@@ -172,7 +168,7 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    private async getUserTokens(userName: string): Promise<PrivacyIdeaToken[]> {
+    public async getUserTokens(userName: string): Promise<PrivacyIdeaToken[]> {
         if (!(await this.checkUserExists(userName))) {
             return [];
         }
@@ -441,7 +437,7 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    private async deleteUser(username: string): Promise<void> {
+    public async deleteUser(username: string): Promise<void> {
         const jwt: string = await this.getJWTToken();
         const resolvername: string = this.privacyIdeaConfig.USER_RESOLVER;
         const url: string = this.privacyIdeaConfig.ENDPOINT + `/user/${resolvername}/${username}`;
@@ -458,15 +454,5 @@ export class PrivacyIdeaAdministrationService {
                 throw new Error(`Error deleting privacyIDEA user: Unknown error occurred`);
             }
         }
-    }
-
-    @EventHandler(PersonDeletedEvent)
-    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
-        this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
-        const userTokens: PrivacyIdeaToken[] = await this.getUserTokens(event.referrer);
-        if (userTokens !== undefined && userTokens.length > 0) {
-            await this.resetToken(event.referrer);
-        }
-        await this.deleteUser(event.referrer);
     }
 }
