@@ -1016,7 +1016,7 @@ describe('OrganisationRepository', () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 {},
@@ -1044,7 +1044,7 @@ describe('OrganisationRepository', () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 {},
@@ -1075,7 +1075,7 @@ describe('OrganisationRepository', () => {
                 orgaIds: [orgas[0]!.id, orgas[3]!.id, orgas[4]!.id],
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 {},
@@ -1123,7 +1123,7 @@ describe('OrganisationRepository', () => {
                 orgaIds: [orgas[0]!.id, orgas[2]!.id, orgas[4]!.id],
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { searchString: 'Test' },
@@ -1170,7 +1170,7 @@ describe('OrganisationRepository', () => {
                 orgaIds: [orgas[0]!.id, orgas[2]!.id, orgas[4]!.id],
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { searchString: '23456' },
@@ -1215,7 +1215,7 @@ describe('OrganisationRepository', () => {
                 all: true,
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { kennung: 'dummy-kennung', name: 'dummy-name' },
@@ -1259,7 +1259,7 @@ describe('OrganisationRepository', () => {
                 all: true,
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { kennung: 'dummy-kennung', name: 'dummy-name', organisationIds: [orgas[1]!.id] },
@@ -1305,7 +1305,7 @@ describe('OrganisationRepository', () => {
                 orgaIds: [orgas[0]!.id, orgas[1]!.id],
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { kennung: 'dummy-kennung', name: 'dummy-name', organisationIds: [orgas[1]!.id, orgas[2]!.id] },
@@ -1353,7 +1353,7 @@ describe('OrganisationRepository', () => {
                 all: true,
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 {
@@ -1446,7 +1446,7 @@ describe('OrganisationRepository', () => {
                 all: true,
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { administriertVon: [mappedOrgaLand.id], typ: OrganisationsTyp.SCHULE },
@@ -1516,7 +1516,7 @@ describe('OrganisationRepository', () => {
                 orgaIds: [orgas[0]!.id, orgas[2]!.id, orgas[3]!.id, orgas[4]!.id],
             });
 
-            const result: Counted<Organisation<true>> = await sut.findAuthorized(
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { excludeTyp: [OrganisationsTyp.KLASSE] },
