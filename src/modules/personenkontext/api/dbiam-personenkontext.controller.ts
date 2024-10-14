@@ -36,6 +36,8 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonenkontextMigrationRuntype } from '../domain/personenkontext.enums.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -54,6 +56,7 @@ export class DBiamPersonenkontextController {
         private readonly personenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly organisationRepo: OrganisationRepository,
         private readonly personRepo: PersonRepository,
+        private readonly rolleRepo: RolleRepo,
         private readonly eventService: EventService,
         private readonly logger: ClassLogger,
     ) {}
@@ -110,36 +113,24 @@ export class DBiamPersonenkontextController {
             );
         }
 
-        const kontextToCreate: Personenkontext<false> = this.personenkontextFactory.createNew(
-            params.personId,
-            params.organisationId,
-            params.rolleId,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            params.befristung,
-        );
+        const person: Option<Person<true>> = params.personId
+            ? await this.personRepo.findById(params.personId)
+            : params.username
+              ? await this.personRepo.findByUsername(params.username)
+              : null;
 
-        const isPersonkontextAlreadyExisting: boolean = await this.personenkontextRepo.exists(
-            params.personId,
-            params.organisationId,
-            params.rolleId,
-        );
-        if (isPersonkontextAlreadyExisting) {
+        if (!person) {
             this.logger.error(
-                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Kontext Already exist`,
+                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Person does not exist`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityCouldNotBeCreated(`Kontext Already Exists`),
+                    new EntityCouldNotBeCreated('Person does not exist'),
                 ),
             );
         }
 
-        const rolle: Option<Rolle<true>> = await kontextToCreate.getRolle();
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(params.rolleId);
         if (!rolle) {
             this.logger.error(
                 `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Rolle does not exist`,
@@ -163,24 +154,43 @@ export class DBiamPersonenkontextController {
             );
         }
 
-        const person: Option<Person<true>> = await this.personRepo.findById(params.personId);
-        if (!person) {
+        const kontextToCreate: Personenkontext<false> = this.personenkontextFactory.createNew(
+            person.id,
+            orga.id,
+            rolle.id,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            params.befristung,
+        );
+
+        const isPersonkontextAlreadyExisting: boolean = await this.personenkontextRepo.exists(
+            person.id,
+            orga.id,
+            rolle.id,
+        );
+        if (isPersonkontextAlreadyExisting) {
             this.logger.error(
-                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Person does not exist`,
+                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / Kontext Already exist`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityCouldNotBeCreated('Person does not exist'),
+                    new EntityCouldNotBeCreated(`Kontext Already Exists`),
                 ),
             );
         }
 
         if (
-            (params.email && rolle.rollenart != RollenArt.LEHR) ||
-            (!params.email && rolle.rollenart == RollenArt.LEHR)
+            (params.migrationRunType === PersonenkontextMigrationRuntype.STANDARD &&
+                ((params.email && rolle.rollenart != RollenArt.LEHR) ||
+                    (!params.email && rolle.rollenart == RollenArt.LEHR))) ||
+            (params.migrationRunType === PersonenkontextMigrationRuntype.ITSLEARNING && params.email)
         ) {
             this.logger.error(
-                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / An Email Must Only Be Provided For a Lehrerkontext`,
+                `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / An Email Must Only Be Provided For a Lehrerkontext in Standard PersonenkontextMigrationRuntype`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
@@ -195,7 +205,14 @@ export class DBiamPersonenkontextController {
         );
 
         this.eventService.publish(
-            new PersonenkontextCreatedMigrationEvent(createdKontext, person, rolle, orga, params.email),
+            new PersonenkontextCreatedMigrationEvent(
+                params.migrationRunType,
+                createdKontext,
+                person,
+                rolle,
+                orga,
+                params.email,
+            ),
         );
 
         return new DBiamPersonenkontextResponse(createdKontext);

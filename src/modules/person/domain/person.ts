@@ -75,6 +75,7 @@ export class Person<WasPersisted extends boolean> {
         public lockInfo?: LockInfo,
         public isLocked?: boolean,
         public email?: string,
+        public oxUserId?: string,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
@@ -116,6 +117,7 @@ export class Person<WasPersisted extends boolean> {
         lockInfo?: LockInfo,
         isLocked?: boolean,
         email?: string,
+        oxUserId?: string,
     ): Person<WasPersisted> {
         return new Person(
             id,
@@ -146,6 +148,7 @@ export class Person<WasPersisted extends boolean> {
             lockInfo,
             isLocked,
             email,
+            oxUserId,
         );
     }
 
@@ -236,10 +239,12 @@ export class Person<WasPersisted extends boolean> {
         isLocked?: boolean,
         email?: string,
     ): void | DomainError {
-        const newRevisionResult: Result<string, DomainError> = this.tryToUpdateRevision(revision);
-        if (!newRevisionResult.ok) {
-            return newRevisionResult.error;
+        if (this.revision !== revision) {
+            return new MismatchedRevisionError(
+                `Revision ${revision} does not match revision ${this.revision} of stored person.`,
+            );
         }
+        const newRevision: string = (parseInt(this.revision) + 1).toString();
 
         if (vorname && !NameValidator.isNameValid(vorname)) {
             return new VornameForPersonWithTrailingSpaceError();
@@ -266,8 +271,8 @@ export class Person<WasPersisted extends boolean> {
         this.lokalisierung = lokalisierung;
         this.vertrauensstufe = vertrauensstufe;
         this.auskunftssperre = auskunftssperre;
-        this.revision = newRevisionResult.value;
-        this.personalnummer = personalnummer;
+        this.revision = newRevision;
+        this.personalnummer = personalnummer ?? this.personalnummer;
         this.lockInfo = lockInfo;
         this.isLocked = isLocked;
         this.email = email;
@@ -278,21 +283,5 @@ export class Person<WasPersisted extends boolean> {
             length: { min: 10, max: 10 },
             casing: 'mixed',
         });
-    }
-
-    public tryToUpdateRevision(revision: string): Result<string, DomainError> {
-        if (this.revision !== revision) {
-            return {
-                ok: false,
-                error: new MismatchedRevisionError(
-                    `Revision ${revision} does not match revision ${this.revision} of stored person.`,
-                ),
-            };
-        }
-
-        return {
-            ok: true,
-            value: (parseInt(this.revision) + 1).toString(),
-        };
     }
 }

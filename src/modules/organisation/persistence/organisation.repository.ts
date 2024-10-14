@@ -6,6 +6,7 @@ import {
     RequiredEntityData,
     SelectQueryBuilder,
     EntityDictionary,
+    QueryOrder,
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -261,16 +262,24 @@ export class OrganisationRepository {
     public async findByNameOrKennungAndExcludeByOrganisationType(
         excludeOrganisationType: OrganisationsTyp,
         searchStr?: string,
+        permittedOrgaIds?: string[],
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
 
+        // Set up the query with the search string, limit, and excluded type
         scope
             .searchString(searchStr)
             .setScopeWhereOperator(ScopeOperator.AND)
             .paged(0, limit)
             .excludeTyp([excludeOrganisationType]);
 
+        // If permitted organization IDs are provided, add them to the query scope
+        if (permittedOrgaIds && permittedOrgaIds.length > 0) {
+            scope.filterByIds(permittedOrgaIds);
+        }
+
+        // Execute the query and return the result
         let foundOrganisations: Organisation<true>[] = [];
         [foundOrganisations] = await this.findBy(scope);
 
@@ -295,6 +304,21 @@ export class OrganisationRepository {
             return [[], 0];
         }
 
+        let entitiesForIds: OrganisationEntity[] = [];
+        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
+
+        if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
+            const organisationIds: string[] = permittedOrgas.all
+                ? searchOptions.organisationIds
+                : searchOptions.organisationIds.filter((id: string) => permittedOrgas.orgaIds.includes(id));
+            const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
+                .select('*')
+                .where({ id: { $in: organisationIds } })
+                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
+                .limit(searchOptions.limit);
+            entitiesForIds = (await queryForIds.getResultAndCount())[0];
+        }
+
         let whereClause: QBFilterQuery<OrganisationEntity> = {};
         const andClauses: QBFilterQuery<OrganisationEntity>[] = [];
         if (searchOptions.kennung) {
@@ -310,7 +334,12 @@ export class OrganisationRepository {
             andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
         }
         if (searchOptions.searchString) {
-            andClauses.push({ name: { $ilike: `%${searchOptions.searchString}%` } });
+            andClauses.push({
+                $or: [
+                    { name: { $ilike: `%${searchOptions.searchString}%` } },
+                    { kennung: { $ilike: `%${searchOptions.searchString}%` } },
+                ],
+            });
         }
         if (searchOptions.excludeTyp) {
             andClauses.push({ typ: { $nin: searchOptions.excludeTyp } });
@@ -318,27 +347,35 @@ export class OrganisationRepository {
         if (andClauses.length > 0) {
             whereClause = { $and: andClauses };
         }
-        // return organisations for IDs even if other search options do not match
-        if (searchOptions.organisationIds) {
-            whereClause = { $or: [whereClause, { id: { $in: searchOptions.organisationIds } }] };
-        }
         // return only permitted organisations
         if (!permittedOrgas.all) {
             whereClause = { $and: [whereClause, { id: { $in: permittedOrgas.orgaIds } }] };
         }
 
-        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
         const query: SelectQueryBuilder<OrganisationEntity> = qb
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
+            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
             .limit(searchOptions.limit);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
-        const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
+        let result: OrganisationEntity[] = [...entitiesForIds];
+        let duplicates: number = 0;
+        for (const entity of entities) {
+            if (!entitiesForIds.find((orga: OrganisationEntity) => orga.id === entity.id)) {
+                result.push(entity);
+            } else {
+                duplicates++;
+            }
+        }
+        if (searchOptions.limit && entitiesForIds.length > 0) {
+            result = result.slice(0, searchOptions.limit);
+        }
+        const organisations: Organisation<true>[] = result.map((entity: OrganisationEntity) =>
             mapEntityToAggregate(entity),
         );
-        return [organisations, total];
+        return [organisations, total + entitiesForIds.length - duplicates];
     }
 
     public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {
