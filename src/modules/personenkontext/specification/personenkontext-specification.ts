@@ -27,15 +27,15 @@ export class PersonenkontextSpecification {
             await this.checkBefristung.and(this.checkRollenartLern).isSatisfiedBy(personenkontexte),
 
             await personenkontexte
-                .map((pk: Personenkontext<boolean>) => this.gleicheRolleAnKlasseWieSchule.isSatisfiedBy(pk))
-                .reduce(async (l: Promise<boolean>, r: Promise<boolean>) => (await l) && (await r)),
-            await personenkontexte
-                .map((pk: Personenkontext<boolean>) => this.nurLehNurLehrUndLernAnKlasse.isSatisfiedBy(pk))
+                .map((pk: Personenkontext<boolean>) =>
+                    this.gleicheRolleAnKlasseWieSchule.and(this.nurLehNurLehrUndLernAnKlasse).isSatisfiedBy(pk),
+                )
                 .reduce(async (l: Promise<boolean>, r: Promise<boolean>) => (await l) && (await r)),
             await personenkontexte
                 .map((pk: Personenkontext<boolean>) => this.checkOrgaRolleCompliance(pk))
                 .reduce(async (l: Promise<boolean>, r: Promise<boolean>) => (await l) && (await r)),
         ].every((v: boolean) => v);
+    Promise.all
     }
 
     private async checkOrgaRolleCompliance(pk: Personenkontext<boolean>): Promise<boolean> {
