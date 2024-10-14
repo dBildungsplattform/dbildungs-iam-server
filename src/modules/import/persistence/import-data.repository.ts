@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItemScope } from './import-data-item.scope.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 
 export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): RequiredEntityData<ImportDataItemEntity> {
     return {
@@ -56,8 +55,7 @@ export class ImportDataRepository {
         return [importDataItems, total];
     }
 
-    public async deleteByImportVorgangId(importvorgangId: string): Promise<Option<DomainError>> {
+    public async deleteByImportVorgangId(importvorgangId: string): Promise<void> {
         await this.em.nativeDelete(ImportDataItemEntity, { importvorgangId: importvorgangId });
-        return;
     }
 }

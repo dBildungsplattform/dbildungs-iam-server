@@ -66,7 +66,7 @@ export class ImportController {
                 })
                 .build({
                     errorHttpStatusCode: HttpStatus.BAD_REQUEST,
-                    fileIsRequired: false,
+                    fileIsRequired: true,
                 }),
         )
         file: Express.Multer.File,

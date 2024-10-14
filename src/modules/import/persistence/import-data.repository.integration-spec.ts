@@ -10,7 +10,6 @@ import {
 import { ImportDataRepository, mapAggregateToData, mapEntityToAggregate } from './import-data.repository.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('ImportDataRepository', () => {
     let module: TestingModule;
@@ -192,12 +191,11 @@ describe('ImportDataRepository', () => {
         });
 
         it('should delete all the import data items for the importVorgnagsId', async () => {
-            const result: Option<DomainError> = await sut.deleteByImportVorgangId(importVorgnagsId);
+            const result: void = await sut.deleteByImportVorgangId(importVorgnagsId);
             const [findResult, findTotal]: [Option<ImportDataItem<true>[]>, number] =
                 await sut.findByImportVorgangId(importVorgnagsId);
 
             expect(result).toBeUndefined();
-            expect(result).not.toBeInstanceOf(DomainError);
             expect(findResult.length).toBe(0);
             expect(findTotal).toBe(0);
         });
