@@ -258,11 +258,8 @@ export class OrganisationController {
         @Query() queryParams: FindOrganisationQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepository.findAuthorized(
-            permissions,
-            queryParams.systemrechte,
-            queryParams,
-        );
+        const [organisations, total, pageTotal]: [Organisation<true>[], number, number] =
+            await this.organisationRepository.findAuthorized(permissions, queryParams.systemrechte, queryParams);
 
         const organisationResponses: OrganisationResponse[] = organisations.map((organisation: Organisation<true>) => {
             return new OrganisationResponse(organisation);
@@ -272,7 +269,7 @@ export class OrganisationController {
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            pageTotal: organisationResponses.length,
+            pageTotal: pageTotal,
             items: organisationResponses,
         };
 
