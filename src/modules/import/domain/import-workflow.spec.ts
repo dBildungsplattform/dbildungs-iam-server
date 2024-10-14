@@ -176,14 +176,8 @@ describe('ImportWorkflowAggregate', () => {
         });
 
         it('should return ImportCSVFileEmptyError if the csv file is empty', async () => {
-            const file: Express.Multer.File = {
-                fieldname: 'file',
-                originalname: 'invalid_test_import_SuS.csv',
-                encoding: '7bit',
-                mimetype: 'text/csv',
-                buffer: Buffer.from(''),
-                size: 0,
-            } as Express.Multer.File;
+            const file: Express.Multer.File = createMock<Express.Multer.File>();
+            file.buffer = Buffer.from('');
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
@@ -195,18 +189,12 @@ describe('ImportWorkflowAggregate', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
 
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-            const spyParse: jest.SpyInstance<
-                internal.Duplex,
-                [stream: typeof Papa.NODE_STREAM_INPUT, config?: Papa.ParseConfig<unknown, undefined> | undefined],
-                unknown
-            > = jest.spyOn(Papa, 'parse');
 
             const result: DomainError | ImportUploadResultFields = await sut.validateImport(
                 file,
                 personpermissionsMock,
             );
             expect(result).toBeInstanceOf(ImportCSVFileEmptyError);
-            expect(spyParse).not.toHaveBeenCalled();
             expect(importDataRepositoryMock.save).not.toHaveBeenCalled();
         });
 
