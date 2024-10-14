@@ -35,9 +35,6 @@ import {
 } from './privacy-idea-api.types.js';
 import { DomainError } from '../../shared/error/domain.error.js';
 import { UserExistsError } from './api/error/userename-exists.error.js';
-import { PersonRenamedEvent } from '../../shared/events/person-renamed-event.js';
-import { EventHandler } from '../../core/eventbus/decorators/event-handler.decorator.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -53,7 +50,6 @@ export class PrivacyIdeaAdministrationService {
         private readonly httpService: HttpService,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly personenkontextService: PersonenkontextService,
-        private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
         this.privacyIdeaConfig = configService.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA');
@@ -258,25 +254,17 @@ export class PrivacyIdeaAdministrationService {
             await firstValueFrom(this.httpService.delete(url, { headers: headers }));
         } catch (error) {
             if (error instanceof Error) {
-                throw new Error(`Error adding user: ${error.message}`);
+                throw new Error(`Error deleting user: ${error.message}`);
             } else {
-                throw new Error(`Error adding user: Unknown error occurred`);
+                throw new Error(`Error deleting user: Unknown error occurred`);
             }
         }
     }
 
-    @EventHandler(PersonRenamedEvent)
-    public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
-        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
-        if (!event.referrer) throw new Error('Referrer is missing');
-
-        await this.updateUsername(event.oldReferrer, event.referrer);
-    }
-
-    private async updateUsername(oldUserName: string, newUserName: string): Promise<Result<void, DomainError>> {
+    public async updateUsername(oldUserName: string, newUserName: string): Promise<Result<void, DomainError>> {
         const token: string = await this.getJWTToken();
         const userTokens: PrivacyIdeaToken[] = await this.getUserTokens(oldUserName);
-        await Promise.allSettled(
+        await Promise.all(
             userTokens.map(async (userToken: PrivacyIdeaToken) => {
                 await this.unassignToken(userToken.serial, token);
             }),
@@ -286,7 +274,7 @@ export class PrivacyIdeaAdministrationService {
             return { ok: false, error: new UserExistsError() };
         }
         await this.addUser(newUserName);
-        await Promise.allSettled(
+        await Promise.all(
             userTokens.map(async (userToken: PrivacyIdeaToken) => {
                 await this.assignToken(userToken.serial, token, newUserName);
             }),

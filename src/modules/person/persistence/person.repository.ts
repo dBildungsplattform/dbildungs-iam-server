@@ -412,11 +412,14 @@ export class PersonRepository {
     }
 
     private createUsername(vorname: string, familienname: string): string {
-        return (vorname.charAt(0) + familienname).toLowerCase();
+        const vornameLowerCase: string = vorname.toLowerCase();
+        const familiennameLowerCase: string = familienname.toLowerCase();
+        return `${vornameLowerCase[0]}${familiennameLowerCase}`;
     }
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
+        const oldReferrer: string = personEntity.referrer ?? this.createUsername(personEntity.vorname, personEntity.familienname);
         const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
         if (person.newPassword) {
             const setPasswordResult: Result<string, DomainError> = await this.kcUserService.setPassword(
@@ -433,11 +436,7 @@ export class PersonRepository {
         await this.em.persistAndFlush(personEntity);
 
         if (isPersonRenamedEventNecessary) {
-            this.eventService.publish(
-                PersonRenamedEvent.fromPerson(
-                    person,
-                    this.createUsername(personEntity.vorname, personEntity.familienname)),
-            );
+            this.eventService.publish(PersonRenamedEvent.fromPerson(person, oldReferrer));
         }
 
         return mapEntityToAggregate(personEntity);
