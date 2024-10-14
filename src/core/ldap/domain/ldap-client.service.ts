@@ -265,8 +265,10 @@ export class LdapClientService {
                 };
             }
 
-            const currentEmailAddressArray: string = searchResult.searchEntries[0]['mailPrimaryAddress'] as string;
-            const currentEmailAddress: string = currentEmailAddressArray[0] ?? newEmailAddress;
+            const currentEmailAddressString: string | undefined = searchResult.searchEntries[0][
+                'mailPrimaryAddress'
+            ] as string;
+            const currentEmailAddress: string = currentEmailAddressString ?? newEmailAddress;
 
             await client.modify(searchResult.searchEntries[0].dn, [
                 new Change({

@@ -560,7 +560,7 @@ describe('LDAP Client Service', () => {
                                 searchEntries: [
                                     createMock<Entry>({
                                         dn: fakeDN,
-                                        mailPrimaryAddress: [currentEmailAddress],
+                                        mailPrimaryAddress: currentEmailAddress,
                                     }),
                                 ],
                             }),
@@ -598,7 +598,7 @@ describe('LDAP Client Service', () => {
                                 searchEntries: [
                                     createMock<Entry>({
                                         dn: fakeDN,
-                                        mailPrimaryAddress: [],
+                                        mailPrimaryAddress: undefined,
                                     }),
                                 ],
                             }),
