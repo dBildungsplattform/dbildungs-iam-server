@@ -297,6 +297,7 @@ describe('ImportWorkflowAggregate', () => {
             expect(resultString).toContain(person.vorname);
             expect(resultString).toContain(person.familienname);
             expect(resultString).toContain(klasse.name);
+            expect(importDataRepositoryMock.deleteByImportVorgangId).toHaveBeenCalledWith(importvorgangId);
         });
 
         it('should return EntityNotFoundError if the schule is not found', async () => {

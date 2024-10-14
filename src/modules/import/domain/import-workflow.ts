@@ -160,7 +160,7 @@ export class ImportWorkflowAggregate {
             (importDataItem: ImportDataItem<true>) => {
                 const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                     (organisationByIdAndName: OrganisationByIdAndName) =>
-                        organisationByIdAndName.name?.toLocaleLowerCase() == importDataItem.klasse?.toLocaleLowerCase(),
+                        organisationByIdAndName.name?.toLowerCase() == importDataItem.klasse?.toLowerCase(),
                 );
                 if (!klasse) {
                     //(ToDO => next ticket: validate every data item and collect all errors even on import execution)
@@ -215,7 +215,13 @@ export class ImportWorkflowAggregate {
         });
 
         //Create text file.
-        return this.createTextFile(textFilePersonFieldsList);
+        const result: Result<Buffer> = await this.createTextFile(textFilePersonFieldsList);
+
+        if (result.ok) {
+            await this.importDataRepository.deleteByImportVorgangId(importvorgangId);
+        }
+
+        return result;
     }
 
     public getFileName(importvorgangId: string): string {

@@ -10,6 +10,7 @@ import {
 import { ImportDataRepository, mapAggregateToData, mapEntityToAggregate } from './import-data.repository.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('ImportDataRepository', () => {
     let module: TestingModule;
@@ -135,13 +136,13 @@ describe('ImportDataRepository', () => {
         });
 
         it('should return importDataItems for the importVorgnagsId', async () => {
-            const [rolleResult, total]: [Option<ImportDataItem<true>[]>, number] = await sut.findByImportVorgangId(
+            const [result, total]: [Option<ImportDataItem<true>[]>, number] = await sut.findByImportVorgangId(
                 importVorgnagsId,
                 0,
                 30,
             );
 
-            expect(rolleResult?.length).toBe(2);
+            expect(result?.length).toBe(2);
             expect(total).toBe(2);
         });
     });
@@ -153,6 +154,52 @@ describe('ImportDataRepository', () => {
             const savedImportDataItem: ImportDataItem<true> = await sut.save(importDataItem);
 
             expect(savedImportDataItem.id).toBeDefined();
+        });
+    });
+
+    describe('deleteByImportVorgangId', () => {
+        let importDataItem1: ImportDataItem<false>;
+        let importDataItem2: ImportDataItem<false>;
+        let entity1: ImportDataItemEntity;
+        let entity2: ImportDataItemEntity;
+
+        const importVorgnagsId: string = faker.string.uuid();
+
+        beforeEach(async () => {
+            importDataItem1 = ImportDataItem.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                importVorgnagsId,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '1A',
+                undefined,
+            );
+            importDataItem2 = ImportDataItem.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                importVorgnagsId,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '1B',
+                undefined,
+            );
+            entity1 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem1));
+            entity2 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem2));
+            await em.persistAndFlush([entity1, entity2]);
+        });
+
+        it('should delete all the import data items for the importVorgnagsId', async () => {
+            const result: Option<DomainError> = await sut.deleteByImportVorgangId(importVorgnagsId);
+            const [findResult, findTotal]: [Option<ImportDataItem<true>[]>, number] =
+                await sut.findByImportVorgangId(importVorgnagsId);
+
+            expect(result).toBeUndefined();
+            expect(result).not.toBeInstanceOf(DomainError);
+            expect(findResult.length).toBe(0);
+            expect(findTotal).toBe(0);
         });
     });
 });

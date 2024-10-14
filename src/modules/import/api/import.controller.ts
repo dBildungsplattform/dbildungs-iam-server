@@ -126,7 +126,6 @@ export class ImportController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
         } else {
-            //TODO: Delete DataItems & File
             const fileName: string = importWorkflow.getFileName(body.importvorgangId);
             const contentDisposition: string = `attachment; filename="${fileName}"`;
             res.set({
