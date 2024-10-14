@@ -200,7 +200,7 @@ export class ImportWorkflowAggregate {
         const savedPersonWithPersonenkontext: (DomainError | PersonPersonenkontext)[] = await Promise.all(promises);
 
         //Save Benutzer + Passwort in the Liste
-        savedPersonWithPersonenkontext.map((personPersonenkontext: DomainError | PersonPersonenkontext) => {
+        savedPersonWithPersonenkontext.forEach((personPersonenkontext: DomainError | PersonPersonenkontext) => {
             if (!(personPersonenkontext instanceof DomainError)) {
                 const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                     (klasseByIDandName: OrganisationByIdAndName) =>
