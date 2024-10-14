@@ -705,9 +705,11 @@ export class PersonRepository {
                 { personalnummer: { $eq: null } },
                 {
                     personenKontexte: {
-                        createdAt: { $lte: daysAgo }, //Check that createdAt is older than 56 days
-                        rolleId: {
-                            merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
+                        $some: {
+                            createdAt: { $lte: daysAgo }, //Check that createdAt is older than 56 days
+                            rolleId: {
+                                merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
+                            },
                         },
                     },
                 },

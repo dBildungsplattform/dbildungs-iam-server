@@ -21,8 +21,8 @@ describe('CronController', () => {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
                 },
-                CronController,
             ],
+            controllers: [CronController],
         }).compile();
 
         cronController = module.get(CronController);
@@ -39,7 +39,9 @@ describe('CronController', () => {
             it('should return true when all users are successfully locked', async () => {
                 const mockKeycloakIds: string[] = ['user1', 'user2', 'user3'];
                 personRepositoryMock.getKoPersUserLockList.mockResolvedValueOnce(mockKeycloakIds);
-                keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValue({ ok: true, value: undefined });
+                keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
+                keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
+                keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
                 const result: boolean = await cronController.KoPersUserLock();
 
@@ -55,7 +57,7 @@ describe('CronController', () => {
 
                 const result: boolean = await cronController.KoPersUserLock();
 
-                expect(result).toBe(false);
+                expect(result).toBe(true);
                 expect(personRepositoryMock.getKoPersUserLockList).toHaveBeenCalled();
             });
         });

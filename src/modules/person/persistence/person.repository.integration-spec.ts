@@ -1805,16 +1805,15 @@ describe('PersonRepository Integration', () => {
     });
     describe('getKoPersUserLockList', () => {
         it('should return a list of keycloakUserIds for persons older than 56 days without a personalnummer', async () => {
-            // Create the date 56 days ago
+            // Create the date 57 days ago
             const daysAgo: Date = new Date();
-            daysAgo.setDate(daysAgo.getDate() - 56);
+            daysAgo.setDate(daysAgo.getDate() - 57);
 
-            // Create sample person data
-            const person1: Person<true> = await savePerson(true);
-            const person2: Person<true> = await savePerson(true);
-            const person3: Person<true> = await savePerson(true);
+            const person1: Person<true> = await savePerson(false);
+            const person2: Person<true> = await savePerson(false);
+            const person3: Person<true> = await savePerson(false);
+            const person4: Person<true> = await savePerson(false); // Person for two PersonenKontexte
 
-            // Create roles
             const rolle1: Rolle<false> = DoFactory.createRolle(false, {
                 name: 'rolle1',
                 rollenart: RollenArt.LEHR,
@@ -1823,54 +1822,55 @@ describe('PersonRepository Integration', () => {
 
             const rolle2: Rolle<false> = DoFactory.createRolle(false, {
                 name: 'rolle2',
-                rollenart: RollenArt.LERN,
+                rollenart: RollenArt.LEIT,
                 merkmale: [RollenMerkmal.KOPERS_PFLICHT],
             });
 
-            await rolleRepo.save(rolle1);
-            await rolleRepo.save(rolle2);
+            const rolle1Result: Rolle<true> = await rolleRepo.save(rolle1);
+            const rolle2Result: Rolle<true> = await rolleRepo.save(rolle2);
 
-            const rolle1Result: Option<Rolle<true>[]> = await rolleRepo.findByName('rolle1', false);
-            const rolle2Result: Option<Rolle<true>[]> = await rolleRepo.findByName('rolle1', false);
-
-            let rolle1Id: string = '';
-            let rolle2Id: string = '';
-            if (rolle1Result != null && rolle2Result != null) {
-                rolle1Id = rolle1Result[0]!.id;
-                rolle2Id = rolle1Result[0]!.id;
-            }
-
-            // Create Personenkontext with older creation date (56 days ago)
+            // personenKontext where createdAt exceeds the time-limit
+            jest.useFakeTimers({ now: daysAgo });
             const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person1.id,
-                rolleId: rolle1Id,
-                createdAt: daysAgo,
+                rolleId: rolle1Result.id,
             });
 
             const personenKontext2: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person2.id,
-                rolleId: rolle2Id,
-                createdAt: daysAgo,
+                rolleId: rolle2Result.id,
             });
 
-            // Create a Personenkontext with a recent creation date (not older than 56 days)
             const personenKontext3: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person3.id,
-                rolleId: rolle2.id!,
-                createdAt: new Date(), // created today
+                rolleId: rolle2Result.id,
             });
 
             await dbiamPersonenkontextRepoInternal.save(personenKontext1);
             await dbiamPersonenkontextRepoInternal.save(personenKontext2);
             await dbiamPersonenkontextRepoInternal.save(personenKontext3);
 
-            // Execute the method under test
+            // personenKontext where createdAt is within the time-limit
+            jest.useRealTimers();
+
+            const personenKontext4: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                personId: person3.id,
+                rolleId: rolle2Result.id,
+            });
+            const personenKontext5: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                personId: person4.id,
+                rolleId: rolle2Result.id,
+            });
+
+            await dbiamPersonenkontextRepoInternal.save(personenKontext4);
+            await dbiamPersonenkontextRepoInternal.save(personenKontext5);
+
             const lockList: string[] = await sut.getKoPersUserLockList();
 
-            // Assertions
-            expect(lockList).toContain(person1.keycloakUserId); // person1 should be in the list
-            expect(lockList).toContain(person2.keycloakUserId); // person2 should also be in the list
-            expect(lockList).not.toContain(person3.keycloakUserId); // person3 should NOT be in the list
+            expect(lockList).toContain(person1.keycloakUserId);
+            expect(lockList).toContain(person2.keycloakUserId);
+            expect(lockList).toContain(person3.keycloakUserId);
+            expect(lockList).not.toContain(person4.keycloakUserId);
         });
     });
 });

@@ -36,7 +36,7 @@ export class CronController {
         try {
             const keyCloakIds: string[] = await this.personRepository.getKoPersUserLockList();
             if (keyCloakIds.length === 0) {
-                return false;
+                return true;
             }
 
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
@@ -48,11 +48,7 @@ export class CronController {
                     result.status === 'fulfilled' && result.value.ok === true,
             );
 
-            if (allSuccessful) {
-                return true;
-            } else {
-                return false;
-            }
+            return allSuccessful;
         } catch (error) {
             throw new Error('Failed to lock users due to an internal server error.');
         }
