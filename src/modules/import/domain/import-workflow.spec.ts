@@ -25,6 +25,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
 import { Person } from '../../person/domain/person.js';
+import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 
 describe('ImportWorkflowAggregate', () => {
     let module: TestingModule;
@@ -174,7 +175,42 @@ describe('ImportWorkflowAggregate', () => {
             expect(result).toBeInstanceOf(MissingPermissionsError);
         });
 
-        it('should call parser and  importDataRepository', async () => {
+        it('should return ImportCSVFileEmptyError if the csv file is empty', async () => {
+            const file: Express.Multer.File = {
+                fieldname: 'file',
+                originalname: 'invalid_test_import_SuS.csv',
+                encoding: '7bit',
+                mimetype: 'text/csv',
+                buffer: Buffer.from(''),
+                size: 0,
+            } as Express.Multer.File;
+
+            sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
+            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            rolleMock.rollenart = RollenArt.LERN;
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+            );
+            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            const spyParse: jest.SpyInstance<
+                internal.Duplex,
+                [stream: typeof Papa.NODE_STREAM_INPUT, config?: Papa.ParseConfig<unknown, undefined> | undefined],
+                unknown
+            > = jest.spyOn(Papa, 'parse');
+
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
+            expect(result).toBeInstanceOf(ImportCSVFileEmptyError);
+            expect(spyParse).not.toHaveBeenCalled();
+            expect(importDataRepositoryMock.save).not.toHaveBeenCalled();
+        });
+
+        it('should call parser and importDataRepository', async () => {
             const file: Express.Multer.File = createMock<Express.Multer.File>();
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
@@ -198,7 +234,6 @@ describe('ImportWorkflowAggregate', () => {
             );
             expect(result).not.toBeInstanceOf(DomainError);
             expect(importDataRepositoryMock.save).toHaveBeenCalled();
-            expect(personenkontextCreationServiceMock.createPersonWithPersonenkontexte).not.toHaveBeenCalled();
             expect(spyParse).toHaveBeenCalled();
         });
     });
@@ -249,6 +284,7 @@ describe('ImportWorkflowAggregate', () => {
             ]);
 
             await expect(sut.executeImport(importvorgangId, personpermissionsMock)).rejects.toThrowError(error);
+            expect(personenkontextCreationServiceMock.createPersonWithPersonenkontexte).not.toHaveBeenCalled();
         });
 
         it('should return the file buffer if the import transaction was executed successfully', async () => {

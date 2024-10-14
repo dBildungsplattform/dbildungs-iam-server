@@ -5,6 +5,7 @@ import { ImportDomainError } from '../domain/import-domain.error.js';
 import { DbiamImportError, ImportErrorI18nTypes } from './dbiam-import.error.js';
 import { ImportCSVFileParsingError } from '../domain/import-csv-file-parsing.error.js';
 import { ImportTextFileCreationError } from '../domain/import-text-file-creation.error.js';
+import { ImportCSVFileEmptyError } from '../domain/import-csv-file-empty.error.js';
 
 @Catch(ImportDomainError)
 export class ImportExceptionFilter implements ExceptionFilter<ImportDomainError> {
@@ -14,6 +15,13 @@ export class ImportExceptionFilter implements ExceptionFilter<ImportDomainError>
             new DbiamImportError({
                 code: 400,
                 i18nKey: ImportErrorI18nTypes.CSV_PARSING_ERROR,
+            }),
+        ],
+        [
+            ImportCSVFileEmptyError.name,
+            new DbiamImportError({
+                code: 400,
+                i18nKey: ImportErrorI18nTypes.CSV_FILE_EMPTY_ERROR,
             }),
         ],
         [

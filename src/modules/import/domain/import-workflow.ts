@@ -23,6 +23,7 @@ import { DbiamCreatePersonenkontextBodyParams } from '../../personenkontext/api/
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
+import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -93,7 +94,11 @@ export class ImportWorkflowAggregate {
         //Parse Data
         try {
             //Optimierungsidee: 50 ImportDataItems per call direkt einmail parsen
-            const parsedData: ParseResult<CSVImportDataItemDTO> = await this.parseCSVFile(file);
+            const parsedData: DomainError | ParseResult<CSVImportDataItemDTO> = await this.parseCSVFile(file);
+
+            if (parsedData instanceof DomainError) {
+                return parsedData;
+            }
 
             //Datensätze persistieren
             //TODO: 50 ImportDataItems per call direkt einmail persistieren
@@ -269,8 +274,12 @@ export class ImportWorkflowAggregate {
         return undefined;
     }
 
-    private async parseCSVFile(file: Express.Multer.File): Promise<ParseResult<CSVImportDataItemDTO>> {
+    private async parseCSVFile(file: Express.Multer.File): Promise<DomainError | ParseResult<CSVImportDataItemDTO>> {
         const csvContent: string = file.buffer.toString();
+        if (!csvContent) {
+            return new ImportCSVFileEmptyError();
+        }
+
         return new Promise<ParseResult<CSVImportDataItemDTO>>(
             (
                 resolve: (

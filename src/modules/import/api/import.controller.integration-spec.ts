@@ -31,7 +31,6 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import path from 'path';
-import { DbiamPersonenkontextImportBodyParams } from './dbiam-personenkontext-import.body.params.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
@@ -122,7 +121,7 @@ describe('Rolle API', () => {
 
     describe('/POST import', () => {
         it('should return 201 OK with ImportUploadResponse', async () => {
-            const filePath: string = path.resolve('./', `test/imports/test_import_SuS.csv`);
+            const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS.csv`);
 
             const fileExists: boolean = fs.existsSync(filePath);
             if (!fileExists) throw new Error('file does not exist');
@@ -154,22 +153,17 @@ describe('Rolle API', () => {
         });
 
         it('should return 404 if the organisation is not found', async () => {
-            const params: DbiamPersonenkontextImportBodyParams = {
-                organisationId: faker.string.uuid(),
-                rolleId: faker.string.uuid(),
-                file: {
-                    fieldname: 'file',
-                    originalname: 'invalid_test_import_SuS.csv',
-                    encoding: '7bit',
-                    mimetype: 'text/csv',
-                    buffer: Buffer.from(''),
-                    size: 0,
-                } as Express.Multer.File,
-            };
+            const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS.csv`);
+
+            const fileExists: boolean = fs.existsSync(filePath);
+            if (!fileExists) throw new Error('file does not exist');
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
-                .send(params);
+                .set('content-type', 'multipart/form-data')
+                .field('organisationId', faker.string.uuid())
+                .field('rolleId', faker.string.uuid())
+                .attach('file', filePath);
 
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
@@ -212,7 +206,12 @@ describe('Rolle API', () => {
             });
         });
 
-        it('should return 400 with CSV_PARSING_ERROR if the csv file cannot be parsed or is empty', async () => {
+        it('should return 400 with CSV_PARSING_ERROR if the csv file is empty', async () => {
+            const filePath: string = path.resolve('./', `test/imports/empty_test_import_SuS.csv`);
+
+            const fileExists: boolean = fs.existsSync(filePath);
+            if (!fileExists) throw new Error('file does not exist');
+
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             await em.persistAndFlush(schule);
@@ -225,27 +224,17 @@ describe('Rolle API', () => {
                 }),
             );
 
-            const params: DbiamPersonenkontextImportBodyParams = {
-                organisationId: schule.id,
-                rolleId: sus.id,
-                file: {
-                    fieldname: 'file',
-                    originalname: 'invalid_test_import_SuS.csv',
-                    encoding: '7bit',
-                    mimetype: 'text/csv',
-                    buffer: Buffer.from(''),
-                    size: 0,
-                } as Express.Multer.File,
-            };
-
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
-                .send(params);
+                .set('content-type', 'multipart/form-data')
+                .field('organisationId', schule.id)
+                .field('rolleId', sus.id)
+                .attach('file', filePath);
 
             expect(response.status).toBe(400);
             expect(response.body).toEqual({
                 code: 400,
-                i18nKey: 'CSV_PARSING_ERROR',
+                i18nKey: 'CSV_FILE_EMPTY_ERROR',
             });
         });
 
