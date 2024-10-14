@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Collection, EntityManager, MikroORM, rel, RequiredEntityData } from '@mikro-orm/core';
+import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -11,6 +11,7 @@ import {
 import { PersonEntity } from './person.entity.js';
 import {
     getEnabledEmailAddress,
+    getOxUserId,
     mapAggregateToData,
     mapEntityToAggregate,
     mapEntityToAggregateInplace,
@@ -153,6 +154,7 @@ describe('PersonRepository Integration', () => {
             keycloackID: string;
         } = { ...defaultProps, ...props };
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+            referrer: faker.string.alphanumeric(5),
             familienname,
             vorname,
             personalnummer: withPersonalnummer ? faker.finance.pin(7) : undefined,
@@ -179,6 +181,15 @@ describe('PersonRepository Integration', () => {
         }
     }
 
+    function getEmailAddress(status?: EmailAddressStatus, address?: string, oxUserId?: string): EmailAddressEntity {
+        const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+        emailAddressEntity.status = status ?? EmailAddressStatus.ENABLED;
+        emailAddressEntity.address = address ?? faker.internet.email();
+        emailAddressEntity.oxUserId = oxUserId ?? faker.string.numeric();
+
+        return emailAddressEntity;
+    }
+
     describe('findByKeycloakUserId', () => {
         describe('when found by keycloakUserId', () => {
             it('should return found person', async () => {
@@ -197,6 +208,28 @@ describe('PersonRepository Integration', () => {
         describe('when not found by keycloakUserId', () => {
             it('should return null', async () => {
                 const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(faker.string.uuid());
+
+                expect(foundPerson).toBeNull();
+            });
+        });
+    });
+
+    describe('findByUsername', () => {
+        describe('when found by username', () => {
+            it('should return found person', async () => {
+                const personSaved: Person<true> = await savePerson();
+                if (personSaved.referrer) {
+                    const foundPerson: Option<Person<true>> = await sut.findByUsername(personSaved.referrer);
+                    expect(foundPerson).toBeInstanceOf(Person);
+                } else {
+                    throw new Error();
+                }
+            });
+        });
+
+        describe('when not found by keycloakUserId', () => {
+            it('should return null', async () => {
+                const foundPerson: Option<Person<true>> = await sut.findByUsername(faker.string.uuid());
 
                 expect(foundPerson).toBeNull();
             });
@@ -841,9 +874,7 @@ describe('PersonRepository Integration', () => {
 
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.status = EmailAddressStatus.ENABLED;
-                emailAddressEntity.address = faker.internet.email();
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
                 const result: string | undefined = getEnabledEmailAddress(personEntity);
@@ -852,11 +883,9 @@ describe('PersonRepository Integration', () => {
             });
         });
 
-        describe('when NO enabled emailAddress is in collection', () => {
+        describe('when only failed emailAddresses are in collection', () => {
             it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.status = EmailAddressStatus.DISABLED;
-                emailAddressEntity.address = faker.internet.email();
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
                 const result: string | undefined = getEnabledEmailAddress(personEntity);
@@ -868,6 +897,49 @@ describe('PersonRepository Integration', () => {
         describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {
                 const result: string | undefined = getEnabledEmailAddress(personEntity);
+
+                expect(result).toBeUndefined();
+            });
+        });
+    });
+
+    describe('getOxUserId', () => {
+        let personEntity: PersonEntity;
+
+        beforeEach(() => {
+            personEntity = em.create(
+                PersonEntity,
+                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
+            );
+            personEntity.emailAddresses = new Collection<EmailAddressEntity>(personEntity);
+        });
+
+        describe('when enabled emailAddress is in collection', () => {
+            it('should return address of (first found) enabled address', () => {
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress();
+
+                personEntity.emailAddresses.add(emailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toBeDefined();
+            });
+        });
+
+        describe('when only failed emailAddresses are in collection', () => {
+            it('should return undefined', () => {
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
+                personEntity.emailAddresses.add(emailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toBeUndefined();
+            });
+        });
+
+        describe('when NO emailAddress at all is found in collection', () => {
+            it('should return undefined', () => {
+                const result: string | undefined = getOxUserId(personEntity);
 
                 expect(result).toBeUndefined();
             });
@@ -1167,7 +1239,7 @@ describe('PersonRepository Integration', () => {
 
                     const emailAddress: EmailAddressEntity = new EmailAddressEntity();
                     emailAddress.address = faker.internet.email();
-                    emailAddress.personId = rel(PersonEntity, person.id);
+                    emailAddress.personId = ref(PersonEntity, person.id);
                     emailAddress.status = EmailAddressStatus.ENABLED;
 
                     const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
