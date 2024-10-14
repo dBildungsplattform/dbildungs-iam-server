@@ -142,7 +142,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -199,7 +200,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -353,7 +355,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -410,7 +413,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -586,7 +590,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -643,7 +648,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -811,7 +817,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -868,7 +875,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -1028,7 +1036,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -1085,7 +1094,266 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "importvorgang_id": {
+          "name": "importvorgang_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "familienname": {
+          "name": "familienname",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "vorname": {
+          "name": "vorname",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "klasse": {
+          "name": "klasse",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
+        "personalnummer": {
+          "name": "personalnummer",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        }
+      },
+      "name": "importdataitem",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "importdataitem_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED",
+            "FAILED"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -1360,7 +1628,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -1417,7 +1686,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -1830,7 +2100,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -1887,7 +2158,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -1990,7 +2262,8 @@
           "enumItems": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ],
           "mappedType": "enum"
         }
@@ -2108,7 +2381,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -2165,7 +2439,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -2365,7 +2640,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -2422,7 +2698,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -2743,7 +3020,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -2800,7 +3078,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -2962,7 +3241,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -3019,7 +3299,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -3080,7 +3361,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ],
           "mappedType": "enum"
         }
@@ -3187,7 +3469,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -3244,7 +3527,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -3494,7 +3778,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -3551,7 +3836,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -3824,7 +4110,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -3881,7 +4168,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -4050,7 +4338,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -4107,7 +4396,8 @@
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
-            "PERSON_SYNCHRONISIEREN"
+            "PERSON_SYNCHRONISIEREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -4214,7 +4504,8 @@
       "items": [
         "ENABLED",
         "DISABLED",
-        "REQUESTED"
+        "REQUESTED",
+        "FAILED"
       ]
     },
     "rollen_art_enum": {
@@ -4271,7 +4562,8 @@
         "KLASSEN_VERWALTEN",
         "SCHULTRAEGER_VERWALTEN",
         "MIGRATION_DURCHFUEHREN",
-        "PERSON_SYNCHRONISIEREN"
+        "PERSON_SYNCHRONISIEREN",
+        "IMPORT_DURCHFUEHREN"
       ]
     },
     "service_provider_target_enum": {
