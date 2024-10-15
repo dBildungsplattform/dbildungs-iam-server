@@ -34,7 +34,8 @@ import {
     VerificationResponse,
 } from './privacy-idea-api.types.js';
 import { DomainError } from '../../shared/error/domain.error.js';
-import { UserExistsError } from './api/error/userename-exists.error.js';
+import { DeleteUserError } from './api/error/delete-user.error.js';
+import { UserExistsError } from './api/error/user-exists.error.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationService {
@@ -243,8 +244,7 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    private async deleteUser(userName: string): Promise<void> {
-        const token: string = await this.getJWTToken();
+    private async deleteUser(userName: string, token: string): Promise<Result<void, DomainError>> {
         const url: string =
             this.privacyIdeaConfig.ENDPOINT + '/user/' + this.privacyIdeaConfig.USER_RESOLVER + '/' + userName;
         const headers: { Authorization: string } = {
@@ -252,12 +252,9 @@ export class PrivacyIdeaAdministrationService {
         };
         try {
             await firstValueFrom(this.httpService.delete(url, { headers: headers }));
+            return { ok: true, value: undefined };
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Error deleting user: ${error.message}`);
-            } else {
-                throw new Error(`Error deleting user: Unknown error occurred`);
-            }
+            return { ok: false, error: new DeleteUserError() };
         }
     }
 
@@ -282,7 +279,11 @@ export class PrivacyIdeaAdministrationService {
             }),
         );
 
-        await this.deleteUser(oldUserName);
+        const result: Result<void, DomainError> = await this.deleteUser(oldUserName, token);
+        if (!result.ok) {
+            return result;
+        }
+
         return { ok: true, value: undefined };
     }
 
