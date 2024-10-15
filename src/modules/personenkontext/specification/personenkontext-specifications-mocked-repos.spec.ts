@@ -227,7 +227,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
             rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
             rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-            const result: boolean = await specification.checkRollenartLern([personenkontext]);
+            const result: boolean = await specification.isSatisfiedBy([personenkontext]);
 
             expect(result).toBe(true);
         });
@@ -247,7 +247,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
             rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
             rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-            const result: boolean = await specification.checkRollenartLern([personenkontext]);
+            const result: boolean = await specification.isSatisfiedBy([personenkontext]);
 
             expect(result).toBe(true);
         });
@@ -270,7 +270,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
             mapExistingRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
             rolleRepoMock.findByIds.mockResolvedValueOnce(mapExistingRollen);
 
-            const result: boolean = await specification.checkRollenartLern([personenkontext]);
+            const result: boolean = await specification.isSatisfiedBy([personenkontext]);
 
             expect(result).toBe(false);
         });
@@ -290,7 +290,7 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
             rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
             rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-            const result: boolean = await specification.checkRollenartLern([personenkontext]);
+            const result: boolean = await specification.isSatisfiedBy([personenkontext]);
 
             expect(result).toBe(true);
         });

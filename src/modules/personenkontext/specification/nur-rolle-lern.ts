@@ -3,14 +3,19 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Injectable } from '@nestjs/common';
+import { CompositeSpecification } from '../../specification/specifications.js';
 
-export class CheckRollenartLernSpecification {
+@Injectable()
+export class CheckRollenartLernSpecification extends CompositeSpecification<Personenkontext<boolean>[]> {
     public constructor(
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
-    ) {}
+    ) {
+        super();
+    }
 
-    public async checkRollenartLern(sentPKs: Personenkontext<boolean>[]): Promise<boolean> {
+    public async isSatisfiedBy(sentPKs: Personenkontext<boolean>[]): Promise<boolean> {
         // Fetch all personenkontexte for the person
         let existingPKs: Personenkontext<true>[] = [];
 
@@ -44,11 +49,7 @@ export class CheckRollenartLernSpecification {
         const containsMixedRollen: boolean =
             hasAnyLernInSent && sentRollen.some((rolle: Rolle<true>) => rolle.rollenart !== RollenArt.LERN);
 
-        if (containsMixedRollen) {
-            return false;
-        }
-
-        return true;
+        return !containsMixedRollen;
     }
 
     private async getUniqueRollenFromPersonenkontexte(
