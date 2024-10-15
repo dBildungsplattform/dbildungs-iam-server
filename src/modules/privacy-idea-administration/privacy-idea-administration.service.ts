@@ -262,17 +262,19 @@ export class PrivacyIdeaAdministrationService {
     }
 
     public async updateUsername(oldUserName: string, newUserName: string): Promise<Result<void, DomainError>> {
+        const newUserNameExists: boolean = await this.checkUserExists(newUserName);
+        if (newUserNameExists) {
+            return { ok: false, error: new UserExistsError() };
+        }
         const token: string = await this.getJWTToken();
+
         const userTokens: PrivacyIdeaToken[] = await this.getUserTokens(oldUserName);
         await Promise.all(
             userTokens.map(async (userToken: PrivacyIdeaToken) => {
                 await this.unassignToken(userToken.serial, token);
             }),
         );
-        const newUserNameExists: boolean = await this.checkUserExists(newUserName);
-        if (newUserNameExists) {
-            return { ok: false, error: new UserExistsError() };
-        }
+
         await this.addUser(newUserName);
         await Promise.all(
             userTokens.map(async (userToken: PrivacyIdeaToken) => {

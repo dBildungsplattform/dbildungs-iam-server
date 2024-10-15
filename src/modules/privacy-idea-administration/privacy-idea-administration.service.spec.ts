@@ -862,40 +862,26 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 'addUser',
             ).mockResolvedValueOnce();
             jest.spyOn(
-                service as unknown as { assignToken: (serial: string, token: string, username: string) => Promise<AssignTokenResponse> },
+                service as unknown as {
+                    assignToken: (serial: string, token: string, username: string) => Promise<AssignTokenResponse>;
+                },
                 'assignToken',
             ).mockResolvedValueOnce(mockAssignTokenResponse);
             jest.spyOn(service as unknown as { deleteUser: () => Promise<void> }, 'deleteUser').mockResolvedValueOnce();
             const result: Result<void, DomainError> = await service.updateUsername(oldUserName, newUserName);
             expect(result.ok).toBe(true);
         });
+        it('should return error if new username already exists', async () => {
+            const oldUserName: string = 'oldUser';
+            const newUserName: string = 'newUser';
 
-     /*    it('should return error if new username already exists', async () => {
-            const oldUserName = 'oldUser';
-            const newUserName = 'newUser';
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(true);
 
-            jest.spyOn(service, 'checkUserExists').mockResolvedValueOnce(true);
-
-            const result = await service.updateUsername(oldUserName, newUserName);
+            const result: Result<void, DomainError> = await service.updateUsername(oldUserName, newUserName);
             expect(result.ok).toBe(false);
-            expect(result.error).toBeInstanceOf(UserExistsError);
         });
-
-        it('should throw an error if unassigning token fails', async () => {
-            const oldUserName = 'oldUser';
-            const newUserName = 'newUser';
-            const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
-            const mockJWTToken = 'mockJWTToken';
-
-            jest.spyOn(service, 'getJWTToken').mockResolvedValueOnce(mockJWTToken);
-            jest.spyOn(service, 'getUserTokens').mockResolvedValueOnce(mockUserTokens);
-            jest.spyOn(service, 'checkUserExists').mockResolvedValueOnce(false);
-            httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error('unassignToken error')));
-
-            await expect(service.updateUsername(oldUserName, newUserName)).rejects.toThrow(
-                'Error unassigning token: unassignToken error'
-            );
-        }); */
     });
-
 });
