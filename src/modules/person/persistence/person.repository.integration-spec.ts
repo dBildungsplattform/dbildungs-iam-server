@@ -56,6 +56,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 
@@ -97,6 +98,10 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
+                },
+                {
+                    provide: UserLockRepository,
+                    useValue: createMock<UserLockRepository>(),
                 },
                 // the following are required to prepare the test for findByIds()
                 OrganisationRepository,
@@ -1093,7 +1098,12 @@ describe('PersonRepository Integration', () => {
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
-                person1.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
+                person1.userLock = {
+                    person: person1.id,
+                    locked_by: '',
+                    locked_until: new Date(),
+                    created_at: new Date(),
+                };
                 person1.isLocked = false;
 
                 kcUserServiceMock.findById.mockResolvedValue({

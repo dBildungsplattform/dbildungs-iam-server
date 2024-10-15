@@ -13,10 +13,10 @@ import {
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
+import { PersonPermissions, PermittedOrgas } from '../../authentication/domain/person-permissions.js';
+import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { LockInfo, Person } from '../domain/person.js';
+import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
@@ -26,6 +26,7 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
@@ -138,6 +139,7 @@ export class PersonRepository {
 
     public constructor(
         private readonly kcUserService: KeycloakUserService,
+        private readonly userLockRepository: UserLockRepository,
         private readonly em: EntityManager,
         private readonly eventService: EventService,
         private usernameGenerator: UsernameGeneratorService,
@@ -232,27 +234,14 @@ export class PersonRepository {
         if (!person.keycloakUserId) {
             return person;
         }
-
         const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.kcUserService.findById(
             person.keycloakUserId,
         );
-
-        person.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
         person.isLocked = false;
-
         if (!keyCloakUserDataResponse.ok) {
             return person;
         }
-        if (keyCloakUserDataResponse.value.attributes) {
-            const attributes: Record<string, string[]> = keyCloakUserDataResponse.value.attributes;
-            const lockedFrom: string | undefined = attributes[LockKeys.LockedFrom]?.toString();
-            const lockedTimeStamp: string | undefined = attributes[LockKeys.Timestamp]?.toString();
-            const lockInfo: LockInfo = {
-                lock_locked_from: lockedFrom ?? '',
-                lock_timestamp: lockedTimeStamp ?? '',
-            };
-            person.lockInfo = lockInfo;
-        }
+        person.userLock = (await this.userLockRepository.findPersonById(person.id)) ?? undefined;
         person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         return person;
     }
@@ -648,7 +637,7 @@ export class PersonRepository {
             personFound.vertrauensstufe,
             personFound.auskunftssperre,
             newPersonalnummer,
-            personFound.lockInfo,
+            personFound.userLock,
             personFound.isLocked,
             personFound.email,
         );
