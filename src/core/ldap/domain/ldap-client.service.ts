@@ -208,8 +208,14 @@ export class LdapClientService {
                 };
             }
 
-            const currentEmailAddressArray: string = searchResult.searchEntries[0]['mailPrimaryAddress'] as string;
-            const currentEmailAddress: string = currentEmailAddressArray[0] ?? newEmailAddress;
+            let currentEmailAddressString: string | undefined = searchResult.searchEntries[0][
+                'mailPrimaryAddress'
+            ] as string;
+            // yes, that check looks crazy, although currentEmailAddressString is defined as string|undefined, sometimes it's an array with one element
+            if (Array.isArray(currentEmailAddressString)) {
+                currentEmailAddressString = (currentEmailAddressString as string[])[0];
+            }
+            const currentEmailAddress: string = currentEmailAddressString ?? newEmailAddress;
 
             await client.modify(searchResult.searchEntries[0].dn, [
                 new Change({
