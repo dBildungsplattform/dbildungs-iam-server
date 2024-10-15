@@ -23,6 +23,7 @@ import {
     User,
     VerificationResponse,
 } from './privacy-idea-api.types.js';
+import { DomainError } from '../../shared/error/domain.error.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -507,7 +508,6 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const mockJWTToken: string = 'mockJWTToken';
             const mockTwoAuthState: ResetTokenPayload = createMock<ResetTokenPayload>();
             const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
-
             jest.spyOn(
                 service as unknown as { getJWTToken: () => Promise<string> },
                 'getJWTToken',
@@ -832,4 +832,70 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             expect(result).toBe(requires2fa);
         });
     });
+
+    describe('updateUsername', () => {
+        it('should update the username successfully', async () => {
+            const oldUserName: string = 'oldUser';
+            const newUserName: string = 'newUser';
+            const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
+            const mockJWTToken: string = 'mockJWTToken';
+            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+
+            jest.spyOn(
+                service as unknown as { getJWTToken: () => Promise<string> },
+                'getJWTToken',
+            ).mockResolvedValueOnce(mockJWTToken);
+            jest.spyOn(
+                service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
+                'getUserTokens',
+            ).mockResolvedValueOnce(mockUserTokens);
+            jest.spyOn(
+                service as unknown as { unassignToken: (serial: string, token: string) => Promise<ResetTokenResponse> },
+                'unassignToken',
+            ).mockResolvedValueOnce(mockResetTokenResponse);
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(false);
+            jest.spyOn(
+                service as unknown as { addUser: (username: string) => Promise<void> },
+                'addUser',
+            ).mockResolvedValueOnce();
+            jest.spyOn(
+                service as unknown as { assignToken: (serial: string, token: string, username: string) => Promise<AssignTokenResponse> },
+                'assignToken',
+            ).mockResolvedValueOnce(mockAssignTokenResponse);
+            jest.spyOn(service as unknown as { deleteUser: () => Promise<void> }, 'deleteUser').mockResolvedValueOnce();
+            const result: Result<void, DomainError> = await service.updateUsername(oldUserName, newUserName);
+            expect(result.ok).toBe(true);
+        });
+
+     /*    it('should return error if new username already exists', async () => {
+            const oldUserName = 'oldUser';
+            const newUserName = 'newUser';
+
+            jest.spyOn(service, 'checkUserExists').mockResolvedValueOnce(true);
+
+            const result = await service.updateUsername(oldUserName, newUserName);
+            expect(result.ok).toBe(false);
+            expect(result.error).toBeInstanceOf(UserExistsError);
+        });
+
+        it('should throw an error if unassigning token fails', async () => {
+            const oldUserName = 'oldUser';
+            const newUserName = 'newUser';
+            const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
+            const mockJWTToken = 'mockJWTToken';
+
+            jest.spyOn(service, 'getJWTToken').mockResolvedValueOnce(mockJWTToken);
+            jest.spyOn(service, 'getUserTokens').mockResolvedValueOnce(mockUserTokens);
+            jest.spyOn(service, 'checkUserExists').mockResolvedValueOnce(false);
+            httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error('unassignToken error')));
+
+            await expect(service.updateUsername(oldUserName, newUserName)).rejects.toThrow(
+                'Error unassigning token: unassignToken error'
+            );
+        }); */
+    });
+
 });
