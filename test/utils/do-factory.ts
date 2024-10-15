@@ -221,7 +221,7 @@ export class DoFactory {
     ): ImportDataItem<WasPersisted> {
         const person: Partial<ImportDataItem<WasPersisted>> = {
             importvorgangId: faker.string.uuid(),
-            familienname: faker.person.lastName(),
+            nachname: faker.person.lastName(),
             vorname: faker.person.fullName(),
             id: withId ? faker.string.uuid() : undefined,
             createdAt: withId ? faker.date.past() : undefined,

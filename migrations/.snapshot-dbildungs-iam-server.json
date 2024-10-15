@@ -1169,8 +1169,8 @@
           "nullable": false,
           "mappedType": "uuid"
         },
-        "familienname": {
-          "name": "familienname",
+        "nachname": {
+          "name": "nachname",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,

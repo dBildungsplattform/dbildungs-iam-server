@@ -7,7 +7,7 @@ import { ImportDataItemScope } from './import-data-item.scope.js';
 export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): RequiredEntityData<ImportDataItemEntity> {
     return {
         importvorgangId: importDataItem.importvorgangId,
-        familienname: importDataItem.familienname,
+        nachname: importDataItem.nachname,
         vorname: importDataItem.vorname,
         klasse: importDataItem.klasse,
         personalnummer: importDataItem.personalnummer,
@@ -20,7 +20,7 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.createdAt,
         entity.updatedAt,
         entity.importvorgangId,
-        entity.familienname,
+        entity.nachname,
         entity.vorname,
         entity.klasse,
         entity.personalnummer,
@@ -30,7 +30,7 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
 export class ImportDataRepository {
     public constructor(private readonly em: EntityManager) {}
 
-    //TODO: alle 50 Datebsätze auf einmal persistieren
+    //Optimierung: alle 50 Datensätze mit einem Call persistieren
     public async save(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {
         const entity: ImportDataItemEntity = this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
 

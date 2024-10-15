@@ -305,7 +305,7 @@ describe('Rolle API', () => {
             expect(resultString).toContain(schule.name);
             expect(resultString).toContain(sus.name);
             expect(resultString).toContain(importDataItem.vorname);
-            expect(resultString).toContain(importDataItem.familienname);
+            expect(resultString).toContain(importDataItem.nachname);
             expect(resultString).toContain(klasse.name);
         });
 

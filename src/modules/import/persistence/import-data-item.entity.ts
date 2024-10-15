@@ -7,7 +7,7 @@ export class ImportDataItemEntity extends TimestampedEntity {
     public readonly importvorgangId!: string;
 
     @Property()
-    public readonly familienname!: string;
+    public readonly nachname!: string;
 
     @Property()
     public readonly vorname!: string;

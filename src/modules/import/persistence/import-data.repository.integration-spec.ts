@@ -55,13 +55,7 @@ describe('ImportDataRepository', () => {
                 undefined,
             );
 
-            const expectedProperties: string[] = [
-                'importvorgangId',
-                'familienname',
-                'vorname',
-                'klasse',
-                'personalnummer',
-            ];
+            const expectedProperties: string[] = ['importvorgangId', 'nachname', 'vorname', 'klasse', 'personalnummer'];
 
             const result: RequiredEntityData<ImportDataItemEntity> = mapAggregateToData(importDataItem);
 

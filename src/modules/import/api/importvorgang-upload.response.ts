@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ImportUploadResponse {
     @ApiProperty({
-        description: 'The import transaction number. it will be need to execute the import and download the result',
+        description: 'The import transaction number. it will be needed to execute the import and download the result',
     })
     public importvorgangId: string;
 

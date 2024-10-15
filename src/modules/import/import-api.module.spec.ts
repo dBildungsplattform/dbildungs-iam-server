@@ -3,6 +3,7 @@ import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../..
 import { ImportWorkflowFactory } from './domain/import-workflow.factory.js';
 import { ImportApiModule } from './import-api.module.js';
 import { ImportController } from './api/import.controller.js';
+import { MulterModule } from '@nestjs/platform-express';
 
 describe('ImportApiModule', () => {
     let module: TestingModule;
@@ -28,6 +29,10 @@ describe('ImportApiModule', () => {
 
         it('should resolve ImportController', () => {
             expect(module.get(ImportController)).toBeInstanceOf(ImportController);
+        });
+
+        it('should resolve MulterModule', () => {
+            expect(module.get(MulterModule)).toBeInstanceOf(MulterModule);
         });
     });
 });

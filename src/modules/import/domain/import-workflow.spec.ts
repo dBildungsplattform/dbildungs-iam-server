@@ -268,7 +268,7 @@ describe('ImportWorkflowAggregate', () => {
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
 
             const error: DomainError = new EntityNotFoundError('Organisation', importDataItem.klasse, [
-                `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.familienname} was not found`,
+                `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
             ]);
 
             await expect(sut.executeImport(importvorgangId, personpermissionsMock)).rejects.toThrowError(error);

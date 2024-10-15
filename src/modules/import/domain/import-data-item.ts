@@ -4,7 +4,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,
         public importvorgangId: string,
-        public familienname: string,
+        public nachname: string,
         public vorname: string,
         public klasse?: string,
         public personalnummer?: string,
@@ -15,26 +15,17 @@ export class ImportDataItem<WasPersisted extends boolean> {
         createdAt: Persisted<Date, WasPersisted>,
         updatedAt: Persisted<Date, WasPersisted>,
         importvorgangId: string,
-        familienname: string,
+        nachname: string,
         vorname: string,
         klasse?: string,
         personalnummer?: string,
     ): ImportDataItem<WasPersisted> {
-        return new ImportDataItem(
-            id,
-            createdAt,
-            updatedAt,
-            importvorgangId,
-            familienname,
-            vorname,
-            klasse,
-            personalnummer,
-        );
+        return new ImportDataItem(id, createdAt, updatedAt, importvorgangId, nachname, vorname, klasse, personalnummer);
     }
 
     public static createNew(
         importvorgangId: string,
-        familienname: string,
+        nachname: string,
         vorname: string,
         klasse?: string,
         personalnummer?: string,
@@ -44,7 +35,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
             undefined,
             undefined,
             importvorgangId,
-            familienname,
+            nachname,
             vorname,
             klasse,
             personalnummer,

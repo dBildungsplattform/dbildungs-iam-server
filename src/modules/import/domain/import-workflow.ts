@@ -33,7 +33,7 @@ export type OrganisationByIdAndName = Pick<Organisation<true>, 'id' | 'name'>;
 export type TextFilePersonFields = {
     klasse: string | undefined;
     vorname: string;
-    familienname: string;
+    nachname: string;
     username: string | undefined;
     password: string | undefined;
 };
@@ -170,7 +170,7 @@ export class ImportWorkflowAggregate {
                 if (!klasse) {
                     //(ToDO => next ticket: validate every data item and collect all errors even on import execution)
                     throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
-                        `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.familienname} was not found`,
+                        `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
                     ]);
                 }
 
@@ -189,7 +189,7 @@ export class ImportWorkflowAggregate {
                     this.personenkontextCreationService.createPersonWithPersonenkontexte(
                         permissions,
                         importDataItem.vorname,
-                        importDataItem.familienname,
+                        importDataItem.nachname,
                         createPersonenkontexte,
                     );
 
@@ -212,7 +212,7 @@ export class ImportWorkflowAggregate {
                 textFilePersonFieldsList.push({
                     klasse: klasse?.name,
                     vorname: personPersonenkontext.person.vorname,
-                    familienname: personPersonenkontext.person.familienname,
+                    nachname: personPersonenkontext.person.familienname,
                     username: personPersonenkontext.person.referrer,
                     password: personPersonenkontext.person.newPassword,
                 });
@@ -328,7 +328,7 @@ export class ImportWorkflowAggregate {
         fileContent += headerImportInfo + headerUserInfo;
 
         for (const textFilePersonFields of textFilePersonFieldsList) {
-            const userInfo: string = `\n${textFilePersonFields.klasse} - ${textFilePersonFields.vorname} - ${textFilePersonFields.familienname} - ${textFilePersonFields.username} - ${textFilePersonFields.password}`;
+            const userInfo: string = `\n${textFilePersonFields.klasse} - ${textFilePersonFields.vorname} - ${textFilePersonFields.nachname} - ${textFilePersonFields.username} - ${textFilePersonFields.password}`;
             fileContent += userInfo;
         }
 
