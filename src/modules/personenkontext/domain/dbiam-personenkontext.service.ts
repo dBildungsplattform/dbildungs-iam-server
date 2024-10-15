@@ -7,7 +7,7 @@ import { PersonenkontextKlasseSpecification } from '../specification/personenkon
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { CheckRollenartLernSpecification } from '../specification/nur-rolle-lern.js';
+import { CheckRollenartLernSpecification } from '../specification/nur-gleiche-rolle.js';
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenMerkmal } from '../../rolle/domain/rolle.enums.js';

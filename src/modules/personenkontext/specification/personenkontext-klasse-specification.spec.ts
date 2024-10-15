@@ -6,7 +6,7 @@ import { GleicheRolleAnKlasseWieSchuleError } from './error/gleiche-rolle-an-kla
 import { NurLehrUndLernAnKlasseError } from './error/nur-lehr-und-lern-an-klasse.error.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 import { NurLehrUndLernAnKlasse } from './nur-lehr-und-lern-an-klasse.js';
-import { CheckRollenartLernSpecification } from './nur-rolle-lern.js';
+import { CheckRollenartLernSpecification } from './nur-gleiche-rolle.js';
 import { PersonenkontextKlasseSpecification } from './personenkontext-klasse-specification.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
