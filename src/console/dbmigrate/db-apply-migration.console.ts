@@ -25,10 +25,9 @@ export class DbApplyMigrationConsole extends CommandRunner {
 
         const allMigrations: UmzugMigration[] = await migrator.getPendingMigrations();
 
-        // check if all migrations end with a S or D
         if (
             !allMigrations
-                .map((migration: UmzugMigration) => migration.name)
+                .map((migration: UmzugMigration) => migration.name.replace('.ts', ''))
                 .every((name: string) => name.endsWith('S') || name.endsWith('D'))
         ) {
             throw new Error('Not all migrations end with a S or D');
