@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Collection, EntityManager, MikroORM, rel, RequiredEntityData } from '@mikro-orm/core';
+import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -11,9 +11,11 @@ import {
 import { PersonEntity } from './person.entity.js';
 import {
     getEnabledEmailAddress,
+    getOxUserId,
     mapAggregateToData,
     mapEntityToAggregate,
     mapEntityToAggregateInplace,
+    PersonenQueryParams,
     PersonRepository,
 } from './person.repository.js';
 import { Person } from '../domain/person.js';
@@ -31,7 +33,7 @@ import {
     MismatchedRevisionError,
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -46,12 +48,12 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { Rolle as SchulConnexRolle } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
@@ -76,11 +78,14 @@ describe('PersonRepository Integration', () => {
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
             providers: [
                 PersonRepository,
+                OrganisationRepository,
+
                 ConfigService,
                 {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
+
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
@@ -135,19 +140,23 @@ describe('PersonRepository Integration', () => {
     type SavedPersonProps = { keycloackID: string };
     async function savePerson(
         withPersonalnummer: boolean = false,
-        props: Partial<SavedPersonProps> = {},
+        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string }> = {},
     ): Promise<Person<true>> {
         usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
         };
 
+        const vorname: string = props.vorname ?? faker.person.firstName();
+        const familienname: string = props.familienname ?? faker.person.lastName();
+
         const personProps: {
             keycloackID: string;
         } = { ...defaultProps, ...props };
         const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-            familienname: faker.person.lastName(),
-            vorname: faker.person.firstName(),
+            referrer: faker.string.alphanumeric(5),
+            familienname,
+            vorname,
             personalnummer: withPersonalnummer ? faker.finance.pin(7) : undefined,
         });
 
@@ -172,6 +181,15 @@ describe('PersonRepository Integration', () => {
         }
     }
 
+    function getEmailAddress(status?: EmailAddressStatus, address?: string, oxUserId?: string): EmailAddressEntity {
+        const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+        emailAddressEntity.status = status ?? EmailAddressStatus.ENABLED;
+        emailAddressEntity.address = address ?? faker.internet.email();
+        emailAddressEntity.oxUserId = oxUserId ?? faker.string.numeric();
+
+        return emailAddressEntity;
+    }
+
     describe('findByKeycloakUserId', () => {
         describe('when found by keycloakUserId', () => {
             it('should return found person', async () => {
@@ -190,6 +208,28 @@ describe('PersonRepository Integration', () => {
         describe('when not found by keycloakUserId', () => {
             it('should return null', async () => {
                 const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(faker.string.uuid());
+
+                expect(foundPerson).toBeNull();
+            });
+        });
+    });
+
+    describe('findByUsername', () => {
+        describe('when found by username', () => {
+            it('should return found person', async () => {
+                const personSaved: Person<true> = await savePerson();
+                if (personSaved.referrer) {
+                    const foundPerson: Option<Person<true>> = await sut.findByUsername(personSaved.referrer);
+                    expect(foundPerson).toBeInstanceOf(Person);
+                } else {
+                    throw new Error();
+                }
+            });
+        });
+
+        describe('when not found by keycloakUserId', () => {
+            it('should return null', async () => {
+                const foundPerson: Option<Person<true>> = await sut.findByUsername(faker.string.uuid());
 
                 expect(foundPerson).toBeNull();
             });
@@ -834,9 +874,7 @@ describe('PersonRepository Integration', () => {
 
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.status = EmailAddressStatus.ENABLED;
-                emailAddressEntity.address = faker.internet.email();
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
                 const result: string | undefined = getEnabledEmailAddress(personEntity);
@@ -845,11 +883,9 @@ describe('PersonRepository Integration', () => {
             });
         });
 
-        describe('when NO enabled emailAddress is in collection', () => {
+        describe('when only failed emailAddresses are in collection', () => {
             it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
-                emailAddressEntity.status = EmailAddressStatus.DISABLED;
-                emailAddressEntity.address = faker.internet.email();
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
                 const result: string | undefined = getEnabledEmailAddress(personEntity);
@@ -861,6 +897,49 @@ describe('PersonRepository Integration', () => {
         describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {
                 const result: string | undefined = getEnabledEmailAddress(personEntity);
+
+                expect(result).toBeUndefined();
+            });
+        });
+    });
+
+    describe('getOxUserId', () => {
+        let personEntity: PersonEntity;
+
+        beforeEach(() => {
+            personEntity = em.create(
+                PersonEntity,
+                mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
+            );
+            personEntity.emailAddresses = new Collection<EmailAddressEntity>(personEntity);
+        });
+
+        describe('when enabled emailAddress is in collection', () => {
+            it('should return address of (first found) enabled address', () => {
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress();
+
+                personEntity.emailAddresses.add(emailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toBeDefined();
+            });
+        });
+
+        describe('when only failed emailAddresses are in collection', () => {
+            it('should return undefined', () => {
+                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
+                personEntity.emailAddresses.add(emailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toBeUndefined();
+            });
+        });
+
+        describe('when NO emailAddress at all is found in collection', () => {
+            it('should return undefined', () => {
+                const result: string | undefined = getOxUserId(personEntity);
 
                 expect(result).toBeUndefined();
             });
@@ -977,7 +1056,6 @@ describe('PersonRepository Integration', () => {
                     organisationId: organisation.id,
                     personId: person1.id,
                     rolleId: rolleEntity.id,
-                    rolle: SchulConnexRolle.LEHRENDER,
                 };
                 const personenkontextEntity: PersonenkontextEntity = em.create(
                     PersonenkontextEntity,
@@ -1129,7 +1207,6 @@ describe('PersonRepository Integration', () => {
                     organisationId: organisation.id,
                     personId: person1.id,
                     rolleId: rolleEntity.id,
-                    rolle: SchulConnexRolle.LEHRENDER,
                 };
                 const personenkontextEntity: PersonenkontextEntity = em.create(
                     PersonenkontextEntity,
@@ -1162,7 +1239,7 @@ describe('PersonRepository Integration', () => {
 
                     const emailAddress: EmailAddressEntity = new EmailAddressEntity();
                     emailAddress.address = faker.internet.email();
-                    emailAddress.personId = rel(PersonEntity, person.id);
+                    emailAddress.personId = ref(PersonEntity, person.id);
                     emailAddress.status = EmailAddressStatus.ENABLED;
 
                     const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
@@ -1369,6 +1446,117 @@ describe('PersonRepository Integration', () => {
             expect(exists).toBe(false);
         });
     });
+
+    describe('createPersonScope', () => {
+        it('should create a scope with the correct filters and sorting', async () => {
+            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
+            await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.VORNAME,
+                sortOrder: ScopeOrder.ASC,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+
+            expect(total).toBe(3);
+
+            expect(persons[0]?.vorname).toBe('Alice');
+            expect(persons[1]?.vorname).toBe('Bob');
+            expect(persons[2]?.vorname).toBe('Charlie');
+        });
+
+        it('should return the suchFilter', async () => {
+            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
+            const person2: Person<true> = await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                vorname: person2.vorname,
+                familienname: person2.familienname,
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.VORNAME,
+                sortOrder: ScopeOrder.ASC,
+                suchFilter: person2.vorname,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+
+            expect(total).toBe(1);
+
+            expect(persons[0]?.vorname).toBe('Bob');
+            expect(persons[0]?.familienname).toBe('Johnson');
+        });
+        it('should return undefeined if PermittedOrgas is placed', async () => {
+            const person: Person<true> = await savePerson();
+
+            const permittedOrgas: PermittedOrgas = { all: false, orgaIds: [] };
+
+            const queryParams: PersonenQueryParams = {
+                vorname: person.vorname,
+                familienname: person.familienname,
+                organisationIDs: undefined,
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.VORNAME,
+                sortOrder: ScopeOrder.ASC,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+            const [firstPerson]: Person<true>[] | undefined = persons;
+
+            expect(firstPerson?.vorname).toBe(undefined);
+            expect(firstPerson?.familienname).toBe(undefined);
+            expect(total).toBe(0);
+        });
+
+        it('should use default sortField and sortOrder when not provided', async () => {
+            await savePerson(false, { vorname: 'Alice', familienname: 'Smith' });
+            await savePerson(false, { vorname: 'Bob', familienname: 'Johnson' });
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Brown' });
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                offset: 0,
+                limit: 10,
+                // sortField and sortOrder are not provided
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+
+            expect(total).toBe(3);
+
+            expect(persons[0]?.vorname).toBe('Alice');
+            expect(persons[1]?.vorname).toBe('Bob');
+            expect(persons[2]?.vorname).toBe('Charlie');
+        });
+    });
+
     describe('findByIds', () => {
         it('should return a list of persons', async () => {
             const person1: Person<true> = await savePerson();
