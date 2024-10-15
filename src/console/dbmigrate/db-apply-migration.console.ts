@@ -23,14 +23,16 @@ export class DbApplyMigrationConsole extends CommandRunner {
         const migrator: Migrator = this.orm.getMigrator();
         const migrationType: MigrationType = (options?.['migration'] as MigrationType) || MigrationType.All;
 
-        let allMigrations: UmzugMigration[] = await migrator.getPendingMigrations();
+        const allMigrations: UmzugMigration[] = await migrator.getPendingMigrations();
 
-        //sort migrations by filename after removing the 'S' or 'D' prefix
-        allMigrations = allMigrations.sort((a: UmzugMigration, b: UmzugMigration) => {
-            const aName: string = a.name.substring(1);
-            const bName: string = b.name.substring(1);
-            return aName.localeCompare(bName);
-        });
+        // check if all migrations end with a S or D
+        if (
+            !allMigrations
+                .map((migration: UmzugMigration) => migration.name)
+                .every((name: string) => name.endsWith('S') || name.endsWith('D'))
+        ) {
+            throw new Error('Not all migrations end with a S or D');
+        }
 
         const migrationsToExecute: UmzugMigration[] = allMigrations.filter((migration: UmzugMigration) => {
             if (migrationType === MigrationType.All) {
@@ -38,10 +40,10 @@ export class DbApplyMigrationConsole extends CommandRunner {
             }
 
             if (migrationType === MigrationType.STRUCTURAL) {
-                return migration.name.startsWith('S');
+                return migration.name.endsWith('S');
             }
 
-            return migration.name.startsWith('D');
+            return migration.name.endsWith('D');
         });
 
         await migrator.up(migrationsToExecute.map((migration: UmzugMigration) => migration.name));
