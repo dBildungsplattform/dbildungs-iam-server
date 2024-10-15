@@ -10,7 +10,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { PersonEntity } from './person.entity.js';
 import {
-    getEmailAddress,
+    getEnabledOrAlternativeEmailAddress,
     getOxUserId,
     mapAggregateToData,
     mapEntityToAggregate,
@@ -877,7 +877,7 @@ describe('PersonRepository Integration', () => {
                 const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
-                const result: string | undefined = getEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
                 expect(result).toBeDefined();
             });
@@ -888,7 +888,7 @@ describe('PersonRepository Integration', () => {
                 const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
-                const result: string | undefined = getEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
                 expect(result).toBeDefined();
             });
@@ -896,7 +896,7 @@ describe('PersonRepository Integration', () => {
 
         describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {
-                const result: string | undefined = getEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
                 expect(result).toBeUndefined();
             });

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { EmailAddressStatus, EmailAddressStatusName } from '../../email/domain/email-address.js';
 
 export class PersonEmailResponse {
-    @ApiProperty({ enum: EmailAddressStatus, enumName: EmailAddressStatusName })
+    @ApiProperty({ enum: EmailAddressStatus, enumName: EmailAddressStatusName, required: true })
     public readonly status: EmailAddressStatus;
 
     @ApiProperty({ type: String, required: true })

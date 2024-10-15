@@ -116,15 +116,19 @@ export class EmailRepo {
         return emailAddressEntity;
     }
 
-    public async getEmailAddressAndStatusForPerson(person: Person<true>): Promise<Option<PersonEmailResponse>> {
+    public async getEmailAddressAndStatusForPerson(person: Person<true>): Promise<PersonEmailResponse | undefined> {
+        const enabledEmailAddress: Option<EmailAddress<true>> = await this.findEnabledByPerson(person.id);
+        if (enabledEmailAddress) {
+            return new PersonEmailResponse(enabledEmailAddress.status, enabledEmailAddress.address);
+        }
         const emailAddresses: Option<EmailAddress<true>[]> = await this.findByPersonSortedByUpdatedAtDesc(person.id);
         if (!emailAddresses || !emailAddresses[0]) return undefined;
-
+        /*
         for (const ea of emailAddresses) {
             if (ea.status === EmailAddressStatus.ENABLED) {
                 return new PersonEmailResponse(ea.status, ea.address);
             }
-        }
+        }*/
 
         return new PersonEmailResponse(emailAddresses[0].status, emailAddresses[0].address);
     }
