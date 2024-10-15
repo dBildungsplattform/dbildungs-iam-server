@@ -32,7 +32,7 @@ import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { ImportUploadResultFields, ImportWorkflowAggregate } from '../domain/import-workflow.js';
+import { ImportUploadResultFields, ImportWorkflow } from '../domain/import-workflow.js';
 import { DbiamImportError } from './dbiam-import.error.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 import { Response } from 'express';
@@ -72,7 +72,7 @@ export class ImportController {
         file: Express.Multer.File,
         @Permissions() permissions: PersonPermissions,
     ): Promise<ImportUploadResponse> {
-        const importWorkflow: ImportWorkflowAggregate = this.importWorkflowFactory.createNew();
+        const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         importWorkflow.initialize(body.organisationId, body.rolleId);
         const result: DomainError | ImportUploadResultFields = await importWorkflow.validateImport(file, permissions);
         if (result instanceof DomainError) {
@@ -113,7 +113,7 @@ export class ImportController {
         @Res({ passthrough: true }) res: Response,
         @Permissions() permissions: PersonPermissions,
     ): Promise<StreamableFile> {
-        const importWorkflow: ImportWorkflowAggregate = this.importWorkflowFactory.createNew();
+        const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         importWorkflow.initialize(body.organisationId, body.rolleId);
         const result: Result<Buffer> = await importWorkflow.executeImport(body.importvorgangId, permissions);
 

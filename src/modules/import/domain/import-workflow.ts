@@ -38,7 +38,7 @@ export type TextFilePersonFields = {
     password: string | undefined;
 };
 
-export class ImportWorkflowAggregate {
+export class ImportWorkflow {
     public readonly TEXT_FILENAME_NAME: string = '_spsh_csv_import_ergebnis.txt';
 
     public selectedOrganisationId!: string;
@@ -57,8 +57,8 @@ export class ImportWorkflowAggregate {
         organisationRepository: OrganisationRepository,
         importDataRepository: ImportDataRepository,
         personenkontextCreationService: PersonenkontextCreationService,
-    ): ImportWorkflowAggregate {
-        return new ImportWorkflowAggregate(
+    ): ImportWorkflow {
+        return new ImportWorkflow(
             rolleRepo,
             organisationRepository,
             importDataRepository,

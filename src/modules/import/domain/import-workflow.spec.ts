@@ -4,7 +4,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
-import { ImportUploadResultFields, ImportWorkflowAggregate } from './import-workflow.js';
+import { ImportUploadResultFields, ImportWorkflow } from './import-workflow.js';
 import {
     PersonenkontextCreationService,
     PersonPersonenkontext,
@@ -27,13 +27,13 @@ import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/speci
 import { Person } from '../../person/domain/person.js';
 import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 
-describe('ImportWorkflowAggregate', () => {
+describe('ImportWorkflow', () => {
     let module: TestingModule;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let importDataRepositoryMock: DeepMocked<ImportDataRepository>;
     let personenkontextCreationServiceMock: DeepMocked<PersonenkontextCreationService>;
-    let sut: ImportWorkflowAggregate;
+    let sut: ImportWorkflow;
     let importWorkflowFactory: ImportWorkflowFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
 

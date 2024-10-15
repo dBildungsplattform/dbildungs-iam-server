@@ -7,16 +7,16 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 
 import { ImportController } from './import.controller.js';
 import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
-import { ImportWorkflowAggregate } from '../domain/import-workflow.js';
+import { ImportWorkflow } from '../domain/import-workflow.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Response } from 'express';
 import { ImportTextFileCreationError } from '../domain/import-text-file-creation.error.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 
-describe('Import API with mocked ImportWorkflowAggregate', () => {
+describe('Import API with mocked ImportWorkflow', () => {
     let sut: ImportController;
     let importWorkflowFactoryMock: DeepMocked<ImportWorkflowFactory>;
-    let importWorkflowAggregateMock: DeepMocked<ImportWorkflowAggregate>;
+    let ImportWorkflowMock: DeepMocked<ImportWorkflow>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -31,15 +31,15 @@ describe('Import API with mocked ImportWorkflowAggregate', () => {
                     useValue: createMock<ImportWorkflowFactory>(),
                 },
                 {
-                    provide: ImportWorkflowAggregate,
-                    useValue: createMock<ImportWorkflowAggregate>(),
+                    provide: ImportWorkflow,
+                    useValue: createMock<ImportWorkflow>(),
                 },
                 ImportController,
             ],
         }).compile();
 
         sut = module.get(ImportController);
-        importWorkflowAggregateMock = module.get(ImportWorkflowAggregate);
+        ImportWorkflowMock = module.get(ImportWorkflow);
         importWorkflowFactoryMock = module.get(ImportWorkflowFactory);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -60,11 +60,11 @@ describe('Import API with mocked ImportWorkflowAggregate', () => {
                 const personpermissionsMock: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
-                importWorkflowAggregateMock.executeImport.mockResolvedValueOnce({
+                ImportWorkflowMock.executeImport.mockResolvedValueOnce({
                     ok: false,
                     error: new ImportTextFileCreationError(['Reason']),
                 });
-                importWorkflowFactoryMock.createNew.mockReturnValueOnce(importWorkflowAggregateMock);
+                importWorkflowFactoryMock.createNew.mockReturnValueOnce(ImportWorkflowMock);
 
                 await expect(sut.executeImport(params, responseMock, personpermissionsMock)).rejects.toThrow(
                     new ImportTextFileCreationError(['Reason']),
