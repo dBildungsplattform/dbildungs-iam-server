@@ -280,6 +280,45 @@ export class DbSeedService {
         this.logger.info(`Insert ${files.length} entities of type Person`);
     }
 
+    public async seedTechnicalUser(fileContentAsStr: string): Promise<void> {
+        const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
+        const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        /* eslint-disable no-await-in-loop */
+        for (const file of files) {
+            /* eslint-disable no-await-in-loop */
+            const person: Person<false> | DomainError = Person.construct(
+                undefined,
+                undefined,
+                undefined,
+                file.familienname,
+                file.vorname,
+                '1',
+                file.username,
+                file.keycloakUserId,
+            );
+
+            if (person instanceof DomainError) {
+                this.logger.error('Could not create person:');
+                this.logger.error(JSON.stringify(person));
+                throw person;
+            }
+
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
+            if (persistedPerson instanceof Person && file.id != null) {
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.PERSON,
+                    file.id,
+                    persistedPerson.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
+            } else {
+                this.logger.error('Person without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(person));
+            }
+        }
+        this.logger.info(`Insert ${files.length} entities of type Person`);
+    }
+
     public async seedPersonenkontext(fileContentAsStr: string): Promise<Personenkontext<true>[]> {
         const personenkontextFile: EntityFile<PersonenkontextFile> = JSON.parse(
             fileContentAsStr,

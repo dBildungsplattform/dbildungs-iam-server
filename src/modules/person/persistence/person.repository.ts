@@ -348,14 +348,19 @@ export class PersonRepository {
 
             // Take ID from person to create keycloak user
             let personWithKeycloakUser: Person<true> | DomainError;
-            if (!hashedPassword) {
-                personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+
+            if (person.keycloakUserId == null) {
+                if (!hashedPassword) {
+                    personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+                } else {
+                    personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
+                        persistedPerson,
+                        hashedPassword,
+                        this.kcUserService,
+                    );
+                }
             } else {
-                personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
-                    persistedPerson,
-                    hashedPassword,
-                    this.kcUserService,
-                );
+                personWithKeycloakUser = persistedPerson;
             }
 
             // -> When keycloak fails, rollback

@@ -156,7 +156,9 @@
         "name": "Technischer Nutzer",
         "rollenart": "SYSADMIN",
         "merkmale": [],
-        "systemrechte": [],
+        "systemrechte": [
+            "CRON_DURCHFUEHREN"
+        ],
         "serviceProviderIds": [],
         "istTechnisch": true
     }

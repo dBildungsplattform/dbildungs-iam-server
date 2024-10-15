@@ -164,13 +164,6 @@
             "vorname": "migration",
             "familienname": "migration",
             "personalnummer": "9999999"
-        },
-        {
-            "id": 21,
-            "username": "technical",
-            "password": "technical",
-            "vorname": "technical",
-            "familienname": "technical"
         }
     ]
 }
