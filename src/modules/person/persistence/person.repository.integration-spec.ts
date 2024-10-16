@@ -694,6 +694,35 @@ describe('PersonRepository Integration', () => {
                     expect(kcUserServiceMock.setPassword).not.toHaveBeenCalled();
                 });
             });
+            describe('when lastname or firstname changed', () => {
+                it('should return DomainError if it cannot generate a new username when referrer is missing', async () => {
+                    const person: Person<true> = await savePerson(true);
+
+                    // Set the existing referrer to undefined to trigger username generation
+                    person.referrer = undefined;
+
+                    personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+                    // Simulate username generation failure
+                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                        ok: false,
+                        error: new InvalidNameError('Could not generate valid username'),
+                    });
+
+                    const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                        person.id,
+                        faker.name.lastName(),
+                        faker.name.firstName(),
+                        faker.finance.pin(7),
+                        person.updatedAt,
+                        person.revision,
+                        personPermissionsMock,
+                    );
+
+                    // Expect the result to be an instance of DomainError since username generation failed
+                    expect(result).toBeInstanceOf(DomainError);
+                });
+            });
 
             describe('when lastname has changed', () => {
                 it('should trigger PersonRenamedEvent', async () => {
@@ -1799,30 +1828,6 @@ describe('PersonRepository Integration', () => {
                 person.revision,
                 personPermissionsMock,
             );
-            expect(result).toBeInstanceOf(DomainError);
-        });
-
-        it('should return DomainError if it cannot generate a new username when referrer is missing', async () => {
-            const person: Person<true> = await savePerson(true);
-            person.referrer = undefined;
-            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
-
-            usernameGeneratorService.generateUsername.mockResolvedValueOnce({
-                ok: false,
-                error: new InvalidNameError('Could not generate valid username'),
-            });
-
-            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
-                person.id,
-                faker.name.lastName(),
-                faker.name.firstName(),
-                faker.finance.pin(7),
-                person.updatedAt,
-                person.revision,
-                personPermissionsMock,
-            );
-
-            // Expect the result to be an instance of DomainError since username generation failed
             expect(result).toBeInstanceOf(DomainError);
         });
     });
