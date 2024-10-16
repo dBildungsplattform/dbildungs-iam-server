@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
+import { Collection, EntityManager, Loaded, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -28,6 +28,7 @@ import {
     DomainError,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
+    InvalidCharacterSetError,
     InvalidNameError,
     KeycloakClientError,
     MismatchedRevisionError,
@@ -694,35 +695,6 @@ describe('PersonRepository Integration', () => {
                     expect(kcUserServiceMock.setPassword).not.toHaveBeenCalled();
                 });
             });
-            describe('when lastname or firstname changed', () => {
-                it('should return DomainError if it cannot generate a new username when referrer is missing', async () => {
-                    const person: Person<true> = await savePerson(true);
-
-                    // Set the existing referrer to undefined to trigger username generation
-                    person.referrer = undefined;
-
-                    personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
-
-                    // Simulate username generation failure
-                    usernameGeneratorService.generateUsername.mockResolvedValueOnce({
-                        ok: false,
-                        error: new InvalidNameError('Could not generate valid username'),
-                    });
-
-                    const result: Person<true> | DomainError = await sut.updatePersonMetadata(
-                        person.id,
-                        faker.name.lastName(),
-                        faker.name.firstName(),
-                        faker.finance.pin(7),
-                        person.updatedAt,
-                        person.revision,
-                        personPermissionsMock,
-                    );
-
-                    // Expect the result to be an instance of DomainError since username generation failed
-                    expect(result).toBeInstanceOf(DomainError);
-                });
-            });
 
             describe('when lastname has changed', () => {
                 it('should trigger PersonRenamedEvent', async () => {
@@ -886,6 +858,51 @@ describe('PersonRepository Integration', () => {
                     faker.string.uuid(),
                 );
                 await expect(sut.update(person)).rejects.toBeDefined();
+            });
+        });
+        describe('when referrer is undefined', () => {
+            it('should use the existing referrer if the person has not been renamed and referrer is already defined', async () => {
+                const existingPerson: Person<true> = await savePerson();
+                const result: Person<true> | DomainError = await sut.update(existingPerson);
+
+                expect(result).toBeInstanceOf(Person);
+                if (result instanceof Person) {
+                    expect(result.referrer).toEqual(existingPerson.referrer);
+                }
+            });
+
+            it('should generate a new referrer if the person has been renamed and referrer is not defined', async () => {
+                const existingPerson: Person<true> = await savePerson();
+                const personEntity: Loaded<PersonEntity> = await em.findOneOrFail(PersonEntity, existingPerson.id);
+                personEntity.referrer = undefined;
+                jest.spyOn(em, 'findOneOrFail').mockResolvedValueOnce(personEntity);
+
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                existingPerson.familienname = 'NewLastName';
+                existingPerson.vorname = 'NewFirstName';
+                const result: Person<true> | DomainError = await sut.update(existingPerson);
+                expect(result).toBeInstanceOf(Person);
+                if (result instanceof Person) {
+                    expect(result.referrer).toEqual('testusername');
+                }
+                expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith('NewFirstName', 'NewLastName');
+            });
+
+            it('should return an error if the username generator fails when referrer is not defined', async () => {
+                const existingPerson: Person<true> = await savePerson();
+                const personEntity: Loaded<PersonEntity> = await em.findOneOrFail(PersonEntity, existingPerson.id);
+                personEntity.referrer = undefined;
+                jest.spyOn(em, 'findOneOrFail').mockResolvedValueOnce(personEntity);
+
+                usernameGeneratorService.generateUsername.mockResolvedValue({
+                    ok: false,
+                    error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
+                });
+                existingPerson.familienname = 'NewLastName';
+                existingPerson.vorname = 'NewFirstName';
+                const result: Person<true> | DomainError = await sut.update(existingPerson);
+                expect(result).toBeInstanceOf(DomainError);
+                expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith('NewFirstName', 'NewLastName');
             });
         });
     });
