@@ -298,7 +298,7 @@ export class OrganisationRepository {
         personPermissions: PersonPermissions,
         systemrechte: RollenSystemRecht[],
         searchOptions: OrganisationSeachOptions,
-    ): Promise<[Organisation<true>[], number, number]> {
+    ): Promise<[Organisation<true>[], total: number, pageTotal: number]> {
         const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
             return [[], 0, 0];

@@ -1583,4 +1583,79 @@ describe('OrganisationRepository', () => {
             expect(result.some((org: Organisation<true>) => org.id === organisations[2]?.id)).toBeTruthy();
         }
     });
+
+    it('should return correct pageTotal for root user without searchString', async () => {
+        const orgas: OrganisationEntity[] = [];
+        for (let i: number = 0; i < 5; i++) {
+            const orga: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orga instanceof DomainError) {
+                return;
+            }
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+            await em.persistAndFlush(mappedOrga);
+            orgas.push(mappedOrga);
+        }
+        const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+        const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+            personPermissions,
+            [RollenSystemRecht.SCHULEN_VERWALTEN],
+            { limit: 3 }, // Simulate a limit for pagination
+        );
+
+        expect(result[1]).toBe(5); // total should be 5
+        expect(result[2]).toBe(3); // pageTotal should be 3 because of the limit
+    });
+
+    it('should return correct pageTotal when searchString is used', async () => {
+        const orgas: OrganisationEntity[] = [];
+        for (let i: number = 0; i < 3; i++) {
+            const orga: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                'Test' + faker.company.name(),
+            );
+            if (orga instanceof DomainError) {
+                return;
+            }
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+            await em.persistAndFlush(mappedOrga);
+            orgas.push(mappedOrga);
+        }
+        for (let i: number = 0; i < 3; i++) {
+            const orga: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                faker.string.numeric(6),
+                faker.company.name(),
+            );
+            if (orga instanceof DomainError) {
+                return;
+            }
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+            await em.persistAndFlush(mappedOrga);
+            orgas.push(mappedOrga);
+        }
+        const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+            all: false,
+            orgaIds: [orgas[0]!.id, orgas[2]!.id, orgas[4]!.id],
+        });
+
+        const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+            personPermissions,
+            [RollenSystemRecht.SCHULEN_VERWALTEN],
+            { searchString: 'Test' },
+        );
+
+        expect(result[1]).toBe(2); // total matched organisations
+        expect(result[2]).toBe(2); // pageTotal should also be 2 since it's less than the limit
+    });
 });
