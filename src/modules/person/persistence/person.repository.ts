@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, FilterQuery, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, FilterQuery, Loaded, QBFilterQuery, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -15,8 +15,8 @@ import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enu
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { LockInfo, Person } from '../domain/person.js';
+import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { Person, LockInfo } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
@@ -708,5 +708,29 @@ export class PersonRepository {
         if (oldVornameLowerCase[0] !== newVornameLowerCase[0]) return true;
 
         return oldFamiliennameLowerCase !== newFamiliennameLowerCase;
+    }
+
+    public async getKoPersUserLockList(): Promise<string[]> {
+        const daysAgo: Date = new Date();
+        daysAgo.setDate(daysAgo.getDate() - 56);
+
+        const filters: QBFilterQuery<PersonEntity> = {
+            $and: [
+                { personalnummer: { $eq: null } },
+                {
+                    personenKontexte: {
+                        $some: {
+                            createdAt: { $lte: daysAgo }, //Check that createdAt is older than 56 days
+                            rolleId: {
+                                merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
+                            },
+                        },
+                    },
+                },
+            ],
+        };
+
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        return personEntities.map((person: PersonEntity) => person.keycloakUserId);
     }
 }
