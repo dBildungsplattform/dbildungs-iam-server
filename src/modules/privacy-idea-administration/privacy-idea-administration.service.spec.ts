@@ -899,9 +899,10 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             const mockJWTToken: string = 'mockJWTToken';
             const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
 
-            jest.spyOn(service as unknown as { getJWTToken: () => Promise<string> }, 'getJWTToken').mockResolvedValue(
-                mockJWTToken,
-            );
+            jest.spyOn(
+                service as unknown as { getJWTToken: () => Promise<string> },
+                'getJWTToken',
+            ).mockResolvedValueOnce(mockJWTToken);
             jest.spyOn(
                 service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
                 'getUserTokens',
@@ -927,6 +928,43 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             httpServiceMock.delete.mockReturnValueOnce(throwError(() => new Error('Delete failed')));
             const result: Result<void, DomainError> = await service.updateUsername(oldUserName, newUserName);
             expect(result.ok).toBe(false);
+        });
+        it('should return ok if deleteUser was successfull ', async () => {
+            const oldUserName: string = 'oldUser';
+            const newUserName: string = 'newUser';
+            const mockUserTokens: PrivacyIdeaToken[] = [mockPrivacyIdeaToken];
+            const mockJWTToken: string = 'mockJWTToken';
+            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
+
+            jest.spyOn(
+                service as unknown as { getJWTToken: () => Promise<string> },
+                'getJWTToken',
+            ).mockResolvedValueOnce(mockJWTToken);
+            jest.spyOn(
+                service as unknown as { getUserTokens: () => Promise<PrivacyIdeaToken[]> },
+                'getUserTokens',
+            ).mockResolvedValueOnce(mockUserTokens);
+            jest.spyOn(
+                service as unknown as { unassignToken: (serial: string, token: string) => Promise<ResetTokenResponse> },
+                'unassignToken',
+            ).mockResolvedValueOnce(mockResetTokenResponse);
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValueOnce(false);
+            jest.spyOn(
+                service as unknown as { addUser: (username: string) => Promise<void> },
+                'addUser',
+            ).mockResolvedValueOnce();
+            jest.spyOn(
+                service as unknown as {
+                    assignToken: (serial: string, token: string, username: string) => Promise<AssignTokenResponse>;
+                },
+                'assignToken',
+            ).mockResolvedValueOnce(mockAssignTokenResponse);
+            httpServiceMock.delete.mockReturnValueOnce(of({} as AxiosResponse));
+            const result: Result<void, DomainError> = await service.updateUsername(oldUserName, newUserName);
+            expect(result.ok).toBe(true);
         });
     });
 });
