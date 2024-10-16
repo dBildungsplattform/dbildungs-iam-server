@@ -257,6 +257,10 @@ export class Person<WasPersisted extends boolean> {
             return new FamiliennameForPersonWithTrailingSpaceError();
         }
 
+        if (personalnummer && !NameValidator.isNameValid(personalnummer)) {
+            return new PersonalNummerForPersonWithTrailingSpaceError();
+        }
+
         this.familienname = familienname ?? this.familienname;
         this.vorname = vorname ?? this.vorname;
         this.referrer = referrer;
