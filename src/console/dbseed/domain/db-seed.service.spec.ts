@@ -596,7 +596,7 @@ describe('DbSeedService', () => {
                     'seeding-integration-test/all',
                     '01',
                 );
-                expect(entityFileNames).toHaveLength(6);
+                expect(entityFileNames).toHaveLength(7);
             });
         });
     });
