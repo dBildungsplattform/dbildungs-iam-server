@@ -352,6 +352,7 @@ export class PersonRepository {
         person: Person<false>,
         hashedPassword?: string,
         personId?: string,
+        technicalUser: boolean = false,
     ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
@@ -380,7 +381,7 @@ export class PersonRepository {
             // Take ID from person to create keycloak user
             let personWithKeycloakUser: Person<true> | DomainError;
 
-            if (person.keycloakUserId == null) {
+            if (!technicalUser) {
                 if (!hashedPassword) {
                     personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
                 } else {

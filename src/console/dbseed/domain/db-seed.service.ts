@@ -304,7 +304,12 @@ export class DbSeedService {
                 throw person;
             }
 
-            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
+                person,
+                undefined,
+                undefined,
+                true,
+            );
             if (persistedPerson instanceof Person && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
                     ReferencedEntityType.PERSON,
