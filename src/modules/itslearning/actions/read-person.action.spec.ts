@@ -67,7 +67,7 @@ describe('ReadPersonAction', () => {
         it('should return error, if firstname is missing', () => {
             const userId: string = faker.string.uuid();
             const username: string = faker.internet.userName();
-            const firstName: string = faker.person.firstName();
+            const lastName: string = faker.person.lastName();
             const email: string = faker.internet.email();
             const institutionRole: IMSESInstitutionRoleType = faker.helpers.enumValue(IMSESInstitutionRoleType);
             const primaryRoleType: boolean = faker.datatype.boolean();
@@ -78,7 +78,7 @@ describe('ReadPersonAction', () => {
                     readPersonResponse: {
                         person: {
                             name: {
-                                partName: [{ namePartType: 'First', namePartValue: firstName }],
+                                partName: [{ namePartType: 'Last', namePartValue: lastName }],
                             },
                             email,
                             userId: {
@@ -100,7 +100,7 @@ describe('ReadPersonAction', () => {
         it('should return error, if lastname is missing', () => {
             const userId: string = faker.string.uuid();
             const username: string = faker.internet.userName();
-            const lastName: string = faker.person.lastName();
+            const firstName: string = faker.person.firstName();
             const email: string = faker.internet.email();
             const institutionRole: IMSESInstitutionRoleType = faker.helpers.enumValue(IMSESInstitutionRoleType);
             const primaryRoleType: boolean = faker.datatype.boolean();
@@ -111,7 +111,7 @@ describe('ReadPersonAction', () => {
                     readPersonResponse: {
                         person: {
                             name: {
-                                partName: [{ namePartType: 'Last', namePartValue: lastName }],
+                                partName: [{ namePartType: 'First', namePartValue: firstName }],
                             },
                             email,
                             userId: {

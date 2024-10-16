@@ -6,7 +6,6 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import {
@@ -79,19 +78,23 @@ export class ItsLearningPersonsEventHandler {
 
     @EventHandler(OxUserChangedEvent)
     public async oxUserChangedEventHandler(event: OxUserChangedEvent): Promise<void> {
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring email update.');
+        }
+
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`Received OxUserChangedEvent, ${event.personId}`);
 
-            await this.updateEmail(event.personId, event.primaryEmail);
-        });
-    }
+            const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(
+                event.personId,
+                event.primaryEmail,
+            );
 
-    @EventHandler(OxMetadataInKeycloakChangedEvent)
-    public async oxMetadataInKeycloakChangedEventHandler(event: OxMetadataInKeycloakChangedEvent): Promise<void> {
-        await this.personUpdateMutex.runExclusive(async () => {
-            this.logger.info(`Received OxMetadataInKeycloakChangedEvent, ${event.personId}`);
-
-            await this.updateEmail(event.personId, event.emailAddress);
+            if (updateError) {
+                this.logger.error(`Could not update E-Mail for person with ID ${event.personId}!`);
+            } else {
+                this.logger.info(`Updated E-Mail for person with ID ${event.personId}!`);
+            }
         });
     }
 
@@ -183,23 +186,6 @@ export class ItsLearningPersonsEventHandler {
             this.logger.info(`Person with ID ${personID} deleted.`);
         } else {
             this.logger.error(`Could not delete person with ID ${personID} from itsLearning.`);
-        }
-    }
-
-    /**
-     * Updates the email for the person
-     */
-    private async updateEmail(personId: PersonID, email: string): Promise<void> {
-        if (!this.ENABLED) {
-            return this.logger.info('Not enabled, ignoring email update.');
-        }
-
-        const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(personId, email);
-
-        if (updateError) {
-            this.logger.error(`Could not update E-Mail for person with ID ${personId}!`);
-        } else {
-            this.logger.info(`Updated E-Mail for person with ID ${personId}!`);
         }
     }
 

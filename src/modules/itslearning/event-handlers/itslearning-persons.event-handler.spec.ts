@@ -6,7 +6,6 @@ import { ConfigTestModule, DoFactory, LoggingTestModule } from '../../../../test
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import {
@@ -298,45 +297,6 @@ describe('ItsLearning Persons Event Handler', () => {
             itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
 
             await sut.oxUserChangedEventHandler(generatedEvent);
-
-            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring email update.');
-        });
-    });
-
-    describe('oxMetadataInKeycloakChangedEventHandler', () => {
-        const personId: string = faker.string.uuid();
-        const email: string = faker.internet.email();
-        const changedEvent: OxMetadataInKeycloakChangedEvent = new OxMetadataInKeycloakChangedEvent(
-            personId,
-            faker.internet.userName(),
-            faker.string.uuid(),
-            faker.internet.userName(),
-            faker.string.uuid(),
-            email,
-        );
-
-        it('should update email', async () => {
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
-
-            await sut.oxMetadataInKeycloakChangedEventHandler(changedEvent);
-
-            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(personId, email);
-            expect(loggerMock.info).toHaveBeenCalledWith(`Updated E-Mail for person with ID ${personId}!`);
-        });
-
-        it('should log error, if email could not be updated', async () => {
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Update email
-
-            await sut.oxMetadataInKeycloakChangedEventHandler(changedEvent);
-
-            expect(loggerMock.error).toHaveBeenCalledWith(`Could not update E-Mail for person with ID ${personId}!`);
-        });
-
-        it('should skip event, if not enabled', async () => {
-            sut.ENABLED = false;
-            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
-
-            await sut.oxMetadataInKeycloakChangedEventHandler(changedEvent);
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring email update.');
         });
