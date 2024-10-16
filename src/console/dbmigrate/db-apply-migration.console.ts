@@ -3,7 +3,7 @@ import { CommandRunner, SubCommand, Option } from 'nest-commander';
 import { Migrator } from '@mikro-orm/migrations';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 
-enum MigrationType {
+export enum MigrationType {
     STRUCTURAL = 'structural',
     DATA = 'data',
     All = 'all',
