@@ -31,6 +31,10 @@ import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -574,6 +578,13 @@ export class PersonRepository {
             return new MissingPermissionsError('Not allowed to update the person metadata for the person.');
         }
 
+        if (!NameValidator.isNameValid(vorname)) {
+            return new VornameForPersonWithTrailingSpaceError();
+        }
+        if (!NameValidator.isNameValid(familienname)) {
+            return new FamiliennameForPersonWithTrailingSpaceError();
+        }
+
         const hasNameChanged: boolean = this.hasNameChanged(
             personFound.vorname,
             personFound.familienname,
@@ -604,6 +615,9 @@ export class PersonRepository {
 
         //Update personalnummer
         if (personalnummer) {
+            if (!NameValidator.isNameValid(personalnummer)) {
+                return new PersonalNummerForPersonWithTrailingSpaceError();
+            }
             if (await this.isPersonalnummerAlreadayAssigned(personalnummer)) {
                 return new DuplicatePersonalnummerError(`Personalnummer ${personalnummer} already exists.`);
             }
