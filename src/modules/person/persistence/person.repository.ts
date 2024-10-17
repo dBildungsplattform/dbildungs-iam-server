@@ -412,6 +412,7 @@ export class PersonRepository {
     }
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
+        let oldReferrer: string | undefined = '';
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
         const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
         if (person.newPassword) {
@@ -425,11 +426,28 @@ export class PersonRepository {
             }
         }
 
+        //save old referrer for person-renamed-event before updating the person
+        if (isPersonRenamedEventNecessary) {
+            oldReferrer = personEntity.referrer;
+            if (!oldReferrer) {
+                const result: Result<string, DomainError> = await this.usernameGenerator.generateUsername(
+                    person.vorname,
+                    person.familienname,
+                );
+                if (!result.ok) {
+                    return result.error;
+                }
+                oldReferrer = result.value;
+            }
+        }
+
         personEntity.assign(mapAggregateToData(person));
         await this.em.persistAndFlush(personEntity);
 
         if (isPersonRenamedEventNecessary) {
-            this.eventService.publish(PersonRenamedEvent.fromPerson(person));
+            this.eventService.publish(PersonRenamedEvent.fromPerson(person, oldReferrer));
+            // wait for privacyIDEA to update the username
+            await new Promise<void>((resolve: () => void) => setTimeout(resolve, 5000));
         }
 
         return mapEntityToAggregate(personEntity);
