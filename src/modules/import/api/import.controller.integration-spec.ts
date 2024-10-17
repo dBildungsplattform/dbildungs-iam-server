@@ -220,7 +220,7 @@ describe('Rolle API', () => {
                 isValid: false,
                 totalImportDataItems: 2,
                 totalInvalidImportDataItems: 2,
-                invalidImportDataItems: expect.arrayContaining([
+                invalidImportDataItems: [
                     {
                         vorname: '',
                         nachname: 'Mustermann',
@@ -233,7 +233,7 @@ describe('Rolle API', () => {
                         klasse: '',
                         validationErrors: ['IMPORT_DATA_ITEM_KLASSE_IS_EMPTY', 'IMPORT_DATA_ITEM_NACHNAME_IS_EMPTY'],
                     },
-                ]),
+                ],
             });
         });
 
