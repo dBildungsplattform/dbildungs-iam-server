@@ -164,10 +164,6 @@ export class ImportController {
         const result: Result<void> = await importWorkflow.cancelImport(params.importvorgangId, permissions);
         if (!result.ok) {
             if (result.error instanceof DomainError) {
-                if (result.error instanceof ImportDomainError) {
-                    throw result.error;
-                }
-
                 throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                     SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
                 );
