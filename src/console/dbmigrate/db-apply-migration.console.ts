@@ -27,7 +27,7 @@ export class DbApplyMigrationConsole extends CommandRunner {
 
         if (
             !allMigrations
-                .map((migration: UmzugMigration) => migration.name.replace('.ts', ''))
+                .map((migration: UmzugMigration) => migration.name)
                 .every((name: string) => name.endsWith('S') || name.endsWith('D'))
         ) {
             throw new Error('Not all migrations end with a S or D');
