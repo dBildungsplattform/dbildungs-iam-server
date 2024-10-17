@@ -411,6 +411,25 @@ describe('DbSeedService', () => {
         });
     });
 
+    describe('seedTechnicalUser', () => {
+        describe('no id in seeding', () => {
+            it('should not create user', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/invalidPerson/06_technical-user.json`,
+                    'utf-8',
+                );
+
+                const person: Person<true> = createMock<Person<true>>();
+
+                personRepoMock.create.mockResolvedValue(person);
+
+                await dbSeedService.seedTechnicalUser(fileContentAsStr);
+
+                expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(0);
+            });
+        });
+    });
+
     describe('seedPersonkontext', () => {
         describe('with violated Personenkontext Klasse specification', () => {
             it('should throw GleicheRolleAnKlasseWieSchuleError', async () => {

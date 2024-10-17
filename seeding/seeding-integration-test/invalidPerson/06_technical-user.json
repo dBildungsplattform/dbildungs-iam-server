@@ -1,0 +1,12 @@
+{
+    "entityName": "TechnicalUser",
+    "entities": [
+        {
+            "username": "technical",
+            "password": "technical",
+            "vorname": "technical",
+            "familienname": "technical",
+            "keycloakUserId": "abc"
+        }
+    ]
+}
