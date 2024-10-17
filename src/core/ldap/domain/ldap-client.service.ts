@@ -11,6 +11,7 @@ import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap-person-entry-changed.event.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
+import {LdapEmailDomainError} from "../error/ldap-email-domain.error.js";
 
 export type PersonData = {
     vorname: string;
@@ -51,16 +52,23 @@ export class LdapClientService {
         }
     }
 
-    private getRootName(emailDomain?: string): string {
-        let rootName: string = 'oeffentlicheSchulen';
-        if (emailDomain && emailDomain === 'ersatzschule-sh.de') {
-            rootName = 'ersatzSchulen';
-        }
-        return rootName;
+    private getRootName(emailDomain?: string): Result<string, LdapEmailDomainError> {
+        if (emailDomain === 'ersatzschule-sh.de') return {
+            ok: true,
+            value: 'ersatzSchulen',
+        };
+        if (emailDomain === 'schule-sh.de') return {
+            ok: true,
+            value: 'oeffentlicheSchulen',
+        };
+
+        return {
+            ok: false,
+            error: new LdapEmailDomainError(),
+        };
     }
 
-    private getLehrerUid(referrer: string, domain: string | undefined): string {
-        const rootName: string = this.getRootName(domain);
+    private getLehrerUid(referrer: string, rootName: string): string {
         return `uid=${referrer},ou=${rootName},dc=schule-sh,dc=de`;
     }
 
@@ -77,8 +85,12 @@ export class LdapClientService {
                 ),
             };
         }
-        const rootName: string = this.getRootName(domain);
-        const lehrerUid: string = this.getLehrerUid(person.referrer, domain);
+        const rootName: Result<string> = this.getRootName(domain);
+        if (!rootName.ok) {
+            this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+            return rootName;
+        }
+        const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -120,7 +132,11 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const rootName: string = this.getRootName(domain);
+            const rootName: Result<string> = this.getRootName(domain);
+            if (!rootName.ok) {
+                this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+                return rootName;
+            }
             const searchResultLehrer: SearchResult = await client.search(`ou=${rootName},dc=schule-sh,dc=de`, {
                 filter: `(uid=${referrer})`,
             });
@@ -138,8 +154,11 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const rootName: string = this.getRootName(domain);
-            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName},dc=schule-sh,dc=de`, {
+            const rootName: Result<string> = this.getRootName(domain);
+            if (!rootName.ok) {
+                this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+                return rootName;
+            }            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName},dc=schule-sh,dc=de`, {
                 scope: 'sub',
                 filter: `(entryUUID=${personId})`,
             });
@@ -162,14 +181,20 @@ export class LdapClientService {
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            if (!person.referrer)
+            if (!person.referrer) {
                 return {
                     ok: false,
                     error: new UsernameRequiredError(
                         `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
                     ),
                 };
-            const lehrerUid: string = this.getLehrerUid(person.referrer, domain);
+            }
+            const rootName: Result<string> = this.getRootName(domain);
+            if (!rootName.ok) {
+                this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+                return rootName;
+            }
+            const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
             await client.del(lehrerUid);
             this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
 
@@ -193,7 +218,11 @@ export class LdapClientService {
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            const rootName: string = this.getRootName(domain);
+            const rootName: Result<string> = this.getRootName(domain);
+            if (!rootName.ok) {
+                this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+                return rootName;
+            }
             const searchResult: SearchResult = await client.search(`ou=${rootName},dc=schule-sh,dc=de`, {
                 scope: 'sub',
                 filter: `(entryUUID=${personId})`,
