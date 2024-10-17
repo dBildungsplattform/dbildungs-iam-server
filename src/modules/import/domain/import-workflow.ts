@@ -225,46 +225,46 @@ export class ImportWorkflow {
             };
         }
         //create Person With PKs
-        const promises: Promise<DomainError | PersonPersonenkontext>[] = importDataItems.map(
-            (importDataItem: ImportDataItem<true>) => {
-                const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
-                    (organisationByIdAndName: OrganisationByIdAndName) =>
-                        organisationByIdAndName.name?.toLowerCase() == importDataItem.klasse?.toLowerCase(),
+        //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
+        const savedPersonenWithPersonenkontext: (DomainError | PersonPersonenkontext)[] = [];
+        /* eslint-disable no-await-in-loop */
+        for (const importDataItem of importDataItems) {
+            const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
+                (organisationByIdAndName: OrganisationByIdAndName) =>
+                    organisationByIdAndName.name?.toLowerCase() == importDataItem.klasse?.toLowerCase(),
+            );
+            if (!klasse) {
+                //(ToDO => next ticket: validate every data item and collect all errors even on import execution)
+                throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
+                    `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
+                ]);
+            }
+
+            const createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[] = [
+                {
+                    organisationId: this.selectedOrganisationId,
+                    rolleId: this.selectedRolleId,
+                },
+                {
+                    organisationId: klasse.id,
+                    rolleId: this.selectedRolleId,
+                },
+            ];
+
+            const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
+                await this.personenkontextCreationService.createPersonWithPersonenkontexte(
+                    permissions,
+                    importDataItem.vorname,
+                    importDataItem.nachname,
+                    createPersonenkontexte,
                 );
-                if (!klasse) {
-                    //(ToDO => next ticket: validate every data item and collect all errors even on import execution)
-                    throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
-                        `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
-                    ]);
-                }
 
-                const createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[] = [
-                    {
-                        organisationId: this.selectedOrganisationId,
-                        rolleId: this.selectedRolleId,
-                    },
-                    {
-                        organisationId: klasse.id,
-                        rolleId: this.selectedRolleId,
-                    },
-                ];
-
-                const savedPersonWithPersonenkontext: Promise<DomainError | PersonPersonenkontext> =
-                    this.personenkontextCreationService.createPersonWithPersonenkontexte(
-                        permissions,
-                        importDataItem.vorname,
-                        importDataItem.nachname,
-                        createPersonenkontexte,
-                    );
-
-                return savedPersonWithPersonenkontext;
-            },
-        );
-
-        const savedPersonWithPersonenkontext: (DomainError | PersonPersonenkontext)[] = await Promise.all(promises);
+            savedPersonenWithPersonenkontext.push(savedPersonWithPersonenkontext);
+        }
+        /* eslint-disable no-await-in-loop */
 
         //Save Benutzer + Passwort in the Liste
-        savedPersonWithPersonenkontext.forEach((personPersonenkontext: DomainError | PersonPersonenkontext) => {
+        savedPersonenWithPersonenkontext.forEach((personPersonenkontext: DomainError | PersonPersonenkontext) => {
             if (!(personPersonenkontext instanceof DomainError)) {
                 const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                     (klasseByIDandName: OrganisationByIdAndName) =>
