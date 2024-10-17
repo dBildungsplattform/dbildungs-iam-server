@@ -287,7 +287,7 @@ export class DbSeedService {
         /* eslint-disable no-await-in-loop */
         for (const file of files) {
             /* eslint-disable no-await-in-loop */
-            const person: Person<false> | DomainError = Person.construct(
+            const person: Person<false> = Person.construct(
                 undefined,
                 undefined,
                 undefined,
@@ -297,12 +297,6 @@ export class DbSeedService {
                 file.username,
                 file.keycloakUserId,
             );
-
-            if (person instanceof DomainError) {
-                this.logger.error('Could not create person:');
-                this.logger.error(JSON.stringify(person));
-                throw person;
-            }
 
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
                 person,
