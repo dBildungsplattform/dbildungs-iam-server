@@ -26,6 +26,7 @@ import { ImportTextFileCreationError } from './import-text-file-creation.error.j
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
 import { Person } from '../../person/domain/person.js';
 import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
+import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -73,7 +74,7 @@ describe('ImportWorkflow', () => {
         importWorkflowFactory = module.get(ImportWorkflowFactory);
         sut = importWorkflowFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
-    });
+    }, 10000000);
 
     afterAll(async () => {
         await module.close();
@@ -136,14 +137,33 @@ describe('ImportWorkflow', () => {
             expect(rolleRepoMock.findById).toHaveBeenCalledWith(SELECTED_ROLLE_ID);
         });
 
+        it('should return ImportNurLernAnSchuleUndKlasseError if the rolle is not rollenart LERN', async () => {
+            const file: Express.Multer.File = createMock<Express.Multer.File>();
+            sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
+            organisationRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+            );
+            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            rolleMock.rollenart = RollenArt.LEHR;
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
+            expect(result).toBeInstanceOf(ImportNurLernAnSchuleUndKlasseError);
+            expect(organisationRepoMock.findById).toHaveBeenCalledWith(SELECTED_ORGANISATION_ID);
+            expect(rolleRepoMock.findById).toHaveBeenCalledWith(SELECTED_ROLLE_ID);
+        });
+
         it('should return RolleNurAnPassendeOrganisationError if the rolle does not pass to organisation', async () => {
             const file: Express.Multer.File = createMock<Express.Multer.File>();
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
             organisationRepoMock.findById.mockResolvedValueOnce(
-                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE }),
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND }),
             );
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
-            rolleMock.rollenart = RollenArt.LEIT;
+            rolleMock.rollenart = RollenArt.LERN;
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
             const result: DomainError | ImportUploadResultFields = await sut.validateImport(
@@ -221,6 +241,153 @@ describe('ImportWorkflow', () => {
                 personpermissionsMock,
             );
             expect(result).not.toBeInstanceOf(DomainError);
+            expect(importDataRepositoryMock.save).toHaveBeenCalled();
+            expect(spyParse).toHaveBeenCalled();
+        });
+
+        it('should return an import data item with error=IMPORT_DATA_ITEM_KLASSE_IS_EMPTY if klasse is missing', async () => {
+            const file: Express.Multer.File = createMock<Express.Multer.File>({
+                buffer: Buffer.from('vorname;nachname;klasse\nMax;Mustermann;'),
+            });
+            sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
+            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            rolleMock.rollenart = RollenArt.LERN;
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+            );
+            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            const spyParse: jest.SpyInstance<
+                internal.Duplex,
+                [stream: typeof Papa.NODE_STREAM_INPUT, config?: Papa.ParseConfig<unknown, undefined> | undefined],
+                unknown
+            > = jest.spyOn(Papa, 'parse');
+
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
+
+            if (result instanceof DomainError) {
+                throw new Error(result.message);
+            }
+
+            expect(result.isValid).toBeFalsy();
+            expect(result.invalidImportDataItems).toMatchObject([
+                {
+                    vorname: 'Max',
+                    nachname: 'Mustermann',
+                    klasse: '',
+                    validationErrors: ['IMPORT_DATA_ITEM_KLASSE_IS_EMPTY'],
+                } as ImportDataItem<false>,
+            ]);
+            expect(result.totalImportDataItems).toBe(1);
+            expect(result.totalInvalidImportDataItems).toBe(1);
+            expect(importDataRepositoryMock.save).toHaveBeenCalled();
+            expect(spyParse).toHaveBeenCalled();
+        });
+
+        it('should return an import data item with error=IMPORT_DATA_ITEM_KLASSE_NOT_FOUND if klasse is not found at the schule', async () => {
+            const file: Express.Multer.File = createMock<Express.Multer.File>({
+                buffer: Buffer.from('vorname;nachname;klasse\nMax;Mustermann;1A-fake'),
+            });
+            sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
+            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            rolleMock.rollenart = RollenArt.LERN;
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+            );
+            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            const spyParse: jest.SpyInstance<
+                internal.Duplex,
+                [stream: typeof Papa.NODE_STREAM_INPUT, config?: Papa.ParseConfig<unknown, undefined> | undefined],
+                unknown
+            > = jest.spyOn(Papa, 'parse');
+
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, name: '1A' }),
+            ]);
+
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
+
+            if (result instanceof DomainError) {
+                throw new Error(result.message);
+            }
+
+            expect(result.isValid).toBeFalsy();
+            expect(result.invalidImportDataItems).toMatchObject([
+                {
+                    vorname: 'Max',
+                    nachname: 'Mustermann',
+                    klasse: '1A-fake',
+                    validationErrors: ['IMPORT_DATA_ITEM_KLASSE_NOT_FOUND'],
+                } as ImportDataItem<false>,
+            ]);
+            expect(result.totalImportDataItems).toBe(1);
+            expect(result.totalInvalidImportDataItems).toBe(1);
+            expect(importDataRepositoryMock.save).toHaveBeenCalled();
+            expect(spyParse).toHaveBeenCalled();
+        });
+
+        it('should return import data items with errors if nachname or vorname is missing', async () => {
+            const file: Express.Multer.File = createMock<Express.Multer.File>({
+                buffer: Buffer.from('vorname;nachname;klasse\n;Mustermann;1A\nPhael;;1B'),
+            });
+            sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
+            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            rolleMock.rollenart = RollenArt.LERN;
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+            );
+            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            const spyParse: jest.SpyInstance<
+                internal.Duplex,
+                [stream: typeof Papa.NODE_STREAM_INPUT, config?: Papa.ParseConfig<unknown, undefined> | undefined],
+                unknown
+            > = jest.spyOn(Papa, 'parse');
+
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, name: '1A' }),
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, name: '1B' }),
+            ]);
+
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                personpermissionsMock,
+            );
+
+            if (result instanceof DomainError) {
+                throw new Error(result.message);
+            }
+
+            expect(result.isValid).toBeFalsy();
+            expect(result.invalidImportDataItems).toMatchObject([
+                {
+                    vorname: '',
+                    nachname: 'Mustermann',
+                    klasse: '1A',
+                    validationErrors: ['IMPORT_DATA_ITEM_VORNAME_IS_EMPTY'],
+                },
+                {
+                    vorname: 'Phael',
+                    nachname: '',
+                    klasse: '1B',
+                    validationErrors: ['IMPORT_DATA_ITEM_NACHNAME_IS_EMPTY'],
+                },
+            ]);
+            expect(result.totalImportDataItems).toBe(2);
+            expect(result.totalInvalidImportDataItems).toBe(2);
             expect(importDataRepositoryMock.save).toHaveBeenCalled();
             expect(spyParse).toHaveBeenCalled();
         });

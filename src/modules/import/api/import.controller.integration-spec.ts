@@ -128,8 +128,25 @@ describe('Rolle API', () => {
 
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
             await em.persistAndFlush(schule);
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+
+            const klasse1A: OrganisationEntity = new OrganisationEntity();
+            klasse1A.typ = OrganisationsTyp.KLASSE;
+            klasse1A.name = '1A';
+            klasse1A.administriertVon = schule.id;
+            klasse1A.zugehoerigZu = schule.id;
+            await em.persistAndFlush(klasse1A);
+            await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
+
+            const klasse2B: OrganisationEntity = new OrganisationEntity();
+            klasse2B.typ = OrganisationsTyp.KLASSE;
+            klasse2B.name = '2B';
+            klasse2B.administriertVon = schule.id;
+            klasse2B.zugehoerigZu = schule.id;
+            await em.persistAndFlush(klasse2B);
+            await em.findOneOrFail(OrganisationEntity, { id: klasse2B.id });
 
             const sus: Rolle<true> = await rolleRepo.save(
                 DoFactory.createRolle(false, {
@@ -149,6 +166,9 @@ describe('Rolle API', () => {
             expect(response.body).toMatchObject({
                 importvorgangId: expect.any(String) as unknown as string,
                 isValid: true,
+                totalImportDataItems: 2,
+                totalInvalidImportDataItems: 0,
+                invalidImportDataItems: [],
             });
         });
 
@@ -321,6 +341,25 @@ describe('Rolle API', () => {
                 .send(params);
 
             expect(executeResponse.status).toBe(404);
+        });
+    });
+
+    describe('/DELETE deleteImportTransaction', () => {
+        it('should return 204', async () => {
+            const importvorgangId: string = faker.string.uuid();
+            await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importvorgangId,
+                    klasse: faker.lorem.word(),
+                    personalnummer: undefined,
+                }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .delete(`/import/${importvorgangId}`)
+                .send();
+
+            expect(response.status).toBe(204);
         });
     });
 });
