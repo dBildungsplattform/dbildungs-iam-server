@@ -22,13 +22,22 @@ export class CheckRollenartSpecification {
         const existingRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(existingPKs);
         const sentRollen: Rolle<true>[] = await this.getUniqueRollenFromPersonenkontexte(sentPKs);
 
-        // If there are no existing roles, any new roles are allowed
+        // Check for existing roles
         if (existingRollen.length === 0) {
-            return true;
+            // When no roles exist already then check the sentRollen only
+            const sentRollenArt: RollenArt | undefined = sentRollen[0]?.rollenart;
+
+            // Check if all the sent Roles have the same role
+            const allSentRollenMatch: boolean = sentRollen.every(
+                (rolle: Rolle<true>) => rolle.rollenart === sentRollenArt,
+            );
+
+            // Returns true only if all roles are the same
+            return allSentRollenMatch;
         }
 
         // Get the RollenArt of existing PKs (assuming all existing PKs have the same RollenArt)
-        const existingRollenArt: RollenArt | undefined = existingRollen[0]?.rollenart;
+        const existingRollenArt: RollenArt = existingRollen[0]!.rollenart;
 
         // Check if all sent roles match the existing RollenArt
         const allSentRollenMatchExisting: boolean = sentRollen.every(

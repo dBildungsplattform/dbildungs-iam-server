@@ -268,7 +268,7 @@ export class PersonenkontexteUpdate {
         return createdPKs;
     }
 
-    private async CheckRollenartSpecification(
+    private async checkRollenartSpecification(
         sentPKs: Personenkontext<boolean>[],
     ): Promise<Option<PersonenkontexteUpdateError>> {
         const isSatisfied: boolean = await new CheckRollenartSpecification(
@@ -305,7 +305,7 @@ export class PersonenkontexteUpdate {
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
 
         const validationForLernError: Option<PersonenkontexteUpdateError> =
-            await this.CheckRollenartSpecification(sentPKs);
+            await this.checkRollenartSpecification(sentPKs);
         if (validationForLernError) {
             return validationForLernError;
         }
