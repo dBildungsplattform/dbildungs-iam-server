@@ -14,14 +14,16 @@ export class MigrationController {
 
     @Put('kc-client')
     @Public()
-    public async updateKeycloakClient(@Body() body: UpdateKeycloakClientParams): Promise<void> {
+    public async updateKeycloakClient(@Body() body: UpdateKeycloakClientParams): Promise<{ ok: boolean }> {
         const result: Result<unknown, DomainError> = await this.keycloakClientService.updateClient(
             body.id,
             body.payload,
         );
 
         if (!result.ok) {
-            console.log(result.error);
+            throw result.error;
         }
+
+        return { ok: true };
     }
 }
