@@ -173,34 +173,6 @@ export class LdapClientService {
         });
     }
 
-    /* public async deleteLehrerByPersonId(personId: PersonID, domain?: string): Promise<Result<PersonID>> {
-        return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: deleteLehrer');
-            const client: Client = this.ldapClient.getClient();
-            const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
-
-            const rootName: Result<string> = this.getRootName(domain);
-            if (!rootName.ok) {
-                this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
-                return rootName;
-            }            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName},dc=schule-sh,dc=de`, {
-                scope: 'sub',
-                filter: `(entryUUID=${personId})`,
-            });
-            if (!searchResultLehrer.searchEntries[0]) {
-                return {
-                    ok: false,
-                    error: new LdapSearchError(LdapEntityType.LEHRER),
-                };
-            }
-            await client.del(searchResultLehrer.searchEntries[0].dn);
-            this.logger.info(`LDAP: Successfully deleted lehrer by personId:${personId}`);
-
-            return { ok: true, value: personId };
-        });
-    }*/
-
     public async deleteLehrer(person: PersonData, domain: string): Promise<Result<PersonData>> {
         const rootName: Result<string> = this.getRootName(domain);
         if (!rootName.ok) {
