@@ -1,34 +1,34 @@
 import { Provider } from '@nestjs/common';
 import { KeycloakAdminClient } from '@s3pweb/keycloak-admin-client-cjs';
 
-import { Client, Issuer, TokenSet } from 'openid-client';
+import { BaseClient, Client, Issuer, TokenSet } from 'openid-client';
 import { KeycloakInstanceConfig } from './keycloak-instance-config.js';
 
 // Treat tokens as expired if they would expire in the next 10 seconds
 const TOKEN_EXPIRE_OFFSET: number = 10;
 
-async function makeAdminClient(
-    baseUrl: string,
-    realmName: string,
-    clientId: string,
-    jsonJWKS: string,
-): Promise<KeycloakAdminClient> {
-    const KeycloakIssuer: Issuer = await Issuer.discover(`${baseUrl}/realms/${realmName}`);
-
-    const client: Client = new KeycloakIssuer.Client(
-        {
-            client_id: clientId,
-            token_endpoint_auth_method: 'private_key_jwt',
-        },
-        JSON.parse(jsonJWKS) as ConstructorParameters<typeof KeycloakIssuer.Client>[1],
-    );
-
+function makeAdminClient(baseUrl: string, realmName: string, clientId: string, jsonJWKS: string): KeycloakAdminClient {
     const apiClient: KeycloakAdminClient = new KeycloakAdminClient({ baseUrl, realmName });
 
+    const jwks: ConstructorParameters<typeof BaseClient>[1] = JSON.parse(jsonJWKS) as ConstructorParameters<
+        typeof BaseClient
+    >[1];
+    let client: Client | undefined;
     let tokenSet: TokenSet | undefined;
 
     apiClient.registerTokenProvider({
         async getAccessToken() {
+            if (!client) {
+                const KeycloakIssuer: Issuer = await Issuer.discover(`${baseUrl}/realms/${realmName}`);
+                client = new KeycloakIssuer.Client(
+                    {
+                        client_id: clientId,
+                        token_endpoint_auth_method: 'private_key_jwt',
+                    },
+                    jwks,
+                );
+            }
+
             if (!tokenSet || tokenSet.expired()) {
                 tokenSet = await client.grant({
                     grant_type: 'client_credentials',
