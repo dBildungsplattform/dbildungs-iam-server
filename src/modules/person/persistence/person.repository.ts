@@ -411,6 +411,10 @@ export class PersonRepository {
         }
     }
 
+    public getReferrer(personEntity: Loaded<PersonEntity>): string | undefined {
+        return personEntity.referrer;
+    }
+
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
         let oldReferrer: string | undefined = '';
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
@@ -428,7 +432,7 @@ export class PersonRepository {
 
         //save old referrer for person-renamed-event before updating the person
         if (isPersonRenamedEventNecessary) {
-            oldReferrer = personEntity.referrer;
+            oldReferrer = this.getReferrer(personEntity);
             if (!oldReferrer) {
                 const result: Result<string, DomainError> = await this.usernameGenerator.generateUsername(
                     person.vorname,

@@ -876,21 +876,23 @@ describe('PersonRepository Integration', () => {
             });
         });
         describe('when referrer is undefined', () => {
+            afterAll(() => {
+                jest.restoreAllMocks();
+            });
+
             it('should return an error if the username generator fails', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusernamebefore1' });
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
                 const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: 'lastname1',
-                    vorname: 'firstname1',
+                    familienname: 'lastname',
+                    vorname: 'firstname',
                 });
                 expect(person).not.toBeInstanceOf(DomainError);
                 if (person instanceof DomainError) {
                     return;
                 }
-                person.username = undefined;
-                person.referrer = undefined;
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
-                    value: '',
+                    value: 'something',
                 });
                 kcUserServiceMock.setPassword.mockResolvedValueOnce({
                     ok: true,
@@ -921,6 +923,7 @@ describe('PersonRepository Integration', () => {
                     ok: false,
                     error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
                 });
+                jest.spyOn(sut, 'getReferrer').mockReturnValueOnce(undefined);
 
                 const result: Person<true> | DomainError = await sut.update(personConstructed);
                 expect(result).toBeInstanceOf(DomainError);
@@ -928,20 +931,18 @@ describe('PersonRepository Integration', () => {
             });
 
             it('should generate a new referrer if the person has been renamed', async () => {
-                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusernamebefore2' });
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
                 const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
-                    familienname: 'lastname2',
-                    vorname: 'firstname2',
+                    familienname: 'lastname',
+                    vorname: 'firstname',
                 });
                 expect(person).not.toBeInstanceOf(DomainError);
                 if (person instanceof DomainError) {
                     return;
                 }
-                person.username = undefined;
-                person.referrer = undefined;
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
-                    value: '',
+                    value: 'something',
                 });
                 kcUserServiceMock.setPassword.mockResolvedValueOnce({
                     ok: true,
@@ -966,13 +967,14 @@ describe('PersonRepository Integration', () => {
                     '1',
                     faker.lorem.word(),
                     faker.lorem.word(),
-                    faker.string.uuid(),
+                    'newtestusername',
                 );
-                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'newtestusername' });
+                jest.spyOn(sut, 'getReferrer').mockReturnValueOnce(undefined);
                 const result: Person<true> | DomainError = await sut.update(personConstructed);
                 expect(result).toBeInstanceOf(Person);
                 if (result instanceof Person) {
-                    expect(result.referrer).toEqual('testusername');
+                    expect(result.referrer).toEqual('newtestusername');
                 }
                 expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
             });
