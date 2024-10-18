@@ -168,6 +168,7 @@ export class DbSeedService {
                 serviceProviderUUIDs,
                 serviceProviderData,
                 file.istTechnisch ?? false,
+                file.overrideId,
             );
 
             if (rolle instanceof DomainError) {
@@ -211,6 +212,7 @@ export class DbSeedService {
                 file.keycloakRole,
                 file.externalSystem ?? ServiceProviderSystem.NONE,
                 file.requires2fa,
+                file.overrideId,
             );
 
             const persistedServiceProvider: ServiceProvider<true> =
@@ -334,6 +336,7 @@ export class DbSeedService {
                 undefined,
                 undefined,
                 befristung,
+                file.overrideId,
             );
 
             //Check specifications

@@ -357,6 +357,9 @@ export class RolleRepo {
     }
 
     private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
+        if (rolle.overrideId) {
+            rolle.id = rolle.overrideId;
+        }
         const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));
 
         await this.em.persistAndFlush(rolleEntity);

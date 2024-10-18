@@ -109,6 +109,10 @@ export class ServiceProviderRepo {
     }
 
     private async create(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
+        if (serviceProvider.overrideId) {
+            serviceProvider.id = serviceProvider.overrideId;
+        }
+
         const serviceProviderEntity: ServiceProviderEntity = this.em.create(
             ServiceProviderEntity,
             mapAggregateToData(serviceProvider),
