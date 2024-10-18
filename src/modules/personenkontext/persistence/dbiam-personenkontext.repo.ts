@@ -1,4 +1,4 @@
-import { Loaded } from '@mikro-orm/core';
+import { Loaded, QBFilterQuery } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../../../shared/types/index.js';
@@ -275,5 +275,40 @@ export class DBiamPersonenkontextRepo {
 
     public async isRolleAlreadyAssigned(id: RolleID): Promise<boolean> {
         return (await this.findByRolle(id)).length > 0;
+    }
+
+    public async getPersonenKontexteWithExceedingBefristung(): Promise<Record<string, Personenkontext<true>[]>> {
+        const filters: QBFilterQuery<PersonenkontextEntity> = {
+            id: {
+                $in: this.em
+                    .createQueryBuilder(PersonenkontextEntity, 'pk')
+                    .select('pk.id')
+                    .where({ befristung: { $lt: new Date() } })
+                    .getKnexQuery(), // Subquery to get ids where befristung < CURRENT_DATE
+            },
+        };
+
+        const personenKontexteEntities: PersonenkontextEntity[] = await this.em.find(PersonenkontextEntity, filters);
+        const personenKontexte: Personenkontext<true>[] = personenKontexteEntities.map((pk: PersonenkontextEntity) =>
+            mapEntityToAggregate(pk, this.personenkontextFactory),
+        );
+
+        // Grouping the entities by personId
+        const groupedByPersonId: Record<string, Personenkontext<true>[]> = personenKontexte.reduce(
+            (groups: Record<string, Personenkontext<true>[]>, personKontext: Personenkontext<true>) => {
+                const personId: string = personKontext.personId;
+
+                if (!groups[personId]) {
+                    groups[personId] = [];
+                }
+
+                // Use non-null assertion here
+                groups[personId]!.push(personKontext); // Now TypeScript knows this can't be undefined
+                return groups;
+            },
+            {} as Record<string, Personenkontext<true>[]>,
+        );
+
+        return groupedByPersonId;
     }
 }
