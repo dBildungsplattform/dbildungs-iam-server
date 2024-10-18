@@ -533,6 +533,29 @@ describe('OrganisationRepository', () => {
             expect(result).toBeDefined();
             expect(result).toStrictEqual(domain);
         });
+
+        it('should return undefined when NO organisation in tree has an email-domain', async () => {
+            const { root, traeger, schule }: CreateOrgaTreeResult = await createOrgaTreeWithDomains(
+                undefined,
+                undefined,
+                undefined,
+            );
+
+            const result: string | undefined = await sut.findEmailDomainForOrganisation(schule.id);
+
+            expect(root).toBeDefined();
+            expect(traeger).toBeDefined();
+            expect(schule).toBeDefined();
+            expect(result).toBeUndefined();
+        });
+
+        // This test covers getDomainRecursive, case 'no organisations, first cancel condition'
+        it('should return undefined when NO organisation were found via findParentOrgasForIdSortedByDepthAsc', async () => {
+            //no tree-creation here -> mocks no organisations could be found
+            const result: string | undefined = await sut.findEmailDomainForOrganisation(faker.string.uuid());
+
+            expect(result).toBeUndefined();
+        });
     });
 
     describe('findParentOrgas-Methods', () => {
