@@ -136,7 +136,7 @@ export class ImportWorkflow {
 
             // Validate object
             for (const error of validateSync(value, { forbidUnknownValues: true })) {
-                for (const message of Object.values(error.constraints ?? {})) {
+                for (const message in error.constraints) {
                     importDataItemErrors.push(message);
                 }
             }
