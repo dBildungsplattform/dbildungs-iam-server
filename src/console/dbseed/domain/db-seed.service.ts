@@ -168,7 +168,7 @@ export class DbSeedService {
                 serviceProviderUUIDs,
                 serviceProviderData,
                 file.istTechnisch ?? false,
-                file.overrideId,
+                this.getValidUuidOrUndefined(file.overrideId),
             );
 
             if (rolle instanceof DomainError) {
@@ -212,7 +212,7 @@ export class DbSeedService {
                 file.keycloakRole,
                 file.externalSystem ?? ServiceProviderSystem.NONE,
                 file.requires2fa,
-                file.overrideId,
+                this.getValidUuidOrUndefined(file.overrideId),
             );
 
             const persistedServiceProvider: ServiceProvider<true> =
@@ -320,7 +320,7 @@ export class DbSeedService {
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
                 person,
                 undefined,
-                undefined,
+                this.getValidUuidOrUndefined(file.overrideId),
                 true,
             );
             if (persistedPerson instanceof Person && file.id != null) {
@@ -374,7 +374,7 @@ export class DbSeedService {
                 undefined,
                 undefined,
                 befristung,
-                file.overrideId,
+                this.getValidUuidOrUndefined(file.overrideId),
             );
 
             //Check specifications
