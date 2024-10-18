@@ -33,6 +33,7 @@ import { OrganisationRepository } from '../../../modules/organisation/persistenc
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../../modules/service-provider/domain/service-provider.enum.js';
+import { validate as isUUID } from 'uuid';
 
 @Injectable()
 export class DbSeedService {
@@ -55,6 +56,15 @@ export class DbSeedService {
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
+
+    public isValidUUID(id: unknown): id is string {
+        return typeof id === 'string' && isUUID(id);
+    }
+
+    public getValidUuidOrUndefined(id: string | undefined): string | undefined {
+        const valid: boolean = typeof id === 'string' && isUUID(id);
+        return valid ? id : undefined;
     }
 
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
@@ -99,7 +109,6 @@ export class DbSeedService {
             data.emailDomain,
             data.emailAdress,
         );
-
         if (organisation instanceof DomainError) {
             throw organisation;
         }
@@ -107,6 +116,8 @@ export class DbSeedService {
         if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {
             organisation.id = this.ROOT_ORGANISATION_ID;
         }
+
+        organisation.id = this.getValidUuidOrUndefined(data.overrideId);
 
         const savedOrga: Organisation<true> = await this.organisationRepository.saveSeedData(organisation);
         const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
@@ -157,6 +168,7 @@ export class DbSeedService {
                 serviceProviderUUIDs,
                 serviceProviderData,
                 file.istTechnisch ?? false,
+                this.getValidUuidOrUndefined(file.overrideId),
             );
 
             if (rolle instanceof DomainError) {
@@ -200,6 +212,7 @@ export class DbSeedService {
                 file.keycloakRole,
                 file.externalSystem ?? ServiceProviderSystem.NONE,
                 file.requires2fa,
+                this.getValidUuidOrUndefined(file.overrideId),
             );
 
             const persistedServiceProvider: ServiceProvider<true> =
@@ -246,6 +259,7 @@ export class DbSeedService {
                 username: file.username,
                 password: file.password,
                 personalnummer: file.personalnummer,
+                overrideId: this.getValidUuidOrUndefined(file.overrideId),
             };
             /* eslint-disable no-await-in-loop */
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
@@ -265,7 +279,50 @@ export class DbSeedService {
                     `Keycloak User with keycloakid: ${existingKcUser.value.id} has been deleted, and will be replaced by newly seeded user with same username: ${person.username}`,
                 );
             }
-            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
+
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
+                person,
+                undefined,
+                creationParams.overrideId,
+            );
+            if (persistedPerson instanceof Person && file.id != null) {
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.PERSON,
+                    file.id,
+                    persistedPerson.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
+            } else {
+                this.logger.error('Person without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(person));
+            }
+        }
+        this.logger.info(`Insert ${files.length} entities of type Person`);
+    }
+
+    public async seedTechnicalUser(fileContentAsStr: string): Promise<void> {
+        const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
+        const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        /* eslint-disable no-await-in-loop */
+        for (const file of files) {
+            /* eslint-disable no-await-in-loop */
+            const person: Person<false> = Person.construct(
+                undefined,
+                undefined,
+                undefined,
+                file.familienname,
+                file.vorname,
+                '1',
+                file.username,
+                file.keycloakUserId,
+            );
+
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
+                person,
+                undefined,
+                this.getValidUuidOrUndefined(file.overrideId),
+                true,
+            );
             if (persistedPerson instanceof Person && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
                     ReferencedEntityType.PERSON,
@@ -317,6 +374,7 @@ export class DbSeedService {
                 undefined,
                 undefined,
                 befristung,
+                this.getValidUuidOrUndefined(file.overrideId),
             );
 
             //Check specifications

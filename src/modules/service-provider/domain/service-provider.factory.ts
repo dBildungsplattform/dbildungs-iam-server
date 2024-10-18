@@ -19,6 +19,7 @@ export class ServiceProviderFactory {
         keycloakRole: string | undefined,
         externalSystem: ServiceProviderSystem,
         requires2fa: boolean,
+        overrideId?: string,
     ): ServiceProvider<true> {
         return ServiceProvider.construct(
             id,
@@ -35,6 +36,7 @@ export class ServiceProviderFactory {
             keycloakRole,
             externalSystem,
             requires2fa,
+            overrideId,
         );
     }
 
@@ -50,6 +52,7 @@ export class ServiceProviderFactory {
         keycloakRole: string | undefined,
         externalSystem: ServiceProviderSystem,
         requires2fa: boolean,
+        overrideId?: string,
     ): ServiceProvider<false> {
         return ServiceProvider.createNew(
             name,
@@ -63,6 +66,7 @@ export class ServiceProviderFactory {
             keycloakRole,
             externalSystem,
             requires2fa,
+            overrideId,
         );
     }
 }

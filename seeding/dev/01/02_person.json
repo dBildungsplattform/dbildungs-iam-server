@@ -2,7 +2,8 @@
     "entityName": "Person",
     "entities": [
         {
-            "id": 1,
+            "id": "1",
+            "overrideId": "057db75e-7f3e-4ac2-ad2b-14a5e55f3338",
             "username": "test",
             "password": "test",
             "vorname": "test",
@@ -11,6 +12,7 @@
         },
         {
             "id": 2,
+            "overrideId": "838e2292-331c-4c83-90ab-1ff839fc046f",
             "username": "ssuperadmin",
             "password": "test",
             "mandant": "023c68a8-83a8-487f-812e-e4662c9862e1",

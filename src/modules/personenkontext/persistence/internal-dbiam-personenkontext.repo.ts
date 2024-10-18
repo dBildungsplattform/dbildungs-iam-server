@@ -63,6 +63,9 @@ export class DBiamPersonenkontextRepoInternal {
     }
 
     private async create(personenKontext: Personenkontext<false>): Promise<Personenkontext<true>> {
+        if (personenKontext.overrideId) {
+            personenKontext.id = personenKontext.overrideId;
+        }
         const personenKontextEntity: PersonenkontextEntity = this.em.create(
             PersonenkontextEntity,
             mapAggregateToData(personenKontext),
