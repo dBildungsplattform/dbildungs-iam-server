@@ -104,12 +104,20 @@ describe('LDAP Event Handler', () => {
     describe('handlePersonenkontextCreatedMigrationEvent', () => {
         describe('MigrationRunType: STANDARD', () => {
             const migrationType: PersonenkontextMigrationRuntype = PersonenkontextMigrationRuntype.STANDARD;
-            it('should do nothing when rolle is not LEHR', async () => {
-                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const orga: Organisation<true> = createMock<Organisation<true>>();
 
+            let personenkontext: Personenkontext<true>;
+            let person: Person<true>;
+            let rolle: Rolle<true>;
+            let orga: Organisation<true>;
+
+            beforeEach(() => {
+                personenkontext = createMock<Personenkontext<true>>();
+                person = createMock<Person<true>>();
+                rolle = createMock<Rolle<true>>();
+                orga = createMock<Organisation<true>>();
+            });
+
+            it('should do nothing when rolle is not LEHR', async () => {
                 const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
                     migrationType,
                     personenkontext,
@@ -126,11 +134,6 @@ describe('LDAP Event Handler', () => {
             });
 
             it('should created LDAP entry', async () => {
-                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const orga: Organisation<true> = createMock<Organisation<true>>();
-
                 rolle.rollenart = RollenArt.LEHR;
                 person.referrer = 'user123';
                 orga.kennung = '12345678';
@@ -153,11 +156,6 @@ describe('LDAP Event Handler', () => {
             });
 
             it('should log error if username is missing', async () => {
-                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const orga: Organisation<true> = createMock<Organisation<true>>();
-
                 rolle.rollenart = RollenArt.LEHR;
                 person.referrer = undefined;
 
@@ -175,11 +173,6 @@ describe('LDAP Event Handler', () => {
             });
 
             it('should log error if kennung is missing', async () => {
-                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const orga: Organisation<true> = createMock<Organisation<true>>();
-
                 rolle.rollenart = RollenArt.LEHR;
                 person.referrer = 'user123';
                 orga.kennung = undefined;
@@ -198,11 +191,6 @@ describe('LDAP Event Handler', () => {
             });
 
             it('should log error if isLehrerExisting check fails', async () => {
-                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const orga: Organisation<true> = createMock<Organisation<true>>();
-
                 rolle.rollenart = RollenArt.LEHR;
                 person.referrer = 'user123';
                 orga.kennung = '12345678';
@@ -231,11 +219,6 @@ describe('LDAP Event Handler', () => {
             });
 
             it('should abort creatingLehrer if no valid emailDomain for organisation is found', async () => {
-                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const orga: Organisation<true> = createMock<Organisation<true>>();
-
                 rolle.rollenart = RollenArt.LEHR;
                 person.referrer = 'user123';
                 orga.kennung = '12345678';
@@ -262,11 +245,6 @@ describe('LDAP Event Handler', () => {
             });
 
             it('should abort creatingLehrer if already exists', async () => {
-                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const orga: Organisation<true> = createMock<Organisation<true>>();
-
                 rolle.rollenart = RollenArt.LEHR;
                 person.referrer = 'user123';
                 orga.kennung = '12345678';
@@ -295,11 +273,6 @@ describe('LDAP Event Handler', () => {
             });
 
             it('should log error if createLehrer Operation fails', async () => {
-                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-                const person: Person<true> = createMock<Person<true>>();
-                const rolle: Rolle<true> = createMock<Rolle<true>>();
-                const orga: Organisation<true> = createMock<Organisation<true>>();
-
                 rolle.rollenart = RollenArt.LEHR;
                 person.referrer = 'user123';
                 orga.kennung = '12345678';
