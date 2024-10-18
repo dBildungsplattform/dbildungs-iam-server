@@ -25,7 +25,9 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
 import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
-import { ValidationError, validateSync } from 'class-validator';
+import { ImportDomainErrorI18nTypes } from './import-i18n-errors.js';
+import { validateSync } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -42,14 +44,6 @@ export type TextFilePersonFields = {
     username: string | undefined;
     password: string | undefined;
 };
-
-export enum ImportDomainErrorI18nTypes {
-    IMPORT_DATA_ITEM_KLASSE_IS_EMPTY = 'IMPORT_DATA_ITEM_KLASSE_IS_EMPTY',
-    IMPORT_DATA_ITEM_KLASSE_NOT_FOUND = 'IMPORT_DATA_ITEM_KLASSE_NOT_FOUND',
-    IMPORT_DATA_ITEM_NACHNAME_IS_INVALID = 'IMPORT_DATA_ITEM_NACHNAME_IS_INVALID',
-    IMPORT_DATA_ITEM_VORNAME_IS_INVALID = 'IMPORT_DATA_ITEM_VORNAME_IS_INVALID',
-    IMPORT_DATA_ITEM_UNKNOWN_ERROR = 'IMPORT_DATA_ITEM_UNKNOWN_ERROR',
-}
 
 export class ImportWorkflow {
     public readonly TEXT_FILENAME_NAME: string = '_spsh_csv_import_ergebnis.txt';
@@ -115,7 +109,7 @@ export class ImportWorkflow {
                 return new ImportCSVFileParsingError(parsedData.errors);
             }
 
-            parsedDataItems = parsedData.data;
+            parsedDataItems = plainToInstance(CSVImportDataItemDTO, parsedData.data);
         } catch (error) {
             return new ImportCSVFileParsingError([error]);
         }
@@ -139,9 +133,15 @@ export class ImportWorkflow {
 
         const promises: Promise<ImportDataItem<true>>[] = parsedDataItems.map((value: CSVImportDataItemDTO) => {
             const importDataItemErrors: string[] = [];
-            if (!value.klasse) {
-                importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_KLASSE_IS_EMPTY);
-            } else {
+
+            // Validate object
+            for (const error of validateSync(value, { forbidUnknownValues: true })) {
+                for (const message of Object.values(error.constraints ?? {})) {
+                    importDataItemErrors.push(message);
+                }
+            }
+
+            if (value.klasse) {
                 const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                     (organisationByIdAndName: OrganisationByIdAndName) =>
                         organisationByIdAndName.name?.toLowerCase() === value.klasse?.toLowerCase(),
@@ -151,22 +151,6 @@ export class ImportWorkflow {
                 //Do not need to check if the Klasse can be assigned to rolle for now, because we only impport RollenArt=LERN
                 if (!klasse) {
                     importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_KLASSE_NOT_FOUND);
-                }
-            }
-
-            const validateErrors: ValidationError[] = validateSync(value);
-
-            for (const error of validateErrors) {
-                switch (error.property as keyof CSVImportDataItemDTO) {
-                    case 'nachname':
-                        importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_NACHNAME_IS_INVALID);
-                        break;
-                    case 'vorname':
-                        importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_VORNAME_IS_INVALID);
-                        break;
-                    default:
-                        importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_UNKNOWN_ERROR);
-                        break;
                 }
             }
 

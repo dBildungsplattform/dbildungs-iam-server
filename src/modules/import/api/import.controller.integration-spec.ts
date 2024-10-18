@@ -225,13 +225,19 @@ describe('Rolle API', () => {
                         vorname: '',
                         nachname: 'Mustermann',
                         klasse: '1a-fake',
-                        validationErrors: ['IMPORT_DATA_ITEM_KLASSE_NOT_FOUND', 'IMPORT_DATA_ITEM_VORNAME_IS_EMPTY'],
+                        validationErrors: [
+                            'IMPORT_DATA_ITEM_VORNAME_IS_TOO_SHORT',
+                            'IMPORT_DATA_ITEM_KLASSE_NOT_FOUND',
+                        ],
                     },
                     {
                         vorname: 'Maria',
                         nachname: '',
                         klasse: '',
-                        validationErrors: ['IMPORT_DATA_ITEM_KLASSE_IS_EMPTY', 'IMPORT_DATA_ITEM_NACHNAME_IS_EMPTY'],
+                        validationErrors: [
+                            'IMPORT_DATA_ITEM_NACHNAME_IS_TOO_SHORT',
+                            'IMPORT_DATA_ITEM_KLASSE_IS_TOO_SHORT',
+                        ],
                     },
                 ],
             });
