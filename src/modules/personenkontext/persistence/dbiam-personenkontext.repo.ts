@@ -279,12 +279,12 @@ export class DBiamPersonenkontextRepo {
 
     public async getPersonenKontexteWithExceedingBefristung(): Promise<Record<string, Personenkontext<true>[]>> {
         const filters: QBFilterQuery<PersonenkontextEntity> = {
-            id: {
+            personId: {
                 $in: this.em
                     .createQueryBuilder(PersonenkontextEntity, 'pk')
-                    .select('pk.id')
+                    .select('pk.person_id')
                     .where({ befristung: { $lt: new Date() } })
-                    .getKnexQuery(), // Subquery to get ids where befristung < CURRENT_DATE
+                    .getKnexQuery(),
             },
         };
 
