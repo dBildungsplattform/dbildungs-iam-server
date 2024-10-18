@@ -25,6 +25,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
 import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
+import { ValidationError, validateSync } from 'class-validator';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -45,8 +46,9 @@ export type TextFilePersonFields = {
 export enum ImportDomainErrorI18nTypes {
     IMPORT_DATA_ITEM_KLASSE_IS_EMPTY = 'IMPORT_DATA_ITEM_KLASSE_IS_EMPTY',
     IMPORT_DATA_ITEM_KLASSE_NOT_FOUND = 'IMPORT_DATA_ITEM_KLASSE_NOT_FOUND',
-    IMPORT_DATA_ITEM_NACHNAME_IS_EMPTY = 'IMPORT_DATA_ITEM_NACHNAME_IS_EMPTY',
-    IMPORT_DATA_ITEM_VORNAME_IS_EMPTY = 'IMPORT_DATA_ITEM_VORNAME_IS_EMPTY',
+    IMPORT_DATA_ITEM_NACHNAME_IS_INVALID = 'IMPORT_DATA_ITEM_NACHNAME_IS_INVALID',
+    IMPORT_DATA_ITEM_VORNAME_IS_INVALID = 'IMPORT_DATA_ITEM_VORNAME_IS_INVALID',
+    IMPORT_DATA_ITEM_UNKNOWN_ERROR = 'IMPORT_DATA_ITEM_UNKNOWN_ERROR',
 }
 
 export class ImportWorkflow {
@@ -152,13 +154,20 @@ export class ImportWorkflow {
                 }
             }
 
-            //Nachname and Vorname are required
-            if (!value.nachname) {
-                importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_NACHNAME_IS_EMPTY);
-            }
+            const validateErrors: ValidationError[] = validateSync(value);
 
-            if (!value.vorname) {
-                importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_VORNAME_IS_EMPTY);
+            for (const error of validateErrors) {
+                switch (error.property as keyof CSVImportDataItemDTO) {
+                    case 'nachname':
+                        importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_NACHNAME_IS_INVALID);
+                        break;
+                    case 'vorname':
+                        importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_VORNAME_IS_INVALID);
+                        break;
+                    default:
+                        importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_UNKNOWN_ERROR);
+                        break;
+                }
             }
 
             const importDataItem: ImportDataItem<false> = ImportDataItem.createNew(
