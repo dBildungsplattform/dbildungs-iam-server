@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
 import { Attribute, Change, Client, Control, SearchResult } from 'ldapts';
-import { LdapEntityType, LdapOrganisationEntry, LdapPersonEntry, LdapRoleEntry } from './ldap.types.js';
-import { KennungRequiredForSchuleError } from '../../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
+import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
@@ -11,6 +10,8 @@ import { LdapSearchError } from '../error/ldap-search.error.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap-person-entry-changed.event.js';
+import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
+import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 
 export type PersonData = {
     vorname: string;
@@ -18,10 +19,6 @@ export type PersonData = {
     id: string;
     referrer?: string;
     ldapEntryUUID?: string;
-};
-
-type OrganisationData = {
-    kennung?: string;
 };
 
 @Injectable()
@@ -55,68 +52,33 @@ export class LdapClientService {
         }
     }
 
-    public async createOrganisation(organisationData: OrganisationData): Promise<Result<void>> {
-        return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: createOrganisation');
-            if (!organisationData.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
-            const client: Client = this.ldapClient.getClient();
-            const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
-            const organisationEntry: LdapOrganisationEntry = {
-                ou: organisationData.kennung,
-                objectclass: ['organizationalUnit'],
+    private getRootName(emailDomain: string): Result<string, LdapEmailDomainError> {
+        if (emailDomain === 'ersatzschule-sh.de')
+            return {
+                ok: true,
+                value: 'ersatzSchulen',
             };
-            const roleEntry: LdapRoleEntry = {
-                cn: 'lehrer',
-                ou: organisationData.kennung,
-                objectclass: ['organizationalRole'],
+        if (emailDomain === 'schule-sh.de')
+            return {
+                ok: true,
+                value: 'oeffentlicheSchulen',
             };
-            await client.add(
-                `ou=${organisationData.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-                organisationEntry,
-            );
-            this.logger.info(`LDAP: Successfully created organisation ou=${organisationData.kennung}`);
 
-            await client.add(
-                `cn=lehrer,ou=${organisationData.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-                roleEntry,
-            );
-            this.logger.info(
-                `LDAP: Successfully created corresponding lehrer rolle for ou=${organisationData.kennung}`,
-            );
-
-            return { ok: true, value: undefined };
-        });
+        return {
+            ok: false,
+            error: new LdapEmailDomainError(),
+        };
     }
 
-    public async deleteOrganisation(organisationData: OrganisationData): Promise<Result<void>> {
-        return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: deleteOrganisation');
-            const client: Client = this.ldapClient.getClient();
-            const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
-            if (!organisationData.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
-
-            this.logger.info('LDAP: Successfully connected to LDAP');
-
-            await client.del(`cn=lehrer,ou=${organisationData.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
-            this.logger.info(
-                `LDAP: Successfully deleted corresponding lehrer rolle for ou=${organisationData.kennung}`,
-            );
-
-            await client.del(`ou=${organisationData.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`);
-            this.logger.info(`LDAP: Successfully deleted organisation ou=${organisationData.kennung}`);
-
-            return { ok: true, value: undefined };
-        });
+    private getLehrerUid(referrer: string, rootName: string): string {
+        return `uid=${referrer},ou=${rootName},dc=schule-sh,dc=de`;
     }
 
     public async createLehrer(
         person: PersonData,
-        organisation: OrganisationData,
+        domain: string,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
     ): Promise<Result<PersonData>> {
-        if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
         if (!person.referrer) {
             return {
                 ok: false,
@@ -125,35 +87,25 @@ export class LdapClientService {
                 ),
             };
         }
-        const lehrerUid: string = this.getLehrerUid(person.referrer, organisation.kennung);
+        const rootName: Result<string> = this.getRootName(domain);
+        if (!rootName.ok) {
+            this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+            return rootName;
+        }
+        const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResultSchule: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
-                filter: `(ou=${organisation.kennung})`,
+            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName.value},dc=schule-sh,dc=de`, {
+                filter: `(uid=${person.referrer})`,
             });
-
-            if (searchResultSchule.searchEntries.length <= 0) {
-                return {
-                    ok: false,
-                    error: new LdapSearchError(LdapEntityType.SCHULE),
-                };
-            }
-
-            const searchResultLehrer: SearchResult = await client.search(
-                `cn=lehrer,ou=${organisation.kennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-                {
-                    filter: `(uid=${person.referrer})`,
-                },
-            );
             if (searchResultLehrer.searchEntries.length > 0) {
-                return {
-                    ok: false,
-                    error: new LdapSearchError(LdapEntityType.LEHRER),
-                };
+                this.logger.info(`LDAP: Lehrer ${lehrerUid} exists, nothing to create`);
+
+                return { ok: true, value: person };
             }
             const entry: LdapPersonEntry = {
                 cn: person.vorname,
@@ -175,28 +127,26 @@ export class LdapClientService {
         });
     }
 
-    public async isLehrerExisting(referrer: string, orgaKennung: string): Promise<Result<boolean>> {
+    public async isLehrerExisting(referrer: string, domain: string): Promise<Result<boolean>> {
+        const rootName: Result<string> = this.getRootName(domain);
+        if (!rootName.ok) {
+            this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+            return rootName;
+        }
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: isLehrerExisting');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResultLehrer: SearchResult = await client.search(
-                `cn=lehrer,ou=${orgaKennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`,
-                {
-                    filter: `(uid=${referrer})`,
-                },
-            );
+            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName.value},dc=schule-sh,dc=de`, {
+                filter: `(uid=${referrer})`,
+            });
             if (searchResultLehrer.searchEntries.length > 0) {
                 return { ok: true, value: true };
             }
             return { ok: true, value: false };
         });
-    }
-
-    private getLehrerUid(referrer: string, orgaKennung: string): string {
-        return `uid=${referrer},cn=lehrer,ou=${orgaKennung},ou=oeffentlicheSchulen,dc=schule-sh,dc=de`;
     }
 
     public async deleteLehrerByPersonId(personId: PersonID): Promise<Result<PersonID>> {
@@ -206,7 +156,7 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResultLehrer: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
+            const searchResultLehrer: SearchResult = await client.search(`dc=schule-sh,dc=de`, {
                 scope: 'sub',
                 filter: `(entryUUID=${personId})`,
             });
@@ -223,21 +173,26 @@ export class LdapClientService {
         });
     }
 
-    public async deleteLehrer(person: PersonData, organisation: OrganisationData): Promise<Result<PersonData>> {
+    public async deleteLehrer(person: PersonData, domain: string): Promise<Result<PersonData>> {
+        const rootName: Result<string> = this.getRootName(domain);
+        if (!rootName.ok) {
+            this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+            return rootName;
+        }
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            if (!organisation.kennung) return { ok: false, error: new KennungRequiredForSchuleError() };
-            if (!person.referrer)
+            if (!person.referrer) {
                 return {
                     ok: false,
                     error: new UsernameRequiredError(
                         `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
                     ),
                 };
-            const lehrerUid: string = this.getLehrerUid(person.referrer, organisation.kennung);
+            }
+            const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
             await client.del(lehrerUid);
             this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
 
@@ -248,26 +203,45 @@ export class LdapClientService {
     public async changeEmailAddressByPersonId(personId: PersonID, newEmailAddress: string): Promise<Result<PersonID>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: changeEmailAddress');
+            const splitted: string[] = newEmailAddress.split('@');
+            if (!splitted || !splitted[1]) {
+                this.logger.error(`LDAP: Invalid email-address:${newEmailAddress}`);
+
+                return {
+                    ok: false,
+                    error: new LdapEmailAddressError(),
+                };
+            }
+            const domain: string = splitted[1];
+            const rootName: Result<string> = this.getRootName(domain);
+            if (!rootName.ok) {
+                this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+                return rootName;
+            }
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-
-            const searchResult: SearchResult = await client.search(`ou=oeffentlicheSchulen,dc=schule-sh,dc=de`, {
+            const searchResult: SearchResult = await client.search(`ou=${rootName.value},dc=schule-sh,dc=de`, {
                 scope: 'sub',
                 filter: `(entryUUID=${personId})`,
                 attributes: ['mailPrimaryAddress', 'mailAlternativeAddress'],
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
+                this.logger.error(`Changing email-address in LDAP FAILED, no entry for personId:${personId}`);
                 return {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
                 };
             }
 
-            const currentEmailAddressString: string | undefined = searchResult.searchEntries[0][
+            let currentEmailAddressString: string | undefined = searchResult.searchEntries[0][
                 'mailPrimaryAddress'
             ] as string;
+            // yes, that check looks crazy, although currentEmailAddressString is defined as string|undefined, sometimes it's an array with one element
+            if (Array.isArray(currentEmailAddressString)) {
+                currentEmailAddressString = (currentEmailAddressString as string[])[0];
+            }
             const currentEmailAddress: string = currentEmailAddressString ?? newEmailAddress;
 
             await client.modify(searchResult.searchEntries[0].dn, [
