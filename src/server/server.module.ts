@@ -22,7 +22,7 @@ import { PersonenKontextApiModule } from '../modules/personenkontext/personenkon
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
 // import { createClient, RedisClientType } from 'redis';
-import { createClient, createCluster, RedisClientOptions, RedisClientType, RedisClusterType } from 'redis';
+import { createClient, createCluster, RedisClientType, RedisClusterType } from 'redis';
 import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
