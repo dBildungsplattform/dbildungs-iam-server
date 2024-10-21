@@ -23,6 +23,20 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
+    public static readonly OEFFENTLICHE_SCHULEN_DOMAIN: string = 'schule-sh.de';
+
+    public static readonly ERSATZ_SCHULEN_DOMAIN: string = 'ersatzschule-sh.de';
+
+    public static readonly OEFFENTLICHE_SCHULEN_OU: string = 'oeffentlicheSchulen';
+
+    public static readonly ERSATZ_SCHULEN_OU: string = 'ersatzSchulen';
+
+    public static readonly MAIL_PRIMARY_ADDRESS: string = 'mailPrimaryAddress';
+
+    public static readonly MAIL_ALTERNATIVE_ADDRESS: string = 'mailAlternativeAddress';
+
+    public static readonly DC_SCHULE_SH_DC_DE: string = 'dc=schule-sh,dc=de';
+
     private mutex: Mutex;
 
     public constructor(
@@ -53,15 +67,15 @@ export class LdapClientService {
     }
 
     private getRootName(emailDomain: string): Result<string, LdapEmailDomainError> {
-        if (emailDomain === 'ersatzschule-sh.de')
+        if (emailDomain === LdapClientService.ERSATZ_SCHULEN_DOMAIN)
             return {
                 ok: true,
-                value: 'ersatzSchulen',
+                value: LdapClientService.ERSATZ_SCHULEN_OU,
             };
-        if (emailDomain === 'schule-sh.de')
+        if (emailDomain === LdapClientService.OEFFENTLICHE_SCHULEN_DOMAIN)
             return {
                 ok: true,
-                value: 'oeffentlicheSchulen',
+                value: LdapClientService.OEFFENTLICHE_SCHULEN_OU,
             };
 
         return {
@@ -71,7 +85,15 @@ export class LdapClientService {
     }
 
     private getLehrerUid(referrer: string, rootName: string): string {
-        return `uid=${referrer},ou=${rootName},dc=schule-sh,dc=de`;
+        return `uid=${referrer},ou=${rootName},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
+    }
+
+    private getRootNameOrError(domain: string): Result<string> {
+        const rootName: Result<string> = this.getRootName(domain);
+        if (!rootName.ok) {
+            this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
+        }
+        return rootName;
     }
 
     public async createLehrer(
@@ -87,11 +109,9 @@ export class LdapClientService {
                 ),
             };
         }
-        const rootName: Result<string> = this.getRootName(domain);
-        if (!rootName.ok) {
-            this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
-            return rootName;
-        }
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) return rootName;
+
         const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
@@ -99,9 +119,12 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName.value},dc=schule-sh,dc=de`, {
-                filter: `(uid=${person.referrer})`,
-            });
+            const searchResultLehrer: SearchResult = await client.search(
+                `ou=${rootName.value},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+                {
+                    filter: `(uid=${person.referrer})`,
+                },
+            );
             if (searchResultLehrer.searchEntries.length > 0) {
                 this.logger.info(`LDAP: Lehrer ${lehrerUid} exists, nothing to create`);
 
@@ -128,20 +151,21 @@ export class LdapClientService {
     }
 
     public async isLehrerExisting(referrer: string, domain: string): Promise<Result<boolean>> {
-        const rootName: Result<string> = this.getRootName(domain);
-        if (!rootName.ok) {
-            this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
-            return rootName;
-        }
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) return rootName;
+
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: isLehrerExisting');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResultLehrer: SearchResult = await client.search(`ou=${rootName.value},dc=schule-sh,dc=de`, {
-                filter: `(uid=${referrer})`,
-            });
+            const searchResultLehrer: SearchResult = await client.search(
+                `ou=${rootName.value},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+                {
+                    filter: `(uid=${referrer})`,
+                },
+            );
             if (searchResultLehrer.searchEntries.length > 0) {
                 return { ok: true, value: true };
             }
@@ -156,7 +180,7 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResultLehrer: SearchResult = await client.search(`dc=schule-sh,dc=de`, {
+            const searchResultLehrer: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
                 scope: 'sub',
                 filter: `(entryUUID=${personId})`,
             });
@@ -174,11 +198,9 @@ export class LdapClientService {
     }
 
     public async deleteLehrer(person: PersonData, domain: string): Promise<Result<PersonData>> {
-        const rootName: Result<string> = this.getRootName(domain);
-        if (!rootName.ok) {
-            this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
-            return rootName;
-        }
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) return rootName;
+
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -213,20 +235,20 @@ export class LdapClientService {
                 };
             }
             const domain: string = splitted[1];
-            const rootName: Result<string> = this.getRootName(domain);
-            if (!rootName.ok) {
-                this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
-                return rootName;
-            }
+            const rootName: Result<string> = this.getRootNameOrError(domain);
+            if (!rootName.ok) return rootName;
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            const searchResult: SearchResult = await client.search(`ou=${rootName.value},dc=schule-sh,dc=de`, {
-                scope: 'sub',
-                filter: `(entryUUID=${personId})`,
-                attributes: ['mailPrimaryAddress', 'mailAlternativeAddress'],
-                returnAttributeValues: true,
-            });
+            const searchResult: SearchResult = await client.search(
+                `ou=${rootName.value},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+                {
+                    scope: 'sub',
+                    filter: `(entryUUID=${personId})`,
+                    attributes: [LdapClientService.MAIL_PRIMARY_ADDRESS, LdapClientService.MAIL_ALTERNATIVE_ADDRESS],
+                    returnAttributeValues: true,
+                },
+            );
             if (!searchResult.searchEntries[0]) {
                 this.logger.error(`Changing email-address in LDAP FAILED, no entry for personId:${personId}`);
                 return {
@@ -236,7 +258,7 @@ export class LdapClientService {
             }
 
             let currentEmailAddressString: string | undefined = searchResult.searchEntries[0][
-                'mailPrimaryAddress'
+                LdapClientService.MAIL_PRIMARY_ADDRESS
             ] as string;
             // yes, that check looks crazy, although currentEmailAddressString is defined as string|undefined, sometimes it's an array with one element
             if (Array.isArray(currentEmailAddressString)) {
@@ -247,13 +269,19 @@ export class LdapClientService {
             await client.modify(searchResult.searchEntries[0].dn, [
                 new Change({
                     operation: 'replace',
-                    modification: new Attribute({ type: 'mailPrimaryAddress', values: [newEmailAddress] }),
+                    modification: new Attribute({
+                        type: LdapClientService.MAIL_PRIMARY_ADDRESS,
+                        values: [newEmailAddress],
+                    }),
                 }),
             ]);
             await client.modify(searchResult.searchEntries[0].dn, [
                 new Change({
                     operation: 'replace',
-                    modification: new Attribute({ type: 'mailAlternativeAddress', values: [currentEmailAddress] }),
+                    modification: new Attribute({
+                        type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                        values: [currentEmailAddress],
+                    }),
                 }),
             ]);
             this.logger.info(
