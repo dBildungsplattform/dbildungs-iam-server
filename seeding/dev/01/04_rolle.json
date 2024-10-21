@@ -156,7 +156,7 @@
     {
         "id": 9,
         "administeredBySchulstrukturknoten": 0,
-        "name": "Cron Runner",
+        "name": "Technical User CRON",
         "rollenart": "SYSADMIN",
         "merkmale": [],
         "systemrechte": [
