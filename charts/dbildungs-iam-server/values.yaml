@@ -48,6 +48,7 @@ auth:
   pi_admin_password: ''
   pi_user_resolver: ''
   pi_user_realm: ''
+  redis_password: ''
 
 backend:
   replicaCount: 1
@@ -122,45 +123,62 @@ backend:
       name: secret-volume
   extraVolumeMounts: []
 
-redis:
+
+# Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
+redis-cluster:
+  enabled: true
+  cluster:
+      ## This is total number of nodes including the replicas. Meaning there will be 3 master and 3 replica
+      ## nodes (as replica count is set to 1 by default, there will be 1 replica per master node).
+      ## Hence, nodes = numberOfMasterNodes + numberOfMasterNodes * replicas
+      nodes: 2
+      # for staging and prod this could get increased
+      ## @param cluster.replicas Number of replicas for every master in the cluster
+      replicas: 1
+  networkPolicy:
+    enabled: false
+  serviceAccount:
+    create: false
   image:
-    name: redis
-    repository: redis
-    tag: '7.2.4'
-    pullPolicy: IfNotPresent
-  args:
-    - '/data/tls/redis.conf'
-  containerPorts:
-    redis: 6379
-  resources:
-    limits:
-      cpu: 2
-      memory: 4G
-    requests:
-      cpu: 200m
-      memory: 200Mi
-  livenessProbe:
-    enabled: true
-    tcpSocket:
-      port: 6379
-    initialDelaySeconds: 15
-    timeoutSeconds: 2
-  readinessProbe:
-    enabled: true
-    tcpSocket:
-      port: 6379
-    initialDelaySeconds: 5
-    timeoutSeconds: 1
-  startupProbe:
-    enabled: true
-    tcpSocket:
-      port: 6379
-    failureThreshold: 30
-    periodSeconds: 10
-  service:
-    type: ClusterIP
-    ports:
-      redis: 6379
-  extraEnvVars: []
-  extraVolumes: []
-  extraVolumeMounts: []
+    registry: docker.io
+    repository: bitnami/redis-cluster
+    tag: 7.4.1-debian-12-r0
+  existingSecret: dbildungs-iam-server-redis
+  # Use password authentication - not necc with TLS
+  usePassword: true
+  tls:
+    ## @param tls.enabled Enable TLS support for replication traffic
+    ##
+    enabled: false
+  podLabels:
+      app.kubernetes.io/component: server-redis
+  commonLabels:
+    app.kubernetes.io/name: dbildungs-iam-server 
+    # it can auto generate certs
+
+#   # extraVolumes:
+#   #   - name: redis-tls-data
+#   #     configMap:
+#   #       name: dbildungs-iam-server-redis-tls-data
+#   #       items:
+#   #         - key: gencert.sh
+#   #           path: gencert.sh
+#   #         - key: copy-tls.sh
+#   #           path: copy-tls.sh
+#   #         - key: redis.conf
+#   #           path: redis.conf
+#   # extraVolumeMounts:
+#   #   - name: redis-tls-data
+#   #     mountPath: /tls
+#   # metrics:
+#   #   enabled: true
+#     # resources:
+#     # serviceMonitor: 
+#         # enabled: true
+#   # resources:
+# #     limits:
+# #       cpu: 2
+# #       memory: 4G
+# #     requests:
+# #       cpu: 200m
+# #       memory: 200Mi
