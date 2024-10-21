@@ -23,10 +23,11 @@
         "TEST_CLIENT_ID": "spsh-test"
     },
     "REDIS": {
-        "HOST": "dbildungs-iam-server-redis",
+        "HOST": "dbildungs-iam-server-redis-cluster",
         "PORT": 6379,
         "USERNAME": "default",
-        "USE_TLS": false
+        "USE_TLS": false,
+        "CLUSTERED": true
     },
     "LDAP": {
         "URL": "ldap://spsh-xxx.svc.cluster.local",

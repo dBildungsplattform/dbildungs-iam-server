@@ -164,3 +164,42 @@ redis:
   extraEnvVars: []
   extraVolumes: []
   extraVolumeMounts: []
+
+
+# Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
+redis-cluster:
+  enabled: true
+  cluster:
+      ## This is total number of nodes including the replicas. Meaning there will be 3 master and 3 replica
+      ## nodes (as replica count is set to 1 by default, there will be 1 replica per master node).
+      ## Hence, nodes = numberOfMasterNodes + numberOfMasterNodes * replicas
+      nodes: 6
+      ## @param cluster.replicas Number of replicas for every master in the cluster
+      replicas: 1
+  networkPolicy:
+    enabled: false
+  serviceAccount:
+    create: false
+
+  redis:
+    usePassword: false
+    username: "default"
+    password: "password"
+    extraVolumes:
+      - name: redis-tls-data
+        configMap:
+          name: dbildungs-iam-server-redis-tls-data
+          items:
+            - key: gencert.sh
+              path: gencert.sh
+            - key: copy-tls.sh
+              path: copy-tls.sh
+            - key: redis.conf
+              path: redis.conf
+    extraVolumeMounts:
+    - name: redis-tls-data
+      mountPath: /tls
+    podLabels:
+      app.kubernetes.io/component: server-redis
+  commonLabels:
+    app.kubernetes.io/name: dbildungs-iam-server 
