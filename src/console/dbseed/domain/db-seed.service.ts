@@ -58,12 +58,12 @@ export class DbSeedService {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
 
-    public isValidUUID(id: unknown): id is string {
+    public isValidUuid(id: unknown): id is string {
         return typeof id === 'string' && isUUID(id);
     }
 
     public getValidUuidOrUndefined(id: string | undefined): string | undefined {
-        const valid: boolean = typeof id === 'string' && isUUID(id);
+        const valid: boolean = this.isValidUuid(id);
         return valid ? id : undefined;
     }
 
