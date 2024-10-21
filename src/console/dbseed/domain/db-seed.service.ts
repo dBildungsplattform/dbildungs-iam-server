@@ -297,6 +297,7 @@ export class DbSeedService {
                 file.username,
                 file.keycloakUserId,
             );
+            person.personalnummer = file.personalnummer;
 
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
                 person,
