@@ -257,10 +257,10 @@ export class LdapClientService {
                 };
             }
 
-            let currentEmailAddressString: string | undefined = searchResult.searchEntries[0][
+            // result can be a simple string or a string-array
+            let currentEmailAddressString: string | string[] | undefined = searchResult.searchEntries[0][
                 LdapClientService.MAIL_PRIMARY_ADDRESS
             ] as string;
-            // yes, that check looks crazy, although currentEmailAddressString is defined as string|undefined, sometimes it's an array with one element
             if (Array.isArray(currentEmailAddressString)) {
                 currentEmailAddressString = (currentEmailAddressString as string[])[0];
             }
