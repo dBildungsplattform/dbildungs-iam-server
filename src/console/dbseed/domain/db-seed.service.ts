@@ -58,15 +58,6 @@ export class DbSeedService {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
 
-    public isValidUuid(id: unknown): id is string {
-        return typeof id === 'string' && isUUID(id);
-    }
-
-    public getValidUuidOrUndefined(id: string | undefined): string | undefined {
-        const valid: boolean = this.isValidUuid(id);
-        return valid ? id : undefined;
-    }
-
     private dataProviderMap: Map<string, DataProviderFile> = new Map<string, DataProviderFile>();
 
     public readDataProvider(fileContentAsStr: string): DataProviderFile[] {
@@ -464,5 +455,14 @@ export class DbSeedService {
         return fs.readdirSync(path).filter(function (file: string) {
             return fs.statSync(path + '/' + file).isDirectory();
         });
+    }
+
+    public isValidUuid(id: unknown): id is string {
+        return typeof id === 'string' && isUUID(id);
+    }
+
+    public getValidUuidOrUndefined(id: string | undefined): string | undefined {
+        const valid: boolean = this.isValidUuid(id);
+        return valid ? id : undefined;
     }
 }
