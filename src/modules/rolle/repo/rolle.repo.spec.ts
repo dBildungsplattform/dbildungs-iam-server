@@ -74,6 +74,17 @@ describe('RolleRepo', () => {
             expect(savedRolle.id).toBeDefined();
         });
 
+        it('should save a new rolle with overrideId as id', async () => {
+            const rolle: Rolle<false> = DoFactory.createRolle(false);
+            const overrideId: string = faker.string.uuid();
+            rolle.overrideId = overrideId;
+
+            const savedRolle: Rolle<true> = await sut.save(rolle);
+
+            expect(savedRolle.id).toBeDefined();
+            expect(savedRolle.id).toEqual(overrideId);
+        });
+
         it('should update an existing rolle', async () => {
             const existingRolle: Rolle<true> = await sut.save(DoFactory.createRolle(false));
             existingRolle.name = faker.name.firstName();
