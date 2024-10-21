@@ -7,10 +7,5 @@ appVersion: ""
 dependencies:
 - name: redis-cluster
   repository: https://charts.bitnami.com/bitnami
-  version: 10.0.1 # check which image version is used and if we can update further
+  version: 11.0.6
   condition: redis-cluster.enabled
-
-    # redis:7.2.2
-
-# redis.conf file is used in Helm Chart
-
