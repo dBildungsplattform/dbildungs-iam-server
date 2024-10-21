@@ -114,6 +114,7 @@ jobs:
       chart_name: dbildungs-iam-server
       helm_chart_version_generation: ${{ needs. select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
       image_tag_generation: ${{ needs. select_helm_version_generation_and_image_tag_generation.outputs.SELECT_IMAGE_TAG_GENERATION  }}
+      helm_repo_list: "bitnami,https://charts.bitnami.com/bitnami"
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
