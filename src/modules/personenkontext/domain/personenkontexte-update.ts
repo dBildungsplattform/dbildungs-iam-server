@@ -341,7 +341,8 @@ export class PersonenkontexteUpdate {
             }
         }
 
-        if (!existingPKsAfterUpdate) {
+        // Set value with current date in database, when person has no Personenkontext anymore
+        if (existingPKsAfterUpdate.length == 0) {
             const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
             if (person) {
                 person.orgUnassignmentDate = new Date();

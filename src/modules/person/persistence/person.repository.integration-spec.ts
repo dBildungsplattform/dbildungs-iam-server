@@ -1872,5 +1872,33 @@ describe('PersonRepository Integration', () => {
             expect(lockList).toContain(person3.keycloakUserId);
             expect(lockList).not.toContain(person4.keycloakUserId);
         });
+        describe('getPersonWithoutOrgDeleteList', () => {
+            it('should return a list of personIds for persons without a personenkontext', async () => {
+                // person without personenkontext
+                const person1: Person<true> = await savePerson(false);
+                const person2: Person<true> = await savePerson(false);
+
+                // person with personenkontext
+                const person3: Person<true> = await savePerson(false);
+                const rolle1: Rolle<false> = DoFactory.createRolle(false, {
+                    name: 'rolle1',
+                    rollenart: RollenArt.LEHR,
+                    merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                });
+                const rolle1Result: Rolle<true> = await rolleRepo.save(rolle1);
+                const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                    personId: person3.id,
+                    rolleId: rolle1Result.id,
+                });
+                await dbiamPersonenkontextRepoInternal.save(personenKontext1);
+
+                //get person ids without personenkontext
+                const personsWithOrgList: string[] = await sut.getPersonWithoutOrgDeleteList();
+
+                expect(personsWithOrgList).toContain(person1.id);
+                expect(personsWithOrgList).toContain(person2.id);
+                expect(personsWithOrgList).not.toContain(person3.id);
+            });
+        });
     });
 });

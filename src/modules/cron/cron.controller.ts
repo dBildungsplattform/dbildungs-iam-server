@@ -66,7 +66,7 @@ export class CronController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to delete user.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to delete user.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to remove user.' })
-    public async PersonWithoutOrgDelete(@Permissions() permissions: PersonPermissions): Promise<boolean> {
+    public async personWithoutOrgDelete(@Permissions() permissions: PersonPermissions): Promise<boolean> {
         try {
             const personIds: string[] = await this.personRepository.getPersonWithoutOrgDeleteList();
             if (personIds.length === 0) {
@@ -84,7 +84,7 @@ export class CronController {
 
             return allSuccessful;
         } catch (error) {
-            throw new Error('Failed to delete users due to an internal server error.');
+            throw new Error('Failed to remove users due to an internal server error.');
         }
     }
 }
