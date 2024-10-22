@@ -341,6 +341,14 @@ export class PersonenkontexteUpdate {
             }
         }
 
+        if (!existingPKsAfterUpdate) {
+            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
+            if (person) {
+                person.orgUnassignmentDate = new Date();
+                await this.personRepo.save(person);
+            }
+        }
+
         await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate, ldapEntryUUID);
 
         return existingPKsAfterUpdate;

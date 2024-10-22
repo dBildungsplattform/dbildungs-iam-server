@@ -72,6 +72,7 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         dataProvider: undefined,
         revision: person.revision,
         personalnummer: person.personalnummer,
+        orgUnassignmentDate: person.orgUnassignmentDate,
     };
 }
 
@@ -102,6 +103,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
+        entity.orgUnassignmentDate,
         undefined,
         undefined,
         getEnabledEmailAddress(entity),
@@ -648,6 +650,7 @@ export class PersonRepository {
             personFound.vertrauensstufe,
             personFound.auskunftssperre,
             newPersonalnummer,
+            personFound.orgUnassignmentDate,
             personFound.lockInfo,
             personFound.isLocked,
             personFound.email,
@@ -718,5 +721,16 @@ export class PersonRepository {
 
         const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return personEntities.map((person: PersonEntity) => person.keycloakUserId);
+    }
+
+    public async getPersonWithoutOrgDeleteList(): Promise<string[]> {
+        const filters: QBFilterQuery<PersonEntity> = {
+            personenKontexte: {
+                $exists: false,
+            },
+        };
+
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        return personEntities.map((person: PersonEntity) => person.id);
     }
 }

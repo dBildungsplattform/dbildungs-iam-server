@@ -142,4 +142,8 @@ export class PersonEntity extends TimestampedEntity {
         eager: true,
     })
     public emailAddresses: Collection<EmailAddressEntity> = new Collection<EmailAddressEntity>(this);
+
+    @AutoMap()
+    @Property({ nullable: true, type: DateTimeType })
+    public orgUnassignmentDate?: Date;
 }
