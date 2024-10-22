@@ -561,8 +561,8 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
-    describe('getPersonenKontexteWithExceedingBefristung', () => {
-        it('should return a grouped list of Personenkontext records with exceeded befristung', async () => {
+    describe('getPersonenKontexteWithExpiredBefristung', () => {
+        it('should return a grouped list of Personenkontext records with expired befristung', async () => {
             // Create a date 1 day in the past for testing
             const pastDate: Date = new Date();
             pastDate.setDate(pastDate.getDate() - 1);
@@ -619,13 +619,13 @@ describe('dbiam Personenkontext Repo', () => {
             await personenkontextRepoInternal.save(personenKontext4);
             await personenkontextRepoInternal.save(personenKontext5);
 
-            const result: Record<string, Personenkontext<true>[]> =
-                await sut.getPersonenKontexteWithExceedingBefristung();
+            const result: Map<string, Personenkontext<true>[]> = await sut.getPersonenKontexteWithExpiredBefristung();
 
-            expect(result).toHaveProperty(person1.id);
-            expect(result[person1.id]).toHaveLength(2);
-            expect(result).toHaveProperty(person2.id);
-            expect(result[person2.id]).toHaveLength(2);
+            expect(result.has(person1.id)).toBe(true);
+            expect(result.get(person1.id)).toHaveLength(2);
+
+            expect(result.has(person2.id)).toBe(true);
+            expect(result.get(person2.id)).toHaveLength(2);
         });
     });
 });

@@ -121,7 +121,7 @@ describe('CronController', () => {
         });
     });
 
-    describe('/PUT cron/kontext-exceeding', () => {
+    describe('/PUT cron/kontext-expired', () => {
         describe('when there are organisations to remove', () => {
             it('should return true when all personenKontexte are successfully removed', async () => {
                 const today: Date = new Date();
@@ -151,34 +151,34 @@ describe('CronController', () => {
                     personId: person2.id,
                 });
 
-                const mockPersonenKontexte: Record<string, Personenkontext<true>[]> = {
-                    [person1.id]: [personenKontextMock1, personenKontextMock4],
-                    [person2.id]: [personenKontextMock2, personenKontextMock5],
-                    [person3.id]: [personenKontextMock3],
-                };
+                const mockPersonenKontexte: Map<string, Personenkontext<true>[]> = new Map([
+                    [person1.id, [personenKontextMock1, personenKontextMock4]],
+                    [person2.id, [personenKontextMock2, personenKontextMock5]],
+                    [person3.id, [personenKontextMock3]],
+                ]);
 
-                personenKontextRepositoryMock.getPersonenKontexteWithExceedingBefristung.mockResolvedValueOnce(
+                personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockResolvedValueOnce(
                     mockPersonenKontexte,
                 );
 
                 const result: boolean =
-                    await cronController.removePersonenKontexteWithExceedingLimitFromUsers(permissionsMock);
+                    await cronController.removePersonenKontexteWithExpiredBefristungFromUsers(permissionsMock);
 
                 expect(result).toBe(true);
-                expect(personenKontextRepositoryMock.getPersonenKontexteWithExceedingBefristung).toHaveBeenCalled();
+                expect(personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung).toHaveBeenCalled();
                 expect(personenkontextWorkflowFactoryMock.createNew).toHaveBeenCalledTimes(3);
             });
         });
 
         describe('when there are no organisations to remove', () => {
             it('should return true when no organisations exceed their limit', async () => {
-                personenKontextRepositoryMock.getPersonenKontexteWithExceedingBefristung.mockResolvedValueOnce({});
+                personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockResolvedValueOnce(new Map());
 
                 const result: boolean =
-                    await cronController.removePersonenKontexteWithExceedingLimitFromUsers(permissionsMock);
+                    await cronController.removePersonenKontexteWithExpiredBefristungFromUsers(permissionsMock);
 
                 expect(result).toBe(true);
-                expect(personenKontextRepositoryMock.getPersonenKontexteWithExceedingBefristung).toHaveBeenCalled();
+                expect(personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung).toHaveBeenCalled();
             });
         });
 
@@ -211,13 +211,13 @@ describe('CronController', () => {
                     personId: person2.id,
                 });
 
-                const mockPersonenKontexte: Record<string, Personenkontext<true>[]> = {
-                    [person1.id]: [personenKontextMock1, personenKontextMock4],
-                    [person2.id]: [personenKontextMock2, personenKontextMock5],
-                    [person3.id]: [personenKontextMock3],
-                };
+                const mockPersonenKontexte: Map<string, Personenkontext<true>[]> = new Map([
+                    [person1.id, [personenKontextMock1, personenKontextMock4]],
+                    [person2.id, [personenKontextMock2, personenKontextMock5]],
+                    [person3.id, [personenKontextMock3]],
+                ]);
 
-                personenKontextRepositoryMock.getPersonenKontexteWithExceedingBefristung.mockResolvedValueOnce(
+                personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockResolvedValueOnce(
                     mockPersonenKontexte,
                 );
 
@@ -231,10 +231,10 @@ describe('CronController', () => {
                 personenkontextWorkflowFactoryMock.createNew.mockReturnValue(personenkontextWorkflowMock);
 
                 const result: boolean =
-                    await cronController.removePersonenKontexteWithExceedingLimitFromUsers(permissionsMock);
+                    await cronController.removePersonenKontexteWithExpiredBefristungFromUsers(permissionsMock);
 
                 expect(result).toBe(false); // Expect false since at least one removal failed
-                expect(personenKontextRepositoryMock.getPersonenKontexteWithExceedingBefristung).toHaveBeenCalled();
+                expect(personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung).toHaveBeenCalled();
                 expect(personenkontextWorkflowFactoryMock.createNew).toHaveBeenCalledTimes(3); // Ensure createNew was called three times
                 expect(personenkontextWorkflowMock.commit).toHaveBeenCalledTimes(3); // Ensure commit is called three times
             });
@@ -242,12 +242,12 @@ describe('CronController', () => {
 
         describe('when an exception is thrown', () => {
             it('should throw an error when there is an internal server error', async () => {
-                personenKontextRepositoryMock.getPersonenKontexteWithExceedingBefristung.mockImplementationOnce(() => {
+                personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockImplementationOnce(() => {
                     throw new Error('Some internal error');
                 });
 
                 await expect(
-                    cronController.removePersonenKontexteWithExceedingLimitFromUsers(permissionsMock),
+                    cronController.removePersonenKontexteWithExpiredBefristungFromUsers(permissionsMock),
                 ).rejects.toThrow('Failed to remove kontexte due to an internal server error.');
             });
         });

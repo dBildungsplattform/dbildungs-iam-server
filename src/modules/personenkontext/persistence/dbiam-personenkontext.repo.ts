@@ -277,14 +277,16 @@ export class DBiamPersonenkontextRepo {
         return (await this.findByRolle(id)).length > 0;
     }
 
-    public async getPersonenKontexteWithExceedingBefristung(): Promise<Record<string, Personenkontext<true>[]>> {
+    public async getPersonenKontexteWithExpiredBefristung(): Promise<Map<PersonID, Personenkontext<true>[]>> {
         const filters: QBFilterQuery<PersonenkontextEntity> = {
             personId: {
-                $in: this.em
-                    .createQueryBuilder(PersonenkontextEntity, 'pk')
-                    .select('pk.person_id')
-                    .where({ befristung: { $lt: new Date() } })
-                    .getKnexQuery(),
+                personenKontexte: {
+                    $some: {
+                        befristung: {
+                            $lt: new Date(),
+                        },
+                    },
+                },
             },
         };
 
@@ -294,21 +296,15 @@ export class DBiamPersonenkontextRepo {
         );
 
         // Grouping the entities by personId
-        const groupedByPersonId: Record<string, Personenkontext<true>[]> = personenKontexte.reduce(
-            (groups: Record<string, Personenkontext<true>[]>, personKontext: Personenkontext<true>) => {
-                const personId: string = personKontext.personId;
+        const groupedByPerson: Map<PersonID, Personenkontext<true>[]> = new Map();
+        for (const kontext of personenKontexte) {
+            const group: Personenkontext<true>[] = groupedByPerson.get(kontext.personId) ?? [];
+            if (group.length === 0) {
+                groupedByPerson.set(kontext.personId, group);
+            }
+            group.push(kontext);
+        }
 
-                if (!groups[personId]) {
-                    groups[personId] = [];
-                }
-
-                // Use non-null assertion here
-                groups[personId]!.push(personKontext); // Now TypeScript knows this can't be undefined
-                return groups;
-            },
-            {} as Record<string, Personenkontext<true>[]>,
-        );
-
-        return groupedByPersonId;
+        return groupedByPerson;
     }
 }

@@ -20,6 +20,7 @@ import { DbiamPersonenkontextBodyParams } from '../personenkontext/api/param/dbi
 import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
+import { PersonID } from '../../shared/types/aggregate-ids.types.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -63,7 +64,7 @@ export class CronController {
         }
     }
 
-    @Put('kontext-exceeding')
+    @Put('kontext-expired')
     @HttpCode(HttpStatus.OK)
     @ApiCreatedResponse({ description: 'Personenkontexte were successfully removed from users.', type: Boolean })
     @ApiBadRequestResponse({ description: 'Personenkontexte are not given or not found.' })
@@ -73,36 +74,35 @@ export class CronController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while trying to remove personenkontexte from users.',
     })
-    public async removePersonenKontexteWithExceedingLimitFromUsers(
+    public async removePersonenKontexteWithExpiredBefristungFromUsers(
         @Permissions() permissions: PersonPermissions,
     ): Promise<boolean> {
         try {
             //Get PersonenKontexte for a person at least one kontext exceeds the befristung value
-            const personenKontexteGroupedByPersonId: Record<string, Personenkontext<true>[]> =
-                await this.personenKonextRepository.getPersonenKontexteWithExceedingBefristung();
-            if (Object.keys(personenKontexteGroupedByPersonId).length === 0) {
+            const personenKontexteGroupedByPersonId: Map<PersonID, Personenkontext<true>[]> =
+                await this.personenKonextRepository.getPersonenKontexteWithExpiredBefristung();
+            if (personenKontexteGroupedByPersonId.size === 0) {
                 return true;
             }
 
-            //filter each Personenkontext and validate Personenkontexte to keep for each person
+            // Filter each Personenkontext and validate Personenkontexte to keep for each person
             const promises: Promise<Personenkontext<true>[] | PersonenkontexteUpdateError>[] = [];
-            for (const personId in personenKontexteGroupedByPersonId) {
-                const personenKontexte: Personenkontext<true>[] | undefined =
-                    personenKontexteGroupedByPersonId[personId];
-
-                if (Array.isArray(personenKontexte)) {
-                    const count: number = personenKontexte.length;
-                    //filter PersonenKontexte
-                    const personenKontexteToKeep: DbiamPersonenkontextBodyParams[] =
-                        this.filterPersonenKontexte(personenKontexte);
-                    //validate PersonenKontexte to keep
-                    promises.push(
-                        this.personenkontextWorkflowFactory
-                            .createNew()
-                            .commit(personId, new Date(), count, personenKontexteToKeep, permissions),
-                    );
-                }
-            }
+            personenKontexteGroupedByPersonId.forEach(
+                (personenKontexte: Personenkontext<true>[], personId: PersonID) => {
+                    if (personenKontexte) {
+                        const count: number = personenKontexte.length;
+                        // Filter PersonenKontexte
+                        const personenKontexteToKeep: DbiamPersonenkontextBodyParams[] =
+                            this.filterPersonenKontexte(personenKontexte);
+                        // Validate PersonenKontexte to keep
+                        promises.push(
+                            this.personenkontextWorkflowFactory
+                                .createNew()
+                                .commit(personId, new Date(), count, personenKontexteToKeep, permissions),
+                        );
+                    }
+                },
+            );
 
             //validate results
             const results: PromiseSettledResult<Personenkontext<true>[] | PersonenkontexteUpdateError>[] =
@@ -123,12 +123,13 @@ export class CronController {
         today.setHours(0, 0, 0, 0);
         const personenKontexteToKeep: DbiamPersonenkontextBodyParams[] = [];
         personenKontexte.forEach((personenKontext: Personenkontext<true>) => {
-            if (personenKontext.befristung == undefined || personenKontext.befristung >= today) {
+            if (!personenKontext.befristung || personenKontext.befristung >= today) {
                 personenKontexteToKeep.push({
                     personId: personenKontext.personId,
                     organisationId: personenKontext.organisationId,
                     rolleId: personenKontext.rolleId,
-                } as DbiamPersonenkontextBodyParams);
+                    befristung: personenKontext.befristung,
+                });
             }
         });
         return personenKontexteToKeep;
