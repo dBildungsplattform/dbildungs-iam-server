@@ -14,7 +14,8 @@
         "KLASSEN_VERWALTEN",
         "SCHULTRAEGER_VERWALTEN",
         "PERSONEN_SOFORT_LOESCHEN",
-        "PERSON_SYNCHRONISIEREN"
+        "PERSON_SYNCHRONISIEREN",
+        "IMPORT_DURCHFUEHREN"
       ],
       "serviceProviderIds": [
         0,
@@ -151,6 +152,18 @@
         "serviceProviderIds": [
             3
         ]
+    },
+    {
+        "id": 9,
+        "administeredBySchulstrukturknoten": 0,
+        "name": "Technical User CRON",
+        "rollenart": "SYSADMIN",
+        "merkmale": [],
+        "systemrechte": [
+            "CRON_DURCHFUEHREN"
+        ],
+        "serviceProviderIds": [],
+        "istTechnisch": true
     }
   ]
 }
