@@ -143,6 +143,9 @@ export class DbSeedConsole extends CommandRunner {
             case 'Personenkontext':
                 await this.dbSeedService.seedPersonenkontext(fileContentAsStr);
                 break;
+            case 'TechnicalUser':
+                await this.dbSeedService.seedTechnicalUser(fileContentAsStr);
+                break;
             default:
                 throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);
         }
