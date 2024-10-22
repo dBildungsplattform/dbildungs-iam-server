@@ -124,7 +124,7 @@ describe('PersonenkontextCreationService', () => {
             expect(result).toBeInstanceOf(DomainError);
         });
 
-        it('should skip checkReferences if teh admin has IMPORT rights', async () => {
+        it('should skip checkReferences if the admin has IMPORT rights', async () => {
             personFactoryMock.createNew.mockResolvedValueOnce(createMock<Person<false>>());
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
