@@ -149,6 +149,18 @@ services:
       - mariadb:/var/lib/mysql
       - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql
 
+  cron-service:
+    build: ./cron
+    environment:
+      - CLIENT_ID=spsh-service
+      - TOKEN_URL=http://keycloak:8080/realms/SPSH/protocol/openid-connect/token
+      - PRIVATE_KEY_FILE=/keys/private_dummy_pkcs8.pem
+    volumes:
+      - ./cron/scripts:/scripts
+      - ./cron/keys/private_dummy_pkcs8.pem:/keys/private_dummy_pkcs8.pem:ro
+    depends_on:
+      - keycloak
+
 volumes:
   db-data:
   mariadb:
