@@ -1,29 +1,32 @@
-import { Body, Controller, Put } from '@nestjs/common';
+import { Body, Controller, Param, Put } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 import { KeycloakClientService } from '../../keycloak-administration/domain/keycloak-client.service.js';
-import { UpdateKeycloakClientParams } from './update-client.params.js';
+import { ClientByIdParams } from './client-by-id.params.js';
 
-// TODO: Errors, Swagger, Ingress
 @Controller({ path: 'migration' })
 @ApiExcludeController()
 export class MigrationController {
-    public constructor(private readonly keycloakClientService: KeycloakClientService) {}
+    public constructor(
+        private readonly keycloakClientService: KeycloakClientService,
+        private readonly logger: ClassLogger,
+    ) {}
 
-    @Put('kc-client')
+    @Put('kc-client/:id')
     @Public()
-    public async updateKeycloakClient(@Body() body: UpdateKeycloakClientParams): Promise<{ ok: boolean }> {
-        const result: Result<unknown, DomainError> = await this.keycloakClientService.updateClient(
-            body.id,
-            body.payload,
-        );
+    public async updateKeycloakClient(
+        @Param() params: ClientByIdParams,
+        @Body() body: object,
+    ): Promise<{ success: boolean; message?: string }> {
+        const result: Result<unknown, DomainError> = await this.keycloakClientService.updateClient(params.id, body);
 
         if (!result.ok) {
-            throw result.error;
+            this.logger.error('Could not update keycloak client', result.error);
         }
 
-        return { ok: true };
+        return { success: result.ok };
     }
 }
