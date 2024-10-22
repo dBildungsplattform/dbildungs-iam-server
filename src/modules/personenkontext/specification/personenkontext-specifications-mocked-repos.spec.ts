@@ -350,5 +350,33 @@ describe('PersonenkontextSpecificationsMockedReposTest', () => {
 
             expect(result).toBe(false); // Expecting false because of different role types
         });
+
+        it('should throw an error when existingRollen has undefined values', async () => {
+            const specification: CheckRollenartSpecification = new CheckRollenartSpecification(
+                personenkontextRepoMock,
+                rolleRepoMock,
+            );
+
+            const personenkontext1: Personenkontext<false> = createMock<Personenkontext<false>>();
+            const personenkontext2: Personenkontext<false> = createMock<Personenkontext<false>>();
+
+            // Mock to return an empty array for existing person contexts
+            personenkontextRepoMock.findByPerson.mockResolvedValueOnce([]);
+
+            // Instead of mocking the map with 'undefined', we simulate the function returning an invalid array (empty or undefined)
+            const existingRollen: Rolle<true>[] = [undefined as unknown as Rolle<true>]; // Simulating undefined role
+            rolleRepoMock.findByIds.mockResolvedValueOnce(new Map(Object.entries(existingRollen)));
+
+            // Mock new roles with valid role types
+            const newRollen: Map<string, Rolle<true>> = new Map();
+            newRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+            newRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
+            rolleRepoMock.findByIds.mockResolvedValueOnce(newRollen);
+
+            // Expect the function to throw an error due to the undefined value in existingRollen
+            await expect(specification.checkRollenart([personenkontext1, personenkontext2])).rejects.toThrow(
+                'Expected existingRollen to contain valid roles, but found undefined.',
+            );
+        });
     });
 });

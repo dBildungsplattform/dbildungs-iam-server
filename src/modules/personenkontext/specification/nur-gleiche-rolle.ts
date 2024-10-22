@@ -36,8 +36,13 @@ export class CheckRollenartSpecification {
             return allSentRollenMatch;
         }
 
+        // Throw an error if for some reason the first element is undefined (This should never happen but just defensive programming)
+        if (!existingRollen[0] || !existingRollen[0].rollenart) {
+            throw new Error('Expected existingRollen to contain valid roles, but found undefined.');
+        }
+
         // Get the RollenArt of existing PKs (assuming all existing PKs have the same RollenArt)
-        const existingRollenArt: RollenArt = existingRollen[0]!.rollenart;
+        const existingRollenArt: RollenArt = existingRollen[0].rollenart;
 
         // Check if all sent roles match the existing RollenArt
         const allSentRollenMatchExisting: boolean = sentRollen.every(
