@@ -3,6 +3,7 @@ import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.r
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { ExistingRolleUndefined } from '../domain/error/existing-rolle-undefined.error.js';
 
 export class CheckRollenartSpecification {
     public constructor(
@@ -38,7 +39,7 @@ export class CheckRollenartSpecification {
 
         // Throw an error if for some reason the first element is undefined (This should never happen but just defensive programming)
         if (!existingRollen[0] || !existingRollen[0].rollenart) {
-            throw new Error('Expected existingRollen to contain valid roles, but found undefined.');
+            throw new ExistingRolleUndefined();
         }
 
         // Get the RollenArt of existing PKs (assuming all existing PKs have the same RollenArt)
