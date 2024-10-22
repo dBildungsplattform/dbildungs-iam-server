@@ -97,6 +97,7 @@ export class DbSeedService {
             data.typ,
             data.traegerschaft,
             data.emailDomain,
+            data.emailAdress,
         );
 
         if (organisation instanceof DomainError) {
@@ -265,6 +266,45 @@ export class DbSeedService {
                 );
             }
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
+            if (persistedPerson instanceof Person && file.id != null) {
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.PERSON,
+                    file.id,
+                    persistedPerson.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
+            } else {
+                this.logger.error('Person without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(person));
+            }
+        }
+        this.logger.info(`Insert ${files.length} entities of type Person`);
+    }
+
+    public async seedTechnicalUser(fileContentAsStr: string): Promise<void> {
+        const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
+        const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        /* eslint-disable no-await-in-loop */
+        for (const file of files) {
+            /* eslint-disable no-await-in-loop */
+            const person: Person<false> = Person.construct(
+                undefined,
+                undefined,
+                undefined,
+                file.familienname,
+                file.vorname,
+                '1',
+                file.username,
+                file.keycloakUserId,
+            );
+            person.personalnummer = file.personalnummer;
+
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
+                person,
+                undefined,
+                undefined,
+                true,
+            );
             if (persistedPerson instanceof Person && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
                     ReferencedEntityType.PERSON,
