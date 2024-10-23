@@ -296,7 +296,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     person.keycloakUserId = faker.string.uuid();
                     kcUserServiceMock.create.mockResolvedValueOnce({
@@ -330,7 +330,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     person.username = undefined;
                     kcUserServiceMock.create.mockResolvedValueOnce({
@@ -403,7 +403,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: false,
@@ -439,7 +439,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: true,
@@ -476,7 +476,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
 
@@ -655,7 +655,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     person.username = undefined;
                     kcUserServiceMock.create.mockResolvedValueOnce({
@@ -709,7 +709,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     person.username = 'name';
                     //person.keycloakUserId = faker.string.uuid();
@@ -765,7 +765,7 @@ describe('PersonRepository Integration', () => {
                         });
                         expect(person).not.toBeInstanceOf(DomainError);
                         if (person instanceof DomainError) {
-                            return;
+                            throw person;
                         }
                         person.username = undefined;
                         kcUserServiceMock.create.mockResolvedValueOnce({
@@ -877,7 +877,7 @@ describe('PersonRepository Integration', () => {
             });
         });
         describe('when referrer is undefined', () => {
-            afterAll(() => {
+            beforeEach(() => {
                 jest.restoreAllMocks();
             });
 
@@ -889,7 +889,7 @@ describe('PersonRepository Integration', () => {
                 });
                 expect(person).not.toBeInstanceOf(DomainError);
                 if (person instanceof DomainError) {
-                    return;
+                    throw person;
                 }
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
@@ -939,7 +939,7 @@ describe('PersonRepository Integration', () => {
                 });
                 expect(person).not.toBeInstanceOf(DomainError);
                 if (person instanceof DomainError) {
-                    return;
+                    throw person;
                 }
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
@@ -1489,6 +1489,9 @@ describe('PersonRepository Integration', () => {
         });
     });
     describe('save', () => {
+        beforeEach(() => {
+            jest.restoreAllMocks();
+        });
         describe('when person has an id', () => {
             it('should call the update method and return the updated person', async () => {
                 const existingPerson: Person<true> = await savePerson();
