@@ -152,6 +152,18 @@
         "serviceProviderIds": [
             3
         ]
+    },
+    {
+        "id": 9,
+        "administeredBySchulstrukturknoten": 0,
+        "name": "Technical User CRON",
+        "rollenart": "SYSADMIN",
+        "merkmale": [],
+        "systemrechte": [
+            "CRON_DURCHFUEHREN"
+        ],
+        "serviceProviderIds": [],
+        "istTechnisch": true
     }
   ]
 }
