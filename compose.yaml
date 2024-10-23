@@ -152,12 +152,13 @@ services:
   cron-service:
     build: ./cron
     environment:
-      - CLIENT_ID=spsh-service
-      - TOKEN_URL=http://keycloak:8080/realms/SPSH/protocol/openid-connect/token
-      - PRIVATE_KEY_FILE=/keys/private_dummy_pkcs8.pem
+      - KC_CLIENT_ID=spsh-service
+      - KC_TOKEN_URL=http://keycloak:8080/realms/SPSH/protocol/openid-connect/token
+      - BACKEND_URL = http://127.0.0.1:9090
+      - JWKS_FILE=/keys/jwks.json
     volumes:
       - ./cron/scripts:/scripts
-      - ./cron/keys/private_dummy_pkcs8.pem:/keys/private_dummy_pkcs8.pem:ro
+      - ./cron/keys/dummy_jwks.json:/keys/jwks.json:ro
     depends_on:
       - keycloak
 

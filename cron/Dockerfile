@@ -2,7 +2,7 @@ FROM alpine:latest
 
 # Install necessary packages
 RUN apk update && \
-    apk add --no-cache bash openssl  curl cronie
+    apk add --no-cache bash openssl curl cronie jq vim
 
 # Copy scripts into the image
 COPY scripts/ /scripts/
