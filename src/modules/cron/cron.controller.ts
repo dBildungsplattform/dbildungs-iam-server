@@ -89,18 +89,16 @@ export class CronController {
             const promises: Promise<Personenkontext<true>[] | PersonenkontexteUpdateError>[] = [];
             personenKontexteGroupedByPersonId.forEach(
                 (personenKontexte: Personenkontext<true>[], personId: PersonID) => {
-                    if (personenKontexte) {
-                        const count: number = personenKontexte.length;
-                        // Filter PersonenKontexte
-                        const personenKontexteToKeep: DbiamPersonenkontextBodyParams[] =
-                            this.filterPersonenKontexte(personenKontexte);
-                        // Validate PersonenKontexte to keep
-                        promises.push(
-                            this.personenkontextWorkflowFactory
-                                .createNew()
-                                .commit(personId, new Date(), count, personenKontexteToKeep, permissions),
-                        );
-                    }
+                    const count: number = personenKontexte.length;
+                    // Filter PersonenKontexte
+                    const personenKontexteToKeep: DbiamPersonenkontextBodyParams[] =
+                        this.filterPersonenKontexte(personenKontexte);
+                    // Validate PersonenKontexte to keep
+                    promises.push(
+                        this.personenkontextWorkflowFactory
+                            .createNew()
+                            .commit(personId, new Date(), count, personenKontexteToKeep, permissions),
+                    );
                 },
             );
 
