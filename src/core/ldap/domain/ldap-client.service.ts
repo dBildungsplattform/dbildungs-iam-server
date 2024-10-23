@@ -43,7 +43,9 @@ export class LdapClientService {
             await this.ldapClient
                 .getClient()
                 .bind(this.ldapInstanceConfig.BIND_DN, this.ldapInstanceConfig.ADMIN_PASSWORD);
-            this.logger.info('LDAP: Successfully connected');
+            this.logger.info(
+                `LDAP: Successfully connected to url:${this.ldapInstanceConfig.URL}, bind-dn:${this.ldapInstanceConfig.BIND_DN}`,
+            );
             return {
                 ok: true,
                 value: true,
