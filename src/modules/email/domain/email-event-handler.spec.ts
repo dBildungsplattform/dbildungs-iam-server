@@ -826,7 +826,7 @@ describe('Email Event Handler', () => {
             it('should log error', async () => {
                 emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(undefined);
 
-                await emailEventHandler.handleOxUserAttributesChangedEvent(event);
+                await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
                     `Cannot find requested email-address for person with personId:${event.personId}, enabling not possible`,
@@ -847,7 +847,7 @@ describe('Email Event Handler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>({}));
 
-                await emailEventHandler.handleOxUserAttributesChangedEvent(event);
+                await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(
                     `Mismatch between requested(${emailAddress}) and received(${event.emailAddress}) address from OX`,
@@ -870,7 +870,7 @@ describe('Email Event Handler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeUpdated('EmailAddress', '1'));
 
-                await emailEventHandler.handleOxUserAttributesChangedEvent(event);
+                await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
                     `Could not enable email, error is EmailAddress with ID 1 could not be updated`,
@@ -889,7 +889,7 @@ describe('Email Event Handler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(emailMock);
 
-                await emailEventHandler.handleOxUserAttributesChangedEvent(event);
+                await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
                     `Changed email-address:${fakeEmail} from REQUESTED to ENABLED`,
