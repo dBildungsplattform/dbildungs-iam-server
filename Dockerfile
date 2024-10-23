@@ -11,6 +11,7 @@ RUN npm ci
 
 COPY src/ src/
 COPY migrations/ migrations/
+COPY keycloak-migrations/ keycloak-migrations/
 
 RUN npm run build
 
