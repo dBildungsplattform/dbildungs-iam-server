@@ -246,6 +246,8 @@ export class ImportWorkflow {
                 },
             ];
 
+            // TODO: Refactor this. We want to save the persons in bulk, and not get bogged down with checks.
+            // We should not use the CreationService here
             const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
                 await this.personenkontextCreationService.createPersonWithPersonenkontexte(
                     permissions,
