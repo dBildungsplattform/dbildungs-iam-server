@@ -256,13 +256,15 @@ export class LdapClientService {
                     error: new LdapSearchError(LdapEntityType.LEHRER),
                 };
             }
-
             // result can be a simple string or a string-array
-            let currentEmailAddressString: string | string[] | undefined = searchResult.searchEntries[0][
-                LdapClientService.MAIL_PRIMARY_ADDRESS
-            ] as string;
-            if (Array.isArray(currentEmailAddressString)) {
-                currentEmailAddressString = (currentEmailAddressString as string[])[0];
+            let currentEmailAddressString: string | undefined;
+            const currentLDAPEmailAddressString: unknown =
+                searchResult.searchEntries[0][LdapClientService.MAIL_PRIMARY_ADDRESS];
+            if (typeof currentLDAPEmailAddressString === 'string') {
+                currentEmailAddressString = currentLDAPEmailAddressString;
+            }
+            if (Array.isArray(currentLDAPEmailAddressString) && typeof currentLDAPEmailAddressString[0] === 'string') {
+                currentEmailAddressString = currentLDAPEmailAddressString[0];
             }
             const currentEmailAddress: string = currentEmailAddressString ?? newEmailAddress;
 
