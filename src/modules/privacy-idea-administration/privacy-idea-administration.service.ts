@@ -244,6 +244,11 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
+    public async deleteUserWrapper(userName: string): Promise<void> {
+        const token: string = await this.getJWTToken();
+        await this.deleteUser(userName, token);
+    }
+
     private async deleteUser(userName: string, token: string): Promise<Result<void, DomainError>> {
         const url: string =
             this.privacyIdeaConfig.ENDPOINT + '/user/' + this.privacyIdeaConfig.USER_RESOLVER + '/' + userName;
@@ -479,25 +484,6 @@ export class PrivacyIdeaAdministrationService {
                 throw new Error(`Error deleting token: ${error.message}`);
             } else {
                 throw new Error(`Error deleting token: Unknown error occurred`);
-            }
-        }
-    }
-
-    public async deleteUser(username: string): Promise<void> {
-        const jwt: string = await this.getJWTToken();
-        const resolvername: string = this.privacyIdeaConfig.USER_RESOLVER;
-        const url: string = this.privacyIdeaConfig.ENDPOINT + `/user/${resolvername}/${username}`;
-        const headers: { Authorization: string } = {
-            Authorization: `${jwt}`,
-        };
-
-        try {
-            await firstValueFrom(this.httpService.delete(url, { headers: headers }));
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Error deleting privacyIDEA user: ${error.message}`);
-            } else {
-                throw new Error(`Error deleting privacyIDEA user: Unknown error occurred`);
             }
         }
     }

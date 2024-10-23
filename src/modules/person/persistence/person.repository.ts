@@ -31,6 +31,7 @@ import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
+import { PrivacyIdeaConfig } from '../../../shared/config/privacyidea.config.js';
 
 export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
@@ -136,6 +137,8 @@ export type PersonenQueryParams = {
 export class PersonRepository {
     public readonly ROOT_ORGANISATION_ID: string;
 
+    public readonly PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS: number;
+
     public constructor(
         private readonly kcUserService: KeycloakUserService,
         private readonly em: EntityManager,
@@ -144,6 +147,8 @@ export class PersonRepository {
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+        this.PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS =
+            config.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA').RENAME_WAITING_TIME_IN_SECONDS;
     }
 
     private async getPersonScopeWithPermissions(
@@ -457,7 +462,9 @@ export class PersonRepository {
         if (isPersonRenamedEventNecessary) {
             this.eventService.publish(PersonRenamedEvent.fromPerson(person, oldReferrer));
             // wait for privacyIDEA to update the username
-            await new Promise<void>((resolve: () => void) => setTimeout(resolve, 5000));
+            await new Promise<void>((resolve: () => void) =>
+                setTimeout(resolve, this.PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS * 1000),
+            );
         }
 
         return mapEntityToAggregate(personEntity);
