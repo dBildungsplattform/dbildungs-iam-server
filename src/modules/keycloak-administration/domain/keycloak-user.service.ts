@@ -196,6 +196,7 @@ export class KeycloakUserService {
 
         const updatedUserRepresentation: UserRepresentation = {
             //only attributes shall be updated here for this event
+            username: userRepresentation.username,
             attributes: attributes,
         };
 

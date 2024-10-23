@@ -4,12 +4,13 @@ import { Person } from '../domain/person.js';
 import { PersonBirthParams } from './person-birth.params.js';
 import { PersonNameParams } from './person-name.params.js';
 import { UserLockParams } from '../../keycloak-administration/api/user-lock.params.js';
+import { PersonEmailResponse } from './person-email-response.js';
 
 export class PersonendatensatzResponse {
     @ApiProperty()
     public person!: PersonResponse;
 
-    public constructor(person: Person<true>, withStartPasswort: boolean) {
+    public constructor(person: Person<true>, withStartPasswort: boolean, personEmailResponse?: PersonEmailResponse) {
         const personResponseName: PersonNameParams = {
             familienname: person.familienname,
             vorname: person.vorname,
@@ -48,6 +49,7 @@ export class PersonendatensatzResponse {
             isLocked: person.isLocked,
             userLock: userLockParams,
             lastModified: person.updatedAt,
+            email: personEmailResponse,
         };
 
         this.person = personResponse;
