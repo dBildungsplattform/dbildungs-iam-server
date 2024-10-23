@@ -16,7 +16,7 @@ import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { Person} from '../domain/person.js';
+import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
@@ -696,7 +696,7 @@ export class PersonRepository {
         return oldFamiliennameLowerCase !== newFamiliennameLowerCase;
     }
 
-    public async getKoPersUserLockList(): Promise<string[]> {
+    public async getKoPersUserLockList(): Promise<[PersonID, string][]> {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - 56);
 
@@ -717,6 +717,6 @@ export class PersonRepository {
         };
 
         const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
-        return personEntities.map((person: PersonEntity) => person.keycloakUserId);
+        return personEntities.map((person: PersonEntity) => [person.id, person.keycloakUserId]);
     }
 }

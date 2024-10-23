@@ -60,6 +60,7 @@ import { UserLockRepository } from '../../keycloak-administration/repository/use
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1875,12 +1876,19 @@ describe('PersonRepository Integration', () => {
             await dbiamPersonenkontextRepoInternal.save(personenKontext4);
             await dbiamPersonenkontextRepoInternal.save(personenKontext5);
 
-            const lockList: string[] = await sut.getKoPersUserLockList();
+            const lockList: [PersonID, string][] = await sut.getKoPersUserLockList();
 
-            expect(lockList).toContain(person1.keycloakUserId);
-            expect(lockList).toContain(person2.keycloakUserId);
-            expect(lockList).toContain(person3.keycloakUserId);
-            expect(lockList).not.toContain(person4.keycloakUserId);
+            // Create tuples for the expected values
+            const expectedPerson1: [PersonID, string | undefined] = [person1.id, person1.keycloakUserId];
+            const expectedPerson2: [PersonID, string | undefined] = [person2.id, person2.keycloakUserId];
+            const expectedPerson3: [PersonID, string | undefined] = [person3.id, person3.keycloakUserId];
+            const unexpectedPerson4: [PersonID, string | undefined] = [person4.id, person4.keycloakUserId];
+
+            // Perform the assertions
+            expect(lockList).toContainEqual(expectedPerson1);
+            expect(lockList).toContainEqual(expectedPerson2);
+            expect(lockList).toContainEqual(expectedPerson3);
+            expect(lockList).not.toContainEqual(unexpectedPerson4);
         });
     });
 });
