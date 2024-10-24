@@ -33,12 +33,17 @@ import { PersonalnummerRequiredError } from '../domain/personalnummer-required.e
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 import { PrivacyIdeaConfig } from '../../../shared/config/privacyidea.config.js';
 
-export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
+/**
+ * Return email-address for person, if an enabled email-address exists, return it.
+ * If no enabled email-address exists, return the latest changed one (updatedAt), order is done on PersonEntity.
+ * @param entity
+ */
+export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
         // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
         if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
-    return undefined;
+    return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
 }
 
 export function getOxUserId(entity: PersonEntity): string | undefined {
@@ -105,7 +110,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.personalnummer,
         undefined,
         undefined,
-        getEnabledEmailAddress(entity),
+        getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
     );
 }
