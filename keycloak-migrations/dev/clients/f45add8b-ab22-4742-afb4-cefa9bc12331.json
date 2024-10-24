@@ -1,4 +1,5 @@
 {
     "clientId": "spsh",
-    "description": "Temporary, testing on cluster."
+    "name": "Schulportal SH",
+    "description": "Default client for the Schulportal"
 }
