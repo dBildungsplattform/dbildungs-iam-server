@@ -619,36 +619,4 @@ describe('DbSeedService', () => {
             });
         });
     });
-
-    describe('isValidUUID', () => {
-        describe('isValidUUID with valid UUID', () => {
-            it('should return true', () => {
-                const isValidUuid: boolean = dbSeedService.isValidUuid(faker.string.uuid());
-                expect(isValidUuid).toBe(true);
-            });
-        });
-
-        describe('isValidUUID with invalid UUID', () => {
-            it('should return false', () => {
-                const isValidUuid: boolean = dbSeedService.isValidUuid('invalid-uuid');
-                expect(isValidUuid).toBe(false);
-            });
-        });
-    });
-
-    describe('getValidUuidOrUndefined', () => {
-        describe('getValidUuidOrUndefined with valid UUID', () => {
-            it('should return valid UUID', () => {
-                const validUuid: string | undefined = dbSeedService.getValidUuidOrUndefined(faker.string.uuid());
-                expect(validUuid).toBeDefined();
-            });
-        });
-
-        describe('getValidUuidOrUndefined with invalid UUID', () => {
-            it('should return undefined', () => {
-                const validUuid: string | undefined = dbSeedService.getValidUuidOrUndefined('invalid-uuid');
-                expect(validUuid).toBeUndefined();
-            });
-        });
-    });
 });

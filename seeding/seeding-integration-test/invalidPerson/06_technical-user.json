@@ -2,10 +2,10 @@
     "entityName": "TechnicalUser",
     "entities": [
         {
-            "username": "technical",
-            "password": "technical",
-            "vorname": "technical",
-            "familienname": "technical",
+            "username": "cron-runner",
+            "password": "cron-runner",
+            "vorname": "cron-runner",
+            "familienname": "cron-runner",
             "keycloakUserId": "abc"
         }
     ]

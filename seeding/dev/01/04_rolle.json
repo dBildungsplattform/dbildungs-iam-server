@@ -3,7 +3,6 @@
   "entities": [
     {
       "id": 0,
-      "overrideId": "94bf6129-ffe9-4817-ada1-06dcdd4236e8",
       "administeredBySchulstrukturknoten": 0,
       "name": "Landesadmin",
       "rollenart": "SYSADMIN",
@@ -157,7 +156,7 @@
     {
         "id": 9,
         "administeredBySchulstrukturknoten": 0,
-        "name": "Technischer Nutzer",
+        "name": "Technical User CRON",
         "rollenart": "SYSADMIN",
         "merkmale": [],
         "systemrechte": [

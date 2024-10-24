@@ -3,12 +3,12 @@
     "entities": [
         {
             "id": 7777777,
-            "overrideId": "80d34283-cd6e-467f-b968-0d472470023a",
-            "username": "technical",
-            "password": "technical",
-            "vorname": "technical",
-            "familienname": "technical",
-            "keycloakUserId": "7baf74aa-565f-4cfc-9d5a-8f1a3f374dc9"
+            "username": "cron-runner",
+            "password": "cron-runner",
+            "vorname": "cron-runner",
+            "familienname": "cron-runner",
+            "keycloakUserId": "7baf74aa-565f-4cfc-9d5a-8f1a3f374dc9",
+            "personalnummer": "7777777"
         }
     ]
 }
