@@ -18,6 +18,10 @@ import { PrivacyIdeaAdministrationServiceHandler } from './event-handler/privacy
         LoggerModule.register(PrivacyIdeaAdministrationModule.name),
     ],
     controllers: [PrivacyIdeaAdministrationController],
-    providers: [PrivacyIdeaAdministrationService, PrivacyIdeaAdministrationServiceHandler, PrivacyIdeaAdministrationEventHandler],
+    providers: [
+        PrivacyIdeaAdministrationService,
+        PrivacyIdeaAdministrationServiceHandler,
+        PrivacyIdeaAdministrationEventHandler,
+    ],
 })
 export class PrivacyIdeaAdministrationModule {}
