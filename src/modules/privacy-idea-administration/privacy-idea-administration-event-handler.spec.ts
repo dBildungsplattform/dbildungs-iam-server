@@ -90,7 +90,10 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
             it('should reset privacyIDEA tokens and delete person', async () => {
                 privacyIdeaAdministrationServiceMock.getUserTokens.mockResolvedValueOnce([mockPrivacyIdeaToken]);
                 privacyIdeaAdministrationServiceMock.resetToken.mockResolvedValueOnce(mockResetTokenResponse);
-                privacyIdeaAdministrationServiceMock.deleteUserWrapper.mockResolvedValueOnce();
+                privacyIdeaAdministrationServiceMock.deleteUserWrapper.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
 
                 await sut.handlePersonDeletedEvent(event);
 
@@ -104,7 +107,10 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
             it('should delete person', async () => {
                 privacyIdeaAdministrationServiceMock.getUserTokens.mockResolvedValueOnce([]);
                 privacyIdeaAdministrationServiceMock.resetToken.mockResolvedValueOnce(mockResetTokenResponse);
-                privacyIdeaAdministrationServiceMock.deleteUserWrapper.mockResolvedValueOnce();
+                privacyIdeaAdministrationServiceMock.deleteUserWrapper.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
 
                 await sut.handlePersonDeletedEvent(event);
 

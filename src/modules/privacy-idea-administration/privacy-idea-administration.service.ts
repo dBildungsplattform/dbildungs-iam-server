@@ -244,9 +244,10 @@ export class PrivacyIdeaAdministrationService {
         }
     }
 
-    public async deleteUserWrapper(userName: string): Promise<void> {
+    public async deleteUserWrapper(userName: string): Promise<Result<void, DomainError>> {
         const token: string = await this.getJWTToken();
-        await this.deleteUser(userName, token);
+        const result: Result<void, DomainError> = await this.deleteUser(userName, token);
+        return result;
     }
 
     private async deleteUser(userName: string, token: string): Promise<Result<void, DomainError>> {

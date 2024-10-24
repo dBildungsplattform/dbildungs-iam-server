@@ -25,6 +25,7 @@ import {
 } from './privacy-idea-api.types.js';
 import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 import { DomainError } from '../../shared/error/domain.error.js';
+import { DeleteUserError } from './api/error/delete-user.error.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -836,34 +837,44 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
     describe('deleteUser', () => {
         const referrer: string = faker.string.alpha();
+        let mockJWTToken: string;
+        beforeEach(() => {
+            mockJWTToken = faker.string.alpha();
+            jest.spyOn(
+                service as unknown as { getJWTToken: () => Promise<string> },
+                'getJWTToken',
+            ).mockResolvedValueOnce(mockJWTToken);
+        });
 
         it(`should delete user`, async () => {
             httpServiceMock.post.mockReturnValue(mockJWTTokenResponse());
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockReturnValue(mockEmptyPostResponse());
 
-            await expect(service.deleteUser(referrer)).resolves.toBeUndefined();
+            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({ ok: true, value: undefined });
             expect(httpServiceMock.delete).toHaveBeenCalledTimes(1);
         });
 
-        it(`should throw an error if the delete user causes error throw`, async () => {
+        it(`should resole an DeleteUserError if the delete user causes error throw`, async () => {
             httpServiceMock.post.mockReturnValue(mockJWTTokenResponse());
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockImplementationOnce(mockErrorResponse);
 
-            await expect(service.deleteUser(referrer)).rejects.toThrow(
-                `Error deleting privacyIDEA user: ${mockErrorMsg}`,
-            );
+            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({
+                ok: false,
+                error: new DeleteUserError(),
+            });
         });
 
-        it(`should throw an error if the delete user request causes non error throw`, async () => {
+        it(`should resole an DeleteUserError if the delete user request causes non error throw`, async () => {
             httpServiceMock.post.mockReturnValue(mockJWTTokenResponse());
             httpServiceMock.get.mockReturnValue(mockTokenResponse());
             httpServiceMock.delete.mockImplementationOnce(mockNonErrorThrow);
 
-            await expect(service.deleteUser(referrer)).rejects.toThrow(
-                `Error deleting privacyIDEA user: Unknown error occurred`,
-            );
+            await expect(service.deleteUserWrapper(referrer)).resolves.toEqual({
+                ok: false,
+                error: new DeleteUserError(),
+            });
         });
     });
 
