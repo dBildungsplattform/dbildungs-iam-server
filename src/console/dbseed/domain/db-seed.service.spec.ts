@@ -268,6 +268,25 @@ describe('DbSeedService', () => {
     });
 
     describe('seedRolle', () => {
+        describe('with existing overrideId in seeding file', () => {
+            it('should insert one entity in database with overrideId as id', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/09_rolle_with_override_id.json`,
+                    'utf-8',
+                );
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+                const serviceProviderMocked: ServiceProvider<true> = createMock<ServiceProvider<true>>();
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced serviceProvider
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock get-SSK
+
+                rolleRepoMock.create.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
+            });
+        });
+
         describe('with existing organisation for administeredBySchulstrukturknoten and ID', () => {
             it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
@@ -282,7 +301,7 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
                 organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock get-SSK
 
-                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                rolleRepoMock.create.mockResolvedValueOnce(persistedRolle);
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
             });
         });
