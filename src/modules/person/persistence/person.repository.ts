@@ -36,12 +36,17 @@ import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienn
 import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 
-export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
+/**
+ * Return email-address for person, if an enabled email-address exists, return it.
+ * If no enabled email-address exists, return the latest changed one (updatedAt), order is done on PersonEntity.
+ * @param entity
+ */
+export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
         // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
         if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
-    return undefined;
+    return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
 }
 
 export function getOxUserId(entity: PersonEntity): string | undefined {
@@ -108,7 +113,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.personalnummer,
         undefined,
         undefined,
-        getEnabledEmailAddress(entity),
+        getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
     );
 }
@@ -322,9 +327,9 @@ export class PersonRepository {
             [],
         );
         this.eventService.publish(personenkontextUpdatedEvent);
-        // Delete email-addresses if any, must happen before person deletion to get the referred email-address
-        if (person.email) {
-            this.eventService.publish(new PersonDeletedEvent(personId, person.email));
+
+        if (person.referrer !== undefined) {
+            this.eventService.publish(new PersonDeletedEvent(personId, person.referrer, person.email));
         }
 
         // Delete the person from the database with all their kontexte
@@ -356,6 +361,7 @@ export class PersonRepository {
         person: Person<false>,
         hashedPassword?: string,
         personId?: string,
+        technicalUser: boolean = false,
     ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
@@ -383,14 +389,19 @@ export class PersonRepository {
 
             // Take ID from person to create keycloak user
             let personWithKeycloakUser: Person<true> | DomainError;
-            if (!hashedPassword) {
-                personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+
+            if (!technicalUser) {
+                if (!hashedPassword) {
+                    personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+                } else {
+                    personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
+                        persistedPerson,
+                        hashedPassword,
+                        this.kcUserService,
+                    );
+                }
             } else {
-                personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
-                    persistedPerson,
-                    hashedPassword,
-                    this.kcUserService,
-                );
+                personWithKeycloakUser = persistedPerson;
             }
 
             // -> When keycloak fails, rollback

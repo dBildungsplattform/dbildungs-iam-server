@@ -10,7 +10,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { PersonEntity } from './person.entity.js';
 import {
-    getEnabledEmailAddress,
+    getEnabledOrAlternativeEmailAddress,
     getOxUserId,
     mapAggregateToData,
     mapEntityToAggregate,
@@ -185,7 +185,7 @@ describe('PersonRepository Integration', () => {
         }
     }
 
-    function getEmailAddress(status?: EmailAddressStatus, address?: string, oxUserId?: string): EmailAddressEntity {
+    function getFakeEmailAddress(status?: EmailAddressStatus, address?: string, oxUserId?: string): EmailAddressEntity {
         const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
         emailAddressEntity.status = status ?? EmailAddressStatus.ENABLED;
         emailAddressEntity.address = address ?? faker.internet.email();
@@ -878,29 +878,29 @@ describe('PersonRepository Integration', () => {
 
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress();
+                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
                 expect(result).toBeDefined();
             });
         });
 
-        describe('when only failed emailAddresses are in collection', () => {
-            it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
+        describe('when only non-enabled emailAddresses are in collection', () => {
+            it('should return defined emailAddress', () => {
+                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
-                expect(result).toBeUndefined();
+                expect(result).toBeDefined();
             });
         });
 
         describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
                 expect(result).toBeUndefined();
             });
@@ -920,7 +920,7 @@ describe('PersonRepository Integration', () => {
 
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress();
+                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress();
 
                 personEntity.emailAddresses.add(emailAddressEntity);
 
@@ -932,7 +932,7 @@ describe('PersonRepository Integration', () => {
 
         describe('when only failed emailAddresses are in collection', () => {
             it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
+                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
                 const result: string | undefined = getOxUserId(personEntity);
