@@ -32,12 +32,17 @@ import { UsernameGeneratorService } from '../domain/username-generator.service.j
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 
-export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
+/**
+ * Return email-address for person, if an enabled email-address exists, return it.
+ * If no enabled email-address exists, return the latest changed one (updatedAt), order is done on PersonEntity.
+ * @param entity
+ */
+export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
         // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
         if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
-    return undefined;
+    return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
 }
 
 export function getOxUserId(entity: PersonEntity): string | undefined {
@@ -72,6 +77,7 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         dataProvider: undefined,
         revision: person.revision,
         personalnummer: person.personalnummer,
+        orgUnassignmentDate: person.orgUnassignmentDate,
     };
 }
 
@@ -102,9 +108,10 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.vertrauensstufe,
         entity.auskunftssperre,
         entity.personalnummer,
+        entity.orgUnassignmentDate,
         undefined,
         undefined,
-        getEnabledEmailAddress(entity),
+        getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
     );
 }
@@ -318,9 +325,9 @@ export class PersonRepository {
             [],
         );
         this.eventService.publish(personenkontextUpdatedEvent);
-        // Delete email-addresses if any, must happen before person deletion to get the referred email-address
-        if (person.email) {
-            this.eventService.publish(new PersonDeletedEvent(personId, person.email));
+
+        if (person.referrer !== undefined) {
+            this.eventService.publish(new PersonDeletedEvent(personId, person.referrer, person.email));
         }
 
         // Delete the person from the database with all their kontexte
@@ -352,6 +359,7 @@ export class PersonRepository {
         person: Person<false>,
         hashedPassword?: string,
         personId?: string,
+        technicalUser: boolean = false,
     ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
@@ -379,14 +387,19 @@ export class PersonRepository {
 
             // Take ID from person to create keycloak user
             let personWithKeycloakUser: Person<true> | DomainError;
-            if (!hashedPassword) {
-                personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+
+            if (!technicalUser) {
+                if (!hashedPassword) {
+                    personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+                } else {
+                    personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
+                        persistedPerson,
+                        hashedPassword,
+                        this.kcUserService,
+                    );
+                }
             } else {
-                personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
-                    persistedPerson,
-                    hashedPassword,
-                    this.kcUserService,
-                );
+                personWithKeycloakUser = persistedPerson;
             }
 
             // -> When keycloak fails, rollback
@@ -648,6 +661,7 @@ export class PersonRepository {
             personFound.vertrauensstufe,
             personFound.auskunftssperre,
             newPersonalnummer,
+            personFound.orgUnassignmentDate,
             personFound.lockInfo,
             personFound.isLocked,
             personFound.email,
@@ -718,5 +732,22 @@ export class PersonRepository {
 
         const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return personEntities.map((person: PersonEntity) => person.keycloakUserId);
+    }
+
+    public async getPersonWithoutOrgDeleteList(): Promise<string[]> {
+        const daysAgo: Date = new Date();
+        daysAgo.setDate(daysAgo.getDate() - 84);
+
+        const filters: QBFilterQuery<PersonEntity> = {
+            personenKontexte: {
+                $exists: false,
+            },
+            org_unassignment_date: {
+                $lte: daysAgo,
+            },
+        };
+
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        return personEntities.map((person: PersonEntity) => person.id);
     }
 }

@@ -10,7 +10,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { PersonEntity } from './person.entity.js';
 import {
-    getEnabledEmailAddress,
+    getEnabledOrAlternativeEmailAddress,
     getOxUserId,
     mapAggregateToData,
     mapEntityToAggregate,
@@ -182,7 +182,7 @@ describe('PersonRepository Integration', () => {
         }
     }
 
-    function getEmailAddress(status?: EmailAddressStatus, address?: string, oxUserId?: string): EmailAddressEntity {
+    function getFakeEmailAddress(status?: EmailAddressStatus, address?: string, oxUserId?: string): EmailAddressEntity {
         const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
         emailAddressEntity.status = status ?? EmailAddressStatus.ENABLED;
         emailAddressEntity.address = address ?? faker.internet.email();
@@ -875,29 +875,29 @@ describe('PersonRepository Integration', () => {
 
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress();
+                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress();
                 personEntity.emailAddresses.add(emailAddressEntity);
 
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
                 expect(result).toBeDefined();
             });
         });
 
-        describe('when only failed emailAddresses are in collection', () => {
-            it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
+        describe('when only non-enabled emailAddresses are in collection', () => {
+            it('should return defined emailAddress', () => {
+                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
-                expect(result).toBeUndefined();
+                expect(result).toBeDefined();
             });
         });
 
         describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {
-                const result: string | undefined = getEnabledEmailAddress(personEntity);
+                const result: string | undefined = getEnabledOrAlternativeEmailAddress(personEntity);
 
                 expect(result).toBeUndefined();
             });
@@ -917,7 +917,7 @@ describe('PersonRepository Integration', () => {
 
         describe('when enabled emailAddress is in collection', () => {
             it('should return address of (first found) enabled address', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress();
+                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress();
 
                 personEntity.emailAddresses.add(emailAddressEntity);
 
@@ -929,7 +929,7 @@ describe('PersonRepository Integration', () => {
 
         describe('when only failed emailAddresses are in collection', () => {
             it('should return undefined', () => {
-                const emailAddressEntity: EmailAddressEntity = getEmailAddress(EmailAddressStatus.FAILED);
+                const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
 
                 const result: string | undefined = getOxUserId(personEntity);
@@ -1871,6 +1871,50 @@ describe('PersonRepository Integration', () => {
             expect(lockList).toContain(person2.keycloakUserId);
             expect(lockList).toContain(person3.keycloakUserId);
             expect(lockList).not.toContain(person4.keycloakUserId);
+        });
+        describe('getPersonWithoutOrgDeleteList', () => {
+            it('should return a list of personIds for persons without a personenkontext', async () => {
+                // person without personenkontext & org_unassignment_date older than 84 days
+                const daysAgo: Date = new Date();
+                daysAgo.setDate(daysAgo.getDate() - 84);
+
+                const personEntity1: PersonEntity = new PersonEntity();
+                const person1: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: daysAgo });
+                await em.persistAndFlush(personEntity1.assign(mapAggregateToData(person1)));
+                person1.id = personEntity1.id;
+
+                const personEntity2: PersonEntity = new PersonEntity();
+                const person2: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: daysAgo });
+                await em.persistAndFlush(personEntity2.assign(mapAggregateToData(person2)));
+                person2.id = personEntity2.id;
+
+                // person with personenkontext
+                const person3: Person<true> = await savePerson(false);
+                const rolle1: Rolle<false> = DoFactory.createRolle(false, {
+                    name: 'rolle1',
+                    rollenart: RollenArt.LEHR,
+                    merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                });
+                const rolle1Result: Rolle<true> = await rolleRepo.save(rolle1);
+                const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                    personId: person3.id,
+                    rolleId: rolle1Result.id,
+                });
+                await dbiamPersonenkontextRepoInternal.save(personenKontext1);
+                // person without personenkontext but within the time limit for org_unassignment_Date
+                const person4: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: new Date() });
+                const personEntity4: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity4.assign(mapAggregateToData(person4)));
+                person4.id = personEntity4.id;
+
+                //get person ids without personenkontext
+                const personsWithOrgList: string[] = await sut.getPersonWithoutOrgDeleteList();
+
+                expect(personsWithOrgList).toContain(person1.id);
+                expect(personsWithOrgList).toContain(person2.id);
+                expect(personsWithOrgList).not.toContain(person3.id);
+                expect(personsWithOrgList).not.toContain(person4.id);
+            });
         });
     });
 });
