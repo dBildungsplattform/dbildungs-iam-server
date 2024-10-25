@@ -78,16 +78,6 @@ describe('ServiceProviderRepo', () => {
             expect(savedServiceProvider.id).toBeDefined();
         });
 
-        it('should save new service-provider with overrideId', async () => {
-            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
-            serviceProvider.overrideId = faker.string.uuid();
-
-            const savedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
-
-            expect(savedServiceProvider.id).toBeDefined();
-            expect(savedServiceProvider.id).toEqual(serviceProvider.overrideId);
-        });
-
         it('should update an existing service-provider', async () => {
             const existingServiceProvider: ServiceProvider<true> = await sut.save(
                 DoFactory.createServiceProvider(false),

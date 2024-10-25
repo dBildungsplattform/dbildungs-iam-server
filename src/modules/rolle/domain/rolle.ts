@@ -24,7 +24,6 @@ export class Rolle<WasPersisted extends boolean> {
         public serviceProviderIds: string[],
         public istTechnisch: boolean,
         public serviceProviderData: ServiceProvider<true>[],
-        public overrideId: string | undefined,
     ) {}
 
     public static createNew(
@@ -38,7 +37,6 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
         serviceProviderData: ServiceProvider<true>[],
         istTechnisch: boolean,
-        overrideId: string | undefined,
     ): Rolle<false> | DomainError {
         // Validate the Rollenname
         if (!NameValidator.isNameValid(name)) {
@@ -59,7 +57,6 @@ export class Rolle<WasPersisted extends boolean> {
             serviceProviderIds,
             istTechnisch,
             serviceProviderData,
-            overrideId,
         );
     }
 
@@ -78,7 +75,6 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
         istTechnisch: boolean,
         serviceProviderData?: ServiceProvider<true>[],
-        overrideId?: string | undefined,
     ): Promise<Rolle<true> | DomainError> {
         if (!NameValidator.isNameValid(name)) {
             return new NameForRolleWithTrailingSpaceError();
@@ -99,7 +95,6 @@ export class Rolle<WasPersisted extends boolean> {
             [],
             istTechnisch,
             serviceProviderData ?? [],
-            overrideId,
         );
         //Replace service providers with new ones
         const attachmentResults: (void | DomainError)[] = await Promise.all(
@@ -132,7 +127,6 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
         istTechnisch: boolean,
         serviceProviderData: ServiceProvider<true>[] | undefined,
-        overrideId: string | undefined,
     ): Rolle<WasPersisted> {
         return new Rolle(
             organisationRepo,
@@ -149,7 +143,6 @@ export class Rolle<WasPersisted extends boolean> {
             serviceProviderIds,
             istTechnisch,
             serviceProviderData ?? [],
-            overrideId,
         );
     }
 

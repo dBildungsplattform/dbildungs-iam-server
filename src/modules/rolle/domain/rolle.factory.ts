@@ -26,7 +26,6 @@ export class RolleFactory {
         serviceProviderIds: string[],
         istTechnisch: boolean,
         serviceProviderData?: ServiceProvider<true>[],
-        overrideId?: string,
     ): Rolle<true> {
         return Rolle.construct(
             this.organisationRepo,
@@ -43,7 +42,6 @@ export class RolleFactory {
             serviceProviderIds,
             istTechnisch,
             serviceProviderData,
-            overrideId,
         );
     }
 
@@ -56,7 +54,6 @@ export class RolleFactory {
         serviceProviderIds: string[],
         serviceProviderData: ServiceProvider<true>[],
         istTechnisch: boolean,
-        overrideId?: string,
     ): Rolle<false> | DomainError {
         return Rolle.createNew(
             this.organisationRepo,
@@ -69,7 +66,6 @@ export class RolleFactory {
             serviceProviderIds,
             serviceProviderData,
             istTechnisch,
-            overrideId,
         );
     }
 
@@ -85,7 +81,6 @@ export class RolleFactory {
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
         istTechnisch: boolean,
-        overrideId?: string,
     ): Promise<Rolle<true> | DomainError> {
         return Rolle.update(
             this.organisationRepo,
@@ -102,7 +97,6 @@ export class RolleFactory {
             serviceProviderIds,
             istTechnisch,
             undefined,
-            overrideId,
         );
     }
 }

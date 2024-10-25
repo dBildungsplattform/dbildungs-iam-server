@@ -48,7 +48,6 @@ export class Personenkontext<WasPersisted extends boolean> {
         public readonly loeschungZeitpunkt: Date | undefined,
         public readonly revision: Persisted<string, WasPersisted>,
         public readonly befristung: Date | undefined,
-        public overrideId?: string,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -70,7 +69,6 @@ export class Personenkontext<WasPersisted extends boolean> {
         loeschungZeitpunkt: Date | undefined = undefined,
         revision: Persisted<string, WasPersisted> = '1',
         befristung: Date | undefined = undefined,
-        overrideId?: string,
     ): Personenkontext<WasPersisted> {
         return new Personenkontext(
             personRepository,
@@ -91,7 +89,6 @@ export class Personenkontext<WasPersisted extends boolean> {
             loeschungZeitpunkt,
             revision,
             befristung,
-            overrideId,
         );
     }
 
@@ -110,7 +107,6 @@ export class Personenkontext<WasPersisted extends boolean> {
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
         befristung: Date | undefined = undefined,
-        overrideId?: string,
     ): Personenkontext<false> {
         return new Personenkontext(
             personRepository,
@@ -131,7 +127,6 @@ export class Personenkontext<WasPersisted extends boolean> {
             loeschungZeitpunkt,
             undefined,
             befristung,
-            overrideId,
         );
     }
 

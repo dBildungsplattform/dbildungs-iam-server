@@ -1,8 +1,7 @@
 {
     "entityName": "Personenkontext",
     "entities": [
-        {
-            "overrideId": "512e862a-dd01-4a24-afef-9702e3d5f1b1",
+        {            
             "personId": 1,
             "organisationId": 0,
             "rolleId": 0

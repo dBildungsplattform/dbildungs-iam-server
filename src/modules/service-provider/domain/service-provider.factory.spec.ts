@@ -53,7 +53,6 @@ describe('ServiceProviderFactory', () => {
                     keycloakRole: keycloakRole,
                     externalSystem: externalSystem,
                     requires2fa: false,
-                    overrideId: faker.string.uuid(),
                 };
                 const serviceProvider: ServiceProvider<true> = sut.construct(
                     id,
@@ -70,7 +69,6 @@ describe('ServiceProviderFactory', () => {
                     keycloakRole,
                     externalSystem,
                     false,
-                    example.overrideId,
                 );
 
                 expect(serviceProvider).toEqual(example);

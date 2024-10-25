@@ -151,7 +151,7 @@ describe('dbiam Personenkontext Repo', () => {
             expect(savedPersonenkontext.id).toBeDefined();
         });
 
-        it('should save a new personenkontext with a id set to overrideId', async () => {
+        it('should create a new personenkontext with a id set to overrideId', async () => {
             const person: Person<true> = await createPerson();
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
             const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
@@ -159,11 +159,11 @@ describe('dbiam Personenkontext Repo', () => {
                 rolleId: rolle.id,
             });
 
-            personenkontext.overrideId = faker.string.uuid();
-            const savedPersonenkontext: Personenkontext<true> = await sut.save(personenkontext);
+            personenkontext.id = faker.string.uuid();
+            const savedPersonenkontext: Personenkontext<true> = await sut.create(personenkontext);
 
             expect(savedPersonenkontext.id).toBeDefined();
-            expect(savedPersonenkontext.id).toBe(personenkontext.overrideId);
+            expect(savedPersonenkontext.id).toBe(personenkontext.id);
         });
 
         it('should update an existing rolle', async () => {

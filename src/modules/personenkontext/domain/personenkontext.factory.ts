@@ -29,7 +29,6 @@ export class PersonenkontextFactory {
         sichtfreigabe?: SichtfreigabeType,
         loeschungZeitpunkt?: Date,
         befristung?: Date,
-        overrideId?: string,
     ): Personenkontext<WasPersisted> {
         return Personenkontext.construct(
             this.personRepository,
@@ -49,7 +48,6 @@ export class PersonenkontextFactory {
             loeschungZeitpunkt,
             revision,
             befristung,
-            overrideId,
         );
     }
 
@@ -64,7 +62,6 @@ export class PersonenkontextFactory {
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
         befristung: Date | undefined = undefined,
-        overrideId?: string,
     ): Personenkontext<false> {
         return Personenkontext.createNew(
             this.personRepository,
@@ -80,7 +77,6 @@ export class PersonenkontextFactory {
             sichtfreigabe,
             loeschungZeitpunkt,
             befristung,
-            overrideId,
         );
     }
 }

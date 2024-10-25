@@ -35,7 +35,6 @@ export type PersonCreationParams = {
     lockInfo?: LockInfo;
     isLocked?: boolean;
     id?: number;
-    overrideId?: string;
 };
 
 export class Person<WasPersisted extends boolean> {
