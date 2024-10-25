@@ -192,6 +192,7 @@ export class Person<WasPersisted extends boolean> {
             creationParams.vertrauensstufe,
             creationParams.auskunftssperre,
             creationParams.personalnummer,
+            creationParams.userLock,
             creationParams.orgUnassignmentDate,
         );
 
