@@ -3,14 +3,14 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: dbildungs-iam-server-{{ $job_name }}
-  namespace: spsh-{{ $job_options.schedule }}
+  namespace: {{ template "common.names.namespace" . }}
 spec:
   schedule: {{ $job_options.schedule }}
   startingDeadlineSeconds: 300
   suspend: true
   jobTemplate:
     spec:
-      completions: {{ $job_options.jobsParallelism }}
+      completions: {{ $job_options.jobsParallelism }} #why is this even working?
       parallelism: {{ $job_options.jobsParallelism }}
       backoffLimit: 0
       template:
