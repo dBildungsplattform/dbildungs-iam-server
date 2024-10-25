@@ -172,6 +172,6 @@ cronjobs:
     port: 5656
     schedule: 0 8 * * *
     endpoint-url: bla.org
-    jobsParallelism: false
+    # jobsParallelism: false
     #keycloakHostname
     #backendHostname
