@@ -735,9 +735,15 @@ export class PersonRepository {
     }
 
     public async getPersonWithoutOrgDeleteList(): Promise<string[]> {
+        const daysAgo: Date = new Date();
+        daysAgo.setDate(daysAgo.getDate() - 84);
+
         const filters: QBFilterQuery<PersonEntity> = {
             personenKontexte: {
                 $exists: false,
+            },
+            org_unassignment_date: {
+                $lte: daysAgo,
             },
         };
 
