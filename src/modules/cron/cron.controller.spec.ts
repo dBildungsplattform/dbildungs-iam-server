@@ -9,7 +9,6 @@ import { PersonPermissions } from '../authentication/domain/person-permissions.j
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { DoFactory } from '../../../test/utils/do-factory.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { Person } from '../person/domain/person.js';

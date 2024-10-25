@@ -14,8 +14,6 @@ import { PersonRepository } from '../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError } from '../../shared/error/domain.error.js';
 import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
-import { Permissions } from '../authentication/api/permissions.decorator.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { Permissions } from '../authentication/api/permissions.decorator.js';
