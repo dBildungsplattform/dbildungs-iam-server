@@ -13,7 +13,6 @@ import {
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError } from '../../shared/error/domain.error.js';
-import { PersonID } from '../../shared/types/aggregate-ids.types.js';
 import { UserLock } from '../keycloak-administration/domain/user-lock.js';
 import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
