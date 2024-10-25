@@ -25,7 +25,10 @@ spec:
             image: alpine:{{ $.Values.imageTag }}
             imagePullPolicy: Always
             securityContext:
-              allowPrivilegeEscalation: false            
+              allowPrivilegeEscalation: false
+            envFrom:
+              - configMapRef:
+                  name:  cronjob-envs-configmap
             command: ["sh", "-c", 
                         "apk update && 
                         apk add --no-cache bash openssl curl cronie jq vim &&
@@ -34,20 +37,15 @@ spec:
                         touch /var/log/cron.log && 
                         chmod 644 /var/log/cron.log
                         ./scripts/trigger_xyz.sh "]
-                        
-            envFrom:
-              - configMapRef:
-                  name:  cronjob-envs-configmap
-            
             volumeMounts:
-            - name: secret-volume
-              mountPath: /secrets
-              readOnly: true
-            - name: secret-volume-jwks
-              mountPath: /keys
-              readOnly: true
-            - name: script-volume
-              mountPath: /scripts
+              - name: secret-volume
+                mountPath: /secrets
+                readOnly: true
+              - name: secret-volume-jwks
+                mountPath: /keys
+                readOnly: true
+              - name: script-volume
+                mountPath: /scripts
 
             ports:
             - containerPort: {{ $.Values.port }}
