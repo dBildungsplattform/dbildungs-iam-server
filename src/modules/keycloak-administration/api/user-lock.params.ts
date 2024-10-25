@@ -8,8 +8,8 @@ export class UserLockParams {
     public readonly locked_by?: string;
 
     @ApiProperty({ nullable: true })
-    public readonly locked_until?: string;
+    public readonly created_at?: string;
 
     @ApiProperty({ nullable: true })
-    public readonly created_at?: string;
+    public readonly locked_until?: string;
 }
