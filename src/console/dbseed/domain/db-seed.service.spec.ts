@@ -171,6 +171,21 @@ describe('DbSeedService', () => {
             });
         });
 
+        describe('with overrideId', () => {
+            it('should insert one entity in database', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/08_organisation_with_overrideId.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+
+                organisationRepositoryMock.saveSeedData.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
         describe('with existing administriertVon', () => {
             it('should not throw EntityNotFoundError', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
