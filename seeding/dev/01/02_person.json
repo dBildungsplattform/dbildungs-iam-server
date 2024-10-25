@@ -2,7 +2,7 @@
     "entityName": "Person",
     "entities": [
         {
-            "id": "1",
+            "id": 1,
             "username": "test",
             "password": "test",
             "vorname": "test",

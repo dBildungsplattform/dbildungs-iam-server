@@ -108,7 +108,9 @@ export class DbSeedService {
             organisation.id = this.ROOT_ORGANISATION_ID;
         }
 
-        organisation.id = this.getValidUuidOrUndefined(data.overrideId);
+        if (data.overrideId) {
+            organisation.id = this.getValidUuidOrUndefined(data.overrideId);
+        }
 
         const savedOrga: Organisation<true> = await this.organisationRepository.saveSeedData(organisation);
         const dbSeedReference: DbSeedReference = DbSeedReference.createNew(

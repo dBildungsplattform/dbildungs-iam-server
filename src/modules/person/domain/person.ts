@@ -11,6 +11,7 @@ type PasswordInternalState = { passwordInternal: string | undefined; isTemporary
 export type LockInfo = Record<LockKeys, string>;
 
 export type PersonCreationParams = {
+    id?: number;
     familienname: string;
     vorname: string;
     referrer?: string;
@@ -34,7 +35,6 @@ export type PersonCreationParams = {
     personalnummer?: string;
     lockInfo?: LockInfo;
     isLocked?: boolean;
-    id?: number;
 };
 
 export class Person<WasPersisted extends boolean> {
