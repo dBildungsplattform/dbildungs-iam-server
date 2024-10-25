@@ -11,7 +11,7 @@ export class ImportDataItemResponse {
     @ApiProperty({ nullable: true })
     public klasse?: string;
 
-    @ApiProperty({ isArray: true })
+    @ApiProperty({ type: 'string', isArray: true })
     public validationErrors?: string[];
 
     public constructor(importDataItem: ImportDataItem<false>) {
