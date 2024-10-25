@@ -394,6 +394,19 @@ describe('DbSeedService', () => {
                     EntityNotFoundError,
                 );
             });
+
+            it('should not throw an error and use the overrideId as id', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/serviceProvider/04_service-provider-with-overrideId.json`,
+                    'utf-8',
+                );
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID providedOnSchulstrukturknoten
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock get-SSK
+
+                await expect(dbSeedService.seedServiceProvider(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
         });
     });
 
@@ -478,6 +491,31 @@ describe('DbSeedService', () => {
             it('should insert one entity with Befristung', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                personRepoMock.findById.mockResolvedValue(createMock<Person<true>>()); // mock getReferencedPerson
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                rolleRepoMock.findById.mockResolvedValue(
+                    createMock<Rolle<true>>({ merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT] }),
+                ); // mock getReferencedRolle
+
+                personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(null);
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with overrideId', () => {
+            it('should use the overrideId as id', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/06_personenkontext-with-overrideId.json`,
                     'utf-8',
                 );
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
