@@ -33,6 +33,7 @@ export type PersonCreationParams = {
     personalnummer?: string;
     userLock?: UserLock;
     isLocked?: boolean;
+    orgUnassignmentDate?: Date;
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -72,6 +73,7 @@ export class Person<WasPersisted extends boolean> {
         public auskunftssperre?: boolean,
         public personalnummer?: string,
         public userLock?: UserLock,
+        public orgUnassignmentDate?: Date,
         public isLocked?: boolean,
         public email?: string,
         public oxUserId?: string,
@@ -113,6 +115,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
+        orgUnassignmentDate?: Date,
         userLock?: UserLock,
         isLocked?: boolean,
         email?: string,
@@ -145,6 +148,7 @@ export class Person<WasPersisted extends boolean> {
             auskunftssperre,
             personalnummer,
             userLock,
+            orgUnassignmentDate,
             isLocked,
             email,
             oxUserId,
@@ -188,6 +192,7 @@ export class Person<WasPersisted extends boolean> {
             creationParams.vertrauensstufe,
             creationParams.auskunftssperre,
             creationParams.personalnummer,
+            creationParams.orgUnassignmentDate,
         );
 
         if (creationParams.password) {
@@ -235,6 +240,7 @@ export class Person<WasPersisted extends boolean> {
         auskunftssperre?: boolean,
         personalnummer?: string,
         userLock?: UserLock,
+        orgUnassignmentDate?: Date,
         isLocked?: boolean,
         email?: string,
     ): void | DomainError {
@@ -273,6 +279,7 @@ export class Person<WasPersisted extends boolean> {
         this.revision = newRevision;
         this.personalnummer = personalnummer ?? this.personalnummer;
         this.userLock = userLock;
+        this.orgUnassignmentDate = orgUnassignmentDate;
         this.isLocked = isLocked;
         this.email = email;
     }
