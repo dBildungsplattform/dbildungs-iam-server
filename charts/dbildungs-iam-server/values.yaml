@@ -164,3 +164,12 @@ redis:
   extraEnvVars: []
   extraVolumes: []
   extraVolumeMounts: []
+
+cronjobs:
+  trigger-xyz:
+    serviceName: trigger-xyz
+    imageTag: latest 
+    port: 5656
+    schedule: 0 8 * * *
+    endpoint-url: bla.org
+    jobsParallelism: false

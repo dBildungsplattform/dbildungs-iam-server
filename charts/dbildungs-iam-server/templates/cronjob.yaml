@@ -1,0 +1,69 @@
+{{- range $job_name, $job_options := .Values.cronjobs }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dbildings-iam-server-{{ $job_name }}
+  namespace: spsh-{{ $.Values.schedule }}
+spec:
+  schedule: {{ $.Values.schedule }}
+  startingDeadlineSeconds: 300
+  suspend: true
+  jobTemplate:
+    spec:
+      completions: {{ $job_options.jobsParallelism }}
+      parallelism: {{ $job_options.jobsParallelism }}
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            test: dbildings-iam-server-{{ $job_options.serviceName }}
+            pod: {{ $job_name }}
+        spec:
+          automountServiceAccountToken: false
+          containers:
+          - name: {{ $job_name }}
+            image: alpine:{{ $.Values.imageTag }}
+            imagePullPolicy: Always
+            securityContext:
+              allowPrivilegeEscalation: false
+            env:
+              - name: KC_CLIENT_ID
+                value: ""
+              - name: KC_TOKEN_URL
+                value: ""
+              - name: JWKS
+                value: ""
+              - name: JWKS_FILE
+                value: ""
+            command: ["sh", "-c", 
+                        "apk update && 
+                        apk add --no-cache bash openssl curl cronie jq vim &&
+                        chmod +x /scripts/*.sh &&
+                        chmod 600 /etc/crontabs/root &&
+                        touch /var/log/cron.log && 
+                        chmod 644 /var/log/cron.log
+                         "]
+            volumeMounts:
+            - name: key-volume
+              mountPath: "/etc/config "
+            - name: script-volume
+              mountPath: "/scripts/ "
+            - name: crontab-volume
+              mountPath: "/etc/crontabs/root "
+            ports:
+            - containerPort: {{ $.Values.port }}
+              name: dbildings-iam-server-trigger-xyz-pod  
+          volumes:
+          - name: key-volume
+            configMap:
+              name:  keys-configmap
+          - name: script-volume
+            configMap:
+              name: script-configmap 
+          - name: crontab-volume
+            configMap:
+              name:  crontab-configmap 
+
+          restartPolicy: Never
+---
+{{- end}}
