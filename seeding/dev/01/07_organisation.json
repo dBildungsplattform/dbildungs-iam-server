@@ -5393,13 +5393,11 @@
 		},
 		{
 			"id": 676,
-			"kennung": "1111165",
-			"name": "Testschule-PW65",
+			"name": "1K",
 			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-PW1",
-			"typ": "SCHULE",
-			"administriertVon": 1,
-			"zugehoerigZu": 1
+			"typ": "KLASSE",
+			"administriertVon": 665,
+			"zugehoerigZu": 665
 		},
 		{
 			"id": 677,
@@ -5483,13 +5481,11 @@
 		},
 		{
 			"id": 687,
-			"kennung": "1111165",
-			"name": "Testschule-PW65",
+			"name": "2K",
 			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-PW1",
-			"typ": "SCHULE",
-			"administriertVon": 1,
-			"zugehoerigZu": 1
+			"typ": "KLASSE",
+			"administriertVon": 665,
+			"zugehoerigZu": 665
 		},
 		{
 			"id": 688,
@@ -5573,11 +5569,9 @@
 		},
 		{
 			"id": 698,
-			"kennung": "1111165",
-			"name": "Testschule-PW65",
+			"name": "3K",
 			"namensergaenzung": "Keine",
-			"kuerzel": "Testschule-PW1",
-			"typ": "SCHULE",
+			"typ": "KLASSE",
 			"administriertVon": 1,
 			"zugehoerigZu": 1
 		},
