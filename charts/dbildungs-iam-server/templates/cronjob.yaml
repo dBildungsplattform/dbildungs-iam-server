@@ -29,14 +29,17 @@ spec:
             envFrom:
               - configMapRef:
                   name:  cronjob-envs-configmap
-            command: ["sh", "-c", 
-                        "apk update && 
-                        apk add --no-cache bash openssl curl cronie jq vim &&
-                        chmod +x /scripts/*.sh &&
-                        chmod 600 /etc/crontabs/root &&
-                        touch /var/log/cron.log && 
-                        chmod 644 /var/log/cron.log
-                        ./scripts/trigger_xyz.sh "]
+            command:
+              - "sh"
+              - "-c"
+              - |
+                  apk update && 
+                  apk add --no-cache bash openssl curl cronie jq vim &&
+                  chmod +x /scripts/*.sh &&
+                  chmod 600 /etc/crontabs/root &&
+                  touch /var/log/cron.log && 
+                  chmod 644 /var/log/cron.log &&
+                  ./scripts/trigger_xyz.sh
             volumeMounts:
               - name: secret-volume
                 mountPath: /secrets
@@ -46,11 +49,9 @@ spec:
                 readOnly: true
               - name: script-volume
                 mountPath: /scripts
-
             ports:
             - containerPort: {{ $job_options.port }}
               name: dbildings-iam-server-trigger-xyz-pod  
-
           volumes:
           - name: script-volume
             configMap:
