@@ -173,3 +173,5 @@ cronjobs:
     schedule: 0 8 * * *
     endpoint-url: bla.org
     jobsParallelism: false
+    #keycloakHostname
+    #backendHostname
