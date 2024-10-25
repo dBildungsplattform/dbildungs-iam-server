@@ -94,6 +94,8 @@ export class OrganisationController {
             params.kuerzel,
             params.typ,
             params.traegerschaft,
+            undefined,
+            params.emailAdress,
         );
         if (organisation instanceof DomainError) {
             throw organisation;
@@ -144,6 +146,7 @@ export class OrganisationController {
         existingOrganisation.kuerzel = body.kuerzel;
         existingOrganisation.typ = body.typ;
         existingOrganisation.traegerschaft = body.traegerschaft;
+        existingOrganisation.emailAdress = body.emailAdress;
         existingOrganisation.updatedAt = new Date();
 
         const result: Result<Organisation<true>, DomainError> = await this.organisationService.updateOrganisation(
@@ -258,11 +261,8 @@ export class OrganisationController {
         @Query() queryParams: FindOrganisationQueryParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const [organisations, total]: Counted<Organisation<true>> = await this.organisationRepository.findAuthorized(
-            permissions,
-            queryParams.systemrechte,
-            queryParams,
-        );
+        const [organisations, total, pageTotal]: [Organisation<true>[], number, number] =
+            await this.organisationRepository.findAuthorized(permissions, queryParams.systemrechte, queryParams);
 
         const organisationResponses: OrganisationResponse[] = organisations.map((organisation: Organisation<true>) => {
             return new OrganisationResponse(organisation);
@@ -272,10 +272,7 @@ export class OrganisationController {
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            //During a search, you want to know how many items match the search criteria.
-            //When not searching, you want to know the total number of items,
-            // including any specifically selected items that might not have been part of the initial paginated results.
-            pageTotal: organisationResponses.length,
+            pageTotal: pageTotal,
             items: organisationResponses,
         };
 

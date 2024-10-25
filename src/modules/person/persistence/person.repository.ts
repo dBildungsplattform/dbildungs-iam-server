@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, FilterQuery, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, FilterQuery, Loaded, QBFilterQuery, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -15,8 +15,8 @@ import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enu
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { LockInfo, Person } from '../domain/person.js';
+import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { Person, LockInfo } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
@@ -32,12 +32,17 @@ import { UsernameGeneratorService } from '../domain/username-generator.service.j
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
 
-export function getEnabledEmailAddress(entity: PersonEntity): string | undefined {
+/**
+ * Return email-address for person, if an enabled email-address exists, return it.
+ * If no enabled email-address exists, return the latest changed one (updatedAt), order is done on PersonEntity.
+ * @param entity
+ */
+export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
         // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
         if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
     }
-    return undefined;
+    return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
 }
 
 export function getOxUserId(entity: PersonEntity): string | undefined {
@@ -104,7 +109,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         entity.personalnummer,
         undefined,
         undefined,
-        getEnabledEmailAddress(entity),
+        getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
     );
 }
@@ -318,9 +323,9 @@ export class PersonRepository {
             [],
         );
         this.eventService.publish(personenkontextUpdatedEvent);
-        // Delete email-addresses if any, must happen before person deletion to get the referred email-address
-        if (person.email) {
-            this.eventService.publish(new PersonDeletedEvent(personId, person.email));
+
+        if (person.referrer !== undefined) {
+            this.eventService.publish(new PersonDeletedEvent(personId, person.referrer, person.email));
         }
 
         // Delete the person from the database with all their kontexte
@@ -352,6 +357,7 @@ export class PersonRepository {
         person: Person<false>,
         hashedPassword?: string,
         personId?: string,
+        technicalUser: boolean = false,
     ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
@@ -379,14 +385,19 @@ export class PersonRepository {
 
             // Take ID from person to create keycloak user
             let personWithKeycloakUser: Person<true> | DomainError;
-            if (!hashedPassword) {
-                personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+
+            if (!technicalUser) {
+                if (!hashedPassword) {
+                    personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
+                } else {
+                    personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
+                        persistedPerson,
+                        hashedPassword,
+                        this.kcUserService,
+                    );
+                }
             } else {
-                personWithKeycloakUser = await this.createKeycloakUserWithHashedPassword(
-                    persistedPerson,
-                    hashedPassword,
-                    this.kcUserService,
-                );
+                personWithKeycloakUser = persistedPerson;
             }
 
             // -> When keycloak fails, rollback
@@ -694,5 +705,29 @@ export class PersonRepository {
         if (oldVornameLowerCase[0] !== newVornameLowerCase[0]) return true;
 
         return oldFamiliennameLowerCase !== newFamiliennameLowerCase;
+    }
+
+    public async getKoPersUserLockList(): Promise<string[]> {
+        const daysAgo: Date = new Date();
+        daysAgo.setDate(daysAgo.getDate() - 56);
+
+        const filters: QBFilterQuery<PersonEntity> = {
+            $and: [
+                { personalnummer: { $eq: null } },
+                {
+                    personenKontexte: {
+                        $some: {
+                            createdAt: { $lte: daysAgo }, //Check that createdAt is older than 56 days
+                            rolleId: {
+                                merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
+                            },
+                        },
+                    },
+                },
+            ],
+        };
+
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        return personEntities.map((person: PersonEntity) => person.keycloakUserId);
     }
 }
