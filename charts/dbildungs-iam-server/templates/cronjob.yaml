@@ -2,10 +2,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: dbildings-iam-server-{{ $job_name }}
-  namespace: spsh-{{ $.Values.schedule }}
+  name: dbildungs-iam-server-{{ $job_name }}
+  namespace: spsh-{{ $job_options.schedule }}
 spec:
-  schedule: {{ $.Values.schedule }}
+  schedule: {{ $job_options.schedule }}
   startingDeadlineSeconds: 300
   suspend: true
   jobTemplate:
@@ -22,7 +22,7 @@ spec:
           automountServiceAccountToken: false
           containers:
           - name: {{ $job_name }}
-            image: alpine:{{ $.Values.imageTag }}
+            image: alpine:{{ $job_options.imageTag }}
             imagePullPolicy: Always
             securityContext:
               allowPrivilegeEscalation: false
@@ -48,7 +48,7 @@ spec:
                 mountPath: /scripts
 
             ports:
-            - containerPort: {{ $.Values.port }}
+            - containerPort: {{ $job_options.port }}
               name: dbildings-iam-server-trigger-xyz-pod  
 
           volumes:
