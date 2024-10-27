@@ -35,6 +35,7 @@ export type PersonCreationParams = {
     personalnummer?: string;
     lockInfo?: LockInfo;
     isLocked?: boolean;
+    orgUnassignmentDate?: Date;
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -73,6 +74,7 @@ export class Person<WasPersisted extends boolean> {
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
         public personalnummer?: string,
+        public orgUnassignmentDate?: Date,
         public lockInfo?: LockInfo,
         public isLocked?: boolean,
         public email?: string,
@@ -115,6 +117,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
+        orgUnassignmentDate?: Date,
         lockInfo?: LockInfo,
         isLocked?: boolean,
         email?: string,
@@ -146,6 +149,7 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
             personalnummer,
+            orgUnassignmentDate,
             lockInfo,
             isLocked,
             email,
@@ -193,6 +197,7 @@ export class Person<WasPersisted extends boolean> {
             creationParams.vertrauensstufe,
             creationParams.auskunftssperre,
             creationParams.personalnummer,
+            creationParams.orgUnassignmentDate,
         );
 
         if (creationParams.password) {
@@ -239,6 +244,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
+        orgUnassignmentDate?: Date,
         lockInfo?: LockInfo,
         isLocked?: boolean,
         email?: string,
@@ -281,6 +287,7 @@ export class Person<WasPersisted extends boolean> {
         this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
         this.personalnummer = personalnummer ?? this.personalnummer;
+        this.orgUnassignmentDate = orgUnassignmentDate;
         this.lockInfo = lockInfo;
         this.isLocked = isLocked;
         this.email = email;
