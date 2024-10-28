@@ -200,6 +200,7 @@ export class DoFactory {
             withId ? faker.string.uuid() : undefined,
             withId ? faker.date.past() : undefined,
             withId ? faker.date.recent() : undefined,
+            faker.number.int(),
             faker.string.uuid(),
             faker.string.uuid(),
             faker.lorem.word(),
