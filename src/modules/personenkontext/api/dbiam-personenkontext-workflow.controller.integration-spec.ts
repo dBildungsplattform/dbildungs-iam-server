@@ -231,6 +231,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 }),
             );
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
             permissions.canModifyPerson.mockResolvedValueOnce(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissions);
@@ -263,6 +264,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
             personpermissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
@@ -298,6 +300,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
             personpermissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
