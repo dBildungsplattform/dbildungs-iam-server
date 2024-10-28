@@ -485,7 +485,7 @@ export class OrganisationRepository {
         if (organisationEntity.version !== organisation.version) {
             throw new OrganisationUpdateOutdatedError();
         }
-        organisation.version = organisation.version + 1;
+        organisationEntity.version += 1;
 
         organisationEntity.assign(mapAggregateToData(organisation));
 

@@ -734,7 +734,7 @@ describe('OrganisationRepository', () => {
         });
 
         describe('when all validations are passed', () => {
-            it.only('should update class name and return void', async () => {
+            it('should update class name and return void', async () => {
                 const parentOrga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
                     typ: OrganisationsTyp.SCHULE,
                     version: 1,
@@ -765,7 +765,7 @@ describe('OrganisationRepository', () => {
                     mapAggregateToData(otherChildOrga),
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
-
+                em.clear();
                 const result: DomainError | Organisation<true> = await sut.updateKlassenname(
                     organisationEntity2.id,
                     'newName',
