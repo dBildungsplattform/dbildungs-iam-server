@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { OxUserCreatedEvent } from '../../../shared/events/ox-user-created.event.js';
 import { KeycloakUserService } from '../domain/keycloak-user.service.js';
-import { OxUserAttributesCreatedEvent } from '../../../shared/events/ox-user-attributes-created.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
 
 @Injectable()
 export class KeycloakEventHandler {
@@ -15,27 +15,35 @@ export class KeycloakEventHandler {
         private readonly eventService: EventService,
     ) {}
 
-    @EventHandler(OxUserCreatedEvent)
-    public async handleOxUserCreatedEvent(event: OxUserCreatedEvent): Promise<void> {
+    @EventHandler(OxUserChangedEvent)
+    public async handleOxUserChangedEvent(event: OxUserChangedEvent): Promise<void> {
         this.logger.info(
-            `Received OxUserCreatedEvent personId:${event.personId}, userId:${event.userId}, userName:${event.userName} contextId:${event.contextId}, contextName:${event.contextName}`,
+            `Received OxUserChangedEvent personId:${event.personId}, userId:${event.oxUserId}, userName:${event.oxUserName} contextId:${event.oxContextId}, contextName:${event.oxContextName}, primaryEmail:${event.primaryEmail}`,
         );
 
         const updateResult: Result<void> = await this.kcUserService.updateOXUserAttributes(
             event.keycloakUsername,
-            event.userName,
-            event.contextName,
+            event.oxUserName,
+            event.oxContextName,
         );
 
         if (updateResult.ok) {
             return this.eventService.publish(
-                new OxUserAttributesCreatedEvent(
+                new OxMetadataInKeycloakChangedEvent(
                     event.personId,
                     event.keycloakUsername,
-                    event.userName,
-                    event.contextName,
+                    event.oxUserId,
+                    event.oxUserName,
+                    event.oxContextName,
                     event.primaryEmail,
                 ),
+            );
+        } else {
+            this.logger.error(
+                `Updating user in Keycloak FAILED for OxUserChangedEvent, personId:${event.personId}, userId:${event.oxUserId}, userName:${event.oxUserName} contextId:${event.oxContextId}, contextName:${event.oxContextName}, primaryEmail:${event.primaryEmail}`,
+            );
+            this.logger.error(
+                `OxMetadataInKeycloakChangedEvent will NOT be published, email-address for personId:${event.personId} in REQUESTED status will NOT be ENABLED!`,
             );
         }
     }

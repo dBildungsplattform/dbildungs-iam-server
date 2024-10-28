@@ -1,9 +1,12 @@
 import { PersonID } from '../../../shared/types/index.js';
 
+export const EmailAddressStatusName: string = 'EmailAddressStatus';
+
 export enum EmailAddressStatus {
     ENABLED = 'ENABLED',
     DISABLED = 'DISABLED',
     REQUESTED = 'REQUESTED',
+    FAILED = 'FAILED',
 }
 
 export class EmailAddress<WasPersisted extends boolean> {
@@ -14,6 +17,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         private addressPersonId: PersonID,
         private addressAddress: string,
         private addressStatus: EmailAddressStatus,
+        private oxUserId?: string,
     ) {}
 
     public static construct(
@@ -23,12 +27,18 @@ export class EmailAddress<WasPersisted extends boolean> {
         personId: PersonID,
         address: string,
         enabled: EmailAddressStatus,
+        oxUserId?: string,
     ): EmailAddress<true> {
-        return new EmailAddress(id, createdAt, updatedAt, personId, address, enabled);
+        return new EmailAddress(id, createdAt, updatedAt, personId, address, enabled, oxUserId);
     }
 
-    public static createNew(personId: PersonID, address: string, enabled: EmailAddressStatus): EmailAddress<false> {
-        return new EmailAddress(undefined, undefined, undefined, personId, address, enabled);
+    public static createNew(
+        personId: PersonID,
+        address: string,
+        enabled: EmailAddressStatus,
+        oxUserId?: string,
+    ): EmailAddress<false> {
+        return new EmailAddress(undefined, undefined, undefined, personId, address, enabled, oxUserId);
     }
 
     public enable(): boolean {
@@ -52,6 +62,13 @@ export class EmailAddress<WasPersisted extends boolean> {
         return oldValue;
     }
 
+    public failed(): boolean {
+        const oldValue: boolean = this.enabled;
+        this.addressStatus = EmailAddressStatus.FAILED;
+
+        return oldValue;
+    }
+
     public get enabled(): boolean {
         return this.addressStatus === EmailAddressStatus.ENABLED;
     }
@@ -61,7 +78,7 @@ export class EmailAddress<WasPersisted extends boolean> {
     }
 
     public get enabledOrRequested(): boolean {
-        return this.addressStatus !== EmailAddressStatus.DISABLED;
+        return this.addressStatus === EmailAddressStatus.ENABLED || this.addressStatus === EmailAddressStatus.REQUESTED;
     }
 
     public get personId(): PersonID {
@@ -80,5 +97,13 @@ export class EmailAddress<WasPersisted extends boolean> {
         if (!this.enabled) return undefined;
 
         return this.addressAddress;
+    }
+
+    public get oxUserID(): Option<string> {
+        return this.oxUserId;
+    }
+
+    public set oxUserID(oxUserId: string) {
+        this.oxUserId = oxUserId;
     }
 }
