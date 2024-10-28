@@ -8,4 +8,4 @@ dependencies:
 - name: redis-cluster
   repository: https://charts.bitnami.com/bitnami
   version: 11.0.6
-  condition: redis-cluster.enabled
+  condition: redis-cluster.enabled 
