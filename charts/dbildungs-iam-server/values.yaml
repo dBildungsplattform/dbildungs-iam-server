@@ -155,6 +155,8 @@ redis-cluster:
   commonLabels:
     app.kubernetes.io/name: dbildungs-iam-server 
     # it can auto generate certs
+  pdb:
+    create: false
 
 #   # extraVolumes:
 #   #   - name: redis-tls-data
