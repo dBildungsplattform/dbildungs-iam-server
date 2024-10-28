@@ -122,7 +122,7 @@ backend:
       subPath: secrets-json
       name: secret-volume
   extraVolumeMounts: []
-
+ 
 
 # Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
 redis-cluster:
