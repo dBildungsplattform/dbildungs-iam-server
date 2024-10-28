@@ -26,6 +26,7 @@ import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -909,6 +910,47 @@ describe('OrganisationRepository', () => {
             });
         });
 
+        describe('Should throw an error', () => {
+            it('should throw OptimisticLockError when concurrent updates cause version mismatch', async () => {
+                // Setup: Create initial organization
+                const parentOrga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                    typ: OrganisationsTyp.SCHULE,
+                    version: 1,
+                });
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    name: 'name',
+                    administriertVon: parentOrga.id,
+                    version: 1,
+                });
+
+                // Create and persist entities
+                const organisationEntity1: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(parentOrga),
+                );
+                const organisationEntity2: OrganisationEntity = em.create(
+                    OrganisationEntity,
+                    mapAggregateToData(organisation),
+                );
+
+                await em.persistAndFlush([organisationEntity1, organisationEntity2]);
+                em.clear();
+
+                // Simulate concurrent updates:
+                // 1. First update
+                await sut.updateKlassenname(organisationEntity2.id, 'newName1', 1);
+
+                // 2. Try second update with original version (should fail)
+                await expect(async () => {
+                    await sut.updateKlassenname(
+                        organisationEntity2.id,
+                        'newName2',
+                        1, // This is now outdated because previous update incremented it
+                    );
+                }).rejects.toThrow(OrganisationUpdateOutdatedError);
+            });
+        });
         describe('when name did not change', () => {
             it('should not check specifications, update class name and return void', async () => {
                 const parentOrga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
