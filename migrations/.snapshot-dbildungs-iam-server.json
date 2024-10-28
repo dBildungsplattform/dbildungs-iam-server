@@ -201,6 +201,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -414,6 +415,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -649,6 +651,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -876,6 +879,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -1095,6 +1099,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -1353,6 +1358,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -1527,6 +1533,16 @@
           "primary": false,
           "nullable": true,
           "mappedType": "string"
+        },
+        "version": {
+          "name": "version",
+          "type": "bigint",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "1",
+          "mappedType": "bigint"
         }
       },
       "name": "organisation",
@@ -1696,6 +1712,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -2178,6 +2195,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -2459,6 +2477,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -2728,6 +2747,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -3108,6 +3128,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -3329,6 +3350,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -3391,6 +3413,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ],
           "mappedType": "enum"
@@ -3557,6 +3580,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -3866,6 +3890,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -4198,6 +4223,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -4426,6 +4452,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -4592,6 +4619,7 @@
         "SCHULTRAEGER_VERWALTEN",
         "MIGRATION_DURCHFUEHREN",
         "PERSON_SYNCHRONISIEREN",
+        "CRON_DURCHFUEHREN",
         "IMPORT_DURCHFUEHREN"
       ]
     },
