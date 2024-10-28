@@ -28,6 +28,7 @@ import {
     DomainError,
     EntityCouldNotBeDeleted,
     EntityNotFoundError,
+    InvalidCharacterSetError,
     InvalidNameError,
     KeycloakClientError,
     MismatchedRevisionError,
@@ -301,7 +302,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     person.keycloakUserId = faker.string.uuid();
                     kcUserServiceMock.create.mockResolvedValueOnce({
@@ -335,7 +336,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     person.username = undefined;
                     kcUserServiceMock.create.mockResolvedValueOnce({
@@ -408,7 +409,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: false,
@@ -444,7 +445,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     kcUserServiceMock.create.mockResolvedValueOnce({
                         ok: true,
@@ -481,7 +482,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     const personEntity: PersonEntity = em.create(PersonEntity, mapAggregateToData(person));
 
@@ -660,7 +661,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     person.username = undefined;
                     kcUserServiceMock.create.mockResolvedValueOnce({
@@ -714,7 +715,7 @@ describe('PersonRepository Integration', () => {
                     });
                     expect(person).not.toBeInstanceOf(DomainError);
                     if (person instanceof DomainError) {
-                        return;
+                        throw person;
                     }
                     person.username = 'name';
                     //person.keycloakUserId = faker.string.uuid();
@@ -770,7 +771,7 @@ describe('PersonRepository Integration', () => {
                         });
                         expect(person).not.toBeInstanceOf(DomainError);
                         if (person instanceof DomainError) {
-                            return;
+                            throw person;
                         }
                         person.username = undefined;
                         kcUserServiceMock.create.mockResolvedValueOnce({
@@ -864,6 +865,125 @@ describe('PersonRepository Integration', () => {
                     faker.string.uuid(),
                 );
                 await expect(sut.update(person)).rejects.toBeDefined();
+            });
+        });
+        describe('when referrer is defined', () => {
+            it('should use the existing referrer if the person has not been renamed', async () => {
+                const existingPerson: Person<true> = await savePerson();
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'mockedPassword',
+                });
+                const result: Person<true> | DomainError = await sut.update(existingPerson);
+
+                expect(result).toBeInstanceOf(Person);
+                if (result instanceof Person) {
+                    expect(result.referrer).toEqual(existingPerson.referrer);
+                }
+            });
+        });
+        describe('when referrer is undefined', () => {
+            beforeEach(() => {
+                jest.restoreAllMocks();
+            });
+
+            it('should return an error if the username generator fails', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: 'lastname',
+                    vorname: 'firstname',
+                });
+                expect(person).not.toBeInstanceOf(DomainError);
+                if (person instanceof DomainError) {
+                    throw person;
+                }
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something',
+                });
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                const existingPerson: Person<true> | DomainError = await sut.create(person);
+                if (existingPerson instanceof DomainError) {
+                    return;
+                }
+                const firstname: string = faker.person.firstName();
+                const lastname: string = faker.person.lastName();
+                const personConstructed: Person<true> = Person.construct(
+                    existingPerson.id,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    lastname,
+                    firstname,
+                    '1',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                );
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: false,
+                    error: new InvalidCharacterSetError('name.vorname', 'DIN-91379A'),
+                });
+                jest.spyOn(sut, 'getReferrer').mockReturnValueOnce(undefined);
+
+                const result: Person<true> | DomainError = await sut.update(personConstructed);
+                expect(result).toBeInstanceOf(DomainError);
+                expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
+            });
+
+            it('should generate a new referrer if the person has been renamed', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'testusername' });
+                const person: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: 'lastname',
+                    vorname: 'firstname',
+                });
+                expect(person).not.toBeInstanceOf(DomainError);
+                if (person instanceof DomainError) {
+                    throw person;
+                }
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something',
+                });
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+                kcUserServiceMock.delete.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                const existingPerson: Person<true> | DomainError = await sut.create(person);
+                if (existingPerson instanceof DomainError) {
+                    return;
+                }
+                const firstname: string = faker.person.firstName();
+                const lastname: string = faker.person.lastName();
+                const personConstructed: Person<true> = Person.construct(
+                    existingPerson.id,
+                    faker.date.past(),
+                    faker.date.recent(),
+                    lastname,
+                    firstname,
+                    '1',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    'newtestusername',
+                );
+                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: 'newtestusername' });
+                jest.spyOn(sut, 'getReferrer').mockReturnValueOnce(undefined);
+                const result: Person<true> | DomainError = await sut.update(personConstructed);
+                expect(result).toBeInstanceOf(Person);
+                if (result instanceof Person) {
+                    expect(result.referrer).toEqual('newtestusername');
+                }
+                expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
             });
         });
     });
@@ -1380,6 +1500,9 @@ describe('PersonRepository Integration', () => {
         });
     });
     describe('save', () => {
+        beforeEach(() => {
+            jest.restoreAllMocks();
+        });
         describe('when person has an id', () => {
             it('should call the update method and return the updated person', async () => {
                 const existingPerson: Person<true> = await savePerson();
