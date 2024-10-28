@@ -2,8 +2,8 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: dbildungs-iam-server-{{ $job_name }}
-  namespace: {{ template "common.names.namespace" . }}
+  name: {{ template "common.names.namespace" . }}-trigger-xyz
+  namespace: {{ template "common.names.namespace" $ }}
 spec:
   schedule: {{ $job_options.schedule }}
   startingDeadlineSeconds: 300
