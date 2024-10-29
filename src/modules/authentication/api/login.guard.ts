@@ -32,6 +32,10 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
             request.session.requiredStepupLevel = requiredStepUpLevel;
         }
 
+        if (request.isAuthenticated() && request.session.requiredStepupLevel === request.passportUser?.stepUpLevel) {
+            return true;
+        }
+
         try {
             if (!(await super.canActivate(context))) {
                 return false;
