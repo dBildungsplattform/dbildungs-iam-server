@@ -34,15 +34,18 @@ generate_jti() {
 # Load environment variables
 clientId="${KC_CLIENT_ID}"
 kc_token_url="${KC_TOKEN_URL}"
+backend_hostname="${BACKEND_HOSTNAME}"
+
+echo "backend hostname is $backend_hostname"
 
 
 # Load JWKS from environment variable or file
 if [ -n "$JWKS" ]; then
   # JWKS is set in the environment, use it directly
   jwks="$JWKS"
-elif [ -n "$JWKS_FILE" ] && [ -f "$JWKS_FILE" ]; then
-  # JWKS_FILE is set, use the file
-  jwks=$(cat "$JWKS_FILE")
+elif [ -n "$JWKS_FILE_PATH" ] && [ -f "$JWKS_FILE_PATH" ]; then
+  # JWKS_FILE_PATH is set, use the file
+  jwks=$(cat "$JWKS_FILE_PATH")
 else
   echo "Error: No JWKS environment variable or JWKS file found." >> /var/log/cron.log
   exit 1
