@@ -30,7 +30,7 @@ import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { extractStepUpLevelFromJWT } from '../passport/oidc.strategy.js';
+import { updateAndGetStepUpLevel } from '../passport/oidc.strategy.js';
 
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
@@ -132,12 +132,7 @@ export class AuthenticationController {
             if (lastPasswordChange.ok) userinfoExtension.password_updated_at = lastPasswordChange.value;
         }
 
-        return new UserinfoResponse(
-            permissions,
-            rolleFieldsResponse,
-            extractStepUpLevelFromJWT(req.passportUser?.id_token),
-            userinfoExtension,
-        );
+        return new UserinfoResponse(permissions, rolleFieldsResponse, updateAndGetStepUpLevel(req), userinfoExtension);
     }
 
     @Get('reset-password')

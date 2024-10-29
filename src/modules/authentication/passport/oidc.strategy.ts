@@ -10,7 +10,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { Request } from 'express';
-import { JwtPayload, decode } from 'jsonwebtoken';
+import { JwtPayload } from 'jsonwebtoken';
 
 export interface CustomJwtPayload extends JwtPayload {
     acr: StepUpLevel;
@@ -22,13 +22,29 @@ export enum StepUpLevel {
     GOLD = 'gold',
 }
 
-export function extractStepUpLevelFromJWT(jwt: string | undefined): StepUpLevel {
-    if (!jwt) {
-        return StepUpLevel.NONE;
+export function getLowestStepUpLevel(): StepUpLevel {
+    return StepUpLevel.SILVER;
+}
+
+function isStepUpTimeOver(req: Request): boolean {
+    const currentTime: number = new Date().getTime();
+    if (!req.session?.lastRouteChangeTime) return false;
+    const lastRouteChangeTime: number = req.session.lastRouteChangeTime;
+    const deltaTime: number = currentTime - lastRouteChangeTime;
+    return deltaTime >= 10000; // TODO make config
+}
+
+export function updateAndGetStepUpLevel(req: Request): StepUpLevel {
+    if (!req.session.lastRouteChangeTime) {
+        req.session.lastRouteChangeTime = new Date().getTime();
     }
 
-    const decoded: CustomJwtPayload | null = decode(jwt) as CustomJwtPayload | null;
-    return decoded?.acr ?? StepUpLevel.NONE;
+    if (isStepUpTimeOver(req)) {
+        if (req.passportUser) req.passportUser.stepUpLevel = getLowestStepUpLevel();
+    }
+
+    req.session.lastRouteChangeTime = new Date().getTime();
+    return req.passportUser?.stepUpLevel ?? getLowestStepUpLevel();
 }
 
 @Injectable()
@@ -49,11 +65,8 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
     }
 
     public override authenticate(req: Request): void {
-        const requiredStepUpLevel: string =
-            (req.query['requiredStepUpLevel'] as StepUpLevel | undefined) ?? StepUpLevel.SILVER;
-
         const options: { acr_values: string } = {
-            acr_values: requiredStepUpLevel,
+            acr_values: req.session.requiredStepupLevel ?? StepUpLevel.SILVER,
         };
 
         super.authenticate(req, options);
@@ -89,6 +102,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             userinfo: userinfo,
             personPermissions: () => Promise.reject(),
             redirect_uri: req.session?.redirectUrl,
+            stepUpLevel: req.session.requiredStepupLevel,
         };
         return user;
     }

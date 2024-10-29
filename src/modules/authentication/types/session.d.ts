@@ -7,9 +7,13 @@
 // for the redirect in the LoginGuard, and the second ensures that the user is forwarded
 // to their desired location after the step-up process.
 
+import { StepUpLevel } from '../passport/oidc.strategy.js';
+
 declare module 'express-session' {
     interface SessionData {
         redirectUrl?: string;
+        requiredStepupLevel?: StepUpLevel;
+        lastRouteChangeTime?: number;
         passport?: {
             user: {
                 redirect_uri?: string;
