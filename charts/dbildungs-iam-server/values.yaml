@@ -149,7 +149,6 @@ redis-cluster:
     create: false
   serviceAccount:
     create: false
-  # Use password authentication - not necc with TLS
   usePassword: true
   tls:
     enabled: false

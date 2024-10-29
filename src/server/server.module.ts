@@ -21,7 +21,6 @@ import { AuthenticationApiModule } from '../modules/authentication/authenticatio
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
-// import { createClient, RedisClientType } from 'redis';
 import { createClient, createCluster, RedisClientType, RedisClusterType } from 'redis';
 import RedisStore from 'connect-redis';
 import session from 'express-session';

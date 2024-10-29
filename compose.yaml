@@ -30,7 +30,6 @@ services:
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
 
-# redis values
   redis:
     image: redis:7.2.2
     healthcheck:
