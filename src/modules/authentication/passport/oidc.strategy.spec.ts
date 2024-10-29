@@ -6,7 +6,7 @@ import { AuthorizationParameters, Client, Issuer, Strategy, TokenSet, UserinfoRe
 
 import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
-import { OpenIdConnectStrategy, StepUpLevel } from './oidc.strategy.js';
+import { isStepUpTimeOver, OpenIdConnectStrategy, StepUpLevel, updateAndGetStepUpLevel } from './oidc.strategy.js';
 import { PassportUser } from '../types/user.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
@@ -148,6 +148,86 @@ describe('OpenIdConnectStrategy', () => {
             sut.authenticate(request);
 
             expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'gold' });
+        });
+    });
+
+    const mockTime = (time: number): jest.SpyInstance => jest.spyOn(Date.prototype, 'getTime').mockReturnValue(time);
+
+    describe('Step-Up Utilities', () => {
+        describe('isStepUpTimeOver', () => {
+            it('should return false if lastRouteChangeTime is undefined', () => {
+                const req: Request = { session: {} } as Request;
+                expect(isStepUpTimeOver(req)).toBe(false);
+            });
+
+            it('should return true if time since lastRouteChangeTime is over the threshold', () => {
+                const req: Request = { session: { lastRouteChangeTime: 1000 } } as Request;
+                mockTime(12000);
+
+                expect(isStepUpTimeOver(req)).toBe(true);
+                jest.restoreAllMocks();
+            });
+
+            it('should return false if time since lastRouteChangeTime is under the threshold', () => {
+                const req: Request = { session: { lastRouteChangeTime: 1000 } } as Request;
+                mockTime(8000);
+
+                expect(isStepUpTimeOver(req)).toBe(false);
+                jest.restoreAllMocks();
+            });
+        });
+
+        describe('updateAndGetStepUpLevel', () => {
+            it('should set lastRouteChangeTime if not defined', () => {
+                const req: Request = { session: {} } as Request;
+                const currentTime: number = 5000;
+                mockTime(currentTime);
+
+                updateAndGetStepUpLevel(req);
+
+                expect(req.session.lastRouteChangeTime).toBe(currentTime);
+                jest.restoreAllMocks();
+            });
+
+            it('should reset stepUpLevel if step-up time is over', () => {
+                const req: Request = {
+                    session: { lastRouteChangeTime: 1000 },
+                    passportUser: { stepUpLevel: StepUpLevel.GOLD },
+                } as Request;
+                mockTime(12000);
+
+                const result: StepUpLevel = updateAndGetStepUpLevel(req);
+
+                expect(req.passportUser!.stepUpLevel).toBe(StepUpLevel.SILVER);
+                expect(result).toBe(StepUpLevel.SILVER);
+                expect(req.session.lastRouteChangeTime).toBe(12000);
+                jest.restoreAllMocks();
+            });
+
+            it('should not reset stepUpLevel if step-up time is not over', () => {
+                const req: Request = {
+                    session: { lastRouteChangeTime: 1000 },
+                    passportUser: { stepUpLevel: StepUpLevel.GOLD },
+                } as Request;
+                mockTime(8000);
+
+                const result: StepUpLevel = updateAndGetStepUpLevel(req);
+
+                expect(req.passportUser!.stepUpLevel).toBe(StepUpLevel.GOLD);
+                expect(result).toBe(StepUpLevel.GOLD);
+                expect(req.session.lastRouteChangeTime).toBe(8000);
+                jest.restoreAllMocks();
+            });
+
+            it('should return lowest step-up level if passportUser is undefined', () => {
+                const req: Request = { session: {} } as Request;
+                mockTime(5000);
+
+                const result: StepUpLevel = updateAndGetStepUpLevel(req);
+
+                expect(result).toBe(StepUpLevel.SILVER);
+                jest.restoreAllMocks();
+            });
         });
     });
 });

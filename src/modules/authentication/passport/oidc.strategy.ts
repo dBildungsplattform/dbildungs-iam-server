@@ -26,7 +26,7 @@ export function getLowestStepUpLevel(): StepUpLevel {
     return StepUpLevel.SILVER;
 }
 
-function isStepUpTimeOver(req: Request): boolean {
+export function isStepUpTimeOver(req: Request): boolean {
     const currentTime: number = new Date().getTime();
     if (!req.session?.lastRouteChangeTime) return false;
     const lastRouteChangeTime: number = req.session.lastRouteChangeTime;
