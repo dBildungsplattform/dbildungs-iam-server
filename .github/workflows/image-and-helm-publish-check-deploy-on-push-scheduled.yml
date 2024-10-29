@@ -57,7 +57,7 @@ jobs:
       packages: write
       security-events: write
       contents: read
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@DBP-0000-improve-release-helm-chart-action
     with:
       image_name: "dbildungs-iam-server"
       run_trivy_scan: true
@@ -73,7 +73,7 @@ jobs:
     permissions:
       packages: read
       security-events: write
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
     with:
       image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
       fail_on_vulnerabilites: false
