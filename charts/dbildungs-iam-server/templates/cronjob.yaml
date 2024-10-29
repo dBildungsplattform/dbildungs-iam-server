@@ -2,7 +2,8 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ template "common.names.namespace" $ }}-job
+  name: dbp-1022-cronjob-dev-{{ $job_name}}
+  #name: {{ template "common.names.namespace" $ }}-{{ $job_name}}
   namespace: {{ template "common.names.namespace" $ }}
 spec:
   schedule: {{ $.Values.cronjobs.schedule }}
