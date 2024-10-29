@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ template "common.names.namespace" . }}-trigger-xyz
+  name: {{ template "common.names.namespace" $ }}-job
   namespace: {{ template "common.names.namespace" $ }}
 spec:
   schedule: {{ $job_options.schedule }}
@@ -41,9 +41,6 @@ spec:
                   chmod 644 /var/log/cron.log &&
                   ./scripts/trigger_xyz.sh
             volumeMounts:
-              - name: secret-volume
-                mountPath: /secrets
-                readOnly: true
               - name: secret-volume-jwks
                 mountPath: /keys
                 readOnly: true
@@ -51,7 +48,7 @@ spec:
                 mountPath: /scripts
             ports:
             - containerPort: {{ $job_options.port }}
-              name: dbildings-iam-server-trigger-xyz-pod  
+              name: trigger-xyz-pod  
           volumes:
           - name: script-volume
             configMap:
