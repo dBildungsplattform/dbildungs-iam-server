@@ -5,10 +5,9 @@ import { UsernameGeneratorService } from './username-generator.service.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
-import { LockKeys } from '../../keycloak-administration/index.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
-export type LockInfo = Record<LockKeys, string>;
 
 export type PersonCreationParams = {
     familienname: string;
@@ -32,8 +31,9 @@ export type PersonCreationParams = {
     username?: string;
     password?: string;
     personalnummer?: string;
-    lockInfo?: LockInfo;
+    userLock?: UserLock;
     isLocked?: boolean;
+    orgUnassignmentDate?: Date;
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -72,7 +72,8 @@ export class Person<WasPersisted extends boolean> {
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
         public personalnummer?: string,
-        public lockInfo?: LockInfo,
+        public userLock?: UserLock,
+        public orgUnassignmentDate?: Date,
         public isLocked?: boolean,
         public email?: string,
         public oxUserId?: string,
@@ -114,7 +115,8 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
-        lockInfo?: LockInfo,
+        orgUnassignmentDate?: Date,
+        userLock?: UserLock,
         isLocked?: boolean,
         email?: string,
         oxUserId?: string,
@@ -145,7 +147,8 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
             personalnummer,
-            lockInfo,
+            userLock,
+            orgUnassignmentDate,
             isLocked,
             email,
             oxUserId,
@@ -189,6 +192,8 @@ export class Person<WasPersisted extends boolean> {
             creationParams.vertrauensstufe,
             creationParams.auskunftssperre,
             creationParams.personalnummer,
+            creationParams.userLock,
+            creationParams.orgUnassignmentDate,
         );
 
         if (creationParams.password) {
@@ -235,7 +240,8 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
-        lockInfo?: LockInfo,
+        userLock?: UserLock,
+        orgUnassignmentDate?: Date,
         isLocked?: boolean,
         email?: string,
     ): void | DomainError {
@@ -273,7 +279,8 @@ export class Person<WasPersisted extends boolean> {
         this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
         this.personalnummer = personalnummer ?? this.personalnummer;
-        this.lockInfo = lockInfo;
+        this.userLock = userLock;
+        this.orgUnassignmentDate = orgUnassignmentDate;
         this.isLocked = isLocked;
         this.email = email;
     }
