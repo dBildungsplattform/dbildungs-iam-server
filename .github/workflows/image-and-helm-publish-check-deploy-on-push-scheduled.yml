@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - shell: bash
-        run: "All necessary Tests have been executed" 
+        run: echo "All necessary Tests have been executed" 
 
   # On Delete
   create_branch_identifier_for_deletion:
