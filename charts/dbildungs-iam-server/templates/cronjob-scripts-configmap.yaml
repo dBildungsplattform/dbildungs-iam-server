@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 data:
-  get-access-token.sh: |-
+  get_access_token.sh: |-
     {{ .Files.Get "cron/scripts/get_access_token.sh" | nindent 4 }}
-  trigger-xyz.sh: |-
+  trigger_xyz.sh: |-
     {{ .Files.Get "cron/scripts/trigger_xyz.sh" | nindent 4 }}
