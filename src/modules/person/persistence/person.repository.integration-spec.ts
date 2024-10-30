@@ -57,9 +57,14 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -99,6 +104,10 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
+                },
+                {
+                    provide: UserLockRepository,
+                    useValue: createMock<UserLockRepository>(),
                 },
                 // the following are required to prepare the test for findByIds()
                 OrganisationRepository,
@@ -1214,7 +1223,12 @@ describe('PersonRepository Integration', () => {
                 const personEntity: PersonEntity = new PersonEntity();
                 await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
                 person1.id = personEntity.id;
-                person1.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
+                person1.userLock = {
+                    person: person1.id,
+                    locked_by: '',
+                    locked_until: new Date(),
+                    created_at: new Date(),
+                };
                 person1.isLocked = false;
 
                 kcUserServiceMock.findById.mockResolvedValue({
@@ -1925,6 +1939,63 @@ describe('PersonRepository Integration', () => {
             );
             expect(result).toBeInstanceOf(DomainError);
         });
+
+        it('should return VornameForPersonWithTrailingSpaceError when vorname is invalid', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const invalidVorname: string = ' Max ';
+
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                invalidVorname,
+                faker.finance.pin(7),
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(VornameForPersonWithTrailingSpaceError);
+        });
+
+        it('should return FamiliennameForPersonWithTrailingSpaceError when familienname is invalid', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const invalidFamilienname: string = ' Mustermann ';
+
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                invalidFamilienname, // Pass invalid familienname
+                faker.name.firstName(),
+                faker.finance.pin(7),
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(FamiliennameForPersonWithTrailingSpaceError);
+        });
+
+        it('should return PersonalNummerForPersonWithTrailingSpaceError when personalnummer is invalid', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const invalidPersonalnummer: string = ' 12345678';
+
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                invalidPersonalnummer,
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(PersonalNummerForPersonWithTrailingSpaceError);
+        });
     });
     describe('getKoPersUserLockList', () => {
         it('should return a list of keycloakUserIds for persons older than 56 days without a personalnummer', async () => {
@@ -1988,12 +2059,19 @@ describe('PersonRepository Integration', () => {
             await dbiamPersonenkontextRepoInternal.save(personenKontext4);
             await dbiamPersonenkontextRepoInternal.save(personenKontext5);
 
-            const lockList: string[] = await sut.getKoPersUserLockList();
+            const lockList: [PersonID, string][] = await sut.getKoPersUserLockList();
 
-            expect(lockList).toContain(person1.keycloakUserId);
-            expect(lockList).toContain(person2.keycloakUserId);
-            expect(lockList).toContain(person3.keycloakUserId);
-            expect(lockList).not.toContain(person4.keycloakUserId);
+            // Create tuples for the expected values
+            const expectedPerson1: [PersonID, string | undefined] = [person1.id, person1.keycloakUserId];
+            const expectedPerson2: [PersonID, string | undefined] = [person2.id, person2.keycloakUserId];
+            const expectedPerson3: [PersonID, string | undefined] = [person3.id, person3.keycloakUserId];
+            const unexpectedPerson4: [PersonID, string | undefined] = [person4.id, person4.keycloakUserId];
+
+            // Perform the assertions
+            expect(lockList).toContainEqual(expectedPerson1);
+            expect(lockList).toContainEqual(expectedPerson2);
+            expect(lockList).toContainEqual(expectedPerson3);
+            expect(lockList).not.toContainEqual(unexpectedPerson4);
         });
         describe('getPersonWithoutOrgDeleteList', () => {
             it('should return a list of personIds for persons without a personenkontext', async () => {
