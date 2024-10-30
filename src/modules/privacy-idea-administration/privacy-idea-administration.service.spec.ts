@@ -621,6 +621,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
 
         afterEach(() => {
             getTokenToVerifySpy.mockRestore();
+            jest.restoreAllMocks();
         });
 
         it('should assign hardware token successfully', async () => {
@@ -759,7 +760,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             jest.spyOn(
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
-            ).mockResolvedValueOnce(true);
+            ).mockResolvedValue(true);
             httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
             httpServiceMock.delete.mockReturnValueOnce(of({} as AxiosResponse));
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
