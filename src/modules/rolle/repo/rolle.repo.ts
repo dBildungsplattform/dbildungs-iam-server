@@ -151,6 +151,14 @@ export class RolleRepo {
                 error: new EntityNotFoundError(),
             };
         }
+
+        if (rolle.istTechnisch) {
+            return {
+                ok: false,
+                error: new MissingPermissionsError('Not allowed to view the requested rolle.'),
+            };
+        }
+
         const rolleAdministeringOrganisationId: OrganisationID = rolle.administeredBySchulstrukturknoten;
 
         const relevantSystemRechte: RollenSystemRecht[] = [RollenSystemRecht.ROLLEN_VERWALTEN];
