@@ -34,6 +34,9 @@ spec:
               - |
                   apk update && 
                   apk add --no-cache bash openssl curl cronie jq vim &&
+                  mkdir /scripts &&
+                  cp /scripts_tmp/*.sh /scripts/ &&
+                  chmod +x /scripts/*.sh &&
                   chmod 600 /etc/crontabs/root &&
                   touch /var/log/cron.log && 
                   chmod 644 /var/log/cron.log &&
@@ -44,7 +47,7 @@ spec:
                 mountPath: /keys
                 readOnly: true
               - name: script-volume
-                mountPath: /scripts
+                mountPath: /scripts_tmp
                 readOnly: false
             ports:
             - containerPort: {{ $.Values.cronjobs.port }}
