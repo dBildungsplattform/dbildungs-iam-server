@@ -47,6 +47,7 @@ spec:
                 readOnly: true
               - name: script-volume
                 mountPath: /scripts
+                readOnly: false
             ports:
             - containerPort: {{ $.Values.cronjobs.port }}
               name: trigger-xyz-pod  
