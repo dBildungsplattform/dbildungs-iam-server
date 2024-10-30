@@ -34,7 +34,6 @@ spec:
               - |
                   apk update && 
                   apk add --no-cache bash openssl curl cronie jq vim &&
-                  chmod +x /scripts/*.sh &&
                   chmod 600 /etc/crontabs/root &&
                   touch /var/log/cron.log && 
                   chmod 644 /var/log/cron.log &&
