@@ -13,8 +13,8 @@ import { StepUpLevel } from '../passport/oidc.strategy.js';
 @Injectable()
 export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
     public constructor(
-        private logger: ClassLogger,
-        private configService: ConfigService<ServerConfig>,
+        private readonly logger: ClassLogger,
+        private readonly configService: ConfigService<ServerConfig>,
     ) {
         super();
     }

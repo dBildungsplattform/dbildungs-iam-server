@@ -132,6 +132,7 @@ describe('OpenIdConnectStrategy', () => {
     describe('authenticate', () => {
         let superPassportSpy: jest.SpyInstance;
         beforeEach(() => {
+            jest.restoreAllMocks();
             superPassportSpy = jest.spyOn(Strategy.prototype, 'authenticate').mockImplementation(() => {});
         });
 
@@ -144,7 +145,7 @@ describe('OpenIdConnectStrategy', () => {
 
         it('should call super.authenticate with options', () => {
             const request: Request = createMock<Request>();
-            request.query['requiredStepUpLevel'] = StepUpLevel.GOLD;
+            request.session.requiredStepupLevel = StepUpLevel.GOLD;
             sut.authenticate(request);
 
             expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'gold' });
