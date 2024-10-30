@@ -177,7 +177,10 @@ cronjobs:
   jobs:
     trigger-xyz-1:
       endpoint: ""
+      script: "scripts/trigger_xyz.sh"
     trigger-xyz-2:
       endpoint: ""
+      script: "scripts/trigger_xyz.sh"
     trigger-xyz-3:
       endpoint: ""
+      script: "scripts/trigger_xyz.sh"

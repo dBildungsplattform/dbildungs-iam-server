@@ -39,7 +39,7 @@ spec:
                   touch /var/log/cron.log && 
                   chmod 644 /var/log/cron.log &&
                   export BACKEND_HOSTNAME="{{ $.Values.backendHostname}}{{ $job_options.endpoint}}" &&
-                  ./scripts/trigger_xyz.sh
+                  ./{{ $job_options.script}}
             volumeMounts:
               - name: secret-volume-jwks
                 mountPath: /keys
@@ -56,6 +56,9 @@ spec:
           - name: secret-volume-jwks
             secret:
               secretName: cronjob-secret-service-acc-jwks
+              items:
+              - key: service-account-private-jwks
+                path: jwks.json
           restartPolicy: Never
 ---
 {{- end}}
