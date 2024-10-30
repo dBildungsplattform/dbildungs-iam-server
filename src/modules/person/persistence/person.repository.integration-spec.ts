@@ -60,6 +60,9 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
@@ -1935,6 +1938,63 @@ describe('PersonRepository Integration', () => {
                 personPermissionsMock,
             );
             expect(result).toBeInstanceOf(DomainError);
+        });
+
+        it('should return VornameForPersonWithTrailingSpaceError when vorname is invalid', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const invalidVorname: string = ' Max ';
+
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                invalidVorname,
+                faker.finance.pin(7),
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(VornameForPersonWithTrailingSpaceError);
+        });
+
+        it('should return FamiliennameForPersonWithTrailingSpaceError when familienname is invalid', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const invalidFamilienname: string = ' Mustermann ';
+
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                invalidFamilienname, // Pass invalid familienname
+                faker.name.firstName(),
+                faker.finance.pin(7),
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(FamiliennameForPersonWithTrailingSpaceError);
+        });
+
+        it('should return PersonalNummerForPersonWithTrailingSpaceError when personalnummer is invalid', async () => {
+            const person: Person<true> = await savePerson(true);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+
+            const invalidPersonalnummer: string = ' 12345678';
+
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                invalidPersonalnummer,
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(PersonalNummerForPersonWithTrailingSpaceError);
         });
     });
     describe('getKoPersUserLockList', () => {
