@@ -38,7 +38,7 @@ spec:
                   chmod 600 /etc/crontabs/root &&
                   touch /var/log/cron.log && 
                   chmod 644 /var/log/cron.log &&
-                  export BACKEND_HOSTNAME="{{ $.Values.cronjobs.backendHostname}}{{ $job_options.endpoint}}" &&
+                  export BACKEND_HOSTNAME="{{ $.Values.backendHostname}}{{ $job_options.endpoint}}" &&
                   ./scripts/trigger_xyz.sh
             volumeMounts:
               - name: secret-volume-jwks
