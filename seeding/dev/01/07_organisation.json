@@ -5309,7 +5309,8 @@
 			"kuerzel": "Testschule-PW665",
 			"typ": "SCHULE",
 			"administriertVon": 1,
-			"zugehoerigZu": 1
+			"zugehoerigZu": 1,
+			"emailAdress": "Testschule65.pw@schule-sh.de"
 		},
 		{
 			"id": 666,
