@@ -26,20 +26,21 @@ export function getLowestStepUpLevel(): StepUpLevel {
     return StepUpLevel.SILVER;
 }
 
-export function isStepUpTimeOver(req: Request): boolean {
+// timeout in seconds
+export function isStepUpTimeOver(req: Request, timeout: number): boolean {
     const currentTime: number = new Date().getTime();
     if (!req.session?.lastRouteChangeTime) return false;
     const lastRouteChangeTime: number = req.session.lastRouteChangeTime;
     const deltaTime: number = currentTime - lastRouteChangeTime;
-    return deltaTime >= 10000; // TODO make config
+    return deltaTime >= timeout * 1000;
 }
 
-export function updateAndGetStepUpLevel(req: Request): StepUpLevel {
+export function updateAndGetStepUpLevel(req: Request, timeout: number): StepUpLevel {
     if (!req.session.lastRouteChangeTime) {
         req.session.lastRouteChangeTime = new Date().getTime();
     }
 
-    if (isStepUpTimeOver(req)) {
+    if (isStepUpTimeOver(req, timeout)) {
         if (req.passportUser) req.passportUser.stepUpLevel = getLowestStepUpLevel();
     }
 

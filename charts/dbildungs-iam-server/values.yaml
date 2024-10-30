@@ -49,6 +49,7 @@ auth:
   pi_user_resolver: ''
   pi_user_realm: ''
   pi_rename_waiting_time: ''
+  pi_step_up_timeout_in_seconds: ''
 
 backend:
   replicaCount: 1

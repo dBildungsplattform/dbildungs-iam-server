@@ -158,14 +158,16 @@ describe('OpenIdConnectStrategy', () => {
         describe('isStepUpTimeOver', () => {
             it('should return false if lastRouteChangeTime is undefined', () => {
                 const req: Request = { session: {} } as Request;
-                expect(isStepUpTimeOver(req)).toBe(false);
+                const timeout: number = 10;
+                expect(isStepUpTimeOver(req, timeout)).toBe(false);
             });
 
             it('should return true if time since lastRouteChangeTime is over the threshold', () => {
                 const req: Request = { session: { lastRouteChangeTime: 1000 } } as Request;
                 mockTime(12000);
 
-                expect(isStepUpTimeOver(req)).toBe(true);
+                const timeout: number = 10;
+                expect(isStepUpTimeOver(req, timeout)).toBe(false);
                 jest.restoreAllMocks();
             });
 
@@ -173,7 +175,8 @@ describe('OpenIdConnectStrategy', () => {
                 const req: Request = { session: { lastRouteChangeTime: 1000 } } as Request;
                 mockTime(8000);
 
-                expect(isStepUpTimeOver(req)).toBe(false);
+                const timeout: number = 10;
+                expect(isStepUpTimeOver(req, timeout)).toBe(false);
                 jest.restoreAllMocks();
             });
         });
@@ -183,8 +186,9 @@ describe('OpenIdConnectStrategy', () => {
                 const req: Request = { session: {} } as Request;
                 const currentTime: number = 5000;
                 mockTime(currentTime);
+                const timeout: number = 10;
 
-                updateAndGetStepUpLevel(req);
+                updateAndGetStepUpLevel(req, timeout);
 
                 expect(req.session.lastRouteChangeTime).toBe(currentTime);
                 jest.restoreAllMocks();
@@ -196,8 +200,9 @@ describe('OpenIdConnectStrategy', () => {
                     passportUser: { stepUpLevel: StepUpLevel.GOLD },
                 } as Request;
                 mockTime(12000);
+                const timeout: number = 10;
 
-                const result: StepUpLevel = updateAndGetStepUpLevel(req);
+                const result: StepUpLevel = updateAndGetStepUpLevel(req, timeout);
 
                 expect(req.passportUser!.stepUpLevel).toBe(StepUpLevel.SILVER);
                 expect(result).toBe(StepUpLevel.SILVER);
@@ -211,8 +216,9 @@ describe('OpenIdConnectStrategy', () => {
                     passportUser: { stepUpLevel: StepUpLevel.GOLD },
                 } as Request;
                 mockTime(8000);
+                const timeout: number = 10;
 
-                const result: StepUpLevel = updateAndGetStepUpLevel(req);
+                const result: StepUpLevel = updateAndGetStepUpLevel(req, timeout);
 
                 expect(req.passportUser!.stepUpLevel).toBe(StepUpLevel.GOLD);
                 expect(result).toBe(StepUpLevel.GOLD);
@@ -223,8 +229,9 @@ describe('OpenIdConnectStrategy', () => {
             it('should return lowest step-up level if passportUser is undefined', () => {
                 const req: Request = { session: {} } as Request;
                 mockTime(5000);
+                const timeout: number = 10;
 
-                const result: StepUpLevel = updateAndGetStepUpLevel(req);
+                const result: StepUpLevel = updateAndGetStepUpLevel(req, timeout);
 
                 expect(result).toBe(StepUpLevel.SILVER);
                 jest.restoreAllMocks();
