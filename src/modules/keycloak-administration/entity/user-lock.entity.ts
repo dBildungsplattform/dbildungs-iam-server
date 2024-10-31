@@ -1,6 +1,7 @@
 import { Entity, Property, ManyToOne, Rel } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { PersonLockOccasion } from '../../person/domain/person.enums.js';
 
 @Entity({ tableName: 'user_lock' })
 export class UserLockEntity extends TimestampedEntity {
@@ -12,4 +13,7 @@ export class UserLockEntity extends TimestampedEntity {
 
     @Property({ nullable: true })
     public locked_until?: Date;
+
+    @Property({ nullable: true })
+    public locked_occasion!: PersonLockOccasion;
 }

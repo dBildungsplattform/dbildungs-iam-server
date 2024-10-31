@@ -46,7 +46,7 @@ export class PersonResponse {
     public isLocked?: boolean;
 
     @ApiProperty({ type: UserLockParams, nullable: true })
-    public userLock?: UserLockParams;
+    public userLock?: UserLockParams[];
 
     @ApiProperty({
         type: Date,

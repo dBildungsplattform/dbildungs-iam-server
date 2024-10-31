@@ -508,7 +508,6 @@ export class KeycloakUserService {
     public async updateKeycloakUserStatus(
         personId: string,
         keyCloakUserId: string,
-        enabled: boolean,
         userLock: UserLock,
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
@@ -518,14 +517,23 @@ export class KeycloakUserService {
         }
 
         try {
-            const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
-            await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled });
-            if (enabled) {
-                await this.userLockRepository.deleteUserLock(personId);
+            const userLocks: Option<UserLock[]> = await this.userLockRepository.findByPersonId(personId);
+            const userLockExists: boolean =
+                userLocks?.some(
+                    (existingLock: UserLock) => existingLock.locked_occasion === userLock.locked_occasion,
+                ) ?? false;
+
+            if (userLockExists) {
+                await this.userLockRepository.deleteUserLock(personId, userLock.locked_occasion);
+                if (userLocks?.length == 1) {
+                    const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
+                    await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled: true });
+                }
             } else {
                 await this.userLockRepository.createUserLock(userLock);
+                const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
+                await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled: false });
             }
-
             return { ok: true, value: undefined };
         } catch (err) {
             this.logger.error(`Could not update user status or database, message: ${JSON.stringify(err)}`);

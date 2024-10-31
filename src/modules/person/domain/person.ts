@@ -31,7 +31,7 @@ export type PersonCreationParams = {
     username?: string;
     password?: string;
     personalnummer?: string;
-    userLock?: UserLock;
+    userLock?: UserLock[];
     isLocked?: boolean;
     orgUnassignmentDate?: Date;
 };
@@ -72,7 +72,7 @@ export class Person<WasPersisted extends boolean> {
         public vertrauensstufe?: Vertrauensstufe,
         public auskunftssperre?: boolean,
         public personalnummer?: string,
-        public userLock?: UserLock,
+        public userLock?: UserLock[],
         public orgUnassignmentDate?: Date,
         public isLocked?: boolean,
         public email?: string,
@@ -116,7 +116,7 @@ export class Person<WasPersisted extends boolean> {
         auskunftssperre?: boolean,
         personalnummer?: string,
         orgUnassignmentDate?: Date,
-        userLock?: UserLock,
+        userLock?: UserLock[],
         isLocked?: boolean,
         email?: string,
         oxUserId?: string,
@@ -240,7 +240,7 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
-        userLock?: UserLock,
+        userLock?: UserLock[],
         orgUnassignmentDate?: Date,
         isLocked?: boolean,
         email?: string,

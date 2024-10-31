@@ -4,9 +4,16 @@ import { UserLock } from '../domain/user-lock.js';
 import { UserLockEntity } from '../entity/user-lock.entity.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonLockOccasion } from '../../person/domain/person.enums.js';
 
 export function mapEntityToAggregate(entity: UserLockEntity): UserLock {
-    return UserLock.construct(entity.person.id, entity.locked_by, entity.locked_until, entity.createdAt);
+    return UserLock.construct(
+        entity.person.id,
+        entity.locked_by,
+        entity.locked_until,
+        entity.locked_occasion,
+        entity.createdAt,
+    );
 }
 
 export function mapAggregateToData(userLock: UserLock): RequiredEntityData<UserLockEntity> {
@@ -14,6 +21,7 @@ export function mapAggregateToData(userLock: UserLock): RequiredEntityData<UserL
         person: userLock.person,
         locked_by: userLock.locked_by,
         locked_until: userLock.locked_until,
+        locked_occasion: userLock.locked_occasion,
     };
 }
 
@@ -21,6 +29,7 @@ export function mapEntityToAggregateInplace(entity: UserLockEntity, userLock: Us
     userLock.person = entity.person.id;
     userLock.locked_by = entity.locked_by;
     userLock.locked_until = entity.locked_until;
+    userLock.locked_occasion = entity.locked_occasion;
 
     return userLock;
 }
@@ -29,10 +38,11 @@ export function mapEntityToAggregateInplace(entity: UserLockEntity, userLock: Us
 export class UserLockRepository {
     public constructor(private readonly em: EntityManager) {}
 
-    public async findPersonById(id: PersonID): Promise<Option<UserLock>> {
-        const user: Option<UserLockEntity> = await this.em.findOne(UserLockEntity, { person: id });
-        if (user) {
-            return mapEntityToAggregate(user);
+    public async findByPersonId(id: PersonID): Promise<Option<UserLock[]>> {
+        const users: Option<UserLockEntity[]> = await this.em.find(UserLockEntity, { person: id });
+
+        if (users && users.length > 0) {
+            return users.map(mapEntityToAggregate); // Map each entity to UserLock
         }
         return null;
     }
@@ -53,7 +63,7 @@ export class UserLockRepository {
         return mapEntityToAggregate(userLockEntity);
     }
 
-    public async deleteUserLock(personId: string): Promise<void> {
-        await this.em.nativeDelete(UserLockEntity, { person: personId });
+    public async deleteUserLock(personId: string, lockOccasion: PersonLockOccasion): Promise<void> {
+        await this.em.nativeDelete(UserLockEntity, { person: personId, locked_occasion: lockOccasion });
     }
 }

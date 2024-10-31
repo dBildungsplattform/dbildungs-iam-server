@@ -201,6 +201,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -414,6 +415,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -649,6 +651,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -876,6 +879,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -1095,6 +1099,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -1353,6 +1358,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -1696,6 +1702,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -2178,6 +2185,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -2459,6 +2467,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -2728,6 +2737,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -3108,6 +3118,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -3329,6 +3340,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -3391,6 +3403,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ],
           "mappedType": "enum"
@@ -3557,6 +3570,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -3866,6 +3880,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -4198,6 +4213,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -4426,6 +4442,7 @@
             "SCHULTRAEGER_VERWALTEN",
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
             "IMPORT_DURCHFUEHREN"
           ]
         },
@@ -4518,6 +4535,15 @@
           "nullable": true,
           "length": 6,
           "mappedType": "datetime"
+        },
+        "locked_occasion": {
+          "name": "locked_occasion",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
         }
       },
       "name": "user_lock",
@@ -4621,7 +4647,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -4677,7 +4704,10 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
@@ -4843,6 +4873,7 @@
         "SCHULTRAEGER_VERWALTEN",
         "MIGRATION_DURCHFUEHREN",
         "PERSON_SYNCHRONISIEREN",
+        "CRON_DURCHFUEHREN",
         "IMPORT_DURCHFUEHREN"
       ]
     },
