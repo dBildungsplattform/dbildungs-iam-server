@@ -118,8 +118,9 @@ export class ServerModule implements NestModule {
         const redisConfig: RedisConfig = this.configService.getOrThrow<RedisConfig>('REDIS');
         // eslint-disable-next-line @typescript-eslint/typedef
         let redisClient;
+        // Ignoring cluster config. We'll test this on deployment
+        /* istanbul ignore next */
         if (redisConfig.CLUSTERED) {
-            // Ignoring cluster config. We'll test this on deployment
             /* istanbul ignore next */
             redisClient = createCluster({
                 rootNodes: [
