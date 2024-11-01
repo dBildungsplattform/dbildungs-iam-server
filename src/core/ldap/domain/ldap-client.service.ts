@@ -173,6 +173,80 @@ export class LdapClientService {
         });
     }
 
+    public async modifyPersonAttributes(
+        personId: PersonID,
+        newGivenName?: string,
+        newSn?: string,
+        newUid?: string,
+    ): Promise<Result<PersonID>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: modifyPersonAttributes');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+                scope: 'sub',
+                filter: `(entryUUID=${personId})`,
+                attributes: ['givenName', 'sn', 'uid'],
+                returnAttributeValues: true,
+            });
+            if (!searchResult.searchEntries[0]) {
+                this.logger.error(`Modification FAILED, no entry for personId:${personId}`);
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
+
+            const modifications: Change[] = [];
+
+            if (newGivenName) {
+                modifications.push(
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: 'givenName',
+                            values: [newGivenName],
+                        }),
+                    }),
+                );
+            }
+            if (newSn) {
+                modifications.push(
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: 'sn',
+                            values: [newSn],
+                        }),
+                    }),
+                );
+            }
+            if (newUid) {
+                modifications.push(
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: 'uid',
+                            values: [newUid],
+                        }),
+                    }),
+                );
+            }
+
+            if (modifications.length === 0) {
+                this.logger.info(`No attributes provided to modify for personId:${personId}`);
+                return { ok: true, value: personId };
+            }
+
+            await client.modify(searchResult.searchEntries[0].dn, modifications);
+            this.logger.info(`LDAP: Successfully modified attributes for personId:${personId}`);
+
+            return { ok: true, value: personId };
+        });
+    }
+
     public async deleteLehrerByPersonId(personId: PersonID): Promise<Result<PersonID>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer');
