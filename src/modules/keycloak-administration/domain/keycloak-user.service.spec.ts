@@ -1263,7 +1263,6 @@ describe('KeycloakUserService', () => {
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
-                    true,
                     lockMock,
                 );
                 expect(result).toStrictEqual({ ok: true, value: undefined });
@@ -1288,7 +1287,6 @@ describe('KeycloakUserService', () => {
                     const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                         'person-id',
                         'user-id',
-                        false,
                         lockMock,
                     );
 
@@ -1308,7 +1306,6 @@ describe('KeycloakUserService', () => {
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
-                    true,
                     lockMock,
                 );
 
@@ -1328,7 +1325,6 @@ describe('KeycloakUserService', () => {
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
-                    true,
                     lockMock,
                 );
 
