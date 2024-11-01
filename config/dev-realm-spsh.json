@@ -2764,7 +2764,7 @@
             "alias": "gold",
             "config": {
                 "loa-condition-level": "20",
-                "loa-max-age": "10000"
+                "loa-max-age": "0"
             }
         }, {
             "id" : "a289ca13-92ef-4ac8-9544-bbff68c93147",

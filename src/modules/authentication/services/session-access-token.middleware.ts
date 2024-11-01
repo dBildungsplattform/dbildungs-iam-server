@@ -30,6 +30,7 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
 
         const refreshToken: string | undefined = req.passportUser?.refresh_token;
         updateAndGetStepUpLevel(req, this.privacyIdeaConfig.STEP_UP_TIMEOUT_IN_SECONDS);
+
         if (accessToken) {
             if (!(await this.client.introspect(accessToken)).active)
                 if (refreshToken && (await this.client.introspect(refreshToken)).active && req.passportUser) {
