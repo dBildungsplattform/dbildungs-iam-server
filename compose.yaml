@@ -33,24 +33,14 @@ services:
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
+
   redis:
     image: redis:7.2.2
     healthcheck:
       test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
     ports:
       - 6379:6379
-    command: [ "redis-server",
-               "--requirepass password",
-               "--port 6379",
-               "--bind 0.0.0.0",
-               "--cluster-enabled yes",
-               "--cluster-config-file nodes.conf",
-               "--cluster-node-timeout 5000",
-               "--cluster-announce-ip 172.38.0.1${port}",
-               "--cluster-announce-port 6379",
-               "--cluster-announce-bus-port 16379",
-               "--appendonly yes"
-    ]
+    command: redis-server --requirepass password
   backend:
     profiles:
       - full-backend

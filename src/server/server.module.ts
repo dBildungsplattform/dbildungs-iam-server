@@ -21,7 +21,7 @@ import { AuthenticationApiModule } from '../modules/authentication/authenticatio
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
-import { createCluster, RedisClientOptions } from 'redis';
+import { createClient, createCluster } from 'redis';
 import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
@@ -118,27 +118,44 @@ export class ServerModule implements NestModule {
         const redisConfig: RedisConfig = this.configService.getOrThrow<RedisConfig>('REDIS');
         // eslint-disable-next-line @typescript-eslint/typedef
         let redisClient;
-        const redisClientOptions: RedisClientOptions = {
-            username: redisConfig.USERNAME,
-            password: redisConfig.PASSWORD,
-            socket: {
-                host: redisConfig.HOST,
-                port: redisConfig.PORT,
-                tls: redisConfig.USE_TLS,
-                key: redisConfig.PRIVATE_KEY,
-                cert: redisConfig.CERTIFICATE_AUTHORITIES,
-            },
-        };
-        redisClient = createCluster({
-            rootNodes: [redisClientOptions],
-        });
+        if (redisConfig.CLUSTERED) {
+            redisClient = createCluster({
+                rootNodes: [
+                    {
+                        url: `redis://${redisConfig.USERNAME}:${redisConfig.PASSWORD}@${redisConfig.HOST}:${redisConfig.PORT}`,
+                    },
+                ],
+                useReplicas: true,
+                defaults: {
+                    socket: {
+                        host: redisConfig.HOST,
+                        port: redisConfig.PORT,
+                        tls: redisConfig.USE_TLS,
+                        key: redisConfig.PRIVATE_KEY,
+                        cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                    },
+                },
+            });
+        } else {
+            redisClient = createClient({
+                username: redisConfig.USERNAME,
+                password: redisConfig.PASSWORD,
+                socket: {
+                    host: redisConfig.HOST,
+                    port: redisConfig.PORT,
+                    tls: redisConfig.USE_TLS,
+                    key: redisConfig.PRIVATE_KEY,
+                    cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                },
+            });
+        }
 
         /*
-        Just retrying does not work.
-        Once the connection has failed if no error handler is registered later connection attempts might just fail because
-        the client library assumes termination of the process if failure
-        Also the documentation expressly requires listening to on('error')
-         */
+            Just retrying does not work.
+            Once the connection has failed if no error handler is registered later connection attempts might just fail because
+            the client library assumes termination of the process if failure
+            Also the documentation expressly requires listening to on('error')
+             */
 
         /* istanbul ignore next */
         await redisClient
