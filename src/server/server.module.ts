@@ -20,7 +20,7 @@ import { AuthenticationApiModule } from '../modules/authentication/authenticatio
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
-import { createClient, createCluster, RedisClientOptions } from 'redis';
+import { createCluster, RedisClientOptions } from 'redis';
 import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
@@ -100,35 +100,20 @@ export class ServerModule implements NestModule {
         const redisConfig: RedisConfig = this.configService.getOrThrow<RedisConfig>('REDIS');
         // eslint-disable-next-line @typescript-eslint/typedef
         let redisClient;
-        if (redisConfig.CLUSTERED) {
-            const redisClientOptions: RedisClientOptions = {
-                username: redisConfig.USERNAME,
-                password: redisConfig.PASSWORD,
-                socket: {
-                    host: redisConfig.HOST,
-                    port: redisConfig.PORT,
-                    tls: redisConfig.USE_TLS,
-                    key: redisConfig.PRIVATE_KEY,
-                    cert: redisConfig.CERTIFICATE_AUTHORITIES,
-                },
-            };
-            redisClient = createCluster({
-                rootNodes: [redisClientOptions],
-            });
-        } else {
-            const redisClientOptions: RedisClientOptions = {
-                username: redisConfig.USERNAME,
-                password: redisConfig.PASSWORD,
-                socket: {
-                    host: redisConfig.HOST,
-                    port: redisConfig.PORT,
-                    tls: redisConfig.USE_TLS,
-                    key: redisConfig.PRIVATE_KEY,
-                    cert: redisConfig.CERTIFICATE_AUTHORITIES,
-                },
-            };
-            redisClient = createClient(redisClientOptions);
-        }
+        const redisClientOptions: RedisClientOptions = {
+            username: redisConfig.USERNAME,
+            password: redisConfig.PASSWORD,
+            socket: {
+                host: redisConfig.HOST,
+                port: redisConfig.PORT,
+                tls: redisConfig.USE_TLS,
+                key: redisConfig.PRIVATE_KEY,
+                cert: redisConfig.CERTIFICATE_AUTHORITIES,
+            },
+        };
+        redisClient = createCluster({
+            rootNodes: [redisClientOptions],
+        });
 
         /*
         Just retrying does not work.
