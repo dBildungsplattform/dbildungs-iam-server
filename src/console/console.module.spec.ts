@@ -2,8 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConsoleModule } from './console.module.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
-import { RolleFactory } from '../modules/rolle/domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../modules/service-provider/repo/service-provider.repo.js';
 
 describe('ConsoleModule', () => {
     let module: TestingModule;
@@ -11,7 +9,6 @@ describe('ConsoleModule', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConsoleModule],
-            providers: [RolleFactory, ServiceProviderRepo],
         }).compile();
     });
 

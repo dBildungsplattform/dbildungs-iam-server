@@ -29,6 +29,9 @@ describe('HealthController', () => {
         REALM_NAME: '',
         CLIENT_ID: '',
         CLIENT_SECRET: '',
+        TEST_CLIENT_ID: '',
+        SERVICE_CLIENT_ID: '',
+        SERVICE_CLIENT_PRIVATE_JWKS: '',
     };
     let redisHealthIndicator: RedisHealthIndicator;
     let configService: DeepMocked<ConfigService>;

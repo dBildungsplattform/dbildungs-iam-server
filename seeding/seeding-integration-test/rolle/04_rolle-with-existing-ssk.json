@@ -7,7 +7,10 @@
             "administeredBySchulstrukturknoten": 0,
             "rollenart": "LERN",
             "merkmale": [],
-            "systemrechte": []
+            "systemrechte": [],
+            "serviceProviderIds": [],
+            "istTechnisch": false,
+            "serviceProviderData": []
         }
     ]
 }

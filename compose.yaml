@@ -10,10 +10,14 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=dbildungs-iam-server
   keycloak:
-    image: ghcr.io/dbildungsplattform/dbildungs-iam:latest
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-keycloak:latest
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
+      - PI_ADMIN_USER=admin
+      - PI_ADMIN_PASSWORD=admin
+      - PI_REALM=defrealm
+      - PI_BASE_URL=http://privacy-idea:8080
     entrypoint: '/opt/keycloak/bin/kc.sh start-dev'
     command:
       # Internal DB but still persisted in container
@@ -29,13 +33,10 @@ services:
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
-      - source: "${THEMES_DIR:-keycloak/themes}"
-        target: "/opt/keycloak/themes"
-        type: bind
   redis:
     image: redis:7.2.2
     healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
     ports:
       - 6379:6379
     command: [ "redis-server",
@@ -82,8 +83,90 @@ services:
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
-    command: [ 'node', 'dist/src/console/main.js', 'db', 'init' ]
+    command: ['node', 'dist/src/console/main.js', 'db', 'init']
     volumes:
       - source: 'config'
         target: '/app/config'
         type: bind
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    command: --copy-service --loglevel debug
+    ports:
+      - 389:389
+      - 636:636
+    volumes:
+      - ./config/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom
+    environment:
+      - LDAP_ORGANISATION=schule-sh-de
+      - LDAP_DOMAIN=schule-sh.de
+      - LDAP_BASE_DN=dc=schule-sh,dc=de
+      - LDAP_ADMIN_PASSWORD=admin
+      - LDAP_CONFIG_PASSWORD=config
+      - LDAP_RFC2307BIS_SCHEMA=true
+      - LDAP_REMOVE_CONFIG_AFTER_SETUP=true
+      - LDAP_TLS_VERIFY_CLIENT=never
+  openldap-admin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: ldap-admin
+    restart: 'no'
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: openldap
+      PHPLDAPADMIN_HTTPS: 'false'
+    depends_on:
+      - openldap
+    ports:
+      - 9007:80
+      - 4443:443
+
+  privacy-idea:
+    image: khalibre/privacyidea:latest
+    container_name: privacy-idea
+    ports:
+      - 5000:8080
+    environment:
+      - PI_ADMIN_USER=admin
+      - PI_ADMIN_PASSWORD=admin
+      - PI_DB_TYPE=mysql
+      - PI_DB_HOST=mariadb
+      - PI_DB_PORT=3306
+      - PI_DB_NAME=ducsxqm001
+      - PI_DB_USER=admin
+      - PI_DB_PASSWORD=password
+      - PI_DB_VENDOR=mysql
+      - PI_SUPERUSER_REALM="administrator,api"
+      - PI_PAGE_TITLE=Schulportal SH
+      - PI_SECRET_KEY=secret
+      - PI_PEPPER=pepper
+      - PI_LOGLEVEL=DEBUG
+    depends_on:
+      maria-db:
+        condition: service_healthy
+    volumes:
+      - ./privacyidea/encfile:/data/privacyidea/keys/encfile
+      - ./privacyidea/dummy_private.pem:/data/privacyidea/keys/private.pem
+      - ./privacyidea/dummy_public.pem:/data/privacyidea/keys/public.pem
+
+  maria-db:
+    image: mariadb:latest
+    container_name: mariadb
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=ducsxqm001
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=password
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - mariadb:/var/lib/mysql
+      - ./privacyidea/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+
+volumes:
+  db-data:
+  mariadb:

@@ -12,13 +12,14 @@ import { KeycloakAdministrationModule } from '../modules/keycloak-administration
 import { OrganisationApiModule } from '../modules/organisation/organisation-api.module.js';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { HealthModule } from '../modules/health/health.module.js';
+import { PrivacyIdeaAdministrationModule } from '../modules/privacy-idea-administration/privacy-idea-administration.module.js';
 import { RolleApiModule } from '../modules/rolle/rolle-api.module.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
 import { ErrorModule } from '../shared/error/error.module.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { AuthenticationApiModule } from '../modules/authentication/authentication-api.module.js';
-import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
+import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
 import { createCluster, RedisClientOptions } from 'redis';
 import RedisStore from 'connect-redis';
@@ -28,6 +29,14 @@ import { ClassLogger } from '../core/logging/class-logger.js';
 import { AccessGuard } from '../modules/authentication/api/access.guard.js';
 import { PermissionsInterceptor } from '../modules/authentication/services/permissions.interceptor.js';
 import { PassportModule } from '@nestjs/passport';
+import { EventModule } from '../core/eventbus/index.js';
+import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js';
+import { LdapModule } from '../core/ldap/ldap.module.js';
+import { EmailModule } from '../modules/email/email.module.js';
+import { OxModule } from '../modules/ox/ox.module.js';
+import { KeycloakHandlerModule } from '../modules/keycloak-handler/keycloak-handler.module.js';
+import { CronModule } from '../modules/cron/cron.module.js';
+import { ImportApiModule } from '../modules/import/import-api.module.js';
 
 @Module({
     imports: [
@@ -45,6 +54,7 @@ import { PassportModule } from '@nestjs/passport';
                 const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
+                    user: dbConfig.USERNAME,
                     password: dbConfig.SECRET,
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
@@ -67,9 +77,9 @@ import { PassportModule } from '@nestjs/passport';
             property: 'passportUser',
         }),
         LoggerModule.register(ServerModule.name),
+        EventModule,
         AuthenticationApiModule,
         PersonApiModule,
-        PersonenKontextApiModule,
         OrganisationApiModule,
         KeycloakAdministrationModule,
         HealthModule,
@@ -78,6 +88,14 @@ import { PassportModule } from '@nestjs/passport';
         PersonenKontextApiModule,
         ErrorModule,
         KeycloakConfigModule,
+        ItsLearningModule,
+        LdapModule,
+        EmailModule,
+        OxModule,
+        PrivacyIdeaAdministrationModule,
+        KeycloakHandlerModule,
+        CronModule,
+        ImportApiModule,
     ],
     providers: [
         {
@@ -117,11 +135,12 @@ export class ServerModule implements NestModule {
 
         /*
         Just retrying does not work.
-        Once the connection has failed if no error handler is registered later connection attemps might just fail because
+        Once the connection has failed if no error handler is registered later connection attempts might just fail because
         the client library assumes termination of the process if failure
         Also the documentation expressly requires listening to on('error')
          */
 
+        /* istanbul ignore next */
         await redisClient
             .on('error', (error: Error) => this.logger.error(`Redis connection failed: ${error.message}`))
             .connect();

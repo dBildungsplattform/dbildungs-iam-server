@@ -1,15 +1,15 @@
 import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
-import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
+import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
     ConfigTestModule,
     DatabaseTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -20,19 +20,43 @@ import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { RolleResponse } from './rolle.response.js';
-import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { Rolle } from '../domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { RolleServiceProviderQueryParams } from './rolle-service-provider.query.params.js';
+import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
+import { PagedResponse } from '../../../shared/paging/index.js';
+import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import { Observable } from 'rxjs';
+import { Request } from 'express';
+import { PassportUser } from '../../authentication/types/user.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Person } from '../../person/domain/person.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
     let rolleRepo: RolleRepo;
+    let personRepo: PersonRepository;
     let serviceProviderRepo: ServiceProviderRepo;
+    let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
+    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    let personPermissionsMock: DeepMocked<PersonPermissions>;
+    let personFactory: PersonFactory;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -47,19 +71,62 @@ describe('Rolle API', () => {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
                 },
-                RolleFactory,
-                ServiceProviderRepo,
+                {
+                    provide: APP_INTERCEPTOR,
+                    useValue: {
+                        intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+                            const req: Request = context.switchToHttp().getRequest();
+                            req.passportUser = createMock<PassportUser>({
+                                async personPermissions() {
+                                    return personpermissionsRepoMock.loadPersonPermissions('');
+                                },
+                            });
+                            return next.handle();
+                        },
+                    },
+                },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>({
+                        create: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.uuid(),
+                            }),
+                        setPassword: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: faker.string.alphanumeric(16),
+                            }),
+                    }),
+                },
             ],
-        }).compile();
+        })
+            .overrideModule(KeycloakConfigModule)
+            .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .compile();
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
+        personRepo = module.get(PersonRepository);
         serviceProviderRepo = module.get(ServiceProviderRepo);
+        personFactory = module.get(PersonFactory);
+
+        dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
+        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+
+        personPermissionsMock = createMock<PersonPermissions>();
+        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
+        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
-    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+    }, 10000000);
 
     afterAll(async () => {
         await orm.close();
@@ -189,19 +256,60 @@ describe('Rolle API', () => {
 
     describe('/GET rollen', () => {
         it('should return all rollen', async () => {
-            await Promise.all([
-                rolleRepo.save(DoFactory.createRolle(false)),
-                rolleRepo.save(DoFactory.createRolle(false)),
-                rolleRepo.save(DoFactory.createRolle(false)),
-            ]);
+            const orgaIds: string[] = (
+                await Promise.all([
+                    rolleRepo.save(DoFactory.createRolle(false)),
+                    rolleRepo.save(DoFactory.createRolle(false)),
+                    rolleRepo.save(DoFactory.createRolle(false)),
+                ])
+            ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
                 .send();
 
             expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(3);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(3);
+        });
+
+        it('should return no rollen', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(0);
+        });
+
+        it('should return rollen with the given queried name', async () => {
+            const testRolle: { name: string; administeredBySchulstrukturknoten: string } = await rolleRepo.save(
+                DoFactory.createRolle(false),
+            );
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [testRolle.administeredBySchulstrukturknoten],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/rolle')
+                .query({ searchStr: testRolle.name })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(1);
+            expect(pagedResponse.items).toContainEqual(expect.objectContaining({ name: testRolle.name }));
         });
 
         it('should return rollen with serviceproviders', async () => {
@@ -212,32 +320,109 @@ describe('Rolle API', () => {
                     serviceProviderRepo.save(DoFactory.createServiceProvider(false)),
                 ]);
 
-            await Promise.all([
-                rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp1.id] })),
-                rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp2.id, sp3.id] })),
-                rolleRepo.save(DoFactory.createRolle(false)),
-            ]);
+            const orgaIds: string[] = (
+                await Promise.all([
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp1.id] })),
+                    rolleRepo.save(DoFactory.createRolle(false, { serviceProviderIds: [sp2.id, sp3.id] })),
+                    rolleRepo.save(DoFactory.createRolle(false)),
+                ])
+            ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
                 .send();
 
             expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body).toHaveLength(3);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<RolleWithServiceProvidersResponse> =
+                response.body as PagedResponse<RolleWithServiceProvidersResponse>;
+            expect(pagedResponse.items).toHaveLength(3);
 
-            expect(response.body).toContainEqual(
+            pagedResponse.items.forEach((item: RolleWithServiceProvidersResponse) => {
+                item.serviceProviders.sort((a: ServiceProviderIdNameResponse, b: ServiceProviderIdNameResponse) =>
+                    a.id.localeCompare(b.id),
+                );
+            });
+
+            expect(pagedResponse.items).toContainEqual(
                 expect.objectContaining({ serviceProviders: [{ id: sp1.id, name: sp1.name }] }),
             );
-            expect(response.body).toContainEqual(
+            expect(pagedResponse.items).toContainEqual(
                 expect.objectContaining({
                     serviceProviders: [
                         { id: sp2.id, name: sp2.name },
                         { id: sp3.id, name: sp3.name },
-                    ],
+                    ].sort(
+                        (
+                            a: {
+                                id: string;
+                                name: string;
+                            },
+                            b: {
+                                id: string;
+                                name: string;
+                            },
+                        ) => a.id.localeCompare(b.id),
+                    ),
                 }),
             );
-            expect(response.body).toContainEqual(expect.objectContaining({ serviceProviders: [] }));
+            expect(pagedResponse.items).toContainEqual(expect.objectContaining({ serviceProviders: [] }));
+        });
+    });
+
+    describe('/GET rolle by id', () => {
+        it('should return rolle', async () => {
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [rolle.administeredBySchulstrukturknoten],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+        });
+
+        it('should return rolle with serviceproviders', async () => {
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [rolle.administeredBySchulstrukturknoten],
+            });
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${rolle.id}`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const responseBody: RolleWithServiceProvidersResponse = response.body as RolleWithServiceProvidersResponse;
+
+            expect(responseBody?.serviceProviders).toContainEqual(
+                expect.objectContaining({ id: serviceProvider.id, name: serviceProvider.name }),
+            );
+        });
+
+        it('should return 404 when rolle could not be found', async () => {
+            await rolleRepo.save(DoFactory.createRolle(false));
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/rolle/${faker.string.uuid()}`)
+                .send();
+
+            expect(response.status).toBe(404);
+            expect(response.body).toBeInstanceOf(Object);
         });
     });
 
@@ -257,7 +442,7 @@ describe('Rolle API', () => {
         });
 
         describe('when rolle does not exist', () => {
-            it('should return 200', async () => {
+            it('should return 500', async () => {
                 await rolleRepo.save(DoFactory.createRolle(false));
                 const validButNonExistingUUID: string = faker.string.uuid();
                 const params: AddSystemrechtBodyParams = {
@@ -301,18 +486,19 @@ describe('Rolle API', () => {
         });
     });
 
-    describe('/POST rolleId/serviceProviders', () => {
+    describe('/PUT rolleId/serviceProviders', () => {
         describe('when rolle and serviceProvider exist', () => {
             it('should return 201 and add serviceProvider', async () => {
                 const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                     DoFactory.createServiceProvider(false),
                 );
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-                const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: serviceProvider.id,
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderIds: [serviceProvider.id],
+                    version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .put(`/rolle/${rolle.id}/serviceProviders`)
                     .send(params);
 
                 expect(response.status).toBe(201);
@@ -320,32 +506,34 @@ describe('Rolle API', () => {
         });
 
         describe('when rolle and serviceProvider exist, but serviceProvider is already attached', () => {
-            it('should return 400', async () => {
+            it('should return 201', async () => {
                 const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
                     DoFactory.createServiceProvider(false),
                 );
                 const rolle: Rolle<true> = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
-                const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: serviceProvider.id,
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderIds: [serviceProvider.id],
+                    version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .put(`/rolle/${rolle.id}/serviceProviders`)
                     .send(params);
 
-                expect(response.status).toBe(400);
+                expect(response.status).toBe(201);
             });
         });
 
         describe('when rolle does not exist', () => {
             it('should return 404', async () => {
                 const validButNonExistingUUID: string = faker.string.uuid();
-                const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: faker.string.uuid(),
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderIds: [faker.string.uuid()],
+                    version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .post(`/rolle/${validButNonExistingUUID}/serviceProviders`)
+                    .put(`/rolle/${validButNonExistingUUID}/serviceProviders`)
                     .send(params);
 
                 expect(response.status).toBe(404);
@@ -355,11 +543,12 @@ describe('Rolle API', () => {
         describe('when serviceProvider does not exist', () => {
             it('should return 404', async () => {
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-                const params: RolleServiceProviderQueryParams = {
-                    serviceProviderId: faker.string.uuid(),
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderIds: [faker.string.uuid()],
+                    version: 1,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .post(`/rolle/${rolle.id}/serviceProviders`)
+                    .put(`/rolle/${rolle.id}/serviceProviders`)
                     .send(params);
 
                 expect(response.status).toBe(404);
@@ -376,9 +565,14 @@ describe('Rolle API', () => {
                 const rolle: Rolle<true> = await rolleRepo.save(
                     DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
                 );
+
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderIds: [serviceProvider.id],
+                    version: 1,
+                };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/rolle/${rolle.id}/serviceProviders?serviceProviderId=${serviceProvider.id}`)
-                    .send();
+                    .delete(`/rolle/${rolle.id}/serviceProviders`)
+                    .send(params);
 
                 expect(response.status).toBe(200);
             });
@@ -387,11 +581,13 @@ describe('Rolle API', () => {
         describe('when rolle does not exist', () => {
             it('should return 404', async () => {
                 const validButNonExistingUUID: string = faker.string.uuid();
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderIds: [faker.string.uuid()],
+                    version: 1,
+                };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(
-                        `/rolle/${validButNonExistingUUID}/serviceProviders?serviceProviderId=${faker.string.uuid()}`,
-                    )
-                    .send();
+                    .delete(`/rolle/${validButNonExistingUUID}/serviceProviders`)
+                    .send(params);
 
                 expect(response.status).toBe(404);
             });
@@ -400,11 +596,328 @@ describe('Rolle API', () => {
         describe('when serviceProvider does not exist', () => {
             it('should return 500', async () => {
                 const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const nonExistingServiceProviderId: string = faker.string.uuid();
+
+                const params: RolleServiceProviderBodyParams = {
+                    serviceProviderIds: [nonExistingServiceProviderId],
+                    version: 1,
+                };
                 const response: Response = await request(app.getHttpServer() as App)
-                    .delete(`/rolle/${rolle.id}/serviceProviders?serviceProviderId=${faker.string.uuid()}`)
+                    .delete(`/rolle/${rolle.id}/serviceProviders`)
+                    .send(params);
+
+                expect(response.status).toBe(404);
+            });
+        });
+    });
+
+    describe('/PUT rolle', () => {
+        it('should return updated rolle', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+            await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+
+            const params: UpdateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                serviceProviderIds: [serviceProvider.id],
+                version: 1,
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .put(`/rolle/${rolle.id}`)
+                .send(params);
+
+            expect(response.status).toBe(200);
+            expect(response.body).toMatchObject({
+                id: rolle.id,
+                name: params.name,
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: rolle.rollenart,
+                merkmale: params.merkmale,
+                systemrechte: params.systemrechte,
+            });
+        });
+
+        it('should fail if the rolle does not exist', async () => {
+            const params: UpdateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                serviceProviderIds: [],
+                version: 1,
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .put(`/rolle/${faker.string.uuid()}`)
+                .send(params);
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return error with status-code 404 if user does NOT have permissions', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+            await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+            const params: UpdateRolleBodyParams = {
+                name: faker.person.jobTitle(),
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                serviceProviderIds: [],
+                version: 1,
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .put(`/rolle/${rolle.id}`)
+                .send(params);
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
+            });
+        });
+
+        describe('Update Merkmale', () => {
+            it('should return 400 if rolle is already assigned', async () => {
+                const personData: Person<false> | DomainError = await personFactory.createNew({
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    username: faker.internet.userName(),
+                    password: faker.string.alphanumeric(8),
+                });
+                if (personData instanceof DomainError) {
+                    throw personData;
+                }
+                const person: Person<true> | DomainError = await personRepo.save(personData);
+                if (person instanceof DomainError) {
+                    throw person;
+                }
+
+                const organisation: OrganisationEntity = new OrganisationEntity();
+                organisation.typ = OrganisationsTyp.SCHULE;
+                await em.persistAndFlush(organisation);
+                await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                );
+
+                await dBiamPersonenkontextRepoInternal.save(
+                    DoFactory.createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                );
+
+                const params: UpdateRolleBodyParams = {
+                    name: faker.person.jobTitle(),
+                    merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                    systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                    serviceProviderIds: [],
+                    version: 1,
+                };
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .put(`/rolle/${rolle.id}`)
+                    .send(params);
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual({
+                    code: 400,
+                    i18nKey: 'UPDATE_MERKMALE_ERROR',
+                });
+            });
+        });
+
+        it('should return error if new name has trailing space', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+
+            await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+            const rolle: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.LEHR,
+                }),
+            );
+
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+
+            const params: UpdateRolleBodyParams = {
+                name: ' newName ',
+                merkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                serviceProviderIds: [serviceProvider.id],
+                version: 1,
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .put(`/rolle/${rolle.id}`)
+                .send(params);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({
+                code: 400,
+                i18nKey: 'ROLLENNAME_ENTHAELT_LEERZEICHEN',
+            });
+        });
+    });
+
+    describe('/DELETE rolleId', () => {
+        describe('should return error', () => {
+            it('if rolle does NOT exist', async () => {
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${faker.string.uuid()}`)
                     .send();
 
                 expect(response.status).toBe(404);
+            });
+
+            it('if rolle is already assigned to a Personenkontext', async () => {
+                const personData: Person<false> | DomainError = await personFactory.createNew({
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    username: faker.internet.userName(),
+                    password: faker.string.alphanumeric(8),
+                });
+                if (personData instanceof DomainError) {
+                    throw personData;
+                }
+                const person: Person<true> | DomainError = await personRepo.save(personData);
+                if (person instanceof DomainError) {
+                    throw person;
+                }
+                const organisation: OrganisationEntity = new OrganisationEntity();
+                organisation.typ = OrganisationsTyp.SCHULE;
+                await em.persistAndFlush(organisation);
+                await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                );
+
+                await dBiamPersonenkontextRepoInternal.save(
+                    DoFactory.createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                );
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${rolle.id}`)
+                    .send();
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual({
+                    code: 400,
+                    i18nKey: 'ROLLE_HAT_PERSONENKONTEXTE_ERROR',
+                });
+            });
+
+            it('if user does NOT have permissions', async () => {
+                const organisation: OrganisationEntity = new OrganisationEntity();
+                await em.persistAndFlush(organisation);
+                await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                    }),
+                );
+
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [],
+                });
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${rolle.id}`)
+                    .send();
+
+                expect(response.status).toBe(404);
+                expect(response.body).toEqual({
+                    code: 404,
+                    subcode: '01',
+                    titel: 'Angefragte Entität existiert nicht',
+                    beschreibung: 'Die angeforderte Entität existiert nicht',
+                });
+            });
+        });
+
+        describe('should succeed', () => {
+            it('if all conditions are passed', async () => {
+                const organisation: OrganisationEntity = new OrganisationEntity();
+                await em.persistAndFlush(organisation);
+                await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+
+                const rolle: Rolle<true> = await rolleRepo.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisation.id,
+                        rollenart: RollenArt.LEHR,
+                        serviceProviderIds: [serviceProvider.id],
+                    }),
+                );
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/rolle/${rolle.id}`)
+                    .send();
+
+                expect(response.status).toBe(204);
             });
         });
     });

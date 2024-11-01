@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiOAuth2,
     ApiOkResponse,
     ApiTags,
     ApiUnauthorizedResponse,
@@ -20,25 +21,36 @@ import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/d
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/aggregate-ids.types.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { OrganisationRepo } from '../../../organisation/persistence/organisation.repo.js';
-import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
-import { ApiOkResponsePaginated, PagedResponse, PagingHeadersObject } from '../../../../shared/paging/index.js';
-import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
-import { DbiamPersonenuebersichtScope } from '../../persistence/dbiam-personenuebersicht-scope.js';
+import { ApiOkResponsePaginated, PagingHeadersObject } from '../../../../shared/paging/index.js';
+import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
+import { Permissions } from '../../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig, DataConfig } from '../../../../shared/config/index.js';
+import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
+import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
+import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('dbiam-personenuebersicht')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'dbiam/personenuebersicht' })
 export class DBiamPersonenuebersichtController {
+    public readonly ROOT_ORGANISATION_ID: string;
+
     public constructor(
         private readonly personRepository: PersonRepository,
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepository: RolleRepo,
-        private readonly organisationRepository: OrganisationRepo,
-    ) {}
+        private readonly organisationRepository: OrganisationRepository,
+        private config: ConfigService<ServerConfig>,
+    ) {
+        this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
 
-    @Get('')
+    @Post('')
     @ApiOkResponsePaginated(DBiamPersonenuebersichtResponse, {
         description: 'The personenuebersichten were successfully returned.',
         headers: PagingHeadersObject,
@@ -47,16 +59,13 @@ export class DBiamPersonenuebersichtController {
     @ApiForbiddenResponse({ description: 'Insufficient permission to get personenuebersichten.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersichten.' })
     public async findPersonenuebersichten(
-        @Query() queryParams: PersonenuebersichtQueryParams,
-    ): Promise<PagedResponse<DBiamPersonenuebersichtResponse>> {
+        @Body() bodyParams: PersonenuebersichtBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<{ items: DBiamPersonenuebersichtResponse[] }> {
+        const persons: Person<true>[] = await this.personRepository.findByIds(bodyParams.personIds, permissions);
+
         const items: DBiamPersonenuebersichtResponse[] = [];
-
-        const scope: DbiamPersonenuebersichtScope = new DbiamPersonenuebersichtScope()
-            .findBy({}) //no filtering in ticket spsh-488
-            .paged(queryParams.offset, queryParams.limit);
-
-        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
-        if (total > 0) {
+        if (persons.length > 0) {
             const allPersonIds: PersonID[] = persons.map((person: Person<true>) => person.id);
             const allPersonenKontexte: Map<PersonID, Personenkontext<true>[]> =
                 await this.dbiamPersonenkontextRepo.findByPersonIds(allPersonIds);
@@ -72,26 +81,38 @@ export class DBiamPersonenuebersichtController {
                 ),
             );
             const allRollen: Map<string, Rolle<true>> = await this.rolleRepository.findByIds(Array.from(allRollenIds));
-            const allOrganisations: Map<string, OrganisationDo<true>> = await this.organisationRepository.findByIds(
+            const allOrganisations: Map<string, Organisation<true>> = await this.organisationRepository.findByIds(
                 Array.from(allOrganisationIds),
+            );
+            const dbiamPersonenUebersicht: DbiamPersonenuebersicht = DbiamPersonenuebersicht.createNew(
+                this.personRepository,
+                this.dbiamPersonenkontextRepo,
+                this.organisationRepository,
+                this.rolleRepository,
+                this.config,
             );
 
             persons.forEach((person: Person<true>) => {
                 const personenKontexte: Personenkontext<true>[] = allPersonenKontexte.get(person.id) ?? [];
-                const personenUebersichten: DBiamPersonenzuordnungResponse[] = this.createZuordnungenForKontexte(
-                    personenKontexte,
-                    allRollen,
-                    allOrganisations,
+                const personenUebersichtenResult: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
+                    dbiamPersonenUebersicht.createZuordnungenForKontexte(personenKontexte, allRollen, allOrganisations);
+                if (personenUebersichtenResult instanceof EntityNotFoundError) {
+                    throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                        SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenUebersichtenResult),
+                    );
+                }
+                items.push(
+                    new DBiamPersonenuebersichtResponse(
+                        person,
+                        personenUebersichtenResult[0],
+                        personenUebersichtenResult[1],
+                    ),
                 );
-                items.push(new DBiamPersonenuebersichtResponse(person, personenUebersichten));
             });
         }
 
         return {
             items,
-            offset: queryParams.offset ?? 0,
-            limit: queryParams.limit ?? 0,
-            total,
         };
     }
 
@@ -105,63 +126,24 @@ export class DBiamPersonenuebersichtController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersicht.' })
     public async findPersonenuebersichtenByPerson(
         @Param() params: DBiamFindPersonenuebersichtByPersonIdParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonenuebersichtResponse> {
-        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
-        if (!person) {
+        const dbiamPersonenUebersicht: DbiamPersonenuebersicht = DbiamPersonenuebersicht.createNew(
+            this.personRepository,
+            this.dbiamPersonenkontextRepo,
+            this.organisationRepository,
+            this.rolleRepository,
+            this.config,
+        );
+        const response: DBiamPersonenuebersichtResponse | EntityNotFoundError =
+            await dbiamPersonenUebersicht.getPersonenkontexte(params.personId, permissions);
+
+        if (response instanceof EntityNotFoundError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', params.personId),
-                ),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response),
             );
         }
-        const personenKontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(
-            params.personId,
-        );
-        const rollenIdsForKontexte: RolleID[] = personenKontexte.map(
-            (kontext: Personenkontext<true>) => kontext.rolleId,
-        );
-        const organisationIdsForKontexte: OrganisationID[] = personenKontexte.map(
-            (kontext: Personenkontext<true>) => kontext.organisationId,
-        );
-        const rollenForKontexte: Map<string, Rolle<true>> = await this.rolleRepository.findByIds(rollenIdsForKontexte);
-        const organisationsForKontexte: Map<string, OrganisationDo<true>> = await this.organisationRepository.findByIds(
-            organisationIdsForKontexte,
-        ); //use Organisation Aggregate as soon as there is one
 
-        const personenUebersichten: DBiamPersonenzuordnungResponse[] = this.createZuordnungenForKontexte(
-            personenKontexte,
-            rollenForKontexte,
-            organisationsForKontexte,
-        );
-
-        return new DBiamPersonenuebersichtResponse(person, personenUebersichten);
-    }
-
-    private createZuordnungenForKontexte(
-        kontexte: Personenkontext<true>[],
-        rollen: Map<string, Rolle<true>>,
-        organisations: Map<string, OrganisationDo<true>>,
-    ): DBiamPersonenzuordnungResponse[] {
-        const personenUebersichten: DBiamPersonenzuordnungResponse[] = [];
-        kontexte.forEach((pk: Personenkontext<true>) => {
-            const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
-            const organisation: OrganisationDo<true> | undefined = organisations.get(pk.organisationId);
-            if (!rolle) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new EntityNotFoundError('Rolle', pk.rolleId),
-                    ),
-                );
-            }
-            if (!organisation) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new EntityNotFoundError('Organisation', pk.organisationId),
-                    ),
-                );
-            }
-            personenUebersichten.push(new DBiamPersonenzuordnungResponse(pk, organisation, rolle));
-        });
-        return personenUebersichten;
+        return response;
     }
 }

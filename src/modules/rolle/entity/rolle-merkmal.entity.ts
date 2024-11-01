@@ -7,7 +7,7 @@ export class RolleMerkmalEntity extends BaseEntity {
     @ManyToOne({ primary: true, entity: () => RolleEntity })
     public rolle!: Rel<RolleEntity>;
 
-    @Enum({ primary: true, items: () => RollenMerkmal })
+    @Enum({ primary: true, items: () => RollenMerkmal, nativeEnumName: 'rollen_merkmal_enum' })
     public merkmal!: RollenMerkmal;
 
     public [PrimaryKeyProp]?: ['rolle', 'merkmal'];

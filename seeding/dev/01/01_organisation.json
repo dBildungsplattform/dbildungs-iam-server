@@ -1,0 +1,159 @@
+{
+    "entityName": "Organisation",
+    "entities": [
+        {
+            "id": 0,
+            "kennung": null,
+            "name": "Land Schleswig-Holstein",
+            "kuerzel": "Root",
+            "typ": "ROOT",
+            "administriertVon": null,
+            "zugehoerigZu": null
+        },
+        {
+            "id": 1,
+            "kennung": null,
+            "name": "Öffentliche Schulen Land Schleswig-Holstein",
+            "kuerzel": "Öffentl. Schulen",
+            "typ": "LAND",
+            "administriertVon": 0,
+            "zugehoerigZu": 0,
+            "emailDomain": "schule-sh.de"
+        },
+        {
+            "id": 2,
+            "kennung": null,
+            "name": "Ersatzschulen Land Schleswig-Holstein",
+            "kuerzel": "Ersatzschulen",
+            "typ": "LAND",
+            "administriertVon": 0,
+            "zugehoerigZu": 0,
+            "emailDomain": "ersatzschule-sh.de"
+        },
+        {
+            "id": 3,
+            "kennung": "0703754",
+            "name": "Amalie-Sieveking-Schule",
+            "namensergaenzung": "Keine",
+            "kuerzel": "A-Sieveking-",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1,
+            "emailAdress": "amalie.sieverking@schule-sh.de"
+        },
+        {
+            "id": 4,
+            "kennung": "0702948",
+            "name": "Carl-Orff-Schule",
+            "namensergaenzung": "Keine",
+            "kuerzel": "C-Orff-Schule",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1,
+            "emailAdress": "c.orff@schule-sh.de"
+        },
+        {
+            "id": 5,
+            "kennung": "0705755",
+            "name": "Eric-Kandel-Gymnasium",
+            "namensergaenzung": "Keine",
+            "kuerzel": "E-Kandel-Gymn",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1,
+            "emailAdress": "eric.kandell@schule-sh.de"
+        },
+        {
+            "id": 6,
+            "kennung": "0705751",
+            "name": "Emil-von-Behring-Gymnasium",
+            "namensergaenzung": "Keine",
+            "kuerzel": "O4",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 7,
+            "kennung": "0707712",
+            "name": "Friedrich-Junge-Schule, Gemeinschaftsschule des Schulverbandes Großhansdorf in Großhansdorf",
+            "namensergaenzung": "Keine",
+            "kuerzel": "O5",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1,
+            "emailAdress": "schulverband.shared@schule-sh.de"
+        },
+        {
+            "id": 8,
+            "kennung": "0702960",
+            "name": "Grundschule Hoisdorf",
+            "namensergaenzung": "Keine",
+            "kuerzel": "O6",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1,
+            "emailAdress": "schulverband.shared@schule-sh.de"
+        },
+        {
+            "id": 9,
+            "kennung": "1111111",
+            "name": "Testschule Schulportal",
+            "namensergaenzung": "Keine",
+            "kuerzel": "Testschule",
+            "typ": "SCHULE",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 10,
+            "name": "11a Geographisches Profil",
+            "namensergaenzung": "Keine",
+            "typ": "KLASSE",
+            "administriertVon": 3,
+            "zugehoerigZu": 3
+        },
+        {
+            "id": 11,
+            "name": "9a",
+            "namensergaenzung": "Keine",
+            "typ": "KLASSE",
+            "administriertVon": 4,
+            "zugehoerigZu": 4
+        },
+        {
+            "id": 12,
+            "name": "9a",
+            "namensergaenzung": "Keine",
+            "typ": "KLASSE",
+            "administriertVon": 3,
+            "zugehoerigZu": 3
+        },
+        {
+            "id": 13,
+            "name": "Playwright3a",
+            "namensergaenzung": "Keine",
+            "typ": "KLASSE",
+            "administriertVon": 9,
+            "zugehoerigZu": 9
+        },
+        {
+            "id": 14,
+            "name": "Playwright4b",
+            "namensergaenzung": "Keine",
+            "typ": "KLASSE",
+            "administriertVon": 9,
+            "zugehoerigZu": 9
+        },
+        {
+            "id": 15,
+            "kennung": "0799801",
+            "name": "Duborg-Skolen",
+            "namensergaenzung": "Keine",
+            "kuerzel": "07998-1",
+            "typ": "SCHULE",
+            "administriertVon": 2,
+            "zugehoerigZu": 2
+        }
+    ]
+}

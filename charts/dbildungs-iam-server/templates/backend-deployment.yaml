@@ -19,43 +19,53 @@ spec:
         app.kubernetes.io/component: server-backend
     spec:
       automountServiceAccountToken: false
-      {{- if .Values.backend.dbseeding.enabled }}
       initContainers:
-        - name: "{{ template "common.names.name" . }}-db-init"
+        - name: "{{ template "common.names.name" . }}-db-migration-apply"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: ["node", "dist/src/console/main.js", "db", "init"]
+          command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
-            {{- if .Values.backend.extraEnvVars }}
-            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
-            {{- end }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            - mountPath: /app/seeding/dev
-              name: seeding-volume
-              readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        - name: "{{ template "common.names.name" . }}-keycloak-data-migration"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          volumeMounts:
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{- if .Values.backend.dbseeding.enabled }}
         - name: db-seeding
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
+          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
           env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-            - mountPath: /app/seeding/dev
-              name: seeding-volume
-              readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
-      {{end}}
+        {{end}}
       containers:
         - name: "{{ template "common.names.name" . }}-backend"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
@@ -90,6 +100,12 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        - name: migration-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-backend-migration
+        - name: keycloak-migration-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-backend-keycloak-migration
         {{if .Values.backend.dbseeding.enabled }}
         - name: seeding-volume
           configMap:

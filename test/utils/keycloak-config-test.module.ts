@@ -30,7 +30,7 @@ export class KeycloakConfigTestModule implements OnModuleDestroy {
                                 .withExposedPorts(8080)
                                 .withEnvironment({ KEYCLOAK_ADMIN: 'admin', KEYCLOAK_ADMIN_PASSWORD: 'admin' })
                                 .withCommand(['start-dev', '--import-realm'])
-                                .withStartupTimeout(120000)
+                                .withStartupTimeout(240000)
                                 .start();
                         }
 
@@ -43,9 +43,12 @@ export class KeycloakConfigTestModule implements OnModuleDestroy {
                             keycloakConfig.ADMIN_REALM_NAME,
                             keycloakConfig.ADMIN_CLIENT_ID,
                             keycloakConfig.ADMIN_SECRET,
+                            keycloakConfig.SERVICE_CLIENT_ID,
+                            keycloakConfig.SERVICE_CLIENT_PRIVATE_JWKS,
                             keycloakConfig.REALM_NAME,
                             keycloakConfig.CLIENT_ID,
                             keycloakConfig.CLIENT_SECRET,
+                            keycloakConfig.TEST_CLIENT_ID,
                         );
                     },
                     inject: [ConfigService],

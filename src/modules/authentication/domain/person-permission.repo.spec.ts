@@ -4,6 +4,7 @@ import {
     ConfigTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonPermissionsRepo } from './person-permission.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -11,7 +12,9 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Person } from '../../person/domain/person.js';
 import { PersonPermissions } from './person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { UnauthorizedException } from '@nestjs/common';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { KeycloakUserNotFoundError } from './keycloak-user-not-found.error.js';
 
 describe('PersonPermissionRepo', () => {
     let module: TestingModule;
@@ -20,13 +23,24 @@ describe('PersonPermissionRepo', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
+            imports: [ConfigTestModule, MapperTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false })],
             providers: [
                 PersonPermissionsRepo,
-                DBiamPersonenkontextRepo,
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: RolleRepo,
+                    useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
+                {
+                    provide: OrganisationRepository,
+                    useValue: createMock<OrganisationRepository>(),
                 },
             ],
         }).compile();
@@ -68,7 +82,7 @@ describe('PersonPermissionRepo', () => {
         describe('when person cannot be found', () => {
             it('should throw exception', async () => {
                 personRepositoryMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
-                await expect(sut.loadPersonPermissions(faker.string.uuid())).rejects.toThrow(UnauthorizedException);
+                await expect(sut.loadPersonPermissions(faker.string.uuid())).rejects.toThrow(KeycloakUserNotFoundError);
             });
         });
     });

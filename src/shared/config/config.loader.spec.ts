@@ -23,9 +23,11 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
                     DB_NAME: 'test-db',
                     USE_SSL: false,
                 },
@@ -35,6 +37,8 @@ describe('configloader', () => {
                     ADMIN_REALM_NAME: 'master',
                     REALM_NAME: 'schulportal',
                     CLIENT_ID: 'schulportal',
+                    TEST_CLIENT_ID: 'schulportal-test',
+                    SERVICE_CLIENT_ID: 'spsh-service',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -45,13 +49,50 @@ describe('configloader', () => {
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
+                LDAP: {
+                    URL: 'ldap://localhost',
+                    BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                },
+                ITSLEARNING: {
+                    ENABLED: 'true',
+                    ENDPOINT: 'http://itslearning',
+                    USERNAME: 'username',
+                    ROOT: 'sh',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
+                },
+                PRIVACYIDEA: {
+                    ENDPOINT: 'http://localhost:5000',
+                    USERNAME: 'admin',
+                    PASSWORD: 'admin',
+                    USER_RESOLVER: 'mariadb_resolver',
+                    REALM: 'defrealm',
+                },
+                OX: {
+                    ENABLED: 'true',
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
+                    USERNAME: 'username',
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
-                KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
+                KEYCLOAK: {
+                    ADMIN_SECRET: 'AdminClientSecret',
+                    CLIENT_SECRET: 'ClientSecret',
+                    SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
+                },
+                LDAP: { ADMIN_PASSWORD: 'password' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
                 REDIS: { PASSWORD: 'password' },
+                ITSLEARNING: {
+                    PASSWORD: 'password',
+                },
+                OX: {
+                    PASSWORD: 'password',
+                },
             };
 
             beforeEach(() => {
@@ -85,9 +126,11 @@ describe('configloader', () => {
                     OIDC_CALLBACK_URL: 'http://localhost:9091/api/frontend/login',
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
+                    ERROR_PAGE_REDIRECT: '/error',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
                     DB_NAME: 'test-db',
                     USE_SSL: false,
                     SECRET: 'gehaim',
@@ -100,6 +143,9 @@ describe('configloader', () => {
                     CLIENT_ID: 'schulportal',
                     ADMIN_SECRET: 'geheimer Admin',
                     CLIENT_SECRET: 'geheimer client',
+                    TEST_CLIENT_ID: 'schulportal-test',
+                    SERVICE_CLIENT_ID: 'spsh-service',
+                    SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -110,6 +156,35 @@ describe('configloader', () => {
                 },
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
+                },
+                LDAP: {
+                    URL: 'ldap://localhost',
+                    BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    ADMIN_PASSWORD: 'password',
+                },
+                ITSLEARNING: {
+                    ENABLED: 'true',
+                    ENDPOINT: 'http://itslearning',
+                    USERNAME: 'username',
+                    PASSWORD: 'password',
+                    ROOT: 'sh',
+                    ROOT_OEFFENTLICH: 'oeffentlich',
+                    ROOT_ERSATZ: 'ersatz',
+                },
+                PRIVACYIDEA: {
+                    ENDPOINT: 'http://localhost:5000',
+                    USERNAME: 'admin',
+                    PASSWORD: 'admin',
+                    USER_RESOLVER: 'mariadb_resolver',
+                    REALM: 'defrealm',
+                },
+                OX: {
+                    ENABLED: 'true',
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
+                    USERNAME: 'username',
+                    PASSWORD: 'password',
                 },
             };
 
@@ -148,6 +223,7 @@ describe('configloader', () => {
                     ADMIN_REALM_NAME: '',
                     REALM_NAME: '',
                     CLIENT_ID: '',
+                    TEST_CLIENT_ID: '',
                 },
             };
 

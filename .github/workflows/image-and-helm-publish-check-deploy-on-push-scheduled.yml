@@ -8,7 +8,7 @@ on:
     branches:
       - "**"
   schedule:
-    - cron:  '0 2 * * *'
+    - cron: '0 2 * * *'
   delete:
 
 concurrency:
@@ -41,6 +41,7 @@ jobs:
     with:
       node_version: '18'
       deploy_stage: 'dev'
+      timeout_minutes: 15
     permissions:
       contents: read
     secrets: inherit
@@ -86,8 +87,6 @@ jobs:
 
   select_helm_version_generation_and_image_tag_generation:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    needs: 
-      - scan_helm
     runs-on: ubuntu-latest
     outputs: 
       SELECT_HELM_VERION_GENERATION: ${{ steps.select_generation.outputs.SELECT_HELM_VERION_GENERATION }}
@@ -114,13 +113,21 @@ jobs:
       helm_chart_version_generation: ${{ needs. select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
       image_tag_generation: ${{ needs. select_helm_version_generation_and_image_tag_generation.outputs.SELECT_IMAGE_TAG_GENERATION  }}
 
+  wait_for_helm_chart_to_get_published:
+    needs:
+      - release_helm
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: sleep 1m
+
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@3
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    needs: 
+    needs:
       - branch_meta
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
     with:
@@ -131,16 +138,30 @@ jobs:
     needs:
       - branch_meta
       - create_branch_identifier
-      - release_helm
+      - wait_for_helm_chart_to_get_published
       - build_image_on_push
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@DBP-453-Create-Redis-DBCluster-available-for-session-storage-of-SPSH
     with:
       dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
+      dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
     secrets: inherit
 
+  all_tests_successfull:
+    needs:
+      - deploy
+      - scan_helm
+      - codeql_analyze
+      - nest_lint
+      - tests_and_sonarcloud
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: echo "All necessary Tests have been executed"
+
+  # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
@@ -151,7 +172,7 @@ jobs:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
     needs:
       - create_branch_identifier_for_deletion
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@3
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@5
     with:
       namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:
@@ -164,4 +185,17 @@ jobs:
       - create_branch_identifier_for_deletion
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Deletion workflow of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done" 
+      - run: echo "Deletion workflow of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done"
+
+  # Scheduled
+  scheduled_trivy_scan:
+    name: "Scheduled trivy scan of latest image"
+    if: ${{ github.event_name == 'schedule' }}
+    permissions:
+      packages: read
+      security-events: write
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
+    with:
+      image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
+      fail_on_vulnerabilites: false
+      report_location: "Dockerfile"

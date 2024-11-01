@@ -50,4 +50,6 @@ export class PersonFile {
     public dataProvider?: string;
 
     public revision!: string;
+
+    public personalnummer?: string;
 }

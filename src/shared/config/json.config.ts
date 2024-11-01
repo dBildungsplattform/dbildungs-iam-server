@@ -7,6 +7,11 @@ import { DataConfig } from './data.config.js';
 import { KeycloakConfig } from './keycloak.config.js';
 import { LoggingConfig } from './logging.config.js';
 import { RedisConfig } from './redis.config.js';
+import { LdapConfig } from './ldap.config.js';
+import { ItsLearningConfig } from './itslearning.config.js';
+import { PrivacyIdeaConfig } from './privacyidea.config.js';
+import { OxConfig } from './ox.config.js';
+import { ImportConfig } from './import.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -34,6 +39,26 @@ export class JsonConfig {
     public readonly REDIS!: RedisConfig;
 
     @ValidateNested()
+    @Type(() => LdapConfig)
+    public readonly LDAP!: LdapConfig;
+
+    @ValidateNested()
     @Type(() => DataConfig)
     public readonly DATA!: DataConfig;
+
+    @ValidateNested()
+    @Type(() => ItsLearningConfig)
+    public readonly ITSLEARNING!: ItsLearningConfig;
+
+    @ValidateNested()
+    @Type(() => PrivacyIdeaConfig)
+    public readonly PRIVACYIDEA!: PrivacyIdeaConfig;
+
+    @ValidateNested()
+    @Type(() => OxConfig)
+    public readonly OX!: OxConfig;
+
+    @ValidateNested()
+    @Type(() => ImportConfig)
+    public readonly IMPORT!: ImportConfig;
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, User } from '../../keycloak-administration/index.js';
 import {
     DomainError,
     EntityNotFoundError,
@@ -71,14 +71,16 @@ export class UsernameGeneratorService {
             return calculatedUsername;
         }
         let counter: number = 1;
+        /* eslint-disable no-await-in-loop */
         while (await this.usernameExists(calculatedUsername + counter)) {
             counter = counter + 1;
         }
+        /* eslint-disable no-await-in-loop */
         return calculatedUsername + counter;
     }
 
     public async usernameExists(username: string): Promise<boolean> {
-        const searchResult: Result<UserDo<true>, DomainError> | { ok: false; error: DomainError } =
+        const searchResult: Result<User<true>, DomainError> | { ok: false; error: DomainError } =
             await this.kcUserService.findOne({ username: username });
         if (searchResult.ok) {
             return true;

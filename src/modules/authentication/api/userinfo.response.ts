@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonPermissions } from '../domain/person-permissions.js';
+import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
+
+export type UserinfoExtension = {
+    password_updated_at?: Date;
+};
 
 export class UserinfoResponse {
     @ApiProperty()
@@ -57,9 +63,23 @@ export class UserinfoResponse {
     public phone_number?: string;
 
     @ApiProperty({ nullable: true })
-    public updated_at?: number;
+    public updated_at?: string;
 
-    public constructor(info: PersonPermissions) {
+    @ApiProperty({ nullable: true })
+    public password_updated_at?: string;
+
+    @ApiProperty({ type: PersonenkontextRolleFieldsResponse, isArray: true })
+    public personenkontexte: PersonenkontextRolleFieldsResponse[];
+
+    @ApiProperty({ nullable: false })
+    public acr: StepUpLevel;
+
+    public constructor(
+        info: PersonPermissions,
+        personenkontexte: PersonenkontextRolleFieldsResponse[],
+        acr: StepUpLevel,
+        extension?: UserinfoExtension,
+    ) {
         this.sub = info.personFields.keycloakUserId!;
         this.personId = info.personFields.id;
         this.name = `${info.personFields.vorname} ${info.personFields.familienname}`;
@@ -69,6 +89,9 @@ export class UserinfoResponse {
         this.preferred_username = info.personFields.username;
         this.gender = info.personFields.geschlecht;
         this.birthdate = info.personFields.geburtsdatum?.toISOString();
-        this.updated_at = info.personFields.updatedAt.getTime() / 1000;
+        this.updated_at = info.personFields.updatedAt.toISOString();
+        this.personenkontexte = personenkontexte;
+        this.password_updated_at = extension?.password_updated_at?.toISOString();
+        this.acr = acr;
     }
 }

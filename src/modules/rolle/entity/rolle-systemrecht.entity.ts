@@ -7,7 +7,7 @@ export class RolleSystemrechtEntity extends BaseEntity {
     @ManyToOne({ primary: true, entity: () => RolleEntity })
     public rolle!: Rel<RolleEntity>;
 
-    @Enum({ primary: true, items: () => RollenSystemRecht })
+    @Enum({ primary: true, items: () => RollenSystemRecht, nativeEnumName: 'rollen_system_recht_enum' })
     public systemrecht!: RollenSystemRecht;
 
     public [PrimaryKeyProp]?: ['rolle', 'systemrecht'];

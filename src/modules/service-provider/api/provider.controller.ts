@@ -7,6 +7,7 @@ import {
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
+    ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -15,12 +16,16 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
@@ -29,9 +34,11 @@ export class ProviderController {
     public constructor(
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly serviceProviderService: ServiceProviderService,
     ) {}
 
-    @Get()
+    @Get('all')
+    @ApiOperation({ description: 'Get all service-providers.' })
     @ApiOkResponse({
         description: 'The service-providers were successfully returned.',
         type: [ServiceProviderResponse],
@@ -46,6 +53,27 @@ export class ProviderController {
         );
 
         return response;
+    }
+
+    @Get()
+    @ApiOperation({ description: 'Get service-providers available for logged-in user.' })
+    @ApiOkResponse({
+        description: 'The service-providers were successfully returned.',
+        type: [ServiceProviderResponse],
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get available service providers.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get service-providers.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all service-providers.' })
+    public async getAvailableServiceProviders(
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<ServiceProviderResponse[]> {
+        const roleIds: string[] = await permissions.getRoleIds();
+        const serviceProviders: ServiceProvider<true>[] =
+            await this.serviceProviderService.getServiceProvidersByRolleIds(roleIds);
+
+        return serviceProviders.map(
+            (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
+        );
     }
 
     @Get(':angebotId/logo')

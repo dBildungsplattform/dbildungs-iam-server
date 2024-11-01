@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceProviderFactory } from './service-provider.factory.js';
 import { faker } from '@faker-js/faker';
-import { ServiceProviderKategorie, ServiceProviderTarget } from './service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 
 describe('ServiceProviderFactory', () => {
@@ -35,6 +35,9 @@ describe('ServiceProviderFactory', () => {
                 const created: Date = faker.date.past();
                 const updated: Date = faker.date.recent();
                 const id: string = faker.string.uuid();
+                const keycloakGroup: string = faker.string.alpha();
+                const keycloakRole: string = faker.string.alpha();
+                const externalSystem: ServiceProviderSystem = faker.helpers.enumValue(ServiceProviderSystem);
                 const example: ServiceProvider<true> = {
                     id: id,
                     createdAt: created,
@@ -46,6 +49,10 @@ describe('ServiceProviderFactory', () => {
                     providedOnSchulstrukturknoten: ssk,
                     logo: undefined,
                     logoMimeType: undefined,
+                    keycloakGroup: keycloakGroup,
+                    keycloakRole: keycloakRole,
+                    externalSystem: externalSystem,
+                    requires2fa: false,
                 };
                 const serviceProvider: ServiceProvider<true> = sut.construct(
                     id,
@@ -58,6 +65,10 @@ describe('ServiceProviderFactory', () => {
                     ssk,
                     undefined,
                     undefined,
+                    keycloakGroup,
+                    keycloakRole,
+                    externalSystem,
+                    false,
                 );
 
                 expect(serviceProvider).toEqual(example);

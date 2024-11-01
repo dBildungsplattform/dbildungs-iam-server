@@ -1,6 +1,6 @@
 import { DoFactory } from '../../../../test/utils/index.js';
-import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
 import { KennungRequiredForSchule } from './kennung-required-for-schule.js';
 
 describe('KennungRequiredForSchule specification', () => {
@@ -8,7 +8,7 @@ describe('KennungRequiredForSchule specification', () => {
 
     describe('when organisation is schule', () => {
         it('should return true, if kennung is set', async () => {
-            const schule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const schule: Organisation<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SCHULE,
                 kennung: 'test',
             });
@@ -17,7 +17,7 @@ describe('KennungRequiredForSchule specification', () => {
         });
 
         it('should return false, if kennung is undefined', async () => {
-            const schule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const schule: Organisation<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SCHULE,
                 kennung: undefined,
             });
@@ -26,7 +26,7 @@ describe('KennungRequiredForSchule specification', () => {
         });
 
         it('should return false, if kennung is empty string', async () => {
-            const schule: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const schule: Organisation<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SCHULE,
                 kennung: '',
             });
@@ -37,7 +37,7 @@ describe('KennungRequiredForSchule specification', () => {
 
     describe('when organisation is not schule', () => {
         it('should return true, if kennung is set', async () => {
-            const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SONSTIGE,
                 kennung: 'test',
             });
@@ -46,7 +46,7 @@ describe('KennungRequiredForSchule specification', () => {
         });
 
         it('should return true, if kennung is undefined', async () => {
-            const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SONSTIGE,
                 kennung: undefined,
             });
@@ -55,7 +55,7 @@ describe('KennungRequiredForSchule specification', () => {
         });
 
         it('should return true, if kennung is empty string', async () => {
-            const organisation: OrganisationDo<false> = DoFactory.createOrganisation(false, {
+            const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SONSTIGE,
                 kennung: '',
             });

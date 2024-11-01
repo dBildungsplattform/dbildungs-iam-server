@@ -14,4 +14,6 @@ export class RolleFile {
     public systemrechte!: RollenSystemRecht[];
 
     public serviceProviderIds!: number[];
+
+    public istTechnisch?: boolean;
 }

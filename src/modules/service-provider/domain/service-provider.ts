@@ -1,4 +1,4 @@
-import { ServiceProviderKategorie, ServiceProviderTarget } from './service-provider.enum.js';
+import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 
 export class ServiceProvider<WasPersisted extends boolean> {
     private constructor(
@@ -12,6 +12,10 @@ export class ServiceProvider<WasPersisted extends boolean> {
         public providedOnSchulstrukturknoten: string,
         public logo: Buffer | undefined,
         public logoMimeType: string | undefined,
+        public keycloakGroup: string | undefined,
+        public keycloakRole: string | undefined,
+        public externalSystem: ServiceProviderSystem,
+        public requires2fa: boolean,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -25,6 +29,10 @@ export class ServiceProvider<WasPersisted extends boolean> {
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
+        keycloakGroup: string | undefined,
+        keycloakRole: string | undefined,
+        externalSystem: ServiceProviderSystem,
+        requires2fa: boolean,
     ): ServiceProvider<WasPersisted> {
         return new ServiceProvider(
             id,
@@ -37,6 +45,10 @@ export class ServiceProvider<WasPersisted extends boolean> {
             providedOnSchulstrukturknoten,
             logo,
             logoMimeType,
+            keycloakGroup,
+            keycloakRole,
+            externalSystem,
+            requires2fa,
         );
     }
 
@@ -48,6 +60,10 @@ export class ServiceProvider<WasPersisted extends boolean> {
         providedOnSchulstrukturknoten: string,
         logo: Buffer | undefined,
         logoMimeType: string | undefined,
+        keycloakGroup: string | undefined,
+        keycloakRole: string | undefined,
+        externalSystem: ServiceProviderSystem,
+        requires2fa: boolean,
     ): ServiceProvider<false> {
         return new ServiceProvider(
             undefined,
@@ -60,6 +76,10 @@ export class ServiceProvider<WasPersisted extends boolean> {
             providedOnSchulstrukturknoten,
             logo,
             logoMimeType,
+            keycloakGroup,
+            keycloakRole,
+            externalSystem,
+            requires2fa,
         );
     }
 }

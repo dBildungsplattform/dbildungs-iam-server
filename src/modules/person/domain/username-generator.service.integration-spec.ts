@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { FindUserFilter, KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { FindUserFilter, KeycloakUserService, User } from '../../keycloak-administration/index.js';
 import {
     DomainError,
     EntityNotFoundError,
@@ -104,7 +104,7 @@ describe('The UsernameGenerator Service', () => {
 
     it('should add a number when username already exists', async () => {
         kcUserService.findOne
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
             .mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('Not found') });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
         expect(generatedUsername).toEqual({ ok: true, value: 'mmeyer1' });
@@ -113,7 +113,7 @@ describe('The UsernameGenerator Service', () => {
     it('should increment the counter when a username would exist more than twice', async () => {
         kcUserService.findOne.mockImplementation((userFilter: FindUserFilter) => {
             if (userFilter.username == 'mmeyer' || userFilter.username == 'mmeyer1') {
-                return Promise.resolve({ ok: true, value: new UserDo<true>() });
+                return Promise.resolve({ ok: true, value: createMock<User<true>>() });
             } else return Promise.resolve({ ok: false, error: new EntityNotFoundError('Not found') });
         });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
@@ -122,11 +122,11 @@ describe('The UsernameGenerator Service', () => {
 
     it("Should fill 'holes' in the counter if there are any", async () => {
         kcUserService.findOne
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
             .mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('Not found') })
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() });
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Renate', 'Bergmann');
         expect(generatedUsername).toEqual({ ok: true, value: 'rbergmann3' });
     });
