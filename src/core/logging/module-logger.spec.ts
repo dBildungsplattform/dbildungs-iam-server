@@ -8,6 +8,7 @@ describe('Module Logger', () => {
 
         beforeEach(() => {
             tfi = createMock<winston.Logform.TransformableInfo>();
+            tfi.level = 'info';
         });
 
         it('should produce a sensible log message', () => {
