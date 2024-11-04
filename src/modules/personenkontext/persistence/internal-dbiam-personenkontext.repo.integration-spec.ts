@@ -157,6 +157,21 @@ describe('dbiam Personenkontext Repo', () => {
             expect(savedPersonenkontext.id).toBeDefined();
         });
 
+        it('should create a new personenkontext with a id set to overrideId', async () => {
+            const person: Person<true> = await createPerson();
+            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const personenkontext: Personenkontext<false> = createPersonenkontext(false, {
+                personId: person.id,
+                rolleId: rolle.id,
+            });
+
+            personenkontext.id = faker.string.uuid();
+            const savedPersonenkontext: Personenkontext<true> = await sut.create(personenkontext);
+
+            expect(savedPersonenkontext.id).toBeDefined();
+            expect(savedPersonenkontext.id).toBe(personenkontext.id);
+        });
+
         it('should update an existing rolle', async () => {
             const person: Person<true> = await createPerson();
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));

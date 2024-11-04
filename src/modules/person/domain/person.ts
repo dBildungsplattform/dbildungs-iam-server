@@ -11,6 +11,7 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
 export type PersonCreationParams = {
+    id?: number;
     familienname: string;
     vorname: string;
     referrer?: string;
