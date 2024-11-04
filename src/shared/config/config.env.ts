@@ -8,7 +8,7 @@ import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 
-export default (): {
+export type Config = {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
     LDAP: Partial<LdapConfig>;
@@ -18,7 +18,9 @@ export default (): {
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
     OX: Partial<OxConfig>;
     SYSTEM: Partial<SystemConfig>;
-} => ({
+};
+
+export default (): Config => ({
     DB: {
         DB_NAME: process.env['DB_NAME'],
         USERNAME: process.env['DB_USERNAME'],
