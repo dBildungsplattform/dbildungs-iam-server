@@ -10,7 +10,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { Request } from 'express';
-import { JwtPayload } from 'jsonwebtoken';
+import { decode, JwtPayload } from 'jsonwebtoken';
 
 export interface CustomJwtPayload extends JwtPayload {
     acr: StepUpLevel;
@@ -20,6 +20,14 @@ export enum StepUpLevel {
     NONE = 'none',
     SILVER = 'silver',
     GOLD = 'gold',
+}
+
+export function extractStepUpLevelFromJWT(jwt: string | undefined): StepUpLevel {
+    if (!jwt) {
+        return StepUpLevel.NONE;
+    }
+    const decoded: CustomJwtPayload | null = decode(jwt) as CustomJwtPayload | null;
+    return decoded?.acr ?? StepUpLevel.NONE;
 }
 
 export function getLowestStepUpLevel(): StepUpLevel {
@@ -95,6 +103,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         const idToken: string | undefined = tokenset.id_token;
         const accessToken: string | undefined = tokenset.access_token;
         const refreshToken: string | undefined = tokenset.refresh_token;
+        const stepUpLevel: StepUpLevel = extractStepUpLevelFromJWT(idToken);
 
         const user: AuthorizationParameters & PassportUser = {
             id_token: idToken,
@@ -103,7 +112,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             userinfo: userinfo,
             personPermissions: () => Promise.reject(),
             redirect_uri: req.session?.redirectUrl,
-            stepUpLevel: req.session.requiredStepupLevel,
+            stepUpLevel: stepUpLevel,
         };
         return user;
     }
