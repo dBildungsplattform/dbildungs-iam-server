@@ -150,11 +150,11 @@ export class ServerModule implements NestModule {
         }
 
         /*
-        Just retrying does not work.
-        Once the connection has failed if no error handler is registered later connection attempts might just fail because
-        the client library assumes termination of the process if failure
-        Also the documentation expressly requires listening to on('error')
-         */
+            Just retrying does not work.
+            Once the connection has failed if no error handler is registered later connection attempts might just fail because
+            the client library assumes termination of the process if failure
+            Also the documentation expressly requires listening to on('error')
+             */
 
         /* istanbul ignore next */
         await redisClient
