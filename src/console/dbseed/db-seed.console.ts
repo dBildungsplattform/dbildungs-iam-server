@@ -121,6 +121,7 @@ export class DbSeedConsole extends CommandRunner {
     }
 
     private async processEntityFile(entityFileName: string, directory: string, subDir: string): Promise<void> {
+        this.logger.info(`Processing file ${directory}/${subDir}/${entityFileName}`);
         const fileContentAsStr: string = fs.readFileSync(`./seeding/${directory}/${subDir}/${entityFileName}`, 'utf-8');
         const seedFile: SeedFile = JSON.parse(fileContentAsStr) as SeedFile;
         this.logger.info(`Processing ${seedFile.entityName} from ${directory}/${subDir}/${entityFileName}`);
