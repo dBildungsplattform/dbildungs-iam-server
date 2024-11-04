@@ -49,10 +49,6 @@ jobs:
   build_image_on_push:
     name: "Publish image and scan with trivy"
     if: ${{ github.event_name == 'push' }}
-    needs:
-      - codeql_analyze
-      - nest_lint
-      - tests_and_sonarcloud
     permissions:
       packages: write
       security-events: write
@@ -108,7 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - shell: bash
-        run: sleep 1m
+        run: sleep 1m 
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
@@ -121,7 +117,7 @@ jobs:
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
-
+  
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
@@ -148,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - shell: bash
-        run: echo "All necessary Tests have been executed"
+        run: echo "All necessary Tests have been executed" 
 
   # On Delete
   create_branch_identifier_for_deletion:
