@@ -11,7 +11,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ template "common.names.name" . }}
       app.kubernetes.io/component: server-redis
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ if not .Values.autoscaling.enabled }}{{ .Values.replicaCount }}{{ end }}
   template:
     metadata:
       labels:
