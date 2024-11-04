@@ -17,7 +17,7 @@ import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
-import { Client, Entry, SearchResult } from 'ldapts';
+import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
@@ -425,6 +425,112 @@ describe('LDAP Client Service', () => {
                 const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
 
                 expect(result.ok).toBeFalsy();
+            });
+        });
+    });
+
+    describe('modifyPersonAttributes', () => {
+        describe('when bind returns error', () => {
+            it('should return falsy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(faker.string.uuid());
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when person cannot be found by personID', () => {
+            it('should return LdapSearchError', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(faker.string.uuid());
+
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                });
+            });
+        });
+        describe('when person can be found and modified', () => {
+            beforeEach(() => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    dn: faker.string.numeric(8),
+                                }),
+                            ],
+                        }),
+                    );
+                    clientMock.modify.mockResolvedValue();
+
+                    return clientMock;
+                });
+            });
+            describe('when modifying', () => {
+                it('Should Update LDAP When called with Attributes', async () => {
+                    const personID: string = faker.string.uuid();
+                    const newGivenName: string = faker.person.firstName();
+                    const newSn: string = faker.person.lastName();
+                    const newUid: string = faker.string.alphanumeric(6);
+
+                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                        personID,
+                        newGivenName,
+                        newSn,
+                        newUid,
+                    );
+
+                    expect(result.ok).toBeTruthy();
+
+                    const expectedModifications: Change[] = [
+                        new Change({
+                            operation: 'replace',
+                            modification: new Attribute({
+                                type: 'givenName',
+                                values: [newGivenName],
+                            }),
+                        }),
+                        new Change({
+                            operation: 'replace',
+                            modification: new Attribute({
+                                type: 'sn',
+                                values: [newSn],
+                            }),
+                        }),
+                        new Change({
+                            operation: 'replace',
+                            modification: new Attribute({
+                                type: 'uid',
+                                values: [newUid],
+                            }),
+                        }),
+                    ];
+
+                    expect(clientMock.modify).toHaveBeenCalledWith(expect.any(String), expectedModifications);
+                });
+
+                it('Should Do nothing when called with No Attributes', async () => {
+                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                        faker.string.uuid(),
+                    );
+                    expect(result.ok).toBeTruthy();
+                    expect(clientMock.modify).not.toHaveBeenCalled();
+                });
             });
         });
     });

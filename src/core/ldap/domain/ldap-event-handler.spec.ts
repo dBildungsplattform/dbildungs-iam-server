@@ -34,6 +34,7 @@ import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/per
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -358,6 +359,32 @@ describe('LDAP Event Handler', () => {
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(error.message);
+            });
+        });
+    });
+
+    describe('handlePersonRenamedEvent', () => {
+        describe('when calling LdapClientService.modifyPersonAttributes is successful', () => {
+            it('should NOT log errors', async () => {
+                const modifyResult: Result<PersonID> = {
+                    ok: true,
+                    value: faker.string.uuid(),
+                };
+                ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
+                await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());
+                expect(loggerMock.error).toHaveBeenCalledTimes(0);
+            });
+        });
+        describe('when calling LdapClientService.modifyPersonAttributes is not successfull', () => {
+            it('should log errors', async () => {
+                const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
+                const modifyResult: Result<PersonID> = {
+                    ok: false,
+                    error: error,
+                };
+                ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
+                await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());
+                expect(loggerMock.error).toHaveBeenCalledTimes(1);
             });
         });
     });
