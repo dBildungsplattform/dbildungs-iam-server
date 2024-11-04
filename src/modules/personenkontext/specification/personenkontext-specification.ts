@@ -1,7 +1,6 @@
 import { CheckBefristungSpecification } from './befristung-required-bei-rolle-befristungspflicht.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 import { NurLehrUndLernAnKlasse } from './nur-lehr-und-lern-an-klasse.js';
-import { CheckRollenartLernSpecification } from './nur-rolle-lern.js';
 import { OrganisationMatchesRollenart } from './organisation-matches-rollenart.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 import { Injectable } from '@nestjs/common';
@@ -9,6 +8,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { CheckRollenartSpecification } from './nur-gleiche-rolle.js';
 
 @Injectable()
 export class PersonenkontextSpecification {
@@ -16,7 +16,7 @@ export class PersonenkontextSpecification {
         private checkBefristung: CheckBefristungSpecification,
         private gleicheRolleAnKlasseWieSchule: GleicheRolleAnKlasseWieSchule,
         private nurLehNurLehrUndLernAnKlasse: NurLehrUndLernAnKlasse,
-        private checkRollenartLern: CheckRollenartLernSpecification,
+        private checkRollenartLern: CheckRollenartSpecification,
         private organisationMatchesRollenart: OrganisationMatchesRollenart,
         private rolleRepo: RolleRepo,
         private organisationRepo: OrganisationRepository,
@@ -35,7 +35,6 @@ export class PersonenkontextSpecification {
                 .map((pk: Personenkontext<boolean>) => this.checkOrgaRolleCompliance(pk))
                 .reduce(async (l: Promise<boolean>, r: Promise<boolean>) => (await l) && (await r)),
         ].every((v: boolean) => v);
-    Promise.all
     }
 
     private async checkOrgaRolleCompliance(pk: Personenkontext<boolean>): Promise<boolean> {

@@ -7,10 +7,14 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 import { DBiamPersonenkontextService } from './domain/dbiam-personenkontext.service.js';
 import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.factory.js';
 import { EventModule } from '../../core/eventbus/index.js';
-import { PersonenkontextSpecificationsModule } from './specification/PersonenkontextSpecificationsModule.js';
 import { PersonenkontextPersistenceModule } from './persistence/PersonenkontextPersistenceModule.js';
 import { PersonenkontextCreationService } from './domain/personenkontext-creation.service.js';
 import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow.factory.js';
+import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
+import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from './persistence/internal-dbiam-personenkontext.repo.js';
+import { PersonenkontextFactory } from './domain/personenkontext.factory.js';
+import { PersonenkontextSpecificationsModule } from './specification/personenkontext-specification.module.js';
 
 @Module({
     imports: [
