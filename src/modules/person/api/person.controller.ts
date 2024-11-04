@@ -453,6 +453,7 @@ export class PersonController {
             personId,
             personResult.value.keycloakUserId,
             userLock,
+            lockUserBodyParams.lock,
         );
         if (!result.ok) {
             throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);

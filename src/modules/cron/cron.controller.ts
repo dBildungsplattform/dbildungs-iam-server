@@ -60,11 +60,11 @@ export class CronController {
                     const userLock: UserLock = UserLock.construct(
                         personId,
                         'Cron',
-                        new Date(),
+                        undefined,
                         PersonLockOccasion.KOPERS_GESPERRT,
                         new Date(),
                     );
-                    return this.keyCloakUserService.updateKeycloakUserStatus(personId, keycloakUserId, userLock);
+                    return this.keyCloakUserService.updateKeycloakUserStatus(personId, keycloakUserId, userLock, true);
                 }),
             );
 

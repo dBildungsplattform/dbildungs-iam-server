@@ -38,13 +38,9 @@ export function mapEntityToAggregateInplace(entity: UserLockEntity, userLock: Us
 export class UserLockRepository {
     public constructor(private readonly em: EntityManager) {}
 
-    public async findByPersonId(id: PersonID): Promise<Option<UserLock[]>> {
+    public async findByPersonId(id: PersonID): Promise<UserLock[]> {
         const users: Option<UserLockEntity[]> = await this.em.find(UserLockEntity, { person: id });
-
-        if (users && users.length > 0) {
-            return users.map(mapEntityToAggregate); // Map each entity to UserLock
-        }
-        return null;
+        return users.map(mapEntityToAggregate);
     }
 
     public async createUserLock(userLock: UserLock): Promise<UserLock | DomainError> {

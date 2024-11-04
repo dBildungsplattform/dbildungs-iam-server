@@ -509,30 +509,26 @@ export class KeycloakUserService {
         personId: string,
         keyCloakUserId: string,
         userLock: UserLock,
+        lock: boolean,
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
         if (!kcAdminClientResult.ok) {
             return kcAdminClientResult;
         }
-
         try {
-            const userLocks: Option<UserLock[]> = await this.userLockRepository.findByPersonId(personId);
-            const userLockExists: boolean =
-                userLocks?.some(
-                    (existingLock: UserLock) => existingLock.locked_occasion === userLock.locked_occasion,
-                ) ?? false;
-
-            if (userLockExists) {
-                await this.userLockRepository.deleteUserLock(personId, userLock.locked_occasion);
-                if (userLocks?.length == 1) {
-                    const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
-                    await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled: true });
-                }
-            } else {
+            //lock describes whether the user should be locked or not
+            if (lock) {
                 await this.userLockRepository.createUserLock(userLock);
                 const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
-                await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled: false });
+                await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled: !lock });
+            } else {
+                await this.userLockRepository.deleteUserLock(personId, userLock.locked_occasion);
+                const userLocks: UserLock[] = await this.userLockRepository.findByPersonId(personId);
+                if (userLocks.length === 0) {
+                    const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
+                    await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled: !lock });
+                }
             }
             return { ok: true, value: undefined };
         } catch (err) {
