@@ -26,6 +26,7 @@ export default (): {
     KEYCLOAK: {
         ADMIN_SECRET: process.env['KC_ADMIN_SECRET'],
         CLIENT_SECRET: process.env['KC_CLIENT_SECRET'],
+        SERVICE_CLIENT_PRIVATE_JWKS: process.env['KC_SERVICE_CLIENT_PRIVATE_JWKS'],
         BASE_URL: process.env['KC_BASE_URL'],
     },
     LDAP: {
