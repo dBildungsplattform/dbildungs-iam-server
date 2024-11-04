@@ -65,7 +65,11 @@ export default (): {
         PASSWORD: process.env['OX_PASSWORD'],
     },
     SYSTEM: {
-        RENAME_WAITING_TIME_IN_SECONDS: parseInt(process.env['RENAME_WAITING_TIME_IN_SECONDS'] || '0'),
-        STEP_UP_TIMEOUT_IN_SECONDS: parseInt(process.env['STEP_UP_TIMEOUT_IN_SECONDS'] || '900'),
+        RENAME_WAITING_TIME_IN_SECONDS: process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS']
+            ? parseInt(process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS'])
+            : undefined,
+        STEP_UP_TIMEOUT_IN_SECONDS: process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS']
+            ? parseInt(process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS'])
+            : undefined,
     },
 });

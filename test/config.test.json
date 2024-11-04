@@ -71,5 +71,9 @@
     },
     "IMPORT": {
         "IMPORT_FILE_MAXGROESSE_IN_MB": 1
+    },
+    "SYSTEM": {
+        "RENAME_WAITING_TIME_IN_SECONDS": 5,
+        "STEP_UP_TIMEOUT_IN_SECONDS": 900
     }
 }
