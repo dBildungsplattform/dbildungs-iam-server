@@ -43,7 +43,7 @@ import { PersonenkontextResponse } from '../../personenkontext/api/response/pers
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { LockInfo, Person } from '../domain/person.js';
+import { Person } from '../domain/person.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { ScopeOrder } from '../../../shared/persistence/index.js';
@@ -66,10 +66,15 @@ import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-pe
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonByPersonalnummerBodyParams } from './person-by-personalnummer.body.param.js';
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
+import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from './person-email-response.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -81,6 +86,7 @@ export class PersonController {
 
     public constructor(
         private readonly personRepository: PersonRepository,
+        private readonly emailRepo: EmailRepo,
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
@@ -89,6 +95,7 @@ export class PersonController {
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         config: ConfigService<ServerConfig>,
         private readonly personApiMapper: PersonApiMapper,
+        private readonly eventService: EventService,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
@@ -193,7 +200,15 @@ export class PersonController {
             );
         }
 
-        const response: PersonendatensatzResponse = new PersonendatensatzResponse(personResult.value, false);
+        const personEmailResponse: Option<PersonEmailResponse> = await this.emailRepo.getEmailAddressAndStatusForPerson(
+            personResult.value,
+        );
+        const response: PersonendatensatzResponse = new PersonendatensatzResponse(
+            personResult.value,
+            false,
+            personEmailResponse ?? undefined,
+        );
+
         return response;
     }
 
@@ -425,15 +440,18 @@ export class PersonController {
             throw new PersonDomainError(`Person with id ${personId} has no keycloak id`, personId);
         }
 
-        const lockInfo: LockInfo = {
-            lock_locked_from: lockUserBodyParams.locked_from,
-            lock_timestamp: new Date().toISOString(),
+        const userLock: UserLock = {
+            person: personId,
+            locked_by: lockUserBodyParams.locked_by,
+            locked_until: lockUserBodyParams.locked_until,
+            created_at: undefined,
         };
 
         const result: Result<void, DomainError> = await this.keycloakUserService.updateKeycloakUserStatus(
+            personId,
             personResult.value.keycloakUserId,
             !lockUserBodyParams.lock,
-            lockInfo,
+            userLock,
         );
         if (!result.ok) {
             throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);
@@ -441,28 +459,55 @@ export class PersonController {
         return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
     }
 
-    @Patch(':personId/personalnummer')
-    @ApiNoContentResponse({
-        description: 'The personalnummer was successfully updated.',
+    @Post(':personId/sync')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({ description: 'User will be synced.' })
+    @ApiNotFoundResponse({ description: 'The person was not found.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
+    @ApiInternalServerErrorResponse({ description: 'An internal server error occurred.' })
+    @ApiBadGatewayResponse({ description: 'A downstream server returned an error.' })
+    public async syncPerson(
+        @Param('personId') personId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+            personId,
+            permissions,
+            [RollenSystemRecht.PERSON_SYNCHRONISIEREN],
+        );
+        if (!personResult.ok) {
+            throw new NotFoundOrNoPermissionError(personId);
+        }
+
+        this.eventService.publish(new PersonExternalSystemsSyncEvent(personId));
+    }
+
+    @Patch(':personId/metadata')
+    @ApiOkResponse({
+        description: 'The metadata for user was successfully updated.',
+        type: PersonendatensatzResponse,
     })
     @ApiBadRequestResponse({ description: 'Request has a wrong format.', type: DbiamPersonError })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to update the personalnummer.' })
-    @ApiForbiddenResponse({ description: 'Not permitted to update the personalnummer.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the personalnummer.' })
-    public async updatePersonalnummer(
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the metadata.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to update the metadata.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the metadata for user.' })
+    public async updateMetadata(
         @Param() params: PersonByIdParams,
-        @Body() body: PersonByPersonalnummerBodyParams,
+        @Body() body: PersonMetadataBodyParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<void | DomainError> {
+    ): Promise<PersonendatensatzResponse | DomainError> {
         if (
+            body.personalnummer &&
             !(await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(
                 params.personId,
             ))
         ) {
             throw new PersonDomainError('Person hat keine koperspflichtige Rolle', undefined);
         }
-        const result: Person<true> | DomainError = await this.personRepository.updatePersonalnummer(
+        const result: Person<true> | DomainError = await this.personRepository.updatePersonMetadata(
             params.personId,
+            body.familienname,
+            body.vorname,
             body.personalnummer,
             body.lastModified,
             body.revision,
@@ -478,5 +523,7 @@ export class PersonController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+
+        return new PersonendatensatzResponse(result, false);
     }
 }

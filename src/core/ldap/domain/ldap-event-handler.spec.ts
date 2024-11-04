@@ -14,26 +14,26 @@ import { LdapModule } from '../ldap.module.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClientService } from './ldap-client.service.js';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { faker } from '@faker-js/faker';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
-import { SchuleDeletedEvent } from '../../../shared/events/schule-deleted.event.js';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { RootDirectChildrenType } from '../../../modules/organisation/domain/organisation.enums.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
+import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
+import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -41,6 +41,7 @@ describe('LDAP Event Handler', () => {
 
     let ldapEventHandler: LdapEventHandler;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -70,6 +71,8 @@ describe('LDAP Event Handler', () => {
             .useValue(createMock<RolleRepo>())
             .overrideProvider(DBiamPersonenkontextRepo)
             .useValue(createMock<DBiamPersonenkontextRepo>())
+            .overrideProvider(OrganisationRepository)
+            .useValue(createMock<OrganisationRepository>())
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
@@ -80,6 +83,7 @@ describe('LDAP Event Handler', () => {
 
         ldapEventHandler = module.get(LdapEventHandler);
         ldapClientServiceMock = module.get(LdapClientService);
+        organisationRepositoryMock = module.get(OrganisationRepository);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -98,283 +102,231 @@ describe('LDAP Event Handler', () => {
     });
 
     describe('handlePersonenkontextCreatedMigrationEvent', () => {
-        it('should do nothing when rolle is not LEHR', async () => {
-            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const person: Person<true> = createMock<Person<true>>();
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
-            const orga: Organisation<true> = createMock<Organisation<true>>();
+        describe('MigrationRunType: STANDARD', () => {
+            const migrationType: PersonenkontextMigrationRuntype = PersonenkontextMigrationRuntype.STANDARD;
 
-            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                personenkontext,
-                person,
-                rolle,
-                orga,
-                'test@schule-spsh.de',
-            );
+            let personenkontext: Personenkontext<true>;
+            let person: Person<true>;
+            let rolle: Rolle<true>;
+            let orga: Organisation<true>;
 
-            await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                expect.stringContaining('Do Nothing because Rollenart is Not LEHR'),
-            );
-        });
-
-        it('should created LDAP entry', async () => {
-            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const person: Person<true> = createMock<Person<true>>();
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
-            const orga: Organisation<true> = createMock<Organisation<true>>();
-
-            rolle.rollenart = RollenArt.LEHR;
-            person.referrer = 'user123';
-            orga.kennung = '12345678';
-
-            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                personenkontext,
-                person,
-                rolle,
-                orga,
-                'test@schule-spsh.de',
-            );
-
-            await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                expect.stringContaining('Successfully created LDAP Entry Lehrer'),
-            );
-        });
-
-        it('should log error if username is missing', async () => {
-            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const person: Person<true> = createMock<Person<true>>();
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
-            const orga: Organisation<true> = createMock<Organisation<true>>();
-
-            rolle.rollenart = RollenArt.LEHR;
-            person.referrer = undefined;
-
-            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                personenkontext,
-                person,
-                rolle,
-                orga,
-                'test@schule-spsh.de',
-            );
-
-            await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Username missing'));
-        });
-
-        it('should log error if kennung is missing', async () => {
-            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const person: Person<true> = createMock<Person<true>>();
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
-            const orga: Organisation<true> = createMock<Organisation<true>>();
-
-            rolle.rollenart = RollenArt.LEHR;
-            person.referrer = 'user123';
-            orga.kennung = undefined;
-
-            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                personenkontext,
-                person,
-                rolle,
-                orga,
-                'test@schule-spsh.de',
-            );
-
-            await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Orga Kennung missing'));
-        });
-
-        it('should log error if isLehrerExisting check fails', async () => {
-            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const person: Person<true> = createMock<Person<true>>();
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
-            const orga: Organisation<true> = createMock<Organisation<true>>();
-
-            rolle.rollenart = RollenArt.LEHR;
-            person.referrer = 'user123';
-            orga.kennung = '12345678';
-
-            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                personenkontext,
-                person,
-                rolle,
-                orga,
-                'test@schule-spsh.de',
-            );
-
-            ldapClientServiceMock.isLehrerExisting.mockResolvedValueOnce({
-                ok: false,
-                error: new LdapSearchError(LdapEntityType.LEHRER),
+            beforeEach(() => {
+                personenkontext = createMock<Personenkontext<true>>();
+                person = createMock<Person<true>>();
+                rolle = createMock<Rolle<true>>();
+                orga = createMock<Organisation<true>>();
             });
 
-            await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Check Lehrer existing call failed'));
-        });
-
-        it('should abort creatingLehrer if already exists', async () => {
-            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const person: Person<true> = createMock<Person<true>>();
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
-            const orga: Organisation<true> = createMock<Organisation<true>>();
-
-            rolle.rollenart = RollenArt.LEHR;
-            person.referrer = 'user123';
-            orga.kennung = '12345678';
-
-            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                personenkontext,
-                person,
-                rolle,
-                orga,
-                'test@schule-spsh.de',
-            );
-
-            ldapClientServiceMock.isLehrerExisting.mockResolvedValueOnce({
-                ok: true,
-                value: true,
-            });
-
-            await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                expect.stringContaining('Aborting createLehrer Operation, LDAP Entry already exists'),
-            );
-        });
-
-        it('should log error if createLehrer Operation fails', async () => {
-            const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
-            const person: Person<true> = createMock<Person<true>>();
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
-            const orga: Organisation<true> = createMock<Organisation<true>>();
-
-            rolle.rollenart = RollenArt.LEHR;
-            person.referrer = 'user123';
-            orga.kennung = '12345678';
-
-            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                personenkontext,
-                person,
-                rolle,
-                orga,
-                'test@schule-spsh.de',
-            );
-
-            ldapClientServiceMock.isLehrerExisting.mockResolvedValueOnce({
-                ok: true,
-                value: false,
-            });
-
-            ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
-                ok: false,
-                error: new LdapSearchError(LdapEntityType.LEHRER),
-            });
-
-            await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Create Lehrer Operation failed'));
-        });
-    });
-
-    describe('handleSchuleCreatedEvent', () => {
-        describe('when type is SCHULE and creation is successful', () => {
-            it('should execute without errors', async () => {
-                const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.word.noun(),
-                    RootDirectChildrenType.OEFFENTLICH,
+            it('should do nothing when rolle is not LEHR', async () => {
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                    'test@schule-spsh.de',
                 );
-                const result: Result<void> = {
-                    ok: true,
-                    value: undefined,
-                };
-                ldapClientServiceMock.createOrganisation.mockResolvedValueOnce(result);
 
-                await ldapEventHandler.handleSchuleCreatedEvent(event);
-                expect(ldapClientServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when creation fails', () => {
-            it('should execute without errors', async () => {
-                const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                    faker.string.uuid(),
-                    faker.string.uuid(),
-                    faker.word.noun(),
-                    RootDirectChildrenType.OEFFENTLICH,
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Do Nothing because Rollenart is Not LEHR'),
                 );
-                const result: Result<Organisation<true>> = {
-                    ok: false,
-                    error: new Error(),
-                };
-                ldapClientServiceMock.createOrganisation.mockResolvedValueOnce(result);
-
-                await ldapEventHandler.handleSchuleCreatedEvent(event);
-                expect(ldapClientServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
-        });
 
-        it('should skip event, if kennung is undefined', async () => {
-            const organisationId: string = faker.string.uuid();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                organisationId,
-                undefined,
-                faker.word.noun(),
-                RootDirectChildrenType.OEFFENTLICH,
-            );
+            it('should created LDAP entry', async () => {
+                rolle.rollenart = RollenArt.LEHR;
+                person.referrer = 'user123';
+                orga.kennung = '12345678';
 
-            await ldapEventHandler.handleSchuleCreatedEvent(event);
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                    'test@schule-spsh.de',
+                );
 
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                `Received SchuleCreatedEvent, organisationId:${organisationId}`,
-            );
-            expect(loggerMock.error).toHaveBeenCalledWith('Schule has no kennung. Aborting.');
-            expect(ldapClientServiceMock.createOrganisation).not.toHaveBeenCalled();
-        });
-    });
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
 
-    describe('asyncSchuleDeletedEventHandler', () => {
-        describe('deletion is successful', () => {
-            it('should execute without errors', async () => {
-                const event: SchuleDeletedEvent = new SchuleDeletedEvent(faker.string.uuid(), '1234567', 'Teschule');
-                const result: Result<void> = {
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Successfully created LDAP Entry Lehrer'),
+                );
+            });
+
+            it('should log error if username is missing', async () => {
+                rolle.rollenart = RollenArt.LEHR;
+                person.referrer = undefined;
+
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                    'test@schule-spsh.de',
+                );
+
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+                expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Username missing'));
+            });
+
+            it('should log error if kennung is missing', async () => {
+                rolle.rollenart = RollenArt.LEHR;
+                person.referrer = 'user123';
+                orga.kennung = undefined;
+
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                    'test@schule-spsh.de',
+                );
+
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+                expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Orga Kennung missing'));
+            });
+
+            it('should log error if isLehrerExisting check fails', async () => {
+                rolle.rollenart = RollenArt.LEHR;
+                person.referrer = 'user123';
+                orga.kennung = '12345678';
+
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                    'test@schule-spsh.de',
+                );
+
+                ldapClientServiceMock.isLehrerExisting.mockResolvedValueOnce({
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                });
+
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining('Check Lehrer existing call failed'),
+                );
+            });
+
+            it('should abort creatingLehrer if no valid emailDomain for organisation is found', async () => {
+                rolle.rollenart = RollenArt.LEHR;
+                person.referrer = 'user123';
+                orga.kennung = '12345678';
+
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                    'test@schule-spsh.de',
+                );
+
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(undefined);
+
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+
+                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                    expect.stringContaining(
+                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting createLehrer Operation, No valid emailDomain for organisation`,
+                    ),
+                );
+                expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
+            });
+
+            it('should abort creatingLehrer if already exists', async () => {
+                rolle.rollenart = RollenArt.LEHR;
+                person.referrer = 'user123';
+                orga.kennung = '12345678';
+
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                    'test@schule-spsh.de',
+                );
+
+                ldapClientServiceMock.isLehrerExisting.mockResolvedValueOnce({
                     ok: true,
-                    value: undefined,
-                };
+                    value: true,
+                });
 
-                ldapClientServiceMock.deleteOrganisation.mockResolvedValueOnce(result);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
 
-                await ldapEventHandler.handleSchuleDeletedEvent(event);
-                expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenCalledTimes(1);
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Aborting createLehrer Operation, LDAP Entry already exists'),
+                );
             });
-        });
 
-        describe('deletion fails', () => {
-            it('should execute without errors', async () => {
-                const event: SchuleDeletedEvent = new SchuleDeletedEvent(faker.string.uuid(), '1234567', 'Teschule');
+            it('should log error if createLehrer Operation fails', async () => {
+                rolle.rollenart = RollenArt.LEHR;
+                person.referrer = 'user123';
+                orga.kennung = '12345678';
 
-                const result: Result<Organisation<true>> = {
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                    'test@schule-spsh.de',
+                );
+
+                ldapClientServiceMock.isLehrerExisting.mockResolvedValueOnce({
+                    ok: true,
+                    value: false,
+                });
+
+                ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
                     ok: false,
-                    error: new Error(),
-                };
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                });
 
-                ldapClientServiceMock.deleteOrganisation.mockResolvedValueOnce(result);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
 
-                await ldapEventHandler.handleSchuleDeletedEvent(event);
-                expect(ldapClientServiceMock.deleteOrganisation).toHaveBeenCalledTimes(1);
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining('Create Lehrer Operation failed'),
+                );
             });
         });
 
-        it('should skip event, if kennung is undefined', async () => {
-            const organisationId: string = faker.string.uuid();
-            const event: SchuleDeletedEvent = new SchuleDeletedEvent(organisationId, undefined, faker.word.noun());
+        describe('MigrationRunType: ITSLEARNING', () => {
+            const migrationType: PersonenkontextMigrationRuntype = PersonenkontextMigrationRuntype.ITSLEARNING;
+            it('should do nothing', async () => {
+                const personenkontext: Personenkontext<true> = createMock<Personenkontext<true>>();
+                const person: Person<true> = createMock<Person<true>>();
+                const rolle: Rolle<true> = createMock<Rolle<true>>();
+                const orga: Organisation<true> = createMock<Organisation<true>>();
 
-            await ldapEventHandler.handleSchuleDeletedEvent(event);
+                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                    migrationType,
+                    personenkontext,
+                    person,
+                    rolle,
+                    orga,
+                );
 
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                `Received SchuleDeletedEvent, organisationId:${organisationId}`,
-            );
-            expect(loggerMock.error).toHaveBeenCalledWith('Schule has no kennung. Aborting.');
-            expect(ldapClientServiceMock.deleteOrganisation).not.toHaveBeenCalled();
+                await ldapEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Do Nothing because PersonenkontextMigrationRuntype is Not STANDARD'),
+                );
+            });
         });
     });
 
@@ -441,9 +393,52 @@ describe('LDAP Event Handler', () => {
                 [],
             );
 
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
             expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(1);
+        });
+
+        it('when organisation of created PK has no valid emailDomain should log error', async () => {
+            const createdPKOrgaId: string = faker.string.uuid();
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: createdPKOrgaId,
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+                [],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(undefined);
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `LdapClientService createLehrer NOT called, because organisation:${createdPKOrgaId} has no valid emailDomain`,
+            );
+            expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
         });
 
         it('should call ldap client for every deleted personenkontext with correct role', async () => {
@@ -476,9 +471,52 @@ describe('LDAP Event Handler', () => {
                 [],
             );
 
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
             expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+        });
+
+        it('when organisation of deleted PK has no valid emailDomain should log error', async () => {
+            const removedOrgaId: string = faker.string.uuid();
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [],
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: removedOrgaId,
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(undefined);
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `LdapClientService deleteLehrer NOT called, because organisation:${removedOrgaId} has no valid emailDomain`,
+            );
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
         });
 
         describe('when ldap client fails', () => {
@@ -504,6 +542,8 @@ describe('LDAP Event Handler', () => {
                     [],
                 );
                 ldapClientServiceMock.createLehrer.mockResolvedValueOnce({ ok: false, error: new Error('Error') });
+
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
 
                 await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
@@ -537,9 +577,29 @@ describe('LDAP Event Handler', () => {
                 error: new Error('Error'),
             });
 
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
             expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('handleEmailAddressGeneratedEvent', () => {
+        it('should call ldap client changeEmailAddressByPersonId', async () => {
+            const event: EmailAddressGeneratedEvent = new EmailAddressGeneratedEvent(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.internet.email(),
+                true,
+            );
+
+            await ldapEventHandler.handleEmailAddressGeneratedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
+            );
+            expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });
     });
 });

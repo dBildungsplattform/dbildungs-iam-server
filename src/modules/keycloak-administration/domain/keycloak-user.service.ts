@@ -14,22 +14,20 @@ import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
 import { ExternalSystemIDs, User } from './user.js';
+import { UserLockRepository } from '../repository/user-lock.repository.js';
+import { UserLock } from './user-lock.js';
 
 export type FindUserFilter = {
     username?: string;
     email?: string;
 };
 
-export enum LockKeys {
-    LockedFrom = 'lock_locked_from',
-    Timestamp = 'lock_timestamp',
-}
-
 @Injectable()
 export class KeycloakUserService {
     public constructor(
         private readonly kcAdminService: KeycloakAdministrationService,
         private readonly logger: ClassLogger,
+        private readonly userLockRepository: UserLockRepository,
     ) {}
 
     public async create(user: User<false>, password?: string): Promise<Result<string, DomainError>> {
@@ -178,9 +176,6 @@ export class KeycloakUserService {
         oxUserName: OXUserName,
         oxContextName: OXContextName,
     ): Promise<Result<void, DomainError>> {
-        const filter: FindUserFilter = {
-            username: username,
-        };
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -188,39 +183,25 @@ export class KeycloakUserService {
             return kcAdminClientResult;
         }
 
-        const userResult: Result<UserRepresentation[], DomainError> = await this.wrapClientResponse(
-            kcAdminClientResult.value.users.find({ ...filter, exact: true }),
-        );
-        if (!userResult.ok) {
-            return userResult;
-        }
+        const keycloakUserResult: Result<UserRepresentation, DomainError> =
+            await this.tryToFindKeycloakUserByUsernameForUpdate(kcAdminClientResult.value, username);
 
-        if (!userResult.value[0]) {
-            return {
-                ok: false,
-                error: new EntityNotFoundError(`Keycloak User could not be found`),
-            };
+        if (!keycloakUserResult.ok) {
+            return keycloakUserResult;
         }
-
-        const userRepresentation: UserRepresentation = userResult.value[0];
-        if (!userRepresentation.id) {
-            return {
-                ok: false,
-                error: new EntityNotFoundError(`Keycloak User has no id`),
-            };
-        }
-
+        const userRepresentation: UserRepresentation = keycloakUserResult.value;
         const attributes: Record<string, string[]> | undefined = userRepresentation.attributes ?? {};
 
         attributes['ID_OX'] = [oxUserName + '@' + oxContextName];
 
         const updatedUserRepresentation: UserRepresentation = {
             //only attributes shall be updated here for this event
+            username: userRepresentation.username,
             attributes: attributes,
         };
 
         try {
-            await kcAdminClientResult.value.users.update({ id: userRepresentation.id }, updatedUserRepresentation);
+            await kcAdminClientResult.value.users.update({ id: userRepresentation.id! }, updatedUserRepresentation);
             this.logger.info(`Updated user-attributes for user:${userRepresentation.id}`);
 
             return { ok: true, value: undefined };
@@ -350,6 +331,40 @@ export class KeycloakUserService {
         if (password.createdDate - userResult.value.createdTimestamp <= tolerance)
             return { ok: false, error: new KeycloakClientError('Keycloak user password has never been updated') };
         return { ok: true, value: new Date(password.createdDate) };
+    }
+
+    public async updateUsername(username: string, newUsername: string): Promise<Result<void, DomainError>> {
+        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
+            await this.kcAdminService.getAuthedKcAdminClient();
+
+        if (!kcAdminClientResult.ok) {
+            return kcAdminClientResult;
+        }
+
+        const keycloakUserResult: Result<UserRepresentation, DomainError> =
+            await this.tryToFindKeycloakUserByUsernameForUpdate(kcAdminClientResult.value, username);
+
+        if (!keycloakUserResult.ok) {
+            return keycloakUserResult;
+        }
+
+        const updatedUserRepresentation: UserRepresentation = {
+            username: newUsername,
+        };
+
+        try {
+            await kcAdminClientResult.value.users.update(
+                { id: keycloakUserResult.value.id! },
+                updatedUserRepresentation,
+            );
+            this.logger.info(`Updated username for user:${keycloakUserResult.value.id}`);
+
+            return { ok: true, value: undefined };
+        } catch (err) {
+            this.logger.error(`Could not update username, message: ${JSON.stringify(err)}`);
+
+            return { ok: false, error: new KeycloakClientError('Could not update username') };
+        }
     }
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {
@@ -491,9 +506,10 @@ export class KeycloakUserService {
     }
 
     public async updateKeycloakUserStatus(
-        userId: string,
+        personId: string,
+        keyCloakUserId: string,
         enabled: boolean,
-        customAttributes?: Record<string, string>,
+        userLock: UserLock,
     ): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -503,53 +519,20 @@ export class KeycloakUserService {
 
         try {
             const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
-            await kcAdminClient.users.update({ id: userId }, { enabled });
-
-            if (customAttributes) {
-                await this.updateCustomAttributes(kcAdminClient, userId, customAttributes);
-            }
-
+            await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled });
             if (enabled) {
-                await this.removeLockedAttributes(kcAdminClient, userId);
+                await this.userLockRepository.deleteUserLock(personId);
+            } else {
+                await this.userLockRepository.createUserLock(userLock);
             }
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Could not update user status or custom attributes, message: ${JSON.stringify(err)}`);
+            this.logger.error(`Could not update user status or database, message: ${JSON.stringify(err)}`);
             return {
                 ok: false,
-                error: new KeycloakClientError('Could not update user status or custom attributes'),
+                error: new KeycloakClientError('Could not update user status or database'),
             };
-        }
-    }
-
-    private async updateCustomAttributes(
-        kcAdminClient: KeycloakAdminClient,
-        userId: string,
-        customAttributes: Record<string, string>,
-    ): Promise<void> {
-        const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
-        if (user) {
-            user.attributes = user.attributes ?? {};
-            for (const key in customAttributes) {
-                if (customAttributes.hasOwnProperty(key)) {
-                    user.attributes[key] = [customAttributes[key]];
-                }
-            }
-            await kcAdminClient.users.update({ id: userId }, user);
-        }
-    }
-
-    private async removeLockedAttributes(kcAdminClient: KeycloakAdminClient, userId: string): Promise<void> {
-        const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
-        if (user) {
-            user.attributes = user.attributes ?? {};
-            const filteredAttributes: Record<string, string[]> = Object.fromEntries(
-                Object.entries(user.attributes).filter(([key]: string[]) => !(key! in LockKeys)),
-            );
-
-            user.attributes = filteredAttributes;
-            await kcAdminClient.users.update({ id: userId }, user);
         }
     }
 
@@ -567,5 +550,40 @@ export class KeycloakUserService {
             this.logger.error(`Could not load keycloak userdata, message: ${JSON.stringify(err)}`);
             return undefined;
         }
+    }
+
+    private async tryToFindKeycloakUserByUsernameForUpdate(
+        kcAdminClient: KeycloakAdminClient,
+        username: string,
+    ): Promise<Result<UserRepresentation, DomainError>> {
+        const filter: FindUserFilter = {
+            username: username,
+        };
+        const userResult: Result<UserRepresentation[], DomainError> = await this.wrapClientResponse(
+            kcAdminClient.users.find({ ...filter, exact: true }),
+        );
+        if (!userResult.ok) {
+            return userResult;
+        }
+
+        if (!userResult.value[0]) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError(`Keycloak User could not be found`),
+            };
+        }
+
+        const userRepresentation: UserRepresentation = userResult.value[0];
+        if (!userRepresentation.id) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError(`Keycloak User has no id`),
+            };
+        }
+
+        return {
+            ok: true,
+            value: userRepresentation,
+        };
     }
 }

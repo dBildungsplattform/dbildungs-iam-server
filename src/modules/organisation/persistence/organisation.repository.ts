@@ -6,6 +6,7 @@ import {
     RequiredEntityData,
     SelectQueryBuilder,
     EntityDictionary,
+    QueryOrder,
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -40,6 +41,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         typ: organisation.typ,
         traegerschaft: organisation.traegerschaft,
         emailDomain: organisation.emailDomain,
+        emailAddress: organisation.emailAdress,
     };
 }
 
@@ -57,6 +59,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.typ,
         entity.traegerschaft,
         entity.emailDomain,
+        entity.emailAddress,
     );
 }
 
@@ -199,6 +202,25 @@ export class OrganisationRepository {
         return res;
     }
 
+    /**
+     * Uses findParentOrgasForIdSortedByDepthAsc method to search for the first occurrence of an email-domain in the tree of organisations starting from passed organisationId.
+     * @param id start of search (leaf)
+     */
+    public async findEmailDomainForOrganisation(id: OrganisationID): Promise<string | undefined> {
+        const organisations: Organisation<true>[] = await this.findParentOrgasForIdSortedByDepthAsc(id);
+        const emailDomain: Option<string> = this.getDomainRecursive(organisations);
+
+        return emailDomain ?? undefined;
+    }
+
+    private getDomainRecursive(organisationsSortedByDepthAsc: Organisation<true>[]): Option<string> {
+        if (!organisationsSortedByDepthAsc || organisationsSortedByDepthAsc.length == 0) return undefined;
+        if (organisationsSortedByDepthAsc[0] && organisationsSortedByDepthAsc[0].emailDomain)
+            return organisationsSortedByDepthAsc[0].emailDomain;
+
+        return this.getDomainRecursive(organisationsSortedByDepthAsc.slice(1));
+    }
+
     public async isOrgaAParentOfOrgaB(
         organisationIdA: OrganisationID,
         organisationIdB: OrganisationID,
@@ -261,16 +283,24 @@ export class OrganisationRepository {
     public async findByNameOrKennungAndExcludeByOrganisationType(
         excludeOrganisationType: OrganisationsTyp,
         searchStr?: string,
+        permittedOrgaIds?: string[],
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
 
+        // Set up the query with the search string, limit, and excluded type
         scope
             .searchString(searchStr)
             .setScopeWhereOperator(ScopeOperator.AND)
             .paged(0, limit)
             .excludeTyp([excludeOrganisationType]);
 
+        // If permitted organization IDs are provided, add them to the query scope
+        if (permittedOrgaIds && permittedOrgaIds.length > 0) {
+            scope.filterByIds(permittedOrgaIds);
+        }
+
+        // Execute the query and return the result
         let foundOrganisations: Organisation<true>[] = [];
         [foundOrganisations] = await this.findBy(scope);
 
@@ -289,10 +319,24 @@ export class OrganisationRepository {
         personPermissions: PersonPermissions,
         systemrechte: RollenSystemRecht[],
         searchOptions: OrganisationSeachOptions,
-    ): Promise<Counted<Organisation<true>>> {
+    ): Promise<[Organisation<true>[], total: number, pageTotal: number]> {
         const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
-            return [[], 0];
+            return [[], 0, 0];
+        }
+
+        let entitiesForIds: OrganisationEntity[] = [];
+        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
+
+        if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
+            const organisationIds: string[] = permittedOrgas.all
+                ? searchOptions.organisationIds
+                : searchOptions.organisationIds.filter((id: string) => permittedOrgas.orgaIds.includes(id));
+            const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
+                .select('*')
+                .where({ id: { $in: organisationIds } })
+                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }]);
+            entitiesForIds = (await queryForIds.getResultAndCount())[0];
         }
 
         let whereClause: QBFilterQuery<OrganisationEntity> = {};
@@ -310,7 +354,12 @@ export class OrganisationRepository {
             andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
         }
         if (searchOptions.searchString) {
-            andClauses.push({ name: { $ilike: `%${searchOptions.searchString}%` } });
+            andClauses.push({
+                $or: [
+                    { name: { $ilike: `%${searchOptions.searchString}%` } },
+                    { kennung: { $ilike: `%${searchOptions.searchString}%` } },
+                ],
+            });
         }
         if (searchOptions.excludeTyp) {
             andClauses.push({ typ: { $nin: searchOptions.excludeTyp } });
@@ -318,27 +367,45 @@ export class OrganisationRepository {
         if (andClauses.length > 0) {
             whereClause = { $and: andClauses };
         }
-        // return organisations for IDs even if other search options do not match
-        if (searchOptions.organisationIds) {
-            whereClause = { $or: [whereClause, { id: { $in: searchOptions.organisationIds } }] };
-        }
         // return only permitted organisations
         if (!permittedOrgas.all) {
             whereClause = { $and: [whereClause, { id: { $in: permittedOrgas.orgaIds } }] };
         }
 
-        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
         const query: SelectQueryBuilder<OrganisationEntity> = qb
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
+            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
             .limit(searchOptions.limit);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
-        const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
+        const result: OrganisationEntity[] = [...entitiesForIds];
+        let duplicates: number = 0;
+        for (const entity of entities) {
+            if (!result.find((orga: OrganisationEntity) => orga.id === entity.id)) {
+                result.push(entity);
+            } else {
+                duplicates++;
+            }
+        }
+
+        const organisations: Organisation<true>[] = result.map((entity: OrganisationEntity) =>
             mapEntityToAggregate(entity),
         );
-        return [organisations, total];
+
+        // Calculate pageTotal (excluding entitiesForIds when searchString is present
+        // Otherwise we show a wrong number in the filter since the selected orgas are always returned regardless if we search for them or not)
+        const pageTotal: number = searchOptions.searchString
+            ? Math.min(entities.length, searchOptions.limit || entities.length)
+            : Math.min(organisations.length, searchOptions.limit || organisations.length);
+
+        // Apply limit to the final result
+        if (searchOptions.limit && organisations.length > searchOptions.limit) {
+            organisations.splice(searchOptions.limit);
+        }
+
+        return [organisations, total + entitiesForIds.length - duplicates, pageTotal];
     }
 
     public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {
@@ -378,9 +445,9 @@ export class OrganisationRepository {
                 }
             }
         }
-        const organisationEntity: Organisation<true> = await this.save(organisationFound);
+        const organisationEntity: Organisation<true> | OrganisationSpecificationError =
+            await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
-
         return organisationEntity;
     }
 

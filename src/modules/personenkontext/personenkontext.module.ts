@@ -9,6 +9,8 @@ import { DbiamPersonenkontextFactory } from './domain/dbiam-personenkontext.fact
 import { EventModule } from '../../core/eventbus/index.js';
 import { PersonenkontextSpecificationsModule } from './specification/PersonenkontextSpecificationsModule.js';
 import { PersonenkontextPersistenceModule } from './persistence/PersonenkontextPersistenceModule.js';
+import { PersonenkontextCreationService } from './domain/personenkontext-creation.service.js';
+import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow.factory.js';
 
 @Module({
     imports: [
@@ -18,15 +20,29 @@ import { PersonenkontextPersistenceModule } from './persistence/PersonenkontextP
         OrganisationModule,
         PersonenkontextSpecificationsModule,
         PersonenkontextPersistenceModule,
+        PersonenkontextCreationService,
+        PersonenkontextWorkflowFactory,
         LoggerModule.register(PersonenKontextModule.name),
     ],
-    providers: [PersonenkontextService, DBiamPersonenkontextService, DbiamPersonenkontextFactory],
+    providers: [
+        PersonenkontextRepo,
+        PersonenkontextService,
+        DBiamPersonenkontextService,
+        DBiamPersonenkontextRepo,
+        DBiamPersonenkontextRepoInternal,
+        DbiamPersonenkontextFactory,
+        PersonenkontextFactory,
+        PersonenkontextCreationService,
+        PersonenkontextWorkflowFactory,
+    ],
     exports: [
         PersonenkontextService,
         DBiamPersonenkontextService,
         DbiamPersonenkontextFactory,
         PersonenkontextPersistenceModule,
         PersonenkontextSpecificationsModule,
+        PersonenkontextCreationService,
+        PersonenkontextWorkflowFactory,
     ],
 })
 export class PersonenKontextModule {}

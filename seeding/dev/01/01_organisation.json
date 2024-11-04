@@ -38,7 +38,8 @@
             "kuerzel": "A-Sieveking-",
             "typ": "SCHULE",
             "administriertVon": 1,
-            "zugehoerigZu": 1
+            "zugehoerigZu": 1,
+            "emailAdress": "amalie.sieverking@schule-sh.de"
         },
         {
             "id": 4,
@@ -48,7 +49,8 @@
             "kuerzel": "C-Orff-Schule",
             "typ": "SCHULE",
             "administriertVon": 1,
-            "zugehoerigZu": 1
+            "zugehoerigZu": 1,
+            "emailAdress": "c.orff@schule-sh.de"
         },
         {
             "id": 5,
@@ -58,7 +60,8 @@
             "kuerzel": "E-Kandel-Gymn",
             "typ": "SCHULE",
             "administriertVon": 1,
-            "zugehoerigZu": 1
+            "zugehoerigZu": 1,
+            "emailAdress": "eric.kandell@schule-sh.de"
         },
         {
             "id": 6,
@@ -78,7 +81,8 @@
             "kuerzel": "O5",
             "typ": "SCHULE",
             "administriertVon": 1,
-            "zugehoerigZu": 1
+            "zugehoerigZu": 1,
+            "emailAdress": "schulverband.shared@schule-sh.de"
         },
         {
             "id": 8,
@@ -88,7 +92,8 @@
             "kuerzel": "O6",
             "typ": "SCHULE",
             "administriertVon": 1,
-            "zugehoerigZu": 1
+            "zugehoerigZu": 1,
+            "emailAdress": "schulverband.shared@schule-sh.de"
         },
         {
             "id": 9,
@@ -102,50 +107,40 @@
         },
         {
             "id": 10,
-            "kennung": "0703754-11a",
             "name": "11a Geographisches Profil",
             "namensergaenzung": "Keine",
-            "kuerzel": "A-Sieveking-11a-Geo",
             "typ": "KLASSE",
             "administriertVon": 3,
             "zugehoerigZu": 3
         },
         {
             "id": 11,
-            "kennung": "0702948-9a",
             "name": "9a",
             "namensergaenzung": "Keine",
-            "kuerzel": "C-Orff-9a",
             "typ": "KLASSE",
             "administriertVon": 4,
             "zugehoerigZu": 4
         },
         {
             "id": 12,
-            "kennung": "0703754-9a",
             "name": "9a",
             "namensergaenzung": "Keine",
-            "kuerzel": "A-Sieveking-9a",
             "typ": "KLASSE",
             "administriertVon": 3,
             "zugehoerigZu": 3
         },
         {
             "id": 13,
-            "kennung": "1111111-3a",
             "name": "Playwright3a",
             "namensergaenzung": "Keine",
-            "kuerzel": "Testschule-3a",
             "typ": "KLASSE",
             "administriertVon": 9,
             "zugehoerigZu": 9
         },
         {
             "id": 14,
-            "kennung": "1111111-4b",
             "name": "Playwright4b",
             "namensergaenzung": "Keine",
-            "kuerzel": "Testschule-4b",
             "typ": "KLASSE",
             "administriertVon": 9,
             "zugehoerigZu": 9

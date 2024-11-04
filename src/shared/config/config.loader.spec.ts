@@ -38,6 +38,7 @@ describe('configloader', () => {
                     REALM_NAME: 'schulportal',
                     CLIENT_ID: 'schulportal',
                     TEST_CLIENT_ID: 'schulportal-test',
+                    SERVICE_CLIENT_ID: 'spsh-service',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -56,6 +57,7 @@ describe('configloader', () => {
                     ENABLED: 'true',
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
+                    ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
                 },
@@ -77,7 +79,11 @@ describe('configloader', () => {
 
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
-                KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
+                KEYCLOAK: {
+                    ADMIN_SECRET: 'AdminClientSecret',
+                    CLIENT_SECRET: 'ClientSecret',
+                    SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
+                },
                 LDAP: { ADMIN_PASSWORD: 'password' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
                 REDIS: { PASSWORD: 'password' },
@@ -138,6 +144,8 @@ describe('configloader', () => {
                     ADMIN_SECRET: 'geheimer Admin',
                     CLIENT_SECRET: 'geheimer client',
                     TEST_CLIENT_ID: 'schulportal-test',
+                    SERVICE_CLIENT_ID: 'spsh-service',
+                    SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -159,6 +167,7 @@ describe('configloader', () => {
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
                 },

@@ -2,24 +2,24 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DoFactory, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import {
     PersonenkontextUpdatedData,
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
+import { Person } from '../../person/domain/person.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { CreateMembershipsAction } from '../actions/create-memberships.action.js';
-import { CreatePersonAction } from '../actions/create-person.action.js';
-import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js';
-import { DeletePersonAction } from '../actions/delete-person.action.js';
-import { MembershipResponse } from '../actions/read-memberships-for-person.action.js';
-import { ItsLearningIMSESService } from '../itslearning.service.js';
-import { IMSESInstitutionRoleType, IMSESRoleType } from '../types/role.enum.js';
+import { PersonResponse } from '../actions/read-person.action.js';
+import { ItslearningMembershipRepo, SetMembershipsResult } from '../repo/itslearning-membership.repo.js';
+import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
+import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { ItsLearningPersonsEventHandler } from './itslearning-persons.event-handler.js';
 
 function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData> | undefined): PersonenkontextUpdatedData {
@@ -36,7 +36,8 @@ describe('ItsLearning Persons Event Handler', () => {
     let module: TestingModule;
 
     let sut: ItsLearningPersonsEventHandler;
-    let itsLearningServiceMock: DeepMocked<ItsLearningIMSESService>;
+    let itslearningPersonRepoMock: DeepMocked<ItslearningPersonRepo>;
+    let itslearningMembershipRepoMock: DeepMocked<ItslearningMembershipRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -45,14 +46,19 @@ describe('ItsLearning Persons Event Handler', () => {
             providers: [
                 ItsLearningPersonsEventHandler,
                 {
-                    provide: ItsLearningIMSESService,
-                    useValue: createMock<ItsLearningIMSESService>(),
+                    provide: ItslearningPersonRepo,
+                    useValue: createMock<ItslearningPersonRepo>(),
+                },
+                {
+                    provide: ItslearningMembershipRepo,
+                    useValue: createMock<ItslearningMembershipRepo>(),
                 },
             ],
         }).compile();
 
         sut = module.get(ItsLearningPersonsEventHandler);
-        itsLearningServiceMock = module.get(ItsLearningIMSESService);
+        itslearningPersonRepoMock = module.get(ItslearningPersonRepo);
+        itslearningMembershipRepoMock = module.get(ItslearningMembershipRepo);
         loggerMock = module.get(ClassLogger);
     });
 
@@ -69,213 +75,143 @@ describe('ItsLearning Persons Event Handler', () => {
     });
 
     describe('updateMemberships', () => {
-        describe('when kontexte were removed', () => {
-            it('general', async () => {
-                const personId: string = faker.string.uuid();
-                const currentKontexte: PersonenkontextUpdatedData[] = [];
-                const removedKontexte: PersonenkontextUpdatedData[] = [];
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: [],
-                } satisfies Result<MembershipResponse[]>); // Read Memberships
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                } satisfies Result<void>); // DeleteMembershipsAction
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                } satisfies Result<void>); // CreateMembershipsAction
+        it('should call repo with current kontexte', async () => {
+            const personId: string = faker.string.uuid();
+            const currentKontexte: PersonenkontextUpdatedData[] = [makeKontextEventData()];
+            itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({
+                ok: true,
+                value: { deleted: 0, updated: 1 },
+            } satisfies Result<SetMembershipsResult, DomainError>);
 
-                await sut.updateMemberships(personId, currentKontexte, removedKontexte);
-            });
+            await sut.updateMemberships(personId, currentKontexte);
+
+            expect(itslearningMembershipRepoMock.setMemberships).toHaveBeenCalledTimes(1);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Set ${currentKontexte.length} memberships for person ${personId}`,
+            );
         });
 
-        describe('adding/updating memberships', () => {
-            it('should update all memberships we know of', async () => {
-                const personId: string = faker.string.uuid();
-                const currentKontexte: PersonenkontextUpdatedData[] = [makeKontextEventData(), makeKontextEventData()];
-                const removedKontexte: PersonenkontextUpdatedData[] = [];
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: [],
-                } satisfies Result<MembershipResponse[]>); // Read Memberships
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                } satisfies Result<void>); // CreateMembershipsAction
+        it('should log errors', async () => {
+            const error: DomainError = new ItsLearningError('Test Error');
+            const personId: string = faker.string.uuid();
+            const currentKontexte: PersonenkontextUpdatedData[] = [makeKontextEventData()];
+            itslearningMembershipRepoMock.setMemberships.mockResolvedValueOnce({ ok: false, error } satisfies Result<
+                SetMembershipsResult,
+                DomainError
+            >);
 
-                await sut.updateMemberships(personId, currentKontexte, removedKontexte);
+            await sut.updateMemberships(personId, currentKontexte);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(`Created/Updated 2 memberships for person ${personId}`);
-            });
-
-            it('should combine personenkontexte at one organisation into one membership', async () => {
-                const personId: string = faker.string.uuid();
-                const orgaId: string = faker.string.uuid();
-                const currentKontexte: PersonenkontextUpdatedData[] = [
-                    makeKontextEventData({ orgaId, rolle: RollenArt.LEHR }),
-                    makeKontextEventData({ orgaId, rolle: RollenArt.LEIT }),
-                ];
-                const removedKontexte: PersonenkontextUpdatedData[] = [];
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: [],
-                } satisfies Result<MembershipResponse[]>); // Read Memberships
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                } satisfies Result<void>); // CreateMembershipsAction
-
-                await sut.updateMemberships(personId, currentKontexte, removedKontexte);
-
-                expect(loggerMock.info).toHaveBeenCalledWith(`Created/Updated 1 memberships for person ${personId}`);
-            });
-
-            describe('when creating/updating failed', () => {
-                it('should log error', async () => {
-                    const personId: string = faker.string.uuid();
-                    const kontext: PersonenkontextUpdatedData = makeKontextEventData();
-                    const currentKontexte: PersonenkontextUpdatedData[] = [kontext];
-                    const removedKontexte: PersonenkontextUpdatedData[] = [];
-                    const error: DomainError = new ItsLearningError('CreateMembershipsAction Error');
-                    itsLearningServiceMock.send.mockResolvedValueOnce({
-                        ok: true,
-                        value: [{ groupId: kontext.orgaId, id: kontext.id, role: IMSESRoleType.INSTRUCTOR }],
-                    } satisfies Result<MembershipResponse[]>); // Read Memberships
-                    itsLearningServiceMock.send.mockResolvedValueOnce({
-                        ok: false,
-                        error,
-                    } satisfies Result<void>); // CreateMembershipsAction
-
-                    await sut.updateMemberships(personId, currentKontexte, removedKontexte);
-
-                    expect(loggerMock.error).toHaveBeenCalledWith(
-                        `Could not create/update 1 memberships for person ${personId}`,
-                        error,
-                    );
-                });
-            });
-
-            describe('when person has no kontexte', () => {
-                it('should not send create/update request', async () => {
-                    const personId: string = faker.string.uuid();
-                    const currentKontexte: PersonenkontextUpdatedData[] = [];
-                    const removedKontexte: PersonenkontextUpdatedData[] = [];
-                    itsLearningServiceMock.send.mockResolvedValueOnce({
-                        ok: true,
-                        value: [],
-                    } satisfies Result<MembershipResponse[]>); // Read Memberships
-
-                    await sut.updateMemberships(personId, currentKontexte, removedKontexte);
-
-                    expect(itsLearningServiceMock.send).not.toHaveBeenCalledWith(expect.any(CreateMembershipsAction));
-                });
-            });
-        });
-
-        describe('deleting memberships', () => {
-            it('should only delete memberships that are in itslearning', async () => {
-                const personId: string = faker.string.uuid();
-                const kontext: PersonenkontextUpdatedData = makeKontextEventData();
-                const currentKontexte: PersonenkontextUpdatedData[] = [];
-                const removedKontexte: PersonenkontextUpdatedData[] = [kontext, makeKontextEventData()];
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: [{ groupId: kontext.orgaId, id: kontext.id, role: IMSESRoleType.INSTRUCTOR }],
-                } satisfies Result<MembershipResponse[]>); // Read Memberships
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                } satisfies Result<void>); // DeleteMembershipsAction
-
-                await sut.updateMemberships(personId, currentKontexte, removedKontexte);
-
-                expect(loggerMock.info).toHaveBeenCalledWith(`Deleted 1 memberships for person ${personId}`);
-            });
-
-            describe('when deleting failed', () => {
-                it('should log error', async () => {
-                    const personId: string = faker.string.uuid();
-                    const kontext: PersonenkontextUpdatedData = makeKontextEventData();
-                    const currentKontexte: PersonenkontextUpdatedData[] = [];
-                    const removedKontexte: PersonenkontextUpdatedData[] = [kontext];
-                    const error: DomainError = new ItsLearningError('DeleteMembershipsAction Error');
-                    itsLearningServiceMock.send.mockResolvedValueOnce({
-                        ok: true,
-                        value: [{ groupId: kontext.orgaId, id: kontext.id, role: IMSESRoleType.INSTRUCTOR }],
-                    } satisfies Result<MembershipResponse[]>); // Read Memberships
-                    itsLearningServiceMock.send.mockResolvedValueOnce({
-                        ok: false,
-                        error,
-                    } satisfies Result<void>); // DeleteMembershipsAction
-
-                    await sut.updateMemberships(personId, currentKontexte, removedKontexte);
-
-                    expect(loggerMock.error).toHaveBeenCalledWith(
-                        `Could not delete 1 memberships for person ${personId}`,
-                        error,
-                    );
-                });
-            });
-
-            describe('when person has no memberships but kontexte were removed', () => {
-                it('should not send delete request', async () => {
-                    const personId: string = faker.string.uuid();
-                    const currentKontexte: PersonenkontextUpdatedData[] = [];
-                    const removedKontexte: PersonenkontextUpdatedData[] = [makeKontextEventData()];
-                    itsLearningServiceMock.send.mockResolvedValueOnce({
-                        ok: true,
-                        value: [],
-                    } satisfies Result<MembershipResponse[]>); // Read Memberships
-
-                    await sut.updateMemberships(personId, currentKontexte, removedKontexte);
-
-                    expect(itsLearningServiceMock.send).not.toHaveBeenCalledWith(expect.any(DeleteMembershipsAction));
-                });
-            });
-        });
-
-        describe('when no memberships could be retrieved', () => {
-            it('should log error and return', async () => {
-                const personId: string = faker.string.uuid();
-                const currentKontexte: PersonenkontextUpdatedData[] = [];
-                const removedKontexte: PersonenkontextUpdatedData[] = [];
-                const error: DomainError = new ItsLearningError('ReadMembershipsForPersonAction Error');
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: false,
-                    error,
-                } satisfies Result<MembershipResponse[]>); // Read Memberships
-
-                await sut.updateMemberships(personId, currentKontexte, removedKontexte);
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not retrieve memberships for ${personId}, the user might not exist.`,
-                    error,
-                );
-                expect(itsLearningServiceMock.send).toHaveBeenCalledTimes(1);
-            });
+            expect(itslearningMembershipRepoMock.setMemberships).toHaveBeenCalledTimes(1);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `Could not set ${currentKontexte.length} memberships for person ${personId}`,
+                error,
+            );
         });
     });
 
     describe('deletePerson', () => {
         it('should delete person in itsLearning', async () => {
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined });
-
-            await sut.deletePerson(faker.string.uuid());
-
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction));
-        });
-
-        it('should log error if person could not be deleted', async () => {
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() });
             const personID: string = faker.string.uuid();
+            itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(undefined);
 
             await sut.deletePerson(personID);
 
+            expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID);
+            expect(loggerMock.info).toHaveBeenCalledWith(`Person with ID ${personID} deleted.`);
+        });
+
+        it('should log error if person could not be deleted', async () => {
+            const personID: string = faker.string.uuid();
+            itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(new ItsLearningError('Test Error'));
+
+            await sut.deletePerson(personID);
+
+            expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID);
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `Could not delete person with ID ${personID} from itsLearning.`,
             );
+        });
+    });
+
+    describe('personRenamedEventHandler', () => {
+        function createPersonAndResponse(params: Partial<Person<true>> = {}): [Person<true>, PersonResponse] {
+            if (!('referrer' in params)) {
+                params.referrer = faker.internet.userName();
+            }
+
+            const person: Person<true> = DoFactory.createPerson(true, params);
+
+            const readPersonResponse: PersonResponse = {
+                username: person.id,
+                firstName: faker.person.firstName(),
+                lastName: faker.person.lastName(),
+                primaryRoleType: true,
+                institutionRole: faker.helpers.enumValue(IMSESInstitutionRoleType),
+            };
+
+            return [person, readPersonResponse];
+        }
+
+        it('should send person to itsLearning', async () => {
+            const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
+            itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
+            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined); // Create person
+
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
+
+            expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith({
+                id: person.id,
+                firstName: person.vorname,
+                lastName: person.familienname,
+                username: person.referrer,
+                institutionRoleType: personResponse.institutionRole,
+            });
+            expect(loggerMock.info).toHaveBeenCalledWith(`Person with ID ${person.id} updated in itsLearning!`);
+        });
+
+        it('should log error if person could not be updated', async () => {
+            const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
+            itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
+            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Create person
+
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
+
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `Person with ID ${person.id} could not be updated in itsLearning!`,
+            );
+        });
+
+        describe('when person is invalid', () => {
+            it('should log error, if person has no referrer', async () => {
+                const [person]: [Person<true>, PersonResponse] = createPersonAndResponse({ referrer: undefined });
+
+                await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
+
+                expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${person.id} has no username!`);
+            });
+        });
+
+        describe("when person doesn't exist in itslearning", () => {
+            it('should log info', async () => {
+                const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
+                itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(undefined); // Read person
+
+                await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Person with ID ${person.id} is not in itslearning, ignoring.`,
+                );
+            });
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
+
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
         });
     });
 
@@ -288,41 +224,34 @@ describe('ItsLearning Persons Event Handler', () => {
         };
 
         it('should send person to itsLearning', async () => {
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: false,
-                error: createMock(),
-            }); // Read person
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: undefined,
-            }); // Send person
+            const kontextData: PersonenkontextUpdatedData = makeKontextEventData({ rolle: RollenArt.LERN });
+            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
 
-            await sut.updatePerson(person, [createMock()]);
+            await sut.updatePerson(person, [kontextData]);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreatePersonAction));
+            expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith({
+                id: person.id,
+                firstName: person.vorname,
+                lastName: person.familienname,
+                username: person.referrer,
+                institutionRoleType: IMSESInstitutionRoleType.STUDENT,
+            });
+            expect(loggerMock.info).toHaveBeenCalledWith(`Person with ID ${person.id} created in itsLearning!`);
         });
 
         it('should log error if person could not be created', async () => {
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: false,
-                error: createMock(),
-            });
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() });
+            const kontextData: PersonenkontextUpdatedData = makeKontextEventData({ rolle: RollenArt.LERN });
+            itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(new ItsLearningError('Test Error'));
 
-            await sut.updatePerson(person, [createMock()]);
+            await sut.updatePerson(person, [kontextData]);
 
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `Person with ID ${person.id} could not be sent to itsLearning!`,
+                `Person with ID ${person.id} could not be sent to itsLearning! Error: Test Error`,
             );
         });
 
         describe('when person is invalid', () => {
             it('should log error, if person has no referrer', async () => {
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: false,
-                    error: createMock(),
-                });
-
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { referrer, ...personWithoutReferrer }: PersonenkontextUpdatedPersonData = person;
 
@@ -331,18 +260,45 @@ describe('ItsLearning Persons Event Handler', () => {
                 expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${person.id} has no username!`);
             });
         });
+    });
 
-        describe('when person with correct role already exists', () => {
-            it('should skip creation', async () => {
-                itsLearningServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: { institutionRole: IMSESInstitutionRoleType.STAFF },
-                });
+    describe('oxUserChangedEventHandler', () => {
+        const personId: string = faker.string.uuid();
+        const email: string = faker.internet.email();
+        const generatedEvent: OxUserChangedEvent = new OxUserChangedEvent(
+            personId,
+            faker.internet.userName(),
+            faker.string.uuid(),
+            faker.internet.userName(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+            email,
+        );
 
-                await sut.updatePerson(person, [createMock<PersonenkontextUpdatedData>({ rolle: RollenArt.LEHR })]);
+        it('should update email', async () => {
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
 
-                expect(loggerMock.info).toHaveBeenCalledWith('Person already exists with correct role');
-            });
+            await sut.oxUserChangedEventHandler(generatedEvent);
+
+            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(personId, email);
+            expect(loggerMock.info).toHaveBeenCalledWith(`Updated E-Mail for person with ID ${personId}!`);
+        });
+
+        it('should log error, if email could not be updated', async () => {
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Update email
+
+            await sut.oxUserChangedEventHandler(generatedEvent);
+
+            expect(loggerMock.error).toHaveBeenCalledWith(`Could not update E-Mail for person with ID ${personId}!`);
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            itslearningPersonRepoMock.updateEmail.mockResolvedValueOnce(undefined); // Update email
+
+            await sut.oxUserChangedEventHandler(generatedEvent);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring email update.');
         });
     });
 
