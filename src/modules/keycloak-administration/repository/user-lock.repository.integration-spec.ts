@@ -79,8 +79,8 @@ describe('UserLockRepository', () => {
             const foundUserLocks: Option<UserLock[]> = await sut.findByPersonId(userLock1.person);
 
             expect(foundUserLocks).toHaveLength(2);
-            expect(foundUserLocks![0]!.person).toEqual(userLock1.person);
-            expect(foundUserLocks![1]!.person).toEqual(userLock1.person);
+            expect(foundUserLocks[0]!.person).toEqual(userLock1.person);
+            expect(foundUserLocks[1]!.person).toEqual(userLock1.person);
         });
 
         it('should return an empty array when no UserLocks are found by person', async () => {
