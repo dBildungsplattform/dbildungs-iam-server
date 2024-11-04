@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
@@ -7,6 +6,7 @@ import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-
 import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
 import { PersonalNummerForPersonWithTrailingSpaceError } from './personalnummer-with-trailing-space.error.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
@@ -295,9 +295,6 @@ export class Person<WasPersisted extends boolean> {
     }
 
     public resetPassword(): void {
-        this.passwordInternalState.passwordInternal = faker.string.alphanumeric({
-            length: { min: 10, max: 10 },
-            casing: 'mixed',
-        });
+        this.passwordInternalState.passwordInternal = generatePassword();
     }
 }
