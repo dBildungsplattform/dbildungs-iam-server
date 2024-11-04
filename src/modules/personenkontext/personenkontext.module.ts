@@ -24,8 +24,6 @@ import { PersonenkontextSpecificationsModule } from './specification/personenkon
         OrganisationModule,
         PersonenkontextSpecificationsModule,
         PersonenkontextPersistenceModule,
-        PersonenkontextCreationService,
-        PersonenkontextWorkflowFactory,
         LoggerModule.register(PersonenKontextModule.name),
     ],
     providers: [
