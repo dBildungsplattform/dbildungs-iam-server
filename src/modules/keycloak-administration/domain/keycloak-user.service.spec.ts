@@ -19,6 +19,7 @@ import { type FindUserFilter, KeycloakUserService } from './keycloak-user.servic
 import { User } from './user.js';
 import { UserLock } from './user-lock.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -728,10 +729,7 @@ describe('KeycloakUserService', () => {
             describe('if password is temporary', () => {
                 it('should return result with ok:true and new temporary password', async () => {
                     const userId: string = faker.string.numeric();
-                    const generatedPassword: string = faker.string.alphanumeric({
-                        length: { min: 10, max: 10 },
-                        casing: 'mixed',
-                    });
+                    const generatedPassword: string = generatePassword();
                     kcUsersMock.resetPassword.mockResolvedValueOnce();
 
                     const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
@@ -753,10 +751,7 @@ describe('KeycloakUserService', () => {
             describe('if password is permanent', () => {
                 it('should return result with ok:true and new permanent password', async () => {
                     const userId: string = faker.string.numeric();
-                    const generatedPassword: string = faker.string.alphanumeric({
-                        length: { min: 10, max: 10 },
-                        casing: 'mixed',
-                    });
+                    const generatedPassword: string = generatePassword();
                     kcUsersMock.resetPassword.mockResolvedValueOnce();
 
                     const result: Result<string, DomainError> = await service.setPassword(
@@ -783,10 +778,7 @@ describe('KeycloakUserService', () => {
         describe('when error is thrown during password-reset', () => {
             it('should pass error', async () => {
                 const userId: string = faker.string.numeric();
-                const generatedPassword: string = faker.string.alphanumeric({
-                    length: { min: 10, max: 10 },
-                    casing: 'mixed',
-                });
+                const generatedPassword: string = generatePassword();
                 kcUsersMock.resetPassword.mockRejectedValueOnce(new Error());
                 const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
                 expect(result).toStrictEqual({
