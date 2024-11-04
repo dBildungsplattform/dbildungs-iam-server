@@ -11,6 +11,7 @@ import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
 export type PersonCreationParams = {
+    id?: number;
     familienname: string;
     vorname: string;
     referrer?: string;
