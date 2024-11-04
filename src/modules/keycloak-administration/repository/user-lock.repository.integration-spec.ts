@@ -88,7 +88,7 @@ describe('UserLockRepository', () => {
             const foundUserLocks: Option<UserLock[]> = await sut.findByPersonId(person);
 
             // Check that it returns an empty array instead of null
-            expect(foundUserLocks).toEqual(null);
+            expect(foundUserLocks).toEqual([]);
         });
     });
 
@@ -178,7 +178,7 @@ describe('UserLockRepository', () => {
 
             const foundUserLocks: Option<UserLock[]> = await sut.findByPersonId(newPerson.id);
             // Expect to find an empty array after deletion
-            expect(foundUserLocks).toEqual(null);
+            expect(foundUserLocks).toEqual([]);
         });
     });
 });
