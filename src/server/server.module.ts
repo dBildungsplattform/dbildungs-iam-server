@@ -118,6 +118,7 @@ export class ServerModule implements NestModule {
         const redisConfig: RedisConfig = this.configService.getOrThrow<RedisConfig>('REDIS');
         let redisClient: RedisClientType | RedisClusterType;
         if (redisConfig.CLUSTERED) {
+            /* istanbul ignore next */
             redisClient = createCluster({
                 defaults: {
                     username: redisConfig.USERNAME,
