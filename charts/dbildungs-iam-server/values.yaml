@@ -173,8 +173,7 @@ cronjobs:
   keycloakClientId: spsh-service
   jwksFilePath: /keys/jwks.json
   backendHostname: "{{ $.Values.frontendHostname }}"
-  #url will be attached to backend hostname, start with / 
-  scriptDir: "scripts"
+  scriptDir: scripts
   jobs:
     trigger-xyz-1:
       endpoint: ""

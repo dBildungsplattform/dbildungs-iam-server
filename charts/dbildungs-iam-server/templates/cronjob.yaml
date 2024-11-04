@@ -41,7 +41,7 @@ spec:
                   touch /var/log/cron.log && 
                   chmod 644 /var/log/cron.log &&
                   export BACKEND_HOSTNAME="{{ $.Values.backendHostname}}{{ $job_options.endpoint}}" &&
-                  cd {{ $.Values.scriptDir}} &&
+                  cd {{ $.Values.cronjobs.scriptDir}} &&
                   ./{{ $job_options.script}}
             volumeMounts:
               - name: secret-volume-jwks
