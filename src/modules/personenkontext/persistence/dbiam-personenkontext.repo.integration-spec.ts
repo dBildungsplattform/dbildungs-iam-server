@@ -40,6 +40,7 @@ import {
     createAndPersistRootOrganisation,
 } from '../../../../test/utils/organisation-test-helper.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -138,7 +139,7 @@ describe('dbiam Personenkontext Repo', () => {
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
             username: faker.internet.userName(),
-            password: faker.string.alphanumeric(8),
+            password: generatePassword(),
         });
         if (personResult instanceof DomainError) {
             throw personResult;
