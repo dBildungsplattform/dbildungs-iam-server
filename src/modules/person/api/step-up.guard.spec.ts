@@ -41,18 +41,18 @@ describe('StepUpGuard', () => {
     };
 
     it('should allow access if stepUpLevel is GOLD', () => {
-        const context = createMockExecutionContext(StepUpLevel.GOLD);
+        const context: ExecutionContext = createMockExecutionContext(StepUpLevel.GOLD);
         expect(guard.canActivate(context)).toBe(true);
     });
 
     it('should throw RequiredStepUpLevelNotMetError if stepUpLevel is not GOLD', () => {
-        const context = createMockExecutionContext(StepUpLevel.SILVER);
+        const context: ExecutionContext = createMockExecutionContext(StepUpLevel.SILVER);
 
         expect(() => guard.canActivate(context)).toThrow(RequiredStepUpLevelNotMetError);
     });
 
     it('should throw RequiredStepUpLevelNotMetError if stepUpLevel is undefined', () => {
-        const context = createMockExecutionContext(undefined);
+        const context: ExecutionContext = createMockExecutionContext();
 
         expect(() => guard.canActivate(context)).toThrow(RequiredStepUpLevelNotMetError);
     });
