@@ -3,8 +3,8 @@ import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
 import { OIDC_CLIENT } from './oidc-client.service.js';
 import { Client, TokenSet } from 'openid-client';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PrivacyIdeaConfig } from '../../../shared/config/privacyidea.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
+import { SystemConfig } from '../../../shared/config/system.config.js';
 import { ConfigService } from '@nestjs/config';
 import { updateAndGetStepUpLevel } from '../passport/oidc.strategy.js';
 
@@ -15,21 +15,21 @@ import { updateAndGetStepUpLevel } from '../passport/oidc.strategy.js';
 
 @Injectable()
 export class SessionAccessTokenMiddleware implements NestMiddleware {
-    private readonly privacyIdeaConfig: PrivacyIdeaConfig;
+    private readonly STEP_UP_TIMEOUT_IN_SECONDS: number;
 
     public constructor(
         @Inject(OIDC_CLIENT) private readonly client: Client,
         private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
-        this.privacyIdeaConfig = configService.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA');
+        this.STEP_UP_TIMEOUT_IN_SECONDS = configService.getOrThrow<SystemConfig>('SYSTEM').STEP_UP_TIMEOUT_IN_SECONDS;
     }
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
         const accessToken: string | undefined = req.passportUser?.access_token;
 
         const refreshToken: string | undefined = req.passportUser?.refresh_token;
-        updateAndGetStepUpLevel(req, this.privacyIdeaConfig.STEP_UP_TIMEOUT_IN_SECONDS);
+        updateAndGetStepUpLevel(req, this.STEP_UP_TIMEOUT_IN_SECONDS);
 
         if (accessToken) {
             if (!(await this.client.introspect(accessToken)).active)

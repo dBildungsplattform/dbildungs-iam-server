@@ -86,14 +86,14 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: pi-user-realm
-          - name: PI_RENAME_WAITING_TIME
+          - name: SYSTEM_RENAME_WAITING_TIME
             valueFrom:
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: pi-rename-waiting-time
-          - name: PI_STEP_UP_TIMEOUT_IN_SECONDS
+                  key: system-rename-waiting-time-in-seconds
+          - name: SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS
             valueFrom:
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: pi-step-up-timeout-in-seconds
+                  key: system-step-up-timeout-in-seconds
 {{- end}}

@@ -5,6 +5,7 @@ import { HostConfig } from './host.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
+import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 
 export default (): {
@@ -16,6 +17,7 @@ export default (): {
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
     OX: Partial<OxConfig>;
+    SYSTEM: Partial<SystemConfig>;
 } => ({
     DB: {
         DB_NAME: process.env['DB_NAME'],
@@ -55,12 +57,15 @@ export default (): {
         PASSWORD: process.env['PI_ADMIN_PASSWORD'],
         USER_RESOLVER: process.env['PI_USER_RESOLVER'],
         REALM: process.env['PI_REALM'],
-        RENAME_WAITING_TIME_IN_SECONDS: parseInt(process.env['PI_RENAME_WAITING_TIME'] || '0'),
     },
     OX: {
         ENABLED: process.env['OX_ENABLED']?.toLowerCase() as 'true' | 'false',
         ENDPOINT: process.env['OX_ENDPOINT'],
         USERNAME: process.env['OX_USERNAME'],
         PASSWORD: process.env['OX_PASSWORD'],
+    },
+    SYSTEM: {
+        RENAME_WAITING_TIME_IN_SECONDS: parseInt(process.env['RENAME_WAITING_TIME_IN_SECONDS'] || '0'),
+        STEP_UP_TIMEOUT_IN_SECONDS: parseInt(process.env['STEP_UP_TIMEOUT_IN_SECONDS'] || '900'),
     },
 });

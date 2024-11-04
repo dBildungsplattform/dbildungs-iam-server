@@ -82,11 +82,13 @@
         "USERNAME": "admin",
         "PASSWORD": "admin",
         "USER_RESOLVER": "mariadb_resolver",
-        "REALM": "defrealm",
-        "RENAME_WAITING_TIME_IN_SECONDS": 5,
-        "STEP_UP_TIMEOUT_IN_SECONDS": 10
+        "REALM": "defrealm"
     },
     "IMPORT": {
         "IMPORT_FILE_MAXGROESSE_IN_MB": 10
+    },
+    "SYSTEM": {
+        "RENAME_WAITING_TIME_IN_SECONDS": 5,
+        "STEP_UP_TIMEOUT_IN_SECONDS": 10
     }
 }

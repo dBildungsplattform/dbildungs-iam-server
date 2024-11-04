@@ -492,6 +492,7 @@ export class PersonController {
     }
 
     @Patch(':personId/metadata')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The metadata for user was successfully updated.',
         type: PersonendatensatzResponse,

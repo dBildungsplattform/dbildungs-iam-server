@@ -9,13 +9,10 @@ export class StepUpGuard implements CanActivate {
     public canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
         const request: Request = context.switchToHttp().getRequest();
         const stepUpLevel: StepUpLevel | undefined = request.passportUser?.stepUpLevel;
-        console.log('Im Guard stepUpLevel vor throw', stepUpLevel);
 
         if (!stepUpLevel || stepUpLevel !== StepUpLevel.GOLD) {
             throw new RequiredStepUpLevelNotMetError(undefined);
         }
-        console.log('Im Guard nach throw', stepUpLevel);
-
-        return stepUpLevel === StepUpLevel.GOLD;
+        return true;
     }
 }
