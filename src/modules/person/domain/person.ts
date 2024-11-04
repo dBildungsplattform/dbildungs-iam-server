@@ -286,6 +286,6 @@ export class Person<WasPersisted extends boolean> {
     }
 
     public resetPassword(): void {
-        this.passwordInternalState.passwordInternal = generatePassword(10);
+        this.passwordInternalState.passwordInternal = generatePassword();
     }
 }
