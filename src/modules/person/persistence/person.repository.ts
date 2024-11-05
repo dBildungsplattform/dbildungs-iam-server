@@ -567,7 +567,6 @@ export class PersonRepository {
                 familienname: queryParams.familienname,
                 geburtsdatum: undefined,
                 organisationen: permittedOrgas.all ? undefined : permittedOrgas.orgaIds,
-                excludeTechnischePersonen: true,
             })
             .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
             .paged(queryParams.offset, queryParams.limit);
