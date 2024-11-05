@@ -199,6 +199,7 @@ export class LdapClientService {
                 };
             }
 
+            const entryDn: string = searchResult.searchEntries[0].dn;
             const modifications: Change[] = [];
 
             if (newGivenName) {
@@ -223,25 +224,18 @@ export class LdapClientService {
                     }),
                 );
             }
-            if (newUid) {
-                modifications.push(
-                    new Change({
-                        operation: 'replace',
-                        modification: new Attribute({
-                            type: 'uid',
-                            values: [newUid],
-                        }),
-                    }),
-                );
+            if (modifications.length > 0) {
+                await client.modify(entryDn, modifications);
+                this.logger.info(`LDAP: Successfully modified givenName/sn attributes for personId:${personId}`);
+            } else {
+                this.logger.info(`No givenName/sn attributes provided to modify for personId:${personId}`);
             }
 
-            if (modifications.length === 0) {
-                this.logger.info(`No attributes provided to modify for personId:${personId}`);
-                return { ok: true, value: personId };
+            if (newUid && searchResult.searchEntries[0]['uid'] !== newUid) {
+                const newDn: string = `uid=${newUid},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
+                await client.modifyDN(entryDn, newDn);
+                this.logger.info(`LDAP: Successfully updated uid for personId:${personId} to ${newUid}`);
             }
-
-            await client.modify(searchResult.searchEntries[0].dn, modifications);
-            this.logger.info(`LDAP: Successfully modified attributes for personId:${personId}`);
 
             return { ok: true, value: personId };
         });

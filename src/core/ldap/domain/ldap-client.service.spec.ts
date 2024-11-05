@@ -512,16 +512,10 @@ describe('LDAP Client Service', () => {
                                 values: [newSn],
                             }),
                         }),
-                        new Change({
-                            operation: 'replace',
-                            modification: new Attribute({
-                                type: 'uid',
-                                values: [newUid],
-                            }),
-                        }),
                     ];
 
                     expect(clientMock.modify).toHaveBeenCalledWith(expect.any(String), expectedModifications);
+                    expect(clientMock.modifyDN).toHaveBeenCalledTimes(1);
                 });
 
                 it('Should Do nothing when called with No Attributes', async () => {
@@ -530,6 +524,7 @@ describe('LDAP Client Service', () => {
                     );
                     expect(result.ok).toBeTruthy();
                     expect(clientMock.modify).not.toHaveBeenCalled();
+                    expect(clientMock.modifyDN).not.toHaveBeenCalled();
                 });
             });
         });
