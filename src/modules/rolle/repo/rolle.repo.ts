@@ -130,7 +130,7 @@ export class RolleRepo {
     public async findById(id: RolleID): Promise<Option<Rolle<true>>> {
         const rolle: Option<RolleEntity> = await this.em.findOne(
             this.entityName,
-            { id },
+            { id, istTechnisch: false },
             {
                 populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
@@ -149,13 +149,6 @@ export class RolleRepo {
             return {
                 ok: false,
                 error: new EntityNotFoundError(),
-            };
-        }
-
-        if (rolle.istTechnisch) {
-            return {
-                ok: false,
-                error: new MissingPermissionsError('Not allowed to view the requested rolle.'),
             };
         }
 
