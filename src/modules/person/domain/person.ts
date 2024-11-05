@@ -1,15 +1,17 @@
-import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from './personalnummer-with-trailing-space.error.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
 export type PersonCreationParams = {
+    id?: number;
     familienname: string;
     vorname: string;
     referrer?: string;
@@ -166,6 +168,9 @@ export class Person<WasPersisted extends boolean> {
         if (!NameValidator.isNameValid(creationParams.familienname)) {
             return new FamiliennameForPersonWithTrailingSpaceError();
         }
+        if (creationParams.personalnummer && !NameValidator.isNameValid(creationParams.personalnummer)) {
+            return new PersonalNummerForPersonWithTrailingSpaceError();
+        }
         const person: Person<false> = new Person(
             undefined,
             undefined,
@@ -259,6 +264,10 @@ export class Person<WasPersisted extends boolean> {
             return new FamiliennameForPersonWithTrailingSpaceError();
         }
 
+        if (personalnummer && !NameValidator.isNameValid(personalnummer)) {
+            return new PersonalNummerForPersonWithTrailingSpaceError();
+        }
+
         this.familienname = familienname ?? this.familienname;
         this.vorname = vorname ?? this.vorname;
         this.referrer = referrer;
@@ -286,9 +295,6 @@ export class Person<WasPersisted extends boolean> {
     }
 
     public resetPassword(): void {
-        this.passwordInternalState.passwordInternal = faker.string.alphanumeric({
-            length: { min: 10, max: 10 },
-            casing: 'mixed',
-        });
+        this.passwordInternalState.passwordInternal = generatePassword();
     }
 }
