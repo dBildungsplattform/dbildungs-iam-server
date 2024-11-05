@@ -202,7 +202,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -416,7 +417,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -652,7 +654,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -880,7 +883,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1100,7 +1104,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1368,7 +1373,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1722,7 +1728,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2205,7 +2212,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2487,7 +2495,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2757,7 +2766,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3138,7 +3148,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3360,7 +3371,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3423,7 +3435,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ],
           "mappedType": "enum"
         }
@@ -3590,7 +3603,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3900,7 +3914,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4233,7 +4248,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4462,7 +4478,8 @@
             "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4880,7 +4897,8 @@
         "MIGRATION_DURCHFUEHREN",
         "PERSON_SYNCHRONISIEREN",
         "CRON_DURCHFUEHREN",
-        "IMPORT_DURCHFUEHREN"
+        "IMPORT_DURCHFUEHREN",
+        "PERSONEN_ANLEGEN"
       ]
     },
     "service_provider_target_enum": {
