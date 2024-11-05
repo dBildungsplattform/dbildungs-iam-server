@@ -10,6 +10,7 @@ type FindProps = {
     familienname?: string;
     geburtsdatum?: Date;
     organisationen?: OrganisationID[];
+    excludeTechnischePersonen?: boolean;
 };
 
 export class PersonScope extends ScopeBase<PersonEntity> {
@@ -29,7 +30,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
                 findProps.organisationen !== undefined && {
                     personenKontexte: { $some: { organisationId: { $in: findProps.organisationen } } },
                 },
-                {
+                findProps.excludeTechnischePersonen && {
                     personenKontexte: { $none: { rolleId: { istTechnisch: true } } },
                 },
             ].filter(Boolean),
