@@ -6,7 +6,7 @@ metadata:
   #name: {{ template "common.names.namespace" $ }}-{{ $job_name}}
   namespace: {{ template "common.names.namespace" $ }}
 spec:
-  schedule: {{ $.Values.cronjobs.schedule }}
+  schedule: {{ $job_options.schedule }}
   startingDeadlineSeconds: 300
   suspend: true
   jobTemplate:
