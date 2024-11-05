@@ -28,14 +28,13 @@ export class PersonendatensatzResponse {
             datum: person.geburtsdatum,
             geburtsort: person.geburtsort,
         };
-        const userLockParams: UserLockParams[] =
-            person.userLock?.map((lock: UserLock) => ({
-                personId: person.id,
-                locked_by: lock.locked_by,
-                locked_until: lock.locked_until?.toISOString(),
-                lock_occasion: lock.locked_occasion,
-                created_at: lock.created_at?.toISOString(),
-            })) || [];
+        const userLockParams: UserLockParams[] = person.userLock.map((lock: UserLock) => ({
+            personId: person.id,
+            locked_by: lock.locked_by,
+            locked_until: lock.locked_until?.toISOString(),
+            lock_occasion: lock.locked_occasion,
+            created_at: lock.created_at?.toISOString(),
+        }));
 
         const personResponse: PersonResponse = {
             id: person.id,

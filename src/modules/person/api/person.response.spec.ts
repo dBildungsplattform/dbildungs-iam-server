@@ -42,7 +42,7 @@ describe('PersonResponseDDD', () => {
                 locked_by: 'test',
                 created_at: new Date().toISOString(),
                 locked_until: undefined,
-                lock_occasion: PersonLockOccasion.KOPERS_GESPERRT,
+                lock_occasion: PersonLockOccasion.MANUELL_GESPERRT,
             },
         ],
     };
