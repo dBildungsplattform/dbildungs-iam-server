@@ -6,7 +6,13 @@ import { AuthorizationParameters, Client, Issuer, Strategy, TokenSet, UserinfoRe
 
 import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
-import { extractStepUpLevelFromJWT, isStepUpTimeOver, OpenIdConnectStrategy, StepUpLevel, updateAndGetStepUpLevel } from './oidc.strategy.js';
+import {
+    extractStepUpLevelFromJWT,
+    isStepUpTimeOver,
+    OpenIdConnectStrategy,
+    StepUpLevel,
+    updateAndGetStepUpLevel,
+} from './oidc.strategy.js';
 import { PassportUser } from '../types/user.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
@@ -165,7 +171,7 @@ describe('OpenIdConnectStrategy', () => {
 
             it('should return true if time since lastRouteChangeTime is over the threshold', () => {
                 const req: Request = { session: { lastRouteChangeTime: 1000 } } as Request;
-                mockTime(12000);
+                mockTime(1001);
 
                 const timeout: number = 10;
                 expect(isStepUpTimeOver(req, timeout)).toBe(false);
