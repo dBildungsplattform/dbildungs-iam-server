@@ -7,10 +7,12 @@ import { LdapConfig } from './ldap.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
+import { RedisConfig } from './redis.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
+    REDIS: Partial<RedisConfig>;
     LDAP: Partial<LdapConfig>;
     FRONTEND: Partial<FrontendConfig>;
     HOST: Partial<HostConfig>;
@@ -46,6 +48,9 @@ export default (): Config => ({
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
+    },
+    REDIS: {
+        PASSWORD: process.env['REDIS_PASSWORD'],
     },
     ITSLEARNING: {
         ENABLED: process.env['ITSLEARNING_ENABLED']?.toLowerCase() as 'true' | 'false',
