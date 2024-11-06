@@ -106,10 +106,14 @@ dq=INTEGER:0x$dq_dec
 qi=INTEGER:0x$qi_dec
 EOF
 
+echo "Starting to generate PEM-formatted private key" >> /var/log/cron.log
+
 # Generate the PEM-formatted private key
 temp_key_file=$(mktemp)
 openssl asn1parse -genconf "$asn1_structure" -out "$temp_key_file" > /dev/null 2>&1
 openssl rsa -in "$temp_key_file" -inform DER -outform PEM -out "$temp_key_file.pem" > /dev/null 2>&1
+
+echo "Ending to generate PEM-formatted private key" >> /var/log/cron.log
 
 # Remove temporary files
 rm "$asn1_structure" "$temp_key_file"
@@ -138,10 +142,14 @@ payload_base64=$(base64url_encode "$payload")
 # Combine header and payload
 header_payload="$header_base64.$payload_base64"
 
+echo "Payload created" >> /var/log/cron.log
+
 # Sign the JWT
 signature=$(echo -n "$header_payload" | \
   openssl dgst -sha256 -sign "$temp_key_file.pem" | \
   openssl enc -base64 -A | tr '+/' '-_' | tr -d '=')
+
+echo "Signed the JWT" >> /var/log/cron.log
 
 # Remove the temporary PEM key file
 rm "$temp_key_file.pem"
@@ -156,6 +164,8 @@ response=$(curl -s -X POST "$kc_token_url" \
   -d "client_id=$clientId" \
   -d "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
   -d "client_assertion=$jwt_assertion")
+
+echo "Access token requested" >> /var/log/cron.log
 
 # Check if the response contains an access token
 if echo "$response" | grep -q '"access_token"'; then
