@@ -4599,7 +4599,7 @@
             "id"
           ],
           "referencedTableName": "public.person",
-          "updateRule": "cascade"
+          "deleteRule": "cascade"
         }
       },
       "nativeEnums": {
@@ -4674,7 +4674,8 @@
           "items": [
             "ENABLED",
             "DISABLED",
-            "REQUESTED"
+            "REQUESTED",
+            "FAILED"
           ]
         },
         "rollen_art_enum": {
@@ -4730,7 +4731,10 @@
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN"
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
+            "IMPORT_DURCHFUEHREN"
           ]
         },
         "service_provider_target_enum": {
