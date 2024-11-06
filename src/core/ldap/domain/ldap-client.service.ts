@@ -37,6 +37,12 @@ export class LdapClientService {
 
     public static readonly DC_SCHULE_SH_DC_DE: string = 'dc=schule-sh,dc=de';
 
+    public static readonly GID_NUMBER: string = '100'; //because 0 to 99 are used for statically allocated user groups on Unix-systems
+
+    public static readonly UID_NUMBER: string = '100'; //to match the GID_NUMBER rule above and 0 is reserved for super-user
+
+    public static readonly HOME_DIRECTORY: string = 'none'; //highlight it's a dummy value
+
     private mutex: Mutex;
 
     public constructor(
@@ -131,9 +137,13 @@ export class LdapClientService {
                 return { ok: true, value: person };
             }
             const entry: LdapPersonEntry = {
+                uid: lehrerUid,
+                uidNumber: LdapClientService.UID_NUMBER,
+                gidNumber: LdapClientService.GID_NUMBER,
+                homeDirectory: LdapClientService.HOME_DIRECTORY,
                 cn: person.vorname,
                 sn: person.familienname,
-                objectclass: ['inetOrgPerson', 'univentionMail'],
+                objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
                 mailPrimaryAddress: mail ?? ``,
                 mailAlternativeAddress: mail ?? ``,
             };
