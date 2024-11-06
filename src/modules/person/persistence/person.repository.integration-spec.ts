@@ -1269,6 +1269,62 @@ describe('PersonRepository Integration', () => {
                 expect(result.ok).toBeTruthy();
             });
         });
+
+        it('should return DomainError when user is technical', async () => {
+            const person1: Person<true> = DoFactory.createPerson(true);
+            const personEntity: PersonEntity = new PersonEntity();
+            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            person1.id = personEntity.id;
+
+            const organisation: OrganisationEntity = await createAndPersistOrganisation(
+                em,
+                undefined,
+                OrganisationsTyp.SCHULE,
+            );
+
+            const rolleData: RequiredEntityData<RolleEntity> = {
+                name: 'Testrolle',
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: RollenArt.ORGADMIN,
+                istTechnisch: true,
+            };
+            const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
+            await em.persistAndFlush(rolleEntity);
+
+            const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
+                organisationId: organisation.id,
+                personId: person1.id,
+                rolleId: rolleEntity.id,
+            };
+            const personenkontextEntity: PersonenkontextEntity = em.create(PersonenkontextEntity, personenkontextData);
+            await em.persistAndFlush(personenkontextEntity);
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            kcUserServiceMock.findById.mockResolvedValue({
+                ok: true,
+                value: {
+                    id: person1.keycloakUserId!,
+                    username: person1.username ?? '',
+                    enabled: true,
+                    email: faker.internet.email(),
+                    createdDate: new Date(),
+                    externalSystemIDs: {},
+                    attributes: {},
+                },
+            });
+
+            const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+
+            // check that the result is a DomainError
+            expect(result.ok).toBeFalsy();
+            if (result.ok === false) {
+                expect(result.error).toBeInstanceOf(DomainError);
+            }
+        });
     });
     describe('deletePerson', () => {
         describe('Delete the person and all kontexte', () => {
