@@ -10,7 +10,6 @@ import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
-import { RequiredStepUpLevelNotMetError } from '../domain/required-step-up-level-not-met.error.js';
 
 @Catch(PersonDomainError, DuplicatePersonalnummerError)
 export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError> {
@@ -62,13 +61,6 @@ export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError>
             new DbiamPersonError({
                 code: 400,
                 i18nKey: PersonErrorI18nTypes.PERSONALNUMMER_NICHT_EINDEUTIG,
-            }),
-        ],
-        [
-            RequiredStepUpLevelNotMetError.name,
-            new DbiamPersonError({
-                code: 403,
-                i18nKey: PersonErrorI18nTypes.REQUIRED_STEP_UP_LEVEL_NOT_MET,
             }),
         ],
     ]);

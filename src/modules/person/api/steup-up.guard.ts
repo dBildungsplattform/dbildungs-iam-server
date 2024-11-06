@@ -11,7 +11,7 @@ export class StepUpGuard implements CanActivate {
         const stepUpLevel: StepUpLevel | undefined = request.passportUser?.stepUpLevel;
 
         if (!stepUpLevel || stepUpLevel !== StepUpLevel.GOLD) {
-            throw new RequiredStepUpLevelNotMetError(undefined);
+            throw new RequiredStepUpLevelNotMetError();
         }
         return true;
     }

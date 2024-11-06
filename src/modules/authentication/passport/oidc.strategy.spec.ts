@@ -159,9 +159,15 @@ describe('OpenIdConnectStrategy', () => {
         });
     });
 
-    const mockTime = (time: number): jest.SpyInstance => jest.spyOn(Date.prototype, 'getTime').mockReturnValue(time);
+    const mockTime = (time: number): void => {
+        jest.useFakeTimers();
+        jest.setSystemTime(time);
+    };
 
     describe('Step-Up Utilities', () => {
+        afterEach(() => {
+            jest.useRealTimers();
+        });
         describe('isStepUpTimeOver', () => {
             it('should return false if lastRouteChangeTime is undefined', () => {
                 const req: Request = { session: {} } as Request;

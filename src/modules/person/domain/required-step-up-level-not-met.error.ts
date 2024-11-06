@@ -1,7 +1,7 @@
-import { PersonDomainError } from './person-domain.error.js';
+import { AuthenticationDomainError } from '../../authentication/domain/authentication-domain.error.js';
 
-export class RequiredStepUpLevelNotMetError extends PersonDomainError {
-    public constructor(entityId: string | undefined, details?: unknown[] | Record<string, undefined>) {
-        super(`The action could not be perfomed, bequase the required step up level was not met`, entityId, details);
+export class RequiredStepUpLevelNotMetError extends AuthenticationDomainError {
+    public constructor() {
+        super(`The action could not be perfomed, bequase the required step up level was not met`, undefined, undefined);
     }
 }

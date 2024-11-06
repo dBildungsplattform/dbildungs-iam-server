@@ -4,6 +4,8 @@ import { Response } from 'express';
 import { AuthenticationDomainError } from '../domain/authentication-domain.error.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { AuthenticationErrorI18nTypes, DbiamAuthenticationError } from './dbiam-authentication.error.js';
+import { RequiredStepUpLevelNotMetError } from '../../person/domain/required-step-up-level-not-met.error.js';
+import { DbiamPersonError, PersonErrorI18nTypes } from '../../person/api/dbiam-person.error.js';
 
 @Catch(AuthenticationDomainError)
 export class AuthenticationExceptionFilter implements ExceptionFilter<AuthenticationDomainError> {
@@ -13,6 +15,13 @@ export class AuthenticationExceptionFilter implements ExceptionFilter<Authentica
             new DbiamAuthenticationError({
                 code: 403,
                 i18nKey: AuthenticationErrorI18nTypes.KEYCLOAK_USER_NOT_FOUND,
+            }),
+        ],
+        [
+            RequiredStepUpLevelNotMetError.name,
+            new DbiamPersonError({
+                code: 403,
+                i18nKey: PersonErrorI18nTypes.REQUIRED_STEP_UP_LEVEL_NOT_MET,
             }),
         ],
     ]);

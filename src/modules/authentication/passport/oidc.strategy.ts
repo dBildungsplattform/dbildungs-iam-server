@@ -36,7 +36,7 @@ export function getLowestStepUpLevel(): StepUpLevel {
 
 // timeout in seconds
 export function isStepUpTimeOver(req: Request, timeout: number): boolean {
-    const currentTime: number = new Date().getTime();
+    const currentTime: number = Date.now();
     if (!req.session?.lastRouteChangeTime) return false;
     const lastRouteChangeTime: number = req.session.lastRouteChangeTime;
     const deltaTime: number = currentTime - lastRouteChangeTime;
