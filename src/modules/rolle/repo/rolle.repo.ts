@@ -297,13 +297,11 @@ export class RolleRepo {
             return authorizedRoleResult.error;
         }
         //Specifications
-        {
-            if (
-                isAlreadyAssigned &&
-                (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
-            ) {
-                return new UpdateMerkmaleError();
-            }
+        if (
+            isAlreadyAssigned &&
+            (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
+        ) {
+            return new UpdateMerkmaleError();
         }
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;
