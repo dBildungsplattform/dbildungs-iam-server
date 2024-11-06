@@ -76,7 +76,7 @@ describe('UserLockRepository', () => {
             await sut.createUserLock(userLock1);
             await sut.createUserLock(userLock2);
 
-            const foundUserLocks: Option<UserLock[]> = await sut.findByPersonId(userLock1.person);
+            const foundUserLocks: UserLock[] = await sut.findByPersonId(userLock1.person);
 
             expect(foundUserLocks).toHaveLength(2);
             expect(foundUserLocks[0]!.person).toEqual(userLock1.person);

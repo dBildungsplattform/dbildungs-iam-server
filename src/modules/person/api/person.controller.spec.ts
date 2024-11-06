@@ -168,8 +168,8 @@ describe('PersonController', () => {
                     locked_until: new Date(),
                     created_at: new Date(),
                 },
-            ],
-            undefined, // orgUnassignmentDate  // userLock array
+            ], // userLock array
+            undefined, // orgUnassignmentDate
             undefined, // isLocked
             undefined, // email
         );
