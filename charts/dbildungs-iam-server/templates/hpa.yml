@@ -1,7 +1,7 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "common.names.name" . }}
+  name: {{ include "common.names.name" . }}-hpa
   namespace: {{ .Release.Namespace }}
   labels:
     app.kubernetes.io/name: {{ include "common.names.name" . }}
