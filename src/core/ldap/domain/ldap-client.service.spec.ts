@@ -25,6 +25,7 @@ import { ClassLogger } from '../../logging/class-logger.js';
 import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
+import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -236,6 +237,30 @@ describe('LDAP Client Service', () => {
                 expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
             });
 
+            it('when adding fails should log error', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValue();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: lehrer not present
+                    clientMock.add.mockRejectedValueOnce(new Error('LDAP-Error'));
+
+                    return clientMock;
+                });
+                const testLehrer: PersonData = {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.lorem.word(),
+                };
+                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
+                const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, fakeEmailDomain);
+
+                if (result.ok) throw Error();
+                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                    `LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:{}`,
+                );
+                expect(result.error).toEqual(new LdapCreateLehrerError());
+            });
+
             it('when called with explicit domain "ersatzschule-sh.de" should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
@@ -290,9 +315,6 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }),
-                    ); //mock existsSchule: schule present
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: lehrer not present
 
                     return clientMock;

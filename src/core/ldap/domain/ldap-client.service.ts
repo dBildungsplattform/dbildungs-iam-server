@@ -12,6 +12,7 @@ import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap-person-entry-changed.event.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
+import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 
 export type PersonData = {
     vorname: string;
@@ -153,10 +154,17 @@ export class LdapClientService {
             entry.entryUUID = person.ldapEntryUUID ?? person.id;
             controls.push(new Control(relaxRulesControlOID));
 
-            await client.add(lehrerUid, entry, controls);
-            this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
+            try {
+                await client.add(lehrerUid, entry, controls);
+                this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
-            return { ok: true, value: person };
+                return { ok: true, value: person };
+            } catch (err) {
+                const errMsg: string = JSON.stringify(err);
+                this.logger.error(`LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:${errMsg}`);
+
+                return { ok: false, error: new LdapCreateLehrerError() };
+            }
         });
     }
 
