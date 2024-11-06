@@ -328,7 +328,7 @@ export class EmailEventHandler {
     }
 
     private async createAndPersistFailedEmailAddress(personId: PersonID): Promise<void> {
-        const personIdAndTimestamp: string = personId + '' + new Date().getTime();
+        const personIdAndTimestamp: string = personId + '-' + Date.now();
         const failedEmailAddress: EmailAddress<false> = EmailAddress.createNew(
             personId,
             personIdAndTimestamp,
