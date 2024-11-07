@@ -202,6 +202,25 @@ export class OrganisationRepository {
         return res;
     }
 
+    /**
+     * Uses findParentOrgasForIdSortedByDepthAsc method to search for the first occurrence of an email-domain in the tree of organisations starting from passed organisationId.
+     * @param id start of search (leaf)
+     */
+    public async findEmailDomainForOrganisation(id: OrganisationID): Promise<string | undefined> {
+        const organisations: Organisation<true>[] = await this.findParentOrgasForIdSortedByDepthAsc(id);
+        const emailDomain: Option<string> = this.getDomainRecursive(organisations);
+
+        return emailDomain ?? undefined;
+    }
+
+    private getDomainRecursive(organisationsSortedByDepthAsc: Organisation<true>[]): Option<string> {
+        if (!organisationsSortedByDepthAsc || organisationsSortedByDepthAsc.length == 0) return undefined;
+        if (organisationsSortedByDepthAsc[0] && organisationsSortedByDepthAsc[0].emailDomain)
+            return organisationsSortedByDepthAsc[0].emailDomain;
+
+        return this.getDomainRecursive(organisationsSortedByDepthAsc.slice(1));
+    }
+
     public async isOrgaAParentOfOrgaB(
         organisationIdA: OrganisationID,
         organisationIdB: OrganisationID,
@@ -300,10 +319,10 @@ export class OrganisationRepository {
         personPermissions: PersonPermissions,
         systemrechte: RollenSystemRecht[],
         searchOptions: OrganisationSeachOptions,
-    ): Promise<Counted<Organisation<true>>> {
+    ): Promise<[Organisation<true>[], total: number, pageTotal: number]> {
         const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
-            return [[], 0];
+            return [[], 0, 0];
         }
 
         let entitiesForIds: OrganisationEntity[] = [];
@@ -316,8 +335,7 @@ export class OrganisationRepository {
             const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
                 .select('*')
                 .where({ id: { $in: organisationIds } })
-                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
-                .limit(searchOptions.limit);
+                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }]);
             entitiesForIds = (await queryForIds.getResultAndCount())[0];
         }
 
@@ -362,22 +380,32 @@ export class OrganisationRepository {
             .limit(searchOptions.limit);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
-        let result: OrganisationEntity[] = [...entitiesForIds];
+        const result: OrganisationEntity[] = [...entitiesForIds];
         let duplicates: number = 0;
         for (const entity of entities) {
-            if (!entitiesForIds.find((orga: OrganisationEntity) => orga.id === entity.id)) {
+            if (!result.find((orga: OrganisationEntity) => orga.id === entity.id)) {
                 result.push(entity);
             } else {
                 duplicates++;
             }
         }
-        if (searchOptions.limit && entitiesForIds.length > 0) {
-            result = result.slice(0, searchOptions.limit);
-        }
+
         const organisations: Organisation<true>[] = result.map((entity: OrganisationEntity) =>
             mapEntityToAggregate(entity),
         );
-        return [organisations, total + entitiesForIds.length - duplicates];
+
+        // Calculate pageTotal (excluding entitiesForIds when searchString is present
+        // Otherwise we show a wrong number in the filter since the selected orgas are always returned regardless if we search for them or not)
+        const pageTotal: number = searchOptions.searchString
+            ? Math.min(entities.length, searchOptions.limit || entities.length)
+            : Math.min(organisations.length, searchOptions.limit || organisations.length);
+
+        // Apply limit to the final result
+        if (searchOptions.limit && organisations.length > searchOptions.limit) {
+            organisations.splice(searchOptions.limit);
+        }
+
+        return [organisations, total + entitiesForIds.length - duplicates, pageTotal];
     }
 
     public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {

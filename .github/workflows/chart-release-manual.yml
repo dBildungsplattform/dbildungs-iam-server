@@ -31,3 +31,4 @@ jobs:
       image_tag_generation: specified 
       helm_chart_version: ${{ inputs.chart_version }}
       image_tag: ${{ inputs.image_tag }}
+      helm_repo_list: "bitnami,https://charts.bitnami.com/bitnami"
