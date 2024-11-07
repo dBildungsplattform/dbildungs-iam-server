@@ -27,6 +27,7 @@ import { mapAggregateToData } from './email.repo.js';
 import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-already-has-enabled-email-address.error.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -91,7 +92,7 @@ describe('EmailRepo', () => {
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
             username: faker.internet.userName(),
-            password: faker.string.alphanumeric(8),
+            password: generatePassword(),
         });
         if (personResult instanceof DomainError) {
             throw personResult;
