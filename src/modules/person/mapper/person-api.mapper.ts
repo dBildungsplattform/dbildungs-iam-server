@@ -7,6 +7,7 @@ import { Person } from '../domain/person.js';
 import { CreatedPersonenkontextOrganisation } from '../../personenkontext/api/created-personenkontext-organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { LoeschungResponse } from '../api/loeschung.response.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 @Injectable()
 export class PersonApiMapper {
@@ -17,6 +18,10 @@ export class PersonApiMapper {
         const personenkontexte: PersonenkontextResponse[] = await Promise.all(
             kontexte.map((kontext: Personenkontext<true>) => this.mapToPersonenkontextResponse(kontext)),
         );
+
+        const dienststellen: string[] = (
+            await Promise.all(kontexte.map((kontext: Personenkontext<true>) => kontext.getOrganisation()))
+        ).flatMap((orga: Option<Organisation<true>>) => (orga?.kennung ? [orga.kennung] : []));
 
         const response: PersonInfoResponse = new PersonInfoResponse({
             pid: person.id,
@@ -46,6 +51,7 @@ export class PersonApiMapper {
                 vertrauensstufe: person.vertrauensstufe,
                 revision: person.revision,
                 personalnummer: person.personalnummer,
+                dienststellen: dienststellen,
             },
             personenkontexte: personenkontexte,
             gruppen: [], // TODO: if the gruppe module is implemented, this should be filled out with EW-656 / EW-697
@@ -61,6 +67,8 @@ export class PersonApiMapper {
             referrer: props.referrer,
             mandant: props.mandant!,
             organisation: CreatedPersonenkontextOrganisation.new({ id: props.organisationId }),
+            rollenart: rolle?.rollenart,
+            rollenname: rolle?.name,
             personenstatus: props.personenstatus,
             jahrgangsstufe: props.jahrgangsstufe,
             sichtfreigabe: props.sichtfreigabe,
@@ -69,8 +77,6 @@ export class PersonApiMapper {
                 : undefined,
             revision: props.revision,
         });
-
-        response.roleName = rolle ? rolle.name : undefined;
 
         return response;
     }
