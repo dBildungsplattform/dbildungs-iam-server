@@ -26,6 +26,7 @@ import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
+import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -517,6 +518,44 @@ describe('LDAP Client Service', () => {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
                 });
+            });
+        });
+
+        describe('when person can be found but modification fails', () => {
+            const fakePersonID: string = faker.string.uuid();
+            const fakeDN: string = faker.string.alpha();
+            const newEmailAddress: string = 'new-address@schule-sh.de';
+            const currentEmailAddress: string = 'current-address@schule-sh.de';
+
+            it('should set mailAlternativeAddress as current mailPrimaryAddress and throw LdapPersonEntryChangedEvent', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    dn: fakeDN,
+                                    mailPrimaryAddress: currentEmailAddress,
+                                }),
+                            ],
+                        }),
+                    );
+                    clientMock.modify.mockRejectedValueOnce(new Error());
+
+                    return clientMock;
+                });
+
+                const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
+                    fakePersonID,
+                    newEmailAddress,
+                );
+
+                if (result.ok) throw Error();
+                expect(result.error).toStrictEqual(new LdapModifyEmailError());
+                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED, errMsg:{}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
         });
 

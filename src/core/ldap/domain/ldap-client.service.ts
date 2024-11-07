@@ -13,6 +13,7 @@ import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap-person-
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
+import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 
 export type PersonData = {
     vorname: string;
@@ -286,31 +287,41 @@ export class LdapClientService {
             }
             const currentEmailAddress: string = currentEmailAddressString ?? newEmailAddress;
 
-            await client.modify(searchResult.searchEntries[0].dn, [
-                new Change({
-                    operation: 'replace',
-                    modification: new Attribute({
-                        type: LdapClientService.MAIL_PRIMARY_ADDRESS,
-                        values: [newEmailAddress],
+            try {
+                await client.modify(searchResult.searchEntries[0].dn, [
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: LdapClientService.MAIL_PRIMARY_ADDRESS,
+                            values: [newEmailAddress],
+                        }),
                     }),
-                }),
-            ]);
-            await client.modify(searchResult.searchEntries[0].dn, [
-                new Change({
-                    operation: 'replace',
-                    modification: new Attribute({
-                        type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
-                        values: [currentEmailAddress],
+                ]);
+                await client.modify(searchResult.searchEntries[0].dn, [
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                            values: [currentEmailAddress],
+                        }),
                     }),
-                }),
-            ]);
-            this.logger.info(
-                `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}`,
-            );
+                ]);
+                this.logger.info(
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}`,
+                );
+                this.eventService.publish(
+                    new LdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
+                );
 
-            this.eventService.publish(new LdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress));
+                return { ok: true, value: personId };
+            } catch (err) {
+                const errMsg: string = JSON.stringify(err);
+                this.logger.error(
+                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED, errMsg:${errMsg}`,
+                );
 
-            return { ok: true, value: personId };
+                return { ok: false, error: new LdapModifyEmailError() };
+            }
         });
     }
 }
