@@ -13,7 +13,7 @@
     "ERROR_PAGE_REDIRECT": "/login-error"
   },
   "DB": {
-      "USE_SSL": true
+    "USE_SSL": true
   },
   "KEYCLOAK": {
     "ADMIN_REALM_NAME": "SPSH",
@@ -37,7 +37,7 @@
     "ADMIN_PASSWORD": "password"
   },
   "DATA": {
-      "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
+    "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
   },
   "LOGGING": {
     "DEFAULT_LOG_LEVEL": "info",
