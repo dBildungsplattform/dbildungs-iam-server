@@ -355,7 +355,7 @@ export class RolleRepo {
         return;
     }
 
-    private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
+    public async create(rolle: Rolle<false>): Promise<Rolle<true>> {
         const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));
 
         await this.em.persistAndFlush(rolleEntity);
