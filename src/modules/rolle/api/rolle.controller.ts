@@ -60,6 +60,8 @@ import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
+import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -202,6 +204,11 @@ export class RolleController {
 
         if (rolle instanceof DomainError) {
             throw rolle;
+        }
+
+        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this.rolleRepo);
+        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) {
+            throw new RolleNameNotUniqueOnSskError();
         }
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
