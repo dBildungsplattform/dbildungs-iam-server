@@ -27,7 +27,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -37,6 +37,7 @@ import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienn
 import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 import { PrivacyIdeaConfig } from '../../../shared/config/privacyidea.config.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -700,6 +701,20 @@ export class PersonRepository {
         );
         if (error instanceof DomainError) {
             return error;
+        }
+
+        if (personFound.isLocked) {
+            const koperslock: UserLock | undefined = personFound.userLock?.find(
+                (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
+            );
+            if (koperslock) {
+                await this.kcUserService.updateKeycloakUserStatus(
+                    personFound.id,
+                    personFound.keycloakUserId!,
+                    koperslock,
+                    false,
+                );
+            }
         }
 
         //Update username in kc
