@@ -150,7 +150,7 @@ describe('PersonApiMapper', () => {
 
             // Assert
             expect(result).toBeInstanceOf(PersonInfoResponse);
-            expect(result.personenkontexte[0]?.loeschung).toBeUndefined();
+            expect(result.person.dienststellen).toEqual([]);
         });
     });
 });
