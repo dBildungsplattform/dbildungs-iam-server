@@ -703,20 +703,6 @@ export class PersonRepository {
             return error;
         }
 
-        if (personFound.isLocked) {
-            const koperslock: UserLock | undefined = personFound.userLock?.find(
-                (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
-            );
-            if (koperslock) {
-                await this.kcUserService.updateKeycloakUserStatus(
-                    personFound.id,
-                    personFound.keycloakUserId!,
-                    koperslock,
-                    false,
-                );
-            }
-        }
-
         //Update username in kc
         if (hasUsernameChanged) {
             const kcUsernameUpdated: Result<void, DomainError> = await this.kcUserService.updateUsername(

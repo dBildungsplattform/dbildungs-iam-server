@@ -526,6 +526,20 @@ export class PersonController {
             );
         }
 
+        if (result.isLocked) {
+            const koperslock: UserLock | undefined = result.userLock?.find(
+                (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
+            );
+            if (koperslock) {
+                await this.keycloakUserService.updateKeycloakUserStatus(
+                    result.id,
+                    result.keycloakUserId!,
+                    koperslock,
+                    false,
+                );
+            }
+        }
+
         return new PersonendatensatzResponse(result, false);
     }
 }
