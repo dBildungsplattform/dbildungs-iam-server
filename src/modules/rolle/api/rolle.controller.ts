@@ -197,26 +197,6 @@ export class RolleController {
             throw createRolleResult;
         }
 
-        /* const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
-            params.name,
-            params.administeredBySchulstrukturknoten,
-            params.rollenart,
-            params.merkmale,
-            params.systemrechte,
-            [],
-            [],
-            false,
-        );
-
-        if (rolle instanceof DomainError) {
-            throw rolle;
-        }
-
-        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this.rolleRepo, params.name);
-        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) {
-            throw new RolleNameNotUniqueOnSskError();
-        }*/
-
         const result: Rolle<true> = await this.rolleRepo.save(createRolleResult);
 
         return new RolleResponse(result);
