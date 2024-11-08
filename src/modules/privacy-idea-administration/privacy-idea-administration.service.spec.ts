@@ -650,6 +650,22 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     });
 
     describe('assignHardwareToken', () => {
+        let getTokenToVerifySpy: jest.SpyInstance;
+
+        beforeEach(() => {
+            getTokenToVerifySpy = jest
+                .spyOn(
+                    service as unknown as { getTokenToVerify: () => Promise<PrivacyIdeaToken | undefined> },
+                    'getTokenToVerify',
+                )
+                .mockResolvedValue(undefined);
+        });
+
+        afterEach(() => {
+            getTokenToVerifySpy.mockRestore();
+            jest.restoreAllMocks();
+        });
+
         it('should assign hardware token successfully', async () => {
             httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
             jest.spyOn(
@@ -767,6 +783,28 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 service as unknown as { checkUserExists: () => Promise<boolean> },
                 'checkUserExists',
             ).mockResolvedValueOnce(true);
+
+            httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
+            httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponse } as AxiosResponse));
+            httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));
+
+            await expect(service.assignHardwareToken('ABC123456', 'otp', 'test-user')).rejects.toThrow(
+                new TokenError(
+                    'Leider konnte ihr Hardware-Token aus technischen Gründen nicht aktiviert werden. Bitte versuchen Sie es zu einem späteren Zeitpunkt erneut. Falls das Problem bestehen bleibt, stellen Sie bitte eine Anfrage über den IQSH Helpdesk.--Link: https://www.secure-lernnetz.de/helpdesk/',
+                    'general-token-error',
+                ),
+            );
+        });
+
+        it('should delete verify token when requesting to assign hardware token', async () => {
+            getTokenToVerifySpy.mockRestore();
+            httpServiceMock.post.mockReturnValueOnce(mockJWTTokenResponse());
+            jest.spyOn(
+                service as unknown as { checkUserExists: () => Promise<boolean> },
+                'checkUserExists',
+            ).mockResolvedValue(true);
+            httpServiceMock.get.mockReturnValueOnce(mockTokenResponse(true));
+            httpServiceMock.delete.mockReturnValueOnce(of({} as AxiosResponse));
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenVerificationResponse } as AxiosResponse));
             httpServiceMock.get.mockReturnValueOnce(of({ data: mockTokenOTPSerialResponse } as AxiosResponse));
             httpServiceMock.post.mockImplementationOnce(() => throwError(() => new Error(mockErrorMsg)));

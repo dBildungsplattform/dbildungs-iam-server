@@ -364,6 +364,11 @@ export class PrivacyIdeaAdministrationService {
 
         if (!(await this.checkUserExists(user))) {
             await this.addUser(user);
+        } else {
+            const oldTokenToVerify: PrivacyIdeaToken | undefined = await this.getTokenToVerify(user);
+            if (oldTokenToVerify) {
+                await this.deleteToken(oldTokenToVerify.serial);
+            }
         }
         const tokenVerificationResponse: TokenVerificationResponse = await this.verifyTokenStatus(serial, token);
         //Check token existence
