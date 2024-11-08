@@ -174,7 +174,7 @@ export class RolleController {
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Create a new rolle.' })
     @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleResponse })
-    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the rolle.' })

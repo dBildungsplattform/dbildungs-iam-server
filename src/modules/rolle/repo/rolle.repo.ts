@@ -26,6 +26,8 @@ import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkonte
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
+import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 
 /**
  * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
@@ -304,6 +306,9 @@ export class RolleRepo {
         }
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;
+
+        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this);
+        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(authorizedRole))) return new RolleNameNotUniqueOnSskError();
 
         const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
             id,
