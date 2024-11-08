@@ -24,6 +24,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -532,6 +533,34 @@ describe('RolleRepo', () => {
             );
 
             expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
+        });
+
+        it('should return error when rolle with same on same SSK already exists', async () => {
+            const fakeRolleName: string = faker.company.name();
+            const organisationId: OrganisationID = faker.string.uuid();
+            const rolle: Rolle<true> = await sut.save(
+                DoFactory.createRolle(false, {
+                    name: fakeRolleName,
+                    administeredBySchulstrukturknoten: organisationId,
+                }),
+            );
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            const newMermale: RollenMerkmal[] = [RollenMerkmal.KOPERS_PFLICHT];
+            const newSystemrechte: RollenSystemRecht[] = [RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN];
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
+
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+                rolle.id,
+                fakeRolleName,
+                newMermale,
+                newSystemrechte,
+                [],
+                1,
+                false,
+                permissions,
+            );
+
+            expect(rolleResult).toBeInstanceOf(RolleNameNotUniqueOnSskError);
         });
     });
 

@@ -307,7 +307,7 @@ export class RolleRepo {
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;
 
-        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this);
+        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this, name);
         if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(authorizedRole))) return new RolleNameNotUniqueOnSskError();
 
         const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(

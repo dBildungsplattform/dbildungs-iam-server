@@ -60,8 +60,7 @@ import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
-import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
-import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
+import { RolleWorkflow } from '../domain/rolle-workflow.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -191,7 +190,14 @@ export class RolleController {
             );
         }
 
-        const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
+        const rolleWorkFlow: RolleWorkflow = RolleWorkflow.createNew(this.rolleRepo, this.rolleFactory);
+        const createRolleResult: Rolle<false> | DomainError =
+            await rolleWorkFlow.createNewRolleAndValidateNameUniquenessOnSSK(params);
+        if (createRolleResult instanceof DomainError) {
+            throw createRolleResult;
+        }
+
+        /* const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
             params.administeredBySchulstrukturknoten,
             params.rollenart,
@@ -206,12 +212,12 @@ export class RolleController {
             throw rolle;
         }
 
-        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this.rolleRepo);
+        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this.rolleRepo, params.name);
         if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) {
             throw new RolleNameNotUniqueOnSskError();
-        }
+        }*/
 
-        const result: Rolle<true> = await this.rolleRepo.save(rolle);
+        const result: Rolle<true> = await this.rolleRepo.save(createRolleResult);
 
         return new RolleResponse(result);
     }
