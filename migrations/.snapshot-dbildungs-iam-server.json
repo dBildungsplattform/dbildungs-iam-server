@@ -1548,6 +1548,16 @@
           "primary": false,
           "nullable": true,
           "mappedType": "string"
+        },
+        "version": {
+          "name": "version",
+          "type": "bigint",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "1",
+          "mappedType": "bigint"
         }
       },
       "name": "organisation",
