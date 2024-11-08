@@ -178,7 +178,7 @@ redis-cluster:
 cronjobs:
   imageTag: latest
   port: 5656
-  keycloakTokenUrl: '{{ $.Values.keycloakHostname }}/realms/SPSH/protocol/openid-connect/token'
+  keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
   keycloakClientId: spsh-service
   jwksFilePath: /keys/jwks.json
   backendHostname: '{{ $.Values.frontendHostname }}'

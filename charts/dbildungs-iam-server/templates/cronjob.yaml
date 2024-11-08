@@ -28,6 +28,9 @@ spec:
             envFrom:
               - configMapRef:
                   name:  cronjob-envs-configmap
+            env:
+                - name: BACKEND_HOSTNAME
+                  value: "{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
             command:
               - "sh"
               - "-c"
@@ -40,7 +43,6 @@ spec:
                   chmod 600 /etc/crontabs/root &&
                   touch /var/log/cron.log && 
                   chmod 644 /var/log/cron.log &&
-                  export BACKEND_HOSTNAME="{{ $.Values.backendHostname}}{{ $job_options.endpoint}}" &&
                   cd {{ $.Values.cronjobs.scriptDir}} &&
                   ./{{ $job_options.script}}
             volumeMounts:
