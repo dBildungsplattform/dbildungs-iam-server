@@ -22,7 +22,7 @@ export type PersonData = {
     familienname: string;
     id: string;
     referrer?: string;
-    ldapEntryUUID?: string;
+    ldapEntryUUID?: string; // When this field is set, it will use the relax operator. Only use during migration.
 };
 
 @Injectable()
