@@ -409,9 +409,8 @@ describe('LDAP Client Service', () => {
             });
         });
 
-        describe('delete lehrer by personId', () => {
+        describe('delete lehrer by referrer', () => {
             it('should return truthy result', async () => {
-                personRepoMock.findById.mockResolvedValueOnce(person);
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(
@@ -424,13 +423,12 @@ describe('LDAP Client Service', () => {
                 });
                 personRepoMock.findById.mockResolvedValueOnce(person);
 
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByReferrer(person.referrer!);
 
                 expect(result.ok).toBeTruthy();
             });
 
             it('should return error when lehrer cannot be found', async () => {
-                personRepoMock.findById.mockResolvedValueOnce(person);
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(
@@ -442,27 +440,18 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
-
-                expect(result.ok).toBeFalsy();
-            });
-
-            it('when person can not be found in DB', async () => {
-                personRepoMock.findById.mockResolvedValueOnce(undefined);
-
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByReferrer(person.referrer!);
 
                 expect(result.ok).toBeFalsy();
             });
 
             it('when bind returns error', async () => {
-                personRepoMock.findById.mockResolvedValueOnce(person);
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockRejectedValueOnce(new Error());
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByPersonId(person.id);
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByReferrer(person.referrer!);
 
                 expect(result.ok).toBeFalsy();
             });
@@ -470,24 +459,15 @@ describe('LDAP Client Service', () => {
     });
 
     describe('modifyPersonAttributes', () => {
-        describe('when person can not be found in DB', () => {
-            it('should return falsy result', async () => {
-                personRepoMock.findById.mockResolvedValueOnce(undefined);
-
-                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(faker.string.uuid());
-
-                expect(result.ok).toBeFalsy();
-            });
-        });
-
         describe('when bind returns error', () => {
             it('should return falsy result', async () => {
-                personRepoMock.findById.mockResolvedValueOnce(person);
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockRejectedValueOnce(new Error());
                     return clientMock;
                 });
-                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(faker.string.uuid());
+                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                    faker.internet.userName(),
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -495,7 +475,6 @@ describe('LDAP Client Service', () => {
 
         describe('when person cannot be found by personID', () => {
             it('should return LdapSearchError', async () => {
-                personRepoMock.findById.mockResolvedValueOnce(person);
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(
@@ -506,7 +485,9 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(faker.string.uuid());
+                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                    faker.internet.userName(),
+                );
 
                 expect(result.ok).toBeFalsy();
                 expect(result).toEqual({
@@ -517,7 +498,6 @@ describe('LDAP Client Service', () => {
         });
         describe('when person can be found and modified', () => {
             beforeEach(() => {
-                personRepoMock.findById.mockResolvedValueOnce(person);
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(
@@ -536,13 +516,13 @@ describe('LDAP Client Service', () => {
             });
             describe('when modifying', () => {
                 it('Should Update LDAP When called with Attributes', async () => {
-                    const personID: string = faker.string.uuid();
+                    const oldReferrer: string = faker.internet.userName();
                     const newGivenName: string = faker.person.firstName();
                     const newSn: string = faker.person.lastName();
                     const newUid: string = faker.string.alphanumeric(6);
 
                     const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
-                        personID,
+                        oldReferrer,
                         newGivenName,
                         newSn,
                         newUid,
@@ -580,7 +560,7 @@ describe('LDAP Client Service', () => {
 
                 it('Should Do nothing when called with No Attributes', async () => {
                     const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
-                        faker.string.uuid(),
+                        faker.internet.userName(),
                     );
                     expect(result.ok).toBeTruthy();
                     expect(clientMock.modify).not.toHaveBeenCalled();

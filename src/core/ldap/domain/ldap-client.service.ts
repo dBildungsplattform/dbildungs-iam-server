@@ -207,20 +207,11 @@ export class LdapClientService {
     }
 
     public async modifyPersonAttributes(
-        personId: PersonID,
+        oldReferrer: string,
         newGivenName?: string,
         newSn?: string,
         newUid?: string,
-    ): Promise<Result<PersonID>> {
-        const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
-        if (!referrer) {
-            this.logger.error(`Modification FAILED, no person/referrer found for personId:${personId}`);
-            return {
-                ok: false,
-                error: new LdapSearchError(LdapEntityType.LEHRER),
-            };
-        }
-
+    ): Promise<Result<string>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: modifyPersonAttributes');
             const client: Client = this.ldapClient.getClient();
@@ -229,12 +220,12 @@ export class LdapClientService {
 
             const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
                 scope: 'sub',
-                filter: `(uid=${referrer})`,
+                filter: `(uid=${oldReferrer})`,
                 attributes: ['givenName', 'sn', 'uid'],
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(`Modification FAILED, no entry for personId:${personId}`);
+                this.logger.error(`Modification FAILED, no entry for person:${oldReferrer}`);
                 return {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
@@ -279,31 +270,22 @@ export class LdapClientService {
             }
             if (modifications.length > 0) {
                 await client.modify(entryDn, modifications);
-                this.logger.info(`LDAP: Successfully modified givenName/sn attributes for personId:${personId}`);
+                this.logger.info(`LDAP: Successfully modified givenName/sn attributes for person:${oldReferrer}`);
             } else {
-                this.logger.info(`No givenName/sn attributes provided to modify for personId:${personId}`);
+                this.logger.info(`No givenName/sn attributes provided to modify for person:${oldReferrer}`);
             }
 
             if (newUid && searchResult.searchEntries[0]['uid'] !== newUid) {
                 const newDn: string = `uid=${newUid},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
                 await client.modifyDN(entryDn, newDn);
-                this.logger.info(`LDAP: Successfully updated uid for personId:${personId} to ${newUid}`);
+                this.logger.info(`LDAP: Successfully updated uid for person:${oldReferrer} to ${newUid}`);
             }
 
-            return { ok: true, value: personId };
+            return { ok: true, value: oldReferrer };
         });
     }
 
-    public async deleteLehrerByPersonId(personId: PersonID): Promise<Result<PersonID>> {
-        const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
-        if (!referrer) {
-            this.logger.error(`Deletion FAILED, no person/referrer found for personId:${personId}`);
-            return {
-                ok: false,
-                error: new LdapSearchError(LdapEntityType.LEHRER),
-            };
-        }
-
+    public async deleteLehrerByReferrer(referrer: string): Promise<Result<string>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -321,9 +303,9 @@ export class LdapClientService {
                 };
             }
             await client.del(searchResultLehrer.searchEntries[0].dn);
-            this.logger.info(`LDAP: Successfully deleted lehrer by personId:${personId}`);
+            this.logger.info(`LDAP: Successfully deleted lehrer by person:${referrer}`);
 
-            return { ok: true, value: personId };
+            return { ok: true, value: referrer };
         });
     }
 

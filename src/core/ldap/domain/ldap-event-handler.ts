@@ -36,7 +36,7 @@ export class LdapEventHandler {
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonenkontextDeletedEvent, personId:${event.personId}`);
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByPersonId(event.personId);
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.referrer);
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         }
@@ -133,7 +133,7 @@ export class LdapEventHandler {
     public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
         this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
         const modifyResult: Result<PersonID> = await this.ldapClientService.modifyPersonAttributes(
-            event.personId,
+            event.oldReferrer,
             event.vorname,
             event.familienname,
             event.referrer,

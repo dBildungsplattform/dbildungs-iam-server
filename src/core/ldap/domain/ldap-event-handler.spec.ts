@@ -338,7 +338,7 @@ describe('LDAP Event Handler', () => {
                     ok: true,
                     value: faker.string.uuid(),
                 };
-                ldapClientServiceMock.deleteLehrerByPersonId.mockResolvedValueOnce(deletionResult);
+                ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
 
@@ -353,7 +353,7 @@ describe('LDAP Event Handler', () => {
                     ok: false,
                     error: error,
                 };
-                ldapClientServiceMock.deleteLehrerByPersonId.mockResolvedValueOnce(deletionResult);
+                ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
 
