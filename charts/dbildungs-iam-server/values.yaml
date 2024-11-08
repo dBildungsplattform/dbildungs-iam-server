@@ -129,7 +129,8 @@ backend:
 # Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
 redis-cluster:
   enabled: true
-  persistence:
+  persistence: 
+    enabled: false
     size: 4Gi
   image:
     registry: docker.io
