@@ -101,6 +101,7 @@ describe('PersonInfoController', () => {
                         vertrauensstufe: person.vertrauensstufe,
                         personalnummer: person.personalnummer,
                         revision: person.revision,
+                        dienststellen: [],
                     },
                     personenkontexte: [],
                     gruppen: [],
