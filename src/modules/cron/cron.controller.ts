@@ -13,6 +13,7 @@ import {
 import { PersonRepository } from '../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
 import { DomainError } from '../../shared/error/domain.error.js';
+import { UserLock } from '../keycloak-administration/domain/user-lock.js';
 import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
@@ -22,6 +23,7 @@ import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/person
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
+import { PersonLockOccasion } from '../person/domain/person.enums.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -46,15 +48,27 @@ export class CronController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to lock user.' })
     public async koPersUserLock(): Promise<boolean> {
         try {
-            const keyCloakIds: string[] = await this.personRepository.getKoPersUserLockList();
-            if (keyCloakIds.length === 0) {
+            const personIdsTouple: [PersonID, string][] = await this.personRepository.getKoPersUserLockList();
+
+            // Check if the array is empty (personIdsTouple === 0 is incorrect for array checks)
+            if (personIdsTouple.length === 0) {
                 return true;
             }
 
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
-                keyCloakIds.map((id: string) => this.keyCloakUserService.updateKeycloakUserStatus(id, false)),
+                personIdsTouple.map(([personId, keycloakUserId]: [PersonID, string]) => {
+                    const userLock: UserLock = UserLock.construct(
+                        personId,
+                        'Cron',
+                        undefined,
+                        PersonLockOccasion.KOPERS_GESPERRT,
+                        new Date(),
+                    );
+                    return this.keyCloakUserService.updateKeycloakUserStatus(personId, keycloakUserId, userLock, true);
+                }),
             );
 
+            // Check if all operations were successful
             const allSuccessful: boolean = results.every(
                 (result: PromiseSettledResult<Result<void, DomainError>>) =>
                     result.status === 'fulfilled' && result.value.ok === true,

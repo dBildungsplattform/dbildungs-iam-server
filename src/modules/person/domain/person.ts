@@ -1,16 +1,17 @@
-import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
-import { LockKeys } from '../../keycloak-administration/index.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from './personalnummer-with-trailing-space.error.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
-export type LockInfo = Record<LockKeys, string>;
 
 export type PersonCreationParams = {
+    id?: number;
     familienname: string;
     vorname: string;
     referrer?: string;
@@ -32,7 +33,7 @@ export type PersonCreationParams = {
     username?: string;
     password?: string;
     personalnummer?: string;
-    lockInfo?: LockInfo;
+    userLock?: UserLock[];
     isLocked?: boolean;
     orgUnassignmentDate?: Date;
 };
@@ -54,30 +55,30 @@ export class Person<WasPersisted extends boolean> {
         public familienname: string,
         public vorname: string,
         public revision: string,
-        public username?: string,
-        public keycloakUserId?: string,
-        public referrer?: string,
-        public stammorganisation?: string,
-        public initialenFamilienname?: string,
-        public initialenVorname?: string,
-        public rufname?: string,
-        public nameTitel?: string,
-        public nameAnrede?: string[],
-        public namePraefix?: string[],
-        public nameSuffix?: string[],
-        public nameSortierindex?: string,
-        public geburtsdatum?: Date,
-        public geburtsort?: string,
-        public geschlecht?: Geschlecht,
-        public lokalisierung?: string,
-        public vertrauensstufe?: Vertrauensstufe,
-        public auskunftssperre?: boolean,
-        public personalnummer?: string,
-        public orgUnassignmentDate?: Date,
-        public lockInfo?: LockInfo,
-        public isLocked?: boolean,
-        public email?: string,
-        public oxUserId?: string,
+        public username: string | undefined,
+        public keycloakUserId: string | undefined,
+        public referrer: string | undefined,
+        public stammorganisation: string | undefined,
+        public initialenFamilienname: string | undefined,
+        public initialenVorname: string | undefined,
+        public rufname: string | undefined,
+        public nameTitel: string | undefined,
+        public nameAnrede: string[] | undefined,
+        public namePraefix: string[] | undefined,
+        public nameSuffix: string[] | undefined,
+        public nameSortierindex: string | undefined,
+        public geburtsdatum: Date | undefined,
+        public geburtsort: string | undefined,
+        public geschlecht: Geschlecht | undefined,
+        public lokalisierung: string | undefined,
+        public vertrauensstufe: Vertrauensstufe | undefined,
+        public auskunftssperre: boolean | undefined,
+        public personalnummer: string | undefined,
+        public userLock: UserLock[],
+        public orgUnassignmentDate: Date | undefined,
+        public isLocked: boolean | undefined,
+        public email: string | undefined,
+        public oxUserId: string | undefined,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
@@ -117,7 +118,7 @@ export class Person<WasPersisted extends boolean> {
         auskunftssperre?: boolean,
         personalnummer?: string,
         orgUnassignmentDate?: Date,
-        lockInfo?: LockInfo,
+        userLock: UserLock[] = [],
         isLocked?: boolean,
         email?: string,
         oxUserId?: string,
@@ -148,8 +149,8 @@ export class Person<WasPersisted extends boolean> {
             vertrauensstufe,
             auskunftssperre,
             personalnummer,
+            userLock,
             orgUnassignmentDate,
-            lockInfo,
             isLocked,
             email,
             oxUserId,
@@ -166,6 +167,9 @@ export class Person<WasPersisted extends boolean> {
         }
         if (!NameValidator.isNameValid(creationParams.familienname)) {
             return new FamiliennameForPersonWithTrailingSpaceError();
+        }
+        if (creationParams.personalnummer && !NameValidator.isNameValid(creationParams.personalnummer)) {
+            return new PersonalNummerForPersonWithTrailingSpaceError();
         }
         const person: Person<false> = new Person(
             undefined,
@@ -193,7 +197,11 @@ export class Person<WasPersisted extends boolean> {
             creationParams.vertrauensstufe,
             creationParams.auskunftssperre,
             creationParams.personalnummer,
+            creationParams.userLock ?? [],
             creationParams.orgUnassignmentDate,
+            undefined,
+            undefined,
+            undefined,
         );
 
         if (creationParams.password) {
@@ -240,8 +248,8 @@ export class Person<WasPersisted extends boolean> {
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
         personalnummer?: string,
+        userLock?: UserLock[],
         orgUnassignmentDate?: Date,
-        lockInfo?: LockInfo,
         isLocked?: boolean,
         email?: string,
     ): void | DomainError {
@@ -257,6 +265,10 @@ export class Person<WasPersisted extends boolean> {
         }
         if (familienname && !NameValidator.isNameValid(familienname)) {
             return new FamiliennameForPersonWithTrailingSpaceError();
+        }
+
+        if (personalnummer && !NameValidator.isNameValid(personalnummer)) {
+            return new PersonalNummerForPersonWithTrailingSpaceError();
         }
 
         this.familienname = familienname ?? this.familienname;
@@ -280,15 +292,12 @@ export class Person<WasPersisted extends boolean> {
         this.revision = newRevision;
         this.personalnummer = personalnummer ?? this.personalnummer;
         this.orgUnassignmentDate = orgUnassignmentDate;
-        this.lockInfo = lockInfo;
         this.isLocked = isLocked;
         this.email = email;
+        this.userLock = userLock ?? [];
     }
 
     public resetPassword(): void {
-        this.passwordInternalState.passwordInternal = faker.string.alphanumeric({
-            length: { min: 10, max: 10 },
-            casing: 'mixed',
-        });
+        this.passwordInternalState.passwordInternal = generatePassword();
     }
 }

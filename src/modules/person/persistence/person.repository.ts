@@ -14,9 +14,9 @@ import {
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { KeycloakUserService, LockKeys, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
+import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { Person, LockInfo } from '../domain/person.js';
+import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { EventService } from '../../../core/eventbus/index.js';
@@ -26,11 +26,16 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 import { PrivacyIdeaConfig } from '../../../shared/config/privacyidea.config.js';
 
 /**
@@ -148,6 +153,7 @@ export class PersonRepository {
 
     public constructor(
         private readonly kcUserService: KeycloakUserService,
+        private readonly userLockRepository: UserLockRepository,
         private readonly em: EntityManager,
         private readonly eventService: EventService,
         private usernameGenerator: UsernameGeneratorService,
@@ -244,27 +250,14 @@ export class PersonRepository {
         if (!person.keycloakUserId) {
             return person;
         }
-
         const keyCloakUserDataResponse: Result<User<true>, DomainError> = await this.kcUserService.findById(
             person.keycloakUserId,
         );
-
-        person.lockInfo = { lock_locked_from: '', lock_timestamp: '' };
         person.isLocked = false;
-
         if (!keyCloakUserDataResponse.ok) {
             return person;
         }
-        if (keyCloakUserDataResponse.value.attributes) {
-            const attributes: Record<string, string[]> = keyCloakUserDataResponse.value.attributes;
-            const lockedFrom: string | undefined = attributes[LockKeys.LockedFrom]?.toString();
-            const lockedTimeStamp: string | undefined = attributes[LockKeys.Timestamp]?.toString();
-            const lockInfo: LockInfo = {
-                lock_locked_from: lockedFrom ?? '',
-                lock_timestamp: lockedTimeStamp ?? '',
-            };
-            person.lockInfo = lockInfo;
-        }
+        person.userLock = await this.userLockRepository.findByPersonId(person.id);
         person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         return person;
     }
@@ -616,6 +609,13 @@ export class PersonRepository {
             return new MissingPermissionsError('Not allowed to update the person metadata for the person.');
         }
 
+        if (!NameValidator.isNameValid(vorname)) {
+            return new VornameForPersonWithTrailingSpaceError();
+        }
+        if (!NameValidator.isNameValid(familienname)) {
+            return new FamiliennameForPersonWithTrailingSpaceError();
+        }
+
         const hasNameChanged: boolean = this.hasNameChanged(
             personFound.vorname,
             personFound.familienname,
@@ -646,6 +646,9 @@ export class PersonRepository {
 
         //Update personalnummer
         if (personalnummer) {
+            if (!NameValidator.isNameValid(personalnummer)) {
+                return new PersonalNummerForPersonWithTrailingSpaceError();
+            }
             if (await this.isPersonalnummerAlreadayAssigned(personalnummer)) {
                 return new DuplicatePersonalnummerError(`Personalnummer ${personalnummer} already exists.`);
             }
@@ -690,8 +693,8 @@ export class PersonRepository {
             personFound.vertrauensstufe,
             personFound.auskunftssperre,
             newPersonalnummer,
+            personFound.userLock,
             personFound.orgUnassignmentDate,
-            personFound.lockInfo,
             personFound.isLocked,
             personFound.email,
         );
@@ -739,7 +742,7 @@ export class PersonRepository {
         return oldFamiliennameLowerCase !== newFamiliennameLowerCase;
     }
 
-    public async getKoPersUserLockList(): Promise<string[]> {
+    public async getKoPersUserLockList(): Promise<[PersonID, string][]> {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - 56);
 
@@ -760,7 +763,7 @@ export class PersonRepository {
         };
 
         const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
-        return personEntities.map((person: PersonEntity) => person.keycloakUserId);
+        return personEntities.map((person: PersonEntity) => [person.id, person.keycloakUserId]);
     }
 
     public async getPersonWithoutOrgDeleteList(): Promise<string[]> {

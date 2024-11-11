@@ -6,10 +6,12 @@ import { ItsLearningConfig } from './itslearning.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { OxConfig } from './ox.config.js';
+import { RedisConfig } from './redis.config.js';
 
 export default (): {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
+    REDIS: Partial<RedisConfig>;
     LDAP: Partial<LdapConfig>;
     FRONTEND: Partial<FrontendConfig>;
     HOST: Partial<HostConfig>;
@@ -26,6 +28,7 @@ export default (): {
     KEYCLOAK: {
         ADMIN_SECRET: process.env['KC_ADMIN_SECRET'],
         CLIENT_SECRET: process.env['KC_CLIENT_SECRET'],
+        SERVICE_CLIENT_PRIVATE_JWKS: process.env['KC_SERVICE_CLIENT_PRIVATE_JWKS'],
         BASE_URL: process.env['KC_BASE_URL'],
     },
     LDAP: {
@@ -41,6 +44,9 @@ export default (): {
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
+    },
+    REDIS: {
+        PASSWORD: process.env['REDIS_PASSWORD'],
     },
     ITSLEARNING: {
         ENABLED: process.env['ITSLEARNING_ENABLED']?.toLowerCase() as 'true' | 'false',

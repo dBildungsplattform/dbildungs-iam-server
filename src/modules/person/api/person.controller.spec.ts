@@ -43,6 +43,7 @@ import { PersonalnummerRequiredError } from '../domain/personalnummer-required.e
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from './person-email-response.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { PersonLockOccasion } from '../domain/person.enums.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -142,6 +143,35 @@ describe('PersonController', () => {
             faker.lorem.word(),
             faker.lorem.word(),
             faker.string.uuid(),
+            undefined, // referrer
+            undefined, // stammorganisation
+            undefined, // initialenFamilienname
+            undefined, // initialenVorname
+            undefined, // rufname
+            undefined, // nameTitel
+            undefined, // nameAnrede
+            undefined, // namePraefix
+            undefined, // nameSuffix
+            undefined, // nameSortierindex
+            undefined, // geburtsdatum
+            undefined, // geburtsort
+            undefined, // geschlecht
+            undefined, // lokalisierung
+            undefined, // vertrauensstufe
+            undefined, // auskunftssperre
+            undefined, // personalnummer
+            [
+                {
+                    person: '1',
+                    locked_by: 'test',
+                    locked_occasion: PersonLockOccasion.MANUELL_GESPERRT,
+                    locked_until: new Date(),
+                    created_at: new Date(),
+                },
+            ], // userLock array
+            undefined, // orgUnassignmentDate
+            undefined, // isLocked
+            undefined, // email
         );
     }
 
@@ -708,7 +738,8 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             const lockUserBodyParams: LockUserBodyParams = {
                 lock: true,
-                locked_from: 'Theo Tester',
+                locked_by: 'Theo Tester',
+                locked_until: new Date(),
             };
             it('should return a success message', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
@@ -730,7 +761,8 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             const lockUserBodyParams: LockUserBodyParams = {
                 lock: false,
-                locked_from: 'Theo Tester',
+                locked_by: 'Theo Tester',
+                locked_until: new Date(),
             };
             it('should return a success message', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
@@ -751,7 +783,8 @@ describe('PersonController', () => {
         describe('when person does not exist or no permissions', () => {
             const lockUserBodyParams: LockUserBodyParams = {
                 lock: false,
-                locked_from: '2024-01-01T00:00:00Z',
+                locked_by: '2024-01-01T00:00:00Z',
+                locked_until: new Date(),
             };
             it('should throw an error', async () => {
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
@@ -767,7 +800,8 @@ describe('PersonController', () => {
         describe('when keycloakUserId is missing', () => {
             const lockUserBodyParams: LockUserBodyParams = {
                 lock: false,
-                locked_from: '2024-01-01T00:00:00Z',
+                locked_by: '2024-01-01T00:00:00Z',
+                locked_until: new Date(),
             };
             const person: Person<true> = getPerson();
             person.keycloakUserId = undefined;
@@ -790,7 +824,8 @@ describe('PersonController', () => {
             it('should throw an error', async () => {
                 const lockUserBodyParams: LockUserBodyParams = {
                     lock: false,
-                    locked_from: '2024-01-01T00:00:00Z',
+                    locked_by: '2024-01-01T00:00:00Z',
+                    locked_until: new Date(),
                 };
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,

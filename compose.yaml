@@ -41,6 +41,7 @@ services:
     ports:
       - 6379:6379
     command: redis-server --requirepass password
+
   backend:
     profiles:
       - full-backend
