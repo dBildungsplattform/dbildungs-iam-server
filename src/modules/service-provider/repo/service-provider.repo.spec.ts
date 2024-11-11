@@ -20,6 +20,7 @@ import { ServiceProviderEntity } from './service-provider.entity.js';
 import { ServiceProviderKategorie, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -180,6 +181,49 @@ describe('ServiceProviderRepo', () => {
             expect(serviceProviderMap).toBeDefined();
         });
     });
+
+    describe('findByName', () => {
+        it('should find a ServiceProvider by its name if a ServiceProvider with the given name exists', async () => {
+            const expectedServiceProvider: ServiceProvider<true> = await sut.save(
+                DoFactory.createServiceProvider(false),
+            );
+
+            const actualServiceProvider: Result<ServiceProvider<true>, DomainError> = await sut.findByName(
+                expectedServiceProvider.name,
+            );
+
+            if (actualServiceProvider.ok) expect(actualServiceProvider.value).toEqual(expectedServiceProvider);
+        });
+
+        it('should throw an error if there are no existing ServiceProviders for the given name', async () => {
+            await sut.save(DoFactory.createServiceProvider(false));
+
+            const result: Result<ServiceProvider<true>, DomainError> = await sut.findByName(
+                'this-service-provider-does-not-exist',
+            );
+
+            expect(result.ok).toBeFalsy();
+        });
+    });
+
+    describe('findByKeycloakGroup', () => {
+        it('should find a ServiceProvider by its Keycloak groupname', async () => {
+            const expectedServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            expectedServiceProvider.keycloakGroup = 'keycloak-group-1';
+            const expectedPersistedServiceProvider: ServiceProvider<true> = await sut.save(expectedServiceProvider);
+            const anotherServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            anotherServiceProvider.keycloakGroup = 'keycloak-group-2';
+            await sut.save(anotherServiceProvider);
+
+            let result: ServiceProvider<true>[] = [];
+            if (expectedServiceProvider.keycloakGroup) {
+                result = await sut.findByKeycloakGroup(expectedServiceProvider.keycloakGroup);
+            }
+
+            expect(result).toEqual([expectedPersistedServiceProvider]);
+        });
+    });
+
     describe('fetchRolleServiceProvidersWithoutPerson', () => {
         it('should define serviceProviderResult', async () => {
             const role: RolleID = faker.string.uuid();
