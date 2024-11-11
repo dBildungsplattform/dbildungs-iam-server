@@ -186,13 +186,13 @@ cronjobs:
   jobs:
     trigger-xyz-1:
       schedule: 0 8 * * *
-      endpoint: ''
+      endpoint: '/url1'
       script: 'trigger_xyz.sh'
     trigger-xyz-2:
       schedule: 0 8 * * *
-      endpoint: ''
+      endpoint: '/url2'
       script: 'trigger_xyz.sh'
     trigger-xyz-3:
       schedule: 0 8 * * *
-      endpoint: ''
+      endpoint: '/url3'
       script: 'trigger_xyz.sh'
