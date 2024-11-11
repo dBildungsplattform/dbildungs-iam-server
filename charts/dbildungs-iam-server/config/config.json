@@ -75,6 +75,11 @@
     "USER_RESOLVER": "mariadb_resolver",
     "REALM": "defrealm"
   },
+  "VIDIS": {
+    "BASE_URL": "https://service-stage.vidis.schule",
+    "USERNAME": "",
+    "PASSWORD": ""
+  },
   "IMPORT": {
     "IMPORT_FILE_MAXGROESSE_IN_MB": 10
   }
