@@ -28,6 +28,7 @@ import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationError } from '../../../shared/error/organisation.error.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -313,6 +314,17 @@ export class OrganisationRepository {
         });
 
         return organisations.map(mapEntityToAggregate);
+    }
+
+    public async findByKennung(kennung: string): Promise<Result<Organisation<true>, DomainError>> {
+        try {
+            const organisation: OrganisationEntity = await this.em.findOneOrFail(OrganisationEntity, {
+                kennung: kennung,
+            });
+            return { ok: true, value: mapEntityToAggregate(organisation) };
+        } catch (e) {
+            return { ok: false, error: new OrganisationError(`Organisation '${kennung}' does not exist.`) };
+        }
     }
 
     public async findAuthorized(

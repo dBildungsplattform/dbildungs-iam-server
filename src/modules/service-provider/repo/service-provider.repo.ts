@@ -8,6 +8,8 @@ import { EventService } from '../../../core/eventbus/index.js';
 
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { ServiceProviderError } from '../../../shared/error/service-provider.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -72,6 +74,24 @@ export class ServiceProviderRepo {
         )) as Option<ServiceProviderEntity>;
 
         return serviceProvider && mapEntityToAggregate(serviceProvider);
+    }
+
+    public async findByName(name: string): Promise<Result<ServiceProvider<true>, DomainError>> {
+        try {
+            const serviceProvider: ServiceProviderEntity = await this.em.findOneOrFail(ServiceProviderEntity, {
+                name: name,
+            });
+            return { ok: true, value: mapEntityToAggregate(serviceProvider) };
+        } catch (e) {
+            return { ok: false, error: new ServiceProviderError(`ServiceProvider '${name}' does not exist.`) };
+        }
+    }
+
+    public async findByKeycloakGroup(groupname: string): Promise<ServiceProvider<true>[]> {
+        const serviceProviders: ServiceProviderEntity[] = await this.em.find(ServiceProviderEntity, {
+            keycloakGroup: groupname,
+        });
+        return serviceProviders.map(mapEntityToAggregate);
     }
 
     public async find(options?: ServiceProviderFindOptions): Promise<ServiceProvider<true>[]> {
@@ -159,5 +179,15 @@ export class ServiceProviderRepo {
         );
 
         return serviceProviders;
+    }
+
+    public async deleteById(id: string): Promise<boolean> {
+        const deletedPersons: number = await this.em.nativeDelete(ServiceProviderEntity, { id });
+        return deletedPersons > 0;
+    }
+
+    public async deleteByName(name: string): Promise<boolean> {
+        const deletedPersons: number = await this.em.nativeDelete(ServiceProviderEntity, { name: name });
+        return deletedPersons > 0;
     }
 }
