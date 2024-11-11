@@ -186,7 +186,7 @@ cronjobs:
   jobs:
     trigger-xyz-1:
       schedule: 0 8 * * *
-      endpoint: '/url1'
+      endpoint: '/api/cron/kopers-lock'
       script: 'trigger_xyz.sh'
     trigger-xyz-2:
       schedule: 0 8 * * *

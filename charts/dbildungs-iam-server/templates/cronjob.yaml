@@ -30,18 +30,18 @@ spec:
                   name:  cronjob-envs-configmap
             env:
                 - name: BACKEND_HOSTNAME
-                  value: "{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
+                  value: "https://{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
             command:
               - "sh"
               - "-c"
               - |
-                  apk update && 
+                  apk update &&
                   apk add --no-cache bash openssl curl cronie jq vim &&
                   mkdir /scripts &&
                   cp /scripts_tmp/*.sh /scripts/ &&
                   chmod +x /scripts/*.sh &&
                   chmod 600 /etc/crontabs/root &&
-                  touch /var/log/cron.log && 
+                  touch /var/log/cron.log &&
                   chmod 644 /var/log/cron.log &&
                   cd {{ $.Values.cronjobs.scriptDir}} &&
                   ./{{ $job_options.script}}
@@ -54,7 +54,7 @@ spec:
                 readOnly: false
             ports:
             - containerPort: {{ $.Values.cronjobs.port }}
-              name: trigger-xyz-pod  
+              name: trigger-xyz-pod
           volumes:
           - name: script-volume
             configMap:
