@@ -20,7 +20,6 @@ base64url_decode() {
   echo "$input" | base64 -d
 }
 
-
 # Function to decode base64url and convert to hex, preserving leading zeros
 decode_to_hex() {
   base64url_decode "$1" | hexdump -v -e '/1 "%02x"'
@@ -35,11 +34,6 @@ generate_jti() {
 clientId="${KC_CLIENT_ID}"
 kc_token_url="${KC_TOKEN_URL}"
 backend_hostname="${BACKEND_HOSTNAME}"
-
-echo "BACKEND_HOSTNAME is $backend_hostname"
-echo "KC_CLIENT_ID is $clientId"
-echo "KC_TOKEN_URL is $kc_token_url"
-echo "JWKS_FILE_PATH is $JWKS_FILE_PATH"
 
 # Load JWKS from environment variable or file
 if [ -n "$JWKS" ]; then
