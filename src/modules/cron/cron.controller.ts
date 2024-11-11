@@ -23,6 +23,7 @@ import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/person
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
+import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -35,6 +36,7 @@ export class CronController {
         private readonly personDeleteService: PersonDeleteService,
         private readonly personenKonextRepository: DBiamPersonenkontextRepo,
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
+        private readonly serviceProviderService: ServiceProviderService,
     ) {}
 
     @Put('kopers-lock')
@@ -170,5 +172,19 @@ export class CronController {
         } catch (error) {
             throw new Error('Failed to remove users due to an internal server error.');
         }
+    }
+
+    @Put('vidis-offers')
+    @HttpCode(HttpStatus.OK)
+    @ApiCreatedResponse({ description: 'VIDIS offers were successfully updated.', type: Boolean })
+    @ApiBadRequestResponse({ description: 'VIDIS offers were not successfully updated.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update VIDIS offers.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to update VIDIS offers.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to update VIDIS offers.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while trying to update VIDIS offers.',
+    })
+    public async updateServiceProvidersForVidisOffers(): Promise<void> {
+        await this.serviceProviderService.updateServiceProvidersForVidis();
     }
 }

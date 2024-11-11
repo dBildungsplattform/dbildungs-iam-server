@@ -16,6 +16,7 @@ import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { Person } from '../person/domain/person.js';
 import { PersonenkontextWorkflowAggregate } from '../personenkontext/domain/personenkontext-workflow.js';
 import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
+import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 
 describe('CronController', () => {
     let cronController: CronController;
@@ -26,6 +27,7 @@ describe('CronController', () => {
     let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
     let permissionsMock: DeepMocked<PersonPermissions>;
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
+    let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -54,6 +56,10 @@ describe('CronController', () => {
                     provide: PersonenkontextWorkflowAggregate,
                     useValue: createMock<PersonenkontextWorkflowAggregate>(),
                 },
+                {
+                    provide: ServiceProviderService,
+                    useValue: createMock<ServiceProviderService>(),
+                },
             ],
             controllers: [CronController],
         }).compile();
@@ -66,6 +72,7 @@ describe('CronController', () => {
         personenkontextWorkflowFactoryMock = module.get(PersonenkontextWorkflowFactory);
         personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
         permissionsMock = createMock<PersonPermissions>();
+        serviceProviderServiceMock = module.get(ServiceProviderService);
     });
 
     beforeEach(() => {
@@ -332,6 +339,18 @@ describe('CronController', () => {
                 await expect(cronController.personWithoutOrgDelete(personPermissionsMock)).rejects.toThrow(
                     'Failed to remove users due to an internal server error.',
                 );
+            });
+        });
+    });
+
+    describe('/PUT cron/vidis-offers', () => {
+        describe(`when the vidis-offers endpoint is called`, () => {
+            it(`should update ServiceProviders for VIDIS offers`, async () => {
+                serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
+
+                await cronController.updateServiceProvidersForVidisOffers();
+
+                expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(1);
             });
         });
     });
