@@ -65,26 +65,31 @@ describe('OrganisationServiceProviderRepo', () => {
 
     describe('save', () => {
         it('should save a new OrganisationServiceProvider mapping', async () => {
-            const organisation: Organisation<true> = DoFactory.createOrganisation(true);
-            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-            await organisationRepo.save(organisation);
-            await serviceProviderRepo.save(serviceProvider);
+            const organisation: Organisation<false> = DoFactory.createOrganisation(false);
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedOrganisation: Organisation<true> = await organisationRepo.save(organisation);
+            const persistedServiceProvider: ServiceProvider<true> = await serviceProviderRepo.save(serviceProvider);
 
-            await expect(sut.save(organisation, serviceProvider)).resolves.not.toThrow();
+            await expect(sut.save(persistedOrganisation, persistedServiceProvider)).resolves.not.toThrow();
         });
     });
 
     describe('deleteAll', () => {
         it('should delete all existing OrganisationServiceProvider mappings', async () => {
-            const organisation: Organisation<true> = DoFactory.createOrganisation(true);
-            const organisation2: Organisation<true> = DoFactory.createOrganisation(true);
-            const serviceProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-            const serviceProvider2: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-            const serviceProvider3: ServiceProvider<true> = DoFactory.createServiceProvider(true);
-            await sut.save(organisation, serviceProvider);
-            await sut.save(organisation, serviceProvider2);
-            await sut.save(organisation2, serviceProvider2);
-            await sut.save(organisation2, serviceProvider3);
+            const organisation: Organisation<false> = DoFactory.createOrganisation(false);
+            const persistedOrganisation: Organisation<true> = await organisationRepo.save(organisation);
+            const organisation2: Organisation<false> = DoFactory.createOrganisation(false);
+            const persistedOrganisation2: Organisation<true> = await organisationRepo.save(organisation2);
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedServiceProvider: ServiceProvider<true> = await serviceProviderRepo.save(serviceProvider);
+            const serviceProvider2: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedServiceProvider2: ServiceProvider<true> = await serviceProviderRepo.save(serviceProvider2);
+            const serviceProvider3: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedServiceProvider3: ServiceProvider<true> = await serviceProviderRepo.save(serviceProvider3);
+            await sut.save(persistedOrganisation, persistedServiceProvider);
+            await sut.save(persistedOrganisation, persistedServiceProvider2);
+            await sut.save(persistedOrganisation2, persistedServiceProvider2);
+            await sut.save(persistedOrganisation2, persistedServiceProvider3);
 
             const result: boolean = await sut.deleteAll();
 
