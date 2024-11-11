@@ -28,6 +28,7 @@ import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
 import { OrganisationError } from '../../../shared/error/organisation.error.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
@@ -51,6 +52,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.id,
         entity.createdAt,
         entity.updatedAt,
+        entity.version,
         entity.administriertVon,
         entity.zugehoerigZu,
         entity.kennung,
@@ -436,7 +438,11 @@ export class OrganisationRepository {
         return;
     }
 
-    public async updateKlassenname(id: string, newName: string): Promise<DomainError | Organisation<true>> {
+    public async updateKlassenname(
+        id: string,
+        newName: string,
+        version: number,
+    ): Promise<DomainError | Organisation<true>> {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
         if (!organisationFound) {
@@ -457,6 +463,7 @@ export class OrganisationRepository {
                 }
             }
         }
+        organisationFound.setVersionForUpdate(version);
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
@@ -505,6 +512,12 @@ export class OrganisationRepository {
             OrganisationEntity,
             organisation.id,
         );
+
+        if (organisationEntity.version !== organisation.version) {
+            throw new OrganisationUpdateOutdatedError();
+        }
+        organisationEntity.version += 1;
+
         organisationEntity.assign(mapAggregateToData(organisation));
 
         await this.em.persistAndFlush(organisationEntity);
