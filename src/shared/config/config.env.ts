@@ -6,6 +6,7 @@ import { ItsLearningConfig } from './itslearning.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { OxConfig } from './ox.config.js';
+import { VidisConfig } from './vidis.config.js';
 
 export default (): {
     DB: Partial<DbConfig>;
@@ -16,6 +17,7 @@ export default (): {
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
     OX: Partial<OxConfig>;
+    VIDIS: Partial<VidisConfig>;
 } => ({
     DB: {
         DB_NAME: process.env['DB_NAME'],
@@ -61,5 +63,10 @@ export default (): {
         ENDPOINT: process.env['OX_ENDPOINT'],
         USERNAME: process.env['OX_USERNAME'],
         PASSWORD: process.env['OX_PASSWORD'],
+    },
+    VIDIS: {
+        BASE_URL: process.env['VIDIS_BASE_URL'],
+        USERNAME: process.env['VIDIS_USERNAME'],
+        PASSWORD: process.env['VIDIS_PASSWORD'],
     },
 });

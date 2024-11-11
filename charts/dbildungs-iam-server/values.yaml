@@ -49,6 +49,9 @@ auth:
   pi_user_resolver: ''
   pi_user_realm: ''
   pi_rename_waiting_time: ''
+  vidis_base_url: ''
+  vidis_username: ''
+  vidis_password: ''
 
 backend:
   replicaCount: 1

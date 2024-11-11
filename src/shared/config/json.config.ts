@@ -12,6 +12,7 @@ import { ItsLearningConfig } from './itslearning.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { OxConfig } from './ox.config.js';
 import { ImportConfig } from './import.config.js';
+import { VidisConfig } from './vidis.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -61,4 +62,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => ImportConfig)
     public readonly IMPORT!: ImportConfig;
+
+    @ValidateNested()
+    @Type(() => VidisConfig)
+    public readonly VIDIS!: VidisConfig;
 }
