@@ -63,6 +63,11 @@
         "USER_RESOLVER": "mariadb_resolver",
         "REALM": "defrealm"
     },
+    "VIDIS": {
+        "BASE_URL": "",
+        "USERNAME": "",
+        "PASSWORD": ""
+    },
     "OX": {
         "ENABLED": "false",
         "ENDPOINT": "https://ox_ip:ox_port/webservices/",
