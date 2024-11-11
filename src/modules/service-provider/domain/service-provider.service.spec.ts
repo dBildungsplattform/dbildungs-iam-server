@@ -15,6 +15,7 @@ import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget 
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { ServiceProviderError } from '../../../shared/error/service-provider.error.js';
+import { faker } from '@faker-js/faker';
 
 const mockVidisOfferResponse: VidisOfferResponse[] = [
     {
@@ -105,11 +106,12 @@ const mockExistingServiceProviders: ServiceProvider<true>[] = [
 
 const mockExistingSchools: Organisation<true>[] = [
     Organisation.construct(
-        'dummy-school-vidis-test-20202',
-        new Date('2024-11-04 08:46:54.147+00'),
-        new Date('2024-11-04 08:46:54.147+00'),
-        'dummy-administriert-uuid',
-        'dummy-zugehoerig-zu-uuid',
+        faker.string.uuid(),
+        faker.date.past(),
+        faker.date.recent(),
+        faker.number.int(),
+        faker.string.uuid(),
+        faker.string.uuid(),
         'DE-VIDIS-vidis_test_20202',
         'vidis_test_20202',
         'Keine',
@@ -120,11 +122,12 @@ const mockExistingSchools: Organisation<true>[] = [
         'dummy-school-vidis-test-20202@DE-VIDIS-vidis_test_20202.vidis-example.org',
     ),
     Organisation.construct(
-        'dummy-school-vidis-test-30303',
-        new Date('2024-11-04 08:46:54.147+00'),
-        new Date('2024-11-04 08:46:54.147+00'),
-        'dummy-administriert-uuid',
-        'dummy-zugehoerig-zu-uuid',
+        faker.string.uuid(),
+        faker.date.past(),
+        faker.date.recent(),
+        faker.number.int(),
+        faker.string.uuid(),
+        faker.string.uuid(),
         'DE-VIDIS-vidis_test_30303',
         'vidis_test_30303',
         'Keine',
@@ -135,11 +138,12 @@ const mockExistingSchools: Organisation<true>[] = [
         'dummy-school-vidis-test-30303@DE-VIDIS-vidis_test_30303.vidis-example.org',
     ),
     Organisation.construct(
-        'dummy-school-vidis-test-40404',
-        new Date('2024-11-04 08:46:54.147+00'),
-        new Date('2024-11-04 08:46:54.147+00'),
-        'dummy-administriert-uuid',
-        'dummy-zugehoerig-zu-uuid',
+        faker.string.uuid(),
+        faker.date.past(),
+        faker.date.recent(),
+        faker.number.int(),
+        faker.string.uuid(),
+        faker.string.uuid(),
         'DE-VIDIS-vidis_test_40404',
         'vidis_test_40404',
         'Keine',
@@ -150,11 +154,12 @@ const mockExistingSchools: Organisation<true>[] = [
         'dummy-school-vidis-test-40404@DE-VIDIS-vidis_test_40404.vidis-example.org',
     ),
     Organisation.construct(
-        'dummy-school-vidis-test-101010',
-        new Date('2024-11-04 08:46:54.147+00'),
-        new Date('2024-11-04 08:46:54.147+00'),
-        'dummy-administriert-uuid',
-        'dummy-zugehoerig-zu-uuid',
+        faker.string.uuid(),
+        faker.date.past(),
+        faker.date.recent(),
+        faker.number.int(),
+        faker.string.uuid(),
+        faker.string.uuid(),
         'DE-VIDIS-vidis_test_101010',
         'vidis_test_101010',
         'Keine',
