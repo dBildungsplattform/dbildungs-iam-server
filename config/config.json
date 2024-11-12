@@ -87,7 +87,9 @@
         "RENAME_WAITING_TIME_IN_SECONDS": 5
     },
     "VIDIS": {
-        "BASE_URL": "https://service-stage.vidis.schule"
+        "BASE_URL": "https://service-stage.vidis.schule",
+        "USERNAME": "username",
+        "PASSWORD": "password"
     },
     "IMPORT": {
         "IMPORT_FILE_MAXGROESSE_IN_MB": 10
