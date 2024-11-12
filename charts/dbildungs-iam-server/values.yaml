@@ -185,14 +185,17 @@ cronjobs:
   scriptDir: scripts
   jobs:
     trigger-xyz-1:
-      schedule: 0 8 * * *
+      schedule: 20 0 * * *
       endpoint: '/api/cron/kopers-lock'
+      httpMethod: 'PUT'
       script: 'trigger_xyz.sh'
     trigger-xyz-2:
-      schedule: 0 8 * * *
-      endpoint: '/url2'
+      schedule: 40 0 * * *
+      endpoint: '/api/cron/kontext-expired'
+      httpMethod: 'PUT'
       script: 'trigger_xyz.sh'
     trigger-xyz-3:
-      schedule: 0 8 * * *
-      endpoint: '/url3'
+      schedule: 50 0 * * *
+      endpoint: '/api/cron/person-without-org'
+      httpMethod: 'PUT'
       script: 'trigger_xyz.sh'
