@@ -184,18 +184,18 @@ cronjobs:
   backendHostname: '{{ $.Values.frontendHostname }}'
   scriptDir: scripts
   jobs:
-    trigger-xyz-1:
+    cron-trigger-1:
       schedule: 20 0 * * *
       endpoint: '/api/cron/kopers-lock'
       httpMethod: 'PUT'
-      script: 'trigger_xyz.sh'
-    trigger-xyz-2:
+      script: 'cron_trigger.sh'
+    cron-trigger-2:
       schedule: 40 0 * * *
       endpoint: '/api/cron/kontext-expired'
       httpMethod: 'PUT'
-      script: 'trigger_xyz.sh'
-    trigger-xyz-3:
+      script: 'cron_trigger.sh'
+    cron-trigger-3:
       schedule: 50 0 * * *
       endpoint: '/api/cron/person-without-org'
       httpMethod: 'PUT'
-      script: 'trigger_xyz.sh'
+      script: 'cron_trigger.sh'

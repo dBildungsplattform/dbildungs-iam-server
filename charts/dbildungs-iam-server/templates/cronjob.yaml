@@ -55,7 +55,7 @@ spec:
                 readOnly: false
             ports:
             - containerPort: {{ $.Values.cronjobs.port }}
-              name: trigger-xyz-pod
+              name: cron-trigger-pod
           volumes:
           - name: script-volume
             configMap:
