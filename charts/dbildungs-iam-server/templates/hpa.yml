@@ -15,6 +15,12 @@ spec:
     name: {{ include "common.names.name" . }}-backend   
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  behavior:
+    scaleDown:
+      policies:
+        - type: Percent
+          value: 100      
+          periodSeconds: 60 
   metrics:
     - type: Resource
       resource:
