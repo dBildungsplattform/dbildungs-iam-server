@@ -8,7 +8,6 @@ metadata:
 spec:
   schedule: {{ $job_options.schedule }}
   startingDeadlineSeconds: 300
-  suspend: true
   jobTemplate:
     spec:
       backoffLimit: 0
@@ -29,8 +28,10 @@ spec:
               - configMapRef:
                   name:  cronjob-envs-configmap
             env:
-                - name: BACKEND_HOSTNAME
+                - name: BACKEND_ENPOINT_URL
                   value: "https://{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
+                - name: HTTP_METHOD
+                  value: "{{ $job_options.httpMethod }}"
             command:
               - "sh"
               - "-c"

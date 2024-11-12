@@ -11,4 +11,4 @@ data:
   get_access_token.sh: |-
     {{ .Files.Get "cron/scripts/get_access_token.sh" | nindent 4 }}
   trigger_xyz.sh: |-
-    {{ .Files.Get "cron/scripts/trigger_xyz.sh" | nindent 4 }}
+    {{ .Files.Get "cron/scripts/cron_trigger.sh" | nindent 4 }}
