@@ -108,6 +108,7 @@ export class DoFactory {
             referrer: 'referrer',
             sichtfreigabe: SichtfreigabeType.JA,
             loeschungZeitpunkt: faker.date.anytime(),
+            befristung: faker.date.anytime(),
         };
 
         return Object.assign(Object.create(Personenkontext.prototype) as Personenkontext<boolean>, pk, props);
@@ -199,6 +200,7 @@ export class DoFactory {
             withId ? faker.string.uuid() : undefined,
             withId ? faker.date.past() : undefined,
             withId ? faker.date.recent() : undefined,
+            params.version ?? 1,
             faker.string.uuid(),
             faker.string.uuid(),
             faker.lorem.word(),
