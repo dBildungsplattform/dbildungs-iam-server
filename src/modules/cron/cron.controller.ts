@@ -24,6 +24,9 @@ import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
+import { CronJobError } from '../../shared/error/cron-job.error.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -184,7 +187,15 @@ export class CronController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while trying to update VIDIS offers.',
     })
-    public async updateServiceProvidersForVidisOffers(): Promise<void> {
+    public async updateServiceProvidersForVidisOffers(@Permissions() permissions: PersonPermissions): Promise<void> {
+        const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.CRON_DURCHFUEHREN,
+        ]);
+        if (!hasCronJobPermission) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new CronJobError('Ungenügende Berechtigungen')),
+            );
+        }
         await this.serviceProviderService.updateServiceProvidersForVidis();
     }
 }

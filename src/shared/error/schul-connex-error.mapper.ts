@@ -13,6 +13,7 @@ import { InvalidCharacterSetError } from './invalid-character-set.error.js';
 import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
 import { InvalidNameError } from './invalid-name.error.js';
 import { MissingPermissionsError } from './missing-permissions.error.js';
+import { CronJobError } from './cron-job.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -123,6 +124,15 @@ export class SchulConnexErrorMapper {
                 subcode: '01',
                 titel: 'Angefragte Entität existiert nicht',
                 beschreibung: 'Die angeforderte Entität existiert nicht',
+            }),
+        ],
+        [
+            CronJobError.name,
+            new SchulConnexError({
+                code: 401,
+                subcode: '00',
+                titel: 'Zugriff verweigert',
+                beschreibung: 'Die Anfrage konnte aufgrund fehlender Autorisierung nicht verarbeitet werden.',
             }),
         ],
     ]);
