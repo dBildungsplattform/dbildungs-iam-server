@@ -71,8 +71,8 @@ export class ServiceProviderService {
                         'ffb411f6-8287-4939-b87d-13b6a4e7fdfa', // This is a random UUID
                         Buffer.from(offer.offerLogo, 'base64'),
                         offerLogoMediaType,
-                        vidisKeycloakRole,
                         vidisKeycloakGroup,
+                        vidisKeycloakRole,
                         ServiceProviderSystem.NONE,
                         false,
                     );
@@ -86,8 +86,8 @@ export class ServiceProviderService {
                         'ffb411f6-8287-4939-b87d-13b6a4e7fdfa', // This is a random UUID
                         Buffer.from(offer.offerLogo, 'base64'),
                         offerLogoMediaType,
-                        vidisKeycloakRole,
                         vidisKeycloakGroup,
+                        vidisKeycloakRole,
                         ServiceProviderSystem.NONE,
                         false,
                     );
