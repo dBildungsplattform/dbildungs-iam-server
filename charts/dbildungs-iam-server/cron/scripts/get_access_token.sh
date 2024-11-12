@@ -33,7 +33,6 @@ generate_jti() {
 # Load environment variables
 clientId="${KC_CLIENT_ID}"
 kc_token_url="${KC_TOKEN_URL}"
-backend_hostname="${BACKEND_HOSTNAME}"
 
 # Load JWKS from environment variable or file
 if [ -n "$JWKS" ]; then
