@@ -79,6 +79,7 @@ describe('PersonRepository Integration', () => {
     let rolleRepo: RolleRepo;
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personenkontextFactory: PersonenkontextFactory;
+    let userLockRepository: UserLockRepository;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -130,6 +131,7 @@ describe('PersonRepository Integration', () => {
         rolleRepo = module.get(RolleRepo);
         dbiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personenkontextFactory = module.get(PersonenkontextFactory);
+        userLockRepository = module.get(UserLockRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -1767,6 +1769,13 @@ describe('PersonRepository Integration', () => {
             const newFamilienname: string = faker.name.lastName();
             const newVorname: string = faker.name.firstName();
             const newPersonalnummer: string = faker.finance.pin(7);
+            await userLockRepository.createUserLock({
+                person: person.id,
+                created_at: new Date(),
+                locked_by: 'cron',
+                locked_until: new Date(),
+                locked_occasion: PersonLockOccasion.KOPERS_GESPERRT,
+            });
             personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
             usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername1' });
             kcUserServiceMock.updateUsername.mockResolvedValueOnce({

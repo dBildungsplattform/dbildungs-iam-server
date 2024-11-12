@@ -76,7 +76,6 @@ import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from './person-email-response.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -88,7 +87,6 @@ export class PersonController {
 
     public constructor(
         private readonly personRepository: PersonRepository,
-        private readonly userLockRepository: UserLockRepository,
         private readonly emailRepo: EmailRepo,
         private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
@@ -527,22 +525,6 @@ export class PersonController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
-
-        if (result.personalnummer) {
-            const userLocks: UserLock[] = await this.userLockRepository.findByPersonId(params.personId);
-            const koperslock: UserLock | undefined = userLocks.find(
-                (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
-            );
-            if (koperslock) {
-                await this.keycloakUserService.updateKeycloakUserStatus(
-                    params.personId,
-                    result.keycloakUserId!,
-                    koperslock,
-                    false,
-                );
-            }
-        }
-
         return new PersonendatensatzResponse(result, false);
     }
 }

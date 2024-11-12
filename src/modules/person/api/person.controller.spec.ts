@@ -44,8 +44,6 @@ import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from './person-email-response.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
-import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -60,7 +58,6 @@ describe('PersonController', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let eventServiceMock: DeepMocked<EventService>;
-    let userLockRepositoryMock: DeepMocked<UserLockRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -121,10 +118,6 @@ describe('PersonController', () => {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
-                {
-                    provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
-                },
             ],
         }).compile();
         personController = module.get(PersonController);
@@ -137,7 +130,6 @@ describe('PersonController', () => {
         keycloakUserService = module.get(KeycloakUserService);
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
         eventServiceMock = module.get(EventService);
-        userLockRepositoryMock = module.get(UserLockRepository);
     });
 
     function getPerson(): Person<true> {
@@ -959,34 +951,6 @@ describe('PersonController', () => {
             );
             await expect(personController.updateMetadata(params, body, personPermissionsMock)).rejects.toThrow(
                 PersonDomainError,
-            );
-        });
-
-        it('should call unlock a KOPERS lock when a KOPERS number is added', async () => {
-            const person: Person<true> = getPerson();
-            person.personalnummer = body.personalnummer;
-
-            dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValueOnce(
-                true,
-            );
-            personRepositoryMock.updatePersonMetadata.mockResolvedValue(person);
-
-            const kopersLock: UserLock = {
-                person: person.id,
-                created_at: new Date(),
-                locked_by: 'cron',
-                locked_until: new Date(),
-                locked_occasion: PersonLockOccasion.KOPERS_GESPERRT,
-            };
-            userLockRepositoryMock.findByPersonId.mockResolvedValue([kopersLock]);
-
-            await personController.updateMetadata(params, body, personPermissionsMock);
-
-            expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledWith(
-                params.personId,
-                person.keycloakUserId!,
-                kopersLock,
-                false,
             );
         });
     });
