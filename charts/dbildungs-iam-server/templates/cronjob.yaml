@@ -28,7 +28,7 @@ spec:
               - configMapRef:
                   name:  cronjob-envs-configmap
             env:
-                - name: BACKEND_ENPOINT_URL
+                - name: BACKEND_ENDPOINT_URL
                   value: "https://{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
                 - name: HTTP_METHOD
                   value: "{{ $job_options.httpMethod }}"
