@@ -400,7 +400,7 @@ describe('OxBaseAction', () => {
 
             expect(result).toEqual({
                 ok: false,
-                error: new OxError('Request failed', expect.anything() as Record<string, unknown>),
+                error: new OxError('Request failed'),
             });
         });
     });

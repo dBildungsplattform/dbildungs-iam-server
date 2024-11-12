@@ -68,7 +68,7 @@ export abstract class OxBaseAction<ResponseBodyType, ResultType> {
         if (errorResult.Envelope.Body.Fault) {
             return {
                 ok: false,
-                error: new OxError('Request failed', result),
+                error: new OxError('Request failed'),
             };
         } else {
             return this.parseBody(result.Envelope.Body);

@@ -8,6 +8,7 @@ import { OxBaseAction } from '../actions/ox-base-action.js';
 import { OxError } from '../../../shared/error/ox.error.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 
 describe('OxService', () => {
     let module: TestingModule;
@@ -17,7 +18,7 @@ describe('OxService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule],
+            imports: [LoggingTestModule, ConfigTestModule],
             providers: [
                 OxService,
                 {
@@ -87,7 +88,7 @@ describe('OxService', () => {
 
             expect(result).toEqual({
                 ok: false,
-                error: new OxError('Request failed', [error]),
+                error: new OxError('Request failed'),
             });
         });
     });
