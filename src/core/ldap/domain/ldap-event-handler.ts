@@ -142,7 +142,7 @@ export class LdapEventHandler {
             this.logger.error(modifyResult.error.message);
             return;
         }
-        this.logger.info(`Sucessfully modfied person attributes for personId:${event.personId}`);
+        this.logger.info(`Successfully modfied person attributes for personId:${event.personId}`);
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)

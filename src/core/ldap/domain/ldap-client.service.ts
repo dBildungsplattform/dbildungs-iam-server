@@ -276,7 +276,7 @@ export class LdapClientService {
             }
 
             if (newUid && searchResult.searchEntries[0]['uid'] !== newUid) {
-                const newDn: string = `uid=${newUid},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
+                const newDn: string = `uid=${newUid}`;
                 await client.modifyDN(entryDn, newDn);
                 this.logger.info(`LDAP: Successfully updated uid for person:${oldReferrer} to ${newUid}`);
             }
