@@ -271,13 +271,17 @@ describe('ServiceProviderService', () => {
     });
 
     describe('updateServiceProvidersForVidis', () => {
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
         it('should update ServiceProvider for VIDIS offers if ServiceProvider in VIDIS offer response already exists in SPSH.', async () => {
             vidisService.getActivatedOffersByRegion.mockResolvedValue(mockVidisOfferResponse);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
-            serviceProviderRepo.findByName.mockResolvedValue(
-                { ok: true, value: mockExistingVidisServiceProviderContainedInVidisOfferResponse },
-                // mockExistingVidisServiceProviderContainedInVidisOfferResponse,
-            );
+            serviceProviderRepo.findByName.mockResolvedValue({
+                ok: true,
+                value: mockExistingVidisServiceProviderContainedInVidisOfferResponse,
+            });
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisOfferResponse);
             if (mockExistingSchools[0])
                 organisationRepo.findByKennung.mockResolvedValue({ ok: true, value: mockExistingSchools[0] });

@@ -69,7 +69,7 @@ export class ServiceProviderService {
                         offer.offerLink,
                         ServiceProviderKategorie.ANGEBOTE,
                         'ffb411f6-8287-4939-b87d-13b6a4e7fdfa', // This is a random UUID
-                        offer.offerLogo ? Buffer.from(offer.offerLogo, 'base64') : undefined,
+                        Buffer.from(offer.offerLogo, 'base64'),
                         offerLogoMediaType,
                         vidisKeycloakRole,
                         vidisKeycloakGroup,
@@ -84,7 +84,7 @@ export class ServiceProviderService {
                         offer.offerLink,
                         ServiceProviderKategorie.ANGEBOTE,
                         'ffb411f6-8287-4939-b87d-13b6a4e7fdfa', // This is a random UUID
-                        offer.offerLogo ? Buffer.from(offer.offerLogo, 'base64') : undefined,
+                        Buffer.from(offer.offerLogo, 'base64'),
                         offerLogoMediaType,
                         vidisKeycloakRole,
                         vidisKeycloakGroup,

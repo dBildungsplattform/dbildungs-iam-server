@@ -262,4 +262,26 @@ describe('ServiceProviderRepo', () => {
             );
         });
     });
+
+    describe('deleteById', () => {
+        it('should delete an existing ServiceProvider by its id', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedPersistedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
+
+            const result: boolean = await sut.deleteById(persistedPersistedServiceProvider.id);
+
+            expect(result).toBeTruthy();
+        });
+    });
+
+    describe('deleteByName', () => {
+        it('should delete an existing ServiceProvider by its name', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedPersistedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
+
+            const result: boolean = await sut.deleteByName(persistedPersistedServiceProvider.name);
+
+            expect(result).toBeTruthy();
+        });
+    });
 });
