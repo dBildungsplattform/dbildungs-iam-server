@@ -17,6 +17,7 @@ import { Person } from '../person/domain/person.js';
 import { PersonenkontextWorkflowAggregate } from '../personenkontext/domain/personenkontext-workflow.js';
 import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { HttpException } from '@nestjs/common';
 
 describe('CronController', () => {
     let cronController: CronController;
@@ -344,13 +345,25 @@ describe('CronController', () => {
     });
 
     describe('/PUT cron/vidis-offers', () => {
-        describe(`when the vidis-offers endpoint is called`, () => {
+        describe(`when is authorized user`, () => {
             it(`should update ServiceProviders for VIDIS offers`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
 
-                await cronController.updateServiceProvidersForVidisOffers();
+                await cronController.updateServiceProvidersForVidisOffers(permissionsMock);
 
                 expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(1);
+            });
+        });
+        describe(`when is not authorized user`, () => {
+            it(`should not update ServiceProviders for VIDIS offers and throw an error`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
+                serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
+
+                await expect(cronController.updateServiceProvidersForVidisOffers(permissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
+                expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(0);
             });
         });
     });
