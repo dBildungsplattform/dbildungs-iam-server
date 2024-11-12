@@ -96,7 +96,6 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: system-step-up-timeout-in-seconds
-                  key: pi-rename-waiting-time
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
