@@ -655,18 +655,21 @@ export class PersonRepository {
             }
             newPersonalnummer = personalnummer;
 
-            //Remove KoPers-Lock, if existing
-            const userLocks: UserLock[] = await this.userLockRepository.findByPersonId(personId);
-            const koperslock: UserLock | undefined = userLocks.find(
-                (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
-            );
-            if (koperslock) {
-                await this.kcUserService.updateKeycloakUserStatus(
-                    personId,
-                    personFound.keycloakUserId!,
-                    koperslock,
-                    false,
+            // Remove KoPers-Lock, if existing
+            const userLocks: UserLock[] | undefined = await this.userLockRepository.findByPersonId(personId);
+
+            if (userLocks && userLocks.length > 0) {
+                const koperslock: UserLock | undefined = userLocks.find(
+                    (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
                 );
+                if (koperslock && personFound.keycloakUserId) {
+                    await this.kcUserService.updateKeycloakUserStatus(
+                        personId,
+                        personFound.keycloakUserId,
+                        koperslock,
+                        false,
+                    );
+                }
             }
         }
         //Update name
