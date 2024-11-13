@@ -37,8 +37,15 @@ describe('OXErrorMapper', () => {
             };
         });
 
+        it('when faultString does not match any regex for a specific OxError', () => {
+            oxErrorResponse.Envelope.Body.Fault.faultstring = `another error message, not resulting in a specific OxErrror`;
+
+            const oxError: OxError = OxErrorMapper.mapOxErrorResponseToOxError(oxErrorResponse);
+            expect(oxError.code).toStrictEqual('OX_ERROR');
+        });
+
         it('when faultString contains user already exists', () => {
-            oxErrorResponse.Envelope.Body.Fault.faultstring = `User ${faker.internet.userName()} already exists in this context; exceptionId -1234-054545`;
+            oxErrorResponse.Envelope.Body.Fault.faultstring = `User ${faker.string.alphanumeric()} already exists in this context; exceptionId -1234-054545`;
 
             const oxError: OxError = OxErrorMapper.mapOxErrorResponseToOxError(oxErrorResponse);
             expect(oxError.code).toStrictEqual('OX_USERNAME_ALREADY_EXISTS_ERROR');

@@ -102,7 +102,6 @@ export class OxEventHandler {
             await this.getMostRecentRequestedEmailAddress(personId);
         if (!mostRecentRequestedEmailAddress) return;
         const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
-        console.log(requestedEmailAddressString);
 
         const existsParams: UserNameParams = {
             contextId: this.contextID,
@@ -120,7 +119,7 @@ export class OxEventHandler {
             return;
         }
 
-        /*const params: CreateUserParams = {
+        const params: CreateUserParams = {
             contextId: this.contextID,
             displayName: person.referrer,
             email1: requestedEmailAddressString,
@@ -132,9 +131,9 @@ export class OxEventHandler {
             userPassword: 'TestPassword1',
             login: this.authUser,
             password: this.authPassword,
-        };*/
+        };
 
-        const params: CreateUserParams = {
+        /*const params: CreateUserParams = {
             contextId: this.contextID,
             displayName: 'Cob Meier 3',
             email1: 'cob.meier7@schule-sh.de',
@@ -146,7 +145,7 @@ export class OxEventHandler {
             userPassword: 'TestPassword1',
             login: this.authUser,
             password: this.authPassword,
-        };
+        };*/
 
         const action: CreateUserAction = new CreateUserAction(params);
         const result: Result<CreateUserResponse, DomainError> = await this.oxService.send(action);
