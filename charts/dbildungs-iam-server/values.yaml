@@ -166,6 +166,7 @@ redis-cluster:
       memory: 128Mi
   metrics:
     enabled: true
+
 autoscaling:
   enabled: false
   minReplicas: 1
