@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: cronjob-scripts-configmap
   namespace: {{ template "common.names.namespace" . }}
-  labels: {{ - include "common.labels" . | nindent 4 }}
+  labels: {{- include "common.labels" . | nindent 4 }}
 type: Opaque
 data:
   get_access_token.sh: |-
