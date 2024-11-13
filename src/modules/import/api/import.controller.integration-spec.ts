@@ -34,6 +34,7 @@ import path from 'path';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -148,12 +149,13 @@ describe('Rolle API', () => {
             await em.persistAndFlush(klasse2B);
             await em.findOneOrFail(OrganisationEntity, { id: klasse2B.id });
 
-            const sus: Rolle<true> = await rolleRepo.save(
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     rollenart: RollenArt.LERN,
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
+            if (sus instanceof DomainError) throw Error();
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -200,12 +202,13 @@ describe('Rolle API', () => {
             await em.persistAndFlush(klasse2B);
             await em.findOneOrFail(OrganisationEntity, { id: klasse2B.id });
 
-            const sus: Rolle<true> = await rolleRepo.save(
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     rollenart: RollenArt.LERN,
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
+            if (sus instanceof DomainError) throw Error();
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -276,12 +279,13 @@ describe('Rolle API', () => {
             await em.persistAndFlush(schule);
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
-            const sus: Rolle<true> = await rolleRepo.save(
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     rollenart: RollenArt.LERN,
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
+            if (sus instanceof DomainError) throw Error();
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -308,12 +312,13 @@ describe('Rolle API', () => {
             await em.persistAndFlush(schule);
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
-            const sus: Rolle<true> = await rolleRepo.save(
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     rollenart: RollenArt.LERN,
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
+            if (sus instanceof DomainError) throw Error();
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
@@ -362,13 +367,14 @@ describe('Rolle API', () => {
             await em.persistAndFlush(klasse);
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
 
-            const sus: Rolle<true> = await rolleRepo.save(
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     rollenart: RollenArt.LERN,
                     administeredBySchulstrukturknoten: schule.id,
                     merkmale: [],
                 }),
             );
+            if (sus instanceof DomainError) throw Error();
 
             const importvorgangId: string = faker.string.uuid();
             const importDataItem: ImportDataItem<true> = await importDataRepository.save(

@@ -274,7 +274,10 @@ export class RolleRepo {
         return !!rolle;
     }
 
-    public async save(rolle: Rolle<boolean>): Promise<Rolle<true>> {
+    public async save(rolle: Rolle<boolean>): Promise<Rolle<true> | DomainError> {
+        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this, rolle.name);
+        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) return new RolleNameNotUniqueOnSskError();
+
         if (rolle.id) {
             return this.update(rolle);
         } else {
@@ -307,8 +310,8 @@ export class RolleRepo {
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;
 
-        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this, name);
-        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(authorizedRole))) return new RolleNameNotUniqueOnSskError();
+        /*  const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this, name);
+        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(authorizedRole))) return new RolleNameNotUniqueOnSskError();*/
 
         const updatedRolle: Rolle<true> | DomainError = await this.rolleFactory.update(
             id,
@@ -327,7 +330,10 @@ export class RolleRepo {
         if (updatedRolle instanceof DomainError) {
             return updatedRolle;
         }
-        const result: Rolle<true> = await this.save(updatedRolle);
+        const result: Rolle<true> | DomainError = await this.save(updatedRolle);
+        if (result instanceof DomainError) {
+            return result;
+        }
         this.eventService.publish(
             new RolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
         );

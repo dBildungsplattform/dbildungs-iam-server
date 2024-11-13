@@ -60,7 +60,6 @@ import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
-import { RolleWorkflow } from '../domain/rolle-workflow.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -190,14 +189,30 @@ export class RolleController {
             );
         }
 
-        const rolleWorkFlow: RolleWorkflow = RolleWorkflow.createNew(this.rolleRepo, this.rolleFactory);
+        const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
+            params.name,
+            params.administeredBySchulstrukturknoten,
+            params.rollenart,
+            params.merkmale,
+            params.systemrechte,
+            [],
+            [],
+            false,
+        );
+
+        if (rolle instanceof DomainError) {
+            throw rolle;
+        }
+        /*  const rolleWorkFlow: RolleWorkflow = RolleWorkflow.createNew(this.rolleRepo, this.rolleFactory);
         const createRolleResult: Rolle<false> | DomainError =
             await rolleWorkFlow.createNewRolleAndValidateNameUniquenessOnSSK(params);
         if (createRolleResult instanceof DomainError) {
             throw createRolleResult;
+        }*/
+        const result: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
+        if (result instanceof DomainError) {
+            throw result;
         }
-
-        const result: Rolle<true> = await this.rolleRepo.save(createRolleResult);
 
         return new RolleResponse(result);
     }
