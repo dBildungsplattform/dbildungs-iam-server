@@ -1,12 +1,12 @@
 # Scan & Publish image and helm chart on push, deployment on push, delete deployment on branch deletion, scheduled trivy scanner
-name: 'Dev Pipeline'
+name: "Dev Pipeline"
 
 # All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
 # See DBP-340
 on:
   push:
     branches:
-      - '**'
+      - "**"
   schedule:
     - cron: '0 2 * * *'
   delete:
@@ -16,38 +16,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # codeql_analyze:
-  #    name: "CodeQL"
-  #    if: ${{ github.event_name == 'push' }}
-  #    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@5
-  #    permissions:
-  #      actions: read
-  #      contents: read
-  #      security-events: write
+  codeql_analyze:
+    name: "CodeQL"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@5
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
-  #  nest_lint:
-  #    name: "Linting"
-  #    if: ${{ github.event_name == 'push' }}
-  #    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@5
-  #    with:
-  #      node_version: '18'
-  #    permissions:
-  #      contents: read
+  nest_lint:
+    name: "Linting"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@5
+    with:
+      node_version: '18'
+    permissions:
+      contents: read
 
-  #  tests_and_sonarcloud:
-  #    name: "Tests and Sonarcloud"
-  #    if: ${{ github.event_name == 'push' }}
-  #    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5
-  #    with:
-  #      node_version: '18'
-  #      deploy_stage: 'dev'
-  #      timeout_minutes: 15
-  #    permissions:
-  #      contents: read
-  #    secrets: inherit
-  #
+  tests_and_sonarcloud:
+    name: "Tests and Sonarcloud"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5
+    with:
+      node_version: '18'
+      deploy_stage: 'dev'
+      timeout_minutes: 15
+    permissions:
+      contents: read
+    secrets: inherit
+
   build_image_on_push:
-    name: 'Publish image and scan with trivy'
+    name: "Publish image and scan with trivy"
     if: ${{ github.event_name == 'push' }}
     permissions:
       packages: write
@@ -55,13 +55,13 @@ jobs:
       contents: read
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
     with:
-      image_name: 'dbildungs-iam-server'
+      image_name: "dbildungs-iam-server"
       run_trivy_scan: true
       image_tag_generation: ${{ ( github.ref_name == 'main' || startsWith(github.ref_name,'dependabot/') )  && 'commit_hash' || 'ticket_from_branch' }}
       add_latest_tag: ${{ github.ref_name == 'main' }}
-      container_registry: 'ghcr.io'
+      container_registry: "ghcr.io"
       fail_on_vulnerabilites: false
-      report_location: 'Dockerfile'
+      report_location: "Dockerfile"
 
   scan_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
@@ -104,7 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - shell: bash
-        run: sleep 1m
+        run: sleep 1m 
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
@@ -117,7 +117,7 @@ jobs:
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
-
+  
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
@@ -162,7 +162,7 @@ jobs:
 
   # Scheduled
   scheduled_trivy_scan:
-    name: 'Scheduled trivy scan of latest image'
+    name: "Scheduled trivy scan of latest image"
     if: ${{ github.event_name == 'schedule' }}
     permissions:
       packages: read
@@ -171,4 +171,4 @@ jobs:
     with:
       image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
       fail_on_vulnerabilites: false
-      report_location: 'Dockerfile'
+      report_location: "Dockerfile"

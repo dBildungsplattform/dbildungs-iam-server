@@ -124,10 +124,11 @@ backend:
       name: secret-volume
   extraVolumeMounts: []
 
+
 # Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
 redis-cluster:
   enabled: true
-  persistence:
+  persistence: 
     enabled: false
     size: 4Gi
   image:
@@ -136,14 +137,14 @@ redis-cluster:
     tag: 7.4
   existingSecret: dbildungs-iam-server-redis
   cluster:
-    ## This is total number of nodes including the replicas. Meaning there will be 3 master and 3 replica
-    ## nodes (as replica count is set to 1 by default, there will be 1 replica per master node).
-    ## Hence, nodes = numberOfMasterNodes + numberOfMasterNodes * replicas
-    ## The number of master nodes should always be >= 3, otherwise cluster creation will fail
-    nodes: 6
-    # for staging and prod this could get increased
-    ## @param cluster.replicas Number of replicas for every master in the cluster
-    replicas: 1
+      ## This is total number of nodes including the replicas. Meaning there will be 3 master and 3 replica
+      ## nodes (as replica count is set to 1 by default, there will be 1 replica per master node).
+      ## Hence, nodes = numberOfMasterNodes + numberOfMasterNodes * replicas
+      ## The number of master nodes should always be >= 3, otherwise cluster creation will fail
+      nodes: 6
+      # for staging and prod this could get increased
+      ## @param cluster.replicas Number of replicas for every master in the cluster
+      replicas: 1
   networkPolicy:
     enabled: false
   pdb:
@@ -154,9 +155,9 @@ redis-cluster:
   tls:
     enabled: false
   podLabels:
-    app.kubernetes.io/component: server-redis
+      app.kubernetes.io/component: server-redis
   commonLabels:
-    app.kubernetes.io/name: dbildungs-iam-server
+    app.kubernetes.io/name: dbildungs-iam-server 
   resources:
     limits:
       cpu: 300m
@@ -166,7 +167,7 @@ redis-cluster:
       memory: 128Mi
   metrics:
     enabled: true
-
+   
 autoscaling:
   enabled: false
   minReplicas: 1
