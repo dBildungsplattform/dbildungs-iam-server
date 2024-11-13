@@ -28,7 +28,16 @@ database:
 
 ldap:
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
-  bindDN: cn=admin,dc=schule-sh,dc=de
+
+itslearning:
+  enabled: false
+  endpoint: https://enterprise.itslintegrations.com/WCFServiceLibrary/ImsEnterpriseServicesPort.svc
+
+privacyidea:
+  url: https://privacyidea.dev.spsh.dbildungsplattform.de
+  renameWaitingTime: 5
+  realm: ucs_users
+  userResolver: ucs_users
 
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
@@ -36,19 +45,14 @@ auth:
   secretName: dbildungs-iam-server
   keycloak_adminSecret: ''
   keycloak_clientSecret: ''
+  ldap_bind_dn: ''
   ldap_admin_password: ''
   secrets_json: ''
   frontend_sessionSecret: ''
-  itslearning_enabled: ''
-  itslearning_endpoint: ''
   itslearning_username: ''
   itslearning_password: ''
-  pi_base_url: ''
   pi_admin_user: ''
   pi_admin_password: ''
-  pi_user_resolver: ''
-  pi_user_realm: ''
-  pi_rename_waiting_time: ''
   redis_password: ''
 
 backend:
@@ -91,7 +95,13 @@ backend:
       path: '/health'
   dbseeding:
     enabled: true
-    command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev', '']
+    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
+  dbmigration:
+    enabled: true
+    command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
+  keycloakdatamigration: 
+    enabled: true
+    command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
   ingress:
     enabled: true
     ingressClassName: nginx

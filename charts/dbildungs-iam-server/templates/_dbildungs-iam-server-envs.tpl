@@ -36,16 +36,6 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: frontend-sessionSecret
-          - name: ITSLEARNING_ENABLED
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: itslearning-enabled
-          - name: ITSLEARNING_ENDPOINT
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: itslearning-endpoint
           - name: ITSLEARNING_USERNAME
             valueFrom:
               secretKeyRef:
@@ -56,16 +46,16 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: itslearning-password
+          - name: LDAP_BIND_DN
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: ldap-bind-dn
           - name: LDAP_ADMIN_PASSWORD
             valueFrom:
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: ldap-admin-password
-          - name: PI_BASE_URL
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: pi-base-url
           - name: PI_ADMIN_USER
             valueFrom:
               secretKeyRef:
@@ -76,21 +66,6 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: pi-admin-password
-          - name: PI_USER_RESOLVER
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: pi-user-resolver
-          - name: PI_REALM
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: pi-user-realm
-          - name: PI_RENAME_WAITING_TIME
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: pi-rename-waiting-time
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:

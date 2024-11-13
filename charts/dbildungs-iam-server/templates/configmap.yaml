@@ -8,6 +8,7 @@ metadata:
 data:
   config-json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
+  # why is this node env
   NODE_ENV: "prod"
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}
@@ -17,4 +18,10 @@ data:
   FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"
   BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
   LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
-  LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"
+  ITSLEARNING_ENABLED: "{{ .Values.itslearning.enabled }}"
+  ITSLEARNING_ENDPOINT: "{{ .Values.itslearning.endpoint }}"
+  PI_BASE_URL:  "{{ .Values.privacyidea.url }}"
+  PI_RENAME_WAITING_TIME:  "{{ .Values.privacyidea.renameWaitingTime }}"
+  PI_REALM: "{{ .Values.privacyidea.realm }}"
+  PI_USER_RESOLVER: "{{ .Values.privacyidea.userResolver }}"
+  
