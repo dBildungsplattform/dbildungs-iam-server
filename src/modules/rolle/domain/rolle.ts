@@ -7,10 +7,6 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { NameForRolleWithTrailingSpaceError } from './name-with-trailing-space.error.js';
-import { RolleRepo } from '../repo/rolle.repo.js';
-import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
-import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
-import { RolleDomainError } from './rolle-domain.error.js';
 
 export class Rolle<WasPersisted extends boolean> {
     private constructor(
@@ -148,17 +144,6 @@ export class Rolle<WasPersisted extends boolean> {
             istTechnisch,
             serviceProviderData ?? [],
         );
-    }
-
-    public async checkRolleNameUniqueSpecification(
-        rolleRepo: RolleRepo,
-        newRolleName: string,
-    ): Promise<undefined | RolleDomainError> {
-        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(rolleRepo, newRolleName);
-        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(this))) {
-            return new RolleNameNotUniqueOnSskError();
-        }
-        return undefined;
     }
 
     public async canBeAssignedToOrga(orgaId: OrganisationID): Promise<boolean> {

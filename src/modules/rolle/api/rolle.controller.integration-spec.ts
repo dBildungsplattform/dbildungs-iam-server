@@ -253,6 +253,34 @@ describe('Rolle API', () => {
 
             expect(response.status).toBe(400);
         });
+
+        it('should fail Rolle-Name-Unique-On-SSK specification is violated', async () => {
+            const organisation: OrganisationEntity = new OrganisationEntity();
+            await em.persistAndFlush(organisation);
+
+            const rolleName: string = faker.person.jobTitle();
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisation.id,
+                    name: rolleName,
+                }),
+            );
+            if (rolle instanceof DomainError) throw Error();
+
+            const params: CreateRolleBodyParams = {
+                name: rolleName,
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: faker.helpers.enumValue(RollenArt),
+                merkmale: [],
+                systemrechte: [],
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/rolle')
+                .send(params);
+
+            expect(response.status).toBe(400);
+        });
     });
 
     describe('/GET rollen', () => {
