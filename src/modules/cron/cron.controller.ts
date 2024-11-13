@@ -193,7 +193,7 @@ export class CronController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to unlock users.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to unlock users.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to unlock users.' })
-    public async unlockUsersAfterTimeout(@Permissions() permissions: PersonPermissions): Promise<boolean> {
+    public async unlockUsersWithExpiredLocks(@Permissions() permissions: PersonPermissions): Promise<boolean> {
         try {
             const userLocks: UserLock[] = await this.userLockRepository.getLocksToUnlock();
             if (userLocks.length === 0) {
@@ -212,8 +212,8 @@ export class CronController {
                     return this.keyCloakUserService.updateKeycloakUserStatus(
                         person.value.id,
                         person.value.keycloakUserId,
-                        true,
                         userLock,
+                        false,
                     );
                 }),
             );
