@@ -133,20 +133,6 @@ export class OxEventHandler {
             password: this.authPassword,
         };
 
-        /*const params: CreateUserParams = {
-            contextId: this.contextID,
-            displayName: 'Cob Meier 3',
-            email1: 'cob.meier7@schule-sh.de',
-            username: 'cmeier9',
-            firstname: 'Cob',
-            mailEnabled: true,
-            lastname: 'Meier',
-            primaryEmail: 'cob.meier9@schule-sh.de',
-            userPassword: 'TestPassword1',
-            login: this.authUser,
-            password: this.authPassword,
-        };*/
-
         const action: CreateUserAction = new CreateUserAction(params);
         const result: Result<CreateUserResponse, DomainError> = await this.oxService.send(action);
 
