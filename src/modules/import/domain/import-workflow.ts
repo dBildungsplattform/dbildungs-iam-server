@@ -231,7 +231,7 @@ export class ImportWorkflow {
         for (const importDataItem of importDataItems) {
             const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                 (organisationByIdAndName: OrganisationByIdAndName) =>
-                    organisationByIdAndName.name?.toLowerCase() == importDataItem.klasse?.toLowerCase(),
+                    organisationByIdAndName.name === importDataItem.klasse, //Klassennamen sind case sensitive
             );
             if (!klasse) {
                 //(ToDO => next ticket: validate every data item and collect all errors even on import execution)
