@@ -151,8 +151,7 @@ export class ImportWorkflow {
 
             if (value.klasse) {
                 const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
-                    (organisationByIdAndName: OrganisationByIdAndName) =>
-                        organisationByIdAndName.name?.toLowerCase() === value.klasse?.toLowerCase(),
+                    (organisationByIdAndName: OrganisationByIdAndName) => organisationByIdAndName.name === value.klasse, //Klassennamen sind case sensitive
                 );
 
                 //Only check if the Klasse exists
