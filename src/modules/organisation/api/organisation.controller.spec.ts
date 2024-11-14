@@ -16,7 +16,7 @@ import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js'
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationResponse } from './organisation.response.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
@@ -30,6 +30,7 @@ import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
+import { Person } from '../../person/domain/person.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -88,6 +89,20 @@ describe('OrganisationController', () => {
     });
 
     describe('createOrganisation', () => {
+        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
+            get personFields(): Person<true> {
+                return createMock<Person<true>>({
+                    familienname: 'current-user',
+                });
+            },
+            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
+                Promise.resolve([
+                    {
+                        organisationsId: '',
+                        rolle: { systemrechte: [], serviceProviderIds: [] },
+                    },
+                ]),
+        });
         describe('when usecase returns a DTO', () => {
             it('should not throw an error', async () => {
                 const params: CreateOrganisationBodyParams = {
@@ -101,7 +116,7 @@ describe('OrganisationController', () => {
                 const returnedValue: Organisation<true> = DoFactory.createOrganisation(true);
 
                 organisationServiceMock.createOrganisation.mockResolvedValueOnce({ ok: true, value: returnedValue });
-                await expect(organisationController.createOrganisation(params)).resolves.not.toThrow();
+                await expect(organisationController.createOrganisation(permissionsMock, params)).resolves.not.toThrow();
                 expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
@@ -153,7 +168,7 @@ describe('OrganisationController', () => {
             organisationRepositoryMock.findRootDirectChildren.mockResolvedValue(mockedRepoResponse);
 
             try {
-                await organisationController.createOrganisation(params);
+                await organisationController.createOrganisation(permissionsMock, params);
 
                 fail('Expected error was not thrown');
             } catch (error) {
@@ -202,7 +217,7 @@ describe('OrganisationController', () => {
                     error: new OrganisationSpecificationError('error', undefined),
                 });
                 await expect(
-                    organisationController.createOrganisation({} as CreateOrganisationBodyParams),
+                    organisationController.createOrganisation(permissionsMock, {} as CreateOrganisationBodyParams),
                 ).rejects.toThrow(OrganisationSpecificationError);
                 expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
@@ -249,7 +264,7 @@ describe('OrganisationController', () => {
                     error: {} as EntityNotFoundError,
                 });
                 await expect(
-                    organisationController.createOrganisation({} as CreateOrganisationBodyParams),
+                    organisationController.createOrganisation(permissionsMock, {} as CreateOrganisationBodyParams),
                 ).rejects.toThrow(HttpException);
                 expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });

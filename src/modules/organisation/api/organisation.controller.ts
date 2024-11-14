@@ -82,7 +82,10 @@ export class OrganisationController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
+    public async createOrganisation(
+        @Permissions() permissions: PersonPermissions,
+        @Body() params: CreateOrganisationBodyParams,
+    ): Promise<OrganisationResponse> {
         const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =
             await this.organisationRepository.findRootDirectChildren();
 
@@ -103,6 +106,7 @@ export class OrganisationController {
         }
         const result: Result<Organisation<true>, DomainError> = await this.organisationService.createOrganisation(
             organisation,
+            permissions,
         );
         if (!result.ok) {
             if (result.error instanceof OrganisationSpecificationError) {

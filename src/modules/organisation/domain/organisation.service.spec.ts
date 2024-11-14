@@ -20,6 +20,7 @@ import { Organisation } from './organisation.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -29,7 +30,7 @@ describe('OrganisationService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule],
+            imports: [ConfigTestModule, LoggingTestModule],
             providers: [
                 OrganisationService,
                 {
