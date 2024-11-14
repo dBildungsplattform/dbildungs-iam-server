@@ -51,7 +51,7 @@ import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
 import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
@@ -60,6 +60,7 @@ import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -74,6 +75,7 @@ export class RolleController {
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Get()
@@ -178,12 +180,20 @@ export class RolleController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the rolle.' })
-    public async createRolle(@Body() params: CreateRolleBodyParams): Promise<RolleResponse> {
+    public async createRolle(
+        @Body() params: CreateRolleBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<RolleResponse> {
+        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
+
         const orgResult: Result<OrganisationDo<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
         );
 
         if (!orgResult.ok) {
+            this.logger.info(
+                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
+            );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(orgResult.error),
             );
@@ -201,10 +211,16 @@ export class RolleController {
         );
 
         if (rolle instanceof DomainError) {
+            this.logger.error(
+                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${rolle.message}`,
+            );
             throw rolle;
         }
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
+        this.logger.info(
+            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat eine neue Rolle angelegt: ${result.name}.`,
+        );
 
         return new RolleResponse(result);
     }
@@ -359,6 +375,8 @@ export class RolleController {
         @Body() params: UpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
+        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
+
         const isAlreadyAssigned: boolean = await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(
             findRolleByIdParams.rolleId,
         );
@@ -375,13 +393,22 @@ export class RolleController {
 
         if (result instanceof DomainError) {
             if (result instanceof RolleDomainError) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Rolle ${result.name} zu bearbeiten. Fehler: ${result.message}`,
+                );
                 throw result;
             }
-
+            this.logger.error(
+                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Rolle ${result.name} zu bearbeiten. Fehler: ${result.message}`,
+            );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+
+        this.logger.info(
+            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Rolle bearbeitet: ${result.name}.`,
+        );
 
         return this.returnRolleWithServiceProvidersResponse(result);
     }
@@ -397,19 +424,33 @@ export class RolleController {
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
+        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        const rolleName: string = rolle?.name ?? 'ORGANISATION_NOT_FOUND';
+
         const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
             findRolleByIdParams.rolleId,
             permissions,
         );
         if (result instanceof DomainError) {
             if (result instanceof RolleDomainError) {
+                // Admin <AdminName> (<AdminID>, <Organisation>) hat versucht die Rolle <NameRolle>  zu entfernen. error: <>
+                this.logger.error(
+                    `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
+                );
                 throw result;
             }
-
+            this.logger.error(
+                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
+            );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+
+        this.logger.info(
+            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Rolle entfernt: ${rolleName}.`,
+        );
     }
 
     private async returnRolleWithServiceProvidersResponse(
@@ -422,5 +463,15 @@ export class RolleController {
             .filter(Boolean) as ServiceProvider<true>[];
 
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+    }
+
+    private async getOrganisationNameForCurrentUser(permissions: PersonPermissions): Promise<string> {
+        const personenkontextRolleFields: PersonenkontextRolleFields[] =
+            await permissions?.getPersonenkontextewithRoles();
+        const organisationIdUser: string = personenkontextRolleFields.at(0)?.organisationsId as string;
+        const organisationUser: Option<Organisation<true>> =
+            await this.organisationRepository.findById(organisationIdUser);
+        const organisationNameUser: string = organisationUser?.name ?? 'ORGANISATION_NOT_FOUND';
+        return organisationNameUser;
     }
 }
