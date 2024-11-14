@@ -25,8 +25,8 @@ import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/per
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
-import { CronJobError } from '../../shared/error/cron-job.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -193,7 +193,9 @@ export class CronController {
         ]);
         if (!hasCronJobPermission) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new CronJobError('Ungenügende Berechtigungen')),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Insufficient permissions'),
+                ),
             );
         }
         await this.serviceProviderService.updateServiceProvidersForVidis();

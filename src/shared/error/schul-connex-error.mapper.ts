@@ -126,15 +126,6 @@ export class SchulConnexErrorMapper {
                 beschreibung: 'Die angeforderte Entität existiert nicht',
             }),
         ],
-        [
-            CronJobError.name,
-            new SchulConnexError({
-                code: 401,
-                subcode: '00',
-                titel: 'Zugriff verweigert',
-                beschreibung: 'Die Anfrage konnte aufgrund fehlender Autorisierung nicht verarbeitet werden.',
-            }),
-        ],
     ]);
 
     private static NO_MAPPING_FOUND: SchulConnexError = new SchulConnexError({
