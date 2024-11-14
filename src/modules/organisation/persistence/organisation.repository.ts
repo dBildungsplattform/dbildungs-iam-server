@@ -412,7 +412,10 @@ export class OrganisationRepository {
         return [organisations, total + entitiesForIds.length - duplicates, pageTotal];
     }
 
-    public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {
+    public async deleteKlasse(
+        id: OrganisationID,
+        permissions: PersonPermissions | null = null,
+    ): Promise<Option<DomainError>> {
         const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (!organisationEntity) {
             return new EntityNotFoundError('Organisation', id);
@@ -424,6 +427,17 @@ export class OrganisationRepository {
 
         await this.em.removeAndFlush(organisationEntity);
         this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
+
+        let schoolName: string = 'SCHOOL_NOT_FOUND';
+        if (permissions)
+            if (organisationEntity.zugehoerigZu) {
+                const school: Option<Organisation<true>> = await this.findById(organisationEntity.zugehoerigZu);
+                schoolName = school?.name ?? 'SCHOOL_NOT_FOUND';
+                this.logger.info(
+                    // Admin <AdminName> (<AdminID>) hat eine Klasse entfernt: <NameKlasse > ( < Schule >).
+                    `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
+                );
+            }
 
         return;
     }

@@ -419,12 +419,18 @@ export class OrganisationController {
     @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
     @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
-    public async deleteKlasse(@Param() params: OrganisationByIdParams): Promise<void> {
+    public async deleteKlasse(
+        @Param() params: OrganisationByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
         if (await this.dBiamPersonenkontextRepo.isOrganisationAlreadyAssigned(params.organisationId)) {
             throw new OrganisationIstBereitsZugewiesenError();
         }
 
-        const result: Option<DomainError> = await this.organisationRepository.deleteKlasse(params.organisationId);
+        const result: Option<DomainError> = await this.organisationRepository.deleteKlasse(
+            params.organisationId,
+            permissions,
+        );
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
