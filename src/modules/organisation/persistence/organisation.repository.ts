@@ -430,6 +430,7 @@ export class OrganisationRepository {
         id: string,
         newName: string,
         version: number,
+        permissions: PersonPermissions | null = null,
     ): Promise<DomainError | Organisation<true>> {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
@@ -439,6 +440,11 @@ export class OrganisationRepository {
         if (organisationFound.typ !== OrganisationsTyp.KLASSE) {
             return new EntityCouldNotBeUpdated('Organisation', id, ['Only the name of Klassen can be updated.']);
         }
+        let schoolName: string = 'SCHOOL_NOT_FOUND';
+        if (organisationFound.zugehoerigZu) {
+            const school: Option<Organisation<true>> = await this.findById(organisationFound.zugehoerigZu);
+            schoolName = school?.name ?? 'SCHOOL_NOT_FOUND';
+        }
         //Specifications: it needs to be clarified how the specifications can be checked using DDD principles
         {
             if (organisationFound.name !== newName) {
@@ -447,6 +453,10 @@ export class OrganisationRepository {
                     await organisationFound.checkKlasseSpecifications(this);
 
                 if (specificationError) {
+                    if (permissions)
+                        this.logger.error(
+                            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
+                        );
                     return specificationError;
                 }
             }
@@ -455,6 +465,10 @@ export class OrganisationRepository {
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
+        if (permissions)
+            this.logger.info(
+                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
+            );
         return organisationEntity;
     }
 

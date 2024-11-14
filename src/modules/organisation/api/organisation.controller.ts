@@ -445,18 +445,19 @@ export class OrganisationController {
     public async updateOrganisationName(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByNameBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
         const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
             params.organisationId,
             body.name,
             body.version,
+            permissions,
         );
 
         if (result instanceof DomainError) {
             if (result instanceof OrganisationSpecificationError) {
                 throw result;
             }
-
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );

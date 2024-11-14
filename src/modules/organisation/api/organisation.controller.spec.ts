@@ -734,6 +734,20 @@ describe('OrganisationController', () => {
     });
 
     describe('updateOrganisationName', () => {
+        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
+            get personFields(): Person<true> {
+                return createMock<Person<true>>({
+                    familienname: 'current-user',
+                });
+            },
+            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
+                Promise.resolve([
+                    {
+                        organisationsId: '',
+                        rolle: { systemrechte: [], serviceProviderIds: [] },
+                    },
+                ]),
+        });
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
@@ -760,7 +774,9 @@ describe('OrganisationController', () => {
 
                 organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(oeffentlich);
 
-                await expect(organisationController.updateOrganisationName(params, body)).resolves.not.toThrow();
+                await expect(
+                    organisationController.updateOrganisationName(params, body, permissionsMock),
+                ).resolves.not.toThrow();
             });
         });
 
@@ -775,9 +791,9 @@ describe('OrganisationController', () => {
                 };
                 organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new NameRequiredForKlasseError());
 
-                await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
-                    NameRequiredForKlasseError,
-                );
+                await expect(
+                    organisationController.updateOrganisationName(params, body, permissionsMock),
+                ).rejects.toThrow(NameRequiredForKlasseError);
             });
         });
 
@@ -793,14 +809,28 @@ describe('OrganisationController', () => {
 
                 organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new EntityNotFoundError());
 
-                await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    organisationController.updateOrganisationName(params, body, permissionsMock),
+                ).rejects.toThrow(HttpException);
             });
         });
     });
 
     describe('updateOrganisationName', () => {
+        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
+            get personFields(): Person<true> {
+                return createMock<Person<true>>({
+                    familienname: 'current-user',
+                });
+            },
+            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
+                Promise.resolve([
+                    {
+                        organisationsId: '',
+                        rolle: { systemrechte: [], serviceProviderIds: [] },
+                    },
+                ]),
+        });
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
@@ -827,7 +857,9 @@ describe('OrganisationController', () => {
 
                 organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(oeffentlich);
 
-                await expect(organisationController.updateOrganisationName(params, body)).resolves.not.toThrow();
+                await expect(
+                    organisationController.updateOrganisationName(params, body, permissionsMock),
+                ).resolves.not.toThrow();
             });
         });
 
@@ -842,9 +874,9 @@ describe('OrganisationController', () => {
                 };
                 organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new NameRequiredForKlasseError());
 
-                await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
-                    NameRequiredForKlasseError,
-                );
+                await expect(
+                    organisationController.updateOrganisationName(params, body, permissionsMock),
+                ).rejects.toThrow(NameRequiredForKlasseError);
             });
         });
 
@@ -860,9 +892,9 @@ describe('OrganisationController', () => {
 
                 organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new EntityNotFoundError());
 
-                await expect(organisationController.updateOrganisationName(params, body)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    organisationController.updateOrganisationName(params, body, permissionsMock),
+                ).rejects.toThrow(HttpException);
             });
         });
     });
