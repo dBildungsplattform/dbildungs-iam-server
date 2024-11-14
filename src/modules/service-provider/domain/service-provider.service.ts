@@ -53,8 +53,8 @@ export class ServiceProviderService {
 
         const vidisOffers: VidisOfferResponse[] = await this.vidisService.getActivatedOffersByRegion(vidisRegionName);
 
-        const anyMappingsBeenDeleted: boolean = await this.organisationServiceProviderRepo.deleteAll();
-        if (anyMappingsBeenDeleted)
+        const allMappingsBeenDeleted: boolean = await this.organisationServiceProviderRepo.deleteAll();
+        if (allMappingsBeenDeleted)
             this.logger.info('All mappings between Organisation and ServiceProvider were deleted.');
 
         await Promise.allSettled(
