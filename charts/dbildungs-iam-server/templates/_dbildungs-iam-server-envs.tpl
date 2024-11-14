@@ -96,6 +96,11 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: system-step-up-timeout-in-seconds
+          - name: SYSTEM_STEP_UP_TIMEOUT_ENABLED
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: system-step-up-timeout-enabled
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:

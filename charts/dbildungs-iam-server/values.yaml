@@ -50,6 +50,7 @@ auth:
   pi_user_realm: ''
   system_rename_waiting_time_in_seconds: ''
   system_step_up_timeout_in_seconds: ''
+  system_step_up_timeout_enabled: ''
   redis_password: ''
 
 backend:
@@ -129,7 +130,7 @@ backend:
 # Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
 redis-cluster:
   enabled: true
-  persistence: 
+  persistence:
     enabled: false
     size: 4Gi
   image:

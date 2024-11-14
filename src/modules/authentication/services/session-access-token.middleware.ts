@@ -17,19 +17,24 @@ import { updateAndGetStepUpLevel } from '../passport/oidc.strategy.js';
 export class SessionAccessTokenMiddleware implements NestMiddleware {
     private readonly STEP_UP_TIMEOUT_IN_SECONDS: number;
 
+    private readonly STEP_UP_TIMEOUT_ENABLED: boolean;
+
     public constructor(
         @Inject(OIDC_CLIENT) private readonly client: Client,
         private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
         this.STEP_UP_TIMEOUT_IN_SECONDS = configService.getOrThrow<SystemConfig>('SYSTEM').STEP_UP_TIMEOUT_IN_SECONDS;
+        this.STEP_UP_TIMEOUT_ENABLED = configService.getOrThrow<SystemConfig>('SYSTEM').STEP_UP_TIMEOUT_ENABLED;
     }
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
         const accessToken: string | undefined = req.passportUser?.access_token;
 
         const refreshToken: string | undefined = req.passportUser?.refresh_token;
-        updateAndGetStepUpLevel(req, this.STEP_UP_TIMEOUT_IN_SECONDS);
+        if (this.STEP_UP_TIMEOUT_ENABLED) {
+            updateAndGetStepUpLevel(req, this.STEP_UP_TIMEOUT_IN_SECONDS);
+        }
 
         if (accessToken) {
             if (!(await this.client.introspect(accessToken)).active)

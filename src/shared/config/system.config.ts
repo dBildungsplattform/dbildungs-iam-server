@@ -1,4 +1,4 @@
-import { IsInt, Min } from 'class-validator';
+import { IsBoolean, IsInt, Min } from 'class-validator';
 
 export class SystemConfig {
     @Min(0)
@@ -8,4 +8,7 @@ export class SystemConfig {
     @Min(0)
     @IsInt()
     public readonly STEP_UP_TIMEOUT_IN_SECONDS!: number;
+
+    @IsBoolean()
+    public readonly STEP_UP_TIMEOUT_ENABLED!: boolean;
 }

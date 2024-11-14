@@ -78,5 +78,6 @@ export default (): Config => ({
         STEP_UP_TIMEOUT_IN_SECONDS: process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS']
             ? parseInt(process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS'])
             : undefined,
+        STEP_UP_TIMEOUT_ENABLED: process.env['SYSTEM_STEP_UP_TIMEOUT_ENABLED'] === 'true',
     },
 });
