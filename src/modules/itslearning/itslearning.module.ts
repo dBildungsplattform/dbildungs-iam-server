@@ -9,6 +9,7 @@ import { ItsLearningOrganisationsEventHandler } from './event-handlers/itslearni
 import { ItsLearningPersonsEventHandler } from './event-handlers/itslearning-persons.event-handler.js';
 import { ItsLearningSyncEventHandler } from './event-handlers/itslearning-sync.event-handler.js';
 import { ItsLearningIMSESService } from './itslearning.service.js';
+import { ItslearningGroupRepo } from './repo/itslearning-group.repo.js';
 import { ItslearningMembershipRepo } from './repo/itslearning-membership.repo.js';
 import { ItslearningPersonRepo } from './repo/itslearning-person.repo.js';
 
@@ -23,6 +24,7 @@ import { ItslearningPersonRepo } from './repo/itslearning-person.repo.js';
     providers: [
         ItsLearningIMSESService,
         ItslearningPersonRepo,
+        ItslearningGroupRepo,
         ItslearningMembershipRepo,
         ItsLearningOrganisationsEventHandler,
         ItsLearningPersonsEventHandler,

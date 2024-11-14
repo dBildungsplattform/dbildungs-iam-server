@@ -7,25 +7,24 @@ import { ItsLearningConfig } from '../../../shared/config/itslearning.config.js'
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
-import { CreateGroupAction, CreateGroupParams } from '../actions/create-group.action.js';
-import { DeleteGroupAction } from '../actions/delete-group.action.js';
-import { GroupResponse, ReadGroupAction } from '../actions/read-group.action.js';
-import { UpdateGroupAction, UpdateGroupParams } from '../actions/update-group.action.js';
-import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
-import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
+import { CreateGroupParams } from '../actions/create-group.params.js';
+import { GroupResponse } from '../actions/read-group.action.js';
+import { UpdateGroupParams } from '../actions/update-group.action.js';
+import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
 
 @Injectable()
 export class ItsLearningOrganisationsEventHandler {
     public ENABLED: boolean;
 
-    private readonly ROOT_OEFFENTLICH: string;
+    public readonly ROOT_OEFFENTLICH: string;
 
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly itsLearningService: ItsLearningIMSESService,
+        private readonly itslearningGroupRepo: ItslearningGroupRepo,
         configService: ConfigService<ServerConfig>,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
@@ -58,21 +57,17 @@ export class ItsLearningOrganisationsEventHandler {
 
         {
             // Check if school already exists in itsLearning
-            const readAction: ReadGroupAction = new ReadGroupAction(event.organisationId);
-            const result: Result<GroupResponse, DomainError> = await this.itsLearningService.send(readAction);
-
-            if (result.ok) {
+            const result: Option<GroupResponse> = await this.itslearningGroupRepo.readGroup(event.organisationId);
+            if (result) {
                 // School already exists, keep relationship
-                params.parentId = result.value.parentId;
+                params.parentId = result.parentId;
             }
         }
 
-        const action: CreateGroupAction = new CreateGroupAction(params);
+        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(params);
 
-        const result: Result<void, DomainError> = await this.itsLearningService.send(action);
-
-        if (!result.ok) {
-            return this.logger.error(`Could not create Schule in itsLearning: ${result.error.message}`);
+        if (createError) {
+            return this.logger.error(`Could not create Schule in itsLearning: ${createError.message}`);
         }
 
         this.logger.info(`Schule with ID ${event.organisationId} created.`);
@@ -97,10 +92,9 @@ export class ItsLearningOrganisationsEventHandler {
 
         {
             // Check if parent exists in itsLearning
-            const readAction: ReadGroupAction = new ReadGroupAction(event.administriertVon);
-            const result: Result<GroupResponse, DomainError> = await this.itsLearningService.send(readAction);
+            const result: Option<GroupResponse> = await this.itslearningGroupRepo.readGroup(event.administriertVon);
 
-            if (!result.ok) {
+            if (!result) {
                 // Parent school does not exist
                 return this.logger.error(
                     `Parent Organisation (${event.administriertVon}) does not exist in itsLearning.`,
@@ -115,12 +109,10 @@ export class ItsLearningOrganisationsEventHandler {
             parentId: event.administriertVon,
         };
 
-        const action: CreateGroupAction = new CreateGroupAction(params);
+        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(params);
 
-        const result: Result<void, DomainError> = await this.itsLearningService.send(action);
-
-        if (!result.ok) {
-            return this.logger.error(`Could not create Klasse in itsLearning: ${result.error.message}`);
+        if (createError) {
+            return this.logger.error(`Could not create Klasse in itsLearning: ${createError.message}`);
         }
 
         this.logger.info(`Klasse with ID ${event.id} created.`);
@@ -150,12 +142,10 @@ export class ItsLearningOrganisationsEventHandler {
             parentId: event.administriertVon,
         };
 
-        const action: UpdateGroupAction = new UpdateGroupAction(params);
+        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(params);
 
-        const result: Result<void, DomainError> = await this.itsLearningService.send(action);
-
-        if (!result.ok) {
-            return this.logger.error(`Could not update Klasse in itsLearning: ${result.error.message}`);
+        if (createError) {
+            return this.logger.error(`Could not update Klasse in itsLearning: ${createError.message}`);
         }
 
         this.logger.info(`Klasse with ID ${event.organisationId} was updated.`);
@@ -170,12 +160,10 @@ export class ItsLearningOrganisationsEventHandler {
             return;
         }
 
-        const action: DeleteGroupAction = new DeleteGroupAction(event.organisationId);
+        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(event.organisationId);
 
-        const result: Result<void, DomainError> = await this.itsLearningService.send(action);
-
-        if (!result.ok) {
-            return this.logger.error(`Could not delete Klasse in itsLearning: ${result.error.message}`);
+        if (deleteError) {
+            return this.logger.error(`Could not delete Klasse in itsLearning: ${deleteError.message}`);
         }
 
         this.logger.info(`Klasse with ID ${event.organisationId} was deleted.`);

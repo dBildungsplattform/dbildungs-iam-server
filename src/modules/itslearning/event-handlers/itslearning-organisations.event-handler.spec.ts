@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -10,17 +11,16 @@ import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
-import { CreateGroupAction } from '../actions/create-group.action.js';
-import { DeleteGroupAction } from '../actions/delete-group.action.js';
-import { UpdateGroupAction } from '../actions/update-group.action.js';
-import { ItsLearningIMSESService } from '../itslearning.service.js';
+import { CreateGroupParams } from '../actions/create-group.params.js';
+import { GroupResponse } from '../actions/read-group.action.js';
+import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
 import { ItsLearningOrganisationsEventHandler } from './itslearning-organisations.event-handler.js';
 
 describe('ItsLearning Organisations Event Handler', () => {
     let module: TestingModule;
 
     let sut: ItsLearningOrganisationsEventHandler;
-    let itsLearningServiceMock: DeepMocked<ItsLearningIMSESService>;
+    let itslearningGroupRepoMock: DeepMocked<ItslearningGroupRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -29,14 +29,14 @@ describe('ItsLearning Organisations Event Handler', () => {
             providers: [
                 ItsLearningOrganisationsEventHandler,
                 {
-                    provide: ItsLearningIMSESService,
-                    useValue: createMock<ItsLearningIMSESService>(),
+                    provide: ItslearningGroupRepo,
+                    useValue: createMock<ItslearningGroupRepo>(),
                 },
             ],
         }).compile();
 
         sut = module.get(ItsLearningOrganisationsEventHandler);
-        itsLearningServiceMock = module.get(ItsLearningIMSESService);
+        itslearningGroupRepoMock = module.get(ItslearningGroupRepo);
         loggerMock = module.get(ClassLogger);
     });
 
@@ -52,42 +52,54 @@ describe('ItsLearning Organisations Event Handler', () => {
     describe('createSchuleEventHandler', () => {
         it('should log on success', async () => {
             const orgaId: OrganisationID = faker.string.uuid();
-            const oldParentId: OrganisationID = faker.string.uuid();
+            const kennung: string = faker.string.numeric(7);
+            const name: string = faker.word.noun();
             const event: SchuleCreatedEvent = new SchuleCreatedEvent(
                 orgaId,
-                faker.string.uuid(),
-                faker.word.noun(),
+                kennung,
+                name,
                 RootDirectChildrenType.OEFFENTLICH,
             );
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: { parentId: oldParentId } }); // ReadGroupAction
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: undefined,
-            }); // CreateGroupAction
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(undefined); // Group did not exist
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined);
 
             await sut.createSchuleEventHandler(event);
 
-            expect(itsLearningServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateGroupAction));
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams]>({
+                id: orgaId,
+                name: `${kennung} (${name})`,
+                parentId: sut.ROOT_OEFFENTLICH,
+                type: 'School',
+            });
             expect(loggerMock.info).toHaveBeenLastCalledWith(`Schule with ID ${orgaId} created.`);
         });
 
         it('should keep existing hierarchy', async () => {
+            const orgaId: OrganisationID = faker.string.uuid();
+            const kennung: string = faker.string.numeric(7);
+            const name: string = faker.word.noun();
             const oldParentId: OrganisationID = faker.string.uuid();
             const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                undefined,
+                orgaId,
+                kennung,
+                name,
                 RootDirectChildrenType.OEFFENTLICH,
             );
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: { parentId: oldParentId } }); // ReadGroupAction
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: undefined,
-            }); // CreateGroupAction
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce({
+                parentId: oldParentId,
+                name: faker.word.noun(),
+                type: 'Unspecified',
+            });
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined);
 
             await sut.createSchuleEventHandler(event);
 
-            expect(itsLearningServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateGroupAction));
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams]>({
+                id: orgaId,
+                name: `${kennung} (${name})`,
+                parentId: oldParentId,
+                type: 'School',
+            });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -102,7 +114,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.createSchuleEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should skip event, if schule is ersatzschule', async () => {
@@ -116,7 +128,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.createSchuleEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenCalledWith(`Ersatzschule, ignoring.`);
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log error on failed creation', async () => {
@@ -126,11 +138,11 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.word.noun(),
                 RootDirectChildrenType.OEFFENTLICH,
             );
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() }); // ReadGroupAction
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: false,
-                error: createMock<DomainError>({ message: 'Error' }),
-            }); // CreateGroupAction
+
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(undefined); // Group did not exist
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(
+                createMock<DomainError>({ message: 'Error' }),
+            );
 
             await sut.createSchuleEventHandler(event);
 
@@ -145,15 +157,17 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: {} }); // ReadGroupAction
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: undefined,
-            }); // CreateGroupAction
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
 
-            expect(itsLearningServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateGroupAction));
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams]>({
+                id: event.id,
+                name: event.name!,
+                parentId: event.administriertVon!,
+                type: 'Unspecified',
+            });
             expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.id} created.`);
         });
 
@@ -168,7 +182,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.createKlasseEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log error, if administriertVon is undefined', async () => {
@@ -201,7 +215,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: createMock() }); // ReadGroupAction
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(undefined); // ReadGroupAction
 
             await sut.createKlasseEventHandler(event);
 
@@ -216,11 +230,10 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: {} }); // ReadGroupAction
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: false,
-                error: createMock<DomainError>({ message: 'Error' }),
-            }); // CreateGroupAction
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(
+                createMock<DomainError>({ message: 'Error' }),
+            ); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
             expect(loggerMock.error).toHaveBeenLastCalledWith('Could not create Klasse in itsLearning: Error');
@@ -234,11 +247,16 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: {} }); // UpdateGroupAction
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // UpdateGroupAction
 
             await sut.updatedKlasseEventHandler(event);
 
-            expect(itsLearningServiceMock.send).toHaveBeenLastCalledWith(expect.any(UpdateGroupAction));
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams]>({
+                id: event.organisationId,
+                name: event.name,
+                parentId: event.administriertVon!,
+                type: 'Unspecified',
+            });
             expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.organisationId} was updated.`);
         });
 
@@ -253,7 +271,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.updatedKlasseEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log error, if administriertVon is undefined', async () => {
@@ -266,7 +284,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.updatedKlasseEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no parent organisation. Aborting.');
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log error, if the klasse has no name', async () => {
@@ -275,7 +293,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.updatedKlasseEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no name. Aborting.');
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
         it('should log error on failed update', async () => {
@@ -284,12 +302,12 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.alphanumeric(),
                 faker.string.uuid(),
             );
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: false,
-                error: createMock<DomainError>({ message: 'Error' }),
-            }); // UpdateGroupAction
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(
+                createMock<DomainError>({ message: 'Error' }),
+            ); // UpdateGroupAction
 
             await sut.updatedKlasseEventHandler(event);
+
             expect(loggerMock.error).toHaveBeenLastCalledWith('Could not update Klasse in itsLearning: Error');
         });
     });
@@ -297,11 +315,11 @@ describe('ItsLearning Organisations Event Handler', () => {
     describe('deletedKlasseEventHandler', () => {
         it('should log on success', async () => {
             const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
-            itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: {} }); // DeleteGroupAction
+            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(undefined); // DeleteGroupAction
 
             await sut.deletedKlasseEventHandler(event);
 
-            expect(itsLearningServiceMock.send).toHaveBeenLastCalledWith(expect.any(DeleteGroupAction));
+            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenLastCalledWith(event.organisationId);
             expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.organisationId} was deleted.`);
         });
 
@@ -312,17 +330,15 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.deletedKlasseEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
-            expect(itsLearningServiceMock.send).not.toHaveBeenCalled();
+            expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
         });
 
         it('should log error on failed delete', async () => {
             const event: KlasseDeletedEvent = new KlasseDeletedEvent(faker.string.uuid());
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: false,
-                error: createMock<DomainError>({ message: 'Error' }),
-            }); // DeleteGroupAction
+            itslearningGroupRepoMock.deleteGroup.mockResolvedValueOnce(createMock<DomainError>({ message: 'Error' })); // DeleteGroupAction
 
             await sut.deletedKlasseEventHandler(event);
+
             expect(loggerMock.error).toHaveBeenLastCalledWith('Could not delete Klasse in itsLearning: Error');
         });
     });
