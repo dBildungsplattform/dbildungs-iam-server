@@ -380,11 +380,19 @@ describe('Rolle API', () => {
 
             const klasse: OrganisationEntity = new OrganisationEntity();
             klasse.typ = OrganisationsTyp.KLASSE;
-            klasse.name = '1A';
+            klasse.name = '1a';
             klasse.administriertVon = schule.id;
             klasse.zugehoerigZu = schule.id;
             await em.persistAndFlush(klasse);
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
+
+            const klasse1A: OrganisationEntity = new OrganisationEntity();
+            klasse1A.typ = OrganisationsTyp.KLASSE;
+            klasse1A.name = '1A';
+            klasse1A.administriertVon = schule.id;
+            klasse1A.zugehoerigZu = schule.id;
+            await em.persistAndFlush(klasse1A);
+            await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
             const sus: Rolle<true> = await rolleRepo.save(
                 DoFactory.createRolle(false, {
