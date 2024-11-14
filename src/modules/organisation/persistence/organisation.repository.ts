@@ -477,10 +477,6 @@ export class OrganisationRepository {
 
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
-        this.logger.info(
-            `User with personId:${personPermissions.personFields.id} enabling ITSLearning for organisationId:${id}`,
-        );
-
         if (!organisationFound) {
             return new EntityNotFoundError('Organisation', id);
         }
@@ -490,6 +486,10 @@ export class OrganisationRepository {
             ]);
         }
         organisationFound.isEnabledForItsLearning = true;
+
+        this.logger.info(
+            `User with personId:${personPermissions.personFields.id} enabling ITSLearning for organisationId:${id}`,
+        );
 
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);

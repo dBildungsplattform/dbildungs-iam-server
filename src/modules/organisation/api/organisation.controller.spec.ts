@@ -851,4 +851,60 @@ describe('OrganisationController', () => {
             });
         });
     });
+
+    describe('enableForItsLearning', () => {
+        let params: OrganisationByIdParams;
+        let permissionsMock: DeepMocked<PersonPermissions>;
+
+        beforeAll(() => {
+            params = {
+                organisationId: faker.string.uuid(),
+            };
+            permissionsMock = createMock<PersonPermissions>();
+        });
+        describe('when enabling ITSLearning succeeds for organisation', () => {
+            it('should not throw an error', async () => {
+                const schule: Organisation<true> = Organisation.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    faker.number.int(),
+                    faker.string.uuid(),
+                    faker.string.uuid(),
+                    faker.string.numeric(),
+                    'Schule',
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                    OrganisationsTyp.SCHULE,
+                    undefined,
+                );
+                organisationRepositoryMock.setEnabledForItsLearning.mockResolvedValueOnce(schule);
+
+                await expect(
+                    organisationController.enableForItsLearning(params, permissionsMock),
+                ).resolves.not.toThrow();
+            });
+        });
+        describe('when enabling ITSLearning for organisation returns a OrganisationSpecificationError', () => {
+            it('should throw a HttpException', async () => {
+                organisationRepositoryMock.setEnabledForItsLearning.mockResolvedValueOnce(
+                    new NameRequiredForKlasseError(),
+                );
+
+                await expect(organisationController.enableForItsLearning(params, permissionsMock)).rejects.toThrow(
+                    NameRequiredForKlasseError,
+                );
+            });
+        });
+
+        describe('when enabling ITSLearning for organisation returns a SchulConnexError or any Non-Specificatin-Error', () => {
+            it('should throw a HttpException', async () => {
+                organisationRepositoryMock.setEnabledForItsLearning.mockResolvedValueOnce(new EntityNotFoundError());
+
+                await expect(organisationController.enableForItsLearning(params, permissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
+            });
+        });
+    });
 });
