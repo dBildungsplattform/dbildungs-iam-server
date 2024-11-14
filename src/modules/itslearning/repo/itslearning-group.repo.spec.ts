@@ -11,6 +11,7 @@ import { DeleteGroupAction } from '../actions/delete-group.action.js';
 import { GroupResponse, ReadGroupAction } from '../actions/read-group.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { ItslearningGroupRepo } from './itslearning-group.repo.js';
+import { CreateGroupsAction } from '../actions/create-groups.action.js';
 
 describe('Itslearning Group Repo', () => {
     let module: TestingModule;
@@ -153,7 +154,7 @@ describe('Itslearning Group Repo', () => {
             await sut.createOrUpdateGroups(createParams);
 
             expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ params: createParams }));
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreateGroupAction));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreateGroupsAction));
         });
 
         it('should not return error on success', async () => {
