@@ -60,19 +60,18 @@ export class ServiceProviderService {
 
         await Promise.allSettled(
             vidisOffers.map(async (offer: VidisOfferResponse) => {
-                const existingServiceProvider: Result<
-                    ServiceProvider<true>,
-                    DomainError
-                > = await this.serviceProviderRepo.findByName(offer.offerTitle);
+                const existingServiceProvider: ServiceProvider<true> | void = await this.serviceProviderRepo.findByName(
+                    offer.offerTitle,
+                );
 
                 const offerLogoMediaType: string = this.determineMediaTypeFor(offer.offerLogo);
 
                 let serviceProvider: ServiceProvider<false>;
-                if (existingServiceProvider.ok) {
+                if (existingServiceProvider instanceof ServiceProvider) {
                     serviceProvider = ServiceProvider.construct(
-                        existingServiceProvider.value.id,
-                        existingServiceProvider.value.createdAt,
-                        existingServiceProvider.value.updatedAt,
+                        existingServiceProvider.id,
+                        existingServiceProvider.createdAt,
+                        existingServiceProvider.updatedAt,
                         offer.offerTitle,
                         ServiceProviderTarget.URL,
                         offer.offerLink,

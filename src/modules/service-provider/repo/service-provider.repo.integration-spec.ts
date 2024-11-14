@@ -20,7 +20,6 @@ import { ServiceProviderEntity } from './service-provider.entity.js';
 import { ServiceProviderKategorie, ServiceProviderTarget } from '../domain/service-provider.enum.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -188,21 +187,19 @@ describe('ServiceProviderRepo', () => {
                 DoFactory.createServiceProvider(false),
             );
 
-            const actualServiceProvider: Result<ServiceProvider<true>, DomainError> = await sut.findByName(
+            const actualServiceProvider: ServiceProvider<true> | void = await sut.findByName(
                 expectedServiceProvider.name,
             );
 
-            if (actualServiceProvider.ok) expect(actualServiceProvider.value).toEqual(expectedServiceProvider);
+            expect(actualServiceProvider).toEqual(expectedServiceProvider);
         });
 
         it('should throw an error if there are no existing ServiceProviders for the given name', async () => {
             await sut.save(DoFactory.createServiceProvider(false));
 
-            const result: Result<ServiceProvider<true>, DomainError> = await sut.findByName(
-                'this-service-provider-does-not-exist',
-            );
+            const result: ServiceProvider<true> | void = await sut.findByName('this-service-provider-does-not-exist');
 
-            expect(result.ok).toBeFalsy();
+            expect(result).toBeFalsy();
         });
     });
 

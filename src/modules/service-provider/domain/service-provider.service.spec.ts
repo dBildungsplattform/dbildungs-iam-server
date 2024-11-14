@@ -14,7 +14,6 @@ import { VidisOfferResponse } from '../../vidis/api/vidis-offer-api.types.js';
 import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { ServiceProviderError } from '../../../shared/error/service-provider.error.js';
 import { faker } from '@faker-js/faker';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 
@@ -279,10 +278,9 @@ describe('ServiceProviderService', () => {
         it('should update ServiceProvider for VIDIS offers if ServiceProvider in VIDIS offer response already exists in SPSH.', async () => {
             vidisService.getActivatedOffersByRegion.mockResolvedValue(mockVidisOfferResponse);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
-            serviceProviderRepo.findByName.mockResolvedValue({
-                ok: true,
-                value: mockExistingVidisServiceProviderContainedInVidisOfferResponse,
-            });
+            serviceProviderRepo.findByName.mockResolvedValue(
+                mockExistingVidisServiceProviderContainedInVidisOfferResponse,
+            );
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisOfferResponse);
             if (mockExistingSchools[0])
                 organisationRepo.findByKennung.mockResolvedValue({ ok: true, value: mockExistingSchools[0] });
@@ -305,9 +303,8 @@ describe('ServiceProviderService', () => {
         it('should update ServiceProvider for VIDIS offers if ServiceProvider in VIDIS offer response does not exist in SPSH yet.', async () => {
             vidisService.getActivatedOffersByRegion.mockResolvedValue(mockVidisOfferResponse);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
-            serviceProviderRepo.findByName.mockResolvedValue({
-                ok: false,
-                error: new ServiceProviderError(`ServiceProvider does not exist.`),
+            serviceProviderRepo.findByName.mockImplementation(() => {
+                throw new Error();
             });
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisOfferResponse);
             if (mockExistingSchools[0])
@@ -331,9 +328,8 @@ describe('ServiceProviderService', () => {
         it('should delete ServiceProvider for VIDIS offers in SPSH if ServiceProvider is not in VIDIS offer response.', async () => {
             vidisService.getActivatedOffersByRegion.mockResolvedValue(mockVidisOfferResponse);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
-            serviceProviderRepo.findByName.mockResolvedValue({
-                ok: true,
-                value: mockExistingVidisServiceProviderContainedInVidisOfferResponse,
+            serviceProviderRepo.findByName.mockImplementation(() => {
+                throw new Error();
             });
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisOfferResponse);
             if (mockExistingSchools[0])

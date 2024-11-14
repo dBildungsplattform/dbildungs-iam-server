@@ -8,8 +8,6 @@ import { EventService } from '../../../core/eventbus/index.js';
 
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { ServiceProviderError } from '../../../shared/error/service-provider.error.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -76,14 +74,15 @@ export class ServiceProviderRepo {
         return serviceProvider && mapEntityToAggregate(serviceProvider);
     }
 
-    public async findByName(name: string): Promise<Result<ServiceProvider<true>, DomainError>> {
+    public async findByName(name: string): Promise<ServiceProvider<true> | void> {
+        let serviceProvider: ServiceProviderEntity;
         try {
-            const serviceProvider: ServiceProviderEntity = await this.em.findOneOrFail(ServiceProviderEntity, {
+            serviceProvider = await this.em.findOneOrFail(ServiceProviderEntity, {
                 name: name,
             });
-            return { ok: true, value: mapEntityToAggregate(serviceProvider) };
-        } catch (e) {
-            return { ok: false, error: new ServiceProviderError(`ServiceProvider '${name}' does not exist.`) };
+            return mapEntityToAggregate(serviceProvider);
+        } catch (error) {
+            return;
         }
     }
 
