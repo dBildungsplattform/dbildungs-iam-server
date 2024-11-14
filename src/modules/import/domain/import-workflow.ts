@@ -28,6 +28,7 @@ import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule
 import { ImportDomainErrorI18nTypes } from './import-i18n-errors.js';
 import { validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
+import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -47,6 +48,8 @@ export type TextFilePersonFields = {
 
 export class ImportWorkflow {
     public readonly TEXT_FILENAME_NAME: string = '_spsh_csv_import_ergebnis.txt';
+
+    public readonly CSV_FILE_VALID_HEADERS: string[] = ['nachname', 'vorname', 'klasse'];
 
     public selectedOrganisationId!: string;
 
@@ -111,6 +114,9 @@ export class ImportWorkflow {
 
             parsedDataItems = plainToInstance(CSVImportDataItemDTO, parsedData.data);
         } catch (error) {
+            if (error instanceof ImportCSVFileInvalidHeaderError) {
+                return error;
+            }
             return new ImportCSVFileParsingError([error]);
         }
 
@@ -374,7 +380,14 @@ export class ImportWorkflow {
                     delimitersToGuess: [';'],
                     header: true,
                     skipEmptyLines: true,
-                    transformHeader: (header: string) => header.toLowerCase().trim(),
+                    transformHeader: (header: string) => {
+                        const trimmedHeader: string = header.toLowerCase().trim();
+                        if (!this.CSV_FILE_VALID_HEADERS.includes(trimmedHeader)) {
+                            throw new ImportCSVFileInvalidHeaderError([`Invalid header: ${header}`]);
+                        }
+
+                        return trimmedHeader;
+                    },
                     transform: (value: string): string => {
                         return value.trim();
                     },

@@ -344,6 +344,38 @@ describe('Rolle API', () => {
 
             expect(response.status).toBe(400);
         });
+
+        it('should return 400 with CSV_FILE_INVALID_HEADER_ERROR if the csv file has an invalid header', async () => {
+            const filePath: string = path.resolve('./', `test/imports/invalid_klasse_header_import_SuS.csv`);
+
+            const fileExists: boolean = fs.existsSync(filePath);
+            if (!fileExists) throw new Error('file does not exist');
+
+            const schule: OrganisationEntity = new OrganisationEntity();
+            schule.typ = OrganisationsTyp.SCHULE;
+            await em.persistAndFlush(schule);
+            await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+
+            const sus: Rolle<true> = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/import/upload')
+                .set('content-type', 'multipart/form-data')
+                .field('organisationId', schule.id)
+                .field('rolleId', sus.id)
+                .attach('file', filePath);
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({
+                code: 400,
+                i18nKey: 'CSV_FILE_INVALID_HEADER_ERROR',
+            });
+        });
     });
 
     describe('/POST execute', () => {
