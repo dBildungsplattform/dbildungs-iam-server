@@ -4,7 +4,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { MikroORM } from '@mikro-orm/core';
-import { MapperTestModule } from '../../../../test/utils/index.js';
+import { LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
 import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
@@ -34,6 +34,7 @@ describe('OrganisationServiceSpecificationTest', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [OrganisationService, OrganisationRepository, OrganisationPersistenceMapperProfile],
         }).compile();

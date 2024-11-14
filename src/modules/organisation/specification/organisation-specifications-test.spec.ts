@@ -4,6 +4,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { MikroORM } from '@mikro-orm/core';
@@ -37,6 +38,7 @@ describe('OrganisationSpecificationTests', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [OrganisationPersistenceMapperProfile, OrganisationRepository],
         }).compile();

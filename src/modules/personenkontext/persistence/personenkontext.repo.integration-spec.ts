@@ -5,6 +5,7 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -39,6 +40,7 @@ describe('PersonenkontextRepo', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [
                 PersonPersistenceMapperProfile,
