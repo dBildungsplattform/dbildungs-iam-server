@@ -19,6 +19,8 @@ import { type FindUserFilter, KeycloakUserService } from './keycloak-user.servic
 import { User } from './user.js';
 import { UserLock } from './user-lock.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
+import { PersonLockOccasion } from '../../person/domain/person.enums.js';
 
 describe('KeycloakUserService', () => {
     let module: TestingModule;
@@ -27,6 +29,7 @@ describe('KeycloakUserService', () => {
     let kcUsersMock: DeepMocked<KeycloakAdminClient['users']>;
     let kcGroupsMock: DeepMocked<KeycloakAdminClient['groups']>;
     let loggerMock: DeepMocked<ClassLogger>;
+    let userLockRepository: DeepMocked<UserLockRepository>;
 
     beforeAll(async () => {
         kcUsersMock = createMock<KeycloakAdminClient['users']>();
@@ -63,6 +66,7 @@ describe('KeycloakUserService', () => {
         service = module.get(KeycloakUserService);
         adminService = module.get(KeycloakAdministrationService);
         loggerMock = module.get(ClassLogger);
+        userLockRepository = module.get(UserLockRepository);
     });
 
     beforeEach(() => {
@@ -728,10 +732,7 @@ describe('KeycloakUserService', () => {
             describe('if password is temporary', () => {
                 it('should return result with ok:true and new temporary password', async () => {
                     const userId: string = faker.string.numeric();
-                    const generatedPassword: string = faker.string.alphanumeric({
-                        length: { min: 10, max: 10 },
-                        casing: 'mixed',
-                    });
+                    const generatedPassword: string = generatePassword();
                     kcUsersMock.resetPassword.mockResolvedValueOnce();
 
                     const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
@@ -753,10 +754,7 @@ describe('KeycloakUserService', () => {
             describe('if password is permanent', () => {
                 it('should return result with ok:true and new permanent password', async () => {
                     const userId: string = faker.string.numeric();
-                    const generatedPassword: string = faker.string.alphanumeric({
-                        length: { min: 10, max: 10 },
-                        casing: 'mixed',
-                    });
+                    const generatedPassword: string = generatePassword();
                     kcUsersMock.resetPassword.mockResolvedValueOnce();
 
                     const result: Result<string, DomainError> = await service.setPassword(
@@ -783,10 +781,7 @@ describe('KeycloakUserService', () => {
         describe('when error is thrown during password-reset', () => {
             it('should pass error', async () => {
                 const userId: string = faker.string.numeric();
-                const generatedPassword: string = faker.string.alphanumeric({
-                    length: { min: 10, max: 10 },
-                    casing: 'mixed',
-                });
+                const generatedPassword: string = generatePassword();
                 kcUsersMock.resetPassword.mockRejectedValueOnce(new Error());
                 const result: Result<string, DomainError> = await service.setPassword(userId, generatedPassword);
                 expect(result).toStrictEqual({
@@ -1248,59 +1243,53 @@ describe('KeycloakUserService', () => {
             });
         });
         describe('updateKeycloakUserStatus', () => {
-            it('should update user status successfully', async () => {
+            const userLock: UserLock = {
+                person: '1',
+                locked_by: 'test',
+                locked_until: new Date(),
+                created_at: new Date(),
+                locked_occasion: PersonLockOccasion.MANUELL_GESPERRT,
+            };
+            it('should lock user successfully', async () => {
                 const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                    users: {
-                        update: jest.fn().mockResolvedValueOnce(undefined),
-                        findOne: jest.fn().mockResolvedValueOnce({ attributes: {} }),
-                    },
+                    users: { update: jest.fn().mockResolvedValueOnce(undefined) },
                 });
                 adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
                     ok: true,
                     value: keyCloakAdminClient,
                 });
-                const lockMock: UserLock = createMock<UserLock>();
+                const userLocks: UserLock[] = [];
+                userLockRepository.findByPersonId.mockResolvedValueOnce(userLocks);
+                userLockRepository.deleteUserLock.mockResolvedValueOnce(undefined);
+
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
-                    true,
-                    lockMock,
+                    userLock,
+                    false,
                 );
                 expect(result).toStrictEqual({ ok: true, value: undefined });
                 expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: true });
             });
+            it('should unlock user successfully', async () => {
+                const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
+                    users: { update: jest.fn().mockResolvedValueOnce(undefined) },
+                });
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
+                    ok: true,
+                    value: keyCloakAdminClient,
+                });
+                userLockRepository.createUserLock.mockResolvedValueOnce(userLock);
 
-            it.each([{ attributes: {} }, {}])(
-                'should update user status successfully',
-                async (findOneResponse: Record<string, string> | object) => {
-                    const keyCloakAdminClient: DeepMocked<KeycloakAdminClient> = createMock<KeycloakAdminClient>({
-                        users: {
-                            update: jest.fn().mockResolvedValueOnce(undefined),
-                            findOne: jest.fn().mockResolvedValueOnce(findOneResponse),
-                        },
-                    });
-                    adminService.getAuthedKcAdminClient.mockResolvedValueOnce({
-                        ok: true,
-                        value: keyCloakAdminClient,
-                    });
-
-                    const lockMock: UserLock = createMock<UserLock>();
-                    const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
-                        'person-id',
-                        'user-id',
-                        false,
-                        lockMock,
-                    );
-
-                    expect(result).toStrictEqual({ ok: true, value: undefined });
-                    expect(keyCloakAdminClient.users.update).toHaveBeenCalledTimes(1);
-                    expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith(
-                        { id: 'user-id' },
-                        { enabled: false },
-                    );
-                },
-            );
-
+                const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
+                    'person-id',
+                    'user-id',
+                    userLock,
+                    true,
+                );
+                expect(result).toStrictEqual({ ok: true, value: undefined });
+                expect(keyCloakAdminClient.users.update).toHaveBeenCalledWith({ id: 'user-id' }, { enabled: false });
+            });
             it('should return error if update fails', async () => {
                 kcUsersMock.update.mockRejectedValueOnce(new Error('Update failed'));
 
@@ -1308,8 +1297,8 @@ describe('KeycloakUserService', () => {
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
-                    true,
                     lockMock,
+                    true,
                 );
 
                 expect(result).toStrictEqual({
@@ -1328,8 +1317,8 @@ describe('KeycloakUserService', () => {
                 const result: Result<void, DomainError> = await service.updateKeycloakUserStatus(
                     'person-id',
                     'user-id',
-                    true,
                     lockMock,
+                    true,
                 );
 
                 expect(result).toStrictEqual({

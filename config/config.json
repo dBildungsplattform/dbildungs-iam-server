@@ -38,7 +38,8 @@
         "PORT": 6379,
         "USERNAME": "default",
         "PASSWORD": "password",
-        "USE_TLS": false
+        "USE_TLS": false,
+        "CLUSTERED": false
     },
     "LDAP": {
         "URL": "ldap://localhost",
