@@ -42,6 +42,7 @@ export class ServiceProviderService {
         const vidisKeycloakGroup: string = 'VIDIS-service';
         const vidisKeycloakRole: string = 'VIDIS-user';
         const vidisRegionName: string = 'test-region';
+        const schulstrukturknoten: string = this.organisationRepo.ROOT_ORGANISATION_ID;
 
         const vidisOffers: VidisOfferResponse[] = await this.vidisService.getActivatedOffersByRegion(vidisRegionName);
 
@@ -68,7 +69,7 @@ export class ServiceProviderService {
                         ServiceProviderTarget.URL,
                         offer.offerLink,
                         ServiceProviderKategorie.ANGEBOTE,
-                        'ffb411f6-8287-4939-b87d-13b6a4e7fdfa', // This is a random UUID
+                        schulstrukturknoten,
                         Buffer.from(offer.offerLogo, 'base64'),
                         offerLogoMediaType,
                         vidisKeycloakGroup,
@@ -83,7 +84,7 @@ export class ServiceProviderService {
                         ServiceProviderTarget.URL,
                         offer.offerLink,
                         ServiceProviderKategorie.ANGEBOTE,
-                        'ffb411f6-8287-4939-b87d-13b6a4e7fdfa', // This is a random UUID
+                        schulstrukturknoten,
                         Buffer.from(offer.offerLogo, 'base64'),
                         offerLogoMediaType,
                         vidisKeycloakGroup,
