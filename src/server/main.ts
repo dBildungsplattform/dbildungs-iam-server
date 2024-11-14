@@ -44,7 +44,7 @@ async function bootstrap(): Promise<void> {
     app.useGlobalInterceptors(new GlobalPagingHeadersInterceptor());
     app.useGlobalPipes(new GlobalValidationPipe());
     app.setGlobalPrefix('api', {
-        exclude: ['health', 'metrics'],
+        exclude: ['health'],
     });
 
     let redirectUrl: string;

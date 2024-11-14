@@ -128,7 +128,7 @@ backend:
 # Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
 redis-cluster:
   enabled: true
-  persistence: 
+  persistence:
     enabled: false
     size: 4Gi
   image:
@@ -157,7 +157,7 @@ redis-cluster:
   podLabels:
       app.kubernetes.io/component: server-redis
   commonLabels:
-    app.kubernetes.io/name: dbildungs-iam-server 
+    app.kubernetes.io/name: dbildungs-iam-server
   resources:
     limits:
       cpu: 300m
@@ -174,5 +174,7 @@ redis-cluster:
       requests:
         cpu: 50m
         memory: 64Mi
-    serviceMonitor: 
+    serviceMonitor:
         enabled: true
+        path: "/api/metrics"
+        interval: 30s
