@@ -18,6 +18,8 @@ import { VidisConfig } from '../../../shared/config/vidis.config.js';
 
 @Injectable()
 export class ServiceProviderService {
+    private readonly vidisConfig: VidisConfig;
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly rolleRepo: RolleRepo,
@@ -26,7 +28,6 @@ export class ServiceProviderService {
         private readonly vidisService: VidisService,
         private readonly organisationServiceProviderRepo: OrganisationServiceProviderRepo,
         configService: ConfigService<ServerConfig>,
-        private readonly vidisConfig: VidisConfig,
     ) {
         this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
     }
