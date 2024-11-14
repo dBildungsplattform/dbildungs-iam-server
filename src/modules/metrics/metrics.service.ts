@@ -7,7 +7,8 @@ export class MetricsService {
 
     private readonly gauge: { [key: string]: Gauge<string> } = {};
 
-    public constructor(@Inject(Registry) private readonly registry: Registry) {}
+    public constructor(@Inject(Registry) private readonly registry: Registry) { }
+
 
     public incCounter(key: string, labels?: Record<string, string | number>): void {
         if (!this.counter[key]) {
