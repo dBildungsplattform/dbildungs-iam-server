@@ -27,7 +27,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -37,6 +37,7 @@ import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienn
 import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 import { SystemConfig } from '../../../shared/config/system.config.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -256,7 +257,7 @@ export class PersonRepository {
         if (!keyCloakUserDataResponse.ok) {
             return person;
         }
-        person.userLock = (await this.userLockRepository.findPersonById(person.id)) ?? undefined;
+        person.userLock = await this.userLockRepository.findByPersonId(person.id);
         person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         return person;
     }
@@ -652,6 +653,23 @@ export class PersonRepository {
                 return new DuplicatePersonalnummerError(`Personalnummer ${personalnummer} already exists.`);
             }
             newPersonalnummer = personalnummer;
+
+            // Remove KoPers-Lock, if existing
+            const userLocks: UserLock[] | undefined = await this.userLockRepository.findByPersonId(personId);
+
+            if (userLocks && userLocks.length > 0) {
+                const koperslock: UserLock | undefined = userLocks.find(
+                    (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
+                );
+                if (koperslock && personFound.keycloakUserId) {
+                    await this.kcUserService.updateKeycloakUserStatus(
+                        personId,
+                        personFound.keycloakUserId,
+                        koperslock,
+                        false,
+                    );
+                }
+            }
         }
         //Update name
         if (hasNameChanged) {
