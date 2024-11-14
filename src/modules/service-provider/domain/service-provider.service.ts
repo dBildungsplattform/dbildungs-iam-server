@@ -12,6 +12,9 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { VidisConfig } from '../../../shared/config/vidis.config.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -22,7 +25,11 @@ export class ServiceProviderService {
         private readonly organisationRepo: OrganisationRepository,
         private readonly vidisService: VidisService,
         private readonly organisationServiceProviderRepo: OrganisationServiceProviderRepo,
-    ) {}
+        configService: ConfigService<ServerConfig>,
+        private readonly vidisConfig: VidisConfig,
+    ) {
+        this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
+    }
 
     public async getServiceProvidersByRolleIds(rolleIds: string[]): Promise<ServiceProvider<true>[]> {
         const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
@@ -39,9 +46,9 @@ export class ServiceProviderService {
     public async updateServiceProvidersForVidis(): Promise<void> {
         this.logger.info('Update of service providers for VIDIS offers triggered.');
 
-        const vidisKeycloakGroup: string = 'VIDIS-service';
-        const vidisKeycloakRole: string = 'VIDIS-user';
-        const vidisRegionName: string = 'test-region';
+        const vidisKeycloakGroup: string = this.vidisConfig.KEYCLOAK_GROUP;
+        const vidisKeycloakRole: string = this.vidisConfig.KEYCLOAK_ROLE;
+        const vidisRegionName: string = this.vidisConfig.REGION_NAME;
         const schulstrukturknoten: string = this.organisationRepo.ROOT_ORGANISATION_ID;
 
         const vidisOffers: VidisOfferResponse[] = await this.vidisService.getActivatedOffersByRegion(vidisRegionName);

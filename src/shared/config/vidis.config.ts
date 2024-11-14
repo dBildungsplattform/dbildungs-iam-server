@@ -9,4 +9,13 @@ export class VidisConfig {
 
     @IsString()
     public readonly PASSWORD!: string;
+
+    @IsString()
+    public readonly REGION_NAME!: string;
+
+    @IsString()
+    public readonly KEYCLOAK_GROUP!: string;
+
+    @IsString()
+    public readonly KEYCLOAK_ROLE!: string;
 }

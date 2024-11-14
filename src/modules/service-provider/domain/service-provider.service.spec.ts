@@ -16,6 +16,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { ServiceProviderError } from '../../../shared/error/service-provider.error.js';
 import { faker } from '@faker-js/faker';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 
 const mockVidisOfferResponse: VidisOfferResponse[] = [
     {
@@ -190,7 +191,7 @@ describe('ServiceProviderService', () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [LoggingTestModule],
+            imports: [LoggingTestModule, ConfigTestModule],
             providers: [
                 ServiceProviderService,
                 { provide: RolleRepo, useValue: createMock<RolleRepo>() },
