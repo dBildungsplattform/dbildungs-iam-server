@@ -29,6 +29,7 @@ import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -43,6 +44,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         traegerschaft: organisation.traegerschaft,
         emailDomain: organisation.emailDomain,
         emailAddress: organisation.emailAdress,
+        isEnabledForItsLearning: organisation.isEnabledForItsLearning,
     };
 }
 
@@ -62,6 +64,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.traegerschaft,
         entity.emailDomain,
         entity.emailAddress,
+        entity.isEnabledForItsLearning,
     );
 }
 
@@ -82,6 +85,7 @@ export class OrganisationRepository {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
+        private readonly logger: ClassLogger,
         private readonly eventService: EventService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
@@ -455,6 +459,41 @@ export class OrganisationRepository {
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
+
+        return organisationEntity;
+    }
+
+    public async setEnabledForItsLearning(
+        personPermissions: PersonPermissions,
+        id: string,
+    ): Promise<DomainError | Organisation<true>> {
+        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.SCHULEN_VERWALTEN],
+            true,
+        );
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+
+        const organisationFound: Option<Organisation<true>> = await this.findById(id);
+
+        this.logger.info(
+            `User with personId:${personPermissions.personFields.id} enabling ITSLearning for organisationId:${id}`,
+        );
+
+        if (!organisationFound) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+        if (organisationFound.typ !== OrganisationsTyp.SCHULE) {
+            return new EntityCouldNotBeUpdated('Organisation', id, [
+                'Only organisations of typ SCHULE can be enabled for ITSLearning.',
+            ]);
+        }
+        organisationFound.isEnabledForItsLearning = true;
+
+        const organisationEntity: Organisation<true> | OrganisationSpecificationError =
+            await this.save(organisationFound);
+
         return organisationEntity;
     }
 

@@ -33,6 +33,9 @@ export class OrganisationResponse {
     public traegerschaft?: Traegerschaft;
 
     @ApiProperty()
+    public isEnabledForItsLearning?: boolean;
+
+    @ApiProperty()
     public version: number;
 
     public constructor(organisation: Organisation<true>) {
@@ -44,6 +47,7 @@ export class OrganisationResponse {
         this.kuerzel = organisation.kuerzel;
         this.typ = organisation.typ!;
         this.traegerschaft = organisation.traegerschaft;
+        this.isEnabledForItsLearning = organisation.isEnabledForItsLearning;
         this.version = organisation.version;
     }
 }

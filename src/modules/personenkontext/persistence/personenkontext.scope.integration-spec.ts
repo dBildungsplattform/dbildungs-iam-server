@@ -9,6 +9,7 @@ import {
     DatabaseTestModule,
     DoFactory,
     MapperTestModule,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -40,6 +41,7 @@ describe('PersonenkontextScope', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,

@@ -9,6 +9,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../../shared/validation/global-validation.pipe.js';
@@ -70,6 +71,7 @@ describe('Personenuebersicht API', () => {
 
         const module: TestingModule = await Test.createTestingModule({
             imports: [
+                LoggingTestModule,
                 PersonApiModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),

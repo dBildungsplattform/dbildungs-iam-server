@@ -6,6 +6,7 @@ import {
     DatabaseTestModule,
     DoFactory,
     MapperTestModule,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
@@ -35,6 +36,7 @@ describe('PersonenkontextRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
