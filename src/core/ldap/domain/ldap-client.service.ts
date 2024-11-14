@@ -81,17 +81,16 @@ export class LdapClientService {
 
     private getRootName(emailDomain: string): Result<string, LdapEmailDomainError> {
         if (
-            emailDomain ===
-            (this.ldapInstanceConfig.ERSATZSCHULEN_DOMAIN || LdapClientService.ERSATZ_SCHULEN_DOMAIN_DEFAULT)
+            emailDomain === this.ldapInstanceConfig.ERSATZSCHULEN_DOMAIN ||
+            emailDomain === LdapClientService.ERSATZ_SCHULEN_DOMAIN_DEFAULT
         )
             return {
                 ok: true,
                 value: LdapClientService.ERSATZ_SCHULEN_OU,
             };
         if (
-            emailDomain ===
-            (this.ldapInstanceConfig.OEFFENTLICHE_SCHULEN_DOMAIN ||
-                LdapClientService.OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT)
+            emailDomain === this.ldapInstanceConfig.OEFFENTLICHE_SCHULEN_DOMAIN ||
+            emailDomain === LdapClientService.OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT
         )
             return {
                 ok: true,

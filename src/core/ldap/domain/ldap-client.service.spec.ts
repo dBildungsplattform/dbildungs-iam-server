@@ -176,7 +176,7 @@ describe('LDAP Client Service', () => {
 
             expect(resultOeffentlich.ok).toBeTruthy();
             expect(resultErsatz.ok).toBeTruthy();
-            expect(resultOldDefault.ok).toBeFalsy();
+            expect(resultOldDefault.ok).toBeTruthy();
         });
     });
 
