@@ -513,7 +513,7 @@ export class OrganisationRepository {
         return mapEntityToAggregate(organisationEntity);
     }
 
-    private async findOrganisationZuordnungErsatzOderOeffentlich(
+    public async findOrganisationZuordnungErsatzOderOeffentlich(
         organisationId: OrganisationID | undefined,
     ): Promise<RootDirectChildrenType> {
         const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =

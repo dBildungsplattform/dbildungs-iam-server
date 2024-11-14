@@ -38,6 +38,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
         orgaId: pk.organisationId,
         orgaTyp: orga.typ,
         orgaKennung: orga.kennung,
+        isItslearningOrga: true, // TODO: use value from organisation
         serviceProviderExternalSystems: rolle.serviceProviderData.map((sp: ServiceProvider<true>) => sp.externalSystem),
     };
 }

@@ -50,6 +50,7 @@ export class PersonDeleteService {
                                               rolleId: personenKontext.rolleId,
                                               orgaId: personenKontext.organisationId,
                                               rolle: rolle.rollenart,
+                                              isItslearningOrga: false, // TODO: Does this need to be set? The itslearning event listener ignores the removed kontexte
                                               serviceProviderExternalSystems: rolle.serviceProviderData.map(
                                                   (sp: ServiceProvider<true>) => sp.externalSystem,
                                               ),

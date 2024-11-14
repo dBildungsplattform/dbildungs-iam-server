@@ -8,9 +8,6 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
-import { OrganisationID } from '../../../shared/types/index.js';
-import { RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
 import { CreateGroupParams } from '../actions/create-group.params.js';
 import { GroupResponse } from '../actions/read-group.action.js';
 import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
@@ -47,107 +44,6 @@ describe('ItsLearning Organisations Event Handler', () => {
     beforeEach(() => {
         sut.ENABLED = true;
         jest.resetAllMocks();
-    });
-
-    describe('createSchuleEventHandler', () => {
-        it('should log on success', async () => {
-            const orgaId: OrganisationID = faker.string.uuid();
-            const kennung: string = faker.string.numeric(7);
-            const name: string = faker.word.noun();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                orgaId,
-                kennung,
-                name,
-                RootDirectChildrenType.OEFFENTLICH,
-            );
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(undefined); // Group did not exist
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined);
-
-            await sut.createSchuleEventHandler(event);
-
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams]>({
-                id: orgaId,
-                name: `${kennung} (${name})`,
-                parentId: sut.ROOT_OEFFENTLICH,
-                type: 'School',
-            });
-            expect(loggerMock.info).toHaveBeenLastCalledWith(`Schule with ID ${orgaId} created.`);
-        });
-
-        it('should keep existing hierarchy', async () => {
-            const orgaId: OrganisationID = faker.string.uuid();
-            const kennung: string = faker.string.numeric(7);
-            const name: string = faker.word.noun();
-            const oldParentId: OrganisationID = faker.string.uuid();
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                orgaId,
-                kennung,
-                name,
-                RootDirectChildrenType.OEFFENTLICH,
-            );
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce({
-                parentId: oldParentId,
-                name: faker.word.noun(),
-                type: 'Unspecified',
-            });
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined);
-
-            await sut.createSchuleEventHandler(event);
-
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams]>({
-                id: orgaId,
-                name: `${kennung} (${name})`,
-                parentId: oldParentId,
-                type: 'School',
-            });
-        });
-
-        it('should skip event, if not enabled', async () => {
-            sut.ENABLED = false;
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.word.noun(),
-                RootDirectChildrenType.OEFFENTLICH,
-            );
-
-            await sut.createSchuleEventHandler(event);
-
-            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
-        });
-
-        it('should skip event, if schule is ersatzschule', async () => {
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.word.noun(),
-                RootDirectChildrenType.ERSATZ,
-            );
-
-            await sut.createSchuleEventHandler(event);
-
-            expect(loggerMock.error).toHaveBeenCalledWith(`Ersatzschule, ignoring.`);
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
-        });
-
-        it('should log error on failed creation', async () => {
-            const event: SchuleCreatedEvent = new SchuleCreatedEvent(
-                faker.string.uuid(),
-                faker.string.uuid(),
-                faker.word.noun(),
-                RootDirectChildrenType.OEFFENTLICH,
-            );
-
-            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(undefined); // Group did not exist
-            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(
-                createMock<DomainError>({ message: 'Error' }),
-            );
-
-            await sut.createSchuleEventHandler(event);
-
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`Could not create Schule in itsLearning: Error`);
-        });
     });
 
     describe('createKlasseEventHandler', () => {

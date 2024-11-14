@@ -9,10 +9,10 @@ import { DomainError } from '../../../shared/error/index.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
-import { RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
+import { OrganisationsTyp, RootDirectChildrenType } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { CreateGroupParams } from '../actions/create-group.params.js';
-import { GroupResponse } from '../actions/read-group.action.js';
 import { UpdateGroupParams } from '../actions/update-group.action.js';
 import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
 
@@ -24,6 +24,7 @@ export class ItsLearningOrganisationsEventHandler {
 
     public constructor(
         private readonly logger: ClassLogger,
+        private readonly organisationRepo: OrganisationRepository,
         private readonly itslearningGroupRepo: ItslearningGroupRepo,
         configService: ConfigService<ServerConfig>,
     ) {
@@ -32,45 +33,6 @@ export class ItsLearningOrganisationsEventHandler {
         this.ENABLED = itsLearningConfig.ENABLED === 'true';
 
         this.ROOT_OEFFENTLICH = itsLearningConfig.ROOT_OEFFENTLICH;
-    }
-
-    @EventHandler(SchuleCreatedEvent)
-    public async createSchuleEventHandler(event: SchuleCreatedEvent): Promise<void> {
-        this.logger.info(`Received CreateSchuleEvent, organisationId:${event.organisationId}`);
-
-        if (!this.ENABLED) {
-            this.logger.info('Not enabled, ignoring event.');
-            return;
-        }
-
-        if (event.rootDirectChildrenZuordnung === RootDirectChildrenType.ERSATZ) {
-            this.logger.error(`Ersatzschule, ignoring.`);
-            return;
-        }
-
-        const params: CreateGroupParams = {
-            id: event.organisationId,
-            name: `${event.kennung} (${event.name ?? 'Unbenannte Schule'})`,
-            type: 'School',
-            parentId: this.ROOT_OEFFENTLICH,
-        };
-
-        {
-            // Check if school already exists in itsLearning
-            const result: Option<GroupResponse> = await this.itslearningGroupRepo.readGroup(event.organisationId);
-            if (result) {
-                // School already exists, keep relationship
-                params.parentId = result.parentId;
-            }
-        }
-
-        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(params);
-
-        if (createError) {
-            return this.logger.error(`Could not create Schule in itsLearning: ${createError.message}`);
-        }
-
-        this.logger.info(`Schule with ID ${event.organisationId} created.`);
     }
 
     @EventHandler(KlasseCreatedEvent)
@@ -91,13 +53,11 @@ export class ItsLearningOrganisationsEventHandler {
         }
 
         {
-            // Check if parent exists in itsLearning
-            const result: Option<GroupResponse> = await this.itslearningGroupRepo.readGroup(event.administriertVon);
-
-            if (!result) {
-                // Parent school does not exist
-                return this.logger.error(
-                    `Parent Organisation (${event.administriertVon}) does not exist in itsLearning.`,
+            // Check if parent is an itslearning schule
+            const parent: Option<Organisation<true>> = await this.organisationRepo.findById(event.administriertVon);
+            if (/* !parent.isItslearning */ !parent) {
+                return this.logger.info(
+                    `Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
                 );
             }
         }
@@ -135,6 +95,16 @@ export class ItsLearningOrganisationsEventHandler {
             return this.logger.error('Klasse has no name. Aborting.');
         }
 
+        {
+            // Check if parent is an itslearning schule
+            const parent: Option<Organisation<true>> = await this.organisationRepo.findById(event.administriertVon);
+            if (/* !parent.isItslearning */ !parent) {
+                return this.logger.info(
+                    `Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
+                );
+            }
+        }
+
         const params: UpdateGroupParams = {
             id: event.organisationId,
             name: event.name,
@@ -167,5 +137,65 @@ export class ItsLearningOrganisationsEventHandler {
         }
 
         this.logger.info(`Klasse with ID ${event.organisationId} was deleted.`);
+    }
+
+    //@EventHandler(EnableSchuleItslearning)
+    public async enableSchuleItslearningHandler(event: { id: string }): Promise<void> {
+        this.logger.info(`Received EnableSchuleItslearningEvent, ID: ${event.id}`);
+
+        if (!this.ENABLED) {
+            this.logger.info('Not enabled, ignoring event.');
+            return;
+        }
+
+        const [schule, rootType, klassen]: [Option<Organisation<true>>, RootDirectChildrenType, Organisation<true>[]] =
+            await Promise.all([
+                this.organisationRepo.findById(event.id),
+                this.organisationRepo.findOrganisationZuordnungErsatzOderOeffentlich(event.id),
+                this.organisationRepo.findChildOrgasForIds([event.id]),
+            ]);
+
+        if (!schule) {
+            this.logger.error(`The schule with ID ${event.id} could not be found!`);
+            return;
+        }
+
+        if (schule.typ !== OrganisationsTyp.SCHULE) {
+            this.logger.error(`The organisation with ID ${event.id} is not of type "SCHULE"!`);
+            return;
+        }
+
+        if (rootType === RootDirectChildrenType.ERSATZ) {
+            this.logger.error(`Ersatzschule, ignoring.`);
+            return;
+        }
+
+        // Create params for all klassen
+        const createParams: CreateGroupParams[] = klassen
+            .filter((k: Organisation<true>) => k.typ === OrganisationsTyp.KLASSE)
+            .map((o: Organisation<true>) => ({
+                id: o.id,
+                name: o.name ?? 'Unbenannte Klasse',
+                type: 'Unspecified',
+                parentId: event.id,
+            }));
+
+        // Prepend the params for the schule
+        createParams.unshift({
+            id: schule.id,
+            name: `${schule.kennung} (${schule.name ?? 'Unbenannte Schule'})`,
+            type: 'School',
+            parentId: this.ROOT_OEFFENTLICH,
+        });
+
+        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroups(createParams);
+
+        if (createError) {
+            return this.logger.error(
+                `Could not create Schule (ID ${event.id}) and its Klassen in itsLearning: ${createError.message}`,
+            );
+        }
+
+        this.logger.info(`Schule with ID ${event.id} and its ${klassen.length} Klassen were created.`);
     }
 }

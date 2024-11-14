@@ -190,10 +190,12 @@ export class ItsLearningPersonsEventHandler {
     }
 
     private filterRelevantKontexte<T extends [...PersonenkontextUpdatedData[][]]>(...kontexte: T): [...T] {
-        // Only keep personenkontexte, have a serviceprovider with itslearning-system
+        // Only keep personenkontexte, that are at itslearning organisations and have a serviceprovider with itslearning-system
         const filteredKontexte: [...T] = kontexte.map((pks: PersonenkontextUpdatedData[]) =>
-            pks.filter((pk: PersonenkontextUpdatedData) =>
-                pk.serviceProviderExternalSystems.includes(ServiceProviderSystem.ITSLEARNING),
+            pks.filter(
+                (pk: PersonenkontextUpdatedData) =>
+                    pk.isItslearningOrga &&
+                    pk.serviceProviderExternalSystems.includes(ServiceProviderSystem.ITSLEARNING),
             ),
         ) as [...T];
 
