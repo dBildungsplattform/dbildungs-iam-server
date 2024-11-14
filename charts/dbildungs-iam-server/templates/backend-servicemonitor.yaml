@@ -17,8 +17,8 @@ spec:
       app.kubernetes.io/component: server-backend
   endpoints:
     - port: {{ (index .Values.backend.serviceMonitor.endpoints 0).port }}
-      path: {{ .Values.keycloak.serviceMonitor.path }}
-      interval: {{ .Values.keycloak.serviceMonitor.interval | default "30s" }}
+      path: {{ .Values.backend.serviceMonitor.path }}
+      interval: {{ .Values.backend.serviceMonitor.interval | default "30s" }}
 
 {{ end }}
 
