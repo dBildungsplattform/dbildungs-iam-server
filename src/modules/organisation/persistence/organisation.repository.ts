@@ -29,6 +29,7 @@ import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -85,6 +86,7 @@ export class OrganisationRepository {
         private readonly eventService: EventService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
+        private readonly logger: ClassLogger,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
