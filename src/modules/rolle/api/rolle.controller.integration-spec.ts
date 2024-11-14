@@ -46,6 +46,7 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
+import { DbiamRolleError } from './dbiam-rolle.error.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -278,8 +279,11 @@ describe('Rolle API', () => {
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/rolle')
                 .send(params);
+            const responseBody: DbiamRolleError = response.body as DbiamRolleError;
 
             expect(response.status).toBe(400);
+            expect(responseBody.i18nKey).toStrictEqual('ROLLE_NAME_UNIQUE_ON_SSK');
+            expect(responseBody.code).toStrictEqual(400);
         });
     });
 
