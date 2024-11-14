@@ -569,12 +569,20 @@ describe('RolleRepo', () => {
             expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
         });
 
-        it('should return error when rolle with same on same SSK already exists', async () => {
+        it('should return error when rolle with same name on same SSK already exists', async () => {
             const fakeRolleName: string = faker.company.name();
             const organisationId: OrganisationID = faker.string.uuid();
-            const rolle: Rolle<true> | DomainError = await sut.save(
+            const rolleWithSameName: Rolle<true> | DomainError = await sut.save(
                 DoFactory.createRolle(false, {
                     name: fakeRolleName,
+                    administeredBySchulstrukturknoten: organisationId,
+                }),
+            );
+            if (rolleWithSameName instanceof DomainError) throw Error();
+
+            const rolle: Rolle<true> | DomainError = await sut.save(
+                DoFactory.createRolle(false, {
+                    name: faker.company.name(),
                     administeredBySchulstrukturknoten: organisationId,
                 }),
             );

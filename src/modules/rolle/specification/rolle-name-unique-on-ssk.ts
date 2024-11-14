@@ -25,6 +25,8 @@ export class RolleNameUniqueOnSsk extends CompositeSpecification<Rolle<boolean>>
                 existingRolle.administeredBySchulstrukturknoten === rolle.administeredBySchulstrukturknoten,
         );
 
-        return !rollenOnSameSSK.some((existingRolle: Rolle<true>) => existingRolle.name === newName);
+        return !rollenOnSameSSK.some(
+            (existingRolle: Rolle<true>) => existingRolle.name === newName && existingRolle.id !== rolle.id,
+        );
     }
 }
