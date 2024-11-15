@@ -66,7 +66,7 @@ export class ServiceProviderService {
                 const offerLogoMediaType: string = this.determineMediaTypeFor(offer.offerLogo);
 
                 let serviceProvider: ServiceProvider<false>;
-                if (existingServiceProvider instanceof ServiceProvider) {
+                if (existingServiceProvider) {
                     serviceProvider = ServiceProvider.construct(
                         existingServiceProvider.id,
                         existingServiceProvider.createdAt,
