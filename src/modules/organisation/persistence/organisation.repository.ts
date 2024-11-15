@@ -484,6 +484,7 @@ export class OrganisationRepository {
         }
 
         organisationEntity.itslearningEnabled = true;
+        organisationEntity.version += 1;
 
         this.logger.info(
             `User with personId:${personPermissions.personFields.id} enabled itslearning for organisationId:${id}`,
