@@ -1032,9 +1032,9 @@ describe('OrganisationRepository', () => {
             expect(result).toStrictEqual(new EntityNotFoundError('Organisation', fakeId));
         });
 
-        it('should return error if organisation CANNOT be found by id', async () => {
+        it('should throw error if organisation CANNOT be found by id', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
 
             const fakeId: string = faker.string.uuid();
             const result: Organisation<true> | DomainError = await sut.setEnabledForitslearning(

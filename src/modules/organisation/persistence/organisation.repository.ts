@@ -471,26 +471,28 @@ export class OrganisationRepository {
             return new EntityNotFoundError('Organisation', id);
         }
 
-        const organisationFound: Option<Organisation<true>> = await this.findById(id);
+        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, id);
 
-        if (!organisationFound) {
+        if (!organisationEntity) {
             return new EntityNotFoundError('Organisation', id);
         }
-        if (organisationFound.typ !== OrganisationsTyp.SCHULE) {
+
+        if (organisationEntity.typ !== OrganisationsTyp.SCHULE) {
             return new EntityCouldNotBeUpdated('Organisation', id, [
                 'Only organisations of typ SCHULE can be enabled for ITSLearning.',
             ]);
         }
-        organisationFound.itslearningEnabled = true;
+
+        organisationEntity.itslearningEnabled = true;
+        organisationEntity.version += 1;
 
         this.logger.info(
             `User with personId:${personPermissions.personFields.id} enabled itslearning for organisationId:${id}`,
         );
 
-        const organisationEntity: Organisation<true> | OrganisationSpecificationError =
-            await this.save(organisationFound);
+        await this.em.persistAndFlush(organisationEntity);
 
-        return organisationEntity;
+        return mapEntityToAggregate(organisationEntity);
     }
 
     public async saveSeedData(organisation: Organisation<boolean>): Promise<Organisation<true>> {
