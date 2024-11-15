@@ -229,7 +229,8 @@ describe('Personenuebersicht API', () => {
                     if (rolle1 instanceof DomainError) {
                         return;
                     }
-                    const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+                    const savedRolle1: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
+                    if (savedRolle1 instanceof DomainError) throw Error();
 
                     const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
                         faker.string.alpha(5),
@@ -245,7 +246,8 @@ describe('Personenuebersicht API', () => {
                     if (rolle2 instanceof DomainError) {
                         return;
                     }
-                    const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
+                    const savedRolle2: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
+                    if (savedRolle2 instanceof DomainError) throw Error();
 
                     const savedOrganisation1: OrganisationEntity = await createAndPersistOrganisation(
                         em,
@@ -383,7 +385,8 @@ describe('Personenuebersicht API', () => {
                     if (rolle1 instanceof DomainError) {
                         return;
                     }
-                    const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+                    const savedRolle1: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
+                    if (savedRolle1 instanceof DomainError) throw Error();
 
                     const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
                         faker.string.alpha(5),
@@ -399,7 +402,8 @@ describe('Personenuebersicht API', () => {
                     if (rolle2 instanceof DomainError) {
                         return;
                     }
-                    const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
+                    const savedRolle2: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
+                    if (savedRolle2 instanceof DomainError) throw Error();
 
                     const unsavedOrganisation1: OrganisationDo<true> = DoFactory.createOrganisation(true);
                     const savedOrganisation2: OrganisationEntity = await createAndPersistOrganisation(
@@ -491,7 +495,8 @@ describe('Personenuebersicht API', () => {
             if (rolle1 instanceof DomainError) {
                 return;
             }
-            const savedRolle1: Rolle<true> = await rolleRepo.save(rolle1);
+            const savedRolle1: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
+            if (savedRolle1 instanceof DomainError) throw Error();
 
             const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
                 faker.string.alpha(5),
@@ -507,7 +512,8 @@ describe('Personenuebersicht API', () => {
             if (rolle2 instanceof DomainError) {
                 return;
             }
-            const savedRolle2: Rolle<true> = await rolleRepo.save(rolle2);
+            const savedRolle2: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
+            if (savedRolle2 instanceof DomainError) throw Error();
 
             savedOrganisation1 = await createAndPersistRootOrganisation(em, organisationRepository);
             savedOrganisation2 = await createAndPersistOrganisation(

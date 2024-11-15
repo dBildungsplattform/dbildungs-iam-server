@@ -25,6 +25,7 @@ import { faker } from '@faker-js/faker';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
@@ -87,7 +88,9 @@ describe('PersonenkontextScope', () => {
                 );
                 /* eslint-disable no-await-in-loop */
                 for (const doObj of dos) {
-                    const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                    const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                    if (rolle instanceof DomainError) throw Error();
+
                     doObj.rolleId = rolle.id;
                 }
                 /* eslint-disable no-await-in-loop */
@@ -129,7 +132,9 @@ describe('PersonenkontextScope', () => {
                     { personId: person.id, organisationId: orgaId },
                 );
                 for (const doObj of dos) {
-                    const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                    const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                    if (rolle instanceof DomainError) throw Error();
+
                     doObj.rolleId = rolle.id;
                 }
 

@@ -23,6 +23,7 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { mapAggregateToData } from './person.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -183,7 +184,9 @@ describe('PersonScope', () => {
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
+
                 await em.persistAndFlush([person1, person2]);
                 await createPersonenkontext(person1.id, orgnisationID, rolle.id);
             });
@@ -206,7 +209,9 @@ describe('PersonScope', () => {
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
+
                 rolleID = rolle.id;
                 await em.persistAndFlush([person1, person2]);
                 await createPersonenkontext(person1.id, orgnisationID, rolle.id);
@@ -228,7 +233,8 @@ describe('PersonScope', () => {
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
 
                 await em.persistAndFlush([person1]);
                 await createPersonenkontext(person1.id, organisationID, rolle.id);
@@ -250,7 +256,9 @@ describe('PersonScope', () => {
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
+
                 rolleID = rolle.id;
                 await em.persistAndFlush([person1]);
                 await createPersonenkontext(person1.id, faker.string.uuid(), rolleID);
@@ -295,7 +303,11 @@ describe('PersonScope', () => {
             const orgnisationID: string = faker.string.uuid();
             const person1: PersonEntity = createPersonEntity();
             const person2: PersonEntity = createPersonEntity();
-            const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: true }));
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { istTechnisch: true }),
+            );
+            if (rolle instanceof DomainError) throw Error();
+
             await em.persistAndFlush([person1, person2]);
             await createPersonenkontext(person1.id, orgnisationID, rolle.id);
 
