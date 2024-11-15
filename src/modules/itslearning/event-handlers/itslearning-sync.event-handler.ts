@@ -157,6 +157,10 @@ export class ItsLearningSyncEventHandler {
                 `Created/Updated ${setMembershipsResult.value.updated} and deleted ${setMembershipsResult.value.deleted} memberships for person with ID ${person.id} to itslearning!`,
             );
         } else {
+            this.logger.info(
+                `Deleting person with ID ${person.id} from itslearning (if they exist), because they have no relevant personenkontexte!`,
+            );
+
             // We don't have any relevant personenkontexte for this person, so we delete it
             const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(person.id);
 

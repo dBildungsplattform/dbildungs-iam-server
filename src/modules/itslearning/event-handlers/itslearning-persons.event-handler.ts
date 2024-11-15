@@ -112,16 +112,14 @@ export class ItsLearningPersonsEventHandler {
                 event.currentKontexte,
             );
 
-            // Person should have itslearning, create/update them as necessary
             if (currentKontexte.length > 0) {
+                // Person should have itslearning, create/update them as necessary
                 await this.updatePerson(event.person, currentKontexte);
-            }
 
-            // Synchronize memberships
-            await this.updateMemberships(event.person.id, currentKontexte);
-
-            // Delete person (After updating memberships, to make sure they are removed in case the person is restored)
-            if (currentKontexte.length === 0) {
+                // Synchronize memberships
+                await this.updateMemberships(event.person.id, currentKontexte);
+            } else {
+                // Delete person
                 await this.deletePerson(event.person.id);
             }
         });
