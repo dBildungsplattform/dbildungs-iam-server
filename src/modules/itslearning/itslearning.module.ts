@@ -2,6 +2,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 
 import { LoggerModule } from '../../core/logging/logger.module.js';
+import { OrganisationModule } from '../organisation/organisation.module.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
@@ -19,6 +20,7 @@ import { ItslearningPersonRepo } from './repo/itslearning-person.repo.js';
         HttpModule,
         PersonModule,
         RolleModule,
+        OrganisationModule,
         PersonenKontextModule,
     ],
     providers: [

@@ -26,6 +26,7 @@ import {
 } from '../repo/itslearning-membership.repo.js';
 import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 @Injectable()
 export class ItsLearningSyncEventHandler {
@@ -89,7 +90,23 @@ export class ItsLearningSyncEventHandler {
 
         // Remove all organisations that do not have itslearning
         for (const [orgaId, organisation] of organisations.entries()) {
-            if (!organisation.itslearningEnabled) {
+            if (organisation.typ === OrganisationsTyp.SCHULE) {
+                // Only keep schools, that are enabled for itslearning
+                if (!organisation.itslearningEnabled) {
+                    organisations.delete(orgaId);
+                }
+            } else if (organisation.typ === OrganisationsTyp.KLASSE) {
+                // Only keep classes, whose schools are enabled for itslearning
+                const parentItslearningEnabled: boolean = !!(
+                    organisation.administriertVon &&
+                    organisations.get(organisation.administriertVon)?.itslearningEnabled
+                );
+
+                if (!parentItslearningEnabled) {
+                    organisations.delete(orgaId);
+                }
+            } else {
+                // We only care about schools and classes
                 organisations.delete(orgaId);
             }
         }

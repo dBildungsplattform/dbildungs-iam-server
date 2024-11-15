@@ -6,8 +6,8 @@ export class SchuleItslearningEnabledEvent extends BaseEvent {
     public constructor(
         public readonly organisationId: OrganisationID,
         public readonly typ: OrganisationsTyp,
-        public readonly kennung: string,
-        public readonly name: string,
+        public readonly kennung: string | undefined,
+        public readonly name: string | undefined,
     ) {
         super();
     }

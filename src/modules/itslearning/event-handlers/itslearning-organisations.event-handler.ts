@@ -56,7 +56,7 @@ export class ItsLearningOrganisationsEventHandler {
         {
             // Check if parent is an itslearning schule
             const parent: Option<Organisation<true>> = await this.organisationRepo.findById(event.administriertVon);
-            if (/* !parent.isItslearning */ !parent) {
+            if (!parent?.itslearningEnabled) {
                 return this.logger.info(
                     `Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
                 );
@@ -99,7 +99,7 @@ export class ItsLearningOrganisationsEventHandler {
         {
             // Check if parent is an itslearning schule
             const parent: Option<Organisation<true>> = await this.organisationRepo.findById(event.administriertVon);
-            if (/* !parent.isItslearning */ !parent) {
+            if (!parent?.itslearningEnabled) {
                 return this.logger.info(
                     `Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
                 );
@@ -149,18 +149,18 @@ export class ItsLearningOrganisationsEventHandler {
             return;
         }
 
-        const [rootType, klassen]: [RootDirectChildrenType, Organisation<true>[]] = await Promise.all([
-            this.organisationRepo.findOrganisationZuordnungErsatzOderOeffentlich(event.organisationId),
-            this.organisationRepo.findChildOrgasForIds([event.organisationId]),
-        ]);
-
         if (event.typ !== OrganisationsTyp.SCHULE) {
             this.logger.error(`The organisation with ID ${event.organisationId} is not of type "SCHULE"!`);
             return;
         }
 
+        const [rootType, klassen]: [RootDirectChildrenType, Organisation<true>[]] = await Promise.all([
+            this.organisationRepo.findOrganisationZuordnungErsatzOderOeffentlich(event.organisationId),
+            this.organisationRepo.findChildOrgasForIds([event.organisationId]),
+        ]);
+
         if (rootType === RootDirectChildrenType.ERSATZ) {
-            this.logger.error(`Ersatzschule, ignoring.`);
+            this.logger.error('Ersatzschule, ignoring.');
             return;
         }
 
@@ -169,7 +169,7 @@ export class ItsLearningOrganisationsEventHandler {
             .filter((k: Organisation<true>) => k.typ === OrganisationsTyp.KLASSE)
             .map((o: Organisation<true>) => ({
                 id: o.id,
-                name: o.name ?? 'Unbenannte Klasse',
+                name: o.name || 'Unbenannte Klasse',
                 type: 'Unspecified',
                 parentId: event.organisationId,
             }));
@@ -177,7 +177,7 @@ export class ItsLearningOrganisationsEventHandler {
         // Prepend the params for the schule
         createParams.unshift({
             id: event.organisationId,
-            name: `${event.kennung} (${event.name ?? 'Unbenannte Schule'})`,
+            name: `${event.kennung} (${event.name || 'Unbenannte Schule'})`,
             type: 'School',
             parentId: this.ROOT_OEFFENTLICH,
         });
