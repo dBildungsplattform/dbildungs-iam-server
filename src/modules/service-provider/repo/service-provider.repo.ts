@@ -74,16 +74,15 @@ export class ServiceProviderRepo {
         return serviceProvider && mapEntityToAggregate(serviceProvider);
     }
 
-    public async findByName(name: string): Promise<ServiceProvider<true> | void> {
-        let serviceProvider: ServiceProviderEntity;
-        try {
-            serviceProvider = await this.em.findOneOrFail(ServiceProviderEntity, {
-                name: name,
-            });
+    public async findByName(name: string): Promise<Option<ServiceProvider<true>>> {
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
+            name: name,
+        });
+        if (serviceProvider) {
             return mapEntityToAggregate(serviceProvider);
-        } catch (error) {
-            return;
         }
+
+        return null;
     }
 
     public async findByKeycloakGroup(groupname: string): Promise<ServiceProvider<true>[]> {

@@ -187,7 +187,7 @@ describe('ServiceProviderRepo', () => {
                 DoFactory.createServiceProvider(false),
             );
 
-            const actualServiceProvider: ServiceProvider<true> | void = await sut.findByName(
+            const actualServiceProvider: Option<ServiceProvider<true>> = await sut.findByName(
                 expectedServiceProvider.name,
             );
 
@@ -197,7 +197,7 @@ describe('ServiceProviderRepo', () => {
         it('should throw an error if there are no existing ServiceProviders for the given name', async () => {
             await sut.save(DoFactory.createServiceProvider(false));
 
-            const result: ServiceProvider<true> | void = await sut.findByName('this-service-provider-does-not-exist');
+            const result: Option<ServiceProvider<true>> = await sut.findByName('this-service-provider-does-not-exist');
 
             expect(result).toBeFalsy();
         });

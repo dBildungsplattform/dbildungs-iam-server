@@ -60,9 +60,8 @@ export class ServiceProviderService {
 
         await Promise.allSettled(
             vidisOffers.map(async (offer: VidisOfferResponse) => {
-                const existingServiceProvider: ServiceProvider<true> | void = await this.serviceProviderRepo.findByName(
-                    offer.offerTitle,
-                );
+                const existingServiceProvider: Option<ServiceProvider<true>> =
+                    await this.serviceProviderRepo.findByName(offer.offerTitle);
 
                 const offerLogoMediaType: string = this.determineMediaTypeFor(offer.offerLogo);
 
