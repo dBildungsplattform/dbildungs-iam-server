@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20241104102855 extends Migration {
+export class Migration20241115133701 extends Migration {
     async up(): Promise<void> {
         this.addSql(
             'create table "organisation_service_provider" ("organisation_id" uuid not null, "service_provider_id" uuid not null, constraint "organisation_service_provider_pkey" primary key ("organisation_id", "service_provider_id"));',
@@ -14,7 +14,7 @@ export class Migration20241104102855 extends Migration {
         );
     }
 
-    override async down(): Promise<void> {
+    async down(): Promise<void> {
         this.addSql('drop table if exists "organisation_service_provider" cascade;');
     }
 }

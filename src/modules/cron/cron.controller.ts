@@ -5,6 +5,7 @@ import {
     ApiUnauthorizedResponse,
     ApiForbiddenResponse,
     ApiNotFoundResponse,
+    ApiOkResponse,
     ApiInternalServerErrorResponse,
     ApiBearerAuth,
     ApiOAuth2,
@@ -23,6 +24,10 @@ import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/person
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
+import { UserLockRepository } from '../keycloak-administration/repository/user-lock.repository.js';
+import { Person } from '../person/domain/person.js';
+import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
+import { PersonLockOccasion } from '../person/domain/person.enums.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
@@ -39,6 +44,7 @@ export class CronController {
         private readonly personDeleteService: PersonDeleteService,
         private readonly personenKonextRepository: DBiamPersonenkontextRepo,
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
+        private readonly userLockRepository: UserLockRepository,
         private readonly serviceProviderService: ServiceProviderService,
     ) {}
 
@@ -61,8 +67,14 @@ export class CronController {
 
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
                 personIdsTouple.map(([personId, keycloakUserId]: [PersonID, string]) => {
-                    const userLock: UserLock = UserLock.construct(personId, 'Cron', new Date(), new Date());
-                    return this.keyCloakUserService.updateKeycloakUserStatus(personId, keycloakUserId, false, userLock);
+                    const userLock: UserLock = UserLock.construct(
+                        personId,
+                        'Cron',
+                        undefined,
+                        PersonLockOccasion.KOPERS_GESPERRT,
+                        new Date(),
+                    );
+                    return this.keyCloakUserService.updateKeycloakUserStatus(personId, keycloakUserId, userLock, true);
                 }),
             );
 
@@ -174,6 +186,51 @@ export class CronController {
             return allSuccessful;
         } catch (error) {
             throw new Error('Failed to remove users due to an internal server error.');
+        }
+    }
+
+    @Put('unlock')
+    @ApiOkResponse({
+        description: 'The users were successfully unlocked.',
+        type: Boolean,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to unlock users.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to unlock users.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to unlock users.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to unlock users.' })
+    public async unlockUsersWithExpiredLocks(@Permissions() permissions: PersonPermissions): Promise<boolean> {
+        try {
+            const userLocks: UserLock[] = await this.userLockRepository.getLocksToUnlock();
+            if (userLocks.length === 0) {
+                return true;
+            }
+
+            const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
+                userLocks.map(async (userLock: UserLock) => {
+                    const person: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+                        userLock.person,
+                        permissions,
+                    );
+                    if (!person.ok || !person.value.keycloakUserId) {
+                        return { ok: false, error: new EntityNotFoundError() };
+                    }
+                    return this.keyCloakUserService.updateKeycloakUserStatus(
+                        person.value.id,
+                        person.value.keycloakUserId,
+                        userLock,
+                        false,
+                    );
+                }),
+            );
+
+            const allSuccessful: boolean = results.every(
+                (result: PromiseSettledResult<Result<void, DomainError>>) =>
+                    result.status === 'fulfilled' && result.value.ok === true,
+            );
+
+            return allSuccessful;
+        } catch (error) {
+            throw new Error('Failed to unlock users due to an internal server error.');
         }
     }
 
