@@ -50,7 +50,7 @@ export class OrganisationEntity extends TimestampedEntity {
     public emailAddress?: string;
 
     @Property({ default: false })
-    public isEnabledForItsLearning?: boolean;
+    public itslearningEnabled!: boolean;
 
     @Property({ type: new BigIntType('number'), defaultRaw: '1', concurrencyCheck: true })
     public version!: number & Opt;

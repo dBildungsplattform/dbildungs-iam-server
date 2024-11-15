@@ -991,8 +991,8 @@ describe('OrganisationRepository', () => {
         });
     });
 
-    describe('setEnabledForItsLearning', () => {
-        it('should enable organisation for ITSLearning', async () => {
+    describe('setEnabledForitslearning', () => {
+        it('should enable organisation for itslearning', async () => {
             const orga: Organisation<false> | DomainError = Organisation.createNew(
                 sut.ROOT_ORGANISATION_ID,
                 sut.ROOT_ORGANISATION_ID,
@@ -1002,30 +1002,29 @@ describe('OrganisationRepository', () => {
                 undefined,
                 OrganisationsTyp.SCHULE,
             );
-            if (orga instanceof DomainError) {
-                return;
-            }
+            if (orga instanceof DomainError) throw orga;
+
             const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
             await em.persistAndFlush(mappedOrga);
 
             const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-            const result: Organisation<true> | DomainError = await sut.setEnabledForItsLearning(
+            const result: Organisation<true> | DomainError = await sut.setEnabledForitslearning(
                 personPermissions,
                 mappedOrga.id,
             );
             if (result instanceof DomainError) throw Error();
 
-            expect(result.isEnabledForItsLearning).toBeTruthy();
+            expect(result.itslearningEnabled).toBeTruthy();
         });
 
         it('should return error if permissions are not sufficient to edit organisation', async () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+            personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
 
             const fakeId: string = faker.string.uuid();
-            const result: Organisation<true> | DomainError = await sut.setEnabledForItsLearning(
+            const result: Organisation<true> | DomainError = await sut.setEnabledForitslearning(
                 personPermissions,
                 fakeId,
             );
@@ -1038,7 +1037,7 @@ describe('OrganisationRepository', () => {
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
             const fakeId: string = faker.string.uuid();
-            const result: Organisation<true> | DomainError = await sut.setEnabledForItsLearning(
+            const result: Organisation<true> | DomainError = await sut.setEnabledForitslearning(
                 personPermissions,
                 fakeId,
             );
@@ -1065,7 +1064,7 @@ describe('OrganisationRepository', () => {
             const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-            const result: Organisation<true> | DomainError = await sut.setEnabledForItsLearning(
+            const result: Organisation<true> | DomainError = await sut.setEnabledForitslearning(
                 personPermissions,
                 mappedOrga.id,
             );

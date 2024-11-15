@@ -878,20 +878,20 @@ describe('OrganisationController', () => {
                     OrganisationsTyp.SCHULE,
                     undefined,
                 );
-                organisationRepositoryMock.setEnabledForItsLearning.mockResolvedValueOnce(schule);
+                organisationRepositoryMock.setEnabledForitslearning.mockResolvedValueOnce(schule);
 
                 await expect(
-                    organisationController.enableForItsLearning(params, permissionsMock),
+                    organisationController.enableForitslearning(params, permissionsMock),
                 ).resolves.not.toThrow();
             });
         });
         describe('when enabling ITSLearning for organisation returns a OrganisationSpecificationError', () => {
             it('should throw a HttpException', async () => {
-                organisationRepositoryMock.setEnabledForItsLearning.mockResolvedValueOnce(
+                organisationRepositoryMock.setEnabledForitslearning.mockResolvedValueOnce(
                     new NameRequiredForKlasseError(),
                 );
 
-                await expect(organisationController.enableForItsLearning(params, permissionsMock)).rejects.toThrow(
+                await expect(organisationController.enableForitslearning(params, permissionsMock)).rejects.toThrow(
                     NameRequiredForKlasseError,
                 );
             });
@@ -899,9 +899,9 @@ describe('OrganisationController', () => {
 
         describe('when enabling ITSLearning for organisation returns a SchulConnexError or any Non-Specificatin-Error', () => {
             it('should throw a HttpException', async () => {
-                organisationRepositoryMock.setEnabledForItsLearning.mockResolvedValueOnce(new EntityNotFoundError());
+                organisationRepositoryMock.setEnabledForitslearning.mockResolvedValueOnce(new EntityNotFoundError());
 
-                await expect(organisationController.enableForItsLearning(params, permissionsMock)).rejects.toThrow(
+                await expect(organisationController.enableForitslearning(params, permissionsMock)).rejects.toThrow(
                     HttpException,
                 );
             });

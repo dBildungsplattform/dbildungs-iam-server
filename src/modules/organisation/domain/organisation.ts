@@ -15,6 +15,7 @@ export class Organisation<WasPersisted extends boolean> {
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,
         public version: Persisted<number, WasPersisted>,
+        public itslearningEnabled: boolean,
         public administriertVon?: string,
         public zugehoerigZu?: string,
         public kennung?: string,
@@ -25,7 +26,6 @@ export class Organisation<WasPersisted extends boolean> {
         public traegerschaft?: Traegerschaft,
         public emailDomain?: string,
         public emailAdress?: string,
-        public isEnabledForItsLearning?: boolean,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -43,13 +43,14 @@ export class Organisation<WasPersisted extends boolean> {
         traegerschaft?: Traegerschaft,
         emailDomain?: string,
         emailAdress?: string,
-        isEnabledForItsLearning?: boolean,
+        itslearningEnabled: boolean = false,
     ): Organisation<WasPersisted> {
         return new Organisation(
             id,
             createdAt,
             updatedAt,
             version,
+            itslearningEnabled,
             administriertVon,
             zugehoerigZu,
             kennung,
@@ -60,7 +61,6 @@ export class Organisation<WasPersisted extends boolean> {
             traegerschaft,
             emailDomain,
             emailAdress,
-            isEnabledForItsLearning,
         );
     }
 
@@ -75,13 +75,14 @@ export class Organisation<WasPersisted extends boolean> {
         traegerschaft?: Traegerschaft,
         emailDomain?: string,
         emailAdress?: string,
-        isEnabledForItsLearning?: boolean,
+        itslearningEnabled: boolean = false,
     ): Organisation<false> | DomainError {
         const organisation: Organisation<false> = new Organisation(
             undefined,
             undefined,
             undefined,
             undefined,
+            itslearningEnabled,
             administriertVon,
             zugehoerigZu,
             kennung,
@@ -92,7 +93,6 @@ export class Organisation<WasPersisted extends boolean> {
             traegerschaft,
             emailDomain,
             emailAdress,
-            isEnabledForItsLearning,
         );
 
         const validationError: void | OrganisationSpecificationError = organisation.validateFieldNames();

@@ -44,7 +44,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         traegerschaft: organisation.traegerschaft,
         emailDomain: organisation.emailDomain,
         emailAddress: organisation.emailAdress,
-        isEnabledForItsLearning: organisation.isEnabledForItsLearning,
+        itslearningEnabled: organisation.itslearningEnabled,
     };
 }
 
@@ -64,7 +64,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.traegerschaft,
         entity.emailDomain,
         entity.emailAddress,
-        entity.isEnabledForItsLearning,
+        entity.itslearningEnabled,
     );
 }
 
@@ -463,15 +463,11 @@ export class OrganisationRepository {
         return organisationEntity;
     }
 
-    public async setEnabledForItsLearning(
+    public async setEnabledForitslearning(
         personPermissions: PersonPermissions,
         id: string,
     ): Promise<DomainError | Organisation<true>> {
-        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.SCHULEN_VERWALTEN],
-            true,
-        );
-        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+        if (!(await personPermissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SCHULEN_VERWALTEN]))) {
             return new EntityNotFoundError('Organisation', id);
         }
 
@@ -485,10 +481,10 @@ export class OrganisationRepository {
                 'Only organisations of typ SCHULE can be enabled for ITSLearning.',
             ]);
         }
-        organisationFound.isEnabledForItsLearning = true;
+        organisationFound.itslearningEnabled = true;
 
         this.logger.info(
-            `User with personId:${personPermissions.personFields.id} enabling ITSLearning for organisationId:${id}`,
+            `User with personId:${personPermissions.personFields.id} enabled itslearning for organisationId:${id}`,
         );
 
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =

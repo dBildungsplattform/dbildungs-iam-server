@@ -463,7 +463,7 @@ export class OrganisationController {
 
     @Put(':organisationId/enable-for-its-learning')
     @ApiOkResponse({
-        description: 'The organization was successfully enabled for ITSLearning.',
+        description: 'The organization was successfully enabled for itslearning.',
         type: OrganisationResponseLegacy,
         headers: PagingHeadersObject,
     })
@@ -471,11 +471,11 @@ export class OrganisationController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
-    public async enableForItsLearning(
+    public async enableForitslearning(
         @Param() params: OrganisationByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
-        const result: DomainError | Organisation<true> = await this.organisationRepository.setEnabledForItsLearning(
+        const result: DomainError | Organisation<true> = await this.organisationRepository.setEnabledForitslearning(
             permissions,
             params.organisationId,
         );
