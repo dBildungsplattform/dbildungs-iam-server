@@ -7,7 +7,9 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -38,6 +40,7 @@ export class ItsLearningSyncEventHandler {
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
+        private readonly organisationRepo: OrganisationRepository,
         configService: ConfigService<ServerConfig>,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
@@ -67,9 +70,11 @@ export class ItsLearningSyncEventHandler {
         // Get all personenkontexte for this person
         const kontexte: Personenkontext<true>[] = await this.personenkontextRepo.findByPerson(event.personId);
 
-        // Find all rollen
+        // Find all rollen and organisations
         const rollenIDs: RolleID[] = uniq(kontexte.map((pk: Personenkontext<true>) => pk.rolleId));
-        const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(rollenIDs);
+        const organisationIDs: OrganisationID[] = uniq(kontexte.map((pk: Personenkontext<true>) => pk.organisationId));
+        const [rollen, organisations]: [Map<RolleID, Rolle<true>>, Map<OrganisationID, Organisation<true>>] =
+            await Promise.all([this.rolleRepo.findByIds(rollenIDs), this.organisationRepo.findByIds(organisationIDs)]);
 
         // Remove all rollen that do not have itslearning
         for (const [rolleId, rolle] of rollen.entries()) {
@@ -82,9 +87,16 @@ export class ItsLearningSyncEventHandler {
             }
         }
 
+        // Remove all organisations that do not have itslearning
+        for (const [orgaId, organisation] of organisations.entries()) {
+            if (!organisation /* TODO: .itslearningEnabled */) {
+                organisations.delete(orgaId);
+            }
+        }
+
         // Filter kontexte we care about
-        const relevantKontexte: Personenkontext<true>[] = kontexte.filter((pk: Personenkontext<true>) =>
-            rollen.has(pk.rolleId),
+        const relevantKontexte: Personenkontext<true>[] = kontexte.filter(
+            (pk: Personenkontext<true>) => rollen.has(pk.rolleId) && organisations.has(pk.organisationId),
         );
 
         // Check if the person has at least one personenkontext with the itslearning-system
