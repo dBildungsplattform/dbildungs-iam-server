@@ -52,96 +52,94 @@ describe('KeycloakEventHandler', () => {
     });
 
     describe('handlePersonenkontextCreatedMigrationEvent', () => {
-            const migrationType: PersonenkontextMigrationRuntype = PersonenkontextMigrationRuntype.STANDARD;
+        const migrationType: PersonenkontextMigrationRuntype = PersonenkontextMigrationRuntype.STANDARD;
 
-            let personenkontext: Personenkontext<true>;
-            let person: Person<true>;
-            let rolle: Rolle<true>;
-            let orga: Organisation<true>;
+        let personenkontext: Personenkontext<true>;
+        let person: Person<true>;
+        let rolle: Rolle<true>;
+        let orga: Organisation<true>;
 
-            beforeEach(() => {
-                personenkontext = createMock<Personenkontext<true>>();
-                person = createMock<Person<true>>();
-                rolle = createMock<Rolle<true>>();
-                orga = createMock<Organisation<true>>();
+        beforeEach(() => {
+            personenkontext = createMock<Personenkontext<true>>();
+            person = createMock<Person<true>>();
+            rolle = createMock<Rolle<true>>();
+            orga = createMock<Organisation<true>>();
+        });
+
+        it('should do nothing', async () => {
+            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                migrationType,
+                personenkontext,
+                person,
+                rolle,
+                orga,
+                'test@schule-spsh.de',
+            );
+
+            await sut.handlePersonenkontextCreatedMigrationEvent(event);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining('UpdateOXUserAttributes criteria not fulfilled, no action taken'),
+            );
+            expect(keycloakUserServiceMock.updateOXUserAttributes).not.toHaveBeenCalled();
+        });
+
+        it('should successfully call updateOXUserAttributes', async () => {
+            person.email = faker.internet.email();
+            person.referrer = faker.internet.userName();
+            rolle.rollenart = RollenArt.LEHR;
+
+            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                migrationType,
+                personenkontext,
+                person,
+                rolle,
+                orga,
+                'test@schule-spsh.de',
+            );
+
+            keycloakUserServiceMock.updateOXUserAttributes.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
             });
 
-            it('should do nothing', async () => {
-                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                    migrationType,
-                    personenkontext,
-                    person,
-                    rolle,
-                    orga,
-                    'test@schule-spsh.de',
-                );
+            await sut.handlePersonenkontextCreatedMigrationEvent(event);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining('UpdateOXUserAttributes criteria fulfilled, trying to updateOXUserAttributes'),
+            );
+            expect(loggerMock.error).not.toHaveBeenCalledWith(
+                expect.stringContaining('Updating user in keycloak failed for OxUserChangedEvent'),
+            );
+            expect(keycloakUserServiceMock.updateOXUserAttributes).toHaveBeenCalledTimes(1);
+        });
 
-                await sut.handlePersonenkontextCreatedMigrationEvent(event);
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    expect.stringContaining('UpdateOXUserAttributes criteria not fulfilled, no action taken'),
-                );
-                expect(keycloakUserServiceMock.updateOXUserAttributes).not.toHaveBeenCalled();
+        it('should log error if updateOXUserAttributes fails', async () => {
+            person.email = faker.internet.email();
+            person.referrer = faker.internet.userName();
+            rolle.rollenart = RollenArt.LEHR;
+
+            const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
+                migrationType,
+                personenkontext,
+                person,
+                rolle,
+                orga,
+                'test@schule-spsh.de',
+            );
+
+            keycloakUserServiceMock.updateOXUserAttributes.mockResolvedValueOnce({
+                ok: false,
+                error: new KeycloakClientError('Could not update user-attributes'),
             });
 
-            it('should successfully call updateOXUserAttributes', async () => {
-
-                person.email = faker.internet.email();
-                person.referrer = faker.internet.userName();
-                rolle.rollenart = RollenArt.LEHR;
-
-                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                    migrationType,
-                    personenkontext,
-                    person,
-                    rolle,
-                    orga,
-                    'test@schule-spsh.de',
-                );
-
-                keycloakUserServiceMock.updateOXUserAttributes.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined
-                });
-
-                await sut.handlePersonenkontextCreatedMigrationEvent(event);
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    expect.stringContaining('UpdateOXUserAttributes criteria fulfilled, trying to updateOXUserAttributes'),
-                );
-                expect(loggerMock.error).not.toHaveBeenCalledWith(
-                    expect.stringContaining('Updating user in keycloak failed for OxUserChangedEvent'),
-                );
-                expect(keycloakUserServiceMock.updateOXUserAttributes).toHaveBeenCalledTimes(1);
-            });
-
-            it('should log error if updateOXUserAttributes fails', async () => {
-
-                person.email = faker.internet.email();
-                person.referrer = faker.internet.userName();
-                rolle.rollenart = RollenArt.LEHR;
-
-                const event: PersonenkontextCreatedMigrationEvent = new PersonenkontextCreatedMigrationEvent(
-                    migrationType,
-                    personenkontext,
-                    person,
-                    rolle,
-                    orga,
-                    'test@schule-spsh.de',
-                );
-
-                keycloakUserServiceMock.updateOXUserAttributes.mockResolvedValueOnce({
-                    ok: false,
-                    error: new KeycloakClientError('Could not update user-attributes'),
-                });
-
-                await sut.handlePersonenkontextCreatedMigrationEvent(event);
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    expect.stringContaining('UpdateOXUserAttributes criteria fulfilled, trying to updateOXUserAttributes'),
-                );
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining('Updating user in keycloak failed for OxUserChangedEvent'),
-                );
-                expect(keycloakUserServiceMock.updateOXUserAttributes).toHaveBeenCalledTimes(1);
-            });
+            await sut.handlePersonenkontextCreatedMigrationEvent(event);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringContaining('UpdateOXUserAttributes criteria fulfilled, trying to updateOXUserAttributes'),
+            );
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                expect.stringContaining('Updating user in keycloak failed for OxUserChangedEvent'),
+            );
+            expect(keycloakUserServiceMock.updateOXUserAttributes).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('handleOxUserCreatedEvent', () => {

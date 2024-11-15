@@ -16,7 +16,6 @@ import { OXContextName } from '../../../shared/types/ox-ids.types.js';
 
 @Injectable()
 export class KeycloakEventHandler {
-
     private readonly contextName: OXContextName;
 
     public constructor(
@@ -51,12 +50,12 @@ export class KeycloakEventHandler {
                 event.createdKontextPerson.referrer,
                 this.contextName,
             );
-            if(!updateResult.ok){
+            if (!updateResult.ok) {
                 this.logger.error(
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Updating user in keycloak failed for OxUserChangedEvent`,
                 );
             }
-        }else{
+        } else {
             this.logger.info(
                 `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / UpdateOXUserAttributes criteria not fulfilled, no action taken`,
             );
