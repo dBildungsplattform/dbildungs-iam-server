@@ -159,6 +159,10 @@ describe('KeycloakEventHandler', () => {
             fakeEmail = faker.internet.email();
         });
         it('should log info and call KeycloakUserService', async () => {
+            keycloakUserServiceMock.updateOXUserAttributes.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
             await sut.handleOxUserChangedEvent(
                 new OxUserChangedEvent(
                     fakePersonID,
