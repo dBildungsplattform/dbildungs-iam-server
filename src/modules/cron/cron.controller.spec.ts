@@ -153,7 +153,7 @@ describe('CronController', () => {
             it('should throw an error if permission check for cron permission fails', async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
                 await expect(cronController.koPersUserLock(permissionsMock)).rejects.toThrow(
-                    'Failed to unlock users due to an internal server error.',
+                    'Failed to lock users due to an internal server error.',
                 );
             });
         });
@@ -296,7 +296,7 @@ describe('CronController', () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
                 await expect(
                     cronController.removePersonenKontexteWithExpiredBefristungFromUsers(permissionsMock),
-                ).rejects.toThrow('Failed to unlock users due to an internal server error.');
+                ).rejects.toThrow('Failed to remove kontexte due to an internal server error.');
             });
         });
     });
@@ -370,7 +370,7 @@ describe('CronController', () => {
             it('should throw an error if permission check for cron permission fails', async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
                 await expect(cronController.personWithoutOrgDelete(permissionsMock)).rejects.toThrow(
-                    'Failed to unlock users due to an internal server error.',
+                    'Failed to remove users due to an internal server error.',
                 );
             });
         });
