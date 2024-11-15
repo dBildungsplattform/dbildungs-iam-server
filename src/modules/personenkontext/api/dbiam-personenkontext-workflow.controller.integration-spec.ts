@@ -41,6 +41,7 @@ import { PersonenkontextCreationService } from '../domain/personenkontext-creati
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
+import { StepUpGuard } from '../../person/api/steup-up.guard.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
@@ -110,6 +111,9 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
+
+        const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
+        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
 
         orm = module.get(MikroORM);
         organisationRepo = module.get(OrganisationRepository);
