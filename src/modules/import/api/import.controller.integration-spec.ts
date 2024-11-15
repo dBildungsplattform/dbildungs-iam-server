@@ -414,12 +414,14 @@ describe('Rolle API', () => {
             await em.persistAndFlush(klasse1A);
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
-            const sus: Rolle<true> = await rolleRepo.save(
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     rollenart: RollenArt.LERN,
                     administeredBySchulstrukturknoten: schule.id,
                 }),
             );
+
+            if (sus instanceof DomainError) throw sus;
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/import/upload')
