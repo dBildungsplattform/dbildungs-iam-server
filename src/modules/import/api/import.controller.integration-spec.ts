@@ -402,7 +402,7 @@ describe('Rolle API', () => {
 
             const klasse1A: OrganisationEntity = new OrganisationEntity();
             klasse1A.typ = OrganisationsTyp.KLASSE;
-            klasse1A.name = '1A';
+            klasse1A.name = '1a';
             klasse1A.administriertVon = schule.id;
             klasse1A.zugehoerigZu = schule.id;
             await em.persistAndFlush(klasse1A);
