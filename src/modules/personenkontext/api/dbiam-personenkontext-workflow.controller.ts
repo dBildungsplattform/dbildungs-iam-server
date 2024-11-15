@@ -42,11 +42,13 @@ import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
 import { StepUpGuard } from '../../person/api/steup-up.guard.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
     new PersonenkontextExceptionFilter(),
     new PersonenkontexteUpdateExceptionFilter(),
+    new AuthenticationExceptionFilter(),
 )
 @ApiTags('personenkontext')
 @ApiBearerAuth()

@@ -2,6 +2,6 @@ import { AuthenticationDomainError } from '../../authentication/domain/authentic
 
 export class RequiredStepUpLevelNotMetError extends AuthenticationDomainError {
     public constructor(details?: unknown[] | Record<string, undefined>) {
-        super(`The action could not be perfomed, bequase the required step up level was not met`, undefined, details);
+        super(`The action could not be perfomed, beqause the required step up level was not met`, undefined, details);
     }
 }
