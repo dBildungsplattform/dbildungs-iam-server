@@ -91,11 +91,12 @@ describe('CronController', () => {
                     [faker.string.uuid(), 'user3'],
                 ];
                 personRepositoryMock.getKoPersUserLockList.mockResolvedValueOnce(mockKeycloakIds);
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                const result: boolean = await cronController.koPersUserLock();
+                const result: boolean = await cronController.koPersUserLock(permissionsMock);
 
                 expect(result).toBe(true);
                 expect(personRepositoryMock.getKoPersUserLockList).toHaveBeenCalled();
@@ -105,9 +106,10 @@ describe('CronController', () => {
 
         describe('when there are no users to lock', () => {
             it('should return false', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getKoPersUserLockList.mockResolvedValueOnce([]);
 
-                const result: boolean = await cronController.koPersUserLock();
+                const result: boolean = await cronController.koPersUserLock(permissionsMock);
 
                 expect(result).toBe(true);
                 expect(personRepositoryMock.getKoPersUserLockList).toHaveBeenCalled();
@@ -121,6 +123,7 @@ describe('CronController', () => {
                     [faker.string.uuid(), 'user2'],
                     [faker.string.uuid(), 'user3'],
                 ];
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getKoPersUserLockList.mockResolvedValueOnce(mockKeycloakIds);
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({
@@ -128,7 +131,7 @@ describe('CronController', () => {
                     error: new KeycloakClientError('Could not update user status or custom attributes'),
                 });
 
-                const result: boolean = await cronController.koPersUserLock();
+                const result: boolean = await cronController.koPersUserLock(permissionsMock);
 
                 expect(result).toBe(false);
                 expect(personRepositoryMock.getKoPersUserLockList).toHaveBeenCalled();
@@ -138,12 +141,19 @@ describe('CronController', () => {
 
         describe('when an exception is thrown', () => {
             it('should throw an error when there is an internal error', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getKoPersUserLockList.mockImplementationOnce(() => {
                     throw new Error('Some internal error');
                 });
 
-                await expect(cronController.koPersUserLock()).rejects.toThrow(
+                await expect(cronController.koPersUserLock(permissionsMock)).rejects.toThrow(
                     'Failed to lock users due to an internal server error.',
+                );
+            });
+            it('should throw an error if permission check for cron permission fails', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+                await expect(cronController.unlockUsersWithExpiredLocks(permissionsMock)).rejects.toThrow(
+                    'Failed to unlock users due to an internal server error.',
                 );
             });
         });
@@ -185,6 +195,7 @@ describe('CronController', () => {
                     [person3.id, [personenKontextMock3]],
                 ]);
 
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockResolvedValueOnce(
                     mockPersonenKontexte,
                 );
@@ -200,6 +211,7 @@ describe('CronController', () => {
 
         describe('when there are no organisations to remove', () => {
             it('should return true when no organisations exceed their limit', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockResolvedValueOnce(new Map());
 
                 const result: boolean =
@@ -253,6 +265,7 @@ describe('CronController', () => {
                 const updateError: PersonenkontexteUpdateError = new PersonenkontexteUpdateError(
                     'Update error message',
                 );
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personenkontextWorkflowMock.commit.mockResolvedValueOnce(mockResult);
                 personenkontextWorkflowMock.commit.mockResolvedValueOnce(mockResult);
                 personenkontextWorkflowMock.commit.mockResolvedValueOnce(updateError);
@@ -270,6 +283,7 @@ describe('CronController', () => {
 
         describe('when an exception is thrown', () => {
             it('should throw an error when there is an internal server error', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockImplementationOnce(() => {
                     throw new Error('Some internal error');
                 });
@@ -277,6 +291,12 @@ describe('CronController', () => {
                 await expect(
                     cronController.removePersonenKontexteWithExpiredBefristungFromUsers(permissionsMock),
                 ).rejects.toThrow('Failed to remove kontexte due to an internal server error.');
+            });
+            it('should throw an error if permission check for cron permission fails', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+                await expect(cronController.unlockUsersWithExpiredLocks(permissionsMock)).rejects.toThrow(
+                    'Failed to unlock users due to an internal server error.',
+                );
             });
         });
     });
@@ -286,6 +306,7 @@ describe('CronController', () => {
             it('should return true when all users are successfully removed', async () => {
                 const mockUserIds: string[] = ['user1', 'user2', 'user3'];
 
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
                 personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
                 personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
@@ -302,6 +323,7 @@ describe('CronController', () => {
 
         describe('when there are no users to remove', () => {
             it('should return false', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce([]);
 
                 const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
@@ -316,6 +338,7 @@ describe('CronController', () => {
             it('should return false when at least one user fails to be removed', async () => {
                 const mockUserIds: string[] = ['user1', 'user2', 'user3'];
 
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
                 personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
                 personDeleteServiceMock.deletePerson.mockResolvedValueOnce({
@@ -334,6 +357,7 @@ describe('CronController', () => {
 
         describe('when an exception is thrown', () => {
             it('should throw an error when there is an internal error', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockImplementationOnce(() => {
                     throw new Error('Some internal error');
                 });
@@ -341,6 +365,12 @@ describe('CronController', () => {
                 const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
                 await expect(cronController.personWithoutOrgDelete(personPermissionsMock)).rejects.toThrow(
                     'Failed to remove users due to an internal server error.',
+                );
+            });
+            it('should throw an error if permission check for cron permission fails', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+                await expect(cronController.unlockUsersWithExpiredLocks(permissionsMock)).rejects.toThrow(
+                    'Failed to unlock users due to an internal server error.',
                 );
             });
         });
@@ -374,6 +404,7 @@ describe('CronController', () => {
                 };
                 const mockUserLocks: UserLock[] = [mockUserLock1, mockUserLock2, mockUserLock3];
 
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 userLockRepositoryMock.getLocksToUnlock.mockResolvedValueOnce(mockUserLocks);
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
@@ -401,6 +432,7 @@ describe('CronController', () => {
 
         describe('when there are no users to unlock', () => {
             it('should return false', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 userLockRepositoryMock.getLocksToUnlock.mockResolvedValueOnce([]);
                 const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
 
@@ -439,6 +471,7 @@ describe('CronController', () => {
                 };
                 const mockUserLocks: UserLock[] = [mockUserLock1, mockUserLock2, mockUserLock3];
 
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: mockPerson1,
@@ -470,6 +503,7 @@ describe('CronController', () => {
 
         describe('when an exception is thrown', () => {
             it('should throw an error when there is an internal error', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 userLockRepositoryMock.getLocksToUnlock.mockImplementationOnce(() => {
                     throw new Error('Some internal error');
                 });
@@ -480,6 +514,13 @@ describe('CronController', () => {
             });
         });
         describe('when the person permission check fails', () => {
+            it('should throw an error if permission check for cron permission fails', async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+                await expect(cronController.unlockUsersWithExpiredLocks(permissionsMock)).rejects.toThrow(
+                    'Failed to unlock users due to an internal server error.',
+                );
+            });
+
             it('should return false if permission check for a user fails', async () => {
                 const mockPerson1: Person<true> = createMock<Person<true>>();
                 const mockPerson2: Person<true> = createMock<Person<true>>();
@@ -499,6 +540,7 @@ describe('CronController', () => {
                 };
                 const mockUserLocks: UserLock[] = [mockUserLock1, mockUserLock2];
 
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 userLockRepositoryMock.getLocksToUnlock.mockResolvedValueOnce(mockUserLocks);
 
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({

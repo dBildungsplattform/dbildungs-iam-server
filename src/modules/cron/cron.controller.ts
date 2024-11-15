@@ -28,6 +28,9 @@ import { UserLockRepository } from '../keycloak-administration/repository/user-l
 import { Person } from '../person/domain/person.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
 import { PersonLockOccasion } from '../person/domain/person.enums.js';
+import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
+import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
+import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -51,8 +54,19 @@ export class CronController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to lock user.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to lock user.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to lock user.' })
-    public async koPersUserLock(): Promise<boolean> {
+    public async koPersUserLock(@Permissions() permissions: PersonPermissions): Promise<boolean> {
         try {
+            const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+                RollenSystemRecht.CRON_DURCHFUEHREN,
+            ]);
+            if (!hasCronJobPermission) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
+                    ),
+                );
+            }
+
             const personIdsTouple: [PersonID, string][] = await this.personRepository.getKoPersUserLockList();
 
             // Check if the array is empty (personIdsTouple === 0 is incorrect for array checks)
@@ -99,6 +113,16 @@ export class CronController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<boolean> {
         try {
+            const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+                RollenSystemRecht.CRON_DURCHFUEHREN,
+            ]);
+            if (!hasCronJobPermission) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
+                    ),
+                );
+            }
             //Get PersonenKontexte for a person at least one kontext exceeds the befristung value
             const personenKontexteGroupedByPersonId: Map<PersonID, Personenkontext<true>[]> =
                 await this.personenKonextRepository.getPersonenKontexteWithExpiredBefristung();
@@ -164,6 +188,16 @@ export class CronController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to remove user.' })
     public async personWithoutOrgDelete(@Permissions() permissions: PersonPermissions): Promise<boolean> {
         try {
+            const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+                RollenSystemRecht.CRON_DURCHFUEHREN,
+            ]);
+            if (!hasCronJobPermission) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
+                    ),
+                );
+            }
             const personIds: string[] = await this.personRepository.getPersonWithoutOrgDeleteList();
             if (personIds.length === 0) {
                 return true;
@@ -195,6 +229,16 @@ export class CronController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to unlock users.' })
     public async unlockUsersWithExpiredLocks(@Permissions() permissions: PersonPermissions): Promise<boolean> {
         try {
+            const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+                RollenSystemRecht.CRON_DURCHFUEHREN,
+            ]);
+            if (!hasCronJobPermission) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
+                    ),
+                );
+            }
             const userLocks: UserLock[] = await this.userLockRepository.getLocksToUnlock();
             if (userLocks.length === 0) {
                 return true;
