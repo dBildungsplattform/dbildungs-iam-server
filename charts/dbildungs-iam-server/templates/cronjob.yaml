@@ -2,8 +2,8 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: dbp-1022-cronjob-dev-{{ $job_name}}
-  #name: {{ template "common.names.namespace" $ }}-{{ $job_name}}
+  name: dbp-1022-cronjob-dev-{{ $job_name }}
+  #name: {{ template "common.names.namespace" $ }}-{{ $job_name }}
   namespace: {{ template "common.names.namespace" $ }}
 spec:
   schedule: {{ $job_options.schedule }}
@@ -44,8 +44,8 @@ spec:
                   chmod 600 /etc/crontabs/root &&
                   touch /var/log/cron.log &&
                   chmod 644 /var/log/cron.log &&
-                  cd {{ $.Values.cronjobs.scriptDir}} &&
-                  ./{{ $job_options.script}}
+                  cd {{ $.Values.cronjobs.scriptDir }} &&
+                  ./{{ $job_options.script }}
             volumeMounts:
               - name: secret-volume-jwks
                 mountPath: /keys
@@ -68,4 +68,4 @@ spec:
                 path: jwks.json
           restartPolicy: Never
 ---
-{{- end}}
+{{- end }}
