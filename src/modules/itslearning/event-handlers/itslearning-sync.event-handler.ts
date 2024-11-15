@@ -89,7 +89,7 @@ export class ItsLearningSyncEventHandler {
 
         // Remove all organisations that do not have itslearning
         for (const [orgaId, organisation] of organisations.entries()) {
-            if (!organisation /* TODO: .itslearningEnabled */) {
+            if (!organisation.itslearningEnabled) {
                 organisations.delete(orgaId);
             }
         }

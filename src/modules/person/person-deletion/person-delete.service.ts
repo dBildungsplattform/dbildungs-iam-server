@@ -50,7 +50,9 @@ export class PersonDeleteService {
                                               rolleId: personenKontext.rolleId,
                                               orgaId: personenKontext.organisationId,
                                               rolle: rolle.rollenart,
-                                              isItslearningOrga: false, // TODO: Does this need to be set? The itslearning event listener ignores the removed kontexte
+                                              // The itslearning event listener doesn't care about removed kontexte, only the current kontexte.
+                                              // Instead of querying the DB for all relevant organisations, we just set a default value.
+                                              isItslearningOrga: false,
                                               serviceProviderExternalSystems: rolle.serviceProviderData.map(
                                                   (sp: ServiceProvider<true>) => sp.externalSystem,
                                               ),
