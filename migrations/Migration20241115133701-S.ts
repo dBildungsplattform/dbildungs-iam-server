@@ -14,7 +14,7 @@ export class Migration20241115133701 extends Migration {
         );
     }
 
-    async down(): Promise<void> {
+    override async down(): Promise<void> {
         this.addSql('drop table if exists "organisation_service_provider" cascade;');
     }
 }
