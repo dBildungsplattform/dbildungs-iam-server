@@ -6,7 +6,7 @@ describe('RequiredStepUpLevelNotMetError', () => {
             it('should set message and code', () => {
                 const error: RequiredStepUpLevelNotMetError = new RequiredStepUpLevelNotMetError();
                 expect(error.message).toBe(
-                    'The action could not be perfomed, bequase the required step up level was not met',
+                    'The action could not be perfomed, because the required step up level was not met',
                 );
                 expect(error.code).toBe('USER_COULD_NOT_BE_AUTHENTICATED');
             });
