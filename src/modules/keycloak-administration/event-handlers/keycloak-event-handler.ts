@@ -9,18 +9,20 @@ import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
-import { OXContextName } from '../../../shared/types/ox-ids.types.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
+import { OXContextName } from '../../../shared/types/ox-ids.types.js';
 
 @Injectable()
 export class KeycloakEventHandler {
+
+    private readonly contextName: OXContextName;
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly kcUserService: KeycloakUserService,
         private readonly eventService: EventService,
-        private readonly contextName: OXContextName,
         configService: ConfigService<ServerConfig>,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
