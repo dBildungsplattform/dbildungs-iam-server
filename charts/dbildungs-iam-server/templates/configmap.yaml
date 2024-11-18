@@ -18,3 +18,4 @@ data:
   BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
   LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
   LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"
+  STATUS_REDIRECT_URL: "{{ .Values.status.url }}"
