@@ -175,7 +175,11 @@ autoscaling:
   targetCPUUtilizationPercentage: 60
 
 cronjobs:
-  imageTag: latest
+  enabled: true
+  image:
+    tag: latest
+    repository: alpine
+    pullPolicy: IfNotPresent
   port: 5656
   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
   keycloakClientId: spsh-service
