@@ -6,6 +6,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonEntity } from './person.entity.js';
@@ -84,7 +85,12 @@ describe('PersonRepository Integration', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true }), MapperTestModule],
+            imports: [
+                LoggingTestModule,
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                MapperTestModule,
+            ],
             providers: [
                 PersonRepository,
                 OrganisationRepository,
@@ -1272,6 +1278,62 @@ describe('PersonRepository Integration', () => {
                 expect(result.ok).toBeTruthy();
             });
         });
+
+        it('should return DomainError when user is technical', async () => {
+            const person1: Person<true> = DoFactory.createPerson(true);
+            const personEntity: PersonEntity = new PersonEntity();
+            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            person1.id = personEntity.id;
+
+            const organisation: OrganisationEntity = await createAndPersistOrganisation(
+                em,
+                undefined,
+                OrganisationsTyp.SCHULE,
+            );
+
+            const rolleData: RequiredEntityData<RolleEntity> = {
+                name: 'Testrolle',
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: RollenArt.ORGADMIN,
+                istTechnisch: true,
+            };
+            const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
+            await em.persistAndFlush(rolleEntity);
+
+            const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
+                organisationId: organisation.id,
+                personId: person1.id,
+                rolleId: rolleEntity.id,
+            };
+            const personenkontextEntity: PersonenkontextEntity = em.create(PersonenkontextEntity, personenkontextData);
+            await em.persistAndFlush(personenkontextEntity);
+
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: false,
+                orgaIds: [organisation.id],
+            });
+
+            kcUserServiceMock.findById.mockResolvedValue({
+                ok: true,
+                value: {
+                    id: person1.keycloakUserId!,
+                    username: person1.username ?? '',
+                    enabled: true,
+                    email: faker.internet.email(),
+                    createdDate: new Date(),
+                    externalSystemIDs: {},
+                    attributes: {},
+                },
+            });
+
+            const result: Result<Person<true>> = await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+
+            // check that the result is a DomainError
+            expect(result.ok).toBeFalsy();
+            if (result.ok === false) {
+                expect(result.error).toBeInstanceOf(DomainError);
+            }
+        });
     });
     describe('deletePerson', () => {
         describe('Delete the person and all kontexte', () => {
@@ -1737,7 +1799,8 @@ describe('PersonRepository Integration', () => {
             if (rolle instanceof DomainError) {
                 return;
             }
-            const savedRolle: Rolle<true> = await rolleRepo.save(rolle);
+            const savedRolle: Rolle<true> | DomainError = await rolleRepo.save(rolle);
+            if (savedRolle instanceof DomainError) throw Error();
 
             const savedOrganisation: OrganisationEntity = await createAndPersistOrganisation(
                 em,
@@ -2030,8 +2093,10 @@ describe('PersonRepository Integration', () => {
                 merkmale: [RollenMerkmal.KOPERS_PFLICHT],
             });
 
-            const rolle1Result: Rolle<true> = await rolleRepo.save(rolle1);
-            const rolle2Result: Rolle<true> = await rolleRepo.save(rolle2);
+            const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
+            const rolle2Result: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
+            if (rolle1Result instanceof DomainError) throw Error();
+            if (rolle2Result instanceof DomainError) throw Error();
 
             // personenKontext where createdAt exceeds the time-limit
             jest.useFakeTimers({ now: daysAgo });
@@ -2106,7 +2171,9 @@ describe('PersonRepository Integration', () => {
                     rollenart: RollenArt.LEHR,
                     merkmale: [RollenMerkmal.KOPERS_PFLICHT],
                 });
-                const rolle1Result: Rolle<true> = await rolleRepo.save(rolle1);
+                const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
+                if (rolle1Result instanceof DomainError) throw Error();
+
                 const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                     personId: person3.id,
                     rolleId: rolle1Result.id,
