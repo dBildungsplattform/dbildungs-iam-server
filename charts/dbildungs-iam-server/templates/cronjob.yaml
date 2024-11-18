@@ -21,10 +21,21 @@ spec:
           - name: {{ $job_name }}
             image: "{{ $.Values.cronjobs.image.repository }}:{{ $.Values.cronjobs.image.tag }}"
             imagePullPolicy: {{ $.Values.cronjobs.image.pullPolicy | default "Always"}}
-            securityContext: {{- omit $.Values.containerSecurityContext "enabled" | toYaml | nindent 14 }}
+            securityContext:
+              # not yet possible since we need to install some tools
+              # privileged: false
+              # runAsUser: 1000
+              # runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: false
+              allowPrivilegeEscalation: false
+              seccompProfile:
+                type: RuntimeDefault
             envFrom:
               - configMapRef:
-                  name:  cronjob-envs-configmap
+                  name:  {{ template "common.names.name" $ }}-cronjob-envs-configmap
             env:
                 - name: BACKEND_ENDPOINT_URL
                   value: "https://{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
@@ -53,8 +64,8 @@ spec:
                   ./{{ $job_options.script }}
             volumeMounts:
               - name: secret-volume-jwks
-                mountPath: /keys
-                subPath: "service-account-private-jwks"
+                mountPath: /keys/jwks.json
+                subPath: jwks.json
                 readOnly: true
               - name: script-volume
                 mountPath: /scripts_tmp
@@ -65,10 +76,10 @@ spec:
           volumes:
           - name: script-volume
             configMap:
-              name: cronjob-scripts-configmap
+              name: {{ template "common.names.name" $ }}-cronjob-scripts-configmap
           - name: secret-volume-jwks
             secret:
-              secretName: cronjob-secret-service-acc-jwks
+              secretName: dbildungs-iam-server
               items:
               - key: service-account-private-jwks
                 path: jwks.json
