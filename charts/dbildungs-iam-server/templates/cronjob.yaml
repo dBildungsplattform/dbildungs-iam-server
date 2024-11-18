@@ -42,10 +42,13 @@ spec:
               - "-c"
               - |
                   apk update &&
+                  apk add --no-cache bash openssl curl cronie jq vim &&
                   mkdir /scripts &&
                   cp /scripts_tmp/*.sh /scripts/ &&
                   chmod +x /scripts/*.sh &&
                   chmod 600 /etc/crontabs/root &&
+                  touch /var/log/cron.log &&
+                  chmod 644 /var/log/cron.log &&
                   cd {{ $.Values.cronjobs.scriptDir }} &&
                   ./{{ $job_options.script }}
             volumeMounts:
