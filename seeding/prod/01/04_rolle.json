@@ -15,7 +15,8 @@
                 "SCHULTRAEGER_VERWALTEN",
                 "PERSONEN_SOFORT_LOESCHEN",
                 "PERSON_SYNCHRONISIEREN",
-                "IMPORT_DURCHFUEHREN"
+                "IMPORT_DURCHFUEHREN",
+                "PERSONEN_ANLEGEN"
             ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
         },
@@ -150,6 +151,15 @@
             "administeredBySchulstrukturknoten": 0,
             "name": "itslearning-Administrator",
             "rollenart": "LEIT",
+            "merkmale": [],
+            "systemrechte": [],
+            "serviceProviderIds": [3]
+        },
+        {
+            "id": 17,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "itslearning-Schulbegleitung",
+            "rollenart": "LERN",
             "merkmale": [],
             "systemrechte": [],
             "serviceProviderIds": [3]
