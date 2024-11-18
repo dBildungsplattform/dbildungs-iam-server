@@ -39,13 +39,14 @@ import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persiste
 
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
-import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
+import { Geschlecht } from '../../person/domain/person.enums.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -58,6 +59,7 @@ describe('Rolle API', () => {
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let personFactory: PersonFactory;
+    let permissionsMock: DeepMocked<PersonPermissions>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -124,6 +126,24 @@ describe('Rolle API', () => {
         personPermissionsMock = createMock<PersonPermissions>();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
         personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+
+        // permissionsMock = createMock<PersonPermissions>();
+        permissionsMock = createMock<PersonPermissions>({
+            get personFields(): Person<true> {
+                return createMock<Person<true>>({
+                    id: 'test-id',
+                    keycloakUserId: 'test-keycloak',
+                    vorname: 'test-vorname',
+                    familienname: 'test-familienname',
+                    rufname: 'test-rufname',
+                    username: 'test-username',
+                    geschlecht: Geschlecht.M,
+                    geburtsdatum: faker.date.past(),
+                    updatedAt: faker.date.recent(),
+                });
+            },
+        });
+
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -139,20 +159,9 @@ describe('Rolle API', () => {
     });
 
     describe('/POST rolle', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    familienname: 'current-user',
-                });
-            },
-            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
-                Promise.resolve([
-                    {
-                        organisationsId: '',
-                        rolle: { systemrechte: [], serviceProviderIds: [] },
-                    },
-                ]),
-        });
+        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
+        permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+
         it('should return created rolle', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
@@ -169,7 +178,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/rolle')
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(201);
             expect(response.body).toEqual(expect.objectContaining(params));
@@ -189,7 +198,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/rolle')
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
             const rolle: RolleResponse = response.body as RolleResponse;
 
             await em.findOneOrFail(RolleEntity, { id: rolle.id });
@@ -206,7 +215,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/rolle')
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(404);
         });
@@ -225,7 +234,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/rolle')
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(400);
         });
@@ -244,7 +253,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/rolle')
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(400);
         });
@@ -263,7 +272,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .post('/rolle')
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(400);
         });
@@ -665,20 +674,6 @@ describe('Rolle API', () => {
     });
 
     describe('/PUT rolle', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    familienname: 'current-user',
-                });
-            },
-            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
-                Promise.resolve([
-                    {
-                        organisationsId: '',
-                        rolle: { systemrechte: [], serviceProviderIds: [] },
-                    },
-                ]),
-        });
         it('should return updated rolle', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
@@ -710,7 +705,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .put(`/rolle/${rolle.id}`)
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(200);
             expect(response.body).toMatchObject({
@@ -734,7 +729,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .put(`/rolle/${faker.string.uuid()}`)
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(404);
         });
@@ -765,7 +760,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .put(`/rolle/${rolle.id}`)
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
@@ -806,7 +801,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .put(`/rolle/${rolle.id}`)
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(404);
             expect(response.body).toEqual({
@@ -871,7 +866,7 @@ describe('Rolle API', () => {
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .put(`/rolle/${rolle.id}`)
-                    .send({ params: params, permissions: permissionsMock });
+                    .send(params);
 
                 expect(response.status).toBe(400);
                 expect(response.body).toEqual({
@@ -908,7 +903,7 @@ describe('Rolle API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .put(`/rolle/${rolle.id}`)
-                .send({ params: params, permissions: permissionsMock });
+                .send(params);
 
             expect(response.status).toBe(400);
             expect(response.body).toEqual({
@@ -919,25 +914,11 @@ describe('Rolle API', () => {
     });
 
     describe('/DELETE rolleId', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    familienname: 'current-user',
-                });
-            },
-            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
-                Promise.resolve([
-                    {
-                        organisationsId: '',
-                        rolle: { systemrechte: [], serviceProviderIds: [] },
-                    },
-                ]),
-        });
         describe('should return error', () => {
             it('if rolle does NOT exist', async () => {
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/rolle/${faker.string.uuid()}`)
-                    .send({ permissions: permissionsMock });
+                    .send();
 
                 expect(response.status).toBe(404);
             });
@@ -984,7 +965,7 @@ describe('Rolle API', () => {
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/rolle/${rolle.id}`)
-                    .send({ permissions: permissionsMock });
+                    .send();
 
                 expect(response.status).toBe(400);
                 expect(response.body).toEqual({
@@ -1014,7 +995,7 @@ describe('Rolle API', () => {
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/rolle/${rolle.id}`)
-                    .send({ permissions: permissionsMock });
+                    .send();
 
                 expect(response.status).toBe(404);
                 expect(response.body).toEqual({
@@ -1047,7 +1028,7 @@ describe('Rolle API', () => {
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/rolle/${rolle.id}`)
-                    .send({ permissions: permissionsMock });
+                    .send();
 
                 expect(response.status).toBe(404);
                 expect(response.body).toEqual({
@@ -1086,7 +1067,7 @@ describe('Rolle API', () => {
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/rolle/${rolle.id}`)
-                    .send({ permissions: permissionsMock });
+                    .send();
 
                 expect(response.status).toBe(204);
             });
