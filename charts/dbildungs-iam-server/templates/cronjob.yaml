@@ -20,8 +20,8 @@ spec:
           containers:
           - name: {{ $job_name }}
             image: "{{ $.Values.cronjobs.image.repository }}:{{ $.Values.cronjobs.image.tag }}"
-            imagePullPolicy: {{ .Values.cronjobs.image.pullPolicy | default "Always"}}
-            securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+            imagePullPolicy: {{ $.Values.cronjobs.image.pullPolicy | default "Always"}}
+            securityContext: {{- omit $.Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
             envFrom:
               - configMapRef:
                   name:  cronjob-envs-configmap
