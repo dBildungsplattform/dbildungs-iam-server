@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StatusController } from './status.controller.js';
 import { ConfigTestModule } from '../../../test/utils/index.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('StatusController', () => {
     let controller: StatusController;
@@ -9,6 +10,14 @@ describe('StatusController', () => {
         const module: TestingModule = await Test.createTestingModule({
             imports: [ConfigTestModule],
             controllers: [StatusController],
+            providers: [
+                {
+                    provide: ConfigService,
+                    useValue: {
+                        getOrThrow: jest.fn().mockReturnValue({ STATUS_REDIRECT_URL: 'http://example.com/status' }),
+                    },
+                },
+            ],
         }).compile();
 
         controller = module.get<StatusController>(StatusController);
@@ -16,5 +25,10 @@ describe('StatusController', () => {
 
     it('should be defined', () => {
         expect(controller).toBeDefined();
+    });
+
+    it('should return the correct status URL', () => {
+        const result: { url: string } = controller.getStatus();
+        expect(result).toEqual({ url: 'http://example.com/status' });
     });
 });
