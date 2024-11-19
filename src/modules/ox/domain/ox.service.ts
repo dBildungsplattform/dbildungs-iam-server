@@ -7,7 +7,7 @@ import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { lastValueFrom } from 'rxjs';
 
 import { OxConfig } from '../../../shared/config/ox.config.js';
-import { OxBaseAction, OxErrorResponse } from '../actions/ox-base-action.js';
+import { isOxErrorResponse, OxBaseAction } from '../actions/ox-base-action.js';
 import { OxError } from '../../../shared/error/ox.error.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -25,7 +25,20 @@ export type OxErrorType = {
 };
 
 function isOxErrorType(err: unknown): err is OxErrorType {
-    return (err as OxErrorType).response !== undefined;
+    if (
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        typeof err.response === 'object' &&
+        err.response &&
+        'data' in err.response &&
+        typeof err.response.data === 'string' &&
+        err.response.data
+    ) {
+        return true;
+    }
+
+    return false;
 }
 
 @Injectable()
@@ -74,8 +87,17 @@ export class OxService {
             return action.parseResponse(response.data);
         } catch (err: unknown) {
             if (isOxErrorType(err)) {
-                const oxErrorResponse: OxErrorResponse = this.xmlParser.parse(err.response.data) as OxErrorResponse;
-                const mappedOxError: OxError = OxErrorMapper.mapOxErrorResponseToOxError(oxErrorResponse);
+                const oxResponse: unknown = this.xmlParser.parse(err.response.data);
+
+                if (!isOxErrorResponse(oxResponse)) {
+                    this.logger.error(`OX-response could not be parsed, after error occurred`);
+
+                    return {
+                        ok: false,
+                        error: new OxError('OX-Response Could Not Be Parsed'),
+                    };
+                }
+                const mappedOxError: OxError = OxErrorMapper.mapOxErrorResponseToOxError(oxResponse);
 
                 this.logger.error(mappedOxError.code);
 

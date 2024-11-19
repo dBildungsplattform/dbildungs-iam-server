@@ -133,5 +133,35 @@ describe('OxService', () => {
                 error: new OxPrimaryMailNotEqualEmail1Error(faultString),
             });
         });
+
+        it('should return specific general OxError and log error if request failed and response could NOT be parsed', async () => {
+            const faultyErrorWithMissingFaultString: OxErrorType = {
+                message: faker.string.alphanumeric(),
+                code: faker.string.numeric(),
+                response: {
+                    status: 500,
+                    statusText: 'statusText',
+                    data:
+                        '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">' +
+                        '<soap:Body>' +
+                        '<soap:Fault>' +
+                        '<faultcode>soap:Server</faultcode>' +
+                        '</soap:Fault>' +
+                        '</soap:Body>' +
+                        '</soap:Envelope>',
+                },
+            };
+
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            httpServiceMock.post.mockReturnValueOnce(throwError(() => faultyErrorWithMissingFaultString));
+
+            const result: Result<string, DomainError> = await sut.send(mockAction);
+
+            expect(loggerMock.error).toHaveBeenLastCalledWith(`OX-response could not be parsed, after error occurred`);
+            expect(result).toEqual({
+                ok: false,
+                error: new OxError('OX-Response Could Not Be Parsed'),
+            });
+        });
     });
 });
