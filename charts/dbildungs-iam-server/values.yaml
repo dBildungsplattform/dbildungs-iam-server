@@ -127,7 +127,7 @@ backend:
 
 # Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
 redis-cluster:
-  enabled: true
+  enabled: false
   persistence: 
     enabled: false
     size: 4Gi
@@ -166,6 +166,17 @@ redis-cluster:
       cpu: 125m
       memory: 128Mi
   metrics:
+    enabled: true
+
+redis:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnami/redis
+    tag: 7.4.1-debian-12-r2
+  replica:
+    replicaCount: 2
+  sentinel:
     enabled: true
    
 autoscaling:
