@@ -32,6 +32,11 @@ ldap:
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
 
+itslearning:
+  root: sh
+  rootOeffentlich: oeffentlich
+  rootErsatz: ersatz
+
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
   existingSecret: ''
@@ -130,7 +135,7 @@ backend:
 # Reference: https://github.com/bitnami/charts/tree/main/bitnami/redis-cluster
 redis-cluster:
   enabled: true
-  persistence: 
+  persistence:
     enabled: false
     size: 4Gi
   image:
@@ -159,7 +164,7 @@ redis-cluster:
   podLabels:
       app.kubernetes.io/component: server-redis
   commonLabels:
-    app.kubernetes.io/name: dbildungs-iam-server 
+    app.kubernetes.io/name: dbildungs-iam-server
   resources:
     limits:
       cpu: 300m
@@ -169,7 +174,7 @@ redis-cluster:
       memory: 128Mi
   metrics:
     enabled: true
-   
+
 autoscaling:
   enabled: false
   minReplicas: 1

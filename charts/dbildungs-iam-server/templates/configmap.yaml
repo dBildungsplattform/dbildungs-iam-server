@@ -20,3 +20,6 @@ data:
   LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"
   LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"
   LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.ldap.ersatzschulenDomain }}"
+  ITSLEARNING_ROOT: "{{ .Values.itslearning.root }}"
+  ITSLEARNING_ROOT_OEFFENTLICH: "{{ .Values.itslearning.rootOeffentlich }}"
+  ITSLEARNING_ROOT_ERSATZ: "{{ .Values.itslearning.rootErsatz }}"

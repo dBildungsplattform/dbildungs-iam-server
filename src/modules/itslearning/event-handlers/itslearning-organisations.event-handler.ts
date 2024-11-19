@@ -30,7 +30,7 @@ export class ItsLearningOrganisationsEventHandler {
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
-        this.ENABLED = itsLearningConfig.ENABLED === 'true';
+        this.ENABLED = itsLearningConfig.ENABLED;
 
         this.ROOT_OEFFENTLICH = itsLearningConfig.ROOT_OEFFENTLICH;
     }
