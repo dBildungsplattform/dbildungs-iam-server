@@ -147,11 +147,11 @@ redis-cluster:
       replicas: 1
   networkPolicy:
     enabled: false
-  pdb:
+  pdb: #not in redis valuesyaml
     create: false
   serviceAccount:
     create: false
-  usePassword: true
+  usePassword: true #just in auth form in redis 
   tls:
     enabled: false
   podLabels:
@@ -177,6 +177,23 @@ redis:
   replica:
     replicaCount: 2
   sentinel:
+    enabled: true
+  networkPolicy:
+    enabled: false
+  serviceAccount:
+    create: false
+  podLabels:
+    app.kubernetes.io/component: server-redis
+  commonLabels:
+    app.kubernetes.io/name: dbildungs-iam-server
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 125m
+      memory: 128Mi
+  metrics:
     enabled: true
    
 autoscaling:
