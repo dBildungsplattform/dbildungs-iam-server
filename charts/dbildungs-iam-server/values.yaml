@@ -185,7 +185,7 @@ redis:
   serviceAccount:
     create: false
   auth:  
-    existingSecret: ""
+    existingSecret: dbildungs-iam-server-redis
   podLabels:
     app.kubernetes.io/component: server-redis
   commonLabels:
