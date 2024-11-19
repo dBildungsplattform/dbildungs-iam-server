@@ -178,6 +178,8 @@ redis:
     replicaCount: 2
   sentinel:
     enabled: true
+  pdb: 
+    create: false
   networkPolicy:
     enabled: false
   serviceAccount:
