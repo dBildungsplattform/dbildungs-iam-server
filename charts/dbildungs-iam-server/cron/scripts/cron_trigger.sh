@@ -32,3 +32,9 @@ http_status=$(echo "$response" | tail -n1)
 echo "Finished triggering $endpoint_url with $HTTP_METHOD at $(date)
 HTTP Status: $http_status
 Response Body: $response_body"
+
+# Exit with status 1 if the HTTP status code is not 200
+if [ "$http_status" -ne 200 ]; then
+  echo "Error: HTTP request failed with status code $http_status"
+  exit 1
+fi
