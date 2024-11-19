@@ -18,7 +18,7 @@ export class MetricsService {
                 registers: [this.registry],
             });
         }
-        this.counter[key].inc(labels || {});
+        this.counter[key]?.inc(labels || {});
     }
 
     public setGauge(key: string, value: number, labels?: Record<string, string | number>): void {
@@ -30,6 +30,6 @@ export class MetricsService {
                 registers: [this.registry],
             });
         }
-        this.gauge[key].set(labels || {}, value);
+        this.gauge[key]?.set(labels || {}, value);
     }
 }
