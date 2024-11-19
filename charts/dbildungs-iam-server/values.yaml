@@ -184,6 +184,8 @@ redis:
     enabled: false
   serviceAccount:
     create: false
+  auth:  
+    existingSecret: ""
   podLabels:
     app.kubernetes.io/component: server-redis
   commonLabels:
