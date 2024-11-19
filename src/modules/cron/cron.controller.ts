@@ -73,28 +73,24 @@ export class CronController {
                     );
 
                     const person: Option<Person<true>> = await this.personRepository.findById(personId);
-                    try {
-                        const updateResult: Result<void, DomainError> =
-                            await this.keyCloakUserService.updateKeycloakUserStatus(
-                                personId,
-                                keycloakUserId,
-                                userLock,
-                                true,
-                            );
+
+                    const updateResult: Result<void, DomainError> =
+                        await this.keyCloakUserService.updateKeycloakUserStatus(
+                            personId,
+                            keycloakUserId,
+                            userLock,
+                            true,
+                        );
+                    if (updateResult.ok) {
                         this.logger.info(
                             `System hat Benutzer ${person?.referrer} (${person?.id}) gesperrt, da nach Ablauf der Frist keine KoPers.-Nr. eingetragen war.`,
                         );
-                        return updateResult;
-                    } catch (error) {
-                        let errorMessage: string = 'unbekannt';
-                        if (error instanceof DomainError) {
-                            errorMessage = error.message;
-                        }
+                    } else {
                         this.logger.info(
-                            `System konnte Benutzer ${person?.referrer} (${person?.id}) nach Ablauf der Frist ohne KoPers.-Nr. nicht sperren. Fehler: ${errorMessage}`,
+                            `System konnte Benutzer ${person?.referrer} (${person?.id}) nach Ablauf der Frist ohne KoPers.-Nr. nicht sperren. Fehler: ${updateResult.error.message}`,
                         );
-                        throw error;
                     }
+                    return updateResult;
                 }),
             );
 
@@ -155,25 +151,21 @@ export class CronController {
                     promises.push(
                         (async (): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> => {
                             const person: Option<Person<true>> = await this.personRepository.findById(personId);
-                            try {
-                                const result: Personenkontext<true>[] | PersonenkontexteUpdateError =
-                                    await this.personenkontextWorkflowFactory
-                                        .createNew()
-                                        .commit(personId, new Date(), count, personenKontexteToKeep, permissions);
+
+                            const result: Personenkontext<true>[] | PersonenkontexteUpdateError =
+                                await this.personenkontextWorkflowFactory
+                                    .createNew()
+                                    .commit(personId, new Date(), count, personenKontexteToKeep, permissions);
+                            if (result instanceof PersonenkontexteUpdateError) {
+                                this.logger.info(
+                                    `System konnte die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Fehler: ${result.message}`,
+                                );
+                            } else {
                                 this.logger.info(
                                     `System hat die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) aufgehoben.`,
                                 );
-                                return result;
-                            } catch (error) {
-                                let errorMessage: string = 'unbekannt';
-                                if (error instanceof PersonenkontexteUpdateError) {
-                                    errorMessage = error.message;
-                                }
-                                this.logger.info(
-                                    `System konnte die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Fehler: ${errorMessage}`,
-                                );
-                                throw error;
                             }
+                            return result;
                         })(),
                     );
                 },
@@ -235,25 +227,20 @@ export class CronController {
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
                 personIds.map(async (id: string) => {
                     const person: Option<Person<true>> = await this.personRepository.findById(id);
-                    try {
-                        const deleteResult: Result<void, DomainError> = await this.personDeleteService.deletePerson(
-                            id,
-                            permissions,
-                        );
+                    const deleteResult: Result<void, DomainError> = await this.personDeleteService.deletePerson(
+                        id,
+                        permissions,
+                    );
+                    if (deleteResult.ok) {
                         this.logger.info(
                             `System hat ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung gelöscht.`,
                         );
-                        return deleteResult;
-                    } catch (error) {
-                        let errorMessage: string = 'unbekannt';
-                        if (error instanceof DomainError) {
-                            errorMessage = error.message;
-                        }
+                    } else {
                         this.logger.info(
-                            `System konnte Benutzer ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung nicht löschen. Fehler: ${errorMessage}`,
+                            `System konnte Benutzer ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung nicht löschen. Fehler: ${deleteResult.error.message}`,
                         );
-                        throw error;
                     }
+                    return deleteResult;
                 }),
             );
 
@@ -305,29 +292,23 @@ export class CronController {
                         );
                         return { ok: false, error: new EntityNotFoundError() };
                     }
-
-                    try {
-                        const updateResult: Result<void, DomainError> =
-                            await this.keyCloakUserService.updateKeycloakUserStatus(
-                                person.value.id,
-                                person.value.keycloakUserId,
-                                userLock,
-                                false,
-                            );
+                    const updateResult: Result<void, DomainError> =
+                        await this.keyCloakUserService.updateKeycloakUserStatus(
+                            person.value.id,
+                            person.value.keycloakUserId,
+                            userLock,
+                            false,
+                        );
+                    if (updateResult.ok) {
                         this.logger.info(
                             `System hat die befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) aufgehoben.`,
                         );
-                        return updateResult;
-                    } catch (error) {
-                        let errorMessage: string = 'unbekannt';
-                        if (error instanceof DomainError) {
-                            errorMessage = error.message;
-                        }
+                    } else {
                         this.logger.info(
-                            `System konnte befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) nicht aufheben. Fehler: ${errorMessage}`,
+                            `System konnte befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) nicht aufheben. Fehler: ${updateResult.error.message}`,
                         );
-                        throw error;
                     }
+                    return updateResult;
                 }),
             );
 
