@@ -143,6 +143,8 @@ describe('Rolle API', () => {
                 });
             },
         });
+        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
+        permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -159,9 +161,6 @@ describe('Rolle API', () => {
     });
 
     describe('/POST rolle', () => {
-        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
-        permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-
         it('should return created rolle', async () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
