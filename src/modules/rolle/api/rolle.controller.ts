@@ -184,7 +184,8 @@ export class RolleController {
         @Body() params: CreateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleResponse> {
-        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
+        const organisationNameUser: string | void =
+            (await this.getOrganisationNameForCurrentUser(permissions)) ?? 'ORGANISATION_NAME_NOT_FOUND';
 
         const orgResult: Result<OrganisationDo<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
@@ -375,7 +376,12 @@ export class RolleController {
         @Body() params: UpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
+        const userName: string = permissions.personFields.familienname;
+        const userId: string = permissions.personFields.id;
+        const organisationNameUser: string | void =
+            (await this.getOrganisationNameForCurrentUser(permissions)) ?? 'ORGANISATION_NAME_NOT_FOUND';
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
+        const rolleName: string = rolle?.name ?? 'ROLLE_NOT_FOUND';
 
         const isAlreadyAssigned: boolean = await this.dBiamPersonenkontextRepo.isRolleAlreadyAssigned(
             findRolleByIdParams.rolleId,
@@ -394,12 +400,12 @@ export class RolleController {
         if (result instanceof DomainError) {
             if (result instanceof RolleDomainError) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Rolle ${result.name} zu bearbeiten. Fehler: ${result.message}`,
+                    `Admin ${userName} (${userId}, ${organisationNameUser}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
                 );
                 throw result;
             }
             this.logger.error(
-                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Rolle ${result.name} zu bearbeiten. Fehler: ${result.message}`,
+                `Admin ${userName} (${userId}, ${organisationNameUser}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
@@ -407,7 +413,7 @@ export class RolleController {
         }
 
         this.logger.info(
-            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Rolle bearbeitet: ${result.name}.`,
+            `Admin ${userName} (${userId}, ${organisationNameUser}) hat eine Rolle bearbeitet: ${rolleName}.`,
         );
 
         return this.returnRolleWithServiceProvidersResponse(result);
@@ -424,9 +430,12 @@ export class RolleController {
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
+        const userName: string = permissions.personFields.familienname;
+        const userId: string = permissions.personFields.id;
+        const organisationNameUser: string | void =
+            (await this.getOrganisationNameForCurrentUser(permissions)) ?? 'ORGANISATION_NAME_NOT_FOUND';
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        const rolleName: string = rolle?.name ?? 'ORGANISATION_NOT_FOUND';
+        const rolleName: string = rolle?.name ?? 'ROLLE_NOT_FOUND';
 
         const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
             findRolleByIdParams.rolleId,
@@ -434,14 +443,13 @@ export class RolleController {
         );
         if (result instanceof DomainError) {
             if (result instanceof RolleDomainError) {
-                // Admin <AdminName> (<AdminID>, <Organisation>) hat versucht die Rolle <NameRolle>  zu entfernen. error: <>
                 this.logger.error(
-                    `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
+                    `Admin ${userName} (${userId}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
                 );
                 throw result;
             }
             this.logger.error(
-                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
+                `Admin ${userName} (${userId}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
@@ -449,7 +457,7 @@ export class RolleController {
         }
 
         this.logger.info(
-            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Rolle entfernt: ${rolleName}.`,
+            `Admin ${userName} (${userId}, ${organisationNameUser}) hat eine Rolle entfernt: ${rolleName}.`,
         );
     }
 
@@ -465,13 +473,16 @@ export class RolleController {
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }
 
-    private async getOrganisationNameForCurrentUser(permissions: PersonPermissions): Promise<string> {
+    private async getOrganisationNameForCurrentUser(permissions: PersonPermissions): Promise<string | void> {
         const personenkontextRolleFields: PersonenkontextRolleFields[] =
             await permissions?.getPersonenkontextewithRoles();
-        const organisationIdUser: string = personenkontextRolleFields.at(0)?.organisationsId as string;
-        const organisationUser: Option<Organisation<true>> =
-            await this.organisationRepository.findById(organisationIdUser);
-        const organisationNameUser: string = organisationUser?.name ?? 'ORGANISATION_NOT_FOUND';
-        return organisationNameUser;
+        const organisationIdUser: string | undefined = personenkontextRolleFields.at(0)?.organisationsId;
+        if (organisationIdUser) {
+            const organisationUser: Option<Organisation<true>> =
+                await this.organisationRepository.findById(organisationIdUser);
+            const organisationNameUser: string = organisationUser?.name ?? 'ORGANISATION_NOT_FOUND';
+            return organisationNameUser;
+        }
+        this.logger.error(`No Organisation id found for given Person id: ${permissions.personFields.id}`);
     }
 }
