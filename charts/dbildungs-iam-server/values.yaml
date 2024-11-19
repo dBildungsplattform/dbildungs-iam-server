@@ -195,7 +195,7 @@ redis:
     requests:
       cpu: 125m
       memory: 128Mi
-  metrics:
+  metrics: #weiter einschränken (aus für dev )
     enabled: true
    
 autoscaling:
