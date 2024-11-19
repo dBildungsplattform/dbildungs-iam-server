@@ -287,9 +287,6 @@ export class CronController {
                     );
 
                     if (!person.ok || !person.value.keycloakUserId) {
-                        this.logger.info(
-                            `Call failed for userLock with ID ${userLock.person}: Person not found or missing KeycloakUserId`,
-                        );
                         return { ok: false, error: new EntityNotFoundError() };
                     }
                     const updateResult: Result<void, DomainError> =
