@@ -96,4 +96,19 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: redis-password
+           - name: OX_ENABLED
+             valueFrom:
+               secretKeyRef:
+                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                   key: ox-enabled
+           - name: OX_USERNAME
+             valueFrom:
+               secretKeyRef:
+                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                   key: ox-username
+           - name: OX_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                   key: ox-password
 {{- end}}
