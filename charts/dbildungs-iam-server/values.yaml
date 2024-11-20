@@ -139,7 +139,7 @@ redis-cluster:
     registry: docker.io
     repository: bitnami/redis-cluster
     tag: 7.4
-  existingSecret: dbildungs-iam-server-redis
+  existingSecret: ''
   cluster:
       ## This is total number of nodes including the replicas. Meaning there will be 3 master and 3 replica
       ## nodes (as replica count is set to 1 by default, there will be 1 replica per master node).
