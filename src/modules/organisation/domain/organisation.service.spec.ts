@@ -21,6 +21,9 @@ import { NameForOrganisationWithTrailingSpaceError } from '../specification/erro
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Person } from '../../person/domain/person.js';
+import { Geschlecht } from '../../person/domain/person.enums.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -61,11 +64,36 @@ describe('OrganisationService', () => {
     });
 
     describe('createOrganisation', () => {
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({
+            get personFields(): Person<true> {
+                return createMock<Person<true>>({
+                    id: 'test-id',
+                    keycloakUserId: 'test-keycloak',
+                    vorname: 'test-vorname',
+                    familienname: 'test-familienname',
+                    rufname: 'test-rufname',
+                    username: 'test-username',
+                    geschlecht: Geschlecht.M,
+                    geburtsdatum: faker.date.past(),
+                    updatedAt: faker.date.recent(),
+                });
+            },
+        });
+        const organisationUser: Organisation<true> = DoFactory.createOrganisation(true);
+        const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            {
+                organisationsId: organisationUser.id,
+                rolle: { systemrechte: [], serviceProviderIds: [] },
+            },
+        ];
         it('should create an organisation', async () => {
             const organisation: Organisation<false> = DoFactory.createOrganisation(false);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
             mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisation,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: true,
                 value: organisation as unknown as Organisation<true>,
@@ -77,7 +105,10 @@ describe('OrganisationService', () => {
             organisation.administriertVon = faker.string.uuid();
             organisationRepositoryMock.exists.mockResolvedValueOnce(false);
 
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -90,7 +121,10 @@ describe('OrganisationService', () => {
             organisation.zugehoerigZu = faker.string.uuid();
             organisationRepositoryMock.exists.mockResolvedValueOnce(false);
 
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -106,7 +140,10 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
             mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -115,6 +152,9 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if name is not set and type is schule', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+
             const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SCHULE,
                 kennung: '1234567',
@@ -123,7 +163,10 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
             mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -140,7 +183,10 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
             mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -149,6 +195,9 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if kennung is not unique and type is schule', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+
             const name: string = faker.string.alpha();
             const kennung: string = faker.string.numeric({ length: 7 });
             const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
@@ -170,7 +219,10 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
             mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -181,7 +233,10 @@ describe('OrganisationService', () => {
         it('should return a domain error', async () => {
             const organisation: Organisation<false> = DoFactory.createOrganisation(false);
             organisation.id = faker.string.uuid();
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisation,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new EntityCouldNotBeCreated(`Organization could not be created`),
@@ -191,7 +246,10 @@ describe('OrganisationService', () => {
         it('should return domain error if name contains trailing space', async () => {
             const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { name: ' name' });
             organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new NameForOrganisationWithTrailingSpaceError(),
@@ -201,7 +259,10 @@ describe('OrganisationService', () => {
         it('should return domain error if kennung contains trailing space', async () => {
             const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { kennung: ' ' });
             organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new KennungForOrganisationWithTrailingSpaceError(),
@@ -211,7 +272,10 @@ describe('OrganisationService', () => {
         it('should return domain error if name contains trailing space', async () => {
             const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { name: ' name' });
             organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new NameForOrganisationWithTrailingSpaceError(),
@@ -221,7 +285,10 @@ describe('OrganisationService', () => {
         it('should return domain error if kennung contains trailing space', async () => {
             const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { kennung: ' ' });
             organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new KennungForOrganisationWithTrailingSpaceError(),
@@ -230,10 +297,36 @@ describe('OrganisationService', () => {
     });
 
     describe('updateOrganisation', () => {
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({
+            get personFields(): Person<true> {
+                return createMock<Person<true>>({
+                    id: 'test-id',
+                    keycloakUserId: 'test-keycloak',
+                    vorname: 'test-vorname',
+                    familienname: 'test-familienname',
+                    rufname: 'test-rufname',
+                    username: 'test-username',
+                    geschlecht: Geschlecht.M,
+                    geburtsdatum: faker.date.past(),
+                    updatedAt: faker.date.recent(),
+                });
+            },
+        });
+        const organisationUser: Organisation<true> = DoFactory.createOrganisation(true);
+        const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            {
+                organisationsId: organisationUser.id,
+                rolle: { systemrechte: [], serviceProviderIds: [] },
+            },
+        ];
         it('should update an organisation', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisation);
+            organisationRepositoryMock.findById.mockResolvedValue(organisation);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisation,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: true,
                 value: organisation as unknown as Organisation<true>,
@@ -244,7 +337,10 @@ describe('OrganisationService', () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisation.id = '';
             organisationRepositoryMock.findById.mockResolvedValue({} as Option<Organisation<true>>);
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisation,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new EntityCouldNotBeUpdated(`Organization could not be updated`, organisation.id),
@@ -258,7 +354,10 @@ describe('OrganisationService', () => {
             });
             organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
 
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -267,6 +366,9 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if name is not set and type is schule', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.SCHULE,
                 kennung: '1234567',
@@ -274,7 +376,10 @@ describe('OrganisationService', () => {
             });
             organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
 
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -290,7 +395,10 @@ describe('OrganisationService', () => {
             });
             organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
 
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -299,6 +407,9 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if kennung is not unique and type is schule', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+
             const name: string = faker.string.alpha();
             const kennung: string = faker.string.numeric({ length: 7 });
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
@@ -312,7 +423,10 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
             mapperMock.map.mockReturnValue(organisation as unknown as Dictionary<unknown>);
 
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisation,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -323,7 +437,10 @@ describe('OrganisationService', () => {
         it('should return a domain error when organisation cannot be found on update', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisationRepositoryMock.findById.mockResolvedValue(undefined);
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisation);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisation,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new EntityNotFoundError('Organisation', organisation.id),
@@ -333,7 +450,10 @@ describe('OrganisationService', () => {
         it('should return domain error if name contains trailing space', async () => {
             const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, { name: '  ' });
             organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new NameForOrganisationWithTrailingSpaceError(),
@@ -343,7 +463,10 @@ describe('OrganisationService', () => {
         it('should return domain error if kennung contains trailing space', async () => {
             const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, { kennung: 'kennung ' });
             organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new KennungForOrganisationWithTrailingSpaceError(),
@@ -353,7 +476,10 @@ describe('OrganisationService', () => {
         it('should return domain error if name contains trailing space', async () => {
             const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, { name: '  ' });
             organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new NameForOrganisationWithTrailingSpaceError(),
@@ -363,7 +489,10 @@ describe('OrganisationService', () => {
         it('should return domain error if kennung contains trailing space', async () => {
             const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, { kennung: 'kennung ' });
             organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
-            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new KennungForOrganisationWithTrailingSpaceError(),

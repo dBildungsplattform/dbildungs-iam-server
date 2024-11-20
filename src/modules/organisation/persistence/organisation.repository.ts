@@ -434,7 +434,6 @@ export class OrganisationRepository {
                 const school: Option<Organisation<true>> = await this.findById(organisationEntity.zugehoerigZu);
                 schoolName = school?.name ?? 'SCHOOL_NOT_FOUND';
                 this.logger.info(
-                    // Admin <AdminName> (<AdminID>) hat eine Klasse entfernt: <NameKlasse > ( < Schule >).
                     `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
                 );
             }

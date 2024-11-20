@@ -73,7 +73,7 @@ export class OrganisationService {
         if (organisation.typ === OrganisationsTyp.SCHULE) {
             if (permissions) {
                 const personenkontextRolleFields: PersonenkontextRolleFields[] =
-                    await permissions?.getPersonenkontextewithRoles();
+                    await permissions.getPersonenkontextewithRoles();
                 const organisationIdUser: string = personenkontextRolleFields.at(0)?.organisationsId as string;
                 const organisationUser: Option<Organisation<true>> =
                     await this.organisationRepo.findById(organisationIdUser);
@@ -118,7 +118,7 @@ export class OrganisationService {
         if (organisation.typ === OrganisationsTyp.SCHULE) {
             if (permissions) {
                 const personenkontextRolleFields: PersonenkontextRolleFields[] =
-                    await permissions?.getPersonenkontextewithRoles();
+                    await permissions.getPersonenkontextewithRoles();
                 const organisationIdUser: string = personenkontextRolleFields.at(0)?.organisationsId as string;
                 const organisationUser: Option<Organisation<true>> =
                     await this.organisationRepo.findById(organisationIdUser);

@@ -378,8 +378,7 @@ export class RolleController {
     ): Promise<RolleWithServiceProvidersResponse> {
         const userName: string = permissions.personFields.familienname;
         const userId: string = permissions.personFields.id;
-        const organisationNameUser: string | void =
-            (await this.getOrganisationNameForCurrentUser(permissions)) ?? 'ORGANISATION_NAME_NOT_FOUND';
+        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         const rolleName: string = rolle?.name ?? 'ROLLE_NOT_FOUND';
 
@@ -432,8 +431,7 @@ export class RolleController {
     ): Promise<void> {
         const userName: string = permissions.personFields.familienname;
         const userId: string = permissions.personFields.id;
-        const organisationNameUser: string | void =
-            (await this.getOrganisationNameForCurrentUser(permissions)) ?? 'ORGANISATION_NAME_NOT_FOUND';
+        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         const rolleName: string = rolle?.name ?? 'ROLLE_NOT_FOUND';
 
@@ -473,7 +471,7 @@ export class RolleController {
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
     }
 
-    private async getOrganisationNameForCurrentUser(permissions: PersonPermissions): Promise<string | void> {
+    private async getOrganisationNameForCurrentUser(permissions: PersonPermissions): Promise<string> {
         const personenkontextRolleFields: PersonenkontextRolleFields[] =
             await permissions?.getPersonenkontextewithRoles();
         const organisationIdUser: string | undefined = personenkontextRolleFields.at(0)?.organisationsId;
@@ -484,5 +482,6 @@ export class RolleController {
             return organisationNameUser;
         }
         this.logger.error(`No Organisation id found for given Person id: ${permissions.personFields.id}`);
+        return 'ORGANISATION_NOT_FOUND';
     }
 }
