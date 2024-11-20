@@ -57,7 +57,7 @@
         },
         {
             "id": 4,
-            "name": "OP.SH",
+            "name": "Moodle",
             "target": "URL",
             "url": "https://moodle-01.dev.svs.dbildungsplattform.de/auth/oidc/",
             "kategorie": "UNTERRICHT",
