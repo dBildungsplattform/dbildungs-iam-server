@@ -7,6 +7,7 @@ import { ScopeOperator } from '../../shared/persistence/scope.enums.js';
 import { PersonenkontextScope } from '../personenkontext/persistence/personenkontext.scope.js';
 import { RollenArt } from '../rolle/domain/rolle.enums.js';
 import { MetricsService } from './metrics.service.js';
+import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 
 describe('MetricsController', () => {
     let controller: MetricsController;
@@ -61,5 +62,26 @@ describe('MetricsController', () => {
         jest.spyOn(dBiamPersonenkontextRepo, 'findBy').mockRejectedValue(new Error('Database error'));
 
         await expect(controller.getMetrics()).rejects.toThrow('Database error');
+    });
+
+    it('should process and report metrics correctly when findBy returns personenkontexte', async () => {
+        const mockPersonenkontexte: Personenkontext<true>[] = [
+            { personId: '1' /* other properties */ } as Personenkontext<true>,
+            { personId: '2' /* other properties */ } as Personenkontext<true>,
+            { personId: '1' /* other properties */ } as Personenkontext<true>,
+        ];
+
+        jest.spyOn(dBiamPersonenkontextRepo, 'findBy').mockResolvedValue([
+            mockPersonenkontexte,
+            mockPersonenkontexte.length,
+        ]);
+
+        const gaugeSpy: jest.SpyInstance = jest.spyOn(ReporterService, 'gauge');
+
+        await controller.getMetrics();
+
+        expect(gaugeSpy).toHaveBeenCalledWith('number_of_teachers', 2, { school: 'all' });
+        expect(gaugeSpy).toHaveBeenCalledWith('number_of_students', 2, { school: 'all' });
+        expect(gaugeSpy).toHaveBeenCalledWith('number_of_admins', 2, { school: 'all' });
     });
 });
