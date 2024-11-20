@@ -45,7 +45,7 @@ export class ServiceProviderService {
     }
 
     public async updateServiceProvidersForVidis(): Promise<void> {
-        this.logger.info('Update of service providers for VIDIS offers triggered.');
+        this.logger.info('Aktualisierung der ServiceProvider für VIDIS-Angebote wurde gestartet.');
 
         const vidisKeycloakGroup: string = this.vidisConfig.KEYCLOAK_GROUP;
         const vidisKeycloakRole: string = this.vidisConfig.KEYCLOAK_ROLE;
@@ -133,7 +133,7 @@ export class ServiceProviderService {
             }),
         );
 
-        this.logger.info(`Update of service providers for VIDIS offers was successful.`);
+        this.logger.info(`ServiceProvider für VIDIS-Angebote erfolgreich aktualisiert.`);
     }
 
     /**

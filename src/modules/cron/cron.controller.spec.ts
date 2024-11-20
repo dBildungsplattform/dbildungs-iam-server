@@ -22,6 +22,8 @@ import { PersonLockOccasion } from '../person/domain/person.enums.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 import { HttpException } from '@nestjs/common';
+import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
+import { DomainError } from '../../shared/error/domain.error.js';
 
 describe('CronController', () => {
     let cronController: CronController;
@@ -37,6 +39,7 @@ describe('CronController', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
+            imports: [LoggingTestModule],
             providers: [
                 {
                     provide: KeycloakUserService,
@@ -551,6 +554,23 @@ describe('CronController', () => {
                     HttpException,
                 );
                 expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(0);
+            });
+        });
+        describe(`when is authorized user but ServiceProvider update throws an Error`, () => {
+            it(`should throw the error`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+                class UnknownError extends DomainError {
+                    public constructor(message: string) {
+                        super(message, '');
+                    }
+                }
+                serviceProviderServiceMock.updateServiceProvidersForVidis.mockImplementationOnce(() => {
+                    throw new UnknownError('Internal error when trying to update ServiceProviders for VIDIS offers');
+                });
+
+                await expect(cronController.updateServiceProvidersForVidisOffers(permissionsMock)).rejects.toThrow(
+                    'Internal error when trying to update ServiceProviders for VIDIS offers',
+                );
             });
         });
     });

@@ -32,6 +32,7 @@ import { ServiceProviderService } from '../service-provider/domain/service-provi
 import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -46,6 +47,7 @@ export class CronController {
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly userLockRepository: UserLockRepository,
         private readonly serviceProviderService: ServiceProviderService,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Put('kopers-lock')
@@ -255,6 +257,17 @@ export class CronController {
                 ),
             );
         }
-        await this.serviceProviderService.updateServiceProvidersForVidis();
+        try {
+            await this.serviceProviderService.updateServiceProvidersForVidis();
+        } catch (error) {
+            let errorMessage: string = 'unbekannt';
+            if (error instanceof DomainError) {
+                errorMessage = error.message;
+            }
+            this.logger.info(
+                `ServiceProvider für VIDIS-Angebote konnten nicht aktualisiert werden. Fehler: ${errorMessage}`,
+            );
+            throw error;
+        }
     }
 }
