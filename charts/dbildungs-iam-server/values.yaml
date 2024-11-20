@@ -70,7 +70,7 @@ backend:
       memory: 200Mi
   startupProbe:
     enabled: true
-    initialDelaySeconds: 30
+    initialDelaySeconds: 10
     periodSeconds: 10
     failureThreshold: 5
     httpGet:
