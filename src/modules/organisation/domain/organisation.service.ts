@@ -77,7 +77,8 @@ export class OrganisationService {
                 const organisationIdUser: string = personenkontextRolleFields.at(0)?.organisationsId as string;
                 const organisationUser: Option<Organisation<true>> =
                     await this.organisationRepo.findById(organisationIdUser);
-                const organisationNameUser: string = organisationUser?.name ?? 'ORGANISATION_NOT_FOUND';
+                let organisationNameUser: string = 'ORGANISATION_NOT_FOUND';
+                if (organisationUser) if (organisationUser.name) organisationNameUser = organisationUser.name;
                 if (error) {
                     this.logger.error(
                         `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Schule ${organisation.name} anzulegen. Fehler: ${error.message}`,
@@ -101,7 +102,8 @@ export class OrganisationService {
                 const school: Option<Organisation<true>> = await this.organisationRepo.findById(
                     organisation.zugehoerigZu,
                 );
-                const schoolName: string = school?.name ?? 'SCHOOL_NOT_FOUND';
+                let schoolName: string = 'SCHOOL_NOT_FOUND';
+                if (school) if (school.name) schoolName = school.name;
                 if (permissions) {
                     if (error) {
                         this.logger.error(
