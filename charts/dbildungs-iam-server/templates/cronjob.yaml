@@ -55,11 +55,10 @@ spec:
                   mkdir /scripts &&
                   cp /scripts_tmp/*.sh /scripts/ &&
                   chmod +x /scripts/*.sh &&
-                  chmod 600 /etc/crontabs/root &&
                   touch /var/log/cron.log &&
                   chmod 644 /var/log/cron.log &&
                   cd {{ $.Values.cronjobs.scriptDir }} &&
-                  ./{{ $job_options.script }}
+                  bash {{ $job_options.script }}
             volumeMounts:
               - name: secret-volume-jwks
                 mountPath: /keys/jwks.json
