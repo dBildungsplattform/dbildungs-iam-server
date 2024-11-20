@@ -177,7 +177,7 @@ autoscaling:
 cronjobs:
   enabled: true
   image:
-    tag: latest
+    tag: DBP-1083-latest
     repository: ghcr.io/hpi-schul-cloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
