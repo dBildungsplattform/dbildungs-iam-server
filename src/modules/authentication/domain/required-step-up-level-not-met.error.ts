@@ -1,4 +1,4 @@
-import { AuthenticationDomainError } from '../../authentication/domain/authentication-domain.error.js';
+import { AuthenticationDomainError } from './authentication-domain.error.js';
 
 export class RequiredStepUpLevelNotMetError extends AuthenticationDomainError {
     public constructor(details?: unknown[] | Record<string, undefined>) {

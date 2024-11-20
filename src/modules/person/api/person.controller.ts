@@ -76,7 +76,7 @@ import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from './person-email-response.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
-import { StepUpGuard } from './steup-up.guard.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())

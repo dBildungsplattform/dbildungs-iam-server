@@ -1,10 +1,10 @@
 import { StepUpGuard } from './steup-up.guard.js';
 import { ExecutionContext } from '@nestjs/common';
 import { RequiredStepUpLevelNotMetError } from '../domain/required-step-up-level-not-met.error.js';
-import { StepUpLevel } from '../../authentication/passport/oidc.strategy.js';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { Request } from 'express';
 import { UserinfoResponse } from 'openid-client';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonPermissions } from '../domain/person-permissions.js';
 import { createMock } from '@golevelup/ts-jest';
 
 describe('StepUpGuard', () => {

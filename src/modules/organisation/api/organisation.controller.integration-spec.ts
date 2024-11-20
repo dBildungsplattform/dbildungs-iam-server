@@ -34,7 +34,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
-import { StepUpGuard } from '../../person/api/steup-up.guard.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 describe('Organisation API', () => {
     let app: INestApplication;

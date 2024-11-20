@@ -59,7 +59,7 @@ import { OrganisationByNameBodyParams } from './organisation-by-name.body.params
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
-import { StepUpGuard } from '../../person/api/steup-up.guard.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
