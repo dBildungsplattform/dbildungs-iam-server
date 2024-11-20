@@ -28,6 +28,9 @@ database:
 
 ldap:
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
+  bindDN: cn=admin,dc=schule-sh,dc=de
+  oeffentlicheSchulenDomain: schule-sh.de
+  ersatzschulenDomain: ersatzschule-sh.de
 
 itslearning:
   enabled: false
@@ -38,6 +41,7 @@ privacyidea:
   renameWaitingTime: 5
   realm: ucs_users
   userResolver: ucs_users
+
 
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
