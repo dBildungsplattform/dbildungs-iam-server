@@ -66,9 +66,9 @@ describe('MetricsController', () => {
 
     it('should process and report metrics correctly when findBy returns personenkontexte', async () => {
         const mockPersonenkontexte: Personenkontext<true>[] = [
-            { personId: '1' /* other properties */ } as Personenkontext<true>,
-            { personId: '2' /* other properties */ } as Personenkontext<true>,
-            { personId: '1' /* other properties */ } as Personenkontext<true>,
+            { personId: '1' } as Personenkontext<true>,
+            { personId: '2' } as Personenkontext<true>,
+            { personId: '1' } as Personenkontext<true>,
         ];
 
         jest.spyOn(dBiamPersonenkontextRepo, 'findBy').mockResolvedValue([
