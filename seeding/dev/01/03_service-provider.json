@@ -172,7 +172,7 @@
             "requires2fa": false
         },
         {
-            "id": 12,
+            "id": 13,
             "name": "Moodle",
             "target": "URL",
             "url": "https://moodle-01.dev.svs.dbildungsplattform.de/auth/oidc/",
