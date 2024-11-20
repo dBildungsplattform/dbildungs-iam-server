@@ -20,13 +20,11 @@ echo "Triggering $endpoint_url with $HTTP_METHOD at $(date)"
 access_token=$(./get_access_token.sh)
 
 # Make the request with JWT authorization and capture the HTTP status code and response body
-response=$(curl -s -w "\n%{http_code}" -X "$HTTP_METHOD" "$endpoint_url" \
-    -H "Authorization: Bearer $access_token" \
-    -H "Content-Type: application/json")
+response=$(wget --quiet --output-document=- --server-response --header="Authorization: Bearer $access_token" --header="Content-Type: application/json" --method="$HTTP_METHOD" "$endpoint_url" 2>&1)
 
 # Split the response into body and status code
-response_body=$(echo "$response" | sed '$d')
-http_status=$(echo "$response" | tail -n1)
+response_body=$(echo "$response" | sed -n '/^  HTTP\//q;p')
+http_status=$(echo "$response" | awk '/^  HTTP\// {print $2; exit}')
 
 # Output the response details
 echo "Finished triggering $endpoint_url with $HTTP_METHOD at $(date)

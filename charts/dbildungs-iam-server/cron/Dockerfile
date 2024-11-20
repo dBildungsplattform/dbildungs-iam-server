@@ -2,7 +2,7 @@ FROM alpine:3.19
 
 # Install necessary packages
 RUN apk update && \
-    apk add --no-cache bash cronie curl jq openssl vim
+    apk add --no-cache bash cronie jq openssl vim wget
 
 # Create a new user and group
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

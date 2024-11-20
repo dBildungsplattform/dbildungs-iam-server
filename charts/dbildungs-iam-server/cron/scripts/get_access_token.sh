@@ -151,12 +151,9 @@ rm "$temp_key_file.pem"
 jwt_assertion="$header_payload.$signature"
 
 # Make the POST request to Keycloak to get the access token
-response=$(curl -s -X POST "$kc_token_url" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials" \
-  -d "client_id=$clientId" \
-  -d "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
-  -d "client_assertion=$jwt_assertion")
+response=$(wget -qO- --post-data "grant_type=client_credentials&client_id=$clientId&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=$jwt_assertion" \
+  --header "Content-Type: application/x-www-form-urlencoded" \
+  "$kc_token_url")
 
 echo "Access token requested" >> /var/log/cron.log
 
