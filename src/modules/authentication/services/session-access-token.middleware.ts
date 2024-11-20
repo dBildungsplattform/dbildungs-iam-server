@@ -25,7 +25,8 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
         configService: ConfigService<ServerConfig>,
     ) {
         this.STEP_UP_TIMEOUT_IN_SECONDS = configService.getOrThrow<SystemConfig>('SYSTEM').STEP_UP_TIMEOUT_IN_SECONDS;
-        this.STEP_UP_TIMEOUT_ENABLED = configService.getOrThrow<SystemConfig>('SYSTEM').STEP_UP_TIMEOUT_ENABLED === 'true';
+        this.STEP_UP_TIMEOUT_ENABLED =
+            configService.getOrThrow<SystemConfig>('SYSTEM').STEP_UP_TIMEOUT_ENABLED === 'true';
     }
 
     public async use(req: Request, _res: Response, next: (error?: unknown) => void): Promise<void> {
