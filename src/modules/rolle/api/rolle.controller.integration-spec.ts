@@ -60,7 +60,6 @@ describe('Rolle API', () => {
     let organisationRepo: OrganisationRepository;
     let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
-    let personPermissionsMock: DeepMocked<PersonPermissions>;
     let personFactory: PersonFactory;
     let permissionsMock: DeepMocked<PersonPermissions>;
 
@@ -126,10 +125,6 @@ describe('Rolle API', () => {
 
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
-
-        personPermissionsMock = createMock<PersonPermissions>();
-        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
-        personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -141,10 +136,6 @@ describe('Rolle API', () => {
     });
 
     beforeEach(async () => {
-        await DatabaseTestModule.clearDatabase(orm);
-    });
-
-    describe('/POST rolle', () => {
         permissionsMock = createMock<PersonPermissions>({
             get personFields(): Person<true> {
                 return createMock<Person<true>>({
@@ -160,6 +151,12 @@ describe('Rolle API', () => {
                 });
             },
         });
+        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
+        permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+        await DatabaseTestModule.clearDatabase(orm);
+    });
+
+    describe('/POST rolle', () => {
         it('should return created rolle', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
@@ -358,7 +355,7 @@ describe('Rolle API', () => {
                 ])
             ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
@@ -388,7 +385,7 @@ describe('Rolle API', () => {
                 DoFactory.createRolle(false),
             );
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [testRolle.administeredBySchulstrukturknoten],
             });
@@ -422,7 +419,7 @@ describe('Rolle API', () => {
                 ])
             ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
@@ -474,7 +471,7 @@ describe('Rolle API', () => {
                 ])
             ).map((r: Rolle<true>) => r.administeredBySchulstrukturknoten);
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds });
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get('/rolle')
@@ -492,7 +489,7 @@ describe('Rolle API', () => {
         it('should return rolle', async () => {
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [rolle.administeredBySchulstrukturknoten],
             });
@@ -513,7 +510,7 @@ describe('Rolle API', () => {
                 DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
             );
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [rolle.administeredBySchulstrukturknoten],
             });
@@ -544,7 +541,7 @@ describe('Rolle API', () => {
         it('should return 404 when rolle is technical', async () => {
             const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false, { istTechnisch: true }));
 
-            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
                 all: false,
                 orgaIds: [rolle.administeredBySchulstrukturknoten],
             });
@@ -744,21 +741,6 @@ describe('Rolle API', () => {
     });
 
     describe('/PUT rolle', () => {
-        permissionsMock = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    id: 'test-id',
-                    keycloakUserId: 'test-keycloak',
-                    vorname: 'test-vorname',
-                    familienname: 'test-familienname',
-                    rufname: 'test-rufname',
-                    username: 'test-username',
-                    geschlecht: Geschlecht.M,
-                    geburtsdatum: faker.date.past(),
-                    updatedAt: faker.date.recent(),
-                });
-            },
-        });
         it('should return updated rolle', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
@@ -813,6 +795,18 @@ describe('Rolle API', () => {
         });
 
         it('should fail if the rolle does not exist', async () => {
+            const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+            const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
+            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+                {
+                    organisationsId: savedUserOrganisation.id,
+                    rolle: { systemrechte: [], serviceProviderIds: [] },
+                },
+            ];
+            personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
+            permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
@@ -1042,21 +1036,6 @@ describe('Rolle API', () => {
     });
 
     describe('/DELETE rolleId', () => {
-        permissionsMock = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    id: 'test-id',
-                    keycloakUserId: 'test-keycloak',
-                    vorname: 'test-vorname',
-                    familienname: 'test-familienname',
-                    rufname: 'test-rufname',
-                    username: 'test-username',
-                    geschlecht: Geschlecht.M,
-                    geburtsdatum: faker.date.past(),
-                    updatedAt: faker.date.recent(),
-                });
-            },
-        });
         describe('should return error', () => {
             it('if rolle does NOT exist', async () => {
                 const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
