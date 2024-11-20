@@ -143,7 +143,7 @@ redis:
   serviceAccount:
     create: false
   auth:  
-    existingSecret: ''
+    existingSecret: '' 
   podLabels:
     app.kubernetes.io/component: server-redis
   commonLabels:
