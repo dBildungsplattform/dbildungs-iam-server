@@ -178,8 +178,6 @@ cronjobs:
   enabled: true
   image:
     tag: latest
-    #docker pull ghcr.io/hpi-schul-cloud/cron-tools:docops-1-latest
-    #repository: schulcloud/infra-tools/cron-tools
     repository: ghcr.io/hpi-schul-cloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
