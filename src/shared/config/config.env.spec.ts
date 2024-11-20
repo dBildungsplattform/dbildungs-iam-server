@@ -20,12 +20,12 @@ describe('Config Loader', () => {
             });
         });
 
-        it('should set undefined for System integer values if not provided', () => {
+        it('should set undefined for System values if not provided', () => {
             const config: Config = configEnv();
             expect(config.SYSTEM).toEqual({
                 RENAME_WAITING_TIME_IN_SECONDS: undefined,
                 STEP_UP_TIMEOUT_IN_SECONDS: undefined,
-                STEP_UP_TIMEOUT_ENABLED: 'false',
+                STEP_UP_TIMEOUT_ENABLED: undefined,
             });
         });
     });
