@@ -24,6 +24,7 @@ import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js
 import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Person } from '../../person/domain/person.js';
 import { Geschlecht } from '../../person/domain/person.enums.js';
+import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -100,6 +101,46 @@ describe('OrganisationService', () => {
             });
         });
 
+        it('should create a Schule and log its creation', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+            const schule: Organisation<false> = DoFactory.createOrganisation(false);
+            schule.typ = OrganisationsTyp.SCHULE;
+            organisationRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
+            organisationRepositoryMock.save.mockResolvedValue(schule as unknown as Organisation<true>);
+            mapperMock.map.mockReturnValue(schule as unknown as Dictionary<unknown>);
+
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                schule,
+                permissionsMock,
+            );
+
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: true,
+                value: schule as unknown as Organisation<true>,
+            });
+        });
+
+        it('should fail to create a Klasse and log the creation attempt', async () => {
+            const schule: Organisation<true> = DoFactory.createOrganisation(true);
+            organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
+            const klasse: Organisation<false> = DoFactory.createOrganisation(false);
+            klasse.typ = OrganisationsTyp.KLASSE;
+            klasse.zugehoerigZu = schule.id;
+            organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
+            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
+
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                klasse,
+                permissionsMock,
+            );
+
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new KlasseNurVonSchuleAdministriertError(),
+            });
+        });
+
         it('should return a domain error if first parent organisation does not exist', async () => {
             const organisation: Organisation<false> = DoFactory.createOrganisation(false);
             organisation.administriertVon = faker.string.uuid();
@@ -133,6 +174,9 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if kennung is not set and type is schule', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+
             const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
                 typ: OrganisationsTyp.SCHULE,
                 kennung: undefined,
@@ -333,6 +377,48 @@ describe('OrganisationService', () => {
             });
         });
 
+        it('should update a Schule and log the update', async () => {
+            const schule: Organisation<true> = DoFactory.createOrganisation(true);
+            schule.typ = OrganisationsTyp.SCHULE;
+            organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
+            organisationRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
+            organisationRepositoryMock.save.mockResolvedValue(schule as unknown as Organisation<true>);
+            mapperMock.map.mockReturnValue(schule as unknown as Dictionary<unknown>);
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                schule,
+                permissionsMock,
+            );
+
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: true,
+                value: schule as unknown as Organisation<true>,
+            });
+        });
+
+        it('should fail to update a Klasse and log the update attempt', async () => {
+            const schule: Organisation<true> = DoFactory.createOrganisation(true);
+            const klasse: Organisation<true> = DoFactory.createOrganisation(true);
+            klasse.typ = OrganisationsTyp.KLASSE;
+            klasse.zugehoerigZu = schule.id;
+            organisationRepositoryMock.findById.mockResolvedValueOnce(klasse);
+            organisationRepositoryMock.save.mockResolvedValue(klasse as unknown as Organisation<true>);
+            organisationRepositoryMock.findById.mockResolvedValueOnce(schule);
+            mapperMock.map.mockReturnValue(klasse as unknown as Dictionary<unknown>);
+
+            const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
+                klasse,
+                permissionsMock,
+            );
+
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new KlasseNurVonSchuleAdministriertError(klasse.id),
+            });
+        });
+
         it('should return a domain error', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             organisation.id = '';
@@ -352,7 +438,9 @@ describe('OrganisationService', () => {
                 typ: OrganisationsTyp.SCHULE,
                 kennung: undefined,
             });
-            organisationRepositoryMock.findById.mockResolvedValue(organisation as unknown as Organisation<true>);
+            organisationRepositoryMock.findById.mockResolvedValueOnce(organisation as unknown as Organisation<true>);
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValueOnce(organisationUser);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
                 organisation,

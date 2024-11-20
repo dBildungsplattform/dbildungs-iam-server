@@ -184,8 +184,7 @@ export class RolleController {
         @Body() params: CreateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleResponse> {
-        const organisationNameUser: string | void =
-            (await this.getOrganisationNameForCurrentUser(permissions)) ?? 'ORGANISATION_NAME_NOT_FOUND';
+        const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
 
         const orgResult: Result<OrganisationDo<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
@@ -478,8 +477,7 @@ export class RolleController {
         if (organisationIdUser) {
             const organisationUser: Option<Organisation<true>> =
                 await this.organisationRepository.findById(organisationIdUser);
-            const organisationNameUser: string = organisationUser?.name ?? 'ORGANISATION_NOT_FOUND';
-            return organisationNameUser;
+            if (organisationUser) if (organisationUser.name) return organisationUser.name;
         }
         this.logger.error(`No Organisation id found for given Person id: ${permissions.personFields.id}`);
         return 'ORGANISATION_NOT_FOUND';
