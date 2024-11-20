@@ -52,8 +52,6 @@ spec:
               - "sh"
               - "-c"
               - |
-                  apk update &&
-                  apk add --no-cache bash openssl curl cronie jq vim &&
                   mkdir /scripts &&
                   cp /scripts_tmp/*.sh /scripts/ &&
                   chmod +x /scripts/*.sh &&

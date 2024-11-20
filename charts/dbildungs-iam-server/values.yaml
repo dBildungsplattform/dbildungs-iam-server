@@ -178,7 +178,8 @@ cronjobs:
   enabled: true
   image:
     tag: latest
-    repository: alpine
+    #docker pull ghcr.io/hpi-schul-cloud/cron-tools:docops-1-latest
+    repository: schulcloud/infra-tools/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
