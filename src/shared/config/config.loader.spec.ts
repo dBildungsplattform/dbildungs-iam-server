@@ -77,6 +77,7 @@ describe('configloader', () => {
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
+                    STEP_UP_TIMEOUT_ENABLED: 'true',
                     STEP_UP_TIMEOUT_IN_SECONDS: 10,
                 },
             };
@@ -197,6 +198,7 @@ describe('configloader', () => {
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
+                    STEP_UP_TIMEOUT_ENABLED: 'true',
                     STEP_UP_TIMEOUT_IN_SECONDS: 10,
                 },
             };

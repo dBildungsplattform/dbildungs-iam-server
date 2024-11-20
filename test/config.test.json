@@ -74,6 +74,7 @@
     },
     "SYSTEM": {
         "RENAME_WAITING_TIME_IN_SECONDS": 5,
+        "STEP_UP_TIMEOUT_ENABLED": "true",
         "STEP_UP_TIMEOUT_IN_SECONDS": 900
     }
 }

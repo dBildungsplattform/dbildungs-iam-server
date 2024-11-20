@@ -16,7 +16,7 @@ describe('Config Loader', () => {
             expect(config.SYSTEM).toEqual({
                 RENAME_WAITING_TIME_IN_SECONDS: 60,
                 STEP_UP_TIMEOUT_IN_SECONDS: 120,
-                STEP_UP_TIMEOUT_ENABLED: true,
+                STEP_UP_TIMEOUT_ENABLED: 'true',
             });
         });
 
@@ -25,7 +25,7 @@ describe('Config Loader', () => {
             expect(config.SYSTEM).toEqual({
                 RENAME_WAITING_TIME_IN_SECONDS: undefined,
                 STEP_UP_TIMEOUT_IN_SECONDS: undefined,
-                STEP_UP_TIMEOUT_ENABLED: false,
+                STEP_UP_TIMEOUT_ENABLED: 'false',
             });
         });
     });
