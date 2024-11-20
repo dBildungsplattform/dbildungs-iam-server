@@ -29,8 +29,8 @@ import {
     ListAllGroupsParams,
     ListAllGroupsResponse,
 } from '../actions/group/list-all-groups.action.js';
-import { OxError } from '../../../shared/error/ox.error.js';
-import {CreateGroupAction, CreateGroupParams, CreateGroupResponse} from "../actions/group/create-group.action.js";
+import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../actions/group/create-group.action.js';
+import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -132,13 +132,14 @@ export class OxEventHandler {
             return result;
         }
 
-        this.logger.info(`Successfully Created OxGroup, oxGroupId:${result.value.id}, name:${oxGroupName}, displayName:${displayName}`);
+        this.logger.info(
+            `Successfully Created OxGroup, oxGroupId:${result.value.id}, name:${oxGroupName}, displayName:${displayName}`,
+        );
 
         return {
             ok: true,
             value: result.value.id,
-        }
-
+        };
     }
 
     private async getOxGroupByName(oxGroupName: OXGroupName): Promise<Result<OXGroupID>> {
@@ -157,14 +158,24 @@ export class OxEventHandler {
 
         return {
             ok: false,
-            error: new OxError(`Could Not Find OxGroup With Name:${oxGroupName}`),
+            error: new OxGroupNotFoundError(`OX-group with oxGroupName:${oxGroupName} could not be found`),
         };
     }
 
-   /* private async getExistingOxGroupByNameOrCreateOxGroup(oxGroupName: OXGroupName): Promise<Result<OXGroupID>> {
+    private async getExistingOxGroupByNameOrCreateOxGroup(
+        oxGroupName: OXGroupName,
+        displayName: string,
+    ): Promise<Result<OXGroupID>> {
         const oxGroupId: Result<OXGroupID> = await this.getOxGroupByName(oxGroupName);
 
-    }*/
+        if (!oxGroupId.ok && oxGroupId.error instanceof OxGroupNotFoundError) {
+            const createGroupResult: Result<OXGroupID> = await this.createOxGroup(oxGroupName, displayName);
+
+            return createGroupResult;
+        }
+
+        return oxGroupId;
+    }
 
     private async addOxUserToOxGroup(
         oxGroupId: OXGroupID,
@@ -258,7 +269,10 @@ export class OxEventHandler {
             return this.logger.error(`Persisting oxUserId on emailAddress for personId:${personId} failed`);
         }
 
-        const oxGroupId: Result<OXGroupID> = await this.getOxGroupByName('lehrer');
+        const oxGroupId: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
+            'lehrer-123123',
+            'Lehrer of 123123',
+        );
         if (!oxGroupId.ok) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
