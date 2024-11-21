@@ -177,9 +177,10 @@ describe('PersonenkontextScope', () => {
                         { personId: person.id },
                     );
                     for (const doObj of dos) {
-                        const rolle: Rolle<true> = await rolleRepo.save(
+                        const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                             DoFactory.createRolle(false, { rollenart: rolleArt }),
                         );
+                        if (rolle instanceof DomainError) throw Error();
                         doObj.rolleId = rolle.id;
                     }
 
