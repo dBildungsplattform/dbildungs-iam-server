@@ -19,17 +19,36 @@ echo "Triggering $endpoint_url with $HTTP_METHOD at $(date)"
 # Call get_access_token.sh and capture the access token
 access_token=$(./get_access_token.sh)
 
-# Make the request with JWT authorization and capture the HTTP status code and response body
-response=$(wget --quiet --output-document=- --server-response --header="Authorization: Bearer $access_token" --header="Content-Type: application/json" --method="$HTTP_METHOD" "$endpoint_url" 2>&1)
+# Create temporary files for headers and body
+header_file=$(mktemp)
+body_file=$(mktemp)
 
-# Split the response into body and status code
-response_body=$(echo "$response" | sed -n '/^  HTTP\//q;p')
-http_status=$(echo "$response" | awk '/^  HTTP\// {print $2; exit}')
+# Function to clean up temporary files on exit
+cleanup() {
+  rm -f "$header_file" "$body_file"
+}
+trap cleanup EXIT
+
+# Make the request with JWT authorization
+wget --quiet \
+     --method="$HTTP_METHOD" \
+     --header="Authorization: Bearer $access_token" \
+     --header="Content-Type: application/json" \
+     --output-document="$body_file" \
+     --server-response \
+     "$endpoint_url" \
+     2> "$header_file"
+
+# Extract the HTTP status code from the headers
+http_status=$(awk '/^  HTTP\// {print $2; exit}' "$header_file")
+
+# Extract the response body
+response_body=$(cat "$body_file")
 
 # Output the response details
-echo "Finished triggering $endpoint_url with $HTTP_METHOD at $(date)
-HTTP Status: $http_status
-Response Body: $response_body"
+echo "Finished triggering $endpoint_url with $HTTP_METHOD at $(date)"
+echo "HTTP Status: $http_status"
+echo "Response Body: $response_body"
 
 # Exit with status 1 if the HTTP status code is not 200
 if [ "$http_status" -ne 200 ]; then
