@@ -69,7 +69,7 @@
             "requires2fa": false
         },
         {
-            "id": 5,
+            "id": 8,
             "name": "Anleitungen",
             "target": "URL",
             "url": "https://medienberatung.iqsh.de/schulportal-sh.html",
@@ -82,7 +82,7 @@
             "requires2fa": false
         },
         {
-            "id": 6,
+            "id": 9,
             "name": "Schulrecht A-Z",
             "target": "URL",
             "url": "https://www.schleswig-holstein.de/DE/landesregierung/themen/bildung-hochschulen/schulrecht-von-a-bis-z/schulrecht-von-a-bis-z_node.html",
@@ -95,7 +95,7 @@
             "requires2fa": false
         },
         {
-            "id": 7,
+            "id": 10,
             "name": "Helpdesk kontaktieren",
             "target": "URL",
             "url": "https://www.secure-lernnetz.de/helpdesk/",
@@ -108,7 +108,7 @@
             "requires2fa": false
         },
         {
-            "id": 8,
+            "id": 11,
             "name": "Psychosoziales Beratungsangebot",
             "target": "URL",
             "url": "https://www.schleswig-holstein.de/DE/fachinhalte/P/personalmanagement/BGM/psychosoziale-beratung.html",
@@ -121,7 +121,7 @@
             "requires2fa": false
         },
         {
-            "id": 9,
+            "id": 12,
             "name": "LeOniE.SH",
             "target": "URL",
             "url": "https://www.leonie-sh.de/",
