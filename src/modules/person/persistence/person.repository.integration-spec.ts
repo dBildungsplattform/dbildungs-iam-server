@@ -67,6 +67,7 @@ import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/persona
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -112,6 +113,10 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
                 // the following are required to prepare the test for findByIds()
                 OrganisationRepository,
