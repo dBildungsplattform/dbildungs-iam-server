@@ -40,6 +40,7 @@ import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './pri
 import { TokenInitBodyParams } from './token-init.body.params.js';
 import { TokenStateResponse } from './token-state.response.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
@@ -50,6 +51,7 @@ export class PrivacyIdeaAdministrationController {
     public constructor(
         private readonly privacyIdeaAdministrationService: PrivacyIdeaAdministrationService,
         private readonly personRepository: PersonRepository,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Post('init')
@@ -173,8 +175,19 @@ export class PrivacyIdeaAdministrationController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
-
-        await this.privacyIdeaAdministrationService.verifyTokenEnrollment(referrer, params.otp);
+        try {
+            await this.privacyIdeaAdministrationService.verifyTokenEnrollment(referrer, params.otp);
+            this.logger.info(
+                `Benutzer ${referrer} (BenutzerId: ${params.personId}) hat sich einen Software-Token für 2FA eingerichtet.`,
+            );
+        } catch (error) {
+            if (error instanceof Error) {
+                this.logger.error(
+                    `Benutzer mit BenutzerID: ${params.personId} hat versucht eine 2FA einzurichten. Fehler: ${error.message}`,
+                );
+            }
+            throw error;
+        }
     }
 
     @Get('required')

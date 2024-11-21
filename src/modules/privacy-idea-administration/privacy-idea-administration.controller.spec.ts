@@ -16,6 +16,7 @@ import { PrivacyIdeaAdministrationController } from './privacy-idea-administrati
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
 import { TokenStateResponse } from './token-state.response.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -49,6 +50,10 @@ describe('PrivacyIdeaAdministrationController', () => {
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
             ],
         }).compile();
@@ -395,6 +400,21 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
 
             await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
+        });
+        it('should throw an error when trying to verify', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+            const person: Person<true> = getPerson();
+
+            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+            const error: Error = new Error('verification failed');
+            serviceMock.verifyTokenEnrollment.mockRejectedValueOnce(error);
+
+            await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
+                error,
+            );
         });
 
         it('should return forbidden insufficient permissions', async () => {

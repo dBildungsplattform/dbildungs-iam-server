@@ -15,6 +15,7 @@ import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.j
 import { HttpException } from '@nestjs/common';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('Import API with mocked ImportWorkflow', () => {
     let sut: ImportController;
@@ -36,6 +37,10 @@ describe('Import API with mocked ImportWorkflow', () => {
                 {
                     provide: ImportWorkflow,
                     useValue: createMock<ImportWorkflow>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
                 ImportController,
             ],
