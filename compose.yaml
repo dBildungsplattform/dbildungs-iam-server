@@ -164,6 +164,7 @@ services:
       - KC_CLIENT_ID=spsh-service
       - KC_TOKEN_URL=http://keycloak:8080/realms/SPSH/protocol/openid-connect/token
       - BACKEND_ENDPOINT_URL=http://host.docker.internal:9090/api/cron/kopers-lock
+      - HTTP_METHOD=PUT
       - JWKS_FILE_PATH=/keys/jwks.json
     volumes:
       - ./charts/dbildungs-iam-server/cron/scripts:/scripts
