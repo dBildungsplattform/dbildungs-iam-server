@@ -1,13 +1,27 @@
 import { ExecutionContext } from '@nestjs/common';
 import { MetricsGuard } from './metrics.guard.js';
 import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { MetricsConfig } from '../../shared/config/metrics.config.js';
+import { createMock } from '@golevelup/ts-jest';
 
 describe('MetricsGuard - Basic Auth', () => {
     let metricsGuard: MetricsGuard;
     let mockContext: jest.Mocked<ExecutionContext>;
+    let configService: jest.Mocked<ConfigService>;
 
     beforeEach(() => {
-        metricsGuard = new MetricsGuard();
+        configService = createMock<ConfigService>();
+        configService.getOrThrow.mockImplementation((key: keyof MetricsConfig) => {
+            if (key === ('METRICS' as keyof MetricsConfig)) {
+                return {
+                    USERNAME: 'admin',
+                    PASSWORD: 'admin',
+                };
+            }
+            throw new Error(`Unexpected config key: ${key}`);
+        });
+        metricsGuard = new MetricsGuard(configService);
 
         mockContext = {
             switchToHttp: jest.fn().mockReturnValue({
