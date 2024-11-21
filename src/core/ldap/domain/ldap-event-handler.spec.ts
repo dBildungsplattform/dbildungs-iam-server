@@ -35,6 +35,7 @@ import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -472,7 +473,7 @@ describe('LDAP Event Handler', () => {
             expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
         });
 
-        it('should call ldap client for every deleted personenkontext with correct role', async () => {
+        it('should call ldap client for every deleted personenkontext with correct role (if person has PK with rollenArt LEHR left)', async () => {
             const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
                 {
                     id: faker.string.uuid(),
@@ -509,6 +510,47 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
             expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+        });
+
+        it('should NOT call ldap client for deleting person in LDAP when person still has at least one PK with rollenArt LEHR left', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [],
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Keep lehrer in LDAP, personId:${event.person.id}, because person keeps PK(s) with rollenArt LEHR`,
+            );
         });
 
         it('when organisation of deleted PK has no valid emailDomain should log error', async () => {
@@ -635,6 +677,25 @@ describe('LDAP Event Handler', () => {
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
+            );
+            expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('handleEmailAddressChangedEvent', () => {
+        it('should call ldap client changeEmailAddressByPersonId', async () => {
+            const event: EmailAddressChangedEvent = new EmailAddressChangedEvent(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.internet.email(),
+                faker.string.uuid(),
+                faker.internet.email(),
+            );
+
+            await ldapEventHandler.handleEmailAddressChangedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });
