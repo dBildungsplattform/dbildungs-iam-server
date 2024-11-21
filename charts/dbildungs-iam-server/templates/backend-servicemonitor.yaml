@@ -19,12 +19,5 @@ spec:
     - port: {{ (index .Values.backend.serviceMonitor.endpoints 0).port }}
       path: {{ .Values.serviceMonitor.path }}
       interval: {{ .Values.serviceMonitor.interval }}
-      basicAuth:
-        password:
-          name: {{ .Values.auth.metrics_password }}
-          key: password
-        username:
-          name: {{ .Values.auth.metrics_username }}
-          key: username
 {{ end }}
 
