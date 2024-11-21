@@ -781,12 +781,15 @@ describe('PersonController', () => {
         });
 
         describe('when person does not exist or no permissions', () => {
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: '2024-01-01T00:00:00Z',
-                locked_until: new Date(),
-            };
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
+                const lockUserBodyParams: LockUserBodyParams = {
+                    lock,
+                    locked_by: '2024-01-01T00:00:00Z',
+                    locked_until: new Date(),
+                };
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError('Person'),
@@ -798,15 +801,18 @@ describe('PersonController', () => {
         });
 
         describe('when keycloakUserId is missing', () => {
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: '2024-01-01T00:00:00Z',
-                locked_until: new Date(),
-            };
             const person: Person<true> = getPerson();
             person.keycloakUserId = undefined;
 
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
+                const lockUserBodyParams: LockUserBodyParams = {
+                    lock,
+                    locked_by: '2024-01-01T00:00:00Z',
+                    locked_until: new Date(),
+                };
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: person,
@@ -821,9 +827,12 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             person.keycloakUserId = 'keycloak-12345';
 
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
                 const lockUserBodyParams: LockUserBodyParams = {
-                    lock: false,
+                    lock,
                     locked_by: '2024-01-01T00:00:00Z',
                     locked_until: new Date(),
                 };
