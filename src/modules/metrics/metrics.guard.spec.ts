@@ -67,6 +67,15 @@ describe('MetricsGuard - Basic Auth', () => {
         expect(result).toBe(false);
     });
 
+    it('should return false if base64Credentials are undefinded', () => {
+        const mockRequest: Partial<Request> = { headers: { authorization: 'Basic ' } };
+        (mockContext.switchToHttp().getRequest as jest.Mock).mockReturnValue(mockRequest as Request);
+
+        const result: boolean = metricsGuard.canActivate(mockContext);
+
+        expect(result).toBe(false);
+    });
+
     it('should return true for valid Basic auth credentials', () => {
         const validCredentials: string = Buffer.from('admin:admin').toString('base64');
         const mockRequest: Partial<Request> = { headers: { authorization: `Basic ${validCredentials}` } };
