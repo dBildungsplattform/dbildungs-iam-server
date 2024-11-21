@@ -99,13 +99,13 @@ backend:
       path: '/health'
   dbseeding:
     enabled: true
-    command: [ 'node', 'dist/src/console/main.js', 'db', 'seed', 'dev' ]
+    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
   dbmigration:
     enabled: true
-    command: [ 'node', 'dist/src/console/main.js', 'db', 'migration-apply' ]
+    command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
   keycloakdatamigration: 
     enabled: true
-    command: [ 'node', 'dist/src/console/main.js', 'keycloak', 'update-clients', 'dev' ]
+    command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
   ingress:
     enabled: true
     ingressClassName: nginx
