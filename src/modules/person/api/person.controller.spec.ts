@@ -736,48 +736,56 @@ describe('PersonController', () => {
 
         describe('when locking a user is successful', () => {
             const person: Person<true> = getPerson();
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: true,
-                locked_by: 'Theo Tester',
-                locked_until: new Date(),
-            };
-            it('should return a success message', async () => {
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                const response: { message: string } = await personController.lockPerson(
-                    params.personId,
-                    lockUserBodyParams,
-                    personPermissionsMock,
-                );
+            it.each([[new Date()], [undefined]])(
+                'should return a success message when locked_until is %p',
+                async (lockedUntil: Date | undefined) => {
+                    const lockUserBodyParams: LockUserBodyParams = {
+                        lock: true,
+                        locked_by: 'Theo Tester',
+                        locked_until: lockedUntil,
+                    };
+                    personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                    keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                expect(response).toEqual({ message: 'User has been successfully locked.' });
-                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
-                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
-            });
+                    const response: { message: string } = await personController.lockPerson(
+                        params.personId,
+                        lockUserBodyParams,
+                        personPermissionsMock,
+                    );
+
+                    expect(response).toEqual({ message: 'User has been successfully locked.' });
+                    expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                    expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+                },
+            );
         });
 
         describe('when unlocking a user is successful', () => {
             const person: Person<true> = getPerson();
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: 'Theo Tester',
-                locked_until: new Date(),
-            };
-            it('should return a success message', async () => {
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                const response: { message: string } = await personController.lockPerson(
-                    params.personId,
-                    lockUserBodyParams,
-                    personPermissionsMock,
-                );
+            it.each([[new Date()], [undefined]])(
+                'should return a success message when locked_until is %p',
+                async (lockedUntil: Date | undefined) => {
+                    const lockUserBodyParams: LockUserBodyParams = {
+                        lock: false,
+                        locked_by: 'Theo Tester',
+                        locked_until: lockedUntil,
+                    };
+                    personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                    keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                expect(response).toEqual({ message: 'User has been successfully unlocked.' });
-                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
-                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
-            });
+                    const response: { message: string } = await personController.lockPerson(
+                        params.personId,
+                        lockUserBodyParams,
+                        personPermissionsMock,
+                    );
+
+                    expect(response).toEqual({ message: 'User has been successfully unlocked.' });
+                    expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                    expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+                },
+            );
         });
 
         describe('when person does not exist or no permissions', () => {
