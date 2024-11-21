@@ -92,7 +92,7 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: false,
                 error: new Error('Forbidden access'),
             });
-
+            personPermissionsMock = createMock<PersonPermissions>();
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
             );
