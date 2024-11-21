@@ -96,14 +96,4 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: redis-password
-          - name: METRICS_PASSWORD
-              valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: metrics-password
-          - name: METRICS_USERNAME
-              valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: metrics-username
 {{- end}}

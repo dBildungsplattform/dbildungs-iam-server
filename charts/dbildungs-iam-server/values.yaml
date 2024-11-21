@@ -114,7 +114,7 @@ backend:
       http: 80
   serviceMonitor:
     enabled: true
-    path: "/api/metrics"
+    path: "/metrics"
     interval: 30s
     endpoints:
       - port: 'web'
