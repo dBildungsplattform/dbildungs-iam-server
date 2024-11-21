@@ -10,14 +10,25 @@ base64url_encode() {
 }
 
 base64url_decode() {
-  local input=$1
-  # Replace '-' with '+', '_' with '/'
-  input=$(echo "$input" | sed 's/-/+/g; s/_/\//g')
-  # Calculate the required padding
-  local padding=$(( (4 - ${#input} % 4) % 4 ))
-  # Add padding if necessary
-  input="$input$(printf '=%.0s' $(seq 1 $padding))"
-  echo "$input" | base64 -d
+    local input="$1"
+
+    # Replace URL-specific characters with Base64 standard characters
+    local base64_str="${input//-/+}"
+    base64_str="${base64_str//_/\/}"
+
+    # Calculate the required padding
+    local padding=$((4 - ${#base64_str} % 4))
+    if (( padding != 4 )); then
+        base64_str+=$(printf '=%.0s' $(seq 1 $padding))
+    fi
+
+    # Decode the Base64 string
+    # The -w0 option ensures no line wrapping (GNU base64)
+    if base64 --help 2>&1 | grep -q -- '-w'; then
+        echo "$base64_str" | base64 -d -w0
+    else
+        echo "$base64_str" | base64 -d
+    fi
 }
 
 # Function to decode base64url and convert to hex, preserving leading zeros
