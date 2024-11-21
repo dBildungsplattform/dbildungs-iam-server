@@ -672,11 +672,11 @@ export class PersonRepository {
                         koperslock,
                         false,
                     );
-                    if (lockResult instanceof DomainError) {
+                    if (!lockResult.ok && lockResult.error instanceof DomainError) {
                         const keyCloakUpdateError: DownstreamKeycloakError = new DownstreamKeycloakError(
-                            lockResult.message,
+                            lockResult.error.message,
                             personId,
-                            [lockResult.details],
+                            [lockResult.error.details],
                         );
                         this.logger.error(
                             `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.referrer} (BenutzerId: ${personFound.id}) konnte durch Nachtragen der KoPers.-Nr. nicht aufgehoben werden. Fehler: ${keyCloakUpdateError.message}`,

@@ -68,6 +68,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1869,7 +1870,37 @@ describe('PersonRepository Integration', () => {
             expect(person.personalnummer).not.toEqual(newPersonalnummer);
             expect(result.personalnummer).toEqual(newPersonalnummer);
         });
+        it('should return DownstreamKeycloakError when keyCloakUpdate failed', async () => {
+            const person: Person<true> = await savePerson(true);
+            const newFamilienname: string = faker.name.lastName();
+            const newVorname: string = faker.name.firstName();
+            const newPersonalnummer: string = faker.finance.pin(7);
+            const kopersLock: UserLock = {
+                person: person.id,
+                created_at: new Date(),
+                locked_by: 'cron',
+                locked_until: new Date(),
+                locked_occasion: PersonLockOccasion.KOPERS_GESPERRT,
+            };
 
+            await userLockRepository.createUserLock(kopersLock);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+            kcUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({
+                ok: false,
+                error: new KeycloakClientError('Could not update user status or database'),
+            });
+            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
+                person.id,
+                newFamilienname,
+                newVorname,
+                newPersonalnummer,
+                person.updatedAt,
+                person.revision,
+                personPermissionsMock,
+            );
+
+            expect(result).toBeInstanceOf(DownstreamKeycloakError);
+        });
         it('should return EntityNotFound when person does not exit', async () => {
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 faker.string.uuid(),
