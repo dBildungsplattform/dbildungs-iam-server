@@ -133,7 +133,7 @@ redis:
     repository: bitnami/redis
     tag: 7.4.1-debian-12-r2
   replica:
-    replicaCount: 2
+    replicaCount: 1
   sentinel:
     enabled: true
   pdb: 
