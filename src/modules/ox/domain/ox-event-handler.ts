@@ -44,6 +44,10 @@ export class OxEventHandler {
 
     private readonly contextName: OXContextName;
 
+    private static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
+
+    private static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'Lehrer of ';
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly oxService: OxService,
@@ -271,8 +275,8 @@ export class OxEventHandler {
         }
 
         const oxGroupId: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
-            `lehrer-${orgaKennung}`,
-            `Lehrer of ${orgaKennung}`,
+            OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + orgaKennung,
+            OxEventHandler.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + orgaKennung,
         );
         if (!oxGroupId.ok) {
             mostRecentRequestedEmailAddress.failed();
