@@ -30,7 +30,7 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';
-import { PersonID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
@@ -65,6 +65,7 @@ describe('Email Event Handler', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -114,6 +115,7 @@ describe('Email Event Handler', () => {
         rolleRepoMock = module.get(RolleRepo);
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        organisationRepositoryMock = module.get(OrganisationRepository);
         loggerMock = module.get(ClassLogger);
 
         app = module.createNestApplication();
@@ -144,6 +146,195 @@ describe('Email Event Handler', () => {
         });
     }
 
+    describe('createOrEnableEmail', () => {
+        let fakePersonId: PersonID;
+        let fakeRolleId: RolleID;
+        let fakeOrgaId: string;
+        let event: PersonenkontextUpdatedEvent;
+        let personenkontexte: Personenkontext<true>[];
+        let rolle: Rolle<true>;
+        let rolleMap: Map<string, Rolle<true>>;
+        let sp: ServiceProvider<true>;
+        let spMap: Map<string, ServiceProvider<true>>;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            fakePersonId = faker.string.uuid();
+            fakeRolleId = faker.string.uuid();
+            fakeOrgaId = faker.string.uuid();
+            event = createMock<PersonenkontextUpdatedEvent>({ person: { id: fakePersonId } });
+
+            personenkontexte = [
+                createMock<Personenkontext<true>>({ rolleId: fakeRolleId, organisationId: fakeOrgaId }),
+            ];
+            rolle = createMock<Rolle<true>>({ id: fakeRolleId, serviceProviderIds: [] });
+            rolleMap = new Map<string, Rolle<true>>();
+            rolleMap.set(fakeRolleId, rolle);
+            sp = createMock<ServiceProvider<true>>({
+                kategorie: ServiceProviderKategorie.EMAIL,
+            });
+            spMap = new Map<string, ServiceProvider<true>>();
+            spMap.set(sp.id, sp);
+        });
+
+        describe('when orgaKennung CANNOT be found', () => {
+            it('should log matching error', async () => {
+                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
+
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(undefined); //no existing email is found
+
+                const persistenceResult: EmailAddress<true> = getEmail();
+                emailRepoMock.save.mockResolvedValueOnce(persistenceResult); //mock: error during saving the entity
+
+                mockEmailFactoryCreateNewReturnsEnabledEmail(faker.internet.email());
+
+                // eslint-disable-next-line @typescript-eslint/require-await
+                emailFactoryMock.createNew.mockImplementationOnce(async (personId: PersonID) => {
+                    const emailAddress: EmailAddress<false> = EmailAddress.createNew(
+                        personId,
+                        faker.internet.email(),
+                        EmailAddressStatus.ENABLED,
+                    );
+
+                    return {
+                        ok: true,
+                        value: emailAddress,
+                    };
+                });
+                organisationRepositoryMock.findById.mockResolvedValue(undefined);
+
+                await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(`Could not retrieve orgaKennung, orgaId:${fakeOrgaId}`);
+            });
+        });
+    });
+
+    describe('createNewEmail', () => {
+        let fakePersonId: PersonID;
+        let fakeRolleId: RolleID;
+        let fakeOrgaId: OrganisationID;
+        let event: PersonRenamedEvent;
+        let personenkontexte: Personenkontext<true>[];
+        let rolle: Rolle<true>;
+        let rolleMap: Map<string, Rolle<true>>;
+        let sp: ServiceProvider<true>;
+        let spMap: Map<string, ServiceProvider<true>>;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            fakePersonId = faker.string.uuid();
+            fakeRolleId = faker.string.uuid();
+            fakeOrgaId = faker.string.uuid();
+            event = createMock<PersonRenamedEvent>({ personId: fakePersonId });
+
+            personenkontexte = [
+                createMock<Personenkontext<true>>({ rolleId: fakeRolleId, organisationId: fakeOrgaId }),
+            ];
+            rolle = createMock<Rolle<true>>({ id: fakeRolleId, serviceProviderIds: [] });
+            rolleMap = new Map<string, Rolle<true>>();
+            rolleMap.set(fakeRolleId, rolle);
+            sp = createMock<ServiceProvider<true>>({
+                kategorie: ServiceProviderKategorie.EMAIL,
+            });
+            spMap = new Map<string, ServiceProvider<true>>();
+            spMap.set(sp.id, sp);
+        });
+
+        describe('when orgaKennung CANNOT be found', () => {
+            it('should log matching error', async () => {
+                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
+
+                emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined); //no existing email is found
+
+                organisationRepositoryMock.findById.mockResolvedValue(undefined);
+
+                await emailEventHandler.handlePersonRenamedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(`Could not retrieve orgaKennung, orgaId:${fakeOrgaId}`);
+            });
+        });
+    });
+
+    describe('changeEmail', () => {
+        let fakePersonId: PersonID;
+        let fakeRolleId: RolleID;
+        let fakeEmailAddress: string;
+        let fakeOrgaId: string;
+        let event: PersonRenamedEvent;
+        let personenkontext: Personenkontext<true>;
+        let rolle: Rolle<true>;
+        let rollenMap: Map<string, Rolle<true>>;
+        let sp: ServiceProvider<true>;
+        let spMap: Map<string, ServiceProvider<true>>;
+        let emailAddress: EmailAddress<true>;
+
+        beforeEach(() => {
+            fakePersonId = faker.string.uuid();
+            fakeRolleId = faker.string.uuid();
+            fakeEmailAddress = faker.internet.email();
+            fakeOrgaId = faker.string.uuid();
+            event = new PersonRenamedEvent(
+                fakePersonId,
+                faker.person.firstName(),
+                faker.person.lastName(),
+                faker.internet.userName(),
+                faker.internet.userName(),
+            );
+            personenkontext = createMock<Personenkontext<true>>({ rolleId: fakeRolleId, organisationId: fakeOrgaId });
+            rolle = createMock<Rolle<true>>({ id: fakeRolleId });
+            rollenMap = new Map<string, Rolle<true>>();
+            rollenMap.set(fakeRolleId, rolle);
+            sp = createMock<ServiceProvider<true>>({
+                kategorie: ServiceProviderKategorie.EMAIL,
+            });
+            spMap = new Map<string, ServiceProvider<true>>();
+            spMap.set(sp.id, sp);
+            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
+            emailAddress = EmailAddress.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                fakePersonId,
+                fakeEmailAddress,
+                EmailAddressStatus.ENABLED,
+            );
+        });
+        describe('when orgaKennung CANNOT be found', () => {
+            it('should log error', async () => {
+                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([personenkontext]);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
+                emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
+
+                emailRepoMock.save.mockResolvedValueOnce(emailAddress);
+
+                //mock createNewEmail
+                emailFactoryMock.createNew.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityCouldNotBeCreated('EmailAddress'),
+                });
+
+                //mock persisting new email
+                emailRepoMock.save.mockResolvedValueOnce(emailAddress);
+
+                organisationRepositoryMock.findById.mockResolvedValue(undefined);
+
+                await emailEventHandler.handlePersonRenamedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(`Received PersonRenamedEvent, personId:${event.personId}`);
+                expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
+                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                    `Could not retrieve orgaKennung, orgaId:${fakeOrgaId}`,
+                );
+            });
+        });
+    });
+
     describe('handlePersonenkontextUpdatedEvent', () => {
         let fakePersonId: PersonID;
         let fakeRolleId: RolleID;
@@ -171,6 +362,8 @@ describe('Email Event Handler', () => {
             });
             spMap = new Map<string, ServiceProvider<true>>();
             spMap.set(sp.id, sp);
+
+            organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
         });
 
         describe('when email exists and is enabled', () => {
@@ -568,6 +761,8 @@ describe('Email Event Handler', () => {
                 fakeEmailAddress,
                 EmailAddressStatus.ENABLED,
             );
+
+            organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
         });
 
         describe('when rolle exists and service provider with kategorie email is found', () => {
@@ -652,7 +847,7 @@ describe('Email Event Handler', () => {
                 });
             });
 
-            describe('when enabled email DOES NOT exist and creating new email is successfull', () => {
+            describe('when enabled email DOES NOT exist and creating new email is successful', () => {
                 it('should log info', async () => {
                     dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([personenkontext]);
                     rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);

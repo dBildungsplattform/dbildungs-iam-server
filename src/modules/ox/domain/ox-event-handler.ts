@@ -84,7 +84,7 @@ export class OxEventHandler {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.createOxUser(event.personId);
+        await this.createOxUser(event.personId, event.orgaKennung);
     }
 
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
@@ -149,6 +149,7 @@ export class OxEventHandler {
         }
         for (const group of listAllGroupsResult.value.groups) {
             if (group.name === oxGroupName) {
+                this.logger.info(`Found existing oxGroup for oxGroupName:${oxGroupName}`);
                 return {
                     ok: true,
                     value: group.id,
@@ -200,7 +201,7 @@ export class OxEventHandler {
         return result;
     }
 
-    private async createOxUser(personId: PersonID): Promise<void> {
+    private async createOxUser(personId: PersonID, orgaKennung: string): Promise<void> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
@@ -270,8 +271,8 @@ export class OxEventHandler {
         }
 
         const oxGroupId: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
-            'lehrer-123123',
-            'Lehrer of 123123',
+            `lehrer-${orgaKennung}`,
+            `Lehrer of ${orgaKennung}`,
         );
         if (!oxGroupId.ok) {
             mostRecentRequestedEmailAddress.failed();
