@@ -1,5 +1,5 @@
 import { ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
 import { Registry } from 'prom-client';
 import { Public } from '../authentication/api/public.decorator.js';
 import { ReporterService } from './reporter.service.js';
@@ -8,6 +8,7 @@ import { PersonenkontextScope } from '../personenkontext/persistence/personenkon
 import { RollenArt } from '../rolle/domain/rolle.enums.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { MetricsGuard } from './metrics.guard.js';
 
 @ApiTags('Metrics')
 @Controller({ path: 'metrics' })
@@ -20,6 +21,7 @@ export class MetricsController {
 
     @Get()
     @Public()
+    @UseGuards(MetricsGuard)
     public async getMetrics(): Promise<string> {
         const mapping: Map<string, RollenArt> = new Map([
             ['number_of_teachers', RollenArt.LEHR],

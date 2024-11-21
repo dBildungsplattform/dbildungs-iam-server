@@ -180,3 +180,5 @@ serviceMonitor:
   enabled: true
   path: "/api/metrics"
   interval: 30s
+  username: 'admin'
+  password: 'admin'
