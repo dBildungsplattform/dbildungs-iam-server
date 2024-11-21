@@ -13,6 +13,7 @@ import { OrganisationRepository } from '../../../modules/organisation/persistenc
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -142,7 +143,7 @@ export class LdapEventHandler {
             this.logger.error(modifyResult.error.message);
             return;
         }
-        this.logger.info(`Successfully modfied person attributes for personId:${event.personId}`);
+        this.logger.info(`Successfully modified person attributes for personId:${event.personId}`);
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
@@ -212,5 +213,14 @@ export class LdapEventHandler {
         );
 
         await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.address);
+    }
+
+    @EventHandler(EmailAddressChangedEvent)
+    public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}`,
+        );
+
+        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.newAddress);
     }
 }

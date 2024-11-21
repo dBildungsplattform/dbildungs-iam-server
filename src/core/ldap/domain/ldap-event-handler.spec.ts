@@ -35,6 +35,7 @@ import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -666,6 +667,25 @@ describe('LDAP Event Handler', () => {
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
+            );
+            expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('handleEmailAddressChangedEvent', () => {
+        it('should call ldap client changeEmailAddressByPersonId', async () => {
+            const event: EmailAddressChangedEvent = new EmailAddressChangedEvent(
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.internet.email(),
+                faker.string.uuid(),
+                faker.internet.email(),
+            );
+
+            await ldapEventHandler.handleEmailAddressChangedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });
