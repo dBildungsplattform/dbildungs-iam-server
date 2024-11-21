@@ -70,12 +70,17 @@ export class PrivacyIdeaAdministrationController {
         const selfService: boolean = params.personId === permissions.personFields.id;
         try {
             const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
+            const result: string = await this.privacyIdeaAdministrationService.initializeSoftwareToken(
+                referrer,
+                selfService,
+            );
+
             if (!selfService) {
                 this.logger.info(
                     `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat für Benutzer ${referrer} (BenutzerId: ${params.personId}) den 2FA Token zurückgesetzt. Seriennummer: <Token ID> (Seriennummer nur falls HW Token!)`,
                 );
             }
-            return await this.privacyIdeaAdministrationService.initializeSoftwareToken(referrer, selfService);
+            return result;
         } catch (error) {
             if ((error instanceof HttpException || error instanceof SoftwareTokenInitializationError) && !selfService) {
                 this.logger.error(
