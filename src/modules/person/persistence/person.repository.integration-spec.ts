@@ -1870,7 +1870,7 @@ describe('PersonRepository Integration', () => {
             expect(person.personalnummer).not.toEqual(newPersonalnummer);
             expect(result.personalnummer).toEqual(newPersonalnummer);
         });
-        it('should return DownstreamKeycloakError when keyCloakUpdate failed', async () => {
+        it('should return an error when keyCloakUpdate failed', async () => {
             const person: Person<true> = await savePerson(true);
             const newFamilienname: string = faker.name.lastName();
             const newVorname: string = faker.name.firstName();
@@ -1889,17 +1889,17 @@ describe('PersonRepository Integration', () => {
                 ok: false,
                 error: new KeycloakClientError('Could not update user status or database'),
             });
-            const result: Person<true> | DomainError = await sut.updatePersonMetadata(
-                person.id,
-                newFamilienname,
-                newVorname,
-                newPersonalnummer,
-                person.updatedAt,
-                person.revision,
-                personPermissionsMock,
-            );
-
-            expect(result).toBeInstanceOf(DownstreamKeycloakError);
+            await expect(
+                sut.updatePersonMetadata(
+                    person.id,
+                    newFamilienname,
+                    newVorname,
+                    newPersonalnummer,
+                    person.updatedAt,
+                    person.revision,
+                    personPermissionsMock,
+                ),
+            ).rejects.toThrow(DownstreamKeycloakError);
         });
         it('should return EntityNotFound when person does not exit', async () => {
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
