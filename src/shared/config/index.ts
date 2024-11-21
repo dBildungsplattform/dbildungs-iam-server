@@ -9,3 +9,4 @@ export * from './redis.config.js';
 export * from './server.config.js';
 export * from './itslearning.config.js';
 export * from './privacyidea.config.js';
+export * from './metrics.config.js';

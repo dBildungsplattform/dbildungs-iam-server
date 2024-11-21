@@ -21,10 +21,10 @@ spec:
       interval: {{ .Values.serviceMonitor.interval }}
       basicAuth:
         password:
-          name: {{ .Values.serviceMonitor.password }}
+          name: {{ .Values.auth.metrics_password }}
           key: password
         username:
-          name: {{ .Values.serviceMonitor.username }}
+          name: {{ .Values.auth.metrics_username }}
           key: username
 {{ end }}
 

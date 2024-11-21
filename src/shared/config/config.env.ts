@@ -7,6 +7,7 @@ import { LdapConfig } from './ldap.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
+import { MetricsConfig } from './metrics.config.js';
 
 export default (): {
     DB: Partial<DbConfig>;
@@ -18,6 +19,7 @@ export default (): {
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
     OX: Partial<OxConfig>;
+    METRICS: Partial<MetricsConfig>;
 } => ({
     DB: {
         DB_NAME: process.env['DB_NAME'],
@@ -69,5 +71,9 @@ export default (): {
         ENDPOINT: process.env['OX_ENDPOINT'],
         USERNAME: process.env['OX_USERNAME'],
         PASSWORD: process.env['OX_PASSWORD'],
+    },
+    METRICS: {
+        USERNAME: process.env['METRICS_USERNAME'],
+        PASSWORD: process.env['METRICS_PASSWORD'],
     },
 });

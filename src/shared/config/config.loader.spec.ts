@@ -93,6 +93,10 @@ describe('configloader', () => {
                 OX: {
                     PASSWORD: 'password',
                 },
+                METRICS: {
+                    USERNAME: 'admin',
+                    PASSWORD: 'admin',
+                },
             };
 
             beforeEach(() => {

@@ -52,6 +52,8 @@ auth:
   pi_user_realm: ''
   pi_rename_waiting_time: ''
   redis_password: ''
+  metrics_username: ''
+  metrics_password: ''
 
 backend:
   replicaCount: 1
@@ -180,5 +182,3 @@ serviceMonitor:
   enabled: true
   path: "/api/metrics"
   interval: 30s
-  username: 'admin'
-  password: 'admin'
