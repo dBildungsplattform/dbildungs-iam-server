@@ -40,6 +40,8 @@ import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './pri
 import { TokenInitBodyParams } from './token-init.body.params.js';
 import { TokenStateResponse } from './token-state.response.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
@@ -50,6 +52,7 @@ export class PrivacyIdeaAdministrationController {
     public constructor(
         private readonly privacyIdeaAdministrationService: PrivacyIdeaAdministrationService,
         private readonly personRepository: PersonRepository,
+        private logger: ClassLogger,
     ) {}
 
     @Post('init')
@@ -64,10 +67,23 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: TokenInitBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<string> {
-        const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
         const selfService: boolean = params.personId === permissions.personFields.id;
-
-        return this.privacyIdeaAdministrationService.initializeSoftwareToken(referrer, selfService);
+        try {
+            const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
+            if (!selfService) {
+                this.logger.info(
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat für Benutzer ${referrer} (BenutzerId: ${params.personId}) den 2FA Token zurückgesetzt. Seriennummer: <Token ID> (Seriennummer nur falls HW Token!)`,
+                );
+            }
+            return await this.privacyIdeaAdministrationService.initializeSoftwareToken(referrer, selfService);
+        } catch (error) {
+            if ((error instanceof HttpException || error instanceof SoftwareTokenInitializationError) && !selfService) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer mit BenutzerId: ${params.personId} einen Software-Token einzurichten. Fehler: ${error.message}`,
+                );
+            }
+            throw error;
+        }
     }
 
     @Get('state')
@@ -104,16 +120,26 @@ export class PrivacyIdeaAdministrationController {
         const referrer: string = await this.getReferrerIfAllowed(personId, permissions);
         try {
             const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
+            this.logger.info(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat für Benutzer ${referrer} (BenutzerId: ${personId}) den 2FA Token zurückgesetzt.`,
+            );
             return response.result.status;
         } catch (error) {
             if (error instanceof TokenError) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht den 2FA Token von Benutzer mit BenutzerId: ${personId} zurückzusetzen. Fehler: ${error.message}`,
+                );
                 throw error;
             }
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityCouldNotBeUpdated(referrer, 'Token could not be unassigned.'),
                 ),
             );
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht den 2FA Token von Benutzer mit BenutzerId: ${personId} zurückzusetzen. Fehler: ${schulConnexError.message}`,
+            );
+            throw schulConnexError;
         }
     }
 
@@ -139,6 +165,9 @@ export class PrivacyIdeaAdministrationController {
                 params.otp,
                 referrer,
             );
+            this.logger.info(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat Benutzer ${referrer} (BenutzerId: ${params.userId}) ein Hardware-Token zugewiesen. Seriennummer: ${params.serial}`,
+            );
             return new AssignHardwareTokenResponse(
                 result.id,
                 result.jsonrpc,
@@ -150,13 +179,20 @@ export class PrivacyIdeaAdministrationController {
             );
         } catch (error) {
             if (error instanceof TokenError) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer ${referrer} (BenutzerId: ${params.userId}) einen Hardware-Token zuzuweisen. Fehler: ${error.message}`,
+                );
                 throw error;
             }
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityCouldNotBeCreated('Hardware-Token could not be assigned.'),
                 ),
             );
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht Benutzer ${referrer} (BenutzerId: ${params.userId}) einen Hardware-Token zuzuweisen. Fehler: ${schulConnexError.message}`,
+            );
+            throw schulConnexError;
         }
     }
 
