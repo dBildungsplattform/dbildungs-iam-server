@@ -9,6 +9,7 @@ import { RollenArt } from '../rolle/domain/rolle.enums.js';
 import { MetricsService } from './metrics.service.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { MetricsGuard } from './metrics.guard.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('MetricsController', () => {
     let controller: MetricsController;
@@ -33,6 +34,26 @@ describe('MetricsController', () => {
                         findBy: jest.fn().mockResolvedValue([[], 0]),
                     },
                 },
+                {
+                    provide: ConfigService,
+                    useValue: {
+                        getOrThrow: jest.fn((key: string) => {
+                            if (key === 'METRICS') {
+                                return {
+                                    USERNAME: 'admin',
+                                    PASSWORD: 'securepassword',
+                                };
+                            }
+                            throw new Error(`Config key ${key} not found`);
+                        }),
+                    },
+                },
+                {
+                    provide: MetricsGuard,
+                    useValue: {
+                        canActivate: jest.fn().mockReturnValue(true),
+                    },
+                },
             ],
         }).compile();
 
@@ -40,11 +61,9 @@ describe('MetricsController', () => {
         registry = module.get<Registry>(Registry);
         metricsService = new MetricsService(registry);
         ReporterService.init(metricsService);
-
+        dBiamPersonenkontextRepo = module.get<DBiamPersonenkontextRepo>(DBiamPersonenkontextRepo);
         const metricsGuard: MetricsGuard = module.get(MetricsGuard);
         metricsGuard.canActivate = jest.fn().mockReturnValue(true);
-
-        dBiamPersonenkontextRepo = module.get<DBiamPersonenkontextRepo>(DBiamPersonenkontextRepo);
     });
 
     it('should return metrics', async () => {
