@@ -143,7 +143,7 @@ describe('PersonController', () => {
             faker.lorem.word(),
             faker.lorem.word(),
             faker.string.uuid(),
-            undefined, // referrer
+            faker.person.fullName(), // referrer
             undefined, // stammorganisation
             undefined, // initialenFamilienname
             undefined, // initialenVorname
@@ -910,7 +910,7 @@ describe('PersonController', () => {
             );
         });
 
-        it('should throw PersonalnummerRequiredError when personalnummer was not provided and faminlienname or vorname did not change', async () => {
+        it('should throw PersonalnummerRequiredError when personalnummer was not provided and familienname or vorname did not change', async () => {
             const person: Person<true> = getPerson();
             const bodyWithInvalidPersonalnummer: PersonMetadataBodyParams = {
                 familienname: person.familienname,

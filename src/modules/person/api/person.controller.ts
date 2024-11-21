@@ -580,6 +580,7 @@ export class PersonController {
             this.logger.info(
                 `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht die persoenlichen Daten des Benutzers mit BenutzerId: ${params.personId} zu verändern. Fehler: ${error.message}`,
             );
+            throw error;
         }
         const result: Person<true> | DomainError = await this.personRepository.updatePersonMetadata(
             params.personId,
