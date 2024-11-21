@@ -228,7 +228,7 @@ describe('OrganisationService', () => {
             });
         });
 
-        it.only('should return domain error if name contains no letter nor number', async () => {
+        it('should return domain error if name contains no letter nor number', async () => {
             const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, {
                 name: '-',
                 typ: OrganisationsTyp.KLASSE,
