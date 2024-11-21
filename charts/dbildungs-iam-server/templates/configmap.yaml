@@ -8,7 +8,6 @@ metadata:
 data:
   config-json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
-  # why is this node env
   NODE_ENV: "prod"
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}
@@ -27,4 +26,3 @@ data:
   PI_RENAME_WAITING_TIME:  "{{ .Values.privacyidea.renameWaitingTime }}"
   PI_REALM: "{{ .Values.privacyidea.realm }}"
   PI_USER_RESOLVER: "{{ .Values.privacyidea.userResolver }}"
-  
