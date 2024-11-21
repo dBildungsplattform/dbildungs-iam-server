@@ -17,7 +17,7 @@ spec:
       app.kubernetes.io/component: server-backend
   endpoints:
     - port: {{ (index .Values.backend.serviceMonitor.endpoints 0).port }}
-      path: {{ .Values.serviceMonitor.path }}
-      interval: {{ .Values.serviceMonitor.interval }}
+      path: {{ .Values.backend.serviceMonitor.path }}
+      interval: {{ .Values.backend.serviceMonitor.interval }}
 {{ end }}
 
