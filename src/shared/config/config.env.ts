@@ -47,6 +47,7 @@ export default (): Config => ({
         OIDC_CALLBACK_URL: process.env['FRONTEND_OIDC_CALLBACK_URL'],
         DEFAULT_LOGIN_REDIRECT: process.env['FRONTEND_DEFAULT_LOGIN_REDIRECT'],
         LOGOUT_REDIRECT: process.env['FRONTEND_LOGOUT_REDIRECT'],
+        STATUS_REDIRECT_URL: process.env['STATUS_REDIRECT_URL'],
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],

@@ -20,6 +20,7 @@ import { Organisation } from './organisation.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
+import { KlasseWithoutNumberOrLetterError } from '../specification/error/klasse-without-number-or-letter.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -224,6 +225,19 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new KennungForOrganisationWithTrailingSpaceError(),
+            });
+        });
+
+        it('should return domain error if name contains no letter nor number', async () => {
+            const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, {
+                name: '-',
+                typ: OrganisationsTyp.KLASSE,
+            });
+            organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new KlasseWithoutNumberOrLetterError(),
             });
         });
     });
