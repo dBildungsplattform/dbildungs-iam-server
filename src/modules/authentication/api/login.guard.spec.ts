@@ -55,7 +55,18 @@ describe('LoginGuard', () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
-            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    requiredStepUpLevel: 'gold',
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+            });
+            contextMock.switchToHttp().getResponse.mockReturnValue({});
 
             await sut.canActivate(contextMock);
 
@@ -85,7 +96,17 @@ describe('LoginGuard', () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
-            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    requiredStepUpLevel: 'gold',
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+            });
 
             await sut.canActivate(contextMock);
 
