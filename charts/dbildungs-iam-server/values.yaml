@@ -136,14 +136,14 @@ redis:
     replicaCount: 1
   sentinel:
     enabled: true
-  pdb: 
+  pdb:
     create: false
   networkPolicy:
     enabled: false
   serviceAccount:
     create: false
-  auth:  
-    existingSecret: '' 
+  auth:
+    existingSecret: ''
   podLabels:
     app.kubernetes.io/component: server-redis
   commonLabels:
@@ -157,7 +157,7 @@ redis:
       memory: 128Mi
   metrics:
     enabled: true
-   
+
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -166,3 +166,37 @@ autoscaling:
 
 status:
   url: 'https://status.dev.spsh.dbildungsplattform.de/'
+
+cronjobs:
+  enabled: true
+  image:
+    tag: DBP-1083-latest
+    repository: ghcr.io/hpi-schul-cloud/cron-tools
+    pullPolicy: IfNotPresent
+  port: 5656
+  keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
+  keycloakClientId: spsh-service
+  jwksFilePath: /keys/jwks.json
+  backendHostname: '{{ $.Values.frontendHostname }}'
+  scriptDir: scripts
+  jobs:
+    cron-trigger-1:
+      schedule: 20 0 * * *
+      endpoint: '/api/cron/kopers-lock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-2:
+      schedule: 40 0 * * *
+      endpoint: '/api/cron/kontext-expired'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-3:
+      schedule: 50 0 * * *
+      endpoint: '/api/cron/person-without-org'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-4:
+      schedule: 10 0 * * *
+      endpoint: '/api/cron/unlock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
