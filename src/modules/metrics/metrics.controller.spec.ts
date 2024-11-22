@@ -8,7 +8,6 @@ import { PersonenkontextScope } from '../personenkontext/persistence/personenkon
 import { RollenArt } from '../rolle/domain/rolle.enums.js';
 import { MetricsService } from './metrics.service.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
-import { MetricsGuard } from './metrics.guard.js';
 import { ConfigService } from '@nestjs/config';
 
 describe('MetricsController', () => {
@@ -48,12 +47,6 @@ describe('MetricsController', () => {
                         }),
                     },
                 },
-                {
-                    provide: MetricsGuard,
-                    useValue: {
-                        canActivate: jest.fn().mockReturnValue(true),
-                    },
-                },
             ],
         }).compile();
 
@@ -62,8 +55,6 @@ describe('MetricsController', () => {
         metricsService = new MetricsService(registry);
         ReporterService.init(metricsService);
         dBiamPersonenkontextRepo = module.get<DBiamPersonenkontextRepo>(DBiamPersonenkontextRepo);
-        const metricsGuard: MetricsGuard = module.get(MetricsGuard);
-        metricsGuard.canActivate = jest.fn().mockReturnValue(true);
     });
 
     it('should return metrics', async () => {
