@@ -2515,24 +2515,23 @@
             "alias": "gold",
             "config": {
                 "loa-condition-level": "20",
-                "loa-max-age": "10000"
+                "loa-max-age": "0"
             }
-        },
-        {
-            "id": "a289ca13-92ef-4ac8-9544-bbff68c93147",
-            "alias": "pi",
-            "config": {
-                "pienrolltokentype": "TOTP",
-                "pipollinbrowser": "false",
-                "piservicerealm": "${PI_REALM}",
-                "piservicepass": "${PI_ADMIN_PASSWORD}",
-                "piserver": "${PI_BASE_URL}",
-                "piserviceaccount": "${PI_ADMIN_USER}",
-                "pidefaultmessage": "Diese Aktion setzt eine Zwei-Faktor-Authentifizierung voraus. Bitte geben Sie das Einmalpasswort von Ihrem Security-Token ein.",
-                "preftokentype": "OTP",
-                "pirealm": "${PI_REALM}",
-                "pidolog": "true",
-                "pienrolltoken": "false"
+        }, {
+            "id" : "a289ca13-92ef-4ac8-9544-bbff68c93147",
+            "alias" : "pi",
+            "config" : {
+                "pienrolltokentype" : "TOTP",
+                "pipollinbrowser" : "false",
+                "piservicerealm" : "${PI_REALM}",
+                "piservicepass" : "${PI_ADMIN_PASSWORD}",
+                "piserver" : "${PI_BASE_URL}",
+                "piserviceaccount" : "${PI_ADMIN_USER}",
+                "pidefaultmessage" : "Diese Aktion setzt eine Zwei-Faktor-Authentifizierung voraus. Bitte geben Sie das Einmalpasswort von Ihrem 2FA-Token ein.",
+                "preftokentype" : "OTP",
+                "pirealm" : "${PI_REALM}",
+                "pidolog" : "true",
+                "pienrolltoken" : "false"
             }
         },
         {
