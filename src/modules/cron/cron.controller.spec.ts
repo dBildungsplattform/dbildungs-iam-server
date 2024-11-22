@@ -534,23 +534,23 @@ describe('CronController', () => {
         });
     });
 
-    describe('/PUT cron/vidis-offers', () => {
+    describe('/PUT cron/vidis-angebote', () => {
         describe(`when is authorized user`, () => {
-            it(`should update ServiceProviders for VIDIS offers`, async () => {
+            it(`should update ServiceProviders for VIDIS Angebote`, async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
                 serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
 
-                await cronController.updateServiceProvidersForVidisOffers(permissionsMock);
+                await cronController.updateServiceProvidersForVidisAngebote(permissionsMock);
 
                 expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(1);
             });
         });
         describe(`when is not authorized user`, () => {
-            it(`should not update ServiceProviders for VIDIS offers and throw an error`, async () => {
+            it(`should not update ServiceProviders for VIDIS Angebote and throw an error`, async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
                 serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
 
-                await expect(cronController.updateServiceProvidersForVidisOffers(permissionsMock)).rejects.toThrow(
+                await expect(cronController.updateServiceProvidersForVidisAngebote(permissionsMock)).rejects.toThrow(
                     HttpException,
                 );
                 expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(0);
@@ -565,11 +565,11 @@ describe('CronController', () => {
                     }
                 }
                 serviceProviderServiceMock.updateServiceProvidersForVidis.mockImplementationOnce(() => {
-                    throw new UnknownError('Internal error when trying to update ServiceProviders for VIDIS offers');
+                    throw new UnknownError('Internal error when trying to update ServiceProviders for VIDIS Angebote');
                 });
 
-                await expect(cronController.updateServiceProvidersForVidisOffers(permissionsMock)).rejects.toThrow(
-                    'Internal error when trying to update ServiceProviders for VIDIS offers',
+                await expect(cronController.updateServiceProvidersForVidisAngebote(permissionsMock)).rejects.toThrow(
+                    'Internal error when trying to update ServiceProviders for VIDIS Angebote',
                 );
             });
         });

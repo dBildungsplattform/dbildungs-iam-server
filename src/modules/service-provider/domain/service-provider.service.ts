@@ -6,7 +6,6 @@ import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProvider } from './service-provider.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { VidisService } from '../../vidis/vidis.service.js';
-import { VidisOfferResponse } from '../../vidis/api/vidis-offer-api.types.js';
 import { ServiceProviderTarget, ServiceProviderKategorie, ServiceProviderSystem } from './service-provider.enum.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -15,6 +14,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
+import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 
 @Injectable()
 export class ServiceProviderService {
@@ -52,18 +52,18 @@ export class ServiceProviderService {
         const vidisRegionName: string = this.vidisConfig.REGION_NAME;
         const schulstrukturknoten: string = this.organisationRepo.ROOT_ORGANISATION_ID;
 
-        const vidisOffers: VidisOfferResponse[] = await this.vidisService.getActivatedOffersByRegion(vidisRegionName);
+        const vidisAngebote: VidisAngebot[] = await this.vidisService.getActivatedAngeboteByRegion(vidisRegionName);
 
         const allMappingsBeenDeleted: boolean = await this.organisationServiceProviderRepo.deleteAll();
         if (allMappingsBeenDeleted)
             this.logger.info('All mappings between Organisation and ServiceProvider were deleted.');
 
         await Promise.allSettled(
-            vidisOffers.map(async (offer: VidisOfferResponse) => {
+            vidisAngebote.map(async (angebot: VidisAngebot) => {
                 const existingServiceProvider: Option<ServiceProvider<true>> =
-                    await this.serviceProviderRepo.findByName(offer.offerTitle);
+                    await this.serviceProviderRepo.findByName(angebot.angebotTitle);
 
-                const offerLogoMediaType: string = this.determineMediaTypeFor(offer.offerLogo);
+                const angebotLogoMediaType: string = this.determineMediaTypeFor(angebot.angebotLogo);
 
                 let serviceProvider: ServiceProvider<false>;
                 if (existingServiceProvider) {
@@ -71,39 +71,39 @@ export class ServiceProviderService {
                         existingServiceProvider.id,
                         existingServiceProvider.createdAt,
                         existingServiceProvider.updatedAt,
-                        offer.offerTitle,
+                        angebot.angebotTitle,
                         ServiceProviderTarget.URL,
-                        offer.offerLink,
+                        angebot.angebotLink,
                         ServiceProviderKategorie.ANGEBOTE,
                         schulstrukturknoten,
-                        Buffer.from(offer.offerLogo, 'base64'),
-                        offerLogoMediaType,
+                        Buffer.from(angebot.angebotLogo, 'base64'),
+                        angebotLogoMediaType,
                         vidisKeycloakGroup,
                         vidisKeycloakRole,
                         ServiceProviderSystem.NONE,
                         false,
                     );
-                    this.logger.info(`ServiceProvider for VIDIS offer '${serviceProvider.name}' already exists.`);
+                    this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
                 } else {
                     serviceProvider = ServiceProvider.createNew(
-                        offer.offerTitle,
+                        angebot.angebotTitle,
                         ServiceProviderTarget.URL,
-                        offer.offerLink,
+                        angebot.angebotLink,
                         ServiceProviderKategorie.ANGEBOTE,
                         schulstrukturknoten,
-                        Buffer.from(offer.offerLogo, 'base64'),
-                        offerLogoMediaType,
+                        Buffer.from(angebot.angebotLogo, 'base64'),
+                        angebotLogoMediaType,
                         vidisKeycloakGroup,
                         vidisKeycloakRole,
                         ServiceProviderSystem.NONE,
                         false,
                     );
-                    this.logger.info(`ServiceProvider for VIDIS offer '${serviceProvider.name}' was created.`);
+                    this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
                 }
                 const persistedServiceProvider: ServiceProvider<true> =
                     await this.serviceProviderRepo.save(serviceProvider);
                 await Promise.allSettled(
-                    offer.schoolActivations.map(async (schoolActivation: string) => {
+                    angebot.schoolActivations.map(async (schoolActivation: string) => {
                         const school: Result<
                             Organisation<true>,
                             DomainError
@@ -121,13 +121,13 @@ export class ServiceProviderService {
 
         const vidisServiceProviders: ServiceProvider<true>[] =
             await this.serviceProviderRepo.findByKeycloakGroup(vidisKeycloakGroup);
-        const offerNamesInResponse: string[] = vidisOffers.map((offer: VidisOfferResponse) => offer.offerTitle);
+        const angeboteNamesInResponse: string[] = vidisAngebote.map((angebot: VidisAngebot) => angebot.angebotTitle);
         await Promise.allSettled(
             vidisServiceProviders.map(async (vsp: ServiceProvider<true>) => {
-                if (!offerNamesInResponse.includes(vsp.name)) {
+                if (!angeboteNamesInResponse.includes(vsp.name)) {
                     await this.serviceProviderRepo.deleteById(vsp.id);
                     this.logger.info(
-                        `ServiceProvider '${vsp.name}' was deleted as it was not in VIDIS Offer API response.`,
+                        `ServiceProvider '${vsp.name}' was deleted as it was not in VIDIS Angebote API response.`,
                     );
                 }
             }),
@@ -137,7 +137,7 @@ export class ServiceProviderService {
     }
 
     /**
-     * Determines the correct media type of the given offer logo.
+     * Determines the correct media type of the given Angebot logo.
      * Assumption: Expected media type is always one of the three: 'image/jpeg', 'image/png' or 'image/svg+xml'.
      * @param {base64EncodedLogo} base64EncodedLogo Base64 encoded logo
      */

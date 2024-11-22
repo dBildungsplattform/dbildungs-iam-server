@@ -1,4 +1,4 @@
-export type VidisOfferCategoryResponse = {
+export type VidisOfferCategoriesResponse = {
     category: string[];
     competency: string[];
     gradeLevel: string[];
@@ -15,7 +15,7 @@ export type VidisOfferResponse = {
     offerLongTitle: string;
     offerResourcePk?: number;
     offerStatus?: string;
-    offerCategories?: VidisOfferCategoryResponse;
+    offerKategorien?: VidisOfferCategoriesResponse;
     educationProviderOrganizationId?: number;
     educationProviderOrganizationName: string;
     educationProviderUserEmail?: string;

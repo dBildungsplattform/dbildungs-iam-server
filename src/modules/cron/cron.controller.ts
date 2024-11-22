@@ -236,17 +236,17 @@ export class CronController {
         }
     }
 
-    @Put('vidis-offers')
+    @Put('vidis-angebote')
     @HttpCode(HttpStatus.OK)
-    @ApiCreatedResponse({ description: 'VIDIS offers were successfully updated.', type: Boolean })
-    @ApiBadRequestResponse({ description: 'VIDIS offers were not successfully updated.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to update VIDIS offers.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to update VIDIS offers.' })
-    @ApiNotFoundResponse({ description: 'Insufficient permissions to update VIDIS offers.' })
+    @ApiCreatedResponse({ description: 'VIDIS Angebote were successfully updated.', type: Boolean })
+    @ApiBadRequestResponse({ description: 'VIDIS Angebote were not successfully updated.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update VIDIS Angebote.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to update VIDIS Angebote.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to update VIDIS Angebote.' })
     @ApiInternalServerErrorResponse({
-        description: 'Internal server error while trying to update VIDIS offers.',
+        description: 'Internal server error while trying to update VIDIS Angebote.',
     })
-    public async updateServiceProvidersForVidisOffers(@Permissions() permissions: PersonPermissions): Promise<void> {
+    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: PersonPermissions): Promise<void> {
         const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
             RollenSystemRecht.CRON_DURCHFUEHREN,
         ]);

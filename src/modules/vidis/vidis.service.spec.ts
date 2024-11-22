@@ -2,14 +2,15 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpService } from '@nestjs/axios';
 import { TestingModule, Test } from '@nestjs/testing';
 import { VidisService } from './vidis.service.js';
-import { VidisOfferResponse, VidisResponse } from './api/vidis-offer-api.types.js';
+import { VidisOfferResponse, VidisResponse } from './api/vidis-angebote-api.types.js';
 import { Observable, of } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
+import { VidisAngebot } from './domain/vidis-angebot.js';
 
 const mockVidisRegionName: string = 'test-region';
 
-const mockVidisOfferResponses: VidisOfferResponse[] = [
+const mockVidisAngebotResponses: VidisOfferResponse[] = [
     {
         offerVersion: 1,
         offerDescription:
@@ -61,7 +62,7 @@ const mockVidisResponse: VidisResponse<VidisOfferResponse> = {
     pageSize: 20,
     actions: {},
     page: 1,
-    items: mockVidisOfferResponses,
+    items: mockVidisAngebotResponses,
 };
 
 const mockVidisAxiosResponse = (): Observable<AxiosResponse> =>
@@ -81,34 +82,48 @@ describe(`VidisService`, () => {
         httpServiceMock = module.get(HttpService);
     });
 
-    describe(`getActivatedOffersByRegion`, () => {
-        it(`should get the activated VIDIS offers by region from the VIDIS Offer API if no errors occur`, async () => {
+    describe(`getActivatedAngeboteByRegion`, () => {
+        it(`should get the activated VIDIS Angebote by region from the VIDIS Angebot API if no errors occur`, async () => {
             httpServiceMock.get.mockReturnValueOnce(mockVidisAxiosResponse());
-            const expectedVidisOffers: VidisOfferResponse[] = mockVidisOfferResponses;
+            const expectedVidisOfferResponse: VidisOfferResponse[] = mockVidisAngebotResponses;
+            const expectedVidisAngebote: VidisAngebot[] = expectedVidisOfferResponse.map(
+                (offer: VidisOfferResponse) => {
+                    return {
+                        angebotVersion: offer.offerVersion,
+                        angebotDescription: offer.offerDescription,
+                        angebotLink: offer.offerLink,
+                        angebotLogo: offer.offerLogo,
+                        angebotTitle: offer.offerTitle,
+                        angebotLongTitle: offer.offerLongTitle,
+                        educationProviderOrganizationName: offer.educationProviderOrganizationName,
+                        schoolActivations: offer.schoolActivations,
+                    };
+                },
+            );
 
-            const actualVidisOffers: VidisOfferResponse[] = await sut.getActivatedOffersByRegion(mockVidisRegionName);
+            const actualVidisAngebote: VidisAngebot[] = await sut.getActivatedAngeboteByRegion(mockVidisRegionName);
 
-            expect(actualVidisOffers).toEqual(expectedVidisOffers);
+            expect(actualVidisAngebote).toEqual(expectedVidisAngebote);
         });
 
-        it(`should throw an error if getActivatedOffersByRegion throws an Error object`, async () => {
+        it(`should throw an error if getActivatedAngeboteByRegion throws an Error object`, async () => {
             httpServiceMock.get.mockImplementation(() => {
-                throw new Error('Error when getting VIDIS offers.');
+                throw new Error('Error when getting VIDIS Angebote.');
             });
 
-            await expect(sut.getActivatedOffersByRegion(mockVidisRegionName)).rejects.toThrow(
-                `Error getting all VIDIS offers: Error when getting VIDIS offers.`,
+            await expect(sut.getActivatedAngeboteByRegion(mockVidisRegionName)).rejects.toThrow(
+                `Error getting all VIDIS Angebote: Error when getting VIDIS Angebote.`,
             );
         });
 
-        it(`should throw an error if getActivatedOffersByRegion throws a non-Error object`, async () => {
+        it(`should throw an error if getActivatedAngeboteByRegion throws a non-Error object`, async () => {
             httpServiceMock.get.mockImplementation(() => {
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw 'This is a non-Error throw';
             });
 
-            await expect(sut.getActivatedOffersByRegion(mockVidisRegionName)).rejects.toThrow(
-                `Error getting all VIDIS offers: Unknown error occurred`,
+            await expect(sut.getActivatedAngeboteByRegion(mockVidisRegionName)).rejects.toThrow(
+                `Error getting all VIDIS Angebote: Unknown error occurred`,
             );
         });
     });
