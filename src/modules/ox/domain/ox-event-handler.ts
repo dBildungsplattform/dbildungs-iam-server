@@ -22,6 +22,10 @@ import { GetDataForUserAction, GetDataForUserResponse } from '../actions/user/ge
 import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
+import {
+    ChangeByModuleAccessAction,
+    ChangeByModuleAccessParams,
+} from '../actions/user/change-by-module-access.action.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -153,6 +157,28 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
             this.logger.error(`Persisting oxUserId on emailAddress for personId:${personId} failed`);
+        }
+
+        //adjust user infostore and globalAddressBook
+        const changeByModuleAccessParams: ChangeByModuleAccessParams = {
+            contextId: this.contextID,
+            userId: result.value.id,
+            globalAddressBookDisabled: true,
+            infostore: true,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const changeByModuleAccessAction: ChangeByModuleAccessAction = new ChangeByModuleAccessAction(
+            changeByModuleAccessParams,
+        );
+        const changeByModuleAccessResult: Result<void, DomainError> =
+            await this.oxService.send(changeByModuleAccessAction);
+
+        if (!changeByModuleAccessResult.ok) {
+            //only log error, do not set email-address status = FAILED, the ChangeByModuleAccessAction won't work against OX-DEV
+            this.logger.error(
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${result.value.id}, error: ${changeByModuleAccessResult.error.message}`,
+            );
         }
 
         this.eventService.publish(
