@@ -38,6 +38,7 @@ import { KeycloakHandlerModule } from '../modules/keycloak-handler/keycloak-hand
 import { CronModule } from '../modules/cron/cron.module.js';
 import { ImportApiModule } from '../modules/import/import-api.module.js';
 import { ReporterModule } from '../modules/metrics/reporter.module.js';
+import { StatusModule } from '../modules/status/status.module.js';
 
 @Module({
     imports: [
@@ -98,6 +99,7 @@ import { ReporterModule } from '../modules/metrics/reporter.module.js';
         CronModule,
         ImportApiModule,
         ReporterModule,
+        StatusModule,
     ],
     providers: [
         {
