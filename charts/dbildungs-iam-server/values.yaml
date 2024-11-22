@@ -195,3 +195,8 @@ cronjobs:
       endpoint: '/api/cron/person-without-org'
       httpMethod: 'PUT'
       script: 'cron_trigger.sh'
+    cron-trigger-4:
+      schedule: 10 0 * * *
+      endpoint: '/api/cron/unlock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
