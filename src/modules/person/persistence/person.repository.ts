@@ -787,9 +787,19 @@ export class PersonRepository {
                 {
                     personenKontexte: {
                         $some: {
-                            createdAt: { $lte: daysAgo }, //Check that createdAt is older than 56 days
+                            createdAt: { $lte: daysAgo }, // Check that createdAt is older than 56 days
                             rolleId: {
                                 merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
+                            },
+                        },
+                    },
+                },
+                {
+                    $not: {
+                        // Ensure no corresponding user_lock entry exists
+                        userLocks: {
+                            $some: {
+                                locked_occasion: PersonLockOccasion.KOPERS_GESPERRT,
                             },
                         },
                     },
