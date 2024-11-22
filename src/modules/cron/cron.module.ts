@@ -4,9 +4,16 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
 import { PersonModule } from '../person/person.module.js';
 import { PersonDeleteModule } from '../person/person-deletion/person-delete.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+import { LoggerModule } from '../../core/logging/logger.module.js';
 
 @Module({
-    imports: [PersonModule, PersonenKontextModule, KeycloakAdministrationModule, PersonDeleteModule],
+    imports: [
+        PersonModule,
+        PersonenKontextModule,
+        KeycloakAdministrationModule,
+        PersonDeleteModule,
+        LoggerModule.register(CronModule.name),
+    ],
     controllers: [CronController],
 })
 export class CronModule {}

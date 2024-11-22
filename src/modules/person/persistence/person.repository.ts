@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, FilterQuery, Loaded, QBFilterQuery, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, FilterQuery, Loaded, QBFilterQuery, RequiredEntityData, raw } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -574,7 +574,7 @@ export class PersonRepository {
 
         const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
-        scope.sortBy(sortField, sortOrder);
+        scope.sortBy(raw(`lower(${sortField})`), sortOrder);
 
         if (queryParams.suchFilter) {
             scope.findBySearchString(queryParams.suchFilter);
@@ -770,9 +770,19 @@ export class PersonRepository {
                 {
                     personenKontexte: {
                         $some: {
-                            createdAt: { $lte: daysAgo }, //Check that createdAt is older than 56 days
+                            createdAt: { $lte: daysAgo }, // Check that createdAt is older than 56 days
                             rolleId: {
                                 merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
+                            },
+                        },
+                    },
+                },
+                {
+                    $not: {
+                        // Ensure no corresponding user_lock entry exists
+                        userLocks: {
+                            $some: {
+                                locked_occasion: PersonLockOccasion.KOPERS_GESPERRT,
                             },
                         },
                     },
