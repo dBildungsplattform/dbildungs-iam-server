@@ -75,10 +75,6 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                 },
-                METRICS: {
-                    USERNAME: 'admin',
-                    PASSWORD: 'admin',
-                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -96,10 +92,6 @@ describe('configloader', () => {
                 },
                 OX: {
                     PASSWORD: 'password',
-                },
-                METRICS: {
-                    USERNAME: 'admin',
-                    PASSWORD: 'admin',
                 },
             };
 
@@ -193,10 +185,6 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
-                },
-                METRICS: {
-                    USERNAME: 'admin',
-                    PASSWORD: 'admin',
                 },
             };
 

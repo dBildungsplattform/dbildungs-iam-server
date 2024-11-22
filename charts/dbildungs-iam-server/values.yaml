@@ -52,8 +52,6 @@ auth:
   pi_user_realm: ''
   pi_rename_waiting_time: ''
   redis_password: ''
-  metrics_username: ''
-  metrics_password: ''
 
 backend:
   replicaCount: 1

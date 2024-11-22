@@ -71,9 +71,5 @@
     },
     "IMPORT": {
         "IMPORT_FILE_MAXGROESSE_IN_MB": 1
-    },
-    "METRICS": {
-        "USERNAME": "admin",
-        "PASSWORD": "admin"
     }
 }
