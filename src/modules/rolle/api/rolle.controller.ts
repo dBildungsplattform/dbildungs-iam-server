@@ -192,7 +192,7 @@ export class RolleController {
 
         if (!orgResult.ok) {
             this.logger.info(
-                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
+                `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(orgResult.error),
@@ -212,14 +212,14 @@ export class RolleController {
 
         if (rolle instanceof DomainError) {
             this.logger.error(
-                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${rolle.message}`,
+                `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${rolle.message}`,
             );
             throw rolle;
         }
 
         const result: Rolle<true> = await this.rolleRepo.save(rolle);
         this.logger.info(
-            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat eine neue Rolle angelegt: ${result.name}.`,
+            `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat eine neue Rolle angelegt: ${result.name}.`,
         );
 
         return new RolleResponse(result);
@@ -375,8 +375,6 @@ export class RolleController {
         @Body() params: UpdateRolleBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<RolleWithServiceProvidersResponse> {
-        const userName: string = permissions.personFields.familienname;
-        const userId: string = permissions.personFields.id;
         const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         const rolleName: string = rolle?.name ?? 'ROLLE_NOT_FOUND';
@@ -398,12 +396,12 @@ export class RolleController {
         if (result instanceof DomainError) {
             if (result instanceof RolleDomainError) {
                 this.logger.error(
-                    `Admin ${userName} (${userId}, ${organisationNameUser}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
+                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
                 );
                 throw result;
             }
             this.logger.error(
-                `Admin ${userName} (${userId}, ${organisationNameUser}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
+                `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
@@ -411,7 +409,7 @@ export class RolleController {
         }
 
         this.logger.info(
-            `Admin ${userName} (${userId}, ${organisationNameUser}) hat eine Rolle bearbeitet: ${rolleName}.`,
+            `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Rolle bearbeitet: ${rolleName}.`,
         );
 
         return this.returnRolleWithServiceProvidersResponse(result);
@@ -428,8 +426,6 @@ export class RolleController {
         @Param() findRolleByIdParams: FindRolleByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const userName: string = permissions.personFields.familienname;
-        const userId: string = permissions.personFields.id;
         const organisationNameUser: string = await this.getOrganisationNameForCurrentUser(permissions);
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         const rolleName: string = rolle?.name ?? 'ROLLE_NOT_FOUND';
@@ -441,12 +437,12 @@ export class RolleController {
         if (result instanceof DomainError) {
             if (result instanceof RolleDomainError) {
                 this.logger.error(
-                    `Admin ${userName} (${userId}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
+                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
                 );
                 throw result;
             }
             this.logger.error(
-                `Admin ${userName} (${userId}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
+                `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
@@ -454,7 +450,7 @@ export class RolleController {
         }
 
         this.logger.info(
-            `Admin ${userName} (${userId}, ${organisationNameUser}) hat eine Rolle entfernt: ${rolleName}.`,
+            `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Rolle entfernt: ${rolleName}.`,
         );
     }
 

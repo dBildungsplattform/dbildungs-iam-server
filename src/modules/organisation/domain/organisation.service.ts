@@ -60,11 +60,11 @@ export class OrganisationService {
                 if (permissions) {
                     if (error) {
                         this.logger.error(
-                            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat versucht eine neue Klasse ${organisation.name} (${schoolName}) anzulegen. Fehler: ${error.message}`,
+                            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Klasse ${organisation.name} (${schoolName}) anzulegen. Fehler: ${error.message}`,
                         );
                     } else {
                         this.logger.info(
-                            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat eine neue Klasse angelegt: ${organisation.name} (${schoolName}).`,
+                            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine neue Klasse angelegt: ${organisation.name} (${schoolName}).`,
                         );
                     }
                 }
@@ -81,11 +81,11 @@ export class OrganisationService {
                 if (organisationUser) if (organisationUser.name) organisationNameUser = organisationUser.name;
                 if (error) {
                     this.logger.error(
-                        `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Schule ${organisation.name} anzulegen. Fehler: ${error.message}`,
+                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Schule ${organisation.name} anzulegen. Fehler: ${error.message}`,
                     );
                 } else {
                     this.logger.info(
-                        `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat eine neue Schule angelegt: ${organisation.name}.`,
+                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat eine neue Schule angelegt: ${organisation.name}.`,
                     );
                 }
             }
@@ -107,11 +107,11 @@ export class OrganisationService {
                 if (permissions) {
                     if (error) {
                         this.logger.error(
-                            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat versucht eine Klasse ${organisation.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
+                            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine Klasse ${organisation.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
                         );
                     } else {
                         this.logger.info(
-                            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat eine Klasse geändert: ${organisation.name} (${schoolName}).`,
+                            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Klasse geändert: ${organisation.name} (${schoolName}).`,
                         );
                     }
                 }
@@ -127,11 +127,11 @@ export class OrganisationService {
                 const organisationNameUser: string = organisationUser?.name ?? 'ORGANISATION_NOT_FOUND';
                 if (error) {
                     this.logger.error(
-                        `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Schule ${organisation.name} zu verändern. Fehler: ${error.message}`,
+                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Schule ${organisation.name} zu verändern. Fehler: ${error.message}`,
                     );
                 } else {
                     this.logger.info(
-                        `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Schule geändert: ${organisation.name}.`,
+                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Schule geändert: ${organisation.name}.`,
                     );
                 }
             }

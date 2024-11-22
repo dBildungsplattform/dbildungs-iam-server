@@ -434,7 +434,7 @@ export class OrganisationRepository {
                 const school: Option<Organisation<true>> = await this.findById(organisationEntity.zugehoerigZu);
                 schoolName = school?.name ?? 'SCHOOL_NOT_FOUND';
                 this.logger.info(
-                    `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
+                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
                 );
             }
 
@@ -470,7 +470,7 @@ export class OrganisationRepository {
                 if (specificationError) {
                     if (permissions)
                         this.logger.error(
-                            `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
+                            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
                         );
                     return specificationError;
                 }
@@ -482,7 +482,7 @@ export class OrganisationRepository {
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
         if (permissions)
             this.logger.info(
-                `Admin ${permissions.personFields.familienname} (${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
+                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
             );
         return organisationEntity;
     }
