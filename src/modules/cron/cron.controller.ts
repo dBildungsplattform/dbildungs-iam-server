@@ -31,6 +31,7 @@ import { PersonLockOccasion } from '../person/domain/person.enums.js';
 import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -44,6 +45,7 @@ export class CronController {
         private readonly personenKonextRepository: DBiamPersonenkontextRepo,
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly userLockRepository: UserLockRepository,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Put('kopers-lock')
@@ -75,7 +77,7 @@ export class CronController {
             }
 
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
-                personIdsTouple.map(([personId, keycloakUserId]: [PersonID, string]) => {
+                personIdsTouple.map(async ([personId, keycloakUserId]: [PersonID, string]) => {
                     const userLock: UserLock = UserLock.construct(
                         personId,
                         'Cron',
@@ -83,7 +85,26 @@ export class CronController {
                         PersonLockOccasion.KOPERS_GESPERRT,
                         new Date(),
                     );
-                    return this.keyCloakUserService.updateKeycloakUserStatus(personId, keycloakUserId, userLock, true);
+
+                    const person: Option<Person<true>> = await this.personRepository.findById(personId);
+
+                    const updateResult: Result<void, DomainError> =
+                        await this.keyCloakUserService.updateKeycloakUserStatus(
+                            personId,
+                            keycloakUserId,
+                            userLock,
+                            true,
+                        );
+                    if (updateResult.ok) {
+                        this.logger.info(
+                            `System hat Benutzer ${person?.referrer} (${person?.id}) gesperrt, da nach Ablauf der Frist keine KoPers.-Nr. eingetragen war.`,
+                        );
+                    } else {
+                        this.logger.info(
+                            `System konnte Benutzer ${person?.referrer} (${person?.id}) nach Ablauf der Frist ohne KoPers.-Nr. nicht sperren. Fehler: ${updateResult.error.message}`,
+                        );
+                    }
+                    return updateResult;
                 }),
             );
 
@@ -92,6 +113,16 @@ export class CronController {
                 (result: PromiseSettledResult<Result<void, DomainError>>) =>
                     result.status === 'fulfilled' && result.value.ok === true,
             );
+
+            if (allSuccessful) {
+                this.logger.info(
+                    `System hat alle Benutzer mit einer fehlenden KoPers.-Nr nach Ablauf der Frist gesperrt.`,
+                );
+            } else {
+                this.logger.info(
+                    `System konnte nicht alle Benutzer mit einer fehlenden KoPers.-Nr nach Ablauf der Frist sperren.`,
+                );
+            }
 
             return allSuccessful;
         } catch (error) {
@@ -135,25 +166,49 @@ export class CronController {
             personenKontexteGroupedByPersonId.forEach(
                 (personenKontexte: Personenkontext<true>[], personId: PersonID) => {
                     const count: number = personenKontexte.length;
+
                     // Filter PersonenKontexte
                     const personenKontexteToKeep: DbiamPersonenkontextBodyParams[] =
                         this.filterPersonenKontexte(personenKontexte);
+
                     // Validate PersonenKontexte to keep
                     promises.push(
-                        this.personenkontextWorkflowFactory
-                            .createNew()
-                            .commit(personId, new Date(), count, personenKontexteToKeep, permissions),
+                        (async (): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> => {
+                            const person: Option<Person<true>> = await this.personRepository.findById(personId);
+
+                            const result: Personenkontext<true>[] | PersonenkontexteUpdateError =
+                                await this.personenkontextWorkflowFactory
+                                    .createNew()
+                                    .commit(personId, new Date(), count, personenKontexteToKeep, permissions);
+                            if (result instanceof PersonenkontexteUpdateError) {
+                                this.logger.info(
+                                    `System konnte die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Fehler: ${result.message}`,
+                                );
+                            } else {
+                                this.logger.info(
+                                    `System hat die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) aufgehoben.`,
+                                );
+                            }
+                            return result;
+                        })(),
                     );
                 },
             );
 
-            //validate results
+            // Validate results
             const results: PromiseSettledResult<Personenkontext<true>[] | PersonenkontexteUpdateError>[] =
                 await Promise.allSettled(promises);
+
             const allSuccessful: boolean = results.every(
                 (result: PromiseSettledResult<Personenkontext<true>[] | PersonenkontexteUpdateError>) =>
                     result.status === 'fulfilled' && !(result.value instanceof PersonenkontexteUpdateError),
             );
+
+            if (allSuccessful) {
+                this.logger.info(`System hat alle abgelaufenen Schulzuordnungen entfernt.`);
+            } else {
+                this.logger.info(`System konnte nicht alle abgelaufenen Schulzuordnungen entfernen.`);
+            }
 
             return allSuccessful;
         } catch (error) {
@@ -204,13 +259,37 @@ export class CronController {
             }
 
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
-                personIds.map((id: string) => this.personDeleteService.deletePerson(id, permissions)),
+                personIds.map(async (id: string) => {
+                    const person: Option<Person<true>> = await this.personRepository.findById(id);
+                    const deleteResult: Result<void, DomainError> = await this.personDeleteService.deletePerson(
+                        id,
+                        permissions,
+                    );
+                    if (deleteResult.ok) {
+                        this.logger.info(
+                            `System hat ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung gelöscht.`,
+                        );
+                    } else {
+                        this.logger.info(
+                            `System konnte Benutzer ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung nicht löschen. Fehler: ${deleteResult.error.message}`,
+                        );
+                    }
+                    return deleteResult;
+                }),
             );
 
             const allSuccessful: boolean = results.every(
                 (result: PromiseSettledResult<Result<void, DomainError>>) =>
                     result.status === 'fulfilled' && result.value.ok === true,
             );
+
+            if (allSuccessful) {
+                this.logger.info(`System hat alle Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen gelöscht.`);
+            } else {
+                this.logger.info(
+                    `System konnte nicht alle Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen löschen.`,
+                );
+            }
 
             return allSuccessful;
         } catch (error) {
@@ -250,15 +329,27 @@ export class CronController {
                         userLock.person,
                         permissions,
                     );
+
                     if (!person.ok || !person.value.keycloakUserId) {
                         return { ok: false, error: new EntityNotFoundError() };
                     }
-                    return this.keyCloakUserService.updateKeycloakUserStatus(
-                        person.value.id,
-                        person.value.keycloakUserId,
-                        userLock,
-                        false,
-                    );
+                    const updateResult: Result<void, DomainError> =
+                        await this.keyCloakUserService.updateKeycloakUserStatus(
+                            person.value.id,
+                            person.value.keycloakUserId,
+                            userLock,
+                            false,
+                        );
+                    if (updateResult.ok) {
+                        this.logger.info(
+                            `System hat die befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) aufgehoben.`,
+                        );
+                    } else {
+                        this.logger.info(
+                            `System konnte befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) nicht aufheben. Fehler: ${updateResult.error.message}`,
+                        );
+                    }
+                    return updateResult;
                 }),
             );
 
@@ -267,6 +358,15 @@ export class CronController {
                     result.status === 'fulfilled' && result.value.ok === true,
             );
 
+            if (allSuccessful) {
+                this.logger.info(
+                    `System hat die befristete Sperre von allen gesperrten Benutzern mit abgelaufener Befristung aufgehoben.`,
+                );
+            } else {
+                this.logger.info(
+                    `System hat die befristete Sperre nicht von allen gesperrten Benutzern mit abgelaufener Befristung aufgehoben.`,
+                );
+            }
             return allSuccessful;
         } catch (error) {
             throw new Error('Failed to unlock users due to an internal server error.');

@@ -5,7 +5,6 @@ import { PersonRepository } from '../person/persistence/person.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { KeycloakClientError } from '../../shared/error/keycloak-client.error.js';
 import { PersonID } from '../../shared/types/aggregate-ids.types.js';
-import { faker } from '@faker-js/faker';
 import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
 import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
@@ -20,6 +19,7 @@ import { UserLock } from '../keycloak-administration/domain/user-lock.js';
 import { UserLockRepository } from '../keycloak-administration/repository/user-lock.repository.js';
 import { PersonLockOccasion } from '../person/domain/person.enums.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 describe('CronController', () => {
     let cronController: CronController;
@@ -63,6 +63,10 @@ describe('CronController', () => {
                     provide: UserLockRepository,
                     useValue: createMock<UserLockRepository>(),
                 },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
+                },
             ],
             controllers: [CronController],
         }).compile();
@@ -85,11 +89,18 @@ describe('CronController', () => {
     describe('/PUT cron/kopers-lock', () => {
         describe('when there are users to lock', () => {
             it('should return true when all users are successfully locked', async () => {
+                const personMock1: Person<true> = DoFactory.createPerson(true);
+                const personMock2: Person<true> = DoFactory.createPerson(true);
+                const personMock3: Person<true> = DoFactory.createPerson(true);
+
                 const mockKeycloakIds: [PersonID, string][] = [
-                    [faker.string.uuid(), 'user1'],
-                    [faker.string.uuid(), 'user2'],
-                    [faker.string.uuid(), 'user3'],
+                    [personMock1.id, personMock1.keycloakUserId!],
+                    [personMock2.id, personMock2.keycloakUserId!],
+                    [personMock3.id, personMock3.keycloakUserId!],
                 ];
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock1);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock2);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
                 personRepositoryMock.getKoPersUserLockList.mockResolvedValueOnce(mockKeycloakIds);
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
@@ -118,18 +129,26 @@ describe('CronController', () => {
 
         describe('when locking users fails', () => {
             it('should return false when at least one user fails to lock', async () => {
+                const personMock1: Person<true> = DoFactory.createPerson(true);
+                const personMock2: Person<true> = DoFactory.createPerson(true);
+                const personMock3: Person<true> = DoFactory.createPerson(true);
+
                 const mockKeycloakIds: [PersonID, string][] = [
-                    [faker.string.uuid(), 'user1'],
-                    [faker.string.uuid(), 'user2'],
-                    [faker.string.uuid(), 'user3'],
+                    [personMock1.id, personMock1.keycloakUserId!],
+                    [personMock2.id, personMock2.keycloakUserId!],
+                    [personMock3.id, personMock3.keycloakUserId!],
                 ];
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock1);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock2);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
                 personRepositoryMock.getKoPersUserLockList.mockResolvedValueOnce(mockKeycloakIds);
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
                 keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({
                     ok: false,
                     error: new KeycloakClientError('Could not update user status or custom attributes'),
                 });
+                keycloakUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
                 const result: boolean = await cronController.koPersUserLock(permissionsMock);
 
@@ -199,6 +218,9 @@ describe('CronController', () => {
                 personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockResolvedValueOnce(
                     mockPersonenKontexte,
                 );
+                personRepositoryMock.findById.mockResolvedValueOnce(person1);
+                personRepositoryMock.findById.mockResolvedValueOnce(person2);
+                personRepositoryMock.findById.mockResolvedValueOnce(person3);
 
                 const result: boolean =
                     await cronController.removePersonenKontexteWithExpiredBefristungFromUsers(permissionsMock);
@@ -257,6 +279,9 @@ describe('CronController', () => {
                     [person3.id, [personenKontextMock3]],
                 ]);
 
+                personRepositoryMock.findById.mockResolvedValueOnce(person1);
+                personRepositoryMock.findById.mockResolvedValueOnce(person2);
+                personRepositoryMock.findById.mockResolvedValueOnce(person3);
                 personenKontextRepositoryMock.getPersonenKontexteWithExpiredBefristung.mockResolvedValueOnce(
                     mockPersonenKontexte,
                 );
@@ -304,9 +329,14 @@ describe('CronController', () => {
     describe('/PUT cron/person-without-org', () => {
         describe('when there are users to remove', () => {
             it('should return true when all users are successfully removed', async () => {
-                const mockUserIds: string[] = ['user1', 'user2', 'user3'];
-
+                const personMock1: Person<true> = DoFactory.createPerson(true);
+                const personMock2: Person<true> = DoFactory.createPerson(true);
+                const personMock3: Person<true> = DoFactory.createPerson(true);
+                const mockUserIds: string[] = [personMock1.id, personMock2.id, personMock3.id];
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock1);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock2);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
                 personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
                 personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
@@ -336,7 +366,13 @@ describe('CronController', () => {
 
         describe('when removing users fails', () => {
             it('should return false when at least one user fails to be removed', async () => {
-                const mockUserIds: string[] = ['user1', 'user2', 'user3'];
+                const personMock1: Person<true> = DoFactory.createPerson(true);
+                const personMock2: Person<true> = DoFactory.createPerson(true);
+                const personMock3: Person<true> = DoFactory.createPerson(true);
+                const mockUserIds: string[] = [personMock1.id, personMock2.id, personMock3.id];
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock1);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock2);
+                personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
 
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
