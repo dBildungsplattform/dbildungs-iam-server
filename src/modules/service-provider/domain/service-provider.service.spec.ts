@@ -280,8 +280,7 @@ describe('ServiceProviderService', () => {
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByName.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0])
-                organisationRepo.findByKennung.mockResolvedValue({ ok: true, value: mockExistingSchulen[0] });
+            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -290,7 +289,7 @@ describe('ServiceProviderService', () => {
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByName).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(organisationRepo.findByKennung).toHaveBeenCalledTimes(
+            expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
             expect(organisationServiceProviderRepo.save).toHaveBeenCalledTimes(
@@ -303,8 +302,7 @@ describe('ServiceProviderService', () => {
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByName.mockResolvedValue(null);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0])
-                organisationRepo.findByKennung.mockResolvedValue({ ok: true, value: mockExistingSchulen[0] });
+            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             organisationServiceProviderRepo.save.mockResolvedValue();
 
             await service.updateServiceProvidersForVidis();
@@ -313,7 +311,7 @@ describe('ServiceProviderService', () => {
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByName).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(organisationRepo.findByKennung).toHaveBeenCalledTimes(
+            expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
             expect(organisationServiceProviderRepo.save).toHaveBeenCalledTimes(
@@ -326,8 +324,7 @@ describe('ServiceProviderService', () => {
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
             serviceProviderRepo.findByName.mockResolvedValue(null);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
-            if (mockExistingSchulen[0])
-                organisationRepo.findByKennung.mockResolvedValue({ ok: true, value: mockExistingSchulen[0] });
+            if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             organisationServiceProviderRepo.save.mockResolvedValue();
             serviceProviderRepo.findByKeycloakGroup.mockResolvedValue(mockExistingServiceProviders);
             serviceProviderRepo.deleteById.mockResolvedValue(true);
@@ -338,7 +335,7 @@ describe('ServiceProviderService', () => {
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
             expect(serviceProviderRepo.findByName).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
-            expect(organisationRepo.findByKennung).toHaveBeenCalledTimes(
+            expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
             );
             expect(organisationServiceProviderRepo.save).toHaveBeenCalledTimes(

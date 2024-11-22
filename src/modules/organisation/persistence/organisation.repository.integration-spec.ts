@@ -1028,39 +1028,6 @@ describe('OrganisationRepository', () => {
         });
     });
 
-    describe('findByKennung', () => {
-        let kennungOfExistingOrganisation: string;
-        let persistedOrganisation: Organisation<true>;
-        let kennungOfNotExistingOrganisation: string;
-
-        beforeEach(async () => {
-            const organisation: Organisation<false> = DoFactory.createOrganisation(false);
-            const organisation2: Organisation<false> = DoFactory.createOrganisation(false);
-            persistedOrganisation = await sut.save(organisation);
-            await sut.save(organisation2);
-            if (organisation.kennung) kennungOfExistingOrganisation = organisation.kennung;
-            kennungOfNotExistingOrganisation = 'this-Organisation-does-not-exist';
-        });
-
-        it(`should find correct Organisation by its kennung if any Organisation with the given kennung exists`, async () => {
-            const result: Result<Organisation<true>, DomainError> = await sut.findByKennung(
-                kennungOfExistingOrganisation,
-            );
-
-            expect(result.ok).toBe(true);
-            if (result.ok) expect(result.value).toEqual(persistedOrganisation);
-            if (result.ok) expect(result.value.kennung).toEqual(kennungOfExistingOrganisation);
-        });
-
-        it(`should throw an error if it cannot find any Organisation by the given kennung`, async () => {
-            const result: Result<Organisation<true>, DomainError> = await sut.findByKennung(
-                kennungOfNotExistingOrganisation,
-            );
-
-            expect(result.ok).toBe(false);
-        });
-    });
-
     describe('Save', () => {
         let root: Organisation<false>;
         let oeffentlich: Organisation<false>;

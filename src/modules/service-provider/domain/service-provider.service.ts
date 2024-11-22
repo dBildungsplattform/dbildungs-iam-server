@@ -10,7 +10,6 @@ import { ServiceProviderTarget, ServiceProviderKategorie, ServiceProviderSystem 
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
@@ -104,15 +103,12 @@ export class ServiceProviderService {
                     await this.serviceProviderRepo.save(serviceProvider);
                 await Promise.allSettled(
                     angebot.schoolActivations.map(async (schoolActivation: string) => {
-                        const school: Result<
-                            Organisation<true>,
-                            DomainError
-                        > = await this.organisationRepo.findByKennung(schoolActivation);
-                        if (school.ok) {
-                            await this.organisationServiceProviderRepo.save(school.value, persistedServiceProvider);
-                            this.logger.info(
-                                `Mapping of '${serviceProvider.name}' to '${school.value.name}' was saved.`,
-                            );
+                        const orga: Organisation<true> | undefined = (
+                            await this.organisationRepo.findByNameOrKennung(schoolActivation)
+                        ).at(0); // Assumption: kennung is unique for an Organisation and is not contained in name or kennung of any other Organisation
+                        if (orga) {
+                            await this.organisationServiceProviderRepo.save(orga, persistedServiceProvider);
+                            this.logger.info(`Mapping of '${serviceProvider.name}' to '${orga.name}' was saved.`);
                         }
                     }),
                 );
