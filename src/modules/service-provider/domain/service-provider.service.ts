@@ -138,18 +138,20 @@ export class ServiceProviderService {
      * @param {base64EncodedLogo} base64EncodedLogo Base64 encoded logo
      */
     private determineMediaTypeFor(base64EncodedLogo: string): string {
+        const MEDIA_SIGNATURES: { JPG: Buffer; PNG: Buffer } = {
+            // JPG/JPEG file signature in hexadeciaml begins with: ff d8 ff
+            JPG: Buffer.from([0xff, 0xd8, 0xff]),
+            // PNG file signature in hexadeciaml begins with: 89  50  4e  47  0d  0a  1a  0a
+            PNG: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        };
+
         const logoBuffer: Buffer = Buffer.from(base64EncodedLogo, 'base64');
 
-        // JPG/JPEG file signature in hexadeciaml begins with: ff d8 ff
-        const jpgFileSignatureBuffer: Buffer = Buffer.from([0xff, 0xd8, 0xff]);
-        // PNG file signature in hexadeciaml begins with: 89  50  4e  47  0d  0a  1a  0a
-        const pngFileSignatureBuffer: Buffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+        const first8Bytes: Buffer = logoBuffer.subarray(0, 8);
+        if (first8Bytes.equals(MEDIA_SIGNATURES.PNG)) return 'image/png';
 
-        const first8BytesBuffer: Buffer = logoBuffer.subarray(0, 8);
-        if (first8BytesBuffer.equals(pngFileSignatureBuffer)) return 'image/png';
-
-        const first3BytesBuffer: Buffer = logoBuffer.subarray(0, 3);
-        if (first3BytesBuffer.equals(jpgFileSignatureBuffer)) return 'image/jpeg';
+        const first3Bytes: Buffer = logoBuffer.subarray(0, 3);
+        if (first3Bytes.equals(MEDIA_SIGNATURES.JPG)) return 'image/jpeg';
 
         return 'image/svg+xml';
     }
