@@ -35,6 +35,8 @@ import { Organisation } from './organisation.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { EmailAdressOnOrganisationTyp } from '../specification/email-on-organisation-type.js';
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
+import { OrganisationsTyp } from './organisation.enums.js';
+import { KlasseWithoutNumberOrLetterError } from '../specification/error/klasse-without-number-or-letter.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -364,6 +366,14 @@ export class OrganisationService {
     }
 
     private validateFieldNames(organisation: Organisation<boolean>): void | OrganisationSpecificationError {
+        if (
+            organisation.name &&
+            organisation.typ === OrganisationsTyp.KLASSE &&
+            !NameValidator.hasLetterOrNumber(organisation.name)
+        ) {
+            return new KlasseWithoutNumberOrLetterError();
+        }
+
         if (organisation.name && !NameValidator.isNameValid(organisation.name)) {
             return new NameForOrganisationWithTrailingSpaceError();
         }
