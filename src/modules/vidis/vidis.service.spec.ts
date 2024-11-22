@@ -7,6 +7,7 @@ import { Observable, of } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { ConfigTestModule } from '../../../test/utils/config-test.module.js';
 import { VidisAngebot } from './domain/vidis-angebot.js';
+import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 
 const mockVidisRegionName: string = 'test-region';
 
@@ -74,7 +75,7 @@ describe(`VidisService`, () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [ConfigTestModule],
+            imports: [ConfigTestModule, LoggingTestModule],
             providers: [VidisService, { provide: HttpService, useValue: createMock<HttpService>() }],
         }).compile();
 

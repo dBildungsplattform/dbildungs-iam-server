@@ -7,6 +7,7 @@ import { VidisOfferResponse, VidisResponse } from './api/vidis-angebote-api.type
 import { VidisAngebot } from './domain/vidis-angebot.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
 import { ConfigService } from '@nestjs/config';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @Injectable()
 export class VidisService {
@@ -15,12 +16,14 @@ export class VidisService {
     public constructor(
         private readonly httpService: HttpService,
         configService: ConfigService<ServerConfig>,
+        private readonly logger: ClassLogger,
     ) {
         this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
     }
 
     public async getActivatedAngeboteByRegion(regionName: string): Promise<VidisAngebot[]> {
         const url: string = this.vidisConfig.BASE_URL + `/o/vidis-rest/v1.0/offers/activated/by-region/${regionName}`;
+        this.logger.info(`Fetching activated Angebote for region: ${regionName}`);
         try {
             const response: AxiosResponse<VidisResponse<VidisOfferResponse>> = await firstValueFrom(
                 this.httpService.get(url, {
