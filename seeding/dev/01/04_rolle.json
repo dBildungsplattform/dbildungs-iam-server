@@ -170,7 +170,7 @@
             "name": "Technical User CRON",
             "rollenart": "SYSADMIN",
             "merkmale": [],
-            "systemrechte": ["CRON_DURCHFUEHREN"],
+            "systemrechte": ["CRON_DURCHFUEHREN", "PERSONEN_VERWALTEN", "PERSONEN_SOFORT_LOESCHEN"],
             "serviceProviderIds": [],
             "istTechnisch": true
         },
