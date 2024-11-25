@@ -22,8 +22,6 @@ import { KennungForOrganisationWithTrailingSpaceError } from '../specification/e
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { Person } from '../../person/domain/person.js';
-import { Geschlecht } from '../../person/domain/person.enums.js';
 import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
 
 describe('OrganisationService', () => {
@@ -65,21 +63,7 @@ describe('OrganisationService', () => {
     });
 
     describe('createOrganisation', () => {
-        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    id: 'test-id',
-                    keycloakUserId: 'test-keycloak',
-                    vorname: 'test-vorname',
-                    familienname: 'test-familienname',
-                    rufname: 'test-rufname',
-                    username: 'test-username',
-                    geschlecht: Geschlecht.M,
-                    geburtsdatum: faker.date.past(),
-                    updatedAt: faker.date.recent(),
-                });
-            },
-        });
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
         const organisationUser: Organisation<true> = DoFactory.createOrganisation(true);
         const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
             {
@@ -370,21 +354,7 @@ describe('OrganisationService', () => {
     });
 
     describe('updateOrganisation', () => {
-        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    id: 'test-id',
-                    keycloakUserId: 'test-keycloak',
-                    vorname: 'test-vorname',
-                    familienname: 'test-familienname',
-                    rufname: 'test-rufname',
-                    username: 'test-username',
-                    geschlecht: Geschlecht.M,
-                    geburtsdatum: faker.date.past(),
-                    updatedAt: faker.date.recent(),
-                });
-            },
-        });
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
         const organisationUser: Organisation<true> = DoFactory.createOrganisation(true);
         const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
             {

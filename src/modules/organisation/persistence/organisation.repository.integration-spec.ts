@@ -28,8 +28,6 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { Person } from '../../person/domain/person.js';
-import { Geschlecht } from '../../person/domain/person.enums.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -792,21 +790,7 @@ describe('OrganisationRepository', () => {
     describe('deleteKlasse', () => {
         describe('when all validations succeed', () => {
             it('should succeed', async () => {
-                const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-                    get personFields(): Person<true> {
-                        return createMock<Person<true>>({
-                            id: 'test-id',
-                            keycloakUserId: 'test-keycloak',
-                            vorname: 'test-vorname',
-                            familienname: 'test-familienname',
-                            rufname: 'test-rufname',
-                            username: 'test-username',
-                            geschlecht: Geschlecht.M,
-                            geburtsdatum: faker.date.past(),
-                            updatedAt: faker.date.recent(),
-                        });
-                    },
-                });
+                const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
                 const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                     typ: OrganisationsTyp.KLASSE,
                 });
@@ -842,21 +826,7 @@ describe('OrganisationRepository', () => {
         });
     });
     describe('updateKlassenname', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    id: 'test-id',
-                    keycloakUserId: 'test-keycloak',
-                    vorname: 'test-vorname',
-                    familienname: 'test-familienname',
-                    rufname: 'test-rufname',
-                    username: 'test-username',
-                    geschlecht: Geschlecht.M,
-                    geburtsdatum: faker.date.past(),
-                    updatedAt: faker.date.recent(),
-                });
-            },
-        });
+        const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
                 const id: string = faker.string.uuid();

@@ -24,8 +24,7 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enu
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
-import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { Person } from '../../person/domain/person.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -110,20 +109,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     describe('/GET rolle mocked Rolle-repo', () => {
         describe('createRolle', () => {
-            const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-                get personFields(): Person<true> {
-                    return createMock<Person<true>>({
-                        familienname: 'current-user',
-                    });
-                },
-                getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
-                    Promise.resolve([
-                        {
-                            organisationsId: '',
-                            rolle: { systemrechte: [], serviceProviderIds: [] },
-                        },
-                    ]),
-            });
+            const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
                 const createRolleParams: CreateRolleBodyParams = {
                     name: ' SuS',

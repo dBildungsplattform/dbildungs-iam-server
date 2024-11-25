@@ -46,7 +46,6 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
-import { Geschlecht } from '../../person/domain/person.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 
@@ -136,21 +135,7 @@ describe('Rolle API', () => {
     });
 
     beforeEach(async () => {
-        permissionsMock = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    id: 'test-id',
-                    keycloakUserId: 'test-keycloak',
-                    vorname: 'test-vorname',
-                    familienname: 'test-familienname',
-                    rufname: 'test-rufname',
-                    username: 'test-username',
-                    geschlecht: Geschlecht.M,
-                    geburtsdatum: faker.date.past(),
-                    updatedAt: faker.date.recent(),
-                });
-            },
-        });
+        permissionsMock = createMock<PersonPermissions>();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
         permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         await DatabaseTestModule.clearDatabase(orm);
