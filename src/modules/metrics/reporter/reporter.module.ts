@@ -1,6 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { ReporterService } from './reporter.service.js';
-import { MetricsModule } from './metrics.module.js';
+import { MetricsModule } from '../metrics.module.js';
 
 @Global()
 @Module({

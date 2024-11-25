@@ -2,7 +2,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Inject } from '@nestjs/common';
 import { Registry } from 'prom-client';
 import { Public } from '../authentication/api/public.decorator.js';
-import { ReporterService } from './reporter.service.js';
+import { ReporterService } from './reporter/reporter.service.js';
 import { RollenArt } from '../rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 

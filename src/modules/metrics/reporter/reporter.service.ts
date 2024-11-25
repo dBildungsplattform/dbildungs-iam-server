@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MetricsService } from './metrics.service.js';
+import { MetricsService } from '../service/metrics.service.js';
 
 @Injectable()
 export class ReporterService {

@@ -5,7 +5,7 @@ import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-p
 import { ScopeOperator } from '../../shared/persistence/scope.enums.js';
 import { PersonenkontextScope } from '../personenkontext/persistence/personenkontext.scope.js';
 import { RollenArt } from '../rolle/domain/rolle.enums.js';
-import { ReporterService } from './reporter.service.js';
+import { ReporterService } from './reporter/reporter.service.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 
 describe('MetricsController', () => {

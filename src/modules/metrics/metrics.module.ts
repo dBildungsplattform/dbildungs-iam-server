@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { MetricsService } from './metrics.service.js';
+import { MetricsService } from './service/metrics.service.js';
 import { MetricsController } from './metrics.controller.js';
 import { Registry } from 'prom-client';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
