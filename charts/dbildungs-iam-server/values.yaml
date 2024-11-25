@@ -173,7 +173,7 @@ cronjobs:
   enabled: true
   image:
     tag: '1.1.0'
-    repository: ghcr.io/hpi-schul-cloud/cron-tools
+    repository: schulcloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
