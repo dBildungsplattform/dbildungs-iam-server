@@ -21,3 +21,6 @@ data:
   LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"
   LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.ldap.ersatzschulenDomain }}"
   STATUS_REDIRECT_URL: "{{ .Values.status.url }}"
+  SYSTEM_RENAME_WAITING_TIME_IN_SECONDS: "{{ .Values.backend.renameWaitingTimeInSeconds }}"
+  SYSTEM_STEP_UP_TIMEOUT_ENABLED: "{{ .Values.backend.stepUpTimeoutEnabled }}"
+  SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS: "{{ .Values.backend.stepUpTimeoutInSeconds }}"
