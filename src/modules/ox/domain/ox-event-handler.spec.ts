@@ -189,11 +189,56 @@ describe('OxEventHandler', () => {
                     mailenabled: true,
                 },
             });
+
+            //mock changeByModuleAccess request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+
             await sut.handleEmailAddressGeneratedEvent(event);
 
-            expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
+            expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `User created in OX, userId:${fakeOXUserId}, email:${event.address}`,
+            );
+            expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
+        });
+
+        it('should log error but still publish OxUserCreatedEvent when changeByModuleAccess request fails', async () => {
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    exists: false,
+                },
+            });
+            const fakeOXUserId: string = faker.string.uuid();
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    id: fakeOXUserId,
+                    firstname: 'firstname',
+                    lastname: 'lastname',
+                    username: 'username',
+                    primaryEmail: event.address,
+                    mailenabled: true,
+                },
+            });
+
+            //mock changeByModuleAccess request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: false,
+                error: new OxError(),
+            });
+
+            await sut.handleEmailAddressGeneratedEvent(event);
+
+            expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, error: Unknown OX-error`,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
@@ -222,9 +267,15 @@ describe('OxEventHandler', () => {
             });
             emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeCreated('EmailAddress'));
 
+            //mock changeByModuleAccess request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+
             await sut.handleEmailAddressGeneratedEvent(event);
 
-            expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
+            expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `User created in OX, userId:${fakeOXUserId}, email:${event.address}`,
             );
