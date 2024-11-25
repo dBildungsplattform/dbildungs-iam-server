@@ -395,18 +395,7 @@ describe('Email Event Handler', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map<string, ServiceProvider<true>>());
 
-                // eslint-disable-next-line @typescript-eslint/require-await
-                emailRepoMock.findEnabledByPerson.mockImplementationOnce(async (personId: PersonID) => {
-                    return new EmailAddress<true>(
-                        faker.string.uuid(),
-                        faker.date.past(),
-                        faker.date.recent(),
-                        personId,
-                        faker.internet.email(),
-                        EmailAddressStatus.ENABLED,
-                    );
-                });
-
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([getEmail()]);
                 emailRepoMock.save.mockResolvedValueOnce(new EmailAddressNotFoundError(fakeEmailAddressString)); //mock: error during saving the entity
 
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
@@ -440,17 +429,16 @@ describe('Email Event Handler', () => {
                         EmailAddressStatus.DISABLED,
                     );
 
-                    // eslint-disable-next-line @typescript-eslint/require-await
-                    emailRepoMock.findEnabledByPerson.mockImplementationOnce(async (personId: PersonID) => {
-                        return new EmailAddress<true>(
+                    emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                        EmailAddress.construct(
                             faker.string.uuid(),
                             faker.date.past(),
                             faker.date.recent(),
-                            personId,
+                            fakePersonId,
                             faker.internet.email(),
                             status,
-                        );
-                    });
+                        ),
+                    ]);
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
                     await emailEventHandler.handlePersonenkontextUpdatedEvent(event);

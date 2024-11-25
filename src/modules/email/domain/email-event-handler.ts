@@ -293,19 +293,24 @@ export class EmailEventHandler {
         } else {
             //If user does not have any PK with SP referencing email, we have to disable any existing email
             //Even FAILED emails are disabled, because they are not used
-            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
-            if (existingEmail) {
-                this.logger.info(`Existing email found for personId:${personId}, address:${existingEmail.address}`);
-                if (!existingEmail.disabled) {
-                    existingEmail.disable();
-                    const persistenceResult: EmailAddress<true> | DomainError =
-                        await this.emailRepo.save(existingEmail);
-                    if (persistenceResult instanceof EmailAddress) {
-                        this.logger.info(`Disabled and saved address:${persistenceResult.address}`);
-                    } else {
-                        this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
+            const existingEmails: Option<EmailAddress<true>[]> =
+                await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
+            if (existingEmails) {
+                /* eslint-disable no-await-in-loop */
+                for (const existingEmail of existingEmails) {
+                    this.logger.info(`Existing email found for personId:${personId}, address:${existingEmail.address}`);
+                    if (!existingEmail.disabled) {
+                        existingEmail.disable();
+                        const persistenceResult: EmailAddress<true> | DomainError =
+                            await this.emailRepo.save(existingEmail); //We have to use await in a loop because of persistenceResult
+                        if (persistenceResult instanceof EmailAddress) {
+                            this.logger.info(`Disabled and saved address:${persistenceResult.address}`);
+                        } else {
+                            this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
+                        }
                     }
                 }
+                /* eslint-disable no-await-in-loop */
             }
         }
     }
