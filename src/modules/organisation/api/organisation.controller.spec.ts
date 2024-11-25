@@ -16,7 +16,7 @@ import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js'
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationResponse } from './organisation.response.js';
-import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
@@ -30,7 +30,6 @@ import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
-import { Person } from '../../person/domain/person.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -89,20 +88,7 @@ describe('OrganisationController', () => {
     });
 
     describe('createOrganisation', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    familienname: 'current-user',
-                });
-            },
-            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
-                Promise.resolve([
-                    {
-                        organisationsId: '',
-                        rolle: { systemrechte: [], serviceProviderIds: [] },
-                    },
-                ]),
-        });
+        const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
         describe('when usecase returns a DTO', () => {
             it('should not throw an error', async () => {
                 const params: CreateOrganisationBodyParams = {
@@ -734,20 +720,7 @@ describe('OrganisationController', () => {
     });
 
     describe('updateOrganisationName', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    familienname: 'current-user',
-                });
-            },
-            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
-                Promise.resolve([
-                    {
-                        organisationsId: '',
-                        rolle: { systemrechte: [], serviceProviderIds: [] },
-                    },
-                ]),
-        });
+        const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
@@ -817,20 +790,7 @@ describe('OrganisationController', () => {
     });
 
     describe('updateOrganisationName', () => {
-        const permissionsMock: PersonPermissions = createMock<PersonPermissions>({
-            get personFields(): Person<true> {
-                return createMock<Person<true>>({
-                    familienname: 'current-user',
-                });
-            },
-            getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
-                Promise.resolve([
-                    {
-                        organisationsId: '',
-                        rolle: { systemrechte: [], serviceProviderIds: [] },
-                    },
-                ]),
-        });
+        const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
                 const oeffentlich: Organisation<true> = Organisation.construct(
