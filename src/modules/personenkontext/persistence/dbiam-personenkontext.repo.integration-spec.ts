@@ -652,4 +652,19 @@ describe('dbiam Personenkontext Repo', () => {
             expect(result.get(person2.id)).toHaveLength(2);
         });
     });
+
+    describe('getPersonCountByRole', () => {
+        it('should return the correct count of unique persons for a given role', async () => {
+            const person: Person<true> = await createPerson();
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolle instanceof DomainError) throw Error();
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, { personId: person.id, rolleId: rolle.id }),
+            );
+
+            const count: number = await sut.getPersonCountByRole(rolle.rollenart);
+            expect(count).toBe(1);
+        });
+    });
 });
