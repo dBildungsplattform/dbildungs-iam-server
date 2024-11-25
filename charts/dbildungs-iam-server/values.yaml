@@ -127,6 +127,9 @@ backend:
       subPath: secrets-json
       name: secret-volume
   extraVolumeMounts: []
+  config: 
+    alternativeConfigJson: false
+    alternativeConfigPath: "" 
 
 redis:
   enabled: true
