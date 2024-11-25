@@ -1,0 +1,86 @@
+{{- if .Values.cronjobs.enabled }}
+{{- range $job_name, $job_options := .Values.cronjobs.jobs }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "common.names.name" $ }}-{{ $job_name}}
+  namespace: {{ template "common.names.namespace" $ }}
+spec:
+  schedule: {{ $job_options.schedule }}
+  startingDeadlineSeconds: 300
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            cron: {{ $job_name }}
+        spec:
+          automountServiceAccountToken: false
+          containers:
+          - name: {{ $job_name }}
+            image: "{{ $.Values.cronjobs.image.repository }}:{{ $.Values.cronjobs.image.tag }}"
+            imagePullPolicy: {{ $.Values.cronjobs.image.pullPolicy | default "Always"}}
+            securityContext:
+              # not yet possible since we need to install some tools
+              # privileged: false
+              # runAsUser: 1000
+              # runAsNonRoot: true
+              capabilities:
+                drop:
+                  - ALL
+              readOnlyRootFilesystem: false
+              allowPrivilegeEscalation: false
+              seccompProfile:
+                type: RuntimeDefault
+            envFrom:
+              - configMapRef:
+                  name:  {{ template "common.names.name" $ }}-cronjob-envs-configmap
+            env:
+                - name: BACKEND_ENDPOINT_URL
+                  value: "https://{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
+                - name: HTTP_METHOD
+                  value: "{{ $job_options.httpMethod }}"
+            resources:
+              limits:
+                memory: "128Mi"
+                cpu: "200m"
+              requests:
+                memory: "64Mi"
+                cpu: "50m"
+            command:
+              - "sh"
+              - "-c"
+              - |
+                  mkdir /scripts &&
+                  cp /scripts_tmp/*.sh /scripts/ &&
+                  chmod +x /scripts/*.sh &&
+                  touch /var/log/cron.log &&
+                  chmod 644 /var/log/cron.log &&
+                  cd {{ $.Values.cronjobs.scriptDir }} &&
+                  bash {{ $job_options.script }}
+            volumeMounts:
+              - name: secret-volume-jwks
+                mountPath: /keys/jwks.json
+                subPath: jwks.json
+                readOnly: true
+              - name: script-volume
+                mountPath: /scripts_tmp
+                readOnly: false
+            ports:
+            - containerPort: {{ $.Values.cronjobs.port }}
+              name: cron-pod
+          volumes:
+          - name: script-volume
+            configMap:
+              name: {{ template "common.names.name" $ }}-cronjob-scripts-configmap
+          - name: secret-volume-jwks
+            secret:
+              secretName: dbildungs-iam-server
+              items:
+              - key: service-account-private-jwks
+                path: jwks.json
+          restartPolicy: Never
+---
+{{- end}}
+{{- end }}

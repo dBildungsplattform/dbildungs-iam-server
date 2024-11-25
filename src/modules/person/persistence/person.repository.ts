@@ -36,7 +36,7 @@ import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
-import { PrivacyIdeaConfig } from '../../../shared/config/privacyidea.config.js';
+import { SystemConfig } from '../../../shared/config/system.config.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 
 /**
@@ -150,7 +150,7 @@ export type PersonenQueryParams = {
 export class PersonRepository {
     public readonly ROOT_ORGANISATION_ID: string;
 
-    public readonly PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS: number;
+    public readonly RENAME_WAITING_TIME_IN_SECONDS: number;
 
     public constructor(
         private readonly kcUserService: KeycloakUserService,
@@ -161,8 +161,7 @@ export class PersonRepository {
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
-        this.PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS =
-            config.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA').RENAME_WAITING_TIME_IN_SECONDS;
+        this.RENAME_WAITING_TIME_IN_SECONDS = config.getOrThrow<SystemConfig>('SYSTEM').RENAME_WAITING_TIME_IN_SECONDS;
     }
 
     private async getPersonScopeWithPermissions(
@@ -464,7 +463,7 @@ export class PersonRepository {
             this.eventService.publish(PersonRenamedEvent.fromPerson(person, oldReferrer));
             // wait for privacyIDEA to update the username
             await new Promise<void>((resolve: () => void) =>
-                setTimeout(resolve, this.PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS * 1000),
+                setTimeout(resolve, this.RENAME_WAITING_TIME_IN_SECONDS * 1000),
             );
         }
 
