@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    Post,
+    Put,
+    Query,
+    UseFilters,
+    UseGuards,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -43,11 +55,14 @@ import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-pe
 import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
     new PersonenkontextExceptionFilter(),
     new PersonenkontexteUpdateExceptionFilter(),
+    new AuthenticationExceptionFilter(),
 )
 @ApiTags('personenkontext')
 @ApiBearerAuth()
@@ -122,6 +137,7 @@ export class DbiamPersonenkontextWorkflowController {
     }
 
     @Put(':personId')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description:
@@ -196,6 +212,7 @@ export class DbiamPersonenkontextWorkflowController {
     }
 
     @Post()
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
         description: 'Person with Personenkontext was successfully created.',

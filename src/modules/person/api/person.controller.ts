@@ -13,6 +13,7 @@ import {
     Put,
     Query,
     UseFilters,
+    UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -76,6 +77,7 @@ import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from './person-email-response.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
@@ -103,6 +105,7 @@ export class PersonController {
     }
 
     @Post()
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported.' })
@@ -153,6 +156,7 @@ export class PersonController {
     }
 
     @Delete(':personId')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiNoContentResponse({
         description: 'The person and all their kontexte were successfully deleted.',
@@ -225,6 +229,7 @@ export class PersonController {
      * @deprecated This endpoint is no longer used.
      */
     @Post(':personId/personenkontexte')
+    @UseGuards(StepUpGuard)
     @HttpCode(200)
     @ApiOperation({ deprecated: true })
     @ApiParam({ name: 'personId', type: String })
@@ -329,6 +334,7 @@ export class PersonController {
     }
 
     @Put(':personId')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The person was successfully updated.',
         type: PersonendatensatzResponse,
@@ -391,6 +397,7 @@ export class PersonController {
     }
 
     @Patch(':personId/password')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiAcceptedResponse({ description: 'Password for person was successfully reset.', type: String })
     @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions to update person.' })
@@ -435,6 +442,7 @@ export class PersonController {
     }
 
     @Put(':personId/lock-user')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiOkResponse({ description: 'User has been successfully updated.', type: PersonLockResponse })
     @ApiNotFoundResponse({ description: 'The person was not found.' })
@@ -524,6 +532,7 @@ export class PersonController {
     }
 
     @Post(':personId/sync')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({ description: 'User will be synced.' })
     @ApiNotFoundResponse({ description: 'The person was not found.' })
@@ -554,6 +563,7 @@ export class PersonController {
     }
 
     @Patch(':personId/metadata')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The metadata for user was successfully updated.',
         type: PersonendatensatzResponse,
