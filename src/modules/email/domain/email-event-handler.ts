@@ -315,10 +315,6 @@ export class EmailEventHandler {
     }
 
     private async createOrEnableEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
-        /*    const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(organisationId);
-        if (!organisation || !organisation.kennung) {
-            return this.logger.error(`Could not retrieve orgaKennung, orgaId:${organisationId}`);
-        }*/
         const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
 

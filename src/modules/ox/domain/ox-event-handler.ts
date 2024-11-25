@@ -28,6 +28,10 @@ import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../ac
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
 import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actions/group/list-groups.action.js';
 import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error.js';
+import {
+    ChangeByModuleAccessAction,
+    ChangeByModuleAccessParams,
+} from '../actions/user/change-by-module-access.action.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -98,23 +102,6 @@ export class OxEventHandler {
         return requestedEmailAddresses[0];
     }
 
-    /* private async getAllOxGroups(): Promise<Result<ListAllGroupsResponse>> {
-        const params: ListAllGroupsParams = {
-            contextId: this.contextID,
-            login: this.authUser,
-            password: this.authPassword,
-        };
-
-        const action: ListAllGroupsAction = new ListAllGroupsAction(params);
-        const result: Result<ListAllGroupsResponse, DomainError> = await this.oxService.send(action);
-
-        if (!result.ok) {
-            this.logger.error(`Could Not Retrieve Groups For Context, contextId:${this.contextID}`);
-        }
-
-        return result;
-    }*/
-
     private async createOxGroup(oxGroupName: OXGroupName, displayName: string): Promise<Result<OXGroupID>> {
         const params: CreateGroupParams = {
             contextId: this.contextID,
@@ -143,31 +130,10 @@ export class OxEventHandler {
         };
     }
 
-    /*private async getOxGroupByName(oxGroupName: OXGroupName): Promise<Result<OXGroupID>> {
-        const listAllGroupsResult: Result<ListAllGroupsResponse> = await this.getAllOxGroups();
-        if (!listAllGroupsResult.ok) {
-            return listAllGroupsResult;
-        }
-        for (const group of listAllGroupsResult.value.groups) {
-            if (group.name === oxGroupName) {
-                this.logger.info(`Found existing oxGroup for oxGroupName:${oxGroupName}`);
-                return {
-                    ok: true,
-                    value: group.id,
-                };
-            }
-        }
-
-        return {
-            ok: false,
-            error: new OxGroupNotFoundError(`OX-group with oxGroupName:${oxGroupName} could not be found`),
-        };
-    }*/
-
     private async getOxGroupByName(oxGroupName: OXGroupName): Promise<OXGroupID | DomainError> {
         const params: ListGroupsParams = {
             contextId: this.contextID,
-            pattern: `*${oxGroupName}*`,
+            pattern: `${oxGroupName}`,
             login: this.authUser,
             password: this.authPassword,
         };
@@ -327,6 +293,28 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
             return;
+        }
+
+        //adjust user infostore and globalAddressBook
+        const changeByModuleAccessParams: ChangeByModuleAccessParams = {
+            contextId: this.contextID,
+            userId: createUserResult.value.id,
+            globalAddressBookDisabled: true,
+            infostore: false,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const changeByModuleAccessAction: ChangeByModuleAccessAction = new ChangeByModuleAccessAction(
+            changeByModuleAccessParams,
+        );
+        const changeByModuleAccessResult: Result<void, DomainError> =
+            await this.oxService.send(changeByModuleAccessAction);
+
+        if (!changeByModuleAccessResult.ok) {
+            //only log error, do not set email-address status = FAILED, the ChangeByModuleAccessAction won't work against OX-DEV
+            this.logger.error(
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${createUserResult.value.id}, error: ${changeByModuleAccessResult.error.message}`,
+            );
         }
 
         this.eventService.publish(
