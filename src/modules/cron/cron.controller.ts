@@ -100,7 +100,7 @@ export class CronController {
                             `System hat Benutzer ${person?.referrer} (${person?.id}) gesperrt, da nach Ablauf der Frist keine KoPers.-Nr. eingetragen war.`,
                         );
                     } else {
-                        this.logger.info(
+                        this.logger.error(
                             `System konnte Benutzer ${person?.referrer} (${person?.id}) nach Ablauf der Frist ohne KoPers.-Nr. nicht sperren. Fehler: ${updateResult.error.message}`,
                         );
                     }
@@ -119,7 +119,7 @@ export class CronController {
                     `System hat alle Benutzer mit einer fehlenden KoPers.-Nr nach Ablauf der Frist gesperrt.`,
                 );
             } else {
-                this.logger.info(
+                this.logger.error(
                     `System konnte nicht alle Benutzer mit einer fehlenden KoPers.-Nr nach Ablauf der Frist sperren.`,
                 );
             }
@@ -181,7 +181,7 @@ export class CronController {
                                     .createNew()
                                     .commit(personId, new Date(), count, personenKontexteToKeep, permissions);
                             if (result instanceof PersonenkontexteUpdateError) {
-                                this.logger.info(
+                                this.logger.error(
                                     `System konnte die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Fehler: ${result.message}`,
                                 );
                             } else {
@@ -207,7 +207,7 @@ export class CronController {
             if (allSuccessful) {
                 this.logger.info(`System hat alle abgelaufenen Schulzuordnungen entfernt.`);
             } else {
-                this.logger.info(`System konnte nicht alle abgelaufenen Schulzuordnungen entfernen.`);
+                this.logger.error(`System konnte nicht alle abgelaufenen Schulzuordnungen entfernen.`);
             }
 
             return allSuccessful;
@@ -270,7 +270,7 @@ export class CronController {
                             `System hat ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung gelöscht.`,
                         );
                     } else {
-                        this.logger.info(
+                        this.logger.error(
                             `System konnte Benutzer ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung nicht löschen. Fehler: ${deleteResult.error.message}`,
                         );
                     }
@@ -286,7 +286,7 @@ export class CronController {
             if (allSuccessful) {
                 this.logger.info(`System hat alle Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen gelöscht.`);
             } else {
-                this.logger.info(
+                this.logger.error(
                     `System konnte nicht alle Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen löschen.`,
                 );
             }
@@ -345,7 +345,7 @@ export class CronController {
                             `System hat die befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) aufgehoben.`,
                         );
                     } else {
-                        this.logger.info(
+                        this.logger.error(
                             `System konnte befristete Sperre von Benutzer ${person.value.referrer} (${person.value.id}) nicht aufheben. Fehler: ${updateResult.error.message}`,
                         );
                     }
@@ -363,7 +363,7 @@ export class CronController {
                     `System hat die befristete Sperre von allen gesperrten Benutzern mit abgelaufener Befristung aufgehoben.`,
                 );
             } else {
-                this.logger.info(
+                this.logger.error(
                     `System hat die befristete Sperre nicht von allen gesperrten Benutzern mit abgelaufener Befristung aufgehoben.`,
                 );
             }
