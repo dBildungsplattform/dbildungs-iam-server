@@ -123,12 +123,6 @@ export class EmailRepo {
         }
         const emailAddresses: Option<EmailAddress<true>[]> = await this.findByPersonSortedByUpdatedAtDesc(person.id);
         if (!emailAddresses || !emailAddresses[0]) return undefined;
-        /*
-        for (const ea of emailAddresses) {
-            if (ea.status === EmailAddressStatus.ENABLED) {
-                return new PersonEmailResponse(ea.status, ea.address);
-            }
-        }*/
 
         return new PersonEmailResponse(emailAddresses[0].status, emailAddresses[0].address);
     }
