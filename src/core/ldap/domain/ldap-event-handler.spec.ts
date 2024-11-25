@@ -673,6 +673,7 @@ describe('LDAP Event Handler', () => {
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
+                faker.string.numeric(),
             );
 
             await ldapEventHandler.handleEmailAddressGeneratedEvent(event);
@@ -692,6 +693,7 @@ describe('LDAP Event Handler', () => {
                 faker.internet.email(),
                 faker.string.uuid(),
                 faker.internet.email(),
+                faker.string.numeric(),
             );
 
             await ldapEventHandler.handleEmailAddressChangedEvent(event);
