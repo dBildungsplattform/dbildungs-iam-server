@@ -133,6 +133,7 @@ export class OrganisationController {
     public async updateOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: UpdateOrganisationBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse> {
         const existingOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             params.organisationId,
@@ -156,6 +157,7 @@ export class OrganisationController {
 
         const result: Result<Organisation<true>, DomainError> = await this.organisationService.updateOrganisation(
             existingOrganisation,
+            permissions,
         );
 
         if (result.ok) {

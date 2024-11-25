@@ -258,6 +258,7 @@ describe('OrganisationController', () => {
     });
 
     describe('updateOrganisation', () => {
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
         describe('when usecase returns a DTO', () => {
             it('should not throw an error', async () => {
                 const params: OrganisationByIdParams = {
@@ -277,7 +278,9 @@ describe('OrganisationController', () => {
                 const returnedValue: Organisation<true> = DoFactory.createOrganisation(true);
 
                 organisationServiceMock.updateOrganisation.mockResolvedValue({ ok: true, value: returnedValue });
-                await expect(organisationController.updateOrganisation(params, body)).resolves.not.toThrow();
+                await expect(
+                    organisationController.updateOrganisation(params, body, permissionsMock),
+                ).resolves.not.toThrow();
                 expect(organisationServiceMock.updateOrganisation).toHaveBeenCalledTimes(1);
             });
         });
@@ -292,6 +295,7 @@ describe('OrganisationController', () => {
                     organisationController.updateOrganisation(
                         { organisationId: faker.string.uuid() } as OrganisationByIdParams,
                         {} as UpdateOrganisationBodyParams,
+                        permissionsMock,
                     ),
                 ).rejects.toThrow(OrganisationSpecificationError);
                 expect(organisationServiceMock.updateOrganisation).toHaveBeenCalledTimes(1);
@@ -308,6 +312,7 @@ describe('OrganisationController', () => {
                     organisationController.updateOrganisation(
                         { organisationId: faker.string.uuid() } as OrganisationByIdParams,
                         {} as UpdateOrganisationBodyParams,
+                        permissionsMock,
                     ),
                 ).rejects.toThrow(HttpException);
                 expect(organisationServiceMock.updateOrganisation).toHaveBeenCalledTimes(1);
@@ -321,6 +326,7 @@ describe('OrganisationController', () => {
                     organisationController.updateOrganisation(
                         { organisationId: organisationId } as OrganisationByIdParams,
                         {} as UpdateOrganisationBodyParams,
+                        permissionsMock,
                     ),
                 ).rejects.toThrow(new NotFoundException(`Organisation with ID ${organisationId} not found`));
                 expect(organisationRepositoryMock.findById).toHaveBeenCalledTimes(1);
