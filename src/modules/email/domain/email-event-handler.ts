@@ -291,8 +291,21 @@ export class EmailEventHandler {
             this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
             await this.createOrEnableEmail(personId, pkOfRolleWithSPReference.organisationId);
         } else {
-            //currently no else for calling disablingEmail is necessary, emails are only disabled, when the person is deleted not by PK-events
-            this.logger.info(`Person with id:${personId} does not need an email`);
+            //If user does not have any PK with SP referencing email, we have to disable any existing email
+            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
+            if (existingEmail) {
+                this.logger.info(`Existing email found for personId:${personId}, address:${existingEmail.address}`);
+                if (existingEmail.enabledOrRequested) {
+                    existingEmail.disable();
+                    const persistenceResult: EmailAddress<true> | DomainError =
+                        await this.emailRepo.save(existingEmail);
+                    if (persistenceResult instanceof EmailAddress) {
+                        this.logger.info(`Disabled and saved address:${persistenceResult.address}`);
+                    } else {
+                        this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
+                    }
+                }
+            }
         }
     }
 
