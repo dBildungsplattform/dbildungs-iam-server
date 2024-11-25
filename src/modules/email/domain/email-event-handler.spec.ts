@@ -420,40 +420,46 @@ describe('Email Event Handler', () => {
             });
         });
 
-        describe('when lehrer does not have any PK, email is enabled, disable email is successfull', () => {
-            it('should log matching info', async () => {
-                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
-                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map<string, ServiceProvider<true>>());
+        [
+            { status: EmailAddressStatus.ENABLED },
+            { status: EmailAddressStatus.REQUESTED },
+            { status: EmailAddressStatus.FAILED },
+        ].forEach(({ status }: { status: EmailAddressStatus }) => {
+            describe(`when lehrer does not have any PK, email is  ${status}, disable email is successfull`, () => {
+                it('should log matching info', async () => {
+                    dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+                    rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
+                    serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map<string, ServiceProvider<true>>());
 
-                const emailAddress: EmailAddress<true> = EmailAddress.construct(
-                    faker.string.uuid(),
-                    faker.date.past(),
-                    faker.date.recent(),
-                    fakePersonId,
-                    faker.internet.email(),
-                    EmailAddressStatus.DISABLED,
-                );
-
-                // eslint-disable-next-line @typescript-eslint/require-await
-                emailRepoMock.findEnabledByPerson.mockImplementationOnce(async (personId: PersonID) => {
-                    return new EmailAddress<true>(
+                    const emailAddress: EmailAddress<true> = EmailAddress.construct(
                         faker.string.uuid(),
                         faker.date.past(),
                         faker.date.recent(),
-                        personId,
+                        fakePersonId,
                         faker.internet.email(),
-                        EmailAddressStatus.ENABLED,
+                        EmailAddressStatus.DISABLED,
                     );
+
+                    // eslint-disable-next-line @typescript-eslint/require-await
+                    emailRepoMock.findEnabledByPerson.mockImplementationOnce(async (personId: PersonID) => {
+                        return new EmailAddress<true>(
+                            faker.string.uuid(),
+                            faker.date.past(),
+                            faker.date.recent(),
+                            personId,
+                            faker.internet.email(),
+                            status,
+                        );
+                    });
+
+                    emailRepoMock.save.mockResolvedValueOnce(emailAddress);
+                    await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                    expect(loggerMock.info).toHaveBeenCalledWith(
+                        expect.stringContaining('Existing email found for personId'),
+                    );
+                    expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
                 });
-
-                emailRepoMock.save.mockResolvedValueOnce(emailAddress);
-                await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
-
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    expect.stringContaining('Existing email found for personId'),
-                );
-                expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
             });
         });
     });

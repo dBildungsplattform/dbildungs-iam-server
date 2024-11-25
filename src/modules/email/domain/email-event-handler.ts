@@ -292,10 +292,11 @@ export class EmailEventHandler {
             await this.createOrEnableEmail(personId, pkOfRolleWithSPReference.organisationId);
         } else {
             //If user does not have any PK with SP referencing email, we have to disable any existing email
+            //Even FAILED emails are disabled, because they are not used
             const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
             if (existingEmail) {
                 this.logger.info(`Existing email found for personId:${personId}, address:${existingEmail.address}`);
-                if (existingEmail.enabledOrRequested) {
+                if (!existingEmail.disabled) {
                     existingEmail.disable();
                     const persistenceResult: EmailAddress<true> | DomainError =
                         await this.emailRepo.save(existingEmail);
