@@ -24,13 +24,10 @@ import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
 import { GroupMemberParams } from '../actions/group/ox-group.types.js';
-import {
-    ListAllGroupsAction,
-    ListAllGroupsParams,
-    ListAllGroupsResponse,
-} from '../actions/group/list-all-groups.action.js';
 import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../actions/group/create-group.action.js';
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
+import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actions/group/list-groups.action.js';
+import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -101,7 +98,7 @@ export class OxEventHandler {
         return requestedEmailAddresses[0];
     }
 
-    private async getAllOxGroups(): Promise<Result<ListAllGroupsResponse>> {
+    /* private async getAllOxGroups(): Promise<Result<ListAllGroupsResponse>> {
         const params: ListAllGroupsParams = {
             contextId: this.contextID,
             login: this.authUser,
@@ -116,7 +113,7 @@ export class OxEventHandler {
         }
 
         return result;
-    }
+    }*/
 
     private async createOxGroup(oxGroupName: OXGroupName, displayName: string): Promise<Result<OXGroupID>> {
         const params: CreateGroupParams = {
@@ -146,7 +143,7 @@ export class OxEventHandler {
         };
     }
 
-    private async getOxGroupByName(oxGroupName: OXGroupName): Promise<Result<OXGroupID>> {
+    /*private async getOxGroupByName(oxGroupName: OXGroupName): Promise<Result<OXGroupID>> {
         const listAllGroupsResult: Result<ListAllGroupsResponse> = await this.getAllOxGroups();
         if (!listAllGroupsResult.ok) {
             return listAllGroupsResult;
@@ -165,21 +162,59 @@ export class OxEventHandler {
             ok: false,
             error: new OxGroupNotFoundError(`OX-group with oxGroupName:${oxGroupName} could not be found`),
         };
+    }*/
+
+    private async getOxGroupByName(oxGroupName: OXGroupName): Promise<OXGroupID | DomainError> {
+        const params: ListGroupsParams = {
+            contextId: this.contextID,
+            pattern: `*${oxGroupName}*`,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const action: ListGroupsAction = new ListGroupsAction(params);
+        const result: Result<ListGroupsResponse, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            this.logger.error(`Could Not Retrieve Groups For Context, contextId:${this.contextID}`);
+            return result.error;
+        }
+        if (!result.value.groups[0] || result.value.groups.length == 0) {
+            this.logger.info(`Found No Matching OxGroup For OxGroupName:${oxGroupName}`);
+            return new OxGroupNotFoundError(oxGroupName);
+        }
+        if (result.value.groups.length > 1) {
+            this.logger.error(`Found multiple OX-groups For OxGroupName:${oxGroupName}, Cannot Proceed`);
+            return new OxGroupNameAmbiguousError(oxGroupName);
+        }
+
+        this.logger.info(`Found existing oxGroup for oxGroupName:${oxGroupName}`);
+
+        return result.value.groups[0].id;
     }
 
     private async getExistingOxGroupByNameOrCreateOxGroup(
         oxGroupName: OXGroupName,
         displayName: string,
     ): Promise<Result<OXGroupID>> {
-        const oxGroupId: Result<OXGroupID> = await this.getOxGroupByName(oxGroupName);
+        const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(oxGroupName);
 
-        if (!oxGroupId.ok && oxGroupId.error instanceof OxGroupNotFoundError) {
+        if (oxGroupId instanceof OxGroupNotFoundError) {
             const createGroupResult: Result<OXGroupID> = await this.createOxGroup(oxGroupName, displayName);
 
             return createGroupResult;
         }
 
-        return oxGroupId;
+        //return if OxGroupNameAmbiguousError or any other error
+        if (oxGroupId instanceof DomainError)
+            return {
+                ok: false,
+                error: oxGroupId,
+            };
+
+        return {
+            ok: true,
+            value: oxGroupId,
+        };
     }
 
     private async addOxUserToOxGroup(

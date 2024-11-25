@@ -21,7 +21,8 @@ import { EmailAddress } from '../../email/domain/email-address.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 import { GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/index.js';
-import { OXGroupID } from '../../../shared/types/ox-ids.types.js';
+import {OXGroupID, OXUserID} from '../../../shared/types/ox-ids.types.js';
+import { ListGroupsAction } from '../actions/group/list-groups.action.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -87,6 +88,21 @@ describe('OxEventHandler', () => {
         return [emailAddress];
     }
 
+    function mockUserCreationRequest(userId: OXUserID, emailAddress: string): void {
+        //mock create-oxUser-request
+        oxServiceMock.send.mockResolvedValueOnce({
+            ok: true,
+            value: {
+                id: userId,
+                firstname: 'firstname',
+                lastname: 'lastname',
+                username: 'username',
+                primaryEmail: emailAddress,
+                mailenabled: true,
+            },
+        });
+    }
+
     afterAll(async () => {
         await module.close();
     });
@@ -94,69 +110,6 @@ describe('OxEventHandler', () => {
     beforeEach(() => {
         sut.ENABLED = true;
         jest.resetAllMocks();
-    });
-
-    describe('getAllOxGroups', () => {
-        let personId: PersonID;
-        let event: EmailAddressGeneratedEvent;
-        let person: Person<true>;
-
-        beforeEach(() => {
-            jest.resetAllMocks();
-            personId = faker.string.uuid();
-            event = new EmailAddressGeneratedEvent(
-                personId,
-                faker.string.uuid(),
-                faker.internet.email(),
-                true,
-                faker.string.numeric(),
-            );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
-        });
-
-        describe('when retrieving groups fails', () => {
-            it('should log error about failing retrieving groups', async () => {
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-                    createMock<EmailAddress<true>>(),
-                ]);
-
-                //mock exists-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        exists: false,
-                    },
-                });
-                const fakeOXUserId: string = faker.string.uuid();
-                //mock create-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        id: fakeOXUserId,
-                        firstname: 'firstname',
-                        lastname: 'lastname',
-                        username: 'username',
-                        primaryEmail: event.address,
-                        mailenabled: true,
-                    },
-                });
-
-                //mock list-all-oxGroups-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: false,
-                    error: new OxError(),
-                });
-
-                await sut.handleEmailAddressGeneratedEvent(event);
-
-                expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Retrieve Groups For Context, contextId:undefined`,
-                );
-                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
-            });
-        });
     });
 
     describe('createOxGroup', () => {
@@ -193,32 +146,14 @@ describe('OxEventHandler', () => {
                         exists: false,
                     },
                 });
-                const fakeOXUserId: string = faker.string.uuid();
                 //mock create-oxUser-request
+                const fakeOXUserId: string = faker.string.uuid();
+                mockUserCreationRequest(fakeOXUserId, event.address);
+                //mock list-oxGroups-request: empty result -> no groups found
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
                     value: {
-                        id: fakeOXUserId,
-                        firstname: 'firstname',
-                        lastname: 'lastname',
-                        username: 'username',
-                        primaryEmail: event.address,
-                        mailenabled: true,
-                    },
-                });
-
-                //mock list-all-oxGroups-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [
-                            {
-                                displayname: 'string',
-                                id: 'id',
-                                name: 'name',
-                                memberIds: [],
-                            },
-                        ],
+                        groups: [],
                     },
                 });
                 //mock create-oxGroup-request
@@ -272,21 +207,10 @@ describe('OxEventHandler', () => {
                         exists: false,
                     },
                 });
-                const fakeOXUserId: string = faker.string.uuid();
                 //mock create-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        id: fakeOXUserId,
-                        firstname: 'firstname',
-                        lastname: 'lastname',
-                        username: 'username',
-                        primaryEmail: event.address,
-                        mailenabled: true,
-                    },
-                });
-
-                //mock list-all-oxGroups-request
+                const fakeOXUserId: string = faker.string.uuid();
+                mockUserCreationRequest(fakeOXUserId, event.address);
+                //mock list-oxGroups-request
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
                     value: {
@@ -319,6 +243,146 @@ describe('OxEventHandler', () => {
                     `Found existing oxGroup for oxGroupName:lehrer-${fakeDstNr}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when OX-request fails', () => {
+            it('should log error', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                    createMock<EmailAddress<true>>(),
+                ]);
+
+                //mock exists-oxUser-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        exists: false,
+                    },
+                });
+                //mock create-oxUser-request
+                const fakeOXUserId: string = faker.string.uuid();
+                mockUserCreationRequest(fakeOXUserId, event.address);
+                //mock list-oxGroups-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: new OxError('mockError'),
+                });
+
+                await sut.handleEmailAddressGeneratedEvent(event);
+
+                expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
+                expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(ListGroupsAction));
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could Not Retrieve Groups For Context, contextId:undefined`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when no matching groups is found', () => {
+            it('should log error', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                    createMock<EmailAddress<true>>(),
+                ]);
+
+                //mock exists-oxUser-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        exists: false,
+                    },
+                });
+                //mock create-oxUser-request
+                const fakeOXUserId: string = faker.string.uuid();
+                mockUserCreationRequest(fakeOXUserId, event.address);
+                //mock list-oxGroups-request, mock no matching group found
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        groups: [],
+                    },
+                });
+                const fakeOxGroupId: OXGroupID = faker.string.uuid();
+                //mock create-oxGroup-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        id: fakeOxGroupId,
+                    },
+                });
+                //mock add-member-to-oxGroup-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        status: {
+                            code: 'success',
+                        },
+                        data: undefined,
+                    },
+                });
+
+                await sut.handleEmailAddressGeneratedEvent(event);
+
+                expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
+                expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(ListGroupsAction));
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Found No Matching OxGroup For OxGroupName:lehrer-${fakeDstNr}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when multiple groups are found for same groupName', () => {
+            it('should log error', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                    createMock<EmailAddress<true>>(),
+                ]);
+
+                //mock exists-oxUser-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        exists: false,
+                    },
+                });
+                //mock create-oxUser-request
+                const fakeOXUserId: string = faker.string.uuid();
+                mockUserCreationRequest(fakeOXUserId, event.address);
+                //mock list-oxGroups-request, mock no matching group found
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        groups: [
+                            {
+                                displayname: `Lehrer of ${fakeDstNr}`,
+                                id: 'id',
+                                name: `lehrer-${fakeDstNr}`,
+                                memberIds: [],
+                            },
+                            {
+                                displayname: `Lehrer of ${fakeDstNr}`,
+                                id: 'id',
+                                name: `lehrer-${fakeDstNr}-`,
+                                memberIds: [],
+                            },
+                        ],
+                    },
+                });
+
+                await sut.handleEmailAddressGeneratedEvent(event);
+
+                expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
+                expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(ListGroupsAction));
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Found multiple OX-groups For OxGroupName:lehrer-${fakeDstNr}, Cannot Proceed`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
         });
     });
@@ -357,35 +421,16 @@ describe('OxEventHandler', () => {
                         exists: false,
                     },
                 });
-                const fakeOXUserId: string = faker.string.uuid();
                 //mock create-oxUser-request
+                const fakeOXUserId: string = faker.string.uuid();
+                mockUserCreationRequest(fakeOXUserId, event.address);
+                //mock list-oxGroups-request, empty result -> no groups found
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
                     value: {
-                        id: fakeOXUserId,
-                        firstname: 'firstname',
-                        lastname: 'lastname',
-                        username: 'username',
-                        primaryEmail: event.address,
-                        mailenabled: true,
+                        groups: [],
                     },
                 });
-
-                //mock list-all-oxGroups-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [
-                            {
-                                displayname: `displayname`,
-                                id: 'id',
-                                name: `name`,
-                                memberIds: [],
-                            },
-                        ],
-                    },
-                });
-
                 const fakeOxGroupId: OXGroupID = faker.string.uuid();
                 //mock create-oxGroup-request
                 oxServiceMock.send.mockResolvedValueOnce({
@@ -394,7 +439,6 @@ describe('OxEventHandler', () => {
                         id: fakeOxGroupId,
                     },
                 });
-
                 //mock add-member-to-oxGroup-request
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
@@ -502,44 +546,31 @@ describe('OxEventHandler', () => {
                     exists: false,
                 },
             });
-            const fakeOXUserId: string = faker.string.uuid();
             //mock create-oxUser-request
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: {
-                    id: fakeOXUserId,
-                    firstname: 'firstname',
-                    lastname: 'lastname',
-                    username: 'username',
-                    primaryEmail: event.address,
-                    mailenabled: true,
-                },
-            });
-
-            //mock list-all-oxGroups-request
+            const fakeOXUserId: string = faker.string.uuid();
+            mockUserCreationRequest(fakeOXUserId, event.address);
+            //mock list-oxGroups-request
+            const fakeOXGroupId: string = faker.string.uuid();
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
                 value: {
                     groups: [
                         {
                             displayname: 'string',
-                            id: 'id',
+                            id: fakeOXGroupId,
                             name: 'name',
                             memberIds: [],
                         },
                     ],
                 },
             });
-
-            const fakeOxGroupId: OXGroupID = faker.string.uuid();
             //mock create-oxGroup-request
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
                 value: {
-                    id: fakeOxGroupId,
+                    id: fakeOXGroupId,
                 },
             });
-
             //mock add-member-to-oxGroup-request
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -558,7 +589,7 @@ describe('OxEventHandler', () => {
                 `User created in OX, userId:${fakeOXUserId}, email:${event.address}`,
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOxGroupId}`,
+                `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}`,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
@@ -576,18 +607,7 @@ describe('OxEventHandler', () => {
             });
             //mock create-oxUser-request
             const fakeOXUserId: string = faker.string.uuid();
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: {
-                    id: fakeOXUserId,
-                    firstname: 'firstname',
-                    lastname: 'lastname',
-                    username: 'username',
-                    primaryEmail: event.address,
-                    mailenabled: true,
-                },
-            });
-
+            mockUserCreationRequest(fakeOXUserId, event.address);
             //mock list-all-oxGroups-request
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
@@ -602,16 +622,14 @@ describe('OxEventHandler', () => {
                     ],
                 },
             });
-
-            const fakeOxGroupId: OXGroupID = faker.string.uuid();
             //mock create-oxGroup-request
+            const fakeOxGroupId: OXGroupID = faker.string.uuid();
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
                 value: {
                     id: fakeOxGroupId,
                 },
             });
-
             //mock add-member-to-oxGroup-request
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,

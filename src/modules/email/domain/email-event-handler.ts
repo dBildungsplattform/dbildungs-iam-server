@@ -371,10 +371,6 @@ export class EmailEventHandler {
     }
 
     private async createNewEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
-        /*     const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(organisationId);
-        if (!organisation || !organisation.kennung) {
-            return this.logger.error(`Could not retrieve orgaKennung, orgaId:${organisationId}`);
-        }*/
         const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
@@ -407,10 +403,6 @@ export class EmailEventHandler {
         organisationId: OrganisationID,
         oldEmail: EmailAddress<true>,
     ): Promise<void> {
-        /*    const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(organisationId);
-        if (!organisation || !organisation.kennung) {
-            return this.logger.error(`Could not retrieve orgaKennung, orgaId:${organisationId}`);
-        }*/
         const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
