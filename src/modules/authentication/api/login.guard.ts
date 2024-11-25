@@ -8,14 +8,13 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { AuthenticationErrorI18nTypes } from './dbiam-authentication.error.js';
-import { CustomJwtPayload, StepUpLevel } from '../passport/oidc.strategy.js';
-import { decode } from 'jsonwebtoken';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
 
 @Injectable()
 export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
     public constructor(
-        private logger: ClassLogger,
-        private configService: ConfigService<ServerConfig>,
+        private readonly logger: ClassLogger,
+        private readonly configService: ConfigService<ServerConfig>,
     ) {
         super();
     }
@@ -23,18 +22,20 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
     public override async canActivate(context: ExecutionContext): Promise<boolean> {
         const request: Request = context.switchToHttp().getRequest<Request>();
         const res: Response = context.switchToHttp().getResponse<Response>();
-        const stepup: StepUpLevel = request.query['requiredStepUpLevel'] as StepUpLevel;
+        const requiredStepUpLevel: StepUpLevel = request.query['requiredStepUpLevel'] as StepUpLevel;
 
         if (request.query['redirectUrl']) {
             request.session.redirectUrl = request.query['redirectUrl'] as string;
         }
 
-        let decodedIdToken: CustomJwtPayload | null = null;
-        if (request.passportUser?.access_token) {
-            decodedIdToken = decode(request.passportUser?.access_token) as CustomJwtPayload | null;
+        if (requiredStepUpLevel) {
+            request.session.requiredStepupLevel = requiredStepUpLevel;
         }
 
-        if (stepup === decodedIdToken?.acr && request.isAuthenticated()) {
+        if (
+            request.isAuthenticated() &&
+            request.session.requiredStepupLevel === (request.passportUser?.stepUpLevel ?? StepUpLevel.NONE)
+        ) {
             return true;
         }
 

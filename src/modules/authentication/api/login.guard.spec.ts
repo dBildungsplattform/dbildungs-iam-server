@@ -12,6 +12,7 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { HttpFoundException } from '../../../shared/error/http.found.exception.js';
 import { AuthenticationErrorI18nTypes } from './dbiam-authentication.error.js';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
 
 const canActivateSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'canActivate');
 const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototype as IAuthGuard, 'logIn');
@@ -133,13 +134,13 @@ describe('LoginGuard', () => {
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             contextMock.switchToHttp().getRequest.mockReturnValue({
                 query: {
-                    requiredStepUpLevel: 'gold',
+                    requiredStepUpLevel: StepUpLevel.GOLD,
                 },
                 isAuthenticated: jest.fn().mockReturnValue(true),
                 passportUser: {
-                    access_token:
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY3IiOiJnb2xkIn0.3-QcljrIgxTpgaTgsTCpHtpr3wjsy5gnfwzghi-E_Ls',
+                    stepUpLevel: StepUpLevel.GOLD,
                 },
+                session: {},
             });
             contextMock.switchToHttp().getResponse.mockReturnValue({});
             await expect(sut.canActivate(contextMock)).resolves.toBe(true);
@@ -151,13 +152,13 @@ describe('LoginGuard', () => {
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             contextMock.switchToHttp().getRequest.mockReturnValue({
                 query: {
-                    requiredStepUpLevel: 'gold',
+                    requiredStepUpLevel: StepUpLevel.GOLD,
                 },
                 isAuthenticated: jest.fn().mockReturnValue(true),
                 passportUser: {
-                    access_token:
-                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY3IiOiJnb2xkIn0.3-QcljrIgxTpgaTgsTCpHtpr3wjsy5gnfwzghi-E_Ls',
+                    stepUpLevel: StepUpLevel.GOLD,
                 },
+                session: {},
             });
             await expect(sut.canActivate(contextMock)).resolves.toBe(true);
         });
