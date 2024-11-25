@@ -51,6 +51,7 @@ spec:
               - "sh"
               - "-c"
               - |
+                  mkdir /tmp/log/ &&
                   touch /tmp/log/cron.log &&
                   chmod 644 /tmp/log/cron.log &&
                   cd {{ $.Values.cronjobs.scriptDir }} &&
