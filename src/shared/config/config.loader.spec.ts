@@ -24,6 +24,7 @@ describe('configloader', () => {
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
                     ERROR_PAGE_REDIRECT: '/error',
+                    STATUS_REDIRECT_URL: '/',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -83,6 +84,11 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                 },
+                SYSTEM: {
+                    RENAME_WAITING_TIME_IN_SECONDS: 2,
+                    STEP_UP_TIMEOUT_ENABLED: 'true',
+                    STEP_UP_TIMEOUT_IN_SECONDS: 10,
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -113,6 +119,7 @@ describe('configloader', () => {
             });
 
             it('should return validated JsonConfig', () => {
+                jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
                 const validatedConfig: JsonConfig = loadConfigFiles();
                 expect(validatedConfig).toBeInstanceOf(JsonConfig);
                 expect(readFileSyncSpy).toHaveBeenCalledTimes(2);
@@ -120,6 +127,10 @@ describe('configloader', () => {
         });
 
         describe('When there is no secrets config', () => {
+            beforeAll(() => {
+                jest.clearAllMocks();
+            });
+
             const config: DeepPartial<JsonConfig> = {
                 HOST: {
                     PORT: 8080,
@@ -135,6 +146,7 @@ describe('configloader', () => {
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
                     ERROR_PAGE_REDIRECT: '/error',
+                    STATUS_REDIRECT_URL: '/',
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -201,6 +213,11 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                },
+                SYSTEM: {
+                    RENAME_WAITING_TIME_IN_SECONDS: 2,
+                    STEP_UP_TIMEOUT_ENABLED: 'true',
+                    STEP_UP_TIMEOUT_IN_SECONDS: 10,
                 },
             };
 

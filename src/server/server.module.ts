@@ -37,6 +37,7 @@ import { OxModule } from '../modules/ox/ox.module.js';
 import { KeycloakHandlerModule } from '../modules/keycloak-handler/keycloak-handler.module.js';
 import { CronModule } from '../modules/cron/cron.module.js';
 import { ImportApiModule } from '../modules/import/import-api.module.js';
+import { StatusModule } from '../modules/status/status.module.js';
 import { VidisModule } from '../modules/vidis/vidis.module.js';
 
 @Module({
@@ -97,6 +98,7 @@ import { VidisModule } from '../modules/vidis/vidis.module.js';
         KeycloakHandlerModule,
         CronModule,
         ImportApiModule,
+        StatusModule,
         VidisModule,
     ],
     providers: [

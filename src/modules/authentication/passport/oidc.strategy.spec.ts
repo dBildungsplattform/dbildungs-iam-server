@@ -6,7 +6,13 @@ import { AuthorizationParameters, Client, Issuer, Strategy, TokenSet, UserinfoRe
 
 import { ConfigTestModule } from '../../../../test/utils/index.js';
 import { OIDC_CLIENT } from '../services/oidc-client.service.js';
-import { OpenIdConnectStrategy, StepUpLevel, extractStepUpLevelFromJWT } from './oidc.strategy.js';
+import {
+    extractStepUpLevelFromJWT,
+    isStepUpTimeOver,
+    OpenIdConnectStrategy,
+    StepUpLevel,
+    updateAndGetStepUpLevel,
+} from './oidc.strategy.js';
 import { PassportUser } from '../types/user.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
@@ -133,6 +139,7 @@ describe('OpenIdConnectStrategy', () => {
     describe('authenticate', () => {
         let superPassportSpy: jest.SpyInstance;
         beforeEach(() => {
+            jest.restoreAllMocks();
             superPassportSpy = jest.spyOn(Strategy.prototype, 'authenticate').mockImplementation(() => {});
         });
 
@@ -145,13 +152,105 @@ describe('OpenIdConnectStrategy', () => {
 
         it('should call super.authenticate with options', () => {
             const request: Request = createMock<Request>();
-            request.query['requiredStepUpLevel'] = StepUpLevel.GOLD;
+            request.session.requiredStepupLevel = StepUpLevel.GOLD;
             sut.authenticate(request);
 
             expect(superPassportSpy).toHaveBeenCalledWith(request, { acr_values: 'gold' });
         });
     });
 
+    const mockTime = (time: number): void => {
+        jest.useFakeTimers();
+        jest.setSystemTime(time);
+    };
+
+    describe('Step-Up Utilities', () => {
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+        describe('isStepUpTimeOver', () => {
+            it('should return false if lastRouteChangeTime is undefined', () => {
+                const req: Request = { session: {} } as Request;
+                const timeout: number = 10;
+                expect(isStepUpTimeOver(req, timeout)).toBe(false);
+            });
+
+            it('should return true if time since lastRouteChangeTime is over the threshold', () => {
+                const req: Request = { session: { lastRouteChangeTime: 1000 } } as Request;
+                mockTime(1001);
+
+                const timeout: number = 10;
+                expect(isStepUpTimeOver(req, timeout)).toBe(false);
+                jest.restoreAllMocks();
+            });
+
+            it('should return false if time since lastRouteChangeTime is under the threshold', () => {
+                const req: Request = { session: { lastRouteChangeTime: 1000 } } as Request;
+                mockTime(8000);
+
+                const timeout: number = 10;
+                expect(isStepUpTimeOver(req, timeout)).toBe(false);
+                jest.restoreAllMocks();
+            });
+        });
+
+        describe('updateAndGetStepUpLevel', () => {
+            it('should set lastRouteChangeTime if not defined', () => {
+                const req: Request = { session: {} } as Request;
+                const currentTime: number = 5000;
+                mockTime(currentTime);
+                const timeout: number = 10;
+
+                updateAndGetStepUpLevel(req, timeout);
+
+                expect(req.session.lastRouteChangeTime).toBe(currentTime);
+                jest.restoreAllMocks();
+            });
+
+            it('should reset stepUpLevel if step-up time is over', () => {
+                const req: Request = {
+                    session: { lastRouteChangeTime: 1000 },
+                    passportUser: { stepUpLevel: StepUpLevel.GOLD },
+                } as Request;
+                mockTime(12000);
+                const timeout: number = 10;
+
+                const result: StepUpLevel = updateAndGetStepUpLevel(req, timeout);
+
+                expect(req.passportUser!.stepUpLevel).toBe(StepUpLevel.SILVER);
+                expect(result).toBe(StepUpLevel.SILVER);
+                expect(req.session.lastRouteChangeTime).toBe(12000);
+                jest.restoreAllMocks();
+            });
+
+            it('should not reset stepUpLevel if step-up time is not over', () => {
+                const req: Request = {
+                    session: { lastRouteChangeTime: 1000 },
+                    passportUser: { stepUpLevel: StepUpLevel.GOLD },
+                } as Request;
+                mockTime(8000);
+                const timeout: number = 10;
+
+                const result: StepUpLevel = updateAndGetStepUpLevel(req, timeout);
+
+                expect(req.passportUser!.stepUpLevel).toBe(StepUpLevel.GOLD);
+                expect(result).toBe(StepUpLevel.GOLD);
+                expect(req.session.lastRouteChangeTime).toBe(8000);
+                jest.restoreAllMocks();
+            });
+
+            it('should return lowest step-up level if passportUser is undefined', () => {
+                const req: Request = { session: {} } as Request;
+                mockTime(5000);
+                const timeout: number = 10;
+
+                const result: StepUpLevel = updateAndGetStepUpLevel(req, timeout);
+
+                expect(result).toBe(StepUpLevel.SILVER);
+                jest.restoreAllMocks();
+            });
+        });
+    });
     describe('extractStepUpLevelFromJWT', () => {
         it('should return StepUpLevel.NONE when JWT is undefined', () => {
             const result: StepUpLevel = extractStepUpLevelFromJWT(undefined);
