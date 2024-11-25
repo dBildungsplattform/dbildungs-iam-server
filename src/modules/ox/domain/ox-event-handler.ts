@@ -164,7 +164,7 @@ export class OxEventHandler {
             contextId: this.contextID,
             userId: result.value.id,
             globalAddressBookDisabled: true,
-            infostore: true,
+            infostore: false,
             login: this.authUser,
             password: this.authPassword,
         };
