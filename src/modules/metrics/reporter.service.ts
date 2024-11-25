@@ -1,17 +1,19 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { MetricsService } from './metrics.service.js';
 
+@Injectable()
 export class ReporterService {
-    private static metricsService: MetricsService;
+    private metricsService: MetricsService;
 
-    public static init(metricsService: MetricsService): void {
-        ReporterService.metricsService = metricsService;
+    public constructor(@Inject(MetricsService) metricsService: MetricsService) {
+        this.metricsService = metricsService;
     }
 
-    public static counter(key: string, labels?: Record<string, string | number>): void {
-        ReporterService.metricsService.incCounter(key, labels);
+    public counter(key: string, labels?: Record<string, string | number>): void {
+        this.metricsService.incCounter(key, labels);
     }
 
-    public static gauge(key: string, value: number, labels?: Record<string, string | number>): void {
-        ReporterService.metricsService.setGauge(key, value, labels);
+    public gauge(key: string, value: number, labels?: Record<string, string | number>): void {
+        this.metricsService.setGauge(key, value, labels);
     }
 }

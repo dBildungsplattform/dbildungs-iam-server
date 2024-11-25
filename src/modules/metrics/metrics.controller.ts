@@ -3,10 +3,7 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { Registry } from 'prom-client';
 import { Public } from '../authentication/api/public.decorator.js';
 import { ReporterService } from './reporter.service.js';
-import { ScopeOperator } from '../../shared/persistence/scope.enums.js';
-import { PersonenkontextScope } from '../personenkontext/persistence/personenkontext.scope.js';
 import { RollenArt } from '../rolle/domain/rolle.enums.js';
-import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @ApiTags('Metrics')
@@ -15,6 +12,8 @@ export class MetricsController {
     public constructor(
         @Inject(Registry)
         private readonly registry: Registry,
+        @Inject(ReporterService)
+        private readonly reporterService: ReporterService,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
 
@@ -29,18 +28,8 @@ export class MetricsController {
 
         await Promise.all(
             Array.from(mapping).map(async ([metric, rolle]: [string, RollenArt]) => {
-                const scope: PersonenkontextScope = new PersonenkontextScope()
-                    .setScopeWhereOperator(ScopeOperator.AND)
-                    .findByRollen([rolle]);
-
-                const [personenkontexte]: Counted<Personenkontext<true>> =
-                    await this.dBiamPersonenkontextRepo.findBy(scope);
-
-                const count: number = Array.from(
-                    new Set(personenkontexte.map((kontext: Personenkontext<true>) => kontext.personId)),
-                ).length;
-
-                ReporterService.gauge(metric, count, { school: 'all' });
+                const count: number = await this.dBiamPersonenkontextRepo.getPersonCountByRole(rolle);
+                this.reporterService.gauge(metric, count, { school: 'all' });
             }),
         );
         const result: string = await this.registry.metrics();

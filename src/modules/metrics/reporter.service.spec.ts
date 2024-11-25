@@ -1,34 +1,74 @@
+import { Test, TestingModule } from '@nestjs/testing';
 import { ReporterService } from './reporter.service.js';
 import { MetricsService } from './metrics.service.js';
 
 describe('ReporterService', () => {
+    let reporterService: ReporterService;
     let metricsService: MetricsService;
 
-    beforeEach(() => {
-        metricsService = {
-            incCounter: jest.fn(),
-            setGauge: jest.fn(),
-        } as unknown as MetricsService;
-        ReporterService.init(metricsService);
+    beforeEach(async () => {
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [
+                ReporterService,
+                {
+                    provide: MetricsService,
+                    useValue: {
+                        incCounter: jest.fn(),
+                        setGauge: jest.fn(),
+                    },
+                },
+            ],
+        }).compile();
+
+        reporterService = module.get<ReporterService>(ReporterService);
+        metricsService = module.get<MetricsService>(MetricsService);
     });
 
-    it('should initialize metricsService', () => {
-        // eslint-disable-next-line @typescript-eslint/dot-notation
-        expect(ReporterService['metricsService']).toBe(metricsService);
+    it('should be defined', () => {
+        expect(reporterService).toBeDefined();
     });
 
-    it('should call incCounter on metricsService when counter is called', () => {
-        const key: string = 'test_counter';
-        const labels: { label1: string } = { label1: 'value1' };
-        ReporterService.counter(key, labels);
-        expect(metricsService.incCounter).toHaveBeenCalledWith(key, labels);
+    describe('counter', () => {
+        it('should call metricsService.incCounter with correct arguments', () => {
+            const key: string = 'test_key';
+            const labels: Record<string, string | number> = { label1: 'value1', label2: 42 };
+
+            reporterService.counter(key, labels);
+
+            expect(metricsService.incCounter).toHaveBeenCalledTimes(1);
+            expect(metricsService.incCounter).toHaveBeenCalledWith(key, labels);
+        });
+
+        it('should call metricsService.incCounter with no labels if labels are not provided', () => {
+            const key: string = 'test_key';
+
+            reporterService.counter(key);
+
+            expect(metricsService.incCounter).toHaveBeenCalledTimes(1);
+            expect(metricsService.incCounter).toHaveBeenCalledWith(key, undefined);
+        });
     });
 
-    it('should call setGauge on metricsService when gauge is called', () => {
-        const key: string = 'test_counter';
-        const labels: { label1: string } = { label1: 'value1' };
-        const value: number = 10;
-        ReporterService.gauge(key, value, labels);
-        expect(metricsService.setGauge).toHaveBeenCalledWith(key, value, labels);
+    describe('gauge', () => {
+        it('should call metricsService.setGauge with correct arguments', () => {
+            const key: string = 'test_key';
+            const value: number = 100;
+            const labels: Record<string, string | number> = { label1: 'value1', label2: 42 };
+
+            reporterService.gauge(key, value, labels);
+
+            expect(metricsService.setGauge).toHaveBeenCalledTimes(1);
+            expect(metricsService.setGauge).toHaveBeenCalledWith(key, value, labels);
+        });
+
+        it('should call metricsService.setGauge with no labels if labels are not provided', () => {
+            const key: string = 'test_key';
+            const value: number = 100;
+
+            reporterService.gauge(key, value);
+
+            expect(metricsService.setGauge).toHaveBeenCalledTimes(1);
+            expect(metricsService.setGauge).toHaveBeenCalledWith(key, value, undefined);
+        });
     });
 });

@@ -126,9 +126,10 @@ backend:
       subPath: secrets-json
       name: secret-volume
   extraVolumeMounts: []
-  renameWaitingTimeInSeconds: 3
-  stepUpTimeoutInSeconds: 900
-  stepUpTimeoutEnabled: 'false'
+  env:
+    renameWaitingTimeInSeconds: 3
+    stepUpTimeoutInSeconds: 900
+    stepUpTimeoutEnabled: 'false'
 
 redis:
   enabled: true

@@ -8,8 +8,6 @@ import { FrontendConfig, HostConfig, KeycloakConfig, ServerConfig } from '../sha
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
-import { ReporterService } from '../modules/metrics/reporter.service.js';
-import { MetricsService } from '../modules/metrics/metrics.service.js';
 
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
@@ -73,8 +71,6 @@ async function bootstrap(): Promise<void> {
     if (frontendConfig.TRUST_PROXY !== undefined) {
         app.set('trust proxy', frontendConfig.TRUST_PROXY);
     }
-
-    ReporterService.init(app.get(MetricsService));
 
     await app.listen(port);
 
