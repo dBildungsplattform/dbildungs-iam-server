@@ -172,7 +172,7 @@ status:
 cronjobs:
   enabled: true
   image:
-    tag: DBP-1083-latest
+    tag: 1.1.0
     repository: ghcr.io/hpi-schul-cloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
