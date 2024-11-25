@@ -60,13 +60,16 @@ describe('LoginGuard', () => {
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             contextMock.switchToHttp().getRequest.mockReturnValue({
                 query: {
-                    requiredStepUpLevel: 'gold',
+                    requiredStepUpLevel: StepUpLevel.GOLD,
                 },
                 isAuthenticated: jest.fn().mockReturnValue(false),
                 passportUser: {
                     userinfo: {
                         preferred_username: 'test',
                     },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
                 },
             });
             contextMock.switchToHttp().getResponse.mockReturnValue({});
@@ -101,13 +104,16 @@ describe('LoginGuard', () => {
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             contextMock.switchToHttp().getRequest.mockReturnValue({
                 query: {
-                    requiredStepUpLevel: 'gold',
+                    requiredStepUpLevel: StepUpLevel.GOLD,
                 },
                 isAuthenticated: jest.fn().mockReturnValue(false),
                 passportUser: {
                     userinfo: {
                         preferred_username: 'test',
                     },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
                 },
             });
 
@@ -121,7 +127,20 @@ describe('LoginGuard', () => {
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             const redirectUrl: string = faker.internet.url();
-            contextMock.switchToHttp().getRequest<Request>().query = { redirectUrl };
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    redirectUrl,
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    redirectUrl: redirectUrl,
+                },
+            });
 
             await sut.canActivate(contextMock);
 
@@ -192,6 +211,9 @@ describe('LoginGuard', () => {
                     userinfo: {
                         preferred_username: 'test',
                     },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
                 },
             });
 
