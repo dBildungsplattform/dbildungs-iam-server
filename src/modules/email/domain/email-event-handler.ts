@@ -7,7 +7,7 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { OrganisationID, PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
@@ -26,6 +26,8 @@ import { EmailAddressChangedEvent } from '../../../shared/events/email-address-c
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -41,6 +43,7 @@ export class EmailEventHandler {
         private readonly rolleRepo: RolleRepo,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepository: OrganisationRepository,
         private readonly eventService: EventService,
     ) {}
 
@@ -315,9 +318,26 @@ export class EmailEventHandler {
         }
     }
 
-    private async createOrEnableEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
-        const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
+    private async getOrganisationKennung(organisationId: OrganisationID): Promise<Result<string>> {
+        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(organisationId);
+        if (!organisation || !organisation.kennung) {
+            this.logger.error(`Could not retrieve orgaKennung, orgaId:${organisationId}`);
+            return {
+                ok: false,
+                error: new EntityNotFoundError('organisation', organisationId),
+            };
+        }
+        return {
+            ok: true,
+            value: organisation.kennung,
+        };
+    }
 
+    private async createOrEnableEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
+        const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
+        if (!organisationKennung.ok) return;
+
+        const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
         if (existingEmail) {
             this.logger.info(`Existing email found for personId:${personId}`);
 
@@ -334,6 +354,7 @@ export class EmailEventHandler {
                             persistenceResult.id,
                             persistenceResult.address,
                             persistenceResult.enabled,
+                            organisationKennung.value,
                         ),
                     );
                 } else {
@@ -365,6 +386,8 @@ export class EmailEventHandler {
     }
 
     private async createNewEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
+        const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
+        if (!organisationKennung.ok) return;
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
             await this.createAndPersistFailedEmailAddress(personId);
@@ -382,6 +405,7 @@ export class EmailEventHandler {
                     persistenceResult.id,
                     persistenceResult.address,
                     persistenceResult.enabled,
+                    organisationKennung.value,
                 ),
             );
         } else {
@@ -394,6 +418,8 @@ export class EmailEventHandler {
         organisationId: OrganisationID,
         oldEmail: EmailAddress<true>,
     ): Promise<void> {
+        const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
+        if (!organisationKennung.ok) return;
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
             await this.createAndPersistFailedEmailAddress(personId);
@@ -413,6 +439,7 @@ export class EmailEventHandler {
                     oldEmail.address,
                     persistenceResult.id,
                     persistenceResult.address,
+                    organisationKennung.value,
                 ),
             );
         } else {
