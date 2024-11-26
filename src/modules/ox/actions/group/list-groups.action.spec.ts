@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { ListGroupsAction } from './list-groups.action.js';
-import { ListAllGroupsResponseBody } from './list-all-groups.action.js';
+import { ListGroupsAction, ListGroupsResponseBody } from './list-groups.action.js';
 
 describe('ListGroupsAction', () => {
     describe('buildRequest', () => {
@@ -25,8 +24,8 @@ describe('ListGroupsAction', () => {
                 password: '',
             });
 
-            const body: ListAllGroupsResponseBody = {
-                listAllResponse: {
+            const body: ListGroupsResponseBody = {
+                listResponse: {
                     return: [
                         {
                             id: 'id1',
@@ -62,6 +61,38 @@ describe('ListGroupsAction', () => {
                     ],
                 },
             });
+        });
+
+        it('should return empty list', () => {
+            const action: ListGroupsAction = new ListGroupsAction({
+                contextId: faker.string.uuid(),
+                pattern: faker.string.alphanumeric(),
+                login: '',
+                password: '',
+            });
+
+            const body: ListGroupsResponseBody = {
+                listResponse: {},
+            };
+            expect(action.parseBody(body)).toEqual({
+                ok: true,
+                value: {
+                    groups: [],
+                },
+            });
+        });
+    });
+
+    describe('isArrayOverride', () => {
+        it('should return true for path "Envelope.Body.listResponse.return"', () => {
+            const action: ListGroupsAction = new ListGroupsAction({
+                contextId: faker.string.uuid(),
+                pattern: faker.string.alphanumeric(),
+                login: '',
+                password: '',
+            });
+
+            expect(action.isArrayOverride('', 'Envelope.Body.listResponse.return')).toBe(true);
         });
     });
 });
