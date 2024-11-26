@@ -359,7 +359,10 @@ describe('OrganisationService', () => {
                 typ: OrganisationsTyp.KLASSE,
             });
             organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(organisationDo);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                organisationDo,
+                permissionsMock,
+            );
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new KlasseWithoutNumberOrLetterError(),

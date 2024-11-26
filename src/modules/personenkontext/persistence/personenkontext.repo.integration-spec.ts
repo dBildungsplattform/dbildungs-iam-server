@@ -7,7 +7,6 @@ import {
     DoFactory,
     LoggingTestModule,
     MapperTestModule,
-    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';

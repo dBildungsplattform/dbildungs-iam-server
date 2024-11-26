@@ -10,7 +10,6 @@ import {
     DoFactory,
     LoggingTestModule,
     MapperTestModule,
-    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';

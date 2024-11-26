@@ -28,7 +28,6 @@ import { OrganisationSpecificationError } from '../specification/error/organisat
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
