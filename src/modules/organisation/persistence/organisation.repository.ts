@@ -90,7 +90,6 @@ export class OrganisationRepository {
         private readonly eventService: EventService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
-        private readonly logger: ClassLogger,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
