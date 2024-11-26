@@ -415,10 +415,7 @@ export class OrganisationRepository {
         return [organisations, total + entitiesForIds.length - duplicates, pageTotal];
     }
 
-    public async deleteKlasse(
-        id: OrganisationID,
-        permissions: PersonPermissions | null = null,
-    ): Promise<Option<DomainError>> {
+    public async deleteKlasse(id: OrganisationID, permissions: PersonPermissions): Promise<Option<DomainError>> {
         const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (!organisationEntity) {
             return new EntityNotFoundError('Organisation', id);
@@ -432,14 +429,13 @@ export class OrganisationRepository {
         this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
 
         let schoolName: string = 'SCHOOL_NOT_FOUND';
-        if (permissions)
-            if (organisationEntity.zugehoerigZu) {
-                const school: Option<Organisation<true>> = await this.findById(organisationEntity.zugehoerigZu);
-                schoolName = school?.name ?? 'SCHOOL_NOT_FOUND';
-                this.logger.info(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
-                );
-            }
+        if (organisationEntity.zugehoerigZu) {
+            const school: Option<Organisation<true>> = await this.findById(organisationEntity.zugehoerigZu);
+            schoolName = school?.name ?? 'SCHOOL_NOT_FOUND';
+            this.logger.info(
+                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
+            );
+        }
 
         return;
     }
@@ -448,7 +444,7 @@ export class OrganisationRepository {
         id: string,
         newName: string,
         version: number,
-        permissions: PersonPermissions | null = null,
+        permissions: PersonPermissions,
     ): Promise<DomainError | Organisation<true>> {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
@@ -471,10 +467,9 @@ export class OrganisationRepository {
                     await organisationFound.checkKlasseSpecifications(this);
 
                 if (specificationError) {
-                    if (permissions)
-                        this.logger.error(
-                            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
-                        );
+                    this.logger.error(
+                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
+                    );
                     return specificationError;
                 }
             }
@@ -483,10 +478,9 @@ export class OrganisationRepository {
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
-        if (permissions)
-            this.logger.info(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
-            );
+        this.logger.info(
+            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
+        );
         return organisationEntity;
     }
 

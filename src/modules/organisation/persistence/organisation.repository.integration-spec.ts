@@ -805,21 +805,23 @@ describe('OrganisationRepository', () => {
 
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 const id: string = faker.string.uuid();
-                const result: Option<DomainError> = await sut.deleteKlasse(id);
+                const result: Option<DomainError> = await sut.deleteKlasse(id, permissionsMock);
                 expect(result).toEqual(new EntityNotFoundError('Organisation', id));
             });
         });
 
         describe('when organisation is not a Klasse', () => {
             it('should return EntityCouldNotBeUpdated', async () => {
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                     typ: OrganisationsTyp.SONSTIGE,
                     name: 'test',
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
 
-                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisaiton.id);
+                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisaiton.id, permissionsMock);
 
                 expect(result).toBeInstanceOf(EntityCouldNotBeUpdated);
             });
@@ -834,6 +836,7 @@ describe('OrganisationRepository', () => {
                     id,
                     faker.company.name(),
                     faker.number.int(),
+                    permissionsMock,
                 );
 
                 expect(result).toEqual(new EntityNotFoundError('Organisation', id));
@@ -852,6 +855,7 @@ describe('OrganisationRepository', () => {
                     savedOrganisaiton.id,
                     faker.company.name(),
                     faker.number.int(),
+                    permissionsMock,
                 );
 
                 expect(result).toBeInstanceOf(EntityCouldNotBeUpdated);
@@ -949,7 +953,7 @@ describe('OrganisationRepository', () => {
 
                 // Simulate concurrent updates:
                 // 1. First update
-                await sut.updateKlassenname(organisationEntity2.id, 'newName1', 1);
+                await sut.updateKlassenname(organisationEntity2.id, 'newName1', 1, permissionsMock);
 
                 // 2. Try second update with original version (should fail)
                 await expect(async () => {
@@ -957,6 +961,7 @@ describe('OrganisationRepository', () => {
                         organisationEntity2.id,
                         'newName2',
                         1, // This is now outdated because previous update incremented it
+                        permissionsMock,
                     );
                 }).rejects.toThrow(OrganisationUpdateOutdatedError);
             });
@@ -988,6 +993,7 @@ describe('OrganisationRepository', () => {
                     organisationEntity2.id,
                     'name',
                     1,
+                    permissionsMock,
                 );
 
                 expect(result).not.toBeInstanceOf(DomainError);
