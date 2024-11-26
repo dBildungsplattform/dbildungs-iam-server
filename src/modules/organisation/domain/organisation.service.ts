@@ -37,7 +37,7 @@ import { EmailAdressOnOrganisationTyp } from '../specification/email-on-organisa
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OrganisationsTyp } from './organisation.enums.js';
-import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 @Injectable()
 export class OrganisationService {
@@ -69,20 +69,13 @@ export class OrganisationService {
             }
         }
         if (organisation.typ === OrganisationsTyp.SCHULE) {
-            const personenkontextRolleFields: PersonenkontextRolleFields[] =
-                await permissions.getPersonenkontextewithRoles();
-            const organisationIdUser: string = personenkontextRolleFields.at(0)?.organisationsId as string;
-            const organisationUser: Option<Organisation<true>> =
-                await this.organisationRepo.findById(organisationIdUser);
-            let organisationNameUser: string = 'ORGANISATION_NOT_FOUND';
-            if (organisationUser) if (organisationUser.name) organisationNameUser = organisationUser.name;
             if (error) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine neue Schule ${organisation.name} anzulegen. Fehler: ${error.message}`,
+                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Schule ${organisation.name} anzulegen. Fehler: ${error.message}`,
                 );
             } else {
                 this.logger.info(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat eine neue Schule angelegt: ${organisation.name}.`,
+                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine neue Schule angelegt: ${organisation.name}.`,
                 );
             }
         }
@@ -113,19 +106,13 @@ export class OrganisationService {
             }
         }
         if (organisation.typ === OrganisationsTyp.SCHULE) {
-            const personenkontextRolleFields: PersonenkontextRolleFields[] =
-                await permissions.getPersonenkontextewithRoles();
-            const organisationIdUser: string = personenkontextRolleFields.at(0)?.organisationsId as string;
-            const organisationUser: Option<Organisation<true>> =
-                await this.organisationRepo.findById(organisationIdUser);
-            const organisationNameUser: string = organisationUser?.name ?? 'ORGANISATION_NOT_FOUND';
             if (error) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat versucht eine Schule ${organisation.name} zu verändern. Fehler: ${error.message}`,
+                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine Schule ${organisation.name} zu verändern. Fehler: ${error.message}`,
                 );
             } else {
                 this.logger.info(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}, ${organisationNameUser}) hat eine Schule geändert: ${organisation.name}.`,
+                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Schule geändert: ${organisation.name}.`,
                 );
             }
         }
