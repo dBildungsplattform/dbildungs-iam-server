@@ -4,4 +4,4 @@ import { ConfigController } from './api/config.controller.js';
 @Module({
     controllers: [ConfigController],
 })
-export class ConfigModule {}
+export class SpshConfigModule {}

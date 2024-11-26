@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
-import { ConfigModule } from '@nestjs/config';
+import { SpshConfigModule } from './spshconfig.module.js';
 
-describe('ConfigModule', () => {
+describe('SpshConfigModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, ConfigModule],
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot(), MapperTestModule, SpshConfigModule],
         }).compile();
     });
 
