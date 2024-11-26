@@ -191,7 +191,7 @@ export class RolleController {
             params.administeredBySchulstrukturknoten,
         );
         if (!orgResult.ok) {
-            this.logger.info(
+            this.logger.error(
                 `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
