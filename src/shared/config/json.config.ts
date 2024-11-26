@@ -13,6 +13,7 @@ import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { ImportConfig } from './import.config.js';
+import { FeatureFlagConfig } from './featureflag.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -42,6 +43,10 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => LdapConfig)
     public readonly LDAP!: LdapConfig;
+
+    @ValidateNested()
+    @Type(() => FeatureFlagConfig)
+    public readonly FEATUREFLAG!: FeatureFlagConfig;
 
     @ValidateNested()
     @Type(() => DataConfig)
