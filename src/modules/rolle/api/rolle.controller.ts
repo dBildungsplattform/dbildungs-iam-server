@@ -217,6 +217,9 @@ export class RolleController {
         }
         const result: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
         if (result instanceof DomainError) {
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${result.message}.`,
+            );
             throw result;
         }
         this.logger.info(
