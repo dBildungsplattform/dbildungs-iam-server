@@ -12,7 +12,8 @@
         "OIDC_CALLBACK_URL": "https://localhost:8099/api/auth/login",
         "DEFAULT_LOGIN_REDIRECT": "https://localhost:8099/",
         "LOGOUT_REDIRECT": "https://localhost:8099/",
-        "ERROR_PAGE_REDIRECT": "https://localhost:8099/login-error"
+        "ERROR_PAGE_REDIRECT": "https://localhost:8099/login-error",
+        "STATUS_REDIRECT_URL": "https://status.dev.spsh.dbildungsplattform.de/"
     },
     "DB": {
         "CLIENT_URL": "postgres://127.0.0.1:5432",
@@ -83,10 +84,14 @@
         "USERNAME": "admin",
         "PASSWORD": "admin",
         "USER_RESOLVER": "mariadb_resolver",
-        "REALM": "defrealm",
-        "RENAME_WAITING_TIME_IN_SECONDS": 5
+        "REALM": "defrealm"
     },
     "IMPORT": {
         "IMPORT_FILE_MAXGROESSE_IN_MB": 10
+    },
+    "SYSTEM": {
+        "RENAME_WAITING_TIME_IN_SECONDS": 3,
+        "STEP_UP_TIMEOUT_ENABLED": "false",
+        "STEP_UP_TIMEOUT_IN_SECONDS": 10
     }
 }

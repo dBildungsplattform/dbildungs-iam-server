@@ -7,6 +7,7 @@ import {
     DoFactory,
     LoggingTestModule,
     MapperTestModule,
+    LoggingTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
@@ -20,6 +21,7 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -36,6 +38,7 @@ describe('PersonenkontextRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
@@ -76,7 +79,8 @@ describe('PersonenkontextRepo', () => {
         describe('When referenced person entity exists', () => {
             it('should create a personenkontext', async () => {
                 const newPerson: PersonEntity = createPersonEntity();
-                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: RolleAggregate<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
 
                 await em.persistAndFlush(newPerson);
 
@@ -97,7 +101,8 @@ describe('PersonenkontextRepo', () => {
 
             it('should update a personenkontext and should not create a new personenkontext', async () => {
                 const newPerson: PersonEntity = createPersonEntity();
-                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: RolleAggregate<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
 
                 await em.persistAndFlush(newPerson);
 
@@ -120,7 +125,8 @@ describe('PersonenkontextRepo', () => {
 
             it('should update a personenkontext with id and should not create a new personenkontext', async () => {
                 const newPerson: PersonEntity = createPersonEntity();
-                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: RolleAggregate<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
 
                 await em.persistAndFlush(newPerson);
 
