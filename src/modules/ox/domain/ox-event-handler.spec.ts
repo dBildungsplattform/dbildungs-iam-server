@@ -535,7 +535,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when EmailAddress for person cannot be found', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(undefined);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
 
             await sut.handleEmailAddressGeneratedEvent(event);
 
@@ -817,7 +817,7 @@ describe('OxEventHandler', () => {
 
         it('should log error when no requestedEmailAddress is found for person', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
-            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(undefined);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
 
             await sut.handleEmailAddressChangedEvent(event);
 
