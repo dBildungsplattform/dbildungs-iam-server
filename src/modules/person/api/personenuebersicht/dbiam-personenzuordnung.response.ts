@@ -37,11 +37,15 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, nullable: true })
     public readonly merkmale?: RollenMerkmal[];
 
+    @ApiProperty({ type: [String] })
+    public readonly admins?: string[];
+
     public constructor(
         personenkontext: Personenkontext<true>,
         organisation: OrganisationDo<true>,
         rolle: Rolle<true>,
         editable: boolean,
+        admins: string[] | undefined,
     ) {
         //use Organisation Aggregate as soon as there is one
         this.sskId = personenkontext.organisationId;
@@ -54,5 +58,6 @@ export class DBiamPersonenzuordnungResponse {
         this.editable = editable;
         this.merkmale = rolle.merkmale;
         this.befristung = personenkontext.befristung;
+        this.admins = admins;
     }
 }
