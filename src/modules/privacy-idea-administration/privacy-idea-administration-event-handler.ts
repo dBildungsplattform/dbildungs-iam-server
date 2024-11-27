@@ -4,7 +4,6 @@ import { EventHandler } from '../../core/eventbus/decorators/event-handler.decor
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
 import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
-import { TokenResetError } from './api/error/token-reset.error.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationEventHandler {
@@ -26,12 +25,11 @@ export class PrivacyIdeaAdministrationEventHandler {
                     `System hat für Benutzer  ${event.referrer} (BenutzerId: ${event.personId}) den 2FA Token zurückgesetzt.`,
                 );
             } catch (error) {
-                if (error instanceof TokenResetError) {
-                    this.logger.error(
-                        `System hat versucht den 2FA Token von Benutzer ${event.referrer} (BenutzerId: ${event.personId}) zurückzusetzen. Fehler: ${error.message}`,
-                    );
-                    throw error;
-                }
+                this.logger.error(
+                    `System hat versucht den 2FA Token von Benutzer ${event.referrer} (BenutzerId: ${event.personId}) zurückzusetzen.`,
+                    error,
+                );
+                throw error;
             }
         }
         await this.privacyIdeaAdministrationService.deleteUserWrapper(event.referrer);

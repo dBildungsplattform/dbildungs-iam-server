@@ -135,7 +135,7 @@ export class ImportController {
         if (!result.ok) {
             if (result.error instanceof ImportDomainError) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: <error>`,
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${result.error.message}`,
                 );
                 throw result.error;
             }
@@ -144,7 +144,7 @@ export class ImportController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
             this.logger.error(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: <error>`,
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
             );
             throw schulConnexError;
         } else {

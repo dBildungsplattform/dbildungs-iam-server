@@ -266,7 +266,7 @@ export class ImportWorkflow {
                 );
             if (!(savedPersonWithPersonenkontext instanceof DomainError)) {
                 this.logger.info(
-                    `System hat neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
+                    `System hat einen neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
                 );
             } else {
                 this.logger.info(

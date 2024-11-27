@@ -29,8 +29,8 @@ import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
 import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { VornameForPersonWithTrailingSpaceError } from '../../person/domain/vorname-with-trailing-space.error.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -48,6 +48,7 @@ describe('ImportWorkflow', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [LoggingTestModule],
             providers: [
                 ImportWorkflowFactory,
                 {
@@ -69,10 +70,6 @@ describe('ImportWorkflow', () => {
                 {
                     provide: PersonPermissions,
                     useValue: createMock<PersonPermissions>(),
-                },
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
                 },
             ],
         }).compile();

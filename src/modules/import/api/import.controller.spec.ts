@@ -1,7 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    LoggingTestModule,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 
@@ -15,7 +19,6 @@ import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.j
 import { HttpException } from '@nestjs/common';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('Import API with mocked ImportWorkflow', () => {
     let sut: ImportController;
@@ -24,7 +27,7 @@ describe('Import API with mocked ImportWorkflow', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [MapperTestModule, LoggingTestModule],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -37,10 +40,6 @@ describe('Import API with mocked ImportWorkflow', () => {
                 {
                     provide: ImportWorkflow,
                     useValue: createMock<ImportWorkflow>(),
-                },
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
                 },
                 ImportController,
             ],

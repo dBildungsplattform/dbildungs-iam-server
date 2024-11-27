@@ -16,7 +16,7 @@ import { PrivacyIdeaAdministrationController } from './privacy-idea-administrati
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
 import { TokenStateResponse } from './token-state.response.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
+import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -42,6 +42,7 @@ describe('PrivacyIdeaAdministrationController', () => {
     beforeEach(async () => {
         module = await Test.createTestingModule({
             controllers: [PrivacyIdeaAdministrationController],
+            imports: [LoggingTestModule],
             providers: [
                 {
                     provide: PrivacyIdeaAdministrationService,
@@ -50,10 +51,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
-                },
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
                 },
             ],
         }).compile();
@@ -405,7 +402,7 @@ describe('PrivacyIdeaAdministrationController', () => {
             personPermissionsMock = createMock<PersonPermissions>();
             const person: Person<true> = getPerson();
 
-            jest.spyOn(personRepository, 'getPersonIfAllowed').mockResolvedValueOnce({
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
                 ok: true,
                 value: person,
             });

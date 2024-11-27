@@ -181,11 +181,10 @@ export class PrivacyIdeaAdministrationController {
                 `Benutzer ${referrer} (BenutzerId: ${params.personId}) hat sich einen Software-Token für 2FA eingerichtet.`,
             );
         } catch (error) {
-            if (error instanceof Error) {
-                this.logger.error(
-                    `Benutzer mit BenutzerID: ${params.personId} hat versucht eine 2FA einzurichten. Fehler: ${error.message}`,
-                );
-            }
+            this.logger.error(
+                `Benutzer ${referrer} (BenutzerId: ${params.personId}) hat versucht eine 2FA einzurichten.`,
+                error,
+            );
             throw error;
         }
     }
