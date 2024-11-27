@@ -375,7 +375,8 @@ export class EmailEventHandler {
             if (email.enabled) {
                 return this.logger.info(`Existing email for personId:${personId} already enabled`);
             } else if (email.disabled) {
-                email.request();
+                // If we find a disabled address, we just enable it again
+                email.enable();
 
                 // Will return after the first iteration, so it's not an await in a loop
                 // eslint-disable-next-line no-await-in-loop

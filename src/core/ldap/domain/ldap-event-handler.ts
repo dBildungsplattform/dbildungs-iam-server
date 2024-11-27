@@ -152,14 +152,6 @@ export class LdapEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, new personenkontexte: ${event.newKontexte.length}, deleted personenkontexte: ${event.removedKontexte.length}`,
         );
 
-        // TODO: Marvin - Person darf sich nicht mehr im OX anmelden? ID_OX Keycloak
-
-        if (!event.containsAnyCurrentPKWithRollenartLehr()) {
-            this.logger.info(
-                `Person with ID:${event.person.id} no longer has any PKs with rollenArt LEHR. Will be kept in LDAP for E-Mail.`,
-            );
-        }
-
         // Create personenkontexte if rollenart === LEHR
         await Promise.allSettled(
             event.newKontexte
