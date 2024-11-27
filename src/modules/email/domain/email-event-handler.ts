@@ -339,16 +339,17 @@ export class EmailEventHandler {
         const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
 
-        // TODO: Marvin
-        const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
-        if (existingEmail) {
-            this.logger.info(`Existing email found for personId:${personId}`);
+        const existingEmails: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
 
-            if (existingEmail.enabled) {
+        for (const email of existingEmails) {
+            if (email.enabled) {
                 return this.logger.info(`Existing email for personId:${personId} already enabled`);
-            } else {
-                existingEmail.request();
-                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(existingEmail);
+            } else if (email.disabled) {
+                email.request();
+
+                // Will return after the first iteration, so it's not an await in a loop
+                // eslint-disable-next-line no-await-in-loop
+                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
                 if (persistenceResult instanceof EmailAddress) {
                     this.logger.info(`Set Requested status and persisted address:${persistenceResult.address}`);
                     this.eventService.publish(
@@ -361,13 +362,15 @@ export class EmailEventHandler {
                         ),
                     );
                 } else {
-                    return this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
+                    this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
                 }
+
+                return;
             }
-        } else {
-            this.logger.info(`No existing email found for personId:${personId}, creating a new one`);
-            await this.createNewEmail(personId, organisationId);
         }
+
+        this.logger.info(`No existing email found for personId:${personId}, creating a new one`);
+        await this.createNewEmail(personId, organisationId);
     }
 
     private async createAndPersistFailedEmailAddress(personId: PersonID): Promise<void> {
