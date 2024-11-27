@@ -79,7 +79,7 @@ export class OrganisationController {
     ) {}
 
     @Post()
-    @UseGuards(StepUpGuard)
+    // @UseGuards(StepUpGuard) --> SPSH-1519 (Not Possible due to migration at the moment)
     @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'The organisation already exists.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
