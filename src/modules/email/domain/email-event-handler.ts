@@ -28,7 +28,7 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/ox-user-added-to-group-event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;

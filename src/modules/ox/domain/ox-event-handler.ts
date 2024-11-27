@@ -32,7 +32,7 @@ import {
     ChangeByModuleAccessAction,
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/ox-user-added-to-group-event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -94,9 +94,9 @@ export class OxEventHandler {
     }
 
     @EventHandler(EmailAddressAlreadyExistsEvent)
-    public async handleOxUserAddedToGroupEvent(event: EmailAddressAlreadyExistsEvent): Promise<void> {
+    public async handleEmailAddressAlreadyExistsEvent(event: EmailAddressAlreadyExistsEvent): Promise<void> {
         this.logger.info(
-            `Received OxUserAddedToGroupEvent, personId:${event.personId}, orgaKennung:${event.orgaKennung}`,
+            `Received EmailAddressAlreadyExistsEvent, personId:${event.personId}, orgaKennung:${event.orgaKennung}`,
         );
 
         // Check if the functionality is enabled
