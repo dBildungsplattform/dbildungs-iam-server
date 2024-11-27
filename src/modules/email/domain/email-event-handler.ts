@@ -339,6 +339,7 @@ export class EmailEventHandler {
         const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
 
+        // TODO: Marvin
         const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
         if (existingEmail) {
             this.logger.info(`Existing email found for personId:${personId}`);

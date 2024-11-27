@@ -152,32 +152,11 @@ export class LdapEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, new personenkontexte: ${event.newKontexte.length}, deleted personenkontexte: ${event.removedKontexte.length}`,
         );
 
+        // TODO: Marvin - Person darf sich nicht mehr im OX anmelden? ID_OX Keycloak
+
         if (!event.containsAnyCurrentPKWithRollenartLehr()) {
-            // Delete all removed personenkontexte if rollenart === LEHR
-            await Promise.allSettled(
-                event.removedKontexte
-                    .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
-                    .map(async (pk: PersonenkontextEventKontextData) => {
-                        const emailDomain: Result<string> = await this.getEmailDomainForOrganisationId(pk.orgaId);
-                        if (emailDomain.ok) {
-                            this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
-                            const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(
-                                event.person,
-                                emailDomain.value,
-                            );
-                            if (!deletionResult.ok) {
-                                this.logger.error(deletionResult.error.message);
-                            }
-                        } else {
-                            this.logger.error(
-                                `LdapClientService deleteLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
-                            );
-                        }
-                    }),
-            );
-        } else {
             this.logger.info(
-                `Keep lehrer in LDAP, personId:${event.person.id}, because person keeps PK(s) with rollenArt LEHR`,
+                `Person with ID:${event.person.id} no longer has any PKs with rollenArt LEHR. Will be kept in LDAP for E-Mail.`,
             );
         }
 
