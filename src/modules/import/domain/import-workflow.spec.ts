@@ -20,7 +20,6 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import internal from 'stream';
-import { ImportDataItem } from './import-data-item.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
@@ -29,6 +28,7 @@ import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
 import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
+import { ImportDataItem } from './import-data-item.js';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;

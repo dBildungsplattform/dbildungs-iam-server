@@ -13,8 +13,6 @@ import Papa, { ParseResult } from 'papaparse';
 import { CSVImportDataItemDTO } from './csv-import-data-item.dto.js';
 import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
-import { ImportDataItem } from './import-data-item.js';
-import { faker } from '@faker-js/faker';
 import {
     PersonenkontextCreationService,
     PersonPersonenkontext,
@@ -29,6 +27,9 @@ import { ImportDomainErrorI18nTypes } from './import-i18n-errors.js';
 import { validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
+import { ImportDataItem } from './import-data-item.js';
+import { ImportVorgang } from './import-vorgang.js';
+import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -46,6 +47,11 @@ export type TextFilePersonFields = {
     password: string | undefined;
 };
 
+export type RolleAndOrganisationByName = {
+    rollenName: string;
+    organisationsname: string;
+};
+
 export class ImportWorkflow {
     public readonly TEXT_FILENAME_NAME: string = '_spsh_csv_import_ergebnis.txt';
 
@@ -60,6 +66,7 @@ export class ImportWorkflow {
         private readonly organisationRepository: OrganisationRepository,
         private readonly importDataRepository: ImportDataRepository,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
+        private readonly importVorgangRepository: ImportVorgangRepository,
     ) {}
 
     public static createNew(
@@ -67,12 +74,14 @@ export class ImportWorkflow {
         organisationRepository: OrganisationRepository,
         importDataRepository: ImportDataRepository,
         personenkontextCreationService: PersonenkontextCreationService,
+        importVorgangRepository: ImportVorgangRepository,
     ): ImportWorkflow {
         return new ImportWorkflow(
             rolleRepo,
             organisationRepository,
             importDataRepository,
             personenkontextCreationService,
+            importVorgangRepository,
         );
     }
 
@@ -87,12 +96,12 @@ export class ImportWorkflow {
         file: Express.Multer.File,
         permissions: PersonPermissions,
     ): Promise<DomainError | ImportUploadResultFields> {
-        const referenceCheckError: Option<DomainError> = await this.checkReferences(
+        const referenceCheck: DomainError | RolleAndOrganisationByName = await this.checkReferences(
             this.selectedOrganisationId,
             this.selectedRolleId,
         );
-        if (referenceCheckError) {
-            return referenceCheckError;
+        if (referenceCheck instanceof DomainError) {
+            return referenceCheck;
         }
 
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
@@ -134,8 +143,25 @@ export class ImportWorkflow {
             }
         });
 
-        const importVorgangId: string = faker.string.uuid();
+        // const importVorgangId: string = faker.string.uuid();
         const invalidImportDataItems: ImportDataItem<false>[] = [];
+
+        if (permissions.personFields.username === undefined) {
+            //log no username found for adminn
+            return new EntityNotFoundError('Person', permissions.personFields.id);
+        }
+        //Create ImportVorgang
+        const importVorgang: ImportVorgang<false> = ImportVorgang.createNew(
+            permissions.personFields.username,
+            referenceCheck.rollenName,
+            referenceCheck.organisationsname,
+            parsedDataItems.length,
+            permissions.personFields.id,
+            this.selectedRolleId,
+            this.selectedOrganisationId,
+        );
+
+        const savedImportvorgang: ImportVorgang<true> = await this.importVorgangRepository.save(importVorgang);
 
         const promises: Promise<ImportDataItem<true>>[] = parsedDataItems.map((value: CSVImportDataItemDTO) => {
             const importDataItemErrors: string[] = [];
@@ -162,7 +188,7 @@ export class ImportWorkflow {
             }
 
             const importDataItem: ImportDataItem<false> = ImportDataItem.createNew(
-                importVorgangId,
+                savedImportvorgang.id,
                 value.nachname,
                 value.vorname,
                 value.klasse,
@@ -180,8 +206,11 @@ export class ImportWorkflow {
         //TODO: 50 ImportDataItems per call direkt einmail persistieren
         await Promise.all(promises);
 
+        savedImportvorgang.validate(invalidImportDataItems.length);
+        await this.importVorgangRepository.save(importVorgang);
+
         return {
-            importVorgangId,
+            importVorgangId: savedImportvorgang.id,
             isValid: invalidImportDataItems.length === 0,
             totalImportDataItems: parsedDataItems.length,
             totalInvalidImportDataItems: invalidImportDataItems.length,
@@ -316,7 +345,10 @@ export class ImportWorkflow {
     }
 
     //Optimierung: CheckReferences auslagern?
-    private async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
+    private async checkReferences(
+        organisationId: string,
+        rolleId: string,
+    ): Promise<DomainError | RolleAndOrganisationByName> {
         const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
             this.organisationRepository.findById(organisationId),
             this.rolleRepo.findById(rolleId),
@@ -347,7 +379,10 @@ export class ImportWorkflow {
             return new RolleNurAnPassendeOrganisationError();
         }
 
-        return undefined;
+        return {
+            rollenName: rolle.name,
+            organisationsname: orga.name ?? orga.kennung ?? orga.id,
+        };
     }
 
     private async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {

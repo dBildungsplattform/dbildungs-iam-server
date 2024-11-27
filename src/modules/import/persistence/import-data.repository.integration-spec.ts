@@ -8,8 +8,8 @@ import {
     DoFactory,
 } from '../../../../test/utils/index.js';
 import { ImportDataRepository, mapAggregateToData, mapEntityToAggregate } from './import-data.repository.js';
-import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
+import { ImportDataItem } from '../domain/import-data-item.js';
 
 describe('ImportDataRepository', () => {
     let module: TestingModule;
