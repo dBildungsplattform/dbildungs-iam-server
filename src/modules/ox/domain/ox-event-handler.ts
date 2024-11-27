@@ -144,18 +144,21 @@ export class OxEventHandler {
             `Successfully added user with personId:${event.personId} to OX group with id:${oxGroupIdResult.value}`,
         );
 
-        // Publish an OxUserChangedEvent after successful addition to the group
-        this.eventService.publish(
-            new OxUserChangedEvent(
-                event.personId,
-                person.referrer ?? '',
-                person.oxUserId,
-                person.referrer ?? '',
-                this.contextID,
-                this.contextName,
-                person.email ?? '',
-            ),
-        );
+        // Should always be true
+        if (person.referrer && person.email) {
+            // Publish an OxUserChangedEvent after successful addition to the group
+            this.eventService.publish(
+                new OxUserChangedEvent(
+                    event.personId,
+                    person.referrer,
+                    person.oxUserId,
+                    person.referrer,
+                    this.contextID,
+                    this.contextName,
+                    person.email,
+                ),
+            );
+        }
     }
 
     // TODO: Marvin Event handler PKUpdate
