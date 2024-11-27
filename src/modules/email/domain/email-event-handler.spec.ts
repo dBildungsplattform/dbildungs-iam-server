@@ -534,6 +534,68 @@ describe('Email Event Handler', () => {
                 );
             });
         });
+
+        describe('when lehrer does not have any PK, email is enabled, disable email and error occurs during persisting', () => {
+            it('should log matching info', async () => {
+                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map<string, ServiceProvider<true>>());
+
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([getEmail()]);
+                emailRepoMock.save.mockResolvedValueOnce(new EmailAddressNotFoundError(fakeEmailAddressString)); //mock: error during saving the entity
+
+                await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Existing email found for personId'),
+                );
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could not disable email, error is requested EmailAddress with the address:${fakeEmailAddressString} was not found`,
+                );
+            });
+        });
+
+        [
+            { status: EmailAddressStatus.ENABLED },
+            { status: EmailAddressStatus.REQUESTED },
+            { status: EmailAddressStatus.FAILED },
+        ].forEach(({ status }: { status: EmailAddressStatus }) => {
+            describe(`when lehrer does not have any PK, email is  ${status}, disable email is successfull`, () => {
+                it('should log matching info', async () => {
+                    dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+                    rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
+                    serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map<string, ServiceProvider<true>>());
+
+                    const emailAddress: EmailAddress<true> = EmailAddress.construct(
+                        faker.string.uuid(),
+                        faker.date.past(),
+                        faker.date.recent(),
+                        fakePersonId,
+                        faker.internet.email(),
+                        EmailAddressStatus.DISABLED,
+                    );
+
+                    emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                        EmailAddress.construct(
+                            faker.string.uuid(),
+                            faker.date.past(),
+                            faker.date.recent(),
+                            fakePersonId,
+                            faker.internet.email(),
+                            status,
+                        ),
+                    ]);
+
+                    emailRepoMock.save.mockResolvedValueOnce(emailAddress);
+                    await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                    expect(loggerMock.info).toHaveBeenCalledWith(
+                        expect.stringContaining('Existing email found for personId'),
+                    );
+                    expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
+                });
+            });
+        });
     });
 
     describe('handlePersonenkontextCreatedMigrationEvent', () => {
@@ -969,21 +1031,6 @@ describe('Email Event Handler', () => {
                 await emailEventHandler.handleRolleUpdatedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(`RolleUpdatedEvent affects:2 persons`);
-            });
-        });
-
-        describe('when rolle is updated but person should not get an email-address by event', () => {
-            it('should log info', async () => {
-                dbiamPersonenkontextRepoMock.findByRolle.mockResolvedValueOnce(personenkontexte);
-
-                //mock that no email-address is necessary for person to test handlePerson
-                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([]);
-                rolleRepoMock.findByIds.mockResolvedValue(new Map<string, Rolle<true>>());
-                serviceProviderRepoMock.findByIds.mockResolvedValue(new Map<string, ServiceProvider<true>>());
-
-                await emailEventHandler.handleRolleUpdatedEvent(event);
-
-                expect(loggerMock.info).toHaveBeenCalledWith(`Person with id:${fakePersonId} does not need an email`);
             });
         });
     });

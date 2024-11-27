@@ -14,8 +14,8 @@ export type ListGroupsResponse = {
 };
 
 export type ListGroupsResponseBody = {
-    listAllResponse: {
-        return: OXGroup[];
+    listResponse: {
+        return?: OXGroup[];
     };
 };
 
@@ -26,6 +26,10 @@ export class ListGroupsAction extends OxBaseAction<ListGroupsResponseBody, ListG
 
     public constructor(private readonly params: ListGroupsParams) {
         super();
+    }
+
+    public override isArrayOverride(_tagName: string, jPath: string): boolean {
+        return ['Envelope.Body.listResponse.return'].includes(jPath);
     }
 
     public override buildRequest(): object {
@@ -51,7 +55,8 @@ export class ListGroupsAction extends OxBaseAction<ListGroupsResponseBody, ListG
 
     public override parseBody(body: ListGroupsResponseBody): Result<ListGroupsResponse, DomainError> {
         const groups: OXGroup[] = [];
-        for (const ret of body.listAllResponse.return) {
+
+        for (const ret of body.listResponse.return ?? []) {
             groups.push({
                 id: ret.id,
                 name: ret.name,
