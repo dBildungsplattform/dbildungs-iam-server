@@ -28,6 +28,7 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/ox-user-added-to-group-event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -267,37 +268,63 @@ export class EmailEventHandler {
     }
 
     private async handlePerson(personId: PersonID): Promise<void> {
+        // Map to store combinations of rolleId and organisationId as the key
         const rolleIdPKMap: Map<string, Personenkontext<true>> = new Map<string, Personenkontext<true>>();
 
+        // Retrieve all personenkontexte for the given personId
         const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
+
+        // Array to hold the role IDs
         const rollenIds: string[] = [];
+
+        // Process each personenkontext and add it to the map and array
         personenkontexte.forEach((pk: Personenkontext<true>) => {
-            rolleIdPKMap.set(pk.rolleId, pk);
+            // Use combination of rolleId and organisationId as the key
+            const key: string = `${pk.rolleId}-${pk.organisationId}`;
+            rolleIdPKMap.set(key, pk);
             rollenIds.push(pk.rolleId);
         });
-        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
-        const rollen: Rolle<true>[] = Array.from(rollenMap.values(), (value: Rolle<true>) => {
-            return value;
-        });
 
+        // Retrieve role details based on the role IDs
+        const rollenMap: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rollenIds);
+        const rollen: Rolle<true>[] = Array.from(rollenMap.values());
+
+        // Check if any role has a reference to an SP for email service provider
         const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
 
         if (rollenIdWithSPReference) {
-            const pkOfRolleWithSPReference: Personenkontext<true> | undefined =
-                rolleIdPKMap.get(rollenIdWithSPReference);
-            if (!pkOfRolleWithSPReference) {
-                this.logger.error(
-                    `Rolle with id:${rollenIdWithSPReference} references SP, but the wrapping PK could not be found`,
-                );
-                return;
+            // Array to store matching Personenkontext objects for further processing
+            const pkOfRolleWithSPReferenceList: Personenkontext<true>[] = [];
+
+            // Check all combinations of rolleId and organisationId for this role
+            for (const pk of personenkontexte) {
+                if (pk.rolleId === rollenIdWithSPReference) {
+                    const key: string = `${pk.rolleId}-${pk.organisationId}`;
+                    const pkFromMap: Personenkontext<true> | undefined = rolleIdPKMap.get(key);
+                    if (pkFromMap) {
+                        pkOfRolleWithSPReferenceList.push(pkFromMap); // Collect valid matches
+                    }
+                }
             }
-            this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
-            await this.createOrEnableEmail(personId, pkOfRolleWithSPReference.organisationId);
+
+            // Process each valid Personenkontext
+            if (pkOfRolleWithSPReferenceList.length > 0) {
+                this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
+                // Iterate over all valid Personenkontext objects and trigger email creation
+                for (const pkOfRolleWithSPReference of pkOfRolleWithSPReferenceList) {
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.createOrEnableEmail(personId, pkOfRolleWithSPReference.organisationId);
+                }
+            } else {
+                this.logger.error(
+                    `Rolle with id:${rollenIdWithSPReference} references SP, but no matching Personenkontext found.`,
+                );
+            }
         } else {
-            //If user does not have any PK with SP referencing email, we have to disable any existing email
-            //Even FAILED emails are disabled, because they are not used
+            // If no role references an SP, disable any existing emails
             const existingEmails: Option<EmailAddress<true>[]> =
                 await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
+
             if (existingEmails) {
                 await Promise.allSettled(
                     existingEmails
@@ -309,6 +336,7 @@ export class EmailEventHandler {
                             existingEmail.disable();
                             const persistenceResult: EmailAddress<true> | DomainError =
                                 await this.emailRepo.save(existingEmail);
+
                             if (persistenceResult instanceof EmailAddress) {
                                 this.logger.info(`Disabled and saved address:${persistenceResult.address}`);
                             } else {
@@ -364,6 +392,8 @@ export class EmailEventHandler {
                     return this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
                 }
             }
+            // Publish the EmailAddressAlreadyExistsEvent as the email already exists
+            this.eventService.publish(new EmailAddressAlreadyExistsEvent(personId, organisationKennung.value));
         } else {
             this.logger.info(`No existing email found for personId:${personId}, creating a new one`);
             await this.createNewEmail(personId, organisationId);
