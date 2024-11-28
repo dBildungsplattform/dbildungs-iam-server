@@ -1,4 +1,5 @@
 export type ExternalSystemIDs = {
+    USER_ID?: string[];
     ID_ITSLEARNING?: string[];
     ID_OX?: string[];
 };

@@ -440,6 +440,7 @@ describe('DbSeedService', () => {
                     'test@example.com',
                     faker.date.recent(),
                     {
+                        USER_ID: [faker.string.uuid()],
                         ID_ITSLEARNING: [faker.string.uuid()],
                     },
                     true,
