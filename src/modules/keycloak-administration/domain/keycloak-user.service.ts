@@ -521,12 +521,10 @@ export class KeycloakUserService {
         try {
             //lock describes whether the user should be locked or not
             if (lock) {
-                const isExistingUserLock: boolean =
-                    (await this.userLockRepository.findByPersonId(personId)).find(
-                        (foundUserLock: UserLock) =>
-                            foundUserLock.locked_occasion == PersonLockOccasion.MANUELL_GESPERRT,
-                    ) instanceof UserLock;
-                if (isExistingUserLock) {
+                const existingUserLock: UserLock | void = (await this.userLockRepository.findByPersonId(personId)).find(
+                    (foundUserLock: UserLock) => foundUserLock.locked_occasion == PersonLockOccasion.MANUELL_GESPERRT,
+                );
+                if (existingUserLock) {
                     await this.userLockRepository.update(userLock);
                 } else {
                     await this.userLockRepository.createUserLock(userLock);
