@@ -653,7 +653,7 @@ describe('dbiam Personenkontext Repo', () => {
         });
     });
 
-    describe('getPersonCountByRole', () => {
+    describe('getPersonCountByRolle', () => {
         it('should return the correct count of unique persons for a given role', async () => {
             const person: Person<true> = await createPerson();
             const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
