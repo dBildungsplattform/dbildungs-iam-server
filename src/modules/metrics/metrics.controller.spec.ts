@@ -23,7 +23,11 @@ describe('MetricsController', () => {
                 {
                     provide: DBiamPersonenkontextRepo,
                     useValue: {
-                        getPersonCountByRolle: jest.fn().mockResolvedValue(10),
+                        getPersonenkontextRollenCount: jest.fn().mockResolvedValue([
+                            { rollenart: 'LERN', count: '5' },
+                            { rollenart: 'LEIT', count: '8' },
+                            { rollenart: 'LEHR', count: '10' },
+                        ]),
                     },
                 },
                 {
@@ -48,8 +52,8 @@ describe('MetricsController', () => {
 
     it('should call gauge with correct metrics and count', async () => {
         await controller.getMetrics();
-        expect(reporterService.gauge).toHaveBeenCalledWith('number_of_teachers', 10, { school: 'all' });
-        expect(reporterService.gauge).toHaveBeenCalledWith('number_of_students', 10, { school: 'all' });
-        expect(reporterService.gauge).toHaveBeenCalledWith('number_of_admins', 10, { school: 'all' });
+        expect(reporterService.gauge).toHaveBeenCalledWith('personenkontext_rollen_count', 5, { rollenart: 'LERN' });
+        expect(reporterService.gauge).toHaveBeenCalledWith('personenkontext_rollen_count', 8, { rollenart: 'LEIT' });
+        expect(reporterService.gauge).toHaveBeenCalledWith('personenkontext_rollen_count', 10, { rollenart: 'LEHR' });
     });
 });
