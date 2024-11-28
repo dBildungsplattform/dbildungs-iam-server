@@ -1587,4 +1587,103 @@ describe('KeycloakUserService', () => {
             });
         });
     });
+
+    describe('removeOXUserAttributes', () => {
+        let username: string;
+
+        beforeEach(() => {
+            username = faker.internet.userName();
+        });
+
+        describe('when user could not be updated', () => {
+            it('should return error result', async () => {
+                const kcId: string = faker.string.uuid();
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: username,
+                        email: faker.internet.email(),
+                        id: kcId,
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+                const kcError: DomainError = new KeycloakClientError('Could not update user-attributes');
+                kcUsersMock.update.mockRejectedValueOnce(kcError);
+                const attributes: Record<string, string[]> = {};
+                attributes['ID_OX'] = [''];
+
+                const res: Result<void, DomainError> = await service.removeOXUserAttributes(username);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: kcError,
+                });
+                expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
+                expect(kcUsersMock.update).toHaveBeenCalledWith(
+                    { id: kcId },
+                    { username: username, attributes: attributes },
+                );
+            });
+        });
+
+        describe('when updating user is successful', () => {
+            it('should log info', async () => {
+                const kcId: string = faker.string.uuid();
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: username,
+                        email: faker.internet.email(),
+                        id: kcId,
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                kcUsersMock.update.mockResolvedValueOnce();
+                const attributes: Record<string, string[]> = {};
+                attributes['ID_OX'] = [''];
+
+                const res: Result<void, DomainError> = await service.removeOXUserAttributes(username);
+
+                expect(res).toEqual({
+                    ok: true,
+                    value: undefined,
+                });
+                expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
+                expect(kcUsersMock.update).toHaveBeenCalledWith(
+                    { id: kcId },
+                    { username: username, attributes: attributes },
+                );
+            });
+        });
+
+        describe('when user does not exist', () => {
+            it('should return error', async () => {
+                const kcError: DomainError = new KeycloakClientError('Keycloak request failed');
+                kcUsersMock.find.mockRejectedValueOnce(kcError);
+
+                const res: Result<void, DomainError> = await service.removeOXUserAttributes(username);
+
+                expect(res).toStrictEqual<Result<void>>({
+                    ok: false,
+                    error: kcError,
+                });
+                expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
+            });
+        });
+
+        describe('when getAuthedKcAdminClient fails', () => {
+            it('should pass along error result', async () => {
+                const error: Result<KeycloakAdminClient, DomainError> = {
+                    ok: false,
+                    error: new KeycloakClientError('Could not authenticate'),
+                };
+
+                adminService.getAuthedKcAdminClient.mockResolvedValueOnce(error);
+
+                const res: Result<void, DomainError> = await service.removeOXUserAttributes(username);
+
+                expect(res).toBe(error);
+                expect(kcUsersMock.find).not.toHaveBeenCalledWith({ username: username, exact: true });
+            });
+        });
+    });
 });
