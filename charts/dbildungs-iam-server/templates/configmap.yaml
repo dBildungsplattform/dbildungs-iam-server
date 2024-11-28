@@ -7,9 +7,8 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 data:
   config-json: |-
-    {{- if .Values.alternativeConfigJson }}
-    # {{- tpl tpl (.Files.Get .Values.alternativeConfigPath) . | nindent 4 }}
-    {{ .Files.Get "config/config2.json" | nindent 4 }}
+    {{- if .Values.backend.config.alternativeConfigJson }}
+    {{- tpl .Values.backend.config.alternativeConfigFile . | nindent 4 }}
     {{- else }}
     {{ .Files.Get "config/config.json" | nindent 4 }}
     {{- end }}
