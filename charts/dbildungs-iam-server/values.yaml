@@ -112,7 +112,7 @@ backend:
   serviceMonitor:
     enabled: true
     path: "/metrics"
-    interval: 30s
+    interval: 30m
     endpoints:
       - port: 'web'
   extraEnvVars: []
