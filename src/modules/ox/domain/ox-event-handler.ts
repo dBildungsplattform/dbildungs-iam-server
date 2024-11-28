@@ -158,8 +158,6 @@ export class OxEventHandler {
         );
     }
 
-    // TODO: Marvin Event handler PKUpdate
-
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
         const requestedEmailAddresses: Option<EmailAddress<true>[]> =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId, EmailAddressStatus.REQUESTED);
@@ -343,7 +341,6 @@ export class OxEventHandler {
             return this.logger.error(`Persisting oxUserId on emailAddress for personId:${personId} failed`);
         }
 
-        // TODO: Marvin
         const oxGroupId: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
             OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + orgaKennung,
             OxEventHandler.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + orgaKennung,
