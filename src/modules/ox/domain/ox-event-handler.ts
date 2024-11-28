@@ -32,6 +32,7 @@ import {
     ChangeByModuleAccessAction,
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -90,6 +91,74 @@ export class OxEventHandler {
         }
 
         await this.createOxUser(event.personId, event.orgaKennung);
+    }
+
+    @EventHandler(EmailAddressAlreadyExistsEvent)
+    public async handleEmailAddressAlreadyExistsEvent(event: EmailAddressAlreadyExistsEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressAlreadyExistsEvent, personId:${event.personId}, orgaKennung:${event.orgaKennung}`,
+        );
+
+        // Check if the functionality is enabled
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        // Fetch the person's details using their personId
+        const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
+        if (!person) {
+            return this.logger.error(`Person not found for personId:${event.personId}`);
+        }
+
+        // If the person doesn't have an OX user ID, log an error and stop the process
+        if (!person.oxUserId) {
+            return this.logger.error(
+                `Person with personId:${event.personId} does not have an oxUserId. Cannot add to group.`,
+            );
+        }
+
+        // Fetch or create the relevant OX group based on orgaKennung (group identifier)
+        const oxGroupIdResult: Result<OXGroupID, Error> = await this.getExistingOxGroupByNameOrCreateOxGroup(
+            OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + event.orgaKennung,
+            OxEventHandler.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + event.orgaKennung,
+        );
+
+        if (!oxGroupIdResult.ok) {
+            return this.logger.error(`Failed to get or create OX group for orgaKennung:${event.orgaKennung}`);
+        }
+
+        // Add the user to the OX group
+        const addUserToGroupResult: Result<AddMemberToGroupResponse, Error> = await this.addOxUserToOxGroup(
+            oxGroupIdResult.value,
+            person.oxUserId,
+        );
+
+        if (!addUserToGroupResult.ok) {
+            return this.logger.error(
+                `Failed to add user with personId:${event.personId} to OX group with id:${oxGroupIdResult.value}`,
+            );
+        }
+
+        // Log the successful addition of the user to the group
+        this.logger.info(
+            `Successfully added user with personId:${event.personId} to OX group with id:${oxGroupIdResult.value}`,
+        );
+
+        // Should always be true
+        if (person.referrer && person.email) {
+            // Publish an OxUserChangedEvent after successful addition to the group
+            this.eventService.publish(
+                new OxUserChangedEvent(
+                    event.personId,
+                    person.referrer,
+                    person.oxUserId,
+                    person.referrer,
+                    this.contextID,
+                    this.contextName,
+                    person.email,
+                ),
+            );
+        }
     }
 
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
