@@ -1,4 +1,4 @@
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Inject } from '@nestjs/common';
 import { Registry } from 'prom-client';
 import { Public } from '../authentication/api/public.decorator.js';
@@ -7,8 +7,6 @@ import { RollenArt } from '../rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @ApiTags('Metrics')
-@ApiOperation({ summary: 'Get Prometheus metrics' })
-@ApiResponse({ status: 200, description: 'Prometheus metrics.' })
 @Controller({ path: 'metrics' })
 export class MetricsController {
     public constructor(
@@ -20,6 +18,8 @@ export class MetricsController {
     ) {}
 
     @Get()
+    @ApiOperation({ summary: 'Get Prometheus metrics' })
+    @ApiResponse({ status: 200, description: 'Prometheus metrics.' })
     @Public()
     public async getMetrics(): Promise<string> {
         const mappingCountToRollenArt: Map<string, RollenArt> = new Map([
@@ -29,8 +29,8 @@ export class MetricsController {
         ]);
 
         await Promise.all(
-            Array.from(mapping).map(async ([metric, rolle]: [string, RollenArt]) => {
-                const count: number = await this.dBiamPersonenkontextRepo.getPersonCountByRole(rolle);
+            Array.from(mappingCountToRollenArt).map(async ([metric, rolle]: [string, RollenArt]) => {
+                const count: number = await this.dBiamPersonenkontextRepo.getPersonCountByRolle(rolle);
                 this.reporterService.gauge(metric, count, { school: 'all' });
             }),
         );
