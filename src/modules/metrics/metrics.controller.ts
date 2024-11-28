@@ -20,7 +20,7 @@ export class MetricsController {
     @Get()
     @Public()
     public async getMetrics(): Promise<string> {
-        const mapping: Map<string, RollenArt> = new Map([
+        const mappingCountToRollenArt: Map<string, RollenArt> = new Map([
             ['number_of_teachers', RollenArt.LEHR],
             ['number_of_students', RollenArt.LERN],
             ['number_of_admins', RollenArt.LEIT],
