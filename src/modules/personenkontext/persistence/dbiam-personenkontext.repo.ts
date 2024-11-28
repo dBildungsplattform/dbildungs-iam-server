@@ -309,7 +309,7 @@ export class DBiamPersonenkontextRepo {
         return groupedByPerson;
     }
 
-    public async getPersonCountByRole(role: RollenArt): Promise<number> {
+    public async getPersonCountByRolle(rolle: RollenArt): Promise<number> {
         const scope: PersonenkontextScope = new PersonenkontextScope()
             .setScopeWhereOperator(ScopeOperator.AND)
             .findByRollen([role]);
