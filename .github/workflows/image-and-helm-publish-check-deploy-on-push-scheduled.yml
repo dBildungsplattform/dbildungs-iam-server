@@ -114,7 +114,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
       - branch_meta
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1084-rollout-to-namespaces-do-not-delete-dbs
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
   
@@ -125,19 +125,21 @@ jobs:
       - create_branch_identifier
       - wait_for_helm_chart_to_get_published
       - build_image_on_push
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@5
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@DBP-1084-rollout-to-namespaces-do-not-delete-dbs
     with:
       dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
+      # database_deletion: ${{ github.ref_name == 'main' && 'true' || 'false' }}"
+      database_deletion: "true"
     secrets: inherit
 
   # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1084-rollout-to-namespaces-do-not-delete-dbs
     with:
       branch: ${{ github.event.ref }}
 
