@@ -208,6 +208,20 @@ export class PersonController {
         const personEmailResponse: Option<PersonEmailResponse> = await this.emailRepo.getEmailAddressAndStatusForPerson(
             personResult.value,
         );
+
+        if (
+            !personResult.value.personalnummer &&
+            (await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(
+                personResult.value.id,
+            ))
+        ) {
+            const kopersKontext: Personenkontext<true> | null =
+                await this.dBiamPersonenkontextService.getKopersPersonenkontext(personResult.value.id);
+            if (kopersKontext) {
+                const koperslockDate: Date = new Date(kopersKontext.createdAt);
+                koperslockDate.setDate(koperslockDate.getDate() + 56);
+            }
+        }
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,
             false,

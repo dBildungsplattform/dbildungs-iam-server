@@ -31,6 +31,9 @@ import { AuthenticationExceptionFilter } from './authentication-exception-filter
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { getLowestStepUpLevel } from '../passport/oidc.strategy.js';
+import PersonTimeLimitService from '../services/person-time-limit-info.service.js';
+import { PersonTimeLimitInfo } from '../domain/person-time-limit-info.js';
+import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
 
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
@@ -47,6 +50,7 @@ export class AuthenticationController {
         @Inject(OIDC_CLIENT) private client: Client,
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
+        private personTimeLimitService: PersonTimeLimitService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
@@ -132,10 +136,18 @@ export class AuthenticationController {
             if (lastPasswordChange.ok) userinfoExtension.password_updated_at = lastPasswordChange.value;
         }
 
+        const timeLimitInfos: PersonTimeLimitInfo[] = await this.personTimeLimitService.getPersonTimeLimitInfo(
+            permissions.personFields.id,
+        );
+        const timeLimitInfosResponse: PersonTimeLimitInfoResponse[] = timeLimitInfos.map(
+            (info: PersonTimeLimitInfo) => new PersonTimeLimitInfoResponse(info.occasion, info.deadline),
+        );
+
         return new UserinfoResponse(
             permissions,
             rolleFieldsResponse,
             req.passportUser?.stepUpLevel ?? getLowestStepUpLevel(),
+            timeLimitInfosResponse,
             userinfoExtension,
         );
     }

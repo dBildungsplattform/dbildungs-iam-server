@@ -64,4 +64,20 @@ export class DBiamPersonenkontextService {
             rolle.merkmale.includes(RollenMerkmal.KOPERS_PFLICHT),
         );
     }
+
+    public async getKopersPersonenkontext(personId: string): Promise<Personenkontext<true> | null> {
+        const personenkontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(personId);
+        const uniqueRolleIds: Set<string> = new Set(personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId));
+        const foundRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(Array.from(uniqueRolleIds));
+
+        const kopersRolle: Rolle<true> | undefined = Array.from(foundRollen.values()).find((rolle: Rolle<true>) =>
+            rolle.merkmale.includes(RollenMerkmal.KOPERS_PFLICHT),
+        );
+
+        if (!kopersRolle) {
+            return null;
+        }
+
+        return personenkontexte.find((pk: Personenkontext<true>) => pk.rolleId === kopersRolle.id) ?? null;
+    }
 }
