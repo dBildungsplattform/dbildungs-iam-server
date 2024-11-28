@@ -70,4 +70,20 @@ export class ImportVorgang<WasPersisted extends boolean> {
     public validate(invalidImportDataItems: number): void {
         this.status = invalidImportDataItems > 0 ? ImportStatus.INVALID : ImportStatus.VALID;
     }
+
+    public execute(): void {
+        this.status = ImportStatus.INPROGRESS;
+    }
+
+    public fail(): void {
+        this.status = ImportStatus.FAILED;
+    }
+
+    public complete(): void {
+        this.status = ImportStatus.COMPLETED;
+    }
+
+    public cancel(): void {
+        this.status = ImportStatus.CANCELLED;
+    }
 }

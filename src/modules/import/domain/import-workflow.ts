@@ -245,6 +245,14 @@ export class ImportWorkflow {
         //Optimierung: Process 10 dataItems at time for createPersonWithPersonenkontexte
         // const offset: number = 0;
         // const limit: number = 10;
+        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
+        if (!importVorgang) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
+            };
+        }
+
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
         if (total === 0) {
@@ -253,6 +261,10 @@ export class ImportWorkflow {
                 error: new EntityNotFoundError('ImportDataItem', importvorgangId),
             };
         }
+
+        importVorgang.execute();
+        await this.importVorgangRepository.save(importVorgang);
+
         //create Person With PKs
         //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
         const savedPersonenWithPersonenkontext: (DomainError | PersonPersonenkontext)[] = [];
@@ -263,7 +275,9 @@ export class ImportWorkflow {
                     organisationByIdAndName.name === importDataItem.klasse, //Klassennamen sind case sensitive
             );
             if (!klasse) {
-                //(ToDO => next ticket: validate every data item and collect all errors even on import execution)
+                importVorgang.fail();
+                await this.importVorgangRepository.save(importVorgang);
+
                 throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
                     `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
                 ]);
@@ -318,9 +332,13 @@ export class ImportWorkflow {
         const result: Result<Buffer> = await this.createTextFile(textFilePersonFieldsList);
 
         if (result.ok) {
+            importVorgang.complete();
             await this.importDataRepository.deleteByImportVorgangId(importvorgangId);
+        } else {
+            importVorgang.fail();
         }
 
+        await this.importVorgangRepository.save(importVorgang);
         return result;
     }
 
@@ -337,7 +355,19 @@ export class ImportWorkflow {
             };
         }
 
+        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
+        if (!importVorgang) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
+            };
+        }
+
         await this.importDataRepository.deleteByImportVorgangId(importvorgangId);
+
+        importVorgang.cancel();
+        await this.importVorgangRepository.save(importVorgang);
+
         return {
             ok: true,
             value: undefined,
