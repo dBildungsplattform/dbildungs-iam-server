@@ -3,8 +3,7 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { Registry } from 'prom-client';
 import { Public } from '../authentication/api/public.decorator.js';
 import { ReporterService } from './reporter/reporter.service.js';
-import { RollenArt } from '../rolle/domain/rolle.enums.js';
-import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo, RollenCount } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @ApiTags('Metrics')
 @Controller({ path: 'metrics' })
@@ -22,18 +21,14 @@ export class MetricsController {
     @ApiResponse({ status: 200, description: 'Prometheus metrics.' })
     @Public()
     public async getMetrics(): Promise<string> {
-        const mappingCountToRollenArt: Map<string, RollenArt> = new Map([
-            ['number_of_teachers', RollenArt.LEHR],
-            ['number_of_students', RollenArt.LERN],
-            ['number_of_admins', RollenArt.LEIT],
-        ]);
+        const personenKontextRollenCountResult: RollenCount[] =
+            await this.dBiamPersonenkontextRepo.getPersonenkontextRollenCount();
 
-        await Promise.all(
-            Array.from(mappingCountToRollenArt).map(async ([metric, rolle]: [string, RollenArt]) => {
-                const count: number = await this.dBiamPersonenkontextRepo.getPersonCountByRolle(rolle);
-                this.reporterService.gauge(metric, count, { school: 'all' });
-            }),
-        );
+        personenKontextRollenCountResult.forEach((entry: RollenCount) => {
+            this.reporterService.gauge('personenkontext_rollen_count', parseInt(entry.count), {
+                rollenart: entry.rollenart,
+            });
+        });
         const result: string = await this.registry.metrics();
 
         return result;

@@ -8,10 +8,11 @@ import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
+
+export type RollenCount = { rollenart: string; count: string };
 
 function mapEntityToAggregate(
     entity: PersonenkontextEntity,
@@ -309,16 +310,16 @@ export class DBiamPersonenkontextRepo {
         return groupedByPerson;
     }
 
-    public async getPersonCountByRolle(rolle: RollenArt): Promise<number> {
-        const scope: PersonenkontextScope = new PersonenkontextScope()
-            .setScopeWhereOperator(ScopeOperator.AND)
-            .findByRollen([rolle]);
+    public async getPersonenkontextRollenCount(): Promise<RollenCount[]> {
+        const query: string = `SELECT rollenart, COUNT(*) as count
+                               FROM (
+                                   SELECT DISTINCT person_id, rollenart
+                                   FROM personenkontext
+                                   JOIN rolle ON personenkontext.rolle_id = rolle.id
+                               ) as distinct_roles
+                               GROUP BY rollenart;`;
 
-        const [personenkontexte]: Counted<Personenkontext<true>> = await this.findBy(scope);
-
-        const uniquePersonIds: Set<PersonID> = new Set(
-            personenkontexte.map((kontext: Personenkontext<true>) => kontext.personId),
-        );
-        return uniquePersonIds.size;
+        const result: RollenCount[] = await this.em.execute(query, []);
+        return result;
     }
 }
