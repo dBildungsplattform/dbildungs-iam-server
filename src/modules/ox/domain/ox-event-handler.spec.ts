@@ -23,6 +23,7 @@ import { GetDataForUserResponse } from '../actions/user/get-data-user.action.js'
 import { EntityCouldNotBeCreated } from '../../../shared/error/index.js';
 import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { ListGroupsAction } from '../actions/group/list-groups.action.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -909,6 +910,142 @@ describe('OxEventHandler', () => {
                     primaryEmail: email,
                 }),
             );
+        });
+    });
+
+    describe('handleEmailAddressAlreadyExistsEvent', () => {
+        let personId: PersonID;
+        let event: EmailAddressAlreadyExistsEvent;
+        let person: Person<true>;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            personId = faker.string.uuid();
+            event = new EmailAddressAlreadyExistsEvent(personId, faker.string.uuid());
+            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+        });
+
+        describe('when handler is disabled', () => {
+            it('should log and skip processing when not enabled', async () => {
+                sut.ENABLED = false;
+                await sut.handleEmailAddressAlreadyExistsEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            });
+        });
+
+        describe('when person is not found', () => {
+            it('should log error if person does not exist', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+                await sut.handleEmailAddressAlreadyExistsEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(`Person not found for personId:${event.personId}`);
+            });
+        });
+
+        describe('when person has no oxUserId', () => {
+            it('should log error if oxUserId is missing', async () => {
+                person.oxUserId = undefined;
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                await sut.handleEmailAddressAlreadyExistsEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Person with personId:${event.personId} does not have an oxUserId. Cannot add to group.`,
+                );
+            });
+        });
+
+        describe('successful scenario', () => {
+            it('should successfully process event and publish OxUserChangedEvent', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                //mock list-oxGroups-request, no result -> mocks no group found
+                const fakeOXGroupId: string = faker.string.uuid();
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        groups: [],
+                    },
+                });
+                //mock create-oxGroup-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        id: fakeOXGroupId,
+                    },
+                });
+                //mock add-member-to-oxGroup-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        status: {
+                            code: 'success',
+                        },
+                        data: undefined,
+                    },
+                });
+
+                await sut.handleEmailAddressAlreadyExistsEvent(event);
+
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `Successfully added user with personId:${event.personId} to OX group with id:${fakeOXGroupId}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('failure scenarios', () => {
+            it('should log error if group creation/retrieval fails', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                // Mock group creation/retrieval failure
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: new OxError(),
+                });
+
+                await sut.handleEmailAddressAlreadyExistsEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining(`Failed to get or create OX group for orgaKennung:${event.orgaKennung}`),
+                );
+            });
+
+            it('should log error if adding user to group fails', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                const fakeOXGroupId: string = faker.string.uuid();
+
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        groups: [],
+                    },
+                });
+                // Mock group creation/retrieval success
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        id: fakeOXGroupId,
+                    },
+                });
+
+                // Mock add user to group failure
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: new OxError(),
+                });
+
+                await sut.handleEmailAddressAlreadyExistsEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining(
+                        `Failed to add user with personId:${event.personId} to OX group with id:${fakeOXGroupId}`,
+                    ),
+                );
+            });
         });
     });
 });

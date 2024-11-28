@@ -369,7 +369,11 @@ export class EmailEventHandler {
 
         const existingEmails: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
 
-        let emailAlreadyExists: boolean = false;
+        if (existingEmails.length > 0) {
+            // Publish the EmailAddressAlreadyExistsEvent as the User already has an email.
+            // The status of the email is not relevant to adding the user in the OX group.
+            this.eventService.publish(new EmailAddressAlreadyExistsEvent(personId, organisationKennung.value));
+        }
 
         for (const email of existingEmails) {
             if (email.enabled) {
@@ -398,11 +402,6 @@ export class EmailEventHandler {
 
                 return;
             }
-            emailAlreadyExists = true;
-        }
-        if (emailAlreadyExists) {
-            // Publish the EmailAddressAlreadyExistsEvent as the User already has an email
-            this.eventService.publish(new EmailAddressAlreadyExistsEvent(personId, organisationKennung.value));
         }
         this.logger.info(`No existing email found for personId:${personId}, creating a new one`);
         await this.createNewEmail(personId, organisationId);
