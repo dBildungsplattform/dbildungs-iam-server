@@ -471,7 +471,7 @@ export class OrganisationController {
     }
 
     @Put(':organisationId/enable-for-its-learning')
-    @UseGuards(StepUpGuard)
+    //@UseGuards(StepUpGuard) --> SPSH-1519 (Not Possible due to migration at the moment)
     @ApiOkResponse({
         description: 'The organization was successfully enabled for itslearning.',
         type: OrganisationResponseLegacy,
