@@ -2194,5 +2194,39 @@ describe('PersonRepository Integration', () => {
                 expect(personsWithOrgList).not.toContain(person4.id);
             });
         });
+        describe('findOrganisationAdminsByOrganisationId', () => {
+            it('should return a list of personIds for persons without a personenkontext', async () => {
+                const personEntity1: PersonEntity = new PersonEntity();
+                const person1: Person<true> = DoFactory.createPerson(true);
+                await em.persistAndFlush(personEntity1.assign(mapAggregateToData(person1)));
+                person1.id = personEntity1.id;
+
+                const rolle1: Rolle<false> = DoFactory.createRolle(false, {
+                    name: 'rolle1',
+                    rollenart: RollenArt.LEIT,
+                    merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                });
+                const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
+                if (rolle1Result instanceof DomainError) throw Error();
+
+                const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                    personId: person1.id,
+                    rolleId: rolle1Result.id,
+                });
+                await dbiamPersonenkontextRepoInternal.save(personenKontext1);
+                // person without personenkontext but within the time limit for org_unassignment_Date
+                const person4: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: new Date() });
+                const personEntity4: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity4.assign(mapAggregateToData(person4)));
+                person4.id = personEntity4.id;
+
+                //get person ids without personenkontext
+                const admins: string[] = await sut.findOrganisationAdminsByOrganisationId(
+                    personenKontext1.organisationId,
+                );
+
+                expect(admins).toContain(person1.vorname + ' ' + person1.familienname);
+            });
+        });
     });
 });
