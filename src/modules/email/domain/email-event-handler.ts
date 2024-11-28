@@ -28,6 +28,9 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -44,6 +47,7 @@ export class EmailEventHandler {
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly personRepository: PersonRepository,
         private readonly eventService: EventService,
     ) {}
 
@@ -298,6 +302,8 @@ export class EmailEventHandler {
             //Even FAILED emails are disabled, because they are not used
             const existingEmails: Option<EmailAddress<true>[]> =
                 await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
+
+            let anyEmailWasDisabled: boolean = false;
             if (existingEmails) {
                 await Promise.allSettled(
                     existingEmails
@@ -310,12 +316,24 @@ export class EmailEventHandler {
                             const persistenceResult: EmailAddress<true> | DomainError =
                                 await this.emailRepo.save(existingEmail);
                             if (persistenceResult instanceof EmailAddress) {
+                                anyEmailWasDisabled = true;
                                 this.logger.info(`Disabled and saved address:${persistenceResult.address}`);
                             } else {
                                 this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
                             }
                         }),
                 );
+
+                if (anyEmailWasDisabled) {
+                    const person: Option<Person<true>> = await this.personRepository.findById(personId);
+                    if (!person || !person.referrer) {
+                        this.logger.error(
+                            `Could not publish EmailAddressDisabledEvent, personId:${personId} has no username`,
+                        );
+                    } else {
+                        this.eventService.publish(new EmailAddressDisabledEvent(personId, person.referrer));
+                    }
+                }
             }
         }
     }
