@@ -11,7 +11,6 @@ export class MetricsController {
     public constructor(
         @Inject(Registry)
         private readonly registry: Registry,
-        @Inject(ReporterService)
         private readonly reporterService: ReporterService,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
     ) {}
