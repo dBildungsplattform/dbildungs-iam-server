@@ -23,7 +23,7 @@ describe('MetricsController', () => {
                 {
                     provide: DBiamPersonenkontextRepo,
                     useValue: {
-                        getPersonCountByRole: jest.fn().mockResolvedValue(10),
+                        getPersonCountByRolle: jest.fn().mockResolvedValue(10),
                     },
                 },
                 {
