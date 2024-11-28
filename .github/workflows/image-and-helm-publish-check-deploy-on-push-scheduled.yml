@@ -139,7 +139,7 @@ jobs:
   # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1084-rollout-to-namespaces-do-not-delete-dbs
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1084-rollout-to-namespaces-do-not-delete-dbs 
     with:
       branch: ${{ github.event.ref }}
 
