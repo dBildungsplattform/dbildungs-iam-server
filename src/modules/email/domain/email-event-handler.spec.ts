@@ -67,6 +67,7 @@ describe('Email Event Handler', () => {
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let loggerMock: DeepMocked<ClassLogger>;
+    let personRepositoryMock: DeepMocked<PersonRepository>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -117,6 +118,7 @@ describe('Email Event Handler', () => {
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         organisationRepositoryMock = module.get(OrganisationRepository);
         loggerMock = module.get(ClassLogger);
+        personRepositoryMock = module.get(PersonRepository);
 
         app = module.createNestApplication();
         await app.init();
@@ -565,6 +567,7 @@ describe('Email Event Handler', () => {
                     dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
                     rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
                     serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map<string, ServiceProvider<true>>());
+                    personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>());
 
                     const emailAddress: EmailAddress<true> = EmailAddress.construct(
                         faker.string.uuid(),
@@ -594,6 +597,46 @@ describe('Email Event Handler', () => {
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
                 });
+            });
+        });
+
+        describe(`When email is disabled and Person does not have an username, EmailAddressDisabledEvent is not published`, () => {
+            it('should log matching error', async () => {
+                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map<string, ServiceProvider<true>>());
+                personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ referrer: undefined }));
+
+                const emailAddress: EmailAddress<true> = EmailAddress.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    fakePersonId,
+                    faker.internet.email(),
+                    EmailAddressStatus.DISABLED,
+                );
+
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
+                    EmailAddress.construct(
+                        faker.string.uuid(),
+                        faker.date.past(),
+                        faker.date.recent(),
+                        fakePersonId,
+                        faker.internet.email(),
+                        EmailAddressStatus.ENABLED,
+                    ),
+                ]);
+
+                emailRepoMock.save.mockResolvedValueOnce(emailAddress);
+                await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    expect.stringContaining('Existing email found for personId'),
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(`Disabled and saved address:${emailAddress.address}`);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could not publish EmailAddressDisabledEvent, personId:${fakePersonId} has no username`,
+                );
             });
         });
     });
