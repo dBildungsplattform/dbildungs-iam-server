@@ -7,6 +7,8 @@ import { RollenArt } from '../rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
 
 @ApiTags('Metrics')
+@ApiOperation({ summary: 'Get Prometheus metrics' })
+@ApiResponse({ status: 200, description: 'Prometheus metrics.' })
 @Controller({ path: 'metrics' })
 export class MetricsController {
     public constructor(
