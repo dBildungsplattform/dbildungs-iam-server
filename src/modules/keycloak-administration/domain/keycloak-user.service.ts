@@ -16,6 +16,7 @@ import { UserRepresentationDto } from './keycloak-client/user-representation.dto
 import { ExternalSystemIDs, User } from './user.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
 import { UserLock } from './user-lock.js';
+import { PersonLockOccasion } from '../../person/domain/person.enums.js';
 
 export type FindUserFilter = {
     username?: string;
@@ -520,7 +521,16 @@ export class KeycloakUserService {
         try {
             //lock describes whether the user should be locked or not
             if (lock) {
-                await this.userLockRepository.createUserLock(userLock);
+                const isExistingUserLock: boolean =
+                    (await this.userLockRepository.findByPersonId(personId)).find(
+                        (foundUserLock: UserLock) =>
+                            foundUserLock.locked_occasion == PersonLockOccasion.MANUELL_GESPERRT,
+                    ) instanceof UserLock;
+                if (isExistingUserLock) {
+                    await this.userLockRepository.update(userLock);
+                } else {
+                    await this.userLockRepository.createUserLock(userLock);
+                }
                 const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
                 await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled: !lock });
             } else {
