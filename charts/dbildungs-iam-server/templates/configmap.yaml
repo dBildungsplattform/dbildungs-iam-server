@@ -8,11 +8,11 @@ metadata:
 data:
   config-json: |-
     {{- if .Values.alternativeConfigJson }}
-    {{- tpl tpl (.Files.Get .Values.alternativeConfigPath) . | nindent 4 }}
+    # {{- tpl tpl (.Files.Get .Values.alternativeConfigPath) . | nindent 4 }}
+    {{ .Files.Get "config/config2.json" | nindent 4 }}
     {{- else }}
-    {{- tpl (.Files.Get "config.json") . | nindent 4 }}
-    {{- end }}
     {{ .Files.Get "config/config.json" | nindent 4 }}
+    {{- end }}
   NODE_ENV: "prod"
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}
