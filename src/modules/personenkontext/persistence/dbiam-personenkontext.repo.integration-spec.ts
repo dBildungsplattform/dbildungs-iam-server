@@ -663,7 +663,7 @@ describe('dbiam Personenkontext Repo', () => {
                 createPersonenkontext(false, { personId: person.id, rolleId: rolle.id }),
             );
 
-            const count: number = await sut.getPersonCountByRole(rolle.rollenart);
+            const count: number = await sut.getPersonCountByRolle(rolle.rollenart);
             expect(count).toBe(1);
         });
     });
