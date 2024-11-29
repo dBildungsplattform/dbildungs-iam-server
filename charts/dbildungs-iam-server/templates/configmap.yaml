@@ -30,3 +30,6 @@ data:
   ITSLEARNING_ROOT: '{{ .Values.itslearning.root }}'
   ITSLEARNING_ROOT_OEFFENTLICH: '{{ .Values.itslearning.rootOeffentlich }}'
   ITSLEARNING_ROOT_ERSATZ: '{{ .Values.itslearning.rootErsatz }}'
+  SYSTEM_RENAME_WAITING_TIME_IN_SECONDS: '{{ .Values.system.rename_waiting_time_in_seconds }}'
+  SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS: '{{ .Values.system.step_up_timeout_in_seconds }}'
+  SYSTEM_STEP_UP_TIMEOUT_ENABLED: '{{ .Values.system.step_up_timeout_enabled }}'

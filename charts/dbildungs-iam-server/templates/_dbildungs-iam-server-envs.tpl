@@ -66,21 +66,6 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: pi-admin-password
-          - name: SYSTEM_RENAME_WAITING_TIME_IN_SECONDS # TODO
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: system-rename-waiting-time-in-seconds
-          - name: SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS # TODO
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: system-step-up-timeout-in-seconds
-          - name: SYSTEM_STEP_UP_TIMEOUT_ENABLED # TODO
-            valueFrom:
-              secretKeyRef:
-                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-                  key: system-step-up-timeout-enabled
           - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:

@@ -35,15 +35,20 @@ ldap:
 itslearning:
   enabled: false
   endpoint: https://enterprise.itslintegrations.com/WCFServiceLibrary/ImsEnterpriseServicesPort.svc
+  root: sh
+  rootOeffentlich: oeffentlich
+  rootErsatz: ersatz
 
 privacyidea:
   url: https://privacyidea.dev.spsh.dbildungsplattform.de
   renameWaitingTime: 5
   realm: ucs_users
   userResolver: ucs_users
-  root: sh
-  rootOeffentlich: oeffentlich
-  rootErsatz: ersatz
+
+system:
+  rename_waiting_time_in_seconds: ''
+  step_up_timeout_in_seconds: ''
+  step_up_timeout_enabled: ''
 
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
@@ -59,9 +64,6 @@ auth:
   itslearning_password: ''
   pi_admin_user: ''
   pi_admin_password: ''
-  system_rename_waiting_time_in_seconds: '' # TODO
-  system_step_up_timeout_in_seconds: '' # TODO
-  system_step_up_timeout_enabled: '' # TODO
   redis_password: ''
 
 backend:
