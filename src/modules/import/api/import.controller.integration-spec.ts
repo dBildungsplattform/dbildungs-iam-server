@@ -41,7 +41,7 @@ import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { ImportVorgangResponse } from './importvorgang.response.js';
 import { ImportStatus } from '../domain/import.enums.js';
 
-describe('Rolle API', () => {
+describe('Import API', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let em: EntityManager;
@@ -113,6 +113,7 @@ describe('Rolle API', () => {
         personPermissionsMock = createMock<PersonPermissions>();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
         personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+        personPermissionsMock.personFields.username = faker.internet.userName();
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -481,17 +482,19 @@ describe('Rolle API', () => {
             );
             if (sus instanceof DomainError) throw sus;
 
-            const importvorgangId: string = faker.string.uuid();
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false),
+            );
             const importDataItem: ImportDataItem<true> = await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
-                    importvorgangId: importvorgangId,
+                    importvorgangId: importVorgang.id,
                     klasse: klasse.name,
                     personalnummer: undefined,
                 }),
             );
 
             const params: ImportvorgangByIdBodyParams = {
-                importvorgangId: importvorgangId,
+                importvorgangId: importVorgang.id,
                 organisationId: schule.id,
                 rolleId: sus.id,
             };
@@ -528,17 +531,19 @@ describe('Rolle API', () => {
 
     describe('/DELETE deleteImportTransaction', () => {
         it('should return 204', async () => {
-            const importvorgangId: string = faker.string.uuid();
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false),
+            );
             await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
-                    importvorgangId: importvorgangId,
+                    importvorgangId: importVorgang.id,
                     klasse: faker.lorem.word(),
                     personalnummer: undefined,
                 }),
             );
 
             const response: Response = await request(app.getHttpServer() as App)
-                .delete(`/import/${importvorgangId}`)
+                .delete(`/import/${importVorgang.id}`)
                 .send();
 
             expect(response.status).toBe(204);

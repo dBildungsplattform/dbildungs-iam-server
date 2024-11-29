@@ -29,6 +29,8 @@ import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule
 import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
 import { ImportDataItem } from './import-data-item.js';
+import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
+import { ImportVorgang } from './import-vorgang.js';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -36,6 +38,7 @@ describe('ImportWorkflow', () => {
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let importDataRepositoryMock: DeepMocked<ImportDataRepository>;
     let personenkontextCreationServiceMock: DeepMocked<PersonenkontextCreationService>;
+    let importVorgangRepositoryMock: DeepMocked<ImportVorgangRepository>;
     let sut: ImportWorkflow;
     let importWorkflowFactory: ImportWorkflowFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
@@ -68,12 +71,17 @@ describe('ImportWorkflow', () => {
                     provide: PersonPermissions,
                     useValue: createMock<PersonPermissions>(),
                 },
+                {
+                    provide: ImportVorgangRepository,
+                    useValue: createMock<ImportVorgangRepository>(),
+                },
             ],
         }).compile();
         rolleRepoMock = module.get(RolleRepo);
         organisationRepoMock = module.get(OrganisationRepository);
         importDataRepositoryMock = module.get(ImportDataRepository);
         personenkontextCreationServiceMock = module.get(PersonenkontextCreationService);
+        importVorgangRepositoryMock = module.get(ImportVorgangRepository);
         importWorkflowFactory = module.get(ImportWorkflowFactory);
         sut = importWorkflowFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
@@ -300,15 +308,32 @@ describe('ImportWorkflow', () => {
             });
         });
 
+        it('should return EntityNotFoundError if a ImportVorgang does not exist', async () => {
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, name: '1A' }),
+            ]);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(null);
+            const importvorgangId: string = faker.string.uuid();
+
+            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
+            });
+            expect(personenkontextCreationServiceMock.createPersonWithPersonenkontexte).not.toHaveBeenCalled();
+        });
+
         it('should return EntityNotFoundError if a klasse during the import execution was deleted', async () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, name: '1A' }),
             ]);
-
-            const importvorgangId: string = faker.string.uuid();
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
             const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
-                importvorgangId,
+                importvorgangId: importvorgang.id,
                 klasse: '1B',
             });
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
@@ -317,7 +342,7 @@ describe('ImportWorkflow', () => {
                 `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
             ]);
 
-            await expect(sut.executeImport(importvorgangId, personpermissionsMock)).rejects.toThrowError(error);
+            await expect(sut.executeImport(importvorgang.id, personpermissionsMock)).rejects.toThrowError(error);
             expect(personenkontextCreationServiceMock.createPersonWithPersonenkontexte).not.toHaveBeenCalled();
         });
 
@@ -332,9 +357,10 @@ describe('ImportWorkflow', () => {
             });
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([klasse]);
 
-            const importvorgangId: string = faker.string.uuid();
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
             const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
-                importvorgangId,
+                importvorgangId: importvorgang.id,
                 klasse: '1A',
             });
 
@@ -354,7 +380,7 @@ describe('ImportWorkflow', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(rolle);
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
-            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+            const result: Result<Buffer> = await sut.executeImport(importvorgang.id, personpermissionsMock);
 
             if (!result.ok) {
                 throw new Error(result.error.message);
@@ -367,7 +393,7 @@ describe('ImportWorkflow', () => {
             expect(resultString).toContain(person.vorname);
             expect(resultString).toContain(person.familienname);
             expect(resultString).toContain(klasse.name);
-            expect(importDataRepositoryMock.deleteByImportVorgangId).toHaveBeenCalledWith(importvorgangId);
+            expect(importDataRepositoryMock.deleteByImportVorgangId).toHaveBeenCalledWith(importvorgang.id);
         });
 
         it('should return EntityNotFoundError if the schule is not found', async () => {
@@ -381,9 +407,10 @@ describe('ImportWorkflow', () => {
             });
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([klasse]);
 
-            const importvorgangId: string = faker.string.uuid();
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
             const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
-                importvorgangId,
+                importvorgangId: importvorgang.id,
                 klasse: '1A',
             });
             const pks: PersonPersonenkontext = {
@@ -398,7 +425,7 @@ describe('ImportWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(undefined);
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
-            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+            const result: Result<Buffer> = await sut.executeImport(importvorgang.id, personpermissionsMock);
 
             expect(result).toEqual({
                 ok: false,
@@ -417,9 +444,10 @@ describe('ImportWorkflow', () => {
             });
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([klasse]);
 
-            const importvorgangId: string = faker.string.uuid();
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
             const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
-                importvorgangId,
+                importvorgangId: importvorgang.id,
                 klasse: '1A',
             });
             const pks: PersonPersonenkontext = {
@@ -435,7 +463,7 @@ describe('ImportWorkflow', () => {
             rolleRepoMock.findById.mockResolvedValueOnce(undefined);
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
-            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+            const result: Result<Buffer> = await sut.executeImport(importvorgang.id, personpermissionsMock);
 
             expect(result).toEqual({
                 ok: false,
@@ -454,9 +482,10 @@ describe('ImportWorkflow', () => {
             });
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([klasse]);
 
-            const importvorgangId: string = faker.string.uuid();
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
             const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
-                importvorgangId,
+                importvorgangId: importvorgang.id,
                 klasse: '1A',
             });
             const pks: PersonPersonenkontext = {
@@ -475,7 +504,7 @@ describe('ImportWorkflow', () => {
             });
 
             sut.initialize(SELECTED_ORGANISATION_ID, SELECTED_ROLLE_ID);
-            const result: Result<Buffer> = await sut.executeImport(importvorgangId, personpermissionsMock);
+            const result: Result<Buffer> = await sut.executeImport(importvorgang.id, personpermissionsMock);
 
             expect(result).toEqual({
                 ok: false,
@@ -508,10 +537,27 @@ describe('ImportWorkflow', () => {
             });
         });
 
+        it('should return EntityNotFoundError if a ImportVorgang does not exist', async () => {
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(null);
+            const importVorgangId: string = faker.string.uuid();
+
+            const result: Result<void> = await sut.cancelImport(importVorgangId, personpermissionsMock);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importVorgangId),
+            });
+            expect(importDataRepositoryMock.deleteByImportVorgangId).not.toHaveBeenCalled();
+        });
+
         it('should call the importDataRepository if the admin has permissions to cancel the import transaction', async () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
 
-            const result: Result<void> = await sut.cancelImport(faker.string.uuid(), personpermissionsMock);
+            const result: Result<void> = await sut.cancelImport(importvorgang.id, personpermissionsMock);
+
             expect(importDataRepositoryMock.deleteByImportVorgangId).toHaveBeenCalled();
             expect(result).toEqual({ ok: true, value: undefined });
         });
