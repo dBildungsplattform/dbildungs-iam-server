@@ -22,14 +22,14 @@ data:
   LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.ldap.ersatzschulenDomain }}"
   ITSLEARNING_ENABLED: "{{ .Values.itslearning.enabled }}"
   ITSLEARNING_ENDPOINT: "{{ .Values.itslearning.endpoint }}"
+  ITSLEARNING_ROOT: '{{ .Values.itslearning.root }}'
+  ITSLEARNING_ROOT_OEFFENTLICH: '{{ .Values.itslearning.rootOeffentlich }}'
+  ITSLEARNING_ROOT_ERSATZ: '{{ .Values.itslearning.rootErsatz }}'
   PI_BASE_URL:  "{{ .Values.privacyidea.url }}"
   PI_RENAME_WAITING_TIME:  "{{ .Values.privacyidea.renameWaitingTime }}"
   PI_REALM: "{{ .Values.privacyidea.realm }}"
   PI_USER_RESOLVER: "{{ .Values.privacyidea.userResolver }}"
   STATUS_REDIRECT_URL: "{{ .Values.status.url }}"
-  ITSLEARNING_ROOT: '{{ .Values.itslearning.root }}'
-  ITSLEARNING_ROOT_OEFFENTLICH: '{{ .Values.itslearning.rootOeffentlich }}'
-  ITSLEARNING_ROOT_ERSATZ: '{{ .Values.itslearning.rootErsatz }}'
   SYSTEM_RENAME_WAITING_TIME_IN_SECONDS: '{{ .Values.system.rename_waiting_time_in_seconds }}'
   SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS: '{{ .Values.system.step_up_timeout_in_seconds }}'
   SYSTEM_STEP_UP_TIMEOUT_ENABLED: '{{ .Values.system.step_up_timeout_enabled }}'
