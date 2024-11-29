@@ -147,7 +147,7 @@ export class ImportWorkflow {
         const invalidImportDataItems: ImportDataItem<false>[] = [];
 
         if (permissions.personFields.username === undefined) {
-            //log no username found for adminn
+            //log no username found for adminn instead of throwing an error
             return new EntityNotFoundError('Person', permissions.personFields.id);
         }
         //Create ImportVorgang

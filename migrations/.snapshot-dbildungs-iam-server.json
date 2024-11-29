@@ -1235,17 +1235,17 @@
           "length": 6,
           "mappedType": "datetime"
         },
-        "importvorgang_id": {
-          "name": "importvorgang_id",
+        "import_by_person_id": {
+          "name": "import_by_person_id",
           "type": "uuid",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "mappedType": "uuid"
         },
-        "nachname": {
-          "name": "nachname",
+        "import_by_username": {
+          "name": "import_by_username",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -1253,8 +1253,17 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "vorname": {
-          "name": "vorname",
+        "rolle_id": {
+          "name": "rolle_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "uuid"
+        },
+        "rollename": {
+          "name": "rollename",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -1262,39 +1271,59 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "klasse": {
-          "name": "klasse",
+        "organisation_id": {
+          "name": "organisation_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "uuid"
+        },
+        "organisationsname": {
+          "name": "organisationsname",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "mappedType": "string"
         },
-        "personalnummer": {
-          "name": "personalnummer",
-          "type": "varchar(255)",
+        "data_item_count": {
+          "name": "data_item_count",
+          "type": "int",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
-          "mappedType": "string"
+          "nullable": false,
+          "default": "0",
+          "mappedType": "integer"
         },
-        "validation_errors": {
-          "name": "validation_errors",
-          "type": "text[]",
+        "status": {
+          "name": "status",
+          "type": "import_status_enum",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
-          "mappedType": "array"
+          "nullable": false,
+          "nativeEnumName": "import_status_enum",
+          "enumItems": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED"
+          ],
+          "mappedType": "enum"
         }
       },
-      "name": "importdataitem",
+      "name": "importvorgang",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "importdataitem_pkey",
+          "keyName": "importvorgang_pkey",
           "columnNames": [
             "id"
           ],
@@ -1517,17 +1546,17 @@
           "length": 6,
           "mappedType": "datetime"
         },
-        "import_by_person_id": {
-          "name": "import_by_person_id",
+        "importvorgang_id": {
+          "name": "importvorgang_id",
           "type": "uuid",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "mappedType": "uuid"
         },
-        "import_by_username": {
-          "name": "import_by_username",
+        "nachname": {
+          "name": "nachname",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -1535,17 +1564,8 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "rolle_id": {
-          "name": "rolle_id",
-          "type": "uuid",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "uuid"
-        },
-        "rollename": {
-          "name": "rollename",
+        "vorname": {
+          "name": "vorname",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -1553,59 +1573,39 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "organisation_id": {
-          "name": "organisation_id",
-          "type": "uuid",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "uuid"
-        },
-        "organisationsname": {
-          "name": "organisationsname",
+        "klasse": {
+          "name": "klasse",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "mappedType": "string"
         },
-        "data_item_count": {
-          "name": "data_item_count",
-          "type": "int",
+        "personalnummer": {
+          "name": "personalnummer",
+          "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
-          "default": "0",
-          "mappedType": "integer"
+          "nullable": true,
+          "mappedType": "string"
         },
-        "status": {
-          "name": "status",
-          "type": "import_status_enum",
+        "validation_errors": {
+          "name": "validation_errors",
+          "type": "text[]",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
-          "nativeEnumName": "import_status_enum",
-          "enumItems": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
-            "CANCELLED",
-            "COMPLETED",
-            "FAILED"
-          ],
-          "mappedType": "enum"
+          "nullable": true,
+          "mappedType": "array"
         }
       },
-      "name": "importvorgang",
+      "name": "importdataitem",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "importvorgang_pkey",
+          "keyName": "importdataitem_pkey",
           "columnNames": [
             "id"
           ],
@@ -1616,7 +1616,20 @@
         }
       ],
       "checks": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "importdataitem_importvorgang_id_foreign": {
+          "constraintName": "importdataitem_importvorgang_id_foreign",
+          "columnNames": [
+            "importvorgang_id"
+          ],
+          "localTableName": "public.importdataitem",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.importvorgang",
+          "updateRule": "cascade"
+        }
+      },
       "nativeEnums": {
         "db_seed_status_enum": {
           "name": "db_seed_status_enum",
@@ -5123,6 +5136,19 @@
             "ORGANISATION",
             "ROLLE",
             "SERVICE_PROVIDER"
+          ]
+        },
+        "import_status_enum": {
+          "name": "import_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {

@@ -20,7 +20,7 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.id,
         entity.createdAt,
         entity.updatedAt,
-        entity.importvorgangId,
+        entity.importvorgangId.id,
         entity.nachname,
         entity.vorname,
         entity.klasse,
