@@ -17,6 +17,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
 
 describe('KeycloakEventHandler', () => {
     let module: TestingModule;
@@ -207,6 +208,52 @@ describe('KeycloakEventHandler', () => {
                 );
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
                     `OxMetadataInKeycloakChangedEvent will NOT be published, email-address for personId:${fakePersonID} in REQUESTED status will NOT be ENABLED!`,
+                );
+            });
+        });
+    });
+
+    describe('handleEmailAddressDisabledEvent', () => {
+        let fakePersonID: PersonID;
+        let fakeUsername: string;
+
+        beforeEach(() => {
+            fakePersonID = faker.string.uuid();
+            fakeUsername = faker.internet.userName();
+        });
+        it('should log info and call KeycloakUserService', async () => {
+            keycloakUserServiceMock.removeOXUserAttributes.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+
+            await sut.handleEmailAddressDisabledEvent(new EmailAddressDisabledEvent(fakePersonID, fakeUsername));
+
+            expect(loggerMock.info).toHaveBeenNthCalledWith(
+                1,
+                `Received EmailAddressDisabledEvent personId:${fakePersonID}, username:${fakeUsername}`,
+            );
+            expect(loggerMock.info).toHaveBeenNthCalledWith(
+                2,
+                `Removed OX access for personId:${fakePersonID} & username:${fakeUsername} in Keycloak`,
+            );
+            expect(keycloakUserServiceMock.removeOXUserAttributes).toHaveBeenCalledTimes(1);
+        });
+
+        describe('when updating user-attributes fails', () => {
+            it('should log info and call KeycloakUserService', async () => {
+                keycloakUserServiceMock.removeOXUserAttributes.mockResolvedValueOnce({
+                    ok: false,
+                    error: new KeycloakClientError('Could not update user-attributes'),
+                });
+
+                await sut.handleEmailAddressDisabledEvent(new EmailAddressDisabledEvent(fakePersonID, fakeUsername));
+
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `Received EmailAddressDisabledEvent personId:${fakePersonID}, username:${fakeUsername}`,
+                );
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Updating user in Keycloak FAILED for EmailAddressDisabledEvent, personId:${fakePersonID}, username:${fakeUsername}`,
                 );
             });
         });

@@ -4,6 +4,7 @@ import { DbiamError, DbiamErrorProps } from '../../../shared/error/dbiam.error.j
 export enum AuthenticationErrorI18nTypes {
     AUTHENTICATION_ERROR = 'AUTHENTICATION_ERROR',
     KEYCLOAK_USER_NOT_FOUND = 'KEYCLOAK_USER_NOT_FOUND',
+    REQUIRED_STEP_UP_LEVEL_NOT_MET = 'REQUIRED_STEP_UP_LEVEL_NOT_MET',
 }
 
 export type DbiamAuthenticationErrorProps = DbiamErrorProps & {

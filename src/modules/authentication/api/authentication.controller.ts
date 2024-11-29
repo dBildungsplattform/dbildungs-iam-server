@@ -30,7 +30,7 @@ import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte
 import { AuthenticationExceptionFilter } from './authentication-exception-filter.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { extractStepUpLevelFromJWT } from '../passport/oidc.strategy.js';
+import { getLowestStepUpLevel } from '../passport/oidc.strategy.js';
 
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
@@ -135,7 +135,7 @@ export class AuthenticationController {
         return new UserinfoResponse(
             permissions,
             rolleFieldsResponse,
-            extractStepUpLevelFromJWT(req.passportUser?.id_token),
+            req.passportUser?.stepUpLevel ?? getLowestStepUpLevel(),
             userinfoExtension,
         );
     }

@@ -11,3 +11,9 @@ export type OXContextID = Flavor<string, typeof oxContextIdSymbol>;
 
 declare const oxContextNameSymbol: unique symbol;
 export type OXContextName = Flavor<string, typeof oxContextNameSymbol>;
+
+declare const oxGroupIdSymbol: unique symbol;
+export type OXGroupID = Flavor<string, typeof oxGroupIdSymbol>;
+
+declare const oxGroupNameSymbol: unique symbol;
+export type OXGroupName = Flavor<string, typeof oxGroupNameSymbol>;
