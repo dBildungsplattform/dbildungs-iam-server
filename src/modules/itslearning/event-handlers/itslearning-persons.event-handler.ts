@@ -36,7 +36,7 @@ export class ItsLearningPersonsEventHandler {
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
-        this.ENABLED = itsLearningConfig.ENABLED === 'true';
+        this.ENABLED = itsLearningConfig.ENABLED;
     }
 
     @EventHandler(PersonRenamedEvent)

@@ -49,7 +49,7 @@
         "DEFAULT_LOG_LEVEL": "info"
     },
     "ITSLEARNING": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "https://itslearning-test.example.com",
         "USERNAME": "username",
         "PASSWORD": "password",
@@ -65,7 +65,7 @@
         "REALM": "defrealm"
     },
     "OX": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "https://ox_ip:ox_port/webservices/",
         "USERNAME": "username",
         "PASSWORD": "password"

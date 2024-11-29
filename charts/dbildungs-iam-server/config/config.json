@@ -51,7 +51,7 @@
     "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
   },
   "ITSLEARNING": {
-    "ENABLED": "false",
+    "ENABLED": false,
     "ENDPOINT": "https://itslearning.example.com",
     "USERNAME": "username",
     "PASSWORD": "password",
@@ -60,7 +60,7 @@
     "ROOT_ERSATZ": "ersatz"
   },
   "OX": {
-    "ENABLED": "false",
+    "ENABLED": false,
     "ENDPOINT": "https://ox_ip:ox_port/webservices/OXUserService",
     "CONTEXT_ID": "1337",
     "CONTEXT_NAME": "contextname",

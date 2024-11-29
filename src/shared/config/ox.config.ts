@@ -1,8 +1,8 @@
-import { IsBooleanString, IsNumberString, IsString } from 'class-validator';
+import { IsBoolean, IsNumberString, IsString } from 'class-validator';
 
 export class OxConfig {
-    @IsBooleanString()
-    public readonly ENABLED!: 'true' | 'false';
+    @IsBoolean()
+    public readonly ENABLED!: boolean;
 
     @IsString()
     public readonly ENDPOINT!: string;
