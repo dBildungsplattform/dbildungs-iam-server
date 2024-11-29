@@ -1,25 +1,26 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: { { template "common.names.name" . } }
-  namespace: { { template "common.names.namespace" . } }
-  labels: { { - include "common.labels" . | nindent 4 } }
+  name: {{ template "common.names.name" . }}
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
 data:
   config-json: |-
     {{ .Files.Get "config/config.json" | nindent 4 }}
-  NODE_ENV: 'prod'
-  DEPLOY_STAGE: { { .Values.environment | quote } }
-  DB_NAME: { { .Values.database.name | quote } }
-  KC_BASE_URL: 'https://{{ .Values.keycloakHostname }}'
-  FRONTEND_OIDC_CALLBACK_URL: 'https://{{ .Values.backendHostname }}/api/auth/login'
-  FRONTEND_DEFAULT_LOGIN_REDIRECT: 'https://{{ .Values.backendHostname }}/'
-  FRONTEND_LOGOUT_REDIRECT: 'https://{{ .Values.backendHostname }}/'
-  BACKEND_HOSTNAME: '{{ .Values.backendHostname }}'
+  NODE_ENV: "prod"
+  DEPLOY_STAGE: {{ .Values.environment | quote }}
+  DB_NAME: {{ .Values.database.name | quote }}
+  KC_BASE_URL: "https://{{ .Values.keycloakHostname }}"
+  FRONTEND_OIDC_CALLBACK_URL: "https://{{ .Values.backendHostname }}/api/auth/login"
+  FRONTEND_DEFAULT_LOGIN_REDIRECT: "https://{{ .Values.backendHostname }}/"
+  FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"
+  BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
   LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
-  LDAP_BIND_DN: '{{ .Values.ldap.bindDN }}'
-  LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: '{{ .Values.ldap.oeffentlicheSchulenDomain }}'
-  LDAP_ERSATZSCHULEN_DOMAIN: '{{ .Values.ldap.ersatzschulenDomain }}'
-  STATUS_REDIRECT_URL: '{{ .Values.status.url }}'
+  LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"
+  LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"
+  LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.ldap.ersatzschulenDomain }}"
+  STATUS_REDIRECT_URL: "{{ .Values.status.url }}"
   ITSLEARNING_ROOT: '{{ .Values.itslearning.root }}'
   ITSLEARNING_ROOT_OEFFENTLICH: '{{ .Values.itslearning.rootOeffentlich }}'
   ITSLEARNING_ROOT_ERSATZ: '{{ .Values.itslearning.rootErsatz }}'
