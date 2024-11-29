@@ -40,6 +40,8 @@ spec:
                   value: "https://{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
                 - name: HTTP_METHOD
                   value: "{{ $job_options.httpMethod }}"
+                - name: LOG_FILE_PATH
+                  value: "/tmp/log/cron.log"
             resources:
               limits:
                 memory: "128Mi"
