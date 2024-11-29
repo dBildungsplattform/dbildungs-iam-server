@@ -214,7 +214,7 @@ export class PersonController {
                 personResult.value.id,
             ))
         ) {
-            const kopersKontext: Personenkontext<true> | null =
+            const kopersKontext: Personenkontext<true> | undefined =
                 await this.dBiamPersonenkontextService.getKopersPersonenkontext(personResult.value.id);
             if (kopersKontext) {
                 const koperslockDate: Date = new Date(kopersKontext.createdAt);

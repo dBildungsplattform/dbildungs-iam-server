@@ -137,13 +137,13 @@ describe('DBiamPersonenkontextService', () => {
                 mapRollen.set('2', DoFactory.createRolle(true, { rollenart: RollenArt.LEIT, merkmale: [], id: '2' }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                const result: Personenkontext<true> | null = await sut.getKopersPersonenkontext('1');
+                const result: Personenkontext<true> | undefined = await sut.getKopersPersonenkontext('1');
                 expect(result).toEqual(personenkontexte[0]);
             });
         });
 
         describe('when a person has no personenkontext with a rolle with koperspflichtig merkmale', () => {
-            it('should return null', async () => {
+            it('should return undefined', async () => {
                 const personenkontexte: Personenkontext<true>[] = [
                     personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '', '1', '1', '1'),
                     personenkontextFactory.construct('2', faker.date.past(), faker.date.recent(), '', '1', '2', '1'),
@@ -165,8 +165,8 @@ describe('DBiamPersonenkontextService', () => {
                 mapRollen.set('2', DoFactory.createRolle(true, { rollenart: RollenArt.LEIT, merkmale: [], id: '2' }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                const result: Personenkontext<true> | null = await sut.getKopersPersonenkontext('1');
-                expect(result).toBeNull();
+                const result: Personenkontext<true> | undefined = await sut.getKopersPersonenkontext('1');
+                expect(result).toBeUndefined();
             });
         });
     });

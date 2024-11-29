@@ -23,7 +23,7 @@ export default class PersonTimeLimitService {
             !person.personalnummer &&
             (await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(person.id))
         ) {
-            const kopersKontext: Personenkontext<true> | null =
+            const kopersKontext: Personenkontext<true> | undefined =
                 await this.dBiamPersonenkontextService.getKopersPersonenkontext(person.id);
             if (kopersKontext) {
                 const kopersdeadline: Date = new Date(kopersKontext.createdAt);

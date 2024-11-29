@@ -65,7 +65,7 @@ export class DBiamPersonenkontextService {
         );
     }
 
-    public async getKopersPersonenkontext(personId: string): Promise<Personenkontext<true> | null> {
+    public async getKopersPersonenkontext(personId: string): Promise<Personenkontext<true> | undefined> {
         const personenkontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(personId);
         const uniqueRolleIds: Set<string> = new Set(personenkontexte.map((pk: Personenkontext<true>) => pk.rolleId));
         const foundRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(Array.from(uniqueRolleIds));
@@ -75,9 +75,9 @@ export class DBiamPersonenkontextService {
         );
 
         if (!kopersRolle) {
-            return null;
+            return undefined;
         }
 
-        return personenkontexte.find((pk: Personenkontext<true>) => pk.rolleId === kopersRolle.id) ?? null;
+        return personenkontexte.find((pk: Personenkontext<true>) => pk.rolleId === kopersRolle.id);
     }
 }
