@@ -104,7 +104,6 @@ export class PersonController {
     }
 
     @Post()
-    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
     @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported.' })
