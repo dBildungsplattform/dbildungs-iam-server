@@ -246,5 +246,17 @@ describe('ImportVorgangRepository', () => {
             expect(result.length).toBe(1);
             expect(total).toBe(1);
         });
+
+        it('should return an empty array if no import transaction was found', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+            const [result, total]: [ImportVorgang<true>[], number] = await sut.findAuthorized(permissions, {
+                status: ImportStatus.FAILED,
+            });
+
+            expect(result.length).toBe(0);
+            expect(total).toBe(0);
+        });
     });
 });

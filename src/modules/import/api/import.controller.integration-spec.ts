@@ -128,7 +128,7 @@ describe('Import API', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
-    describe('/POST import', () => {
+    describe('/POST upload', () => {
         it('should return 201 OK with ImportUploadResponse', async () => {
             const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS.csv`);
 
@@ -445,6 +445,53 @@ describe('Import API', () => {
                 totalImportDataItems: 1,
                 totalInvalidImportDataItems: 0,
                 invalidImportDataItems: [],
+            });
+        });
+
+        it('should return 404 if the logged-in admin has no username', async () => {
+            const filePath: string = path.resolve('./', `test/imports/valid_test_import_SuS.csv`);
+
+            const fileExists: boolean = fs.existsSync(filePath);
+            if (!fileExists) throw new Error('file does not exist');
+
+            const schule: OrganisationEntity = new OrganisationEntity();
+            schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
+            await em.persistAndFlush(schule);
+            await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+
+            const klasse: OrganisationEntity = new OrganisationEntity();
+            klasse.typ = OrganisationsTyp.KLASSE;
+            klasse.name = '1a';
+            klasse.administriertVon = schule.id;
+            klasse.zugehoerigZu = schule.id;
+            await em.persistAndFlush(klasse);
+            await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
+
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
+
+            personPermissionsMock.personFields.username = undefined;
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/import/upload')
+                .set('content-type', 'multipart/form-data')
+                .field('organisationId', schule.id)
+                .field('rolleId', sus.id)
+                .attach('file', filePath);
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
             });
         });
     });
