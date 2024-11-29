@@ -143,7 +143,7 @@ describe('PersonController', () => {
             faker.lorem.word(),
             faker.lorem.word(),
             faker.string.uuid(),
-            undefined, // referrer
+            faker.person.fullName(), // referrer
             undefined, // stammorganisation
             undefined, // initialenFamilienname
             undefined, // initialenVorname
@@ -736,57 +736,68 @@ describe('PersonController', () => {
 
         describe('when locking a user is successful', () => {
             const person: Person<true> = getPerson();
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: true,
-                locked_by: 'Theo Tester',
-                locked_until: new Date(),
-            };
-            it('should return a success message', async () => {
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                const response: { message: string } = await personController.lockPerson(
-                    params.personId,
-                    lockUserBodyParams,
-                    personPermissionsMock,
-                );
+            it.each([[new Date()], [undefined]])(
+                'should return a success message when locked_until is %p',
+                async (lockedUntil: Date | undefined) => {
+                    const lockUserBodyParams: LockUserBodyParams = {
+                        lock: true,
+                        locked_by: 'Theo Tester',
+                        locked_until: lockedUntil,
+                    };
+                    personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                    keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                expect(response).toEqual({ message: 'User has been successfully locked.' });
-                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
-                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
-            });
+                    const response: { message: string } = await personController.lockPerson(
+                        params.personId,
+                        lockUserBodyParams,
+                        personPermissionsMock,
+                    );
+
+                    expect(response).toEqual({ message: 'User has been successfully locked.' });
+                    expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                    expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+                },
+            );
         });
 
         describe('when unlocking a user is successful', () => {
             const person: Person<true> = getPerson();
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: 'Theo Tester',
-                locked_until: new Date(),
-            };
-            it('should return a success message', async () => {
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                const response: { message: string } = await personController.lockPerson(
-                    params.personId,
-                    lockUserBodyParams,
-                    personPermissionsMock,
-                );
+            it.each([[new Date()], [undefined]])(
+                'should return a success message when locked_until is %p',
+                async (lockedUntil: Date | undefined) => {
+                    const lockUserBodyParams: LockUserBodyParams = {
+                        lock: false,
+                        locked_by: 'Theo Tester',
+                        locked_until: lockedUntil,
+                    };
+                    personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                    keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                expect(response).toEqual({ message: 'User has been successfully unlocked.' });
-                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
-                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
-            });
+                    const response: { message: string } = await personController.lockPerson(
+                        params.personId,
+                        lockUserBodyParams,
+                        personPermissionsMock,
+                    );
+
+                    expect(response).toEqual({ message: 'User has been successfully unlocked.' });
+                    expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                    expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+                },
+            );
         });
 
         describe('when person does not exist or no permissions', () => {
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: '2024-01-01T00:00:00Z',
-                locked_until: new Date(),
-            };
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
+                const lockUserBodyParams: LockUserBodyParams = {
+                    lock,
+                    locked_by: '2024-01-01T00:00:00Z',
+                    locked_until: new Date(),
+                };
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError('Person'),
@@ -798,15 +809,18 @@ describe('PersonController', () => {
         });
 
         describe('when keycloakUserId is missing', () => {
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: '2024-01-01T00:00:00Z',
-                locked_until: new Date(),
-            };
             const person: Person<true> = getPerson();
             person.keycloakUserId = undefined;
 
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
+                const lockUserBodyParams: LockUserBodyParams = {
+                    lock,
+                    locked_by: '2024-01-01T00:00:00Z',
+                    locked_until: new Date(),
+                };
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: person,
@@ -821,9 +835,12 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             person.keycloakUserId = 'keycloak-12345';
 
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
                 const lockUserBodyParams: LockUserBodyParams = {
-                    lock: false,
+                    lock,
                     locked_by: '2024-01-01T00:00:00Z',
                     locked_until: new Date(),
                 };
@@ -910,7 +927,7 @@ describe('PersonController', () => {
             );
         });
 
-        it('should throw PersonalnummerRequiredError when personalnummer was not provided and faminlienname or vorname did not change', async () => {
+        it('should throw PersonalnummerRequiredError when personalnummer was not provided and familienname or vorname did not change', async () => {
             const person: Person<true> = getPerson();
             const bodyWithInvalidPersonalnummer: PersonMetadataBodyParams = {
                 familienname: person.familienname,

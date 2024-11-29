@@ -16,6 +16,8 @@ import { PrivacyIdeaAdministrationController } from './privacy-idea-administrati
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
 import { TokenStateResponse } from './token-state.response.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -49,6 +51,10 @@ describe('PrivacyIdeaAdministrationController', () => {
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
             ],
         }).compile();
@@ -87,9 +93,23 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: false,
                 error: new Error('Forbidden access'),
             });
-
+            personPermissionsMock = createMock<PersonPermissions>();
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+            );
+        });
+        it('should return forbidden insufficient permissions', async () => {
+            const person: Person<true> = getPerson();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+            personPermissionsMock = createMock<PersonPermissions>();
+            serviceMock.initializeSoftwareToken.mockRejectedValueOnce(
+                new SoftwareTokenInitializationError('SoftwareToken Error'),
+            );
+            await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
+                new SoftwareTokenInitializationError('SoftwareToken Error'),
             );
         });
     });

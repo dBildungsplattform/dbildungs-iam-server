@@ -27,6 +27,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -98,6 +99,10 @@ describe('PersonenkontextSpecifications Integration', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
             ],
         })

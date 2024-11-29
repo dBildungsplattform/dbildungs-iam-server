@@ -19,6 +19,7 @@ import { DbiamPersonenkontextWorkflowController } from './dbiam-personenkontext-
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 import { PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
 import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('DbiamPersonenkontextWorkflowController Test', () => {
     let module: TestingModule;
@@ -46,6 +47,10 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                 {
                     provide: PersonenkontextCreationService,
                     useValue: createMock<PersonenkontextCreationService>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
             ],
         }).compile();

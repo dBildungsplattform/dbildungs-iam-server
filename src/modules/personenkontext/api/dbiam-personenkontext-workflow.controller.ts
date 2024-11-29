@@ -53,6 +53,8 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
@@ -70,6 +72,7 @@ export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Get('step')
@@ -243,23 +246,47 @@ export class DbiamPersonenkontextWorkflowController {
             params.personalnummer || undefined,
             params.befristung || undefined,
         );
-
-        if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
-            throw savedPersonWithPersonenkontext;
-        }
-        if (savedPersonWithPersonenkontext instanceof PersonenkontexteUpdateError) {
-            throw savedPersonWithPersonenkontext;
-        }
-
-        if (savedPersonWithPersonenkontext instanceof DuplicatePersonalnummerError) {
-            throw savedPersonWithPersonenkontext;
-        }
-
-        if (savedPersonWithPersonenkontext instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPersonWithPersonenkontext),
+        if (savedPersonWithPersonenkontext instanceof Error) {
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht einen neuen Benutzer für ${params.vorname} ${params.familienname} anzulegen. Fehler:  ${savedPersonWithPersonenkontext.message}`,
             );
+            params.createPersonenkontexte.map((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
+                const rolleId: string = kontextParams.rolleId;
+                const organisationId: string = kontextParams.organisationId;
+                this.logger.error(
+                    `Benutzer für ${params.vorname} ${params.familienname} mit Rolle ${rolleId} und Organisation ${organisationId} anzulegen ist fehlgeschlagen.`,
+                );
+            });
+            if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
+                throw savedPersonWithPersonenkontext;
+            }
+            if (savedPersonWithPersonenkontext instanceof PersonenkontexteUpdateError) {
+                throw savedPersonWithPersonenkontext;
+            }
+
+            if (savedPersonWithPersonenkontext instanceof DuplicatePersonalnummerError) {
+                throw savedPersonWithPersonenkontext;
+            }
+
+            if (savedPersonWithPersonenkontext instanceof DomainError) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPersonWithPersonenkontext),
+                );
+            }
         }
+
+        this.logger.info(
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
+        );
+        await Promise.all(
+            savedPersonWithPersonenkontext.personenkontexte.map(async (personenKontext: Personenkontext<true>) => {
+                const rolle: Option<Rolle<true>> = await personenKontext.getRolle();
+                const organisation: Option<Organisation<true>> = await personenKontext.getOrganisation();
+                this.logger.info(
+                    `Benutzer ${savedPersonWithPersonenkontext.person.referrer} angelegt mit Rolle: ${rolle?.name} (${rolle?.id}), und Organisation: ${organisation?.name} (${organisation?.id}).`,
+                );
+            }),
+        );
 
         return new DBiamPersonResponse(
             savedPersonWithPersonenkontext.person,

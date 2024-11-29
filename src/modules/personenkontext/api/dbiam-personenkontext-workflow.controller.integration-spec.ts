@@ -42,6 +42,7 @@ import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-pe
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
@@ -91,6 +92,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 {
                     provide: PersonPermissionsRepo,
                     useValue: createMock<PersonPermissionsRepo>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
                 },
                 {
                     provide: APP_INTERCEPTOR,
@@ -364,6 +369,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     organisationId: organisation.id,
                     rolleId: rolle.id,
                     personalnummer: '1234567',
+                    createPersonenkontexte: [
+                        {
+                            organisationId: organisation.id,
+                            rolleId: rolle.id,
+                        },
+                    ],
                 });
 
             expect(response.status).toBe(400);
