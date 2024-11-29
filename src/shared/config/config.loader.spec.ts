@@ -69,6 +69,14 @@ describe('configloader', () => {
                     USER_RESOLVER: 'mariadb_resolver',
                     REALM: 'defrealm',
                 },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
                 OX: {
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
@@ -189,6 +197,14 @@ describe('configloader', () => {
                     PASSWORD: 'admin',
                     USER_RESOLVER: 'mariadb_resolver',
                     REALM: 'defrealm',
+                },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
                 },
                 OX: {
                     ENABLED: true,
