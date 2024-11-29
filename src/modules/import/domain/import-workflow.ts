@@ -207,7 +207,7 @@ export class ImportWorkflow {
         await Promise.all(promises);
 
         savedImportvorgang.validate(invalidImportDataItems.length);
-        await this.importVorgangRepository.save(importVorgang);
+        await this.importVorgangRepository.save(savedImportvorgang);
 
         return {
             importVorgangId: savedImportvorgang.id,

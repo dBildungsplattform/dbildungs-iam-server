@@ -1497,25 +1497,6 @@
           "nullable": false,
           "mappedType": "uuid"
         },
-        "status": {
-          "name": "status",
-          "type": "import_status_enum",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "nativeEnumName": "import_status_enum",
-          "enumItems": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
-            "CANCELLED",
-            "COMPLETED",
-            "FAILED"
-          ],
-          "mappedType": "enum"
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamptz",
@@ -1599,6 +1580,25 @@
           "nullable": false,
           "default": "0",
           "mappedType": "integer"
+        },
+        "status": {
+          "name": "status",
+          "type": "import_status_enum",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "nativeEnumName": "import_status_enum",
+          "enumItems": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED"
+          ],
+          "mappedType": "enum"
         }
       },
       "name": "importvorgang",
@@ -1607,10 +1607,9 @@
         {
           "keyName": "importvorgang_pkey",
           "columnNames": [
-            "id",
-            "status"
+            "id"
           ],
-          "composite": true,
+          "composite": false,
           "constraint": true,
           "primary": true,
           "unique": true

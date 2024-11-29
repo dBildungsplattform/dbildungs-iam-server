@@ -26,7 +26,6 @@ export class ImportVorgangEntity extends TimestampedEntity {
     public dataItemCount!: number;
 
     @Enum({
-        primary: true,
         items: () => ImportStatus,
         nativeEnumName: 'import_status_enum',
         onCreate: () => ImportStatus.STARTED,

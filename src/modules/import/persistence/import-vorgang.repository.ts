@@ -1,7 +1,10 @@
-import { EntityManager, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ImportVorgangEntity } from './import-vorgang.entity.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
+import { ImportStatus } from '../domain/import.enums.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 export function mapAggregateToData(importVorgang: ImportVorgang<boolean>): RequiredEntityData<ImportVorgangEntity> {
     return {
@@ -9,6 +12,7 @@ export function mapAggregateToData(importVorgang: ImportVorgang<boolean>): Requi
         rollename: importVorgang.rollename,
         organisationsname: importVorgang.organisationsname,
         dataItemCount: importVorgang.dataItemCount,
+        status: importVorgang.status,
         importByPersonId: importVorgang.importByPersonId,
         rolleId: importVorgang.rolleId,
         organisationId: importVorgang.organisationId,
@@ -31,6 +35,15 @@ export function mapEntityToAggregate(entity: ImportVorgangEntity): ImportVorgang
     );
 }
 
+export type ImportQueryOptions = {
+    readonly status?: ImportStatus;
+    readonly personId?: string;
+    readonly rolleIds?: string[];
+    readonly organisationIds?: string[];
+    readonly offset?: number;
+    readonly limit?: number;
+};
+
 @Injectable()
 export class ImportVorgangRepository {
     public constructor(private readonly em: EntityManager) {}
@@ -52,6 +65,40 @@ export class ImportVorgangRepository {
         return null;
     }
 
+    public async findAuthorized(
+        permissions: PersonPermissions,
+        queryOptions: ImportQueryOptions,
+    ): Promise<[ImportVorgang<true>[], total: number]> {
+        const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.IMPORT_DURCHFUEHREN,
+        ]);
+
+        if (!hasPermissionAtOrga) {
+            //Log Unauthorized to view import history
+            return [[], 0];
+        }
+
+        const [importvorgänge, total]: [Option<ImportVorgangEntity[]>, number] = await this.em.findAndCount(
+            ImportVorgangEntity,
+            {
+                ...(queryOptions.personId ? { importByPersonId: queryOptions.personId } : {}),
+                ...(queryOptions.status ? { status: queryOptions.status } : {}),
+                ...(queryOptions.rolleIds ? { rolleId: { $in: queryOptions.rolleIds } } : {}),
+                ...(queryOptions.organisationIds ? { organisationId: { $in: queryOptions.organisationIds } } : {}),
+            },
+            {
+                limit: queryOptions.limit,
+                offset: queryOptions.offset,
+            },
+        );
+
+        if (total === 0) {
+            return [[], 0];
+        }
+
+        return [importvorgänge.map((importvorgang: ImportVorgangEntity) => mapEntityToAggregate(importvorgang)), total];
+    }
+
     private async create(importVorgang: ImportVorgang<false>): Promise<ImportVorgang<true>> {
         const entity: ImportVorgangEntity = this.em.create(ImportVorgangEntity, mapAggregateToData(importVorgang));
 
@@ -61,7 +108,7 @@ export class ImportVorgangRepository {
     }
 
     private async update(importVorgang: ImportVorgang<true>): Promise<ImportVorgang<true>> {
-        const entity: ImportVorgangEntity = await this.em.findOneOrFail(ImportVorgangEntity, importVorgang.id);
+        const entity: Loaded<ImportVorgangEntity> = await this.em.findOneOrFail(ImportVorgangEntity, importVorgang.id);
         this.em.assign(entity, mapAggregateToData(importVorgang));
         await this.em.persistAndFlush(entity);
         return mapEntityToAggregate(entity);

@@ -35,6 +35,11 @@ import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
+import { ImportVorgang } from '../domain/import-vorgang.js';
+import { PagedResponse } from '../../../shared/paging/paged.response.js';
+import { ImportVorgangResponse } from './importvorgang.response.js';
+import { ImportStatus } from '../domain/import.enums.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -42,6 +47,7 @@ describe('Rolle API', () => {
     let em: EntityManager;
     let rolleRepo: RolleRepo;
     let importDataRepository: ImportDataRepository;
+    let importVorgangRepository: ImportVorgangRepository;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
 
@@ -102,6 +108,7 @@ describe('Rolle API', () => {
         rolleRepo = module.get(RolleRepo);
         importDataRepository = module.get(ImportDataRepository);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
+        importVorgangRepository = module.get(ImportVorgangRepository);
 
         personPermissionsMock = createMock<PersonPermissions>();
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
@@ -535,6 +542,106 @@ describe('Rolle API', () => {
                 .send();
 
             expect(response.status).toBe(204);
+        });
+    });
+
+    describe('/GET history', () => {
+        const rolleId: string = faker.string.uuid();
+        const orgaId1: string = faker.string.uuid();
+        const orgaId2: string = faker.string.uuid();
+
+        beforeEach(async () => {
+            await Promise.all([
+                importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        organisationId: orgaId1,
+                    }),
+                ),
+                importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        rolleId: rolleId,
+                        organisationId: orgaId2,
+                    }),
+                ),
+            ]);
+        });
+
+        it('should return empty array when admin des not have IMPORT_DURCHFUEHREN rights', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/import/history')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<ImportVorgangResponse> =
+                response.body as PagedResponse<ImportVorgangResponse>;
+            expect(pagedResponse.items).toHaveLength(0);
+        });
+
+        it('should return all import transactions', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/import/history')
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<ImportVorgangResponse> =
+                response.body as PagedResponse<ImportVorgangResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+        });
+
+        it('should return import history when search by rolleIds', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/import/history')
+                .query({ rolleIds: [rolleId] })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<ImportVorgangResponse> =
+                response.body as PagedResponse<ImportVorgangResponse>;
+            expect(pagedResponse.items).toHaveLength(1);
+        });
+
+        it('should return import history when search by organisationIds', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/import/history')
+                .query({ organisationIds: [orgaId1, orgaId2] })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<ImportVorgangResponse> =
+                response.body as PagedResponse<ImportVorgangResponse>;
+            expect(pagedResponse.items).toHaveLength(2);
+        });
+
+        it('should return import history when search by status', async () => {
+            personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            const startedImport: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false),
+            );
+            startedImport.status = ImportStatus.COMPLETED;
+            await importVorgangRepository.save(startedImport);
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get('/import/history')
+                .query({ status: ImportStatus.COMPLETED })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            const pagedResponse: PagedResponse<ImportVorgangResponse> =
+                response.body as PagedResponse<ImportVorgangResponse>;
+            expect(pagedResponse.items).toHaveLength(1);
         });
     });
 });

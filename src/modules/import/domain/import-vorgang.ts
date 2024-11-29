@@ -9,7 +9,7 @@ export class ImportVorgang<WasPersisted extends boolean> {
         public rollename: string,
         public organisationsname: string,
         public dataItemCount: number,
-        public status: ImportStatus | undefined,
+        public status: Persisted<ImportStatus, WasPersisted>,
         public importByPersonId?: string,
         public rolleId?: string,
         public organisationId?: string,

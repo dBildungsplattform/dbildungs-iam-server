@@ -9,6 +9,6 @@ import { ImportVorgangRepository } from './persistence/import-vorgang.repository
 @Module({
     imports: [RolleModule, OrganisationModule, PersonenKontextModule],
     providers: [ImportWorkflowFactory, ImportDataRepository, ImportVorgangRepository],
-    exports: [ImportWorkflowFactory],
+    exports: [ImportWorkflowFactory, ImportVorgangRepository],
 })
 export class ImportModule {}

@@ -133,7 +133,7 @@ describe('PersonPermissions', () => {
                 expect(personFields.familienname).toEqual(person.familienname);
                 expect(personFields.vorname).toEqual(person.vorname);
                 expect(personFields.keycloakUserId).toEqual(person.keycloakUserId);
-                expect(personFields.username).toEqual(person.username);
+                expect(personFields.username).toEqual(person.referrer);
             });
         });
     });

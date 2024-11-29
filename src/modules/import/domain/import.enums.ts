@@ -1,3 +1,5 @@
+export const ImportStatusName: string = 'ImportStatus';
+
 export enum ImportStatus {
     STARTED = 'STARTED',
     VALID = 'VALID',
