@@ -12,6 +12,7 @@ import {
     Put,
     Query,
     UseFilters,
+    UseGuards,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -58,6 +59,7 @@ import { OrganisationByNameBodyParams } from './organisation-by-name.body.params
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -77,6 +79,7 @@ export class OrganisationController {
     ) {}
 
     @Post()
+    // @UseGuards(StepUpGuard) --> SPSH-1519 (Not Possible due to migration at the moment)
     @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'The organisation already exists.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
@@ -117,6 +120,7 @@ export class OrganisationController {
     }
 
     @Put(':organisationId')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The organisation was successfully updated.',
         type: OrganisationResponse,
@@ -211,6 +215,7 @@ export class OrganisationController {
     }
 
     @Post('parents-by-ids')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'The parent organizations were successfully pulled.',
@@ -319,6 +324,7 @@ export class OrganisationController {
     }
 
     @Post(':organisationId/administriert')
+    @UseGuards(StepUpGuard)
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
@@ -383,6 +389,7 @@ export class OrganisationController {
     }
 
     @Post(':organisationId/zugehoerig')
+    @UseGuards(StepUpGuard)
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
@@ -409,6 +416,7 @@ export class OrganisationController {
     }
 
     @Delete(':organisationId/klasse')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete an organisation of type Klasse by id.' })
     @ApiNoContentResponse({ description: 'The organisation was deleted successfully.' })
@@ -429,6 +437,7 @@ export class OrganisationController {
     }
 
     @Patch(':organisationId/name')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The organizations were successfully updated.',
         type: OrganisationResponseLegacy,
@@ -462,6 +471,7 @@ export class OrganisationController {
     }
 
     @Put(':organisationId/enable-for-its-learning')
+    //@UseGuards(StepUpGuard) --> SPSH-1519 (Not Possible due to migration at the moment)
     @ApiOkResponse({
         description: 'The organization was successfully enabled for itslearning.',
         type: OrganisationResponseLegacy,

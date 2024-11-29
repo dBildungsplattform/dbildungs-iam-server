@@ -12,7 +12,8 @@
         "OIDC_CALLBACK_URL": "https://localhost:8099/api/auth/login",
         "DEFAULT_LOGIN_REDIRECT": "https://localhost:8099/",
         "LOGOUT_REDIRECT": "https://localhost:8099/",
-        "ERROR_PAGE_REDIRECT": "https://localhost:8099/login-error"
+        "ERROR_PAGE_REDIRECT": "https://localhost:8099/login-error",
+        "STATUS_REDIRECT_URL": "https://status.dev.spsh.dbildungsplattform.de/"
     },
     "DB": {
         "CLIENT_URL": "postgres://127.0.0.1:5432",
@@ -62,7 +63,7 @@
         "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
     },
     "ITSLEARNING": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "https://itslearning-test.example.com",
         "USERNAME": "username",
         "PASSWORD": "password",
@@ -71,7 +72,7 @@
         "ROOT_ERSATZ": "ersatz"
     },
     "OX": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "http://ox.dev.spsh.dbildungsplattform.de/webservices/",
         "CONTEXT_ID": "1337",
         "CONTEXT_NAME": "contextname",
@@ -83,10 +84,14 @@
         "USERNAME": "admin",
         "PASSWORD": "admin",
         "USER_RESOLVER": "mariadb_resolver",
-        "REALM": "defrealm",
-        "RENAME_WAITING_TIME_IN_SECONDS": 5
+        "REALM": "defrealm"
     },
     "IMPORT": {
         "IMPORT_FILE_MAXGROESSE_IN_MB": 10
+    },
+    "SYSTEM": {
+        "RENAME_WAITING_TIME_IN_SECONDS": 3,
+        "STEP_UP_TIMEOUT_ENABLED": "false",
+        "STEP_UP_TIMEOUT_IN_SECONDS": 10
     }
 }

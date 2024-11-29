@@ -1,8 +1,8 @@
-import { IsBooleanString, IsString } from 'class-validator';
+import { IsBoolean, IsString } from 'class-validator';
 
 export class ItsLearningConfig {
-    @IsBooleanString()
-    public readonly ENABLED!: 'true' | 'false';
+    @IsBoolean()
+    public readonly ENABLED!: boolean;
 
     @IsString()
     public readonly ENDPOINT!: string;

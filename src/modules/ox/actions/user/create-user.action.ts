@@ -71,6 +71,7 @@ export class CreateUserAction extends OxBaseAction<CreateUserResponseBody, Creat
                     'ns6:name': this.params.username,
                     'ns6:sur_name': this.params.lastname,
                     'ns6:primaryEmail': this.params.primaryEmail,
+                    'ns6:language': 'de_DE',
                     'ns6:password': this.params.userPassword,
                 },
 

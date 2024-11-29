@@ -14,6 +14,7 @@ export class EmailAddressChangedEvent extends BaseEvent {
         public readonly oldAddress: string,
         public readonly newEmailAddressId: EmailAddressID,
         public readonly newAddress: string,
+        public readonly orgaKennung: string,
     ) {
         super();
     }

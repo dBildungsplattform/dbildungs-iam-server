@@ -26,3 +26,7 @@ data:
   PI_RENAME_WAITING_TIME:  "{{ .Values.privacyidea.renameWaitingTime }}"
   PI_REALM: "{{ .Values.privacyidea.realm }}"
   PI_USER_RESOLVER: "{{ .Values.privacyidea.userResolver }}"
+  STATUS_REDIRECT_URL: "{{ .Values.status.url }}"
+  ITSLEARNING_ROOT: '{{ .Values.itslearning.root }}'
+  ITSLEARNING_ROOT_OEFFENTLICH: '{{ .Values.itslearning.rootOeffentlich }}'
+  ITSLEARNING_ROOT_ERSATZ: '{{ .Values.itslearning.rootErsatz }}'

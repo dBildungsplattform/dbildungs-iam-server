@@ -206,17 +206,17 @@ describe('EmailRepo', () => {
         });
 
         describe('when no status is provided and person does NOT exist', () => {
-            it('should return undefined', async () => {
+            it('should return empty array', async () => {
                 const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     faker.string.uuid(),
                 );
 
-                expect(foundEmails).toBeUndefined();
+                expect(foundEmails).toEqual([]);
             });
         });
 
         describe('when ENABLED status is provided but only requested email-address is found for personId', () => {
-            it('should return undefined', async () => {
+            it('should return empty array', async () => {
                 const person: Person<true> = await createPerson();
                 const organisation: Organisation<true> = await createOrganisation();
                 const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
@@ -230,7 +230,7 @@ describe('EmailRepo', () => {
                     EmailAddressStatus.ENABLED,
                 );
 
-                expect(foundEmails).toBeUndefined();
+                expect(foundEmails).toEqual([]);
             });
         });
 
@@ -256,13 +256,13 @@ describe('EmailRepo', () => {
         });
 
         describe('when status is provided and person does NOT exist', () => {
-            it('should return undefined', async () => {
+            it('should return empty array', async () => {
                 const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     faker.string.uuid(),
                     EmailAddressStatus.ENABLED,
                 );
 
-                expect(foundEmails).toBeUndefined();
+                expect(foundEmails).toEqual([]);
             });
         });
     });
