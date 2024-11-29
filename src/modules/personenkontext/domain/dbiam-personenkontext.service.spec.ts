@@ -114,4 +114,60 @@ describe('DBiamPersonenkontextService', () => {
             });
         });
     });
+
+    describe('getKopersPersonenkontext', () => {
+        describe('when a person has a personenkontext with a rolle with koperspflichtig merkmale', () => {
+            it('should return the personenkontext', async () => {
+                const personenkontexte: Personenkontext<true>[] = [
+                    personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '', '1', '1', '1'),
+                    personenkontextFactory.construct('2', faker.date.past(), faker.date.recent(), '', '1', '2', '1'),
+                    personenkontextFactory.construct('3', faker.date.past(), faker.date.recent(), '', '1', '1', '2'),
+                ];
+                dbiamPersonenKontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(
+                    '1',
+                    DoFactory.createRolle(true, {
+                        rollenart: RollenArt.LEHR,
+                        merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                        id: '1',
+                    }),
+                );
+                mapRollen.set('2', DoFactory.createRolle(true, { rollenart: RollenArt.LEIT, merkmale: [], id: '2' }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const result: Personenkontext<true> | null = await sut.getKopersPersonenkontext('1');
+                expect(result).toEqual(personenkontexte[0]);
+            });
+        });
+
+        describe('when a person has no personenkontext with a rolle with koperspflichtig merkmale', () => {
+            it('should return null', async () => {
+                const personenkontexte: Personenkontext<true>[] = [
+                    personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '', '1', '1', '1'),
+                    personenkontextFactory.construct('2', faker.date.past(), faker.date.recent(), '', '1', '2', '1'),
+                    personenkontextFactory.construct('3', faker.date.past(), faker.date.recent(), '', '1', '1', '2'),
+                ];
+                dbiamPersonenKontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+
+                mapRollen.set(
+                    '1',
+                    DoFactory.createRolle(true, {
+                        rollenart: RollenArt.LERN,
+                        merkmale: [],
+                        id: '1',
+                    }),
+                );
+
+                mapRollen.set('2', DoFactory.createRolle(true, { rollenart: RollenArt.LEIT, merkmale: [], id: '2' }));
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const result: Personenkontext<true> | null = await sut.getKopersPersonenkontext('1');
+                expect(result).toBeNull();
+            });
+        });
+    });
 });
