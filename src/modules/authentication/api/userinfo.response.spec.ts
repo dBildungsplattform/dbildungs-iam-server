@@ -9,6 +9,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { createMock } from '@golevelup/ts-jest';
 import { StepUpLevel } from '../passport/oidc.strategy.js';
+import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
+import { TimeLimitOccasion } from '../domain/time-limit-occasion.enums.js';
 
 describe('UserinfoResponse', () => {
     const permissions: PersonPermissions = new PersonPermissions(
@@ -22,8 +24,15 @@ describe('UserinfoResponse', () => {
         rolle: { systemrechte: [faker.string.alpha()], serviceProviderIds: [faker.string.uuid()] },
     };
 
+    const personTimeLimtit: PersonTimeLimitInfoResponse = {
+        occasion: TimeLimitOccasion.KOPERS,
+        deadline: faker.date.future().toISOString(),
+    };
+
     it('constructs the object without optional extension', () => {
-        const userinfoResponse: UserinfoResponse = new UserinfoResponse(permissions, [pk], StepUpLevel.SILVER);
+        const userinfoResponse: UserinfoResponse = new UserinfoResponse(permissions, [pk], StepUpLevel.SILVER, [
+            personTimeLimtit,
+        ]);
         expect(userinfoResponse).toBeDefined();
         expect(userinfoResponse.password_updated_at).toBeUndefined();
     });
@@ -34,6 +43,7 @@ describe('UserinfoResponse', () => {
             permissions,
             [pk],
             StepUpLevel.SILVER,
+            [personTimeLimtit],
             extension,
         );
         expect(userinfoResponse).toBeDefined();

@@ -26,6 +26,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import PersonTimeLimitService from '../services/person-time-limit-info.service.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -75,6 +76,10 @@ describe('AuthenticationController', () => {
                 {
                     provide: KeycloakUserService,
                     useValue: keycloakUserServiceMock,
+                },
+                {
+                    provide: PersonTimeLimitService,
+                    useValue: createMock<PersonTimeLimitService>(),
                 },
             ],
         }).compile();
