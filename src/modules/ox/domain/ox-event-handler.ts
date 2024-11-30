@@ -23,7 +23,7 @@ import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
-import { GroupMemberParams } from '../actions/group/ox-group.types.js';
+import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
 import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../actions/group/create-group.action.js';
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
 import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actions/group/list-groups.action.js';
@@ -33,6 +33,16 @@ import {
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
 import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import {
+    ListGroupsForUserAction,
+    ListGroupsForUserParams,
+    ListGroupsForUserResponse,
+} from '../actions/group/list-groups-for-user.action.js';
+import {
+    RemoveMemberFromGroupAction,
+    RemoveMemberFromGroupResponse,
+} from '../actions/group/remove-member-from-group.action.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -48,7 +58,7 @@ export class OxEventHandler {
 
     private static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
 
-    private static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'Lehrer of ';
+    private static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'lehrer-';
 
     public constructor(
         private readonly logger: ClassLogger,
@@ -161,6 +171,37 @@ export class OxEventHandler {
         }
     }
 
+    @EventHandler(EmailAddressDisabledEvent)
+    public async handleEmailAddressDisabledEvent(event: EmailAddressDisabledEvent): Promise<void> {
+        this.logger.info(`Received EmailAddressDisabledEvent, personId:${event.personId}, username:${event.username}`);
+
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
+        if (!person) return this.logger.error(`Could Not Find Person For personId:${event.personId}`);
+        if (!person.oxUserId)
+            return this.logger.error(
+                `Could Not Remove Person From OxGroups, No OxUserId For personId:${event.personId}`,
+            );
+
+        const listGroupsForUserResponse: Result<ListGroupsForUserResponse> = await this.getOxGroupsForOxUserId(
+            person.oxUserId,
+        );
+        if (!listGroupsForUserResponse.ok) {
+            return this.logger.error(`Retrieving OxGroups For OxUser Failed, personId:${event.personId}`);
+        }
+        //Removal from Standard-Group is possible even when user is member of other OxGroups
+        const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
+        const oxUserId: OXUserID = person.oxUserId;
+
+        //logging of results is done in removeOxUserFromOxGroup
+        await Promise.allSettled(
+            oxGroups.map((oxGroup: OXGroup) => this.removeOxUserFromOxGroup(oxGroup.id, oxUserId)),
+        );
+    }
+
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
         const requestedEmailAddresses: Option<EmailAddress<true>[]> =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId, EmailAddressStatus.REQUESTED);
@@ -269,8 +310,53 @@ export class OxEventHandler {
 
         if (!result.ok) {
             this.logger.error(`Could Not Add OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        } else {
+            this.logger.info(`Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
         }
-        this.logger.info(`Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+
+        return result;
+    }
+
+    private async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
+        const params: ListGroupsForUserParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: ListGroupsForUserAction = new ListGroupsForUserAction(params);
+        const result: Result<ListGroupsForUserResponse, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            this.logger.error(`Could Not Retrieve OxGroups For OxUser, oxUserId:${oxUserId}`);
+        } else {
+            this.logger.info(`Successfully Retrieved OxGroups For OxUser, oxUserId:${oxUserId}`);
+        }
+
+        return result;
+    }
+
+    private async removeOxUserFromOxGroup(
+        oxGroupId: OXGroupID,
+        oxUserId: OXUserID,
+    ): Promise<Result<RemoveMemberFromGroupResponse>> {
+        const params: GroupMemberParams = {
+            contextId: this.contextID,
+            groupId: oxGroupId,
+            memberId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: RemoveMemberFromGroupAction = new RemoveMemberFromGroupAction(params);
+        const result: Result<RemoveMemberFromGroupResponse, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            this.logger.error(`Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        } else {
+            this.logger.info(`Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        }
 
         return result;
     }
