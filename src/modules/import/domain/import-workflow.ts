@@ -241,6 +241,7 @@ export class ImportWorkflow {
         });
         // Get all import data items with importvorgangId
         const textFilePersonFieldsList: TextFilePersonFields[] = [];
+        const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
         //Optimierung: für das folgeTicket mit z.B. 800 Lehrer , muss der thread so manipuliert werden (sobald ein Resultat da ist, wird der nächste request abgeschickt)
         //Optimierung: Process 10 dataItems at time for createPersonWithPersonenkontexte
         // const offset: number = 0;
@@ -305,6 +306,26 @@ export class ImportWorkflow {
                 );
 
             savedPersonenWithPersonenkontext.push(savedPersonWithPersonenkontext);
+
+            //saved import data items with username and password
+            if (savedPersonWithPersonenkontext instanceof DomainError) {
+                throw savedPersonWithPersonenkontext;
+            }
+            importDataItemsWithLoginInfo.push(
+                ImportDataItem.construct(
+                    importDataItem.id,
+                    importDataItem.createdAt,
+                    importDataItem.updatedAt,
+                    importDataItem.importvorgangId,
+                    importDataItem.nachname,
+                    importDataItem.vorname,
+                    importDataItem.klasse,
+                    importDataItem.personalnummer,
+                    importDataItem.validationErrors,
+                    savedPersonWithPersonenkontext.person.referrer,
+                    savedPersonWithPersonenkontext.person.newPassword,
+                ),
+            );
         }
         /* eslint-disable no-await-in-loop */
 

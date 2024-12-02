@@ -12,6 +12,8 @@ export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): Req
         klasse: importDataItem.klasse,
         personalnummer: importDataItem.personalnummer,
         validationErrors: importDataItem.validationErrors,
+        username: importDataItem.username,
+        password: importDataItem.password,
     };
 }
 
@@ -26,6 +28,8 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.klasse,
         entity.personalnummer,
         entity.validationErrors,
+        entity.username,
+        entity.password,
     );
 }
 @Injectable()
