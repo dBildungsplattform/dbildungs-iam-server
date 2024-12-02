@@ -32,6 +32,11 @@ ldap:
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
 
+itslearning:
+  root: sh
+  rootOeffentlich: oeffentlich
+  rootErsatz: ersatz
+
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
   existingSecret: ''
