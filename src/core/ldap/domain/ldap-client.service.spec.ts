@@ -916,4 +916,143 @@ describe('LDAP Client Service', () => {
             });
         });
     });
+
+    describe('removePersonFromGroup', () => {
+        const fakeGroupId: string = 'lehrer-123';
+        const fakePersonUid: string = 'user123';
+        const fakeGroupDn: string = `cn=${fakeGroupId},dc=schule-sh,dc=de`;
+        const fakeLehrerUid: string = `uid=${fakePersonUid},ou=users,dc=schule-sh,dc=de`;
+
+        it('should successfully remove person from group with multiple members', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                                uniqueMember: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.modify.mockResolvedValueOnce();
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeTruthy();
+            expect(clientMock.modify).toHaveBeenCalledWith(fakeGroupDn, [
+                new Change({
+                    operation: 'delete',
+                    modification: new Attribute({
+                        type: 'uniqueMember',
+                        values: [fakeLehrerUid],
+                    }),
+                }),
+            ]);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `LDAP: Successfully removed person ${fakePersonUid} from group ${fakeGroupId}`,
+            );
+        });
+
+        it('should delete the group when only one member is present', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                                uniqueMember: `${fakeLehrerUid}`,
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.del.mockResolvedValueOnce();
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeTruthy();
+            expect(clientMock.del).toHaveBeenCalledWith(fakeGroupDn);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `LDAP: Successfully removed person ${fakePersonUid} from group ${fakeGroupId}`,
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(`LDAP: Successfully deleted group ${fakeGroupId}`);
+        });
+
+        it('should return error when group is not found', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [],
+                    }),
+                );
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) {
+                throw Error();
+            }
+            expect(result.error).toBeInstanceOf(Error);
+            expect(result.error.message).toContain(`LDAP: Group ${fakeGroupId} not found`);
+            expect(loggerMock.error).toHaveBeenCalledWith(`LDAP: Group ${fakeGroupId} not found`);
+        });
+
+        it('should return error when bind fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockRejectedValueOnce(new Error());
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) {
+                throw Error();
+            }
+            expect(result.error).toBeInstanceOf(Error);
+        });
+
+        it('should return error when modification fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                                uniqueMember: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.modify.mockRejectedValueOnce(new Error('Modify error'));
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) {
+                throw Error();
+            }
+            expect(result.error).toBeInstanceOf(Error);
+            expect(result.error.message).toContain('Modify error');
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `LDAP: Failed to remove person from group ${fakeGroupId}, errMsg: {"message":"Modify error"}`,
+            );
+        });
+    });
 });
