@@ -317,6 +317,7 @@ export class PersonRepository {
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,
+                referrer: person.referrer,
             },
             [],
             removedPersonenkontexts,

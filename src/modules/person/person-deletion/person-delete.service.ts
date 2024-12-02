@@ -43,13 +43,14 @@ export class PersonDeleteService {
                     return new Promise<PersonenkontextEventKontextData>(
                         (resolve: (value: PersonenkontextEventKontextData) => void, reject: () => void) => {
                             personenKontext.getRolle().then(
-                                (rolle: Option<Rolle<true>>) =>
+                                async (rolle: Option<Rolle<true>>) =>
                                     rolle
                                         ? resolve({
                                               id: personenKontext.id,
                                               rolleId: personenKontext.rolleId,
                                               orgaId: personenKontext.organisationId,
                                               rolle: rolle.rollenart,
+                                              orgaKennung: (await personenKontext.getOrganisation())?.kennung,
                                               // The itslearning event listener doesn't care about removed kontexte, only the current kontexte.
                                               // Instead of querying the DB for all relevant organisations, we just set a default value.
                                               isItslearningOrga: false,
