@@ -144,12 +144,12 @@ export class ImportController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
             this.logger.error(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
             );
             throw schulConnexError;
         } else {
             this.logger.info(
-                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat für Schule: ${body.organisationId} einen CSV Import durchgeführt.`,
+                `Admin: ${permissions.personFields.id}) hat für Schule: ${body.organisationId} einen CSV Import durchgeführt.`,
             );
             const fileName: string = importWorkflow.getFileName(body.importvorgangId);
             const contentDisposition: string = `attachment; filename="${fileName}"`;
