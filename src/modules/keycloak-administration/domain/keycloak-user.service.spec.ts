@@ -129,6 +129,7 @@ describe('KeycloakUserService', () => {
                     enabled: true,
                     credentials: [{ type: 'password', value: password, temporary: false }],
                     attributes: {
+                        ID_NEXTCLOUD: user.externalSystemIDs.ID_NEXTCLOUD,
                         ID_ITSLEARNING: user.externalSystemIDs.ID_ITSLEARNING,
                     },
                 });
