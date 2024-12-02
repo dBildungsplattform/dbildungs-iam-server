@@ -4,6 +4,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { ImportWorkflow } from './import-workflow.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { PersonenkontextCreationService } from '../../personenkontext/domain/personenkontext-creation.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @Injectable()
 export class ImportWorkflowFactory {
@@ -12,6 +13,7 @@ export class ImportWorkflowFactory {
         private readonly organisationRepository: OrganisationRepository,
         private readonly importDataRepository: ImportDataRepository,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
+        private readonly logger: ClassLogger,
     ) {}
 
     public createNew(): ImportWorkflow {
@@ -20,6 +22,7 @@ export class ImportWorkflowFactory {
             this.organisationRepository,
             this.importDataRepository,
             this.personenkontextCreationService,
+            this.logger,
         );
     }
 }
