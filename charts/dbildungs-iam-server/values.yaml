@@ -33,9 +33,22 @@ ldap:
   ersatzschulenDomain: ersatzschule-sh.de
 
 itslearning:
+  enabled: false
+  endpoint: https://enterprise.itslintegrations.com/WCFServiceLibrary/ImsEnterpriseServicesPort.svc
   root: sh
   rootOeffentlich: oeffentlich
   rootErsatz: ersatz
+
+privacyidea:
+  url: https://privacyidea.dev.spsh.dbildungsplattform.de
+  renameWaitingTime: 5
+  realm: ucs_users
+  userResolver: ucs_users
+
+system:
+  rename_waiting_time_in_seconds: 2
+  step_up_timeout_in_seconds: 900
+  step_up_timeout_enabled: false
 
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
@@ -43,21 +56,14 @@ auth:
   secretName: dbildungs-iam-server
   keycloak_adminSecret: ''
   keycloak_clientSecret: ''
+  ldap_bind_dn: ''
   ldap_admin_password: ''
   secrets_json: ''
   frontend_sessionSecret: ''
-  itslearning_enabled: ''
-  itslearning_endpoint: ''
   itslearning_username: ''
   itslearning_password: ''
-  pi_base_url: ''
   pi_admin_user: ''
   pi_admin_password: ''
-  pi_user_resolver: ''
-  pi_user_realm: ''
-  system_rename_waiting_time_in_seconds: ''
-  system_step_up_timeout_in_seconds: ''
-  system_step_up_timeout_enabled: ''
   redis_password: ''
 
 backend:
@@ -100,7 +106,13 @@ backend:
       path: '/health'
   dbseeding:
     enabled: true
-    command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev', '']
+    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
+  dbmigration:
+    enabled: true
+    command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
+  keycloakdatamigration: 
+    enabled: true
+    command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
   ingress:
     enabled: true
     ingressClassName: nginx

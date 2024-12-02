@@ -22,11 +22,12 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
+        {{- if .Values.backend.dbmigration.enabled }}
         - name: "{{ template "common.names.name" . }}-db-migration-apply"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
+          command: {{ .Values.backend.dbmigration.command | toJson }}
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
               {{- if .Values.backend.extraEnvVars }}
@@ -38,11 +39,13 @@ spec:
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
+        {{- if .Values.backend.keycloakdatamigration.enabled }}
         - name: "{{ template "common.names.name" . }}-keycloak-data-migration"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
+          command: {{ .Values.backend.keycloakdatamigration.command | toJson }}
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
               {{- if .Values.backend.extraEnvVars }}
@@ -54,12 +57,13 @@ spec:
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
         {{- if .Values.backend.dbseeding.enabled }}
         - name: db-seeding
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
+          command: {{ .Values.backend.dbseeding.command | toJson }}
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
@@ -67,7 +71,7 @@ spec:
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
-        {{end}}
+        {{ end }}
       containers:
         - name: "{{ template "common.names.name" . }}-backend"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
