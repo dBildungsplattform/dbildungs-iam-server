@@ -1107,8 +1107,8 @@ describe('Email Event Handler', () => {
 
                 await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `Cannot find requested email-address for person with personId:${event.personId}, enabling not possible`,
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `Cannot find requested email-address for person with personId:${event.personId}, enabling not necessary`,
                 );
             });
         });

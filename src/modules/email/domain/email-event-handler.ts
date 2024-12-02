@@ -247,8 +247,8 @@ export class EmailEventHandler {
         const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
 
         if (!email) {
-            return this.logger.error(
-                `Cannot find requested email-address for person with personId:${event.personId}, enabling not possible`,
+            return this.logger.info(
+                `Cannot find requested email-address for person with personId:${event.personId}, enabling not necessary`,
             );
         }
 
