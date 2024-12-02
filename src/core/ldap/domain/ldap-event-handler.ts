@@ -106,7 +106,7 @@ export class LdapEventHandler {
             const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(
                 personData,
                 emailDomain.value,
-                event.createdKontextOrga.kennung, // TODO: checken, ob es bei der migration auch immer gesetzt wird!
+                event.createdKontextOrga.kennung,
                 event.email,
             );
             if (!creationResult.ok) {
