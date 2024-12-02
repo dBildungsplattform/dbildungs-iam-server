@@ -106,4 +106,34 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: redis-password
+          - name: VIDIS_BASE_URL
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: vidis-base-url
+          - name: VIDIS_USERNAME
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: vidis-username
+          - name: VIDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: vidis-password
+          - name: VIDIS_REGION_NAME
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: vidis-region-name
+          - name: VIDIS_KEYCLOAK_GROUP
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: vidis-keycloak-group
+          - name: VIDIS_KEYCLOAK_ROLE
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: vidis-keycloak-role
 {{- end}}

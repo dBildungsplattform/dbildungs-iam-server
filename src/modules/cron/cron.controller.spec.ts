@@ -19,7 +19,10 @@ import { UserLock } from '../keycloak-administration/domain/user-lock.js';
 import { UserLockRepository } from '../keycloak-administration/repository/user-lock.repository.js';
 import { PersonLockOccasion } from '../person/domain/person.enums.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
+import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { HttpException } from '@nestjs/common';
+import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
+import { DomainError } from '../../shared/error/domain.error.js';
 
 describe('CronController', () => {
     let cronController: CronController;
@@ -31,9 +34,11 @@ describe('CronController', () => {
     let permissionsMock: DeepMocked<PersonPermissions>;
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
     let userLockRepositoryMock: DeepMocked<UserLockRepository>;
+    let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
+            imports: [LoggingTestModule],
             providers: [
                 {
                     provide: KeycloakUserService,
@@ -64,8 +69,8 @@ describe('CronController', () => {
                     useValue: createMock<UserLockRepository>(),
                 },
                 {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
+                    provide: ServiceProviderService,
+                    useValue: createMock<ServiceProviderService>(),
                 },
             ],
             controllers: [CronController],
@@ -80,6 +85,7 @@ describe('CronController', () => {
         personenkontextWorkflowMock = module.get(PersonenkontextWorkflowAggregate);
         userLockRepositoryMock = module.get(UserLockRepository);
         permissionsMock = createMock<PersonPermissions>();
+        serviceProviderServiceMock = module.get(ServiceProviderService);
     });
 
     beforeEach(() => {
@@ -597,6 +603,47 @@ describe('CronController', () => {
                 expect(userLockRepositoryMock.getLocksToUnlock).toHaveBeenCalled();
                 expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(mockUserLocks.length);
                 expect(keycloakUserServiceMock.updateKeycloakUserStatus).toHaveBeenCalledTimes(1); // Only for the allowed user
+            });
+        });
+    });
+
+    describe('/PUT cron/vidis-angebote', () => {
+        describe(`when is authorized user`, () => {
+            it(`should update ServiceProviders for VIDIS Angebote`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+                serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
+
+                await cronController.updateServiceProvidersForVidisAngebote(permissionsMock);
+
+                expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(1);
+            });
+        });
+        describe(`when is not authorized user`, () => {
+            it(`should not update ServiceProviders for VIDIS Angebote and throw an error`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
+                serviceProviderServiceMock.updateServiceProvidersForVidis.mockResolvedValue();
+
+                await expect(cronController.updateServiceProvidersForVidisAngebote(permissionsMock)).rejects.toThrow(
+                    HttpException,
+                );
+                expect(serviceProviderServiceMock.updateServiceProvidersForVidis).toHaveBeenCalledTimes(0);
+            });
+        });
+        describe(`when is authorized user but ServiceProvider update throws an Error`, () => {
+            it(`should throw the error`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+                class UnknownError extends DomainError {
+                    public constructor(message: string) {
+                        super(message, '');
+                    }
+                }
+                serviceProviderServiceMock.updateServiceProvidersForVidis.mockImplementationOnce(() => {
+                    throw new UnknownError('Internal error when trying to update ServiceProviders for VIDIS Angebote');
+                });
+
+                await expect(cronController.updateServiceProvidersForVidisAngebote(permissionsMock)).rejects.toThrow(
+                    'Internal error when trying to update ServiceProviders for VIDIS Angebote',
+                );
             });
         });
     });

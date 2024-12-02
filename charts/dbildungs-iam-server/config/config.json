@@ -81,5 +81,13 @@
     "RENAME_WAITING_TIME_IN_SECONDS": 3,
     "STEP_UP_TIMEOUT_ENABLED": "true",
     "STEP_UP_TIMEOUT_IN_SECONDS": 10
+  },
+  "VIDIS": {
+      "BASE_URL": "https://service-stage.vidis.schule",
+      "USERNAME": "",
+      "PASSWORD": "",
+      "REGION_NAME": "test-region",
+      "KEYCLOAK_GROUP": "VIDIS-service",
+      "KEYCLOAK_ROLE": "VIDIS-user"
   }
 }
