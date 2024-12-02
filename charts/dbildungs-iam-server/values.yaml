@@ -143,9 +143,12 @@ redis:
     repository: bitnami/redis
     tag: 7.4.1-debian-12-r2
   replica:
-    replicaCount: 1
+  # turn back
+    replicaCount: 3
   sentinel:
     enabled: true
+    masterService:
+      enabled: true
   pdb:
     create: false
   networkPolicy:
