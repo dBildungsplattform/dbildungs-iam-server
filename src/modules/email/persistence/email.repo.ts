@@ -91,6 +91,20 @@ export class EmailRepo {
         return emails;
     }
 
+    public async findByAddress(address: string): Promise<Option<EmailAddress<true>>> {
+        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
+            EmailAddressEntity,
+            {
+                address: { $eq: address },
+            },
+            { orderBy: { updatedAt: QueryOrder.DESC } },
+        );
+
+        if (!emailAddressEntity) return undefined;
+
+        return mapEntityToAggregate(emailAddressEntity);
+    }
+
     public async existsEmailAddress(address: string): Promise<boolean> {
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
             EmailAddressEntity,

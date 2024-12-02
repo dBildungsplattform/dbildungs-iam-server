@@ -33,6 +33,7 @@ import {
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
 import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -159,6 +160,55 @@ export class OxEventHandler {
                 ),
             );
         }
+    }
+
+    // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
+    @EventHandler(PersonDeletedEvent)
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
+        this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
+
+        // Check if the functionality is enabled
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        if (!event.emailAddress) {
+            return this.logger.error('Cannot Create OX-change-user-request, Email-Address Is Not Defined');
+        }
+
+        const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(event.emailAddress);
+        if (!emailAddress) {
+            return this.logger.error(
+                `Cannot Create OX-change-user-request For address:${event.emailAddress} Could Not Be Found`,
+            );
+        }
+        if (!emailAddress.oxUserID) {
+            return this.logger.error(
+                `Cannot Create OX-change-user-request For address:${event.emailAddress}, OxUserId Is Not Defined`,
+            );
+        }
+
+        const params: ChangeUserParams = {
+            contextId: this.contextID,
+            userId: emailAddress.oxUserID,
+            username: emailAddress.id, //person-id is not available anymore when event is received
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: ChangeUserAction = new ChangeUserAction(params);
+
+        const result: Result<void, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(
+                `Could Not Change OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent, error: ${result.error.message}`,
+            );
+        }
+
+        return this.logger.info(
+            `Successfully Changed OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent`,
+        );
     }
 
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
@@ -442,6 +492,7 @@ export class OxEventHandler {
 
         const params: ChangeUserParams = {
             contextId: this.contextID,
+            userId: getDataResult.value.id,
             username: getDataResult.value.username,
             givenname: person.vorname,
             surname: person.familienname,

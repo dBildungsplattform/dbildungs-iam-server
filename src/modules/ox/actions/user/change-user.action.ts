@@ -1,20 +1,22 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
 import { AuthParams, OxBaseAction } from '../ox-base-action.js';
+import { OXUserID } from '../../../../shared/types/ox-ids.types.js';
 
 // Incomplete
 export type ChangeUserParams = AuthParams & {
     contextId: string;
 
-    username: string;
-    givenname: string;
-    surname: string;
-    displayname: string;
+    userId: OXUserID;
+    username?: string;
+    givenname?: string;
+    surname?: string;
+    displayname?: string;
 
-    email1: string;
-    primaryEmail: string;
-    defaultSenderAddress: string;
-    aliases: string[];
+    email1?: string;
+    primaryEmail?: string;
+    defaultSenderAddress?: string;
+    aliases?: string[];
 };
 
 export type ChangeUserResponseBody = {
