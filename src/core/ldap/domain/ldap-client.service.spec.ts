@@ -257,8 +257,8 @@ describe('LDAP Client Service', () => {
                 const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
-                    fakeOrgaKennung,
                     fakeEmailDomain,
+                    fakeOrgaKennung,
                 );
 
                 expect(result.ok).toBeTruthy();
@@ -282,8 +282,8 @@ describe('LDAP Client Service', () => {
                 const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
-                    fakeOrgaKennung,
                     fakeEmailDomain,
+                    fakeOrgaKennung,
                 );
 
                 expect(result.ok).toBeTruthy();
@@ -293,7 +293,9 @@ describe('LDAP Client Service', () => {
             it('when adding fails should log error', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: lehrer not present
+                    clientMock.add.mockResolvedValueOnce();
                     clientMock.add.mockRejectedValueOnce(new Error('LDAP-Error'));
 
                     return clientMock;
@@ -307,8 +309,8 @@ describe('LDAP Client Service', () => {
                 const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
-                    fakeOrgaKennung,
                     fakeEmailDomain,
+                    fakeOrgaKennung,
                 );
 
                 if (result.ok) throw Error();
@@ -365,8 +367,8 @@ describe('LDAP Client Service', () => {
                 });
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     person,
-                    fakeOrgaKennung,
                     fakeEmailDomain,
+                    fakeOrgaKennung,
                 );
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Lehrer ${lehrerUid} exists, nothing to create`);
@@ -396,7 +398,11 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.createLehrer(person, fakeOrgaKennung, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    person,
+                    fakeOrgaKennung,
+                    fakeEmailDomain,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -423,10 +429,15 @@ describe('LDAP Client Service', () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.del.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
                     return clientMock;
                 });
 
-                const result: Result<PersonData> = await ldapClientService.deleteLehrer(person, fakeOrgaKennung, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(
+                    person,
+                    fakeOrgaKennung,
+                    fakeEmailDomain,
+                );
 
                 expect(result.ok).toBeTruthy();
             });
@@ -452,7 +463,11 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.deleteLehrer(person, fakeOrgaKennung, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(
+                    person,
+                    fakeOrgaKennung,
+                    fakeEmailDomain,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
