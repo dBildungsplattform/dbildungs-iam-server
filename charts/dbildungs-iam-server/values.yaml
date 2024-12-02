@@ -145,6 +145,8 @@ redis:
   replica:
   # turn back
     replicaCount: 3
+    # needed for redis masterservice
+    automountServiceAccountToken: true
   sentinel:
     enabled: true
     masterService:
@@ -170,7 +172,9 @@ redis:
       memory: 128Mi
   metrics:
     enabled: true
-
+  # needed for redis masterservice
+  rbac:
+    create: true
 autoscaling:
   enabled: false
   minReplicas: 1
