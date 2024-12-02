@@ -55,7 +55,7 @@ describe('configloader', () => {
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     ROOT: 'sh',
@@ -70,7 +70,7 @@ describe('configloader', () => {
                     REALM: 'defrealm',
                 },
                 OX: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
@@ -175,7 +175,7 @@ describe('configloader', () => {
                     ADMIN_PASSWORD: 'password',
                 },
                 ITSLEARNING: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
@@ -191,7 +191,7 @@ describe('configloader', () => {
                     REALM: 'defrealm',
                 },
                 OX: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
