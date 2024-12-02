@@ -29,6 +29,8 @@ import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
 import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
+import { VornameForPersonWithTrailingSpaceError } from '../../person/domain/vorname-with-trailing-space.error.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -46,6 +48,7 @@ describe('ImportWorkflow', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [LoggingTestModule],
             providers: [
                 ImportWorkflowFactory,
                 {
@@ -455,7 +458,11 @@ describe('ImportWorkflow', () => {
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([klasse]);
 
             const importvorgangId: string = faker.string.uuid();
-            const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
+            const importDataItem1: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
+                importvorgangId,
+                klasse: '1A',
+            });
+            const importDataItem2: ImportDataItem<true> = DoFactory.createImportDataItem(true, {
                 importvorgangId,
                 klasse: '1A',
             });
@@ -466,8 +473,14 @@ describe('ImportWorkflow', () => {
                     DoFactory.createPersonenkontext(true, { organisationId: klasse.id }),
                 ],
             };
-            importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
+            importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([
+                [importDataItem1, importDataItem2],
+                2,
+            ]);
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
+            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(
+                new VornameForPersonWithTrailingSpaceError(),
+            );
             organisationRepoMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
             rolleRepoMock.findById.mockResolvedValueOnce(DoFactory.createRolle(true));
             jest.spyOn(Buffer, 'from').mockImplementationOnce(() => {

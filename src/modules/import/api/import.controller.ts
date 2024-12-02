@@ -3,6 +3,7 @@ import {
     Controller,
     Delete,
     HttpCode,
+    HttpException,
     HttpStatus,
     Param,
     ParseFilePipeBuilder,
@@ -45,6 +46,7 @@ import { ImportDomainError } from '../domain/import-domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -52,7 +54,10 @@ import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 @ApiOAuth2(['openid'])
 @Controller({ path: 'import' })
 export class ImportController {
-    public constructor(private readonly importWorkflowFactory: ImportWorkflowFactory) {}
+    public constructor(
+        private readonly importWorkflowFactory: ImportWorkflowFactory,
+        private readonly logger: ClassLogger,
+    ) {}
 
     @Post('upload')
     @ApiConsumes('multipart/form-data')
@@ -129,13 +134,23 @@ export class ImportController {
 
         if (!result.ok) {
             if (result.error instanceof ImportDomainError) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${result.error.message}`,
+                );
                 throw result.error;
             }
 
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
+            );
+            throw schulConnexError;
         } else {
+            this.logger.info(
+                `Admin: ${permissions.personFields.id}) hat für Schule: ${body.organisationId} einen CSV Import durchgeführt.`,
+            );
             const fileName: string = importWorkflow.getFileName(body.importvorgangId);
             const contentDisposition: string = `attachment; filename="${fileName}"`;
             res.set({

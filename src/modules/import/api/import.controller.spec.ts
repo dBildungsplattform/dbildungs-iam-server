@@ -1,7 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    LoggingTestModule,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 
@@ -23,7 +27,7 @@ describe('Import API with mocked ImportWorkflow', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [MapperTestModule, LoggingTestModule],
             providers: [
                 {
                     provide: APP_PIPE,
