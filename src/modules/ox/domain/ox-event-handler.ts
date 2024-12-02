@@ -196,10 +196,12 @@ export class OxEventHandler {
         const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
         const oxUserId: OXUserID = person.oxUserId;
 
-        //logging of results is done in removeOxUserFromOxGroup
-        await Promise.allSettled(
-            oxGroups.map((oxGroup: OXGroup) => this.removeOxUserFromOxGroup(oxGroup.id, oxUserId)),
-        );
+        // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
+        /* eslint-disable no-await-in-loop */
+        for (const oxGroup of oxGroups) {
+            //logging of results is done in removeOxUserFromOxGroup
+            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId);
+        }
     }
 
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
