@@ -158,26 +158,28 @@ export class LdapEventHandler {
             await Promise.allSettled(
                 event.removedKontexte
                     .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
-                    .map(async (pk: PersonenkontextEventKontextData) => {
+                    .map((pk: PersonenkontextEventKontextData) => {
                         if (!pk.orgaKennung) {
                             return Promise.reject(new Error('Organisation has no Kennung'));
                         }
-                        const emailDomain: Result<string> = await this.getEmailDomainForOrganisationId(pk.orgaId);
-                        if (emailDomain.ok) {
-                            this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
-                            const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(
-                                event.person,
-                                pk.orgaKennung,
-                                emailDomain.value,
-                            );
-                            if (!deletionResult.ok) {
-                                this.logger.error(deletionResult.error.message);
+                        return this.getEmailDomainForOrganisationId(pk.orgaId).then((emailDomain: Result<string>) => {
+                            if (emailDomain.ok) {
+                                this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
+                                return this.ldapClientService
+                                    .deleteLehrer(event.person, pk.orgaKennung!, emailDomain.value)
+                                    .then((deletionResult: Result<PersonData>) => {
+                                        if (!deletionResult.ok) {
+                                            this.logger.error(deletionResult.error.message);
+                                        }
+                                        return deletionResult;
+                                    });
+                            } else {
+                                this.logger.error(
+                                    `LdapClientService deleteLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
+                                );
+                                return Promise.reject(new Error('Invalid email domain'));
                             }
-                        } else {
-                            this.logger.error(
-                                `LdapClientService deleteLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
-                            );
-                        }
+                        });
                     }),
             );
         } else {
@@ -190,27 +192,28 @@ export class LdapEventHandler {
         await Promise.allSettled(
             event.newKontexte
                 .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
-                .map(async (pk: PersonenkontextEventKontextData) => {
+                .map((pk: PersonenkontextEventKontextData) => {
                     this.logger.info(`Call LdapClientService because rollenArt is LEHR`);
-                    const emailDomain: Result<string> = await this.getEmailDomainForOrganisationId(pk.orgaId);
                     if (!pk.orgaKennung) {
                         return Promise.reject(new Error('Organisation has no Kennung'));
                     }
-                    if (emailDomain.ok) {
-                        const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(
-                            event.person,
-                            emailDomain.value,
-                            pk.orgaKennung,
-                            undefined,
-                        );
-                        if (!creationResult.ok) {
-                            this.logger.error(creationResult.error.message);
+                    return this.getEmailDomainForOrganisationId(pk.orgaId).then((emailDomain: Result<string>) => {
+                        if (emailDomain.ok) {
+                            return this.ldapClientService
+                                .createLehrer(event.person, emailDomain.value, pk.orgaKennung!, undefined)
+                                .then((creationResult: Result<PersonData>) => {
+                                    if (!creationResult.ok) {
+                                        this.logger.error(creationResult.error.message);
+                                    }
+                                    return creationResult;
+                                });
+                        } else {
+                            this.logger.error(
+                                `LdapClientService createLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
+                            );
+                            return Promise.reject({ ok: false, error: new Error('Invalid email domain') });
                         }
-                    } else {
-                        this.logger.error(
-                            `LdapClientService createLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
-                        );
-                    }
+                    });
                 }),
         );
     }
