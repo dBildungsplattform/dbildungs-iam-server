@@ -664,6 +664,63 @@ describe('LDAP Event Handler', () => {
 
             expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
         });
+
+        it('should log an error when a removed personenkontext has no orgaKennung', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [],
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: undefined,
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
+        });
+
+        it('should log an error when a new personenkontext has no orgaKennung', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: undefined,
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+                [],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+            expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
+        });
     });
 
     describe('handleEmailAddressGeneratedEvent', () => {
