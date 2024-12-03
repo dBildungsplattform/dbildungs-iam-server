@@ -55,9 +55,6 @@ auth:
   pi_admin_password: ''
   pi_user_resolver: ''
   pi_user_realm: ''
-  system_rename_waiting_time_in_seconds: ''
-  system_step_up_timeout_in_seconds: ''
-  system_step_up_timeout_enabled: ''
   redis_password: ''
 
 backend:
@@ -119,6 +116,8 @@ backend:
       http: 80
   serviceMonitor:
     enabled: true
+    path: "/metrics"
+    interval: 30m
     endpoints:
       - port: 'web'
   extraEnvVars: []
@@ -132,6 +131,10 @@ backend:
       subPath: secrets-json
       name: secret-volume
   extraVolumeMounts: []
+  env:
+    renameWaitingTimeInSeconds: 3
+    stepUpTimeoutInSeconds: 900
+    stepUpTimeoutEnabled: 'false'
 
 redis:
   enabled: true
