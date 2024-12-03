@@ -29,6 +29,8 @@ import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
+import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
+import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -309,10 +311,9 @@ describe('LDAP Client Service', () => {
 
             expect(result.ok).toBeFalsy();
             if (result.ok) throw Error();
-            expect(result.error).toBeInstanceOf(Error);
-            expect(result.error.message).toContain('Group creation failed');
+            expect(result.error).toBeInstanceOf(LdapAddPersonToGroupError);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `LDAP: Failed to create group ${fakeGroupId}, errMsg: {"message":"Group creation failed"}`,
+                `LDAP: Failed to create group ${fakeGroupId}, errMsg: Error: Group creation failed`,
             );
         });
 
@@ -339,10 +340,9 @@ describe('LDAP Client Service', () => {
 
             expect(result.ok).toBeFalsy();
             if (result.ok) throw Error();
-            expect(result.error).toBeInstanceOf(Error);
-            expect(result.error.message).toContain('Modify error');
+            expect(result.error).toBeInstanceOf(LdapAddPersonToGroupError);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `LDAP: Failed to add person to group ${fakeGroupId}, errMsg: {"message":"Modify error"}`,
+                `LDAP: Failed to add person to group ${fakeGroupId}, errMsg: Error: Modify error`,
             );
         });
 
@@ -515,8 +515,8 @@ describe('LDAP Client Service', () => {
                 });
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     personWithoutReferrer,
-                    fakeOrgaKennung,
                     fakeEmailDomain,
+                    fakeOrgaKennung,
                 );
 
                 expect(result.ok).toBeFalsy();
@@ -530,8 +530,8 @@ describe('LDAP Client Service', () => {
                 });
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     person,
-                    fakeOrgaKennung,
                     fakeEmailDomain,
+                    fakeOrgaKennung,
                 );
 
                 expect(result.ok).toBeFalsy();
@@ -540,8 +540,8 @@ describe('LDAP Client Service', () => {
             it('when called with invalid emailDomain returns LdapEmailDomainError', async () => {
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     person,
-                    fakeOrgaKennung,
                     'wrong-email-domain.de',
+                    fakeOrgaKennung,
                 );
 
                 if (result.ok) throw Error();
@@ -1213,10 +1213,9 @@ describe('LDAP Client Service', () => {
             if (result.ok) {
                 throw Error();
             }
-            expect(result.error).toBeInstanceOf(Error);
-            expect(result.error.message).toContain('Modify error');
+            expect(result.error).toBeInstanceOf(LdapRemovePersonFromGroupError);
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `LDAP: Failed to remove person from group ${fakeGroupId}, errMsg: {"message":"Modify error"}`,
+                `LDAP: Failed to remove person from group ${fakeGroupId}, errMsg: Error: Modify error`,
             );
         });
     });
