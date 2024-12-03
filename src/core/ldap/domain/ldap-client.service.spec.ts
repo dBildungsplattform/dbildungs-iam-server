@@ -418,6 +418,41 @@ describe('LDAP Client Service', () => {
 
                 expect(result.error).toBeInstanceOf(LdapEmailDomainError);
             });
+
+            it('should log an error and return the failed result if addPersonToGroup fails', async () => {
+                const referrer: string = 'test-user';
+                const schulId: string = '123';
+                const expectedGroupId: string = `lehrer-${schulId}`;
+                const errorMessage: string = `LDAP: Failed to add lehrer ${referrer} to group ${expectedGroupId}`;
+
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    clientMock.add.mockRejectedValueOnce(new Error('Group addition failed'));
+                    return clientMock;
+                });
+
+                jest.spyOn(ldapClientService, 'addPersonToGroup').mockResolvedValue({
+                    ok: false,
+                    error: new Error('Group addition failed'),
+                });
+
+                const result: Result<PersonData, Error> = await ldapClientService.createLehrer(
+                    {
+                        id: faker.string.uuid(),
+                        vorname: faker.person.firstName(),
+                        familienname: faker.person.lastName(),
+                        referrer,
+                    },
+                    'schule-sh.de',
+                    schulId,
+                );
+
+                expect(result.ok).toBeFalsy();
+                if (result.ok) throw new Error('Test failed because result was unexpectedly successful');
+                expect(loggerMock.error).toHaveBeenCalledWith(errorMessage);
+                expect(result.error?.message).toContain('Group addition failed');
+            });
         });
     });
 
