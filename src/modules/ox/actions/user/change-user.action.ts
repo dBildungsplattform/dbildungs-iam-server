@@ -44,6 +44,7 @@ export class ChangeUserAction extends OxBaseAction<ChangeUserResponseBody, void>
                 },
 
                 'tns:usrdata': {
+                    'ns6:id': this.params.userId,
                     'ns6:email1': this.params.email1,
                     'ns6:name': this.params.username,
                     'ns6:given_name': this.params.givenname,
