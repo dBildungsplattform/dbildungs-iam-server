@@ -61,7 +61,7 @@ backend:
   replicaCount: 1
   image:
     repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-    tag: 'DBP-1118'
+    tag: ''
     pullPolicy: Always
   containerPorts:
     http: 8080
