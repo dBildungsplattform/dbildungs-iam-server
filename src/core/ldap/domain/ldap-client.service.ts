@@ -16,6 +16,8 @@ import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
+import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
+import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 
 export type PersonData = {
     vorname: string;
@@ -470,11 +472,9 @@ export class LdapClientService {
                 this.logger.info(`LDAP: Successfully created group ${groupId} and added person ${personUid}`);
                 return { ok: true, value: true };
             } catch (err) {
-                const errMsg: string = `LDAP: Failed to create group ${groupId}, errMsg: ${JSON.stringify({
-                    message: err instanceof Error ? err.message : String(err),
-                })}`;
+                const errMsg: string = `LDAP: Failed to create group ${groupId}, errMsg: ${String(err)}`;
                 this.logger.error(errMsg);
-                return { ok: false, error: new Error(errMsg) };
+                return { ok: false, error: new LdapAddPersonToGroupError() };
             }
         }
 
@@ -493,11 +493,9 @@ export class LdapClientService {
             this.logger.info(`LDAP: Successfully added person ${personUid} to group ${groupId}`);
             return { ok: true, value: true };
         } catch (err) {
-            const errMsg: string = `LDAP: Failed to add person to group ${groupId}, errMsg: ${JSON.stringify({
-                message: err instanceof Error ? err.message : String(err),
-            })}`;
+            const errMsg: string = `LDAP: Failed to add person to group ${groupId}, errMsg: ${String(err)}`;
             this.logger.error(errMsg);
-            return { ok: false, error: new Error(errMsg) };
+            return { ok: false, error: new LdapAddPersonToGroupError() };
         }
     }
 
@@ -536,11 +534,9 @@ export class LdapClientService {
             this.logger.info(`LDAP: Successfully removed person ${personUid} from group ${groupId}`);
             return { ok: true, value: true };
         } catch (err) {
-            const errMsg: string = `LDAP: Failed to remove person from group ${groupId}, errMsg: ${JSON.stringify({
-                message: err instanceof Error ? err.message : String(err),
-            })}`;
+            const errMsg: string = `LDAP: Failed to remove person from group ${groupId}, errMsg: ${String(err)}`;
             this.logger.error(errMsg);
-            return { ok: false, error: new Error(errMsg) };
+            return { ok: false, error: new LdapRemovePersonFromGroupError() };
         }
     }
 }
