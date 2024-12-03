@@ -470,7 +470,9 @@ export class LdapClientService {
                 this.logger.info(`LDAP: Successfully created group ${groupId} and added person ${personUid}`);
                 return { ok: true, value: true };
             } catch (err) {
-                const errMsg: string = `LDAP: Failed to create group ${groupId}, errMsg: ${JSON.stringify(err)}`;
+                const errMsg: string = `LDAP: Failed to create group ${groupId}, errMsg: ${JSON.stringify({
+                    message: err instanceof Error ? err.message : String(err),
+                })}`;
                 this.logger.error(errMsg);
                 return { ok: false, error: new Error(errMsg) };
             }
@@ -491,7 +493,9 @@ export class LdapClientService {
             this.logger.info(`LDAP: Successfully added person ${personUid} to group ${groupId}`);
             return { ok: true, value: true };
         } catch (err) {
-            const errMsg: string = `LDAP: Failed to add person to group ${groupId}, errMsg: ${JSON.stringify(err)}`;
+            const errMsg: string = `LDAP: Failed to add person to group ${groupId}, errMsg: ${JSON.stringify({
+                message: err instanceof Error ? err.message : String(err),
+            })}`;
             this.logger.error(errMsg);
             return { ok: false, error: new Error(errMsg) };
         }
