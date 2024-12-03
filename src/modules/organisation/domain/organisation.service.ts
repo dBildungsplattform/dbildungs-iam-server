@@ -60,11 +60,11 @@ export class OrganisationService {
                 const schoolName: string = school?.name ?? 'SCHOOL_NOT_FOUND';
                 if (error) {
                     this.logger.error(
-                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Klasse ${organisation.name} (${schoolName}) anzulegen. Fehler: ${error.message}`,
+                        `Admin: ${permissions.personFields.id}) hat versucht eine neue Klasse ${organisation.name} (${schoolName}) anzulegen. Fehler: ${error.message}`,
                     );
                 } else {
                     this.logger.info(
-                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine neue Klasse angelegt: ${organisation.name} (${schoolName}).`,
+                        `Admin: ${permissions.personFields.id}) hat eine neue Klasse angelegt: ${organisation.name} (${schoolName}).`,
                     );
                 }
             }
@@ -72,11 +72,11 @@ export class OrganisationService {
         if (organisation.typ === OrganisationsTyp.SCHULE) {
             if (error) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Schule ${organisation.name} anzulegen. Fehler: ${error.message}`,
+                    `Admin: ${permissions.personFields.id}) hat versucht eine neue Schule ${organisation.name} anzulegen. Fehler: ${error.message}`,
                 );
             } else {
                 this.logger.info(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine neue Schule angelegt: ${organisation.name}.`,
+                    `Admin: ${permissions.personFields.id}) hat eine neue Schule angelegt: ${organisation.name}.`,
                 );
             }
         }
@@ -97,11 +97,11 @@ export class OrganisationService {
 
                 if (error) {
                     this.logger.error(
-                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine Klasse ${organisation.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
+                        `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisation.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
                     );
                 } else {
                     this.logger.info(
-                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Klasse geändert: ${organisation.name} (${schoolName}).`,
+                        `Admin: ${permissions.personFields.id}) hat eine Klasse geändert: ${organisation.name} (${schoolName}).`,
                     );
                 }
             }
@@ -109,11 +109,11 @@ export class OrganisationService {
         if (organisation.typ === OrganisationsTyp.SCHULE) {
             if (error) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine Schule ${organisation.name} zu verändern. Fehler: ${error.message}`,
+                    `Admin: ${permissions.personFields.id}) hat versucht eine Schule ${organisation.name} zu verändern. Fehler: ${error.message}`,
                 );
             } else {
                 this.logger.info(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Schule geändert: ${organisation.name}.`,
+                    `Admin: ${permissions.personFields.id}) hat eine Schule geändert: ${organisation.name}.`,
                 );
             }
         }

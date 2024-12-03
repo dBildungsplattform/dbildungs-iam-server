@@ -192,7 +192,7 @@ export class RolleController {
         );
         if (!orgResult.ok) {
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${orgResult.error.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(orgResult.error),
@@ -211,20 +211,18 @@ export class RolleController {
 
         if (rolle instanceof DomainError) {
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${rolle.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${rolle.message}`,
             );
             throw rolle;
         }
         const result: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
         if (result instanceof DomainError) {
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${result.message}.`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine neue Rolle ${params.name} anzulegen. Fehler: ${result.message}.`,
             );
             throw result;
         }
-        this.logger.info(
-            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine neue Rolle angelegt: ${result.name}.`,
-        );
+        this.logger.info(`Admin: ${permissions.personFields.id}) hat eine neue Rolle angelegt: ${result.name}.`);
 
         return new RolleResponse(result);
     }
@@ -403,21 +401,19 @@ export class RolleController {
         if (result instanceof DomainError) {
             if (result instanceof RolleDomainError) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
+                    `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
                 );
                 throw result;
             }
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.name} zu bearbeiten. Fehler: ${result.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
 
-        this.logger.info(
-            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Rolle bearbeitet: ${rolleName}.`,
-        );
+        this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle bearbeitet: ${rolleName}.`);
 
         return this.returnRolleWithServiceProvidersResponse(result);
     }
@@ -444,21 +440,19 @@ export class RolleController {
         if (result instanceof DomainError) {
             if (result instanceof RolleDomainError) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
+                    `Admin: ${permissions.personFields.id}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
                 );
                 throw result;
             }
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht die Rolle ${rolleName} zu entfernen. Fehler: ${result.message}`,
             );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
 
-        this.logger.info(
-            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Rolle entfernt: ${rolleName}.`,
-        );
+        this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle entfernt: ${rolleName}.`);
     }
 
     private async returnRolleWithServiceProvidersResponse(

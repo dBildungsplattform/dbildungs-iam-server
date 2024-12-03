@@ -420,7 +420,7 @@ export class OrganisationRepository {
         if (!organisationEntity) {
             const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine Klasse mit der ID ${id} zu entfernen. Fehler: ${error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse mit der ID ${id} zu entfernen. Fehler: ${error.message}`,
             );
             return error;
         }
@@ -435,7 +435,7 @@ export class OrganisationRepository {
                 'Only Klassen can be deleted.',
             ]);
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} (${schoolName}) zu entfernen. Fehler: ${error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} (${schoolName}) zu entfernen. Fehler: ${error.message}`,
             );
             return error;
         }
@@ -445,7 +445,7 @@ export class OrganisationRepository {
 
         if (organisationEntity.zugehoerigZu) {
             this.logger.info(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
+                `Admin: ${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
             );
         }
 
@@ -463,7 +463,7 @@ export class OrganisationRepository {
         if (!organisationFound) {
             const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
             );
             return error;
         }
@@ -477,7 +477,7 @@ export class OrganisationRepository {
                 'Only the name of Klassen can be updated.',
             ]);
             this.logger.error(
-                `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
             );
             return error;
         }
@@ -490,7 +490,7 @@ export class OrganisationRepository {
 
                 if (specificationError) {
                     this.logger.error(
-                        `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
                     );
                     return specificationError;
                 }
@@ -501,7 +501,7 @@ export class OrganisationRepository {
             await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
         this.logger.info(
-            `Admin ${permissions.personFields.username} (${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
+            `Admin: ${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
         );
         return organisationEntity;
     }
