@@ -129,7 +129,7 @@ export class OxEventHandler {
         }
 
         // Fetch or create the relevant OX group based on orgaKennung (group identifier)
-        const oxGroupIdResult: Result<OXGroupID, Error> = await this.getExistingOxGroupByNameOrCreateOxGroup(
+        const oxGroupIdResult: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
             OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + event.orgaKennung,
             OxEventHandler.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + event.orgaKennung,
         );
@@ -139,7 +139,7 @@ export class OxEventHandler {
         }
 
         // Add the user to the OX group
-        const addUserToGroupResult: Result<AddMemberToGroupResponse, Error> = await this.addOxUserToOxGroup(
+        const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
             oxGroupIdResult.value,
             person.oxUserId,
         );
@@ -180,25 +180,15 @@ export class OxEventHandler {
         }
         const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
         if (!person) return this.logger.error(`Could Not Find Person For personId:${event.personId}`);
-        if (!person.oxUserId)
+        if (!person.oxUserId) {
             return this.logger.error(
                 `Could Not Remove Person From OxGroups, No OxUserId For personId:${event.personId}`,
             );
-        const listGroupsForUserResponse: Result<ListGroupsForUserResponse> = await this.getOxGroupsForOxUserId(
-            person.oxUserId,
-        );
-        if (!listGroupsForUserResponse.ok) {
-            return this.logger.error(`Retrieving OxGroups For OxUser Failed, personId:${event.personId}`);
         }
-        //Removal from Standard-Group is possible even when user is member of other OxGroups
-        const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
-        const oxUserId: OXUserID = person.oxUserId;
-        // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
-        /* eslint-disable no-await-in-loop */
-        for (const oxGroup of oxGroups) {
-            //logging of results is done in removeOxUserFromOxGroup
-            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId);
-        }
+
+        //remove oxUser as member from all its oxGroups
+        //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
+        await this.removeOxUserFromAllItsOxGroups(person.oxUserId, person.id);
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
@@ -227,6 +217,11 @@ export class OxEventHandler {
             );
         }
 
+        //remove oxUser as member from all its oxGroups
+        //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
+        await this.removeOxUserFromAllItsOxGroups(emailAddress.oxUserID, event.personId);
+
+        //change oxUserName to avoid conflicts for future OX-createUser-requests
         const params: ChangeUserParams = {
             contextId: this.contextID,
             userId: emailAddress.oxUserID,
@@ -248,6 +243,22 @@ export class OxEventHandler {
         return this.logger.info(
             `Successfully Changed OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent`,
         );
+    }
+
+    private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID): Promise<void> {
+        const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
+            await this.getOxGroupsForOxUserId(oxUserId);
+        if (!listGroupsForUserResponse.ok) {
+            return this.logger.error(`Retrieving OxGroups For OxUser Failed, personId:${personId}`);
+        }
+        //Removal from Standard-Group is possible even when user is member of other OxGroups
+        const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
+        // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
+        /* eslint-disable no-await-in-loop */
+        for (const oxGroup of oxGroups) {
+            //logging of results is done in removeOxUserFromOxGroup
+            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId);
+        }
     }
 
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {

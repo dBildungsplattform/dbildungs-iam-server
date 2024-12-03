@@ -1115,7 +1115,7 @@ describe('OxEventHandler', () => {
             });
         });
 
-        describe('when request to OX fails', () => {
+        describe('when usernameChange-request to OX fails', () => {
             it('should log error about failing request', async () => {
                 event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
                 const oxUserId: OXUserID = faker.string.numeric();
@@ -1127,6 +1127,32 @@ describe('OxEventHandler', () => {
                         },
                     }),
                 );
+
+                // Mock group retrieval successfully
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        groups: [
+                            {
+                                displayname: 'groupDisplayName',
+                                id: 'groupId',
+                                name: 'groupName',
+                                memberIds: [oxUserId],
+                            },
+                        ],
+                    },
+                });
+
+                // Mock removal as member from oxGroups successfully
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        status: {
+                            code: 'success',
+                        },
+                        data: undefined,
+                    },
+                });
 
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
@@ -1141,7 +1167,7 @@ describe('OxEventHandler', () => {
             });
         });
 
-        describe('when request to OX succeeds', () => {
+        describe('when usernameChange-request to OX succeeds', () => {
             it('should log info about success', async () => {
                 event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
                 const oxUserId: OXUserID = faker.string.numeric();
@@ -1153,6 +1179,32 @@ describe('OxEventHandler', () => {
                         },
                     }),
                 );
+
+                // Mock group retrieval successfully
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        groups: [
+                            {
+                                displayname: 'groupDisplayName',
+                                id: 'groupId',
+                                name: 'groupName',
+                                memberIds: [oxUserId],
+                            },
+                        ],
+                    },
+                });
+
+                // Mock removal as member from oxGroups successfully
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        status: {
+                            code: 'success',
+                        },
+                        data: undefined,
+                    },
+                });
 
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
@@ -1181,6 +1233,7 @@ describe('OxEventHandler', () => {
             oxUserId = faker.string.numeric();
             event = new EmailAddressDisabledEvent(personId, username);
             person = createMock<Person<true>>({
+                id: personId,
                 email: faker.internet.email(),
                 referrer: username,
                 oxUserId: oxUserId,
