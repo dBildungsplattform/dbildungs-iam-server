@@ -446,8 +446,8 @@ export class LdapClientService {
         });
     }
 
-    public async addPersonToGroup(personUid: string, schoolId: number): Promise<Result<boolean>> {
-        const groupId: string = 'lehrer-' + schoolId;
+    public async addPersonToGroup(personUid: string, schoolReferrer: number): Promise<Result<boolean>> {
+        const groupId: string = 'lehrer-' + schoolReferrer;
         this.logger.info(`LDAP: Adding person ${personUid} to group ${groupId}`);
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
@@ -499,8 +499,8 @@ export class LdapClientService {
         }
     }
 
-    public async removePersonFromGroup(personUid: string, schoolId: number): Promise<Result<boolean>> {
-        const groupId: string = 'lehrer-' + schoolId;
+    public async removePersonFromGroup(personUid: string, schoolReferrer: number): Promise<Result<boolean>> {
+        const groupId: string = 'lehrer-' + schoolReferrer;
         this.logger.info(`LDAP: Removing person ${personUid} from group ${groupId}`);
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
