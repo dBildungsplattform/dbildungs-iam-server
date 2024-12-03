@@ -60,7 +60,7 @@ auth:
   vidis_region_name: ''
   vidis_keycloak_group: ''
   vidis_keycloak_role: ''
-
+ 
 backend:
   replicaCount: 1
   image:
