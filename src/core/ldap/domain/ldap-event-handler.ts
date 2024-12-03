@@ -14,7 +14,6 @@ import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontex
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
-import { Console } from 'console';
 
 @Injectable()
 export class LdapEventHandler {
