@@ -14,6 +14,7 @@ import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontex
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { Console } from 'console';
 
 @Injectable()
 export class LdapEventHandler {
@@ -155,7 +156,7 @@ export class LdapEventHandler {
 
         if (!event.containsAnyCurrentPKWithRollenartLehr()) {
             // Delete all removed personenkontexte if rollenart === LEHR
-            await Promise.allSettled(
+            const results: PromiseSettledResult<Result<PersonData>>[] = await Promise.allSettled(
                 event.removedKontexte
                     .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                     .map((pk: PersonenkontextEventKontextData) => {
@@ -182,6 +183,12 @@ export class LdapEventHandler {
                         });
                     }),
             );
+
+            results.forEach((result: PromiseSettledResult<Result<PersonData>>) => {
+                if (result.status === 'rejected') {
+                    this.logger.error(`LdapClientService delete Personenkontext failed: ${String(result.reason)}`);
+                }
+            });
         } else {
             this.logger.info(
                 `Keep lehrer in LDAP, personId:${event.person.id}, because person keeps PK(s) with rollenArt LEHR`,
@@ -189,7 +196,7 @@ export class LdapEventHandler {
         }
 
         // Create personenkontexte if rollenart === LEHR
-        await Promise.allSettled(
+        const results: PromiseSettledResult<Result<PersonData>>[] = await Promise.allSettled(
             event.newKontexte
                 .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                 .map((pk: PersonenkontextEventKontextData) => {
@@ -216,6 +223,12 @@ export class LdapEventHandler {
                     });
                 }),
         );
+
+        results.forEach((result: PromiseSettledResult<Result<PersonData>>) => {
+            if (result.status === 'rejected') {
+                this.logger.error(`LdapClientService create Personenkontext failed: ${String(result.reason)}`);
+            }
+        });
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
