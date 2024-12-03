@@ -155,7 +155,7 @@ export class LdapEventHandler {
 
         if (!event.containsAnyCurrentPKWithRollenartLehr()) {
             // Delete all removed personenkontexte if rollenart === LEHR
-            const results: PromiseSettledResult<Result<PersonData>>[] = await Promise.allSettled(
+            await Promise.allSettled(
                 event.removedKontexte
                     .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                     .map((pk: PersonenkontextEventKontextData) => {
@@ -182,12 +182,6 @@ export class LdapEventHandler {
                         });
                     }),
             );
-
-            results.forEach((result: PromiseSettledResult<Result<PersonData>>) => {
-                if (result.status === 'rejected') {
-                    this.logger.error(`LdapClientService delete Personenkontext failed: ${String(result.reason)}`);
-                }
-            });
         } else {
             this.logger.info(
                 `Keep lehrer in LDAP, personId:${event.person.id}, because person keeps PK(s) with rollenArt LEHR`,
@@ -195,7 +189,7 @@ export class LdapEventHandler {
         }
 
         // Create personenkontexte if rollenart === LEHR
-        const results: PromiseSettledResult<Result<PersonData>>[] = await Promise.allSettled(
+        await Promise.allSettled(
             event.newKontexte
                 .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                 .map((pk: PersonenkontextEventKontextData) => {
@@ -222,12 +216,6 @@ export class LdapEventHandler {
                     });
                 }),
         );
-
-        results.forEach((result: PromiseSettledResult<Result<PersonData>>) => {
-            if (result.status === 'rejected') {
-                this.logger.error(`LdapClientService create Personenkontext failed: ${String(result.reason)}`);
-            }
-        });
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
