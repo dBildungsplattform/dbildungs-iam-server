@@ -17,12 +17,12 @@ concurrency:
 
 jobs:
   check_deployment_clearance:
-    name: "Check merge clearance"
+    name: "Check deployment clearance"
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     outputs:
-      merge_clearance: ${{ steps.determine_merge_clearance.outputs.merge_clearance }}
+      deployment_clearance: ${{ steps.determine_deployment_clearance.outputs.deployment_clearance }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -44,18 +44,18 @@ jobs:
           PR_LABELS=$(gh pr view ${{ env.PR_NUMBER }} --json labels --jq '.labels | map(.name) | join(",")')
           echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
 
-      - name: Determine merge clearance
-        id: determine_merge_clearance
+      - name: Determine deployment clearance
+        id: determine_deployment_clearance
         run: |
           if [ -z "$env.PR_NUMBER" ] || [[ ${{ ! contains(env.PR_LABELS, 'prevent_auto_deployment') }} == true ]]; then
-            echo "merge_clearance=true" >> "$GITHUB_OUTPUT"
+            echo "deployment_clearance=true" >> "$GITHUB_OUTPUT"
           else
-            echo "merge_clearance=false" >> "$GITHUB_OUTPUT"
+            echo "deployment_clearance=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: test output
         run: |
-          echo "test output: " ${{ steps.determine_merge_clearance.outputs.merge_clearance }}
+          echo "test output: " ${{ steps.determine_deployment_clearance.outputs.deployment_clearance }}
   
   codeql_analyze:
     name: "CodeQL"
@@ -91,7 +91,7 @@ jobs:
     needs:
     - check_deployment_clearance
     name: "Publish image and scan with trivy"
-    if: ${{ github.event_name == 'push' && needs.check_deployment_clearance.outputs.merge_clearance == 'true' }}
+    if: ${{ github.event_name == 'push' && needs.check_deployment_clearance.outputs.deployment_clearance == 'true' }}
     permissions:
       packages: write
       security-events: write
@@ -115,7 +115,7 @@ jobs:
   select_helm_version_generation_and_image_tag_generation:
     needs:
       - check_deployment_clearance
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') && needs.check_deployment_clearance.outputs.merge_clearance == 'true' }}
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') && needs.check_deployment_clearance.outputs.deployment_clearance == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       SELECT_HELM_VERION_GENERATION: ${{ steps.select_generation.outputs.SELECT_HELM_VERION_GENERATION }}
