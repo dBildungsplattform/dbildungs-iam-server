@@ -193,16 +193,15 @@ export class EmailEventHandler {
         //Setting person_id to null in Email table is done via deleteRule, not necessary here
 
         if (!event.emailAddress) {
-            this.logger.info('Cannot deactivate email-address, person did not have an email-address');
-            return;
+            return this.logger.info('Cannot deactivate email-address, person did not have an email-address');
         }
         const deactivationResult: EmailAddressEntity | EmailAddressNotFoundError =
             await this.emailRepo.deactivateEmailAddress(event.emailAddress);
         if (deactivationResult instanceof EmailAddressNotFoundError) {
-            this.logger.error(`Deactivation of email-address:${event.emailAddress} failed`);
-            return;
+            return this.logger.error(`Deactivation of email-address:${event.emailAddress} failed`);
         }
-        this.logger.info(`Successfully deactivated email-address:${event.emailAddress}`);
+
+        return this.logger.info(`Successfully deactivated email-address:${event.emailAddress}`);
     }
 
     private async getAnyRolleReferencesEmailServiceProvider(rollen: Rolle<true>[]): Promise<Option<string>> {
