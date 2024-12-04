@@ -3,8 +3,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ImportWorkflow } from './import-workflow.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
-import { PersonenkontextCreationService } from '../../personenkontext/domain/personenkontext-creation.service.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
+import { EventService } from '../../../core/eventbus/index.js';
 
 @Injectable()
 export class ImportWorkflowFactory {
@@ -12,8 +12,8 @@ export class ImportWorkflowFactory {
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly importDataRepository: ImportDataRepository,
-        private readonly personenkontextCreationService: PersonenkontextCreationService,
         private readonly importVorgangRepository: ImportVorgangRepository,
+        private readonly eventService: EventService,
     ) {}
 
     public createNew(): ImportWorkflow {
@@ -21,8 +21,8 @@ export class ImportWorkflowFactory {
             this.rolleRepo,
             this.organisationRepository,
             this.importDataRepository,
-            this.personenkontextCreationService,
             this.importVorgangRepository,
+            this.eventService,
         );
     }
 }
