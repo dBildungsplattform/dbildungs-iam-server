@@ -4,6 +4,8 @@ namespaceOverride: ''
 
 backendHostname: ''
 keycloakHostname: ''
+keycloak2ndHostname: "blub2.de"
+frontend2ndHostname: "blub.de"
 
 containerSecurityContext:
   enabled: true
@@ -103,6 +105,7 @@ backend:
     enabled: true
     command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev', '']
   ingress:
+    enabled2nd: false
     enabled: true
     ingressClassName: nginx
     pathType: Prefix
