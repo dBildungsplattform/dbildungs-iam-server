@@ -66,10 +66,8 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 @Controller({ path: 'import' })
 export class ImportController {
     public constructor(
-
         private readonly importWorkflowFactory: ImportWorkflowFactory,
         private readonly logger: ClassLogger,
-    ,
         private readonly importVorgangRepository: ImportVorgangRepository,
     ) {}
 
