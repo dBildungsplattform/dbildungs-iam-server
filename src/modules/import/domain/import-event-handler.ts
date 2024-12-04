@@ -14,28 +14,24 @@ import { ImportVorgang } from './import-vorgang.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 import { ImportExecutedEvent } from '../../../shared/events/import-executed.event.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
+import { OrganisationByIdAndName } from './import-workflow.js';
+import { Injectable } from '@nestjs/common';
 
-export type ImportUploadResultFields = {
-    importVorgangId: string;
-    isValid: boolean;
-    totalImportDataItems: number;
-    totalInvalidImportDataItems: number;
-    invalidImportDataItems: ImportDataItem<false>[];
-};
-export type OrganisationByIdAndName = Pick<Organisation<true>, 'id' | 'name'>;
-export type TextFilePersonFields = {
-    klasse: string | undefined;
-    vorname: string;
-    nachname: string;
-    username: string | undefined;
-    password: string | undefined;
-};
+// export type OrganisationByIdAndName = Pick<Organisation<true>, 'id' | 'name'>;
+// export type TextFilePersonFields = {
+//     klasse: string | undefined;
+//     vorname: string;
+//     nachname: string;
+//     username: string | undefined;
+//     password: string | undefined;
+// };
 
-export type RolleAndOrganisationByName = {
-    rollenName: string;
-    organisationsname: string;
-};
+// export type RolleAndOrganisationByName = {
+//     rollenName: string;
+//     organisationsname: string;
+// };
 
+@Injectable()
 export class ImportEventHandler {
     public selectedOrganisationId!: string;
 
