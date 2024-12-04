@@ -26,8 +26,8 @@ import { ListGroupsAction } from '../actions/group/list-groups.action.js';
 import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
-import {PersonenkontextUpdatedEvent} from "../../../shared/events/personenkontext-updated.event";
-import {RollenArt} from "../../rolle/domain/rolle.enums";
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;

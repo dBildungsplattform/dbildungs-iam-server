@@ -44,9 +44,9 @@ import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
 } from '../actions/group/remove-member-from-group.action.js';
-import {PersonenkontextUpdatedEvent} from "../../../shared/events/personenkontext-updated.event";
-import {PersonenkontextEventKontextData} from "../../../shared/events/personenkontext-event.types";
-import {RollenArt} from "../../rolle/domain/rolle.enums";
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 @Injectable()
 export class OxEventHandler {
