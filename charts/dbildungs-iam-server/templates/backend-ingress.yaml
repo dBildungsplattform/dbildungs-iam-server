@@ -16,7 +16,7 @@ spec:
   ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
   rules:
     - host: {{ .Values.backendHostname }}
-      http:
+      https:
         paths:
           {{- range $path := .Values.backend.ingress.paths }}
           - path: {{ $path }}
