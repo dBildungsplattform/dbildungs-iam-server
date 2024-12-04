@@ -54,6 +54,12 @@ auth:
   system_step_up_timeout_in_seconds: ''
   system_step_up_timeout_enabled: ''
   redis_password: ''
+  vidis_base_url: ''
+  vidis_username: ''
+  vidis_password: ''
+  vidis_region_name: ''
+  vidis_keycloak_group: ''
+  vidis_keycloak_role: ''
 
 backend:
   replicaCount: 1
