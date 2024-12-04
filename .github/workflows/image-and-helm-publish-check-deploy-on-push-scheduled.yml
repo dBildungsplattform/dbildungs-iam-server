@@ -49,13 +49,11 @@ jobs:
         run: |
           if [ -z "$env.PR_NUMBER" ] || [[ ${{ ! contains(env.PR_LABELS, 'prevent_auto_deployment') }} == true ]]; then
             echo "deployment_clearance=true" >> "$GITHUB_OUTPUT"
+            echo "Deployment clearance: true"
           else
             echo "deployment_clearance=false" >> "$GITHUB_OUTPUT"
+            echo "Deployment clearance: false"
           fi
-
-      - name: test output
-        run: |
-          echo "test output: " ${{ steps.determine_deployment_clearance.outputs.deployment_clearance }}
   
   codeql_analyze:
     name: "CodeQL"
