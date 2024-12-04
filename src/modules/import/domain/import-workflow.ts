@@ -27,6 +27,7 @@ import { ImportDomainErrorI18nTypes } from './import-i18n-errors.js';
 import { validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportDataItem } from './import-data-item.js';
 import { ImportVorgang } from './import-vorgang.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
@@ -66,6 +67,7 @@ export class ImportWorkflow {
         private readonly organisationRepository: OrganisationRepository,
         private readonly importDataRepository: ImportDataRepository,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
+        private readonly logger: ClassLogger,
         private readonly importVorgangRepository: ImportVorgangRepository,
     ) {}
 
@@ -74,6 +76,7 @@ export class ImportWorkflow {
         organisationRepository: OrganisationRepository,
         importDataRepository: ImportDataRepository,
         personenkontextCreationService: PersonenkontextCreationService,
+        logger: ClassLogger,
         importVorgangRepository: ImportVorgangRepository,
     ): ImportWorkflow {
         return new ImportWorkflow(
@@ -81,6 +84,7 @@ export class ImportWorkflow {
             organisationRepository,
             importDataRepository,
             personenkontextCreationService,
+            logger,
             importVorgangRepository,
         );
     }
@@ -302,7 +306,15 @@ export class ImportWorkflow {
                     importDataItem.nachname,
                     createPersonenkontexte,
                 );
-
+            if (!(savedPersonWithPersonenkontext instanceof DomainError)) {
+                this.logger.info(
+                    `System hat einen neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
+                );
+            } else {
+                this.logger.info(
+                    `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${savedPersonWithPersonenkontext.message}`,
+                );
+            }
             savedPersonenWithPersonenkontext.push(savedPersonWithPersonenkontext);
         }
         /* eslint-disable no-await-in-loop */
