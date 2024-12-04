@@ -44,6 +44,9 @@ import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
 } from '../actions/group/remove-member-from-group.action.js';
+import {PersonenkontextUpdatedEvent} from "../../../shared/events/personenkontext-updated.event";
+import {PersonenkontextEventKontextData} from "../../../shared/events/personenkontext-event.types";
+import {RollenArt} from "../../rolle/domain/rolle.enums";
 
 @Injectable()
 export class OxEventHandler {
@@ -198,6 +201,41 @@ export class OxEventHandler {
         for (const oxGroup of oxGroups) {
             //logging of results is done in removeOxUserFromOxGroup
             await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId);
+        }
+    }
+
+    @EventHandler(PersonenkontextUpdatedEvent)
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
+        this.logger.info(
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, deleted personenkontexte: ${event.removedKontexte.length}`,
+        );
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+        const person: Option<Person<true>> = await this.personRepository.findById(event.person.id);
+        if (!person) {
+            return this.logger.error(`Could Not Find Person For personId:${event.person.id}`);
+        }
+        if (!person.oxUserId) {
+            return this.logger.error(`OxUserId Not Defined For personId:${event.person.id}`);
+        }
+        // For each removed personenkontext and if rollenart === LEHR
+        const rollenArtLehrPKs: PersonenkontextEventKontextData[] = event.removedKontexte.filter(
+            (pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR,
+        );
+        // Await the requests to OX explicitly to avoid transaction-exceptions on OX-side regarding concurrent modifications
+        /* eslint-disable no-await-in-loop */
+        for (const pk of rollenArtLehrPKs) {
+            const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(
+                OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung,
+            );
+            if (oxGroupId instanceof DomainError) {
+                return this.logger.error(
+                    `Could Not Get OxGroupId For oxGroupName:${OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung}`,
+                );
+            }
+            //Logging is done in removeOxUserFromOxGroup
+            await this.removeOxUserFromOxGroup(oxGroupId, person.oxUserId);
         }
     }
 
