@@ -9,6 +9,7 @@ import {
     type PersonenkontextEventKontextData,
     type PersonenkontextEventPersonData,
 } from './personenkontext-event.types.js';
+import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 
 export type PersonenkontextUpdatedPersonData = PersonenkontextEventPersonData;
 
@@ -70,6 +71,16 @@ export class PersonenkontextUpdatedEvent extends BaseEvent {
             newKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             removedKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             currentKontexte.map(mapPersonenkontextAndRolleAggregateToData),
+        );
+    }
+
+    /**
+     * Check if @currentKontexte contains at least one PersonenkontextEventKontextData which satisfies the condition
+     * 'rolle is LEHR'.
+     */
+    public containsAnyCurrentPKWithRollenartLehr(): boolean {
+        return this.currentKontexte.some(
+            (pkEventKontextData: PersonenkontextEventKontextData) => pkEventKontextData.rolle === RollenArt.LEHR,
         );
     }
 }

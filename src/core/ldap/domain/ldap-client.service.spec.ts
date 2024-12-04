@@ -29,6 +29,8 @@ import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
+import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
+import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -234,8 +236,137 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    describe('addPersonToGroup', () => {
+        const fakePersonUid: string = 'test-user';
+        const fakeSchoolId: number = 123;
+        const fakeGroupId: string = `lehrer-${fakeSchoolId}`;
+        const fakeGroupDn: string = `cn=${fakeGroupId},dc=schule-sh,dc=de`;
+
+        it('should successfully add a person to an existing group', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.modify.mockResolvedValueOnce();
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.addPersonToGroup(
+                fakePersonUid,
+                fakeSchoolId,
+            );
+
+            expect(result.ok).toBeTruthy();
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `LDAP: Successfully added person ${fakePersonUid} to group ${fakeGroupId}`,
+            );
+        });
+
+        it('should create a new group and add the person if the group does not exist', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [],
+                    }),
+                );
+                clientMock.add.mockResolvedValueOnce();
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.addPersonToGroup(
+                fakePersonUid,
+                fakeSchoolId,
+            );
+
+            expect(result.ok).toBeTruthy();
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `LDAP: Successfully created group ${fakeGroupId} and added person ${fakePersonUid}`,
+            );
+        });
+
+        it('should return error if group creation fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [],
+                    }),
+                );
+                clientMock.add.mockRejectedValueOnce(new Error('Group creation failed'));
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.addPersonToGroup(
+                fakePersonUid,
+                fakeSchoolId,
+            );
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) throw Error();
+            expect(result.error).toBeInstanceOf(LdapAddPersonToGroupError);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `LDAP: Failed to create group ${fakeGroupId}, errMsg: Error: Group creation failed`,
+            );
+        });
+
+        it('should return error if person addition to the existing group fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.modify.mockRejectedValueOnce(new Error('Modify error'));
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.addPersonToGroup(
+                fakePersonUid,
+                fakeSchoolId,
+            );
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) throw Error();
+            expect(result.error).toBeInstanceOf(LdapAddPersonToGroupError);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `LDAP: Failed to add person to group ${fakeGroupId}, errMsg: Error: Modify error`,
+            );
+        });
+
+        it('should return error if bind fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockRejectedValueOnce(new Error());
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.addPersonToGroup(
+                fakePersonUid,
+                fakeSchoolId,
+            );
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) throw Error();
+            expect(result.error).toBeInstanceOf(Error);
+            expect(loggerMock.error).not.toHaveBeenCalledWith(expect.stringContaining('Failed to add person to group'));
+        });
+    });
+
     describe('creation', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
+        const fakeOrgaKennung: string = '123';
 
         describe('lehrer', () => {
             it('when called with extra entryUUID should return truthy result', async () => {
@@ -254,7 +385,11 @@ describe('LDAP Client Service', () => {
                     ldapEntryUUID: faker.string.uuid(),
                 };
                 const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
-                const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    testLehrer,
+                    fakeEmailDomain,
+                    fakeOrgaKennung,
+                );
 
                 expect(result.ok).toBeTruthy();
                 expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
@@ -275,7 +410,11 @@ describe('LDAP Client Service', () => {
                     referrer: faker.lorem.word(),
                 };
                 const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
-                const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    testLehrer,
+                    fakeEmailDomain,
+                    fakeOrgaKennung,
+                );
 
                 expect(result.ok).toBeTruthy();
                 expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
@@ -284,7 +423,9 @@ describe('LDAP Client Service', () => {
             it('when adding fails should log error', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: lehrer not present
+                    clientMock.add.mockResolvedValueOnce();
                     clientMock.add.mockRejectedValueOnce(new Error('LDAP-Error'));
 
                     return clientMock;
@@ -296,7 +437,11 @@ describe('LDAP Client Service', () => {
                     referrer: faker.lorem.word(),
                 };
                 const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
-                const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    testLehrer,
+                    fakeEmailDomain,
+                    fakeOrgaKennung,
+                );
 
                 if (result.ok) throw Error();
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
@@ -325,6 +470,7 @@ describe('LDAP Client Service', () => {
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeErsatzSchuleAddressDomain,
+                    fakeOrgaKennung,
                     undefined,
                 );
 
@@ -349,7 +495,11 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.createLehrer(person, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    person,
+                    fakeEmailDomain,
+                    fakeOrgaKennung,
+                );
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Lehrer ${lehrerUid} exists, nothing to create`);
                 expect(result.ok).toBeTruthy();
@@ -366,6 +516,7 @@ describe('LDAP Client Service', () => {
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     personWithoutReferrer,
                     fakeEmailDomain,
+                    fakeOrgaKennung,
                 );
 
                 expect(result.ok).toBeFalsy();
@@ -377,7 +528,11 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.createLehrer(person, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    person,
+                    fakeEmailDomain,
+                    fakeOrgaKennung,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -386,26 +541,68 @@ describe('LDAP Client Service', () => {
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     person,
                     'wrong-email-domain.de',
+                    fakeOrgaKennung,
                 );
 
                 if (result.ok) throw Error();
 
                 expect(result.error).toBeInstanceOf(LdapEmailDomainError);
             });
+
+            it('should log an error and return the failed result if addPersonToGroup fails', async () => {
+                const referrer: string = 'test-user';
+                const schulId: string = '123';
+                const expectedGroupId: string = `lehrer-${schulId}`;
+                const errorMessage: string = `LDAP: Failed to add lehrer ${referrer} to group ${expectedGroupId}`;
+
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                    clientMock.add.mockRejectedValueOnce(new Error('Group addition failed'));
+                    return clientMock;
+                });
+
+                jest.spyOn(ldapClientService, 'addPersonToGroup').mockResolvedValue({
+                    ok: false,
+                    error: new Error('Group addition failed'),
+                });
+
+                const result: Result<PersonData, Error> = await ldapClientService.createLehrer(
+                    {
+                        id: faker.string.uuid(),
+                        vorname: faker.person.firstName(),
+                        familienname: faker.person.lastName(),
+                        referrer,
+                    },
+                    'schule-sh.de',
+                    schulId,
+                );
+
+                expect(result.ok).toBeFalsy();
+                if (result.ok) throw new Error('Test failed because result was unexpectedly successful');
+                expect(loggerMock.error).toHaveBeenCalledWith(errorMessage);
+                expect(result.error?.message).toContain('Group addition failed');
+            });
         });
     });
 
     describe('deletion', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
+        const fakeOrgaKennung: string = '123';
         describe('delete lehrer', () => {
             it('should return truthy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.del.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
                     return clientMock;
                 });
 
-                const result: Result<PersonData> = await ldapClientService.deleteLehrer(person, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(
+                    person,
+                    fakeOrgaKennung,
+                    fakeEmailDomain,
+                );
 
                 expect(result.ok).toBeTruthy();
             });
@@ -418,6 +615,7 @@ describe('LDAP Client Service', () => {
                 });
                 const result: Result<PersonData> = await ldapClientService.deleteLehrer(
                     personWithoutReferrer,
+                    fakeOrgaKennung,
                     fakeEmailDomain,
                 );
 
@@ -430,7 +628,11 @@ describe('LDAP Client Service', () => {
                     clientMock.add.mockResolvedValueOnce();
                     return clientMock;
                 });
-                const result: Result<PersonData> = await ldapClientService.deleteLehrer(person, fakeEmailDomain);
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(
+                    person,
+                    fakeOrgaKennung,
+                    fakeEmailDomain,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -438,6 +640,7 @@ describe('LDAP Client Service', () => {
             it('when called with invalid emailDomain returns LdapEmailDomainError', async () => {
                 const result: Result<PersonData> = await ldapClientService.deleteLehrer(
                     person,
+                    fakeOrgaKennung,
                     'wrong-email-domain.de',
                 );
 
@@ -876,6 +1079,144 @@ describe('LDAP Client Service', () => {
                     );
                 });
             });
+        });
+    });
+
+    describe('removePersonFromGroup', () => {
+        const fakeGroupId: string = 'lehrer-123';
+        const fakePersonUid: string = 'user123';
+        const fakeGroupDn: string = `cn=${fakeGroupId},dc=schule-sh,dc=de`;
+        const fakeLehrerUid: string = `uid=${fakePersonUid},ou=users,dc=schule-sh,dc=de`;
+
+        it('should successfully remove person from group with multiple members', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                                uniqueMember: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.modify.mockResolvedValueOnce();
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeTruthy();
+            expect(clientMock.modify).toHaveBeenCalledWith(fakeGroupDn, [
+                new Change({
+                    operation: 'delete',
+                    modification: new Attribute({
+                        type: 'uniqueMember',
+                        values: [fakeLehrerUid],
+                    }),
+                }),
+            ]);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `LDAP: Successfully removed person ${fakePersonUid} from group ${fakeGroupId}`,
+            );
+        });
+
+        it('should delete the group when only one member is present', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                                uniqueMember: `${fakeLehrerUid}`,
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.del.mockResolvedValueOnce();
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeTruthy();
+            expect(clientMock.del).toHaveBeenCalledWith(fakeGroupDn);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `LDAP: Successfully removed person ${fakePersonUid} from group ${fakeGroupId}`,
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(`LDAP: Successfully deleted group ${fakeGroupId}`);
+        });
+
+        it('should return error when group is not found', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [],
+                    }),
+                );
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) {
+                throw Error();
+            }
+            expect(result.error).toBeInstanceOf(Error);
+            expect(result.error.message).toContain(`LDAP: Group ${fakeGroupId} not found`);
+            expect(loggerMock.error).toHaveBeenCalledWith(`LDAP: Group ${fakeGroupId} not found`);
+        });
+
+        it('should return error when bind fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockRejectedValueOnce(new Error());
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) {
+                throw Error();
+            }
+            expect(result.error).toBeInstanceOf(Error);
+        });
+
+        it('should return error when modification fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                                uniqueMember: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.modify.mockRejectedValueOnce(new Error('Modify error'));
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+
+            expect(result.ok).toBeFalsy();
+            if (result.ok) {
+                throw Error();
+            }
+            expect(result.error).toBeInstanceOf(LdapRemovePersonFromGroupError);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `LDAP: Failed to remove person from group ${fakeGroupId}, errMsg: Error: Modify error`,
+            );
         });
     });
 });
