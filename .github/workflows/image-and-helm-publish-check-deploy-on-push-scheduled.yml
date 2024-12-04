@@ -91,7 +91,7 @@ jobs:
     needs:
     - check_deployment_clearance
     name: "Publish image and scan with trivy"
-    if: ${{ github.event_name == 'push' && needs.check_deployment_clearance.outputs.merge_clearance == 'true' 4}}
+    if: ${{ github.event_name == 'push' && needs.check_deployment_clearance.outputs.merge_clearance == 'true' }}
     permissions:
       packages: write
       security-events: write
