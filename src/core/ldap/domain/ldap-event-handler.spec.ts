@@ -721,6 +721,172 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
             expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
         });
+
+        it('should log error when error occurs while delete Lehrer', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [],
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+            ldapClientServiceMock.deleteLehrer.mockRejectedValueOnce(new Error('deleteLehrer error'));
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(loggerMock.error).toHaveBeenCalledTimes(1);
+            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Error while deleteLehrer:'));
+        });
+
+        it('should log error when error occurs while getEmailDomainForOrganisationId deleting person', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [],
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockRejectedValueOnce(new Error('Test'));
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(loggerMock.error).toHaveBeenCalledTimes(1);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                expect.stringContaining('Error while getEmailDomainForOrganisationId:'),
+            );
+        });
+
+        it('should log error when error occurs while create Lehrer', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+                [],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+            ldapClientServiceMock.createLehrer.mockRejectedValueOnce(new Error('createLehrer error'));
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(loggerMock.error).toHaveBeenCalledTimes(1);
+            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Error while createLehrer:'));
+        });
+
+        it('should log error when error occurs while getEmailDomainForOrganisationId adding person', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+                [],
+            );
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockRejectedValueOnce(new Error('Test'));
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(loggerMock.error).toHaveBeenCalledTimes(1);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                expect.stringContaining('Error while getEmailDomainForOrganisationId:'),
+            );
+        });
     });
 
     describe('handleEmailAddressGeneratedEvent', () => {
