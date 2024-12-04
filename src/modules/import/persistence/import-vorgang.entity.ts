@@ -22,7 +22,7 @@ export class ImportVorgangEntity extends TimestampedEntity {
     @Property()
     public organisationsname!: string;
 
-    @Property({ type: 'int', default: 0 })
+    @Property({ type: 'int' })
     public dataItemCount!: number;
 
     @Enum({

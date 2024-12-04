@@ -143,7 +143,6 @@ export class ImportWorkflow {
             }
         });
 
-        // const importVorgangId: string = faker.string.uuid();
         const invalidImportDataItems: ImportDataItem<false>[] = [];
 
         if (permissions.personFields.username === undefined) {

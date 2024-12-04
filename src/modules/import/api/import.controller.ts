@@ -13,6 +13,7 @@ import {
     StreamableFile,
     UploadedFile,
     UseFilters,
+    UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -54,6 +55,7 @@ import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
 import { Paged } from '../../../shared/paging/paged.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -183,6 +185,7 @@ export class ImportController {
         }
     }
 
+    @UseGuards(StepUpGuard)
     @Get('history')
     @ApiOperation({ description: 'Get the history of import.' })
     @ApiOkResponse({
