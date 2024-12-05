@@ -71,6 +71,7 @@ export class ImportController {
         private readonly importVorgangRepository: ImportVorgangRepository,
     ) {}
 
+    @UseGuards(StepUpGuard)
     @Post('upload')
     @ApiConsumes('multipart/form-data')
     @ApiOkResponse({ description: 'Returns an import upload response object.', type: ImportUploadResponse })
@@ -115,6 +116,7 @@ export class ImportController {
         );
     }
 
+    @UseGuards(StepUpGuard)
     @ApiProduces('text/plain')
     @Post('execute')
     @HttpCode(HttpStatus.OK)
@@ -173,6 +175,7 @@ export class ImportController {
         }
     }
 
+    @UseGuards(StepUpGuard)
     @Delete(':importvorgangId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })
