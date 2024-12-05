@@ -27,6 +27,10 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
+    public static readonly DEFAULT_RETRIES: number = 5;
+
+    public static readonly EXPONENTIAL_BACKOFF_FACTOR: number = 3;
+
     public static readonly OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT: string = 'schule-sh.de';
 
     public static readonly ERSATZ_SCHULEN_DOMAIN_DEFAULT: string = 'ersatzschule-sh.de';
@@ -60,6 +64,57 @@ export class LdapClientService {
     ) {
         this.mutex = new Mutex();
     }
+
+    //** BELOW ONLY PUBLIC FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
+
+    public async createLehrer(person: PersonData, domain: string, mail?: string): Promise<Result<PersonData>> {
+        return this.executeWithRetry(
+            () => this.createLehrerInternal(person, domain, mail),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async changeEmailAddressByPersonId(personId: PersonID, newEmailAddress: string): Promise<Result<PersonID>> {
+        return this.executeWithRetry(
+            () => this.changeEmailAddressByPersonIdInternal(personId, newEmailAddress),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async modifyPersonAttributes(
+        oldReferrer: string,
+        newGivenName?: string,
+        newSn?: string,
+        newUid?: string,
+    ): Promise<Result<string>> {
+        return this.executeWithRetry(
+            () => this.modifyPersonAttributesInternal(oldReferrer, newGivenName, newSn, newUid),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async deleteLehrerByReferrer(referrer: string): Promise<Result<string>> {
+        return this.executeWithRetry(
+            () => this.deleteLehrerByReferrerInternal(referrer),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async deleteLehrer(person: PersonData, domain: string): Promise<Result<PersonData>> {
+        return this.executeWithRetry(
+            () => this.deleteLehrerInternal(person, domain),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async isLehrerExisting(referrer: string, domain: string): Promise<Result<boolean>> {
+        return this.executeWithRetry(
+            () => this.isLehrerExistingInternal(referrer, domain),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    //** BELOW ONLY PRIVATE FUNCTIONS */
 
     private async bind(): Promise<Result<boolean>> {
         this.logger.info('LDAP: bind');
@@ -121,75 +176,7 @@ export class LdapClientService {
         return person?.referrer;
     }
 
-    public async createLehrer(
-        person: PersonData,
-        domain: string,
-        mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
-    ): Promise<Result<PersonData>> {
-        const referrer: string | undefined = person.referrer;
-        if (!referrer) {
-            return {
-                ok: false,
-                error: new UsernameRequiredError(
-                    `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
-                ),
-            };
-        }
-        const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
-
-        const lehrerUid: string = this.getLehrerUid(referrer, rootName.value);
-        return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: createLehrer');
-            const client: Client = this.ldapClient.getClient();
-            const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
-
-            const searchResultLehrer: SearchResult = await client.search(
-                `ou=${rootName.value},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
-                {
-                    filter: `(uid=${person.referrer})`,
-                },
-            );
-            if (searchResultLehrer.searchEntries.length > 0) {
-                this.logger.info(`LDAP: Lehrer ${lehrerUid} exists, nothing to create`);
-
-                return { ok: true, value: person };
-            }
-            const entry: LdapPersonEntry = {
-                uid: referrer,
-                uidNumber: LdapClientService.UID_NUMBER,
-                gidNumber: LdapClientService.GID_NUMBER,
-                homeDirectory: LdapClientService.HOME_DIRECTORY,
-                cn: referrer,
-                givenName: person.vorname,
-                sn: person.familienname,
-                objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
-                mailPrimaryAddress: mail ?? ``,
-                mailAlternativeAddress: mail ?? ``,
-            };
-
-            const controls: Control[] = [];
-            if (person.ldapEntryUUID) {
-                entry.entryUUID = person.ldapEntryUUID;
-                controls.push(new Control(LdapClientService.RELAX_OID));
-            }
-
-            try {
-                await client.add(lehrerUid, entry, controls);
-                this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
-
-                return { ok: true, value: person };
-            } catch (err) {
-                const errMsg: string = JSON.stringify(err);
-                this.logger.error(`LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:${errMsg}`);
-
-                return { ok: false, error: new LdapCreateLehrerError() };
-            }
-        });
-    }
-
-    public async isLehrerExisting(referrer: string, domain: string): Promise<Result<boolean>> {
+    private async isLehrerExistingInternal(referrer: string, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
@@ -212,7 +199,56 @@ export class LdapClientService {
         });
     }
 
-    public async modifyPersonAttributes(
+    private async deleteLehrerByReferrerInternal(referrer: string): Promise<Result<string>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: deleteLehrer');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResultLehrer: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+                scope: 'sub',
+                filter: `(uid=${referrer})`,
+            });
+            if (!searchResultLehrer.searchEntries[0]) {
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
+            await client.del(searchResultLehrer.searchEntries[0].dn);
+            this.logger.info(`LDAP: Successfully deleted lehrer by person:${referrer}`);
+
+            return { ok: true, value: referrer };
+        });
+    }
+
+    private async deleteLehrerInternal(person: PersonData, domain: string): Promise<Result<PersonData>> {
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) return rootName;
+
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: deleteLehrer');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+            if (!person.referrer) {
+                return {
+                    ok: false,
+                    error: new UsernameRequiredError(
+                        `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
+                    ),
+                };
+            }
+            const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
+            await client.del(lehrerUid);
+            this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
+
+            return { ok: true, value: person };
+        });
+    }
+
+    private async modifyPersonAttributesInternal(
         oldReferrer: string,
         newGivenName?: string,
         newSn?: string,
@@ -291,56 +327,10 @@ export class LdapClientService {
         });
     }
 
-    public async deleteLehrerByReferrer(referrer: string): Promise<Result<string>> {
-        return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: deleteLehrer');
-            const client: Client = this.ldapClient.getClient();
-            const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
-
-            const searchResultLehrer: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
-                scope: 'sub',
-                filter: `(uid=${referrer})`,
-            });
-            if (!searchResultLehrer.searchEntries[0]) {
-                return {
-                    ok: false,
-                    error: new LdapSearchError(LdapEntityType.LEHRER),
-                };
-            }
-            await client.del(searchResultLehrer.searchEntries[0].dn);
-            this.logger.info(`LDAP: Successfully deleted lehrer by person:${referrer}`);
-
-            return { ok: true, value: referrer };
-        });
-    }
-
-    public async deleteLehrer(person: PersonData, domain: string): Promise<Result<PersonData>> {
-        const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
-
-        return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: deleteLehrer');
-            const client: Client = this.ldapClient.getClient();
-            const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
-            if (!person.referrer) {
-                return {
-                    ok: false,
-                    error: new UsernameRequiredError(
-                        `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
-                    ),
-                };
-            }
-            const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
-            await client.del(lehrerUid);
-            this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
-
-            return { ok: true, value: person };
-        });
-    }
-
-    public async changeEmailAddressByPersonId(personId: PersonID, newEmailAddress: string): Promise<Result<PersonID>> {
+    private async changeEmailAddressByPersonIdInternal(
+        personId: PersonID,
+        newEmailAddress: string,
+    ): Promise<Result<PersonID>> {
         const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         if (!referrer) {
             this.logger.error(
@@ -433,5 +423,115 @@ export class LdapClientService {
                 return { ok: false, error: new LdapModifyEmailError() };
             }
         });
+    }
+
+    private async createLehrerInternal(
+        person: PersonData,
+        domain: string,
+        mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
+    ): Promise<Result<PersonData>> {
+        const referrer: string | undefined = person.referrer;
+        if (!referrer) {
+            return {
+                ok: false,
+                error: new UsernameRequiredError(
+                    `Lehrer ${person.vorname} ${person.familienname} does not have a username`,
+                ),
+            };
+        }
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) return rootName;
+
+        const lehrerUid: string = this.getLehrerUid(referrer, rootName.value);
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: createLehrer');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResultLehrer: SearchResult = await client.search(
+                `ou=${rootName.value},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+                {
+                    filter: `(uid=${person.referrer})`,
+                },
+            );
+            if (searchResultLehrer.searchEntries.length > 0) {
+                this.logger.info(`LDAP: Lehrer ${lehrerUid} exists, nothing to create`);
+
+                return { ok: true, value: person };
+            }
+            const entry: LdapPersonEntry = {
+                uid: referrer,
+                uidNumber: LdapClientService.UID_NUMBER,
+                gidNumber: LdapClientService.GID_NUMBER,
+                homeDirectory: LdapClientService.HOME_DIRECTORY,
+                cn: referrer,
+                givenName: person.vorname,
+                sn: person.familienname,
+                objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
+                mailPrimaryAddress: mail ?? ``,
+                mailAlternativeAddress: mail ?? ``,
+            };
+
+            const controls: Control[] = [];
+            if (person.ldapEntryUUID) {
+                entry.entryUUID = person.ldapEntryUUID;
+                controls.push(new Control(LdapClientService.RELAX_OID));
+            }
+
+            try {
+                await client.add(lehrerUid, entry, controls);
+                this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
+
+                return { ok: true, value: person };
+            } catch (err) {
+                const errMsg: string = JSON.stringify(err);
+                this.logger.error(`LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:${errMsg}`);
+
+                return { ok: false, error: new LdapCreateLehrerError() };
+            }
+        });
+    }
+
+    private executeWithRetry<T>(
+        func: () => Promise<Result<T>>,
+        retries: number,
+        delay: number = 1000,
+    ): Promise<Result<T>> {
+        const attempt = (remainingRetries: number, currentDelay: number): Promise<Result<T>> => {
+            const currentAttempt: number = retries - remainingRetries + 1;
+            return func()
+                .then((result: Result<T>) => {
+                    if (result.ok) {
+                        return result;
+                    } else {
+                        throw new Error(`Function returned error: ${result.error.message}`);
+                    }
+                })
+                .catch((error: Error) => {
+                    this.logger.error(`Attempt ${currentAttempt}: Failed with error: ${error.message}`);
+                    if (remainingRetries === 0) {
+                        this.logger.error(`All ${retries} attempts failed. Exiting with failure.`);
+                        return {
+                            ok: false,
+                            error: new Error('Maximum retries reached without success.'),
+                        };
+                    }
+                    this.logger.warning(
+                        `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${
+                            remainingRetries - 1
+                        }`,
+                    );
+                    return this.sleep(currentDelay).then(
+                        () => attempt(remainingRetries - 1, currentDelay * LdapClientService.EXPONENTIAL_BACKOFF_FACTOR), // Exponential backoff
+                    );
+                });
+        };
+
+        return attempt(retries, delay);
+    }
+
+    private async sleep(ms: number): Promise<void> {
+        return new Promise<void>((resolve: () => void) => setTimeout(resolve, ms));
     }
 }
