@@ -16,6 +16,7 @@ data:
   FRONTEND_DEFAULT_LOGIN_REDIRECT: "https://{{ .Values.backendHostname }}/"
   FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"
   BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
+  ERROR_PAGE_REDIRECT: "https://{{ .Values.backendHostname }}/login-error"
   LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
   LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"
   LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"
@@ -27,4 +28,3 @@ data:
   ITSLEARNING_ROOT: '{{ .Values.itslearning.root }}'
   ITSLEARNING_ROOT_OEFFENTLICH: '{{ .Values.itslearning.rootOeffentlich }}'
   ITSLEARNING_ROOT_ERSATZ: '{{ .Values.itslearning.rootErsatz }}'
-

@@ -1,24 +1,21 @@
-{{if .Values.backend.ingress.enabled }}
+{{if .Values.backend.ingress.enabled2nd }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ template "common.names.name" . }}-backend
+  name: {{ template "common.names.name" . }}-backend2nd
   namespace: {{ template "common.names.namespace" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
   annotations:
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{ .Values.keycloakHostname }}"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{ .Values.keycloak2ndHostname }},https://{{ .Values.keycloakHostname }}"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     {{- with .Values.backend.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  tls:
-  - hosts:
-      - {{ .Values.backendHostname  }}
   ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
   rules:
-    - host: {{ .Values.backendHostname }}
+    - host: {{ .Values.backend2ndHostname }}
       http:
         paths:
           {{- range $path := .Values.backend.ingress.paths }}
