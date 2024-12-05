@@ -2,16 +2,19 @@ import {
     Body,
     Controller,
     Delete,
+    Get,
     HttpCode,
     HttpException,
     HttpStatus,
     Param,
     ParseFilePipeBuilder,
     Post,
+    Query,
     Res,
     StreamableFile,
     UploadedFile,
     UseFilters,
+    UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -47,6 +50,14 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ImportvorgangQueryParams } from './importvorgang-query.param.js';
+import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
+import { ImportVorgangResponse } from './importvorgang.response.js';
+import { PagedResponse } from '../../../shared/paging/paged.response.js';
+import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
+import { ImportVorgang } from '../domain/import-vorgang.js';
+import { Paged } from '../../../shared/paging/paged.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -57,8 +68,10 @@ export class ImportController {
     public constructor(
         private readonly importWorkflowFactory: ImportWorkflowFactory,
         private readonly logger: ClassLogger,
+        private readonly importVorgangRepository: ImportVorgangRepository,
     ) {}
 
+    @UseGuards(StepUpGuard)
     @Post('upload')
     @ApiConsumes('multipart/form-data')
     @ApiOkResponse({ description: 'Returns an import upload response object.', type: ImportUploadResponse })
@@ -103,6 +116,7 @@ export class ImportController {
         );
     }
 
+    @UseGuards(StepUpGuard)
     @ApiProduces('text/plain')
     @Post('execute')
     @HttpCode(HttpStatus.OK)
@@ -161,6 +175,7 @@ export class ImportController {
         }
     }
 
+    @UseGuards(StepUpGuard)
     @Delete(':importvorgangId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })
@@ -184,5 +199,42 @@ export class ImportController {
                 );
             }
         }
+    }
+
+    @UseGuards(StepUpGuard)
+    @Get('history')
+    @ApiOperation({ description: 'Get the history of import.' })
+    @ApiOkResponse({
+        description: 'The import transactions were successfully returned',
+        type: [ImportVorgangResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get import transactions.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get import transactions.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting import transactions.' })
+    public async findImportTransactions(
+        @Query() queryParams: ImportvorgangQueryParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<PagedResponse<ImportVorgangResponse>> {
+        const [result, total]: [ImportVorgang<true>[], number] = await this.importVorgangRepository.findAuthorized(
+            permissions,
+            {
+                status: queryParams.status,
+                personId: permissions.personFields.id,
+                rolleIds: queryParams.rolleIds,
+                organisationIds: queryParams.organisationIds,
+                offset: queryParams.offset,
+                limit: queryParams.limit,
+            },
+        );
+
+        const pagedImportVorgangResponse: Paged<ImportVorgangResponse> = {
+            total: total,
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? result.length,
+            items: result.map((importVorgang: ImportVorgang<true>) => new ImportVorgangResponse(importVorgang)),
+        };
+
+        return new PagedResponse(pagedImportVorgangResponse);
     }
 }

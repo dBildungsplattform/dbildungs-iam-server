@@ -13,8 +13,6 @@ import Papa, { ParseResult } from 'papaparse';
 import { CSVImportDataItemDTO } from './csv-import-data-item.dto.js';
 import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
-import { ImportDataItem } from './import-data-item.js';
-import { faker } from '@faker-js/faker';
 import {
     PersonenkontextCreationService,
     PersonPersonenkontext,
@@ -30,6 +28,9 @@ import { validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ImportDataItem } from './import-data-item.js';
+import { ImportVorgang } from './import-vorgang.js';
+import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -47,6 +48,11 @@ export type TextFilePersonFields = {
     password: string | undefined;
 };
 
+export type RolleAndOrganisationByName = {
+    rollenName: string;
+    organisationsname: string;
+};
+
 export class ImportWorkflow {
     public readonly TEXT_FILENAME_NAME: string = '_spsh_csv_import_ergebnis.txt';
 
@@ -62,6 +68,7 @@ export class ImportWorkflow {
         private readonly importDataRepository: ImportDataRepository,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
         private readonly logger: ClassLogger,
+        private readonly importVorgangRepository: ImportVorgangRepository,
     ) {}
 
     public static createNew(
@@ -70,6 +77,7 @@ export class ImportWorkflow {
         importDataRepository: ImportDataRepository,
         personenkontextCreationService: PersonenkontextCreationService,
         logger: ClassLogger,
+        importVorgangRepository: ImportVorgangRepository,
     ): ImportWorkflow {
         return new ImportWorkflow(
             rolleRepo,
@@ -77,6 +85,7 @@ export class ImportWorkflow {
             importDataRepository,
             personenkontextCreationService,
             logger,
+            importVorgangRepository,
         );
     }
 
@@ -91,12 +100,12 @@ export class ImportWorkflow {
         file: Express.Multer.File,
         permissions: PersonPermissions,
     ): Promise<DomainError | ImportUploadResultFields> {
-        const referenceCheckError: Option<DomainError> = await this.checkReferences(
+        const referenceCheck: DomainError | RolleAndOrganisationByName = await this.checkReferences(
             this.selectedOrganisationId,
             this.selectedRolleId,
         );
-        if (referenceCheckError) {
-            return referenceCheckError;
+        if (referenceCheck instanceof DomainError) {
+            return referenceCheck;
         }
 
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
@@ -138,8 +147,24 @@ export class ImportWorkflow {
             }
         });
 
-        const importVorgangId: string = faker.string.uuid();
         const invalidImportDataItems: ImportDataItem<false>[] = [];
+
+        if (permissions.personFields.username === undefined) {
+            //log no username found for adminn instead of throwing an error
+            return new EntityNotFoundError('Person', permissions.personFields.id);
+        }
+        //Create ImportVorgang
+        const importVorgang: ImportVorgang<false> = ImportVorgang.createNew(
+            permissions.personFields.username,
+            referenceCheck.rollenName,
+            referenceCheck.organisationsname,
+            parsedDataItems.length,
+            permissions.personFields.id,
+            this.selectedRolleId,
+            this.selectedOrganisationId,
+        );
+
+        const savedImportvorgang: ImportVorgang<true> = await this.importVorgangRepository.save(importVorgang);
 
         const promises: Promise<ImportDataItem<true>>[] = parsedDataItems.map((value: CSVImportDataItemDTO) => {
             const importDataItemErrors: string[] = [];
@@ -166,7 +191,7 @@ export class ImportWorkflow {
             }
 
             const importDataItem: ImportDataItem<false> = ImportDataItem.createNew(
-                importVorgangId,
+                savedImportvorgang.id,
                 value.nachname,
                 value.vorname,
                 value.klasse,
@@ -184,8 +209,11 @@ export class ImportWorkflow {
         //TODO: 50 ImportDataItems per call direkt einmail persistieren
         await Promise.all(promises);
 
+        savedImportvorgang.validate(invalidImportDataItems.length);
+        await this.importVorgangRepository.save(savedImportvorgang);
+
         return {
-            importVorgangId,
+            importVorgangId: savedImportvorgang.id,
             isValid: invalidImportDataItems.length === 0,
             totalImportDataItems: parsedDataItems.length,
             totalInvalidImportDataItems: invalidImportDataItems.length,
@@ -220,6 +248,14 @@ export class ImportWorkflow {
         //Optimierung: Process 10 dataItems at time for createPersonWithPersonenkontexte
         // const offset: number = 0;
         // const limit: number = 10;
+        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
+        if (!importVorgang) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
+            };
+        }
+
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
         if (total === 0) {
@@ -228,6 +264,10 @@ export class ImportWorkflow {
                 error: new EntityNotFoundError('ImportDataItem', importvorgangId),
             };
         }
+
+        importVorgang.execute();
+        await this.importVorgangRepository.save(importVorgang);
+
         //create Person With PKs
         //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
         const savedPersonenWithPersonenkontext: (DomainError | PersonPersonenkontext)[] = [];
@@ -238,7 +278,9 @@ export class ImportWorkflow {
                     organisationByIdAndName.name === importDataItem.klasse, //Klassennamen sind case sensitive
             );
             if (!klasse) {
-                //(ToDO => next ticket: validate every data item and collect all errors even on import execution)
+                importVorgang.fail();
+                await this.importVorgangRepository.save(importVorgang);
+
                 throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
                     `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
                 ]);
@@ -301,9 +343,13 @@ export class ImportWorkflow {
         const result: Result<Buffer> = await this.createTextFile(textFilePersonFieldsList);
 
         if (result.ok) {
+            importVorgang.complete();
             await this.importDataRepository.deleteByImportVorgangId(importvorgangId);
+        } else {
+            importVorgang.fail();
         }
 
+        await this.importVorgangRepository.save(importVorgang);
         return result;
     }
 
@@ -320,7 +366,19 @@ export class ImportWorkflow {
             };
         }
 
+        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
+        if (!importVorgang) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
+            };
+        }
+
         await this.importDataRepository.deleteByImportVorgangId(importvorgangId);
+
+        importVorgang.cancel();
+        await this.importVorgangRepository.save(importVorgang);
+
         return {
             ok: true,
             value: undefined,
@@ -328,7 +386,10 @@ export class ImportWorkflow {
     }
 
     //Optimierung: CheckReferences auslagern?
-    private async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
+    private async checkReferences(
+        organisationId: string,
+        rolleId: string,
+    ): Promise<DomainError | RolleAndOrganisationByName> {
         const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
             this.organisationRepository.findById(organisationId),
             this.rolleRepo.findById(rolleId),
@@ -359,7 +420,10 @@ export class ImportWorkflow {
             return new RolleNurAnPassendeOrganisationError();
         }
 
-        return undefined;
+        return {
+            rollenName: rolle.name,
+            organisationsname: orga.name ?? orga.kennung ?? orga.id,
+        };
     }
 
     private async checkPermissions(permissions: PersonPermissions): Promise<Option<DomainError>> {
