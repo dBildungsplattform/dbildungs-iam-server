@@ -20,6 +20,7 @@ const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototy
 describe('LoginGuard', () => {
     let module: TestingModule;
     let sut: LoginGuard;
+    let configMock: DeepMocked<ConfigService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -37,6 +38,7 @@ describe('LoginGuard', () => {
         }).compile();
 
         sut = module.get(LoginGuard);
+        configMock = module.get(ConfigService);
     }, 30 * 1_000);
 
     afterAll(async () => {
@@ -143,6 +145,11 @@ describe('LoginGuard', () => {
         });
 
         it('should throw HttpFoundException exception if KeycloakUser does not exist', async () => {
+            configMock.getOrThrow.mockReturnValueOnce({
+                ERROR_PAGE_REDIRECT: faker.internet.url(),
+                OIDC_CALLBACK_URL: faker.internet.url(),
+            });
+
             canActivateSpy.mockRejectedValueOnce(new KeycloakUserNotFoundError());
             logInSpy.mockResolvedValueOnce(undefined);
 
