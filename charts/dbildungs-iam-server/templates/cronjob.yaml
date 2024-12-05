@@ -8,6 +8,8 @@ metadata:
 spec:
   schedule: {{ $job_options.schedule }}
   startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       backoffLimit: 0
