@@ -12,9 +12,6 @@ metadata:
 spec:
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
   selector:
-    matchExpressions:
-    - key: app.kubernetes.io/name
-      operator: In
-      values:
-      - dbildungs-iam-server
+    matchLabels:
+      app.kubernetes.io/name: dbildungs-iam-server
 {{- end }}
