@@ -19,5 +19,4 @@ spec:
       - dbildungs-iam-server
       - schulportal-client
       - dbildungs-iam-keycloak
-      - dbildungs-iam-ldap
 {{- end }}
