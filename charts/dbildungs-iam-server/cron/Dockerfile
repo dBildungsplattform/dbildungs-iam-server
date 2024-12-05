@@ -1,5 +1,7 @@
 FROM alpine:3.19
 
+ENV LOG_FILE_PATH=/var/log/cron.log
+
 # Install necessary packages
 RUN apk update && \
     apk add --no-cache bash cronie jq openssl vim wget
