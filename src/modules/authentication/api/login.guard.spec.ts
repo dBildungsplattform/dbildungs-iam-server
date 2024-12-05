@@ -72,14 +72,16 @@ describe('LoginGuard', () => {
             await expect(sut.canActivate(contextMock)).resolves.toBe(false);
         });
 
-        it('should refuse on exception', async () => {
+        it('should retry on exception', async () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockRejectedValueOnce('Something broke');
 
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
 
-            await expect(sut.canActivate(contextMock)).resolves.toBe(false);
+            await expect(sut.canActivate(contextMock)).resolves.toBe(true);
+            const request: Request = contextMock.switchToHttp().getRequest<Request>();
+            expect(request.session.passport?.user.redirect_uri).not.toBeNull();
         });
 
         it('should call logIn of superclass', async () => {
