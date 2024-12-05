@@ -5,7 +5,7 @@ namespaceOverride: ''
 backendHostname: ''
 keycloakHostname: ''
 keycloak2ndHostname: "key.mcpovel.de"
-backend2ndHostname: "backend.mcpovel.de"
+backend2ndHostname: "back.mcpovel.de"
 
 containerSecurityContext:
   enabled: true
