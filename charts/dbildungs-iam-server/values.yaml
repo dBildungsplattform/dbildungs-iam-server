@@ -176,7 +176,7 @@ autoscaling:
 
 podDisruptionBudget:
   enabled: true
-  minAvailable: "80%"
+  minAvailable: "100%"
 
 status:
   url: 'https://status.dev.spsh.dbildungsplattform.de/'
