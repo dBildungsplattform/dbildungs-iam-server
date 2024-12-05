@@ -32,6 +32,7 @@ import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-add
 import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
+import { PersonDomainError } from '../../person/domain/person-domain.error.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -270,6 +271,31 @@ export class EmailEventHandler {
         }
     }
 
+    private async getPersonReferrerOrError(personId: PersonID): Promise<Result<string>> {
+        const person: Option<Person<true>> = await this.personRepository.findById(personId);
+
+        if (!person) {
+            this.logger.error(`Person Could Not Be Found For personId:${personId}`);
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Person', personId),
+            };
+        }
+        if (!person.referrer) {
+            this.logger.error(`Referrer Could Not Be Found For personId:${personId}`);
+            return {
+                ok: false,
+                error: new PersonDomainError('Person-Referrer NOT defined', personId),
+            };
+        }
+
+        this.logger.info(`Found referrer${person.referrer} For personId:${personId}`);
+        return {
+            ok: true,
+            value: person.referrer,
+        };
+    }
+
     private async handlePerson(personId: PersonID): Promise<void> {
         // Map to store combinations of rolleId and organisationId as the key
         const rolleIdPKMap: Map<string, Personenkontext<true>> = new Map<string, Personenkontext<true>>();
@@ -391,6 +417,10 @@ export class EmailEventHandler {
             this.eventService.publish(new EmailAddressAlreadyExistsEvent(personId, organisationKennung.value));
         }
 
+        const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
+        if (!personReferrer.ok) {
+            return; //error logging is done getPersonReferrerOrError
+        }
         for (const email of existingEmails) {
             if (email.enabled) {
                 return this.logger.info(`Existing email for personId:${personId} already enabled`);
@@ -406,6 +436,7 @@ export class EmailEventHandler {
                     this.eventService.publish(
                         new EmailAddressGeneratedEvent(
                             personId,
+                            personReferrer.value,
                             persistenceResult.id,
                             persistenceResult.address,
                             persistenceResult.enabled,
@@ -444,6 +475,10 @@ export class EmailEventHandler {
     private async createNewEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
         const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
+        const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
+        if (!personReferrer.ok) {
+            return; //error logging is done getPersonReferrerOrError
+        }
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
             await this.createAndPersistFailedEmailAddress(personId);
@@ -458,6 +493,7 @@ export class EmailEventHandler {
             this.eventService.publish(
                 new EmailAddressGeneratedEvent(
                     personId,
+                    personReferrer.value,
                     persistenceResult.id,
                     persistenceResult.address,
                     persistenceResult.enabled,
@@ -476,6 +512,10 @@ export class EmailEventHandler {
     ): Promise<void> {
         const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
+        const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
+        if (!personReferrer.ok) {
+            return; //error logging is done getPersonReferrerOrError
+        }
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
             await this.createAndPersistFailedEmailAddress(personId);
@@ -491,6 +531,7 @@ export class EmailEventHandler {
             this.eventService.publish(
                 new EmailAddressChangedEvent(
                     personId,
+                    personReferrer.value,
                     oldEmail.id,
                     oldEmail.address,
                     persistenceResult.id,
