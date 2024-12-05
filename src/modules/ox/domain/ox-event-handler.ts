@@ -60,6 +60,8 @@ export class OxEventHandler {
 
     private readonly contextName: OXContextName;
 
+    private readonly standardGroupId?: OXGroupID;
+
     private static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
 
     private static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'lehrer-';
@@ -79,6 +81,7 @@ export class OxEventHandler {
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;
         this.contextName = oxConfig.CONTEXT_NAME;
+        this.standardGroupId = oxConfig.STANDARD_GROUP_ID;
     }
 
     @EventHandler(EmailAddressChangedEvent)
@@ -291,9 +294,15 @@ export class OxEventHandler {
         }
         //Removal from Standard-Group is possible even when user is member of other OxGroups
         const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
-        // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
+        // The Ox-request sent should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
         /* eslint-disable no-await-in-loop */
         for (const oxGroup of oxGroups) {
+            if (this.standardGroupId && oxGroup.id == this.standardGroupId) {
+                this.logger.info(
+                    `Skipping Removal As Member From Standard-Group, oxUserId:${oxUserId}, oxGroupId:${this.standardGroupId}`,
+                );
+                continue;
+            }
             //logging of results is done in removeOxUserFromOxGroup
             await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId);
         }

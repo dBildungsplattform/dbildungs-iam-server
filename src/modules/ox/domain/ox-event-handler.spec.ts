@@ -1156,6 +1156,7 @@ describe('OxEventHandler', () => {
                     },
                 });
 
+                //mock Ox-changeUsername-request
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
                     error: new OxError(),
@@ -1208,6 +1209,7 @@ describe('OxEventHandler', () => {
                     },
                 });
 
+                //mock Ox-changeUsername-request
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
                     value: undefined,
@@ -1217,6 +1219,51 @@ describe('OxEventHandler', () => {
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully Changed OxUsername For oxUserId:${oxUserId} After PersonDeletedEvent`,
+                );
+            });
+        });
+
+        describe('when standard-group is defined', () => {
+            it('should NOT remove user as member from standard-group and log info about that', async () => {
+                //configService.getOrThrow<OxConfig>('OX').STANDARD_GROUP_ID = '12';
+                event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
+                const oxUserId: OXUserID = faker.string.numeric();
+
+                emailRepoMock.findByAddress.mockResolvedValueOnce(
+                    createMock<EmailAddress<true>>({
+                        get oxUserID(): Option<string> {
+                            return oxUserId;
+                        },
+                    }),
+                );
+
+                // Mock group retrieval successfully
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        groups: [
+                            {
+                                displayname: 'groupDisplayName',
+                                id: '1',
+                                name: 'standardGroupName',
+                                memberIds: [oxUserId],
+                            },
+                        ],
+                    },
+                });
+
+                // DO NOT Mock removal as member from oxGroup, because only retrieved group is the standard-group
+
+                //mock Ox-changeUsername-request
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+
+                await sut.handlePersonDeletedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Skipping Removal As Member From Standard-Group, oxUserId:${oxUserId}, oxGroupId:1`,
                 );
             });
         });
