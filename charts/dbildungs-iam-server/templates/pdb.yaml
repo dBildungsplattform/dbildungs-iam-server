@@ -17,6 +17,4 @@ spec:
       operator: In
       values:
       - dbildungs-iam-server
-      - schulportal-client
-      - dbildungs-iam-keycloak
 {{- end }}
