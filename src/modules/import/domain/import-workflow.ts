@@ -21,6 +21,7 @@ import { ImportDomainErrorI18nTypes } from './import-i18n-errors.js';
 import { validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { ImportCSVFileInvalidHeaderError } from './import-csv-file-invalid-header.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportDataItem } from './import-data-item.js';
 import { ImportVorgang } from './import-vorgang.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
@@ -65,6 +66,7 @@ export class ImportWorkflow {
         private readonly importDataRepository: ImportDataRepository,
         private readonly importVorgangRepository: ImportVorgangRepository,
         private readonly eventService: EventService,
+        private readonly logger: ClassLogger,
     ) {}
 
     public static createNew(
@@ -73,6 +75,7 @@ export class ImportWorkflow {
         importDataRepository: ImportDataRepository,
         importVorgangRepository: ImportVorgangRepository,
         eventService: EventService,
+        logger: ClassLogger,
     ): ImportWorkflow {
         return new ImportWorkflow(
             rolleRepo,
@@ -80,6 +83,7 @@ export class ImportWorkflow {
             importDataRepository,
             importVorgangRepository,
             eventService,
+            logger,
         );
     }
 
@@ -141,7 +145,6 @@ export class ImportWorkflow {
             }
         });
 
-        // const importVorgangId: string = faker.string.uuid();
         const invalidImportDataItems: ImportDataItem<false>[] = [];
 
         if (permissions.personFields.username === undefined) {

@@ -40,6 +40,7 @@ import { ImportVorgang } from '../domain/import-vorgang.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { ImportVorgangResponse } from './importvorgang.response.js';
 import { ImportStatus } from '../domain/import.enums.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 describe('Import API', () => {
     let app: INestApplication;
@@ -102,6 +103,9 @@ describe('Import API', () => {
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
+
+        const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
+        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);

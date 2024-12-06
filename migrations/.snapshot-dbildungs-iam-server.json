@@ -94,14 +94,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -323,14 +322,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -574,14 +572,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -817,14 +814,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -1052,14 +1048,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -1313,14 +1308,13 @@
           "nullable": false,
           "nativeEnumName": "import_status_enum",
           "enumItems": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ],
           "mappedType": "enum"
         }
@@ -1365,14 +1359,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -1679,14 +1672,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -2058,14 +2050,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -2556,14 +2547,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -2853,14 +2843,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -3138,14 +3127,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -3534,14 +3522,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -3771,14 +3758,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -4017,14 +4003,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -4342,14 +4327,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -4690,14 +4674,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -4934,14 +4917,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -5178,14 +5160,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -5468,14 +5449,13 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED",
-            "FINISHED",
-            "INPROGRESS",
-            "INVALID",
-            "STARTED",
-            "VALID"
+            "FAILED"
           ]
         },
         "organisations_typ_enum": {
@@ -5650,14 +5630,13 @@
       "name": "import_status_enum",
       "schema": "public",
       "items": [
+        "STARTED",
+        "VALID",
+        "INVALID",
+        "INPROGRESS",
         "CANCELLED",
         "COMPLETED",
-        "FAILED",
-        "FINISHED",
-        "INPROGRESS",
-        "INVALID",
-        "STARTED",
-        "VALID"
+        "FAILED"
       ]
     },
     "organisations_typ_enum": {

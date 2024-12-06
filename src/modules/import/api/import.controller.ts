@@ -4,6 +4,7 @@ import {
     Delete,
     Get,
     HttpCode,
+    HttpException,
     HttpStatus,
     Param,
     ParseFilePipeBuilder,
@@ -13,6 +14,7 @@ import {
     StreamableFile,
     UploadedFile,
     UseFilters,
+    UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -47,6 +49,7 @@ import { ImportDomainError } from '../domain/import-domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportvorgangQueryParams } from './importvorgang-query.param.js';
 import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
 import { ImportVorgangResponse } from './importvorgang.response.js';
@@ -54,6 +57,7 @@ import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
 import { Paged } from '../../../shared/paging/paged.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { ImportStatus } from '../domain/import.enums.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
@@ -65,9 +69,11 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 export class ImportController {
     public constructor(
         private readonly importWorkflowFactory: ImportWorkflowFactory,
+        private readonly logger: ClassLogger,
         private readonly importVorgangRepository: ImportVorgangRepository,
     ) {}
 
+    @UseGuards(StepUpGuard)
     @Post('upload')
     @ApiConsumes('multipart/form-data')
     @ApiOkResponse({ description: 'Returns an import upload response object.', type: ImportUploadResponse })
@@ -112,6 +118,7 @@ export class ImportController {
         );
     }
 
+    @UseGuards(StepUpGuard)
     @ApiProduces('text/plain')
     @Post('execute')
     @HttpCode(HttpStatus.OK)
@@ -139,15 +146,19 @@ export class ImportController {
 
         if (!result.ok) {
             if (result.error instanceof ImportDomainError) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${result.error.message}`,
+                );
                 throw result.error;
             }
 
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
         }
     }
 
+    @UseGuards(StepUpGuard)
     @Delete(':importvorgangId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })

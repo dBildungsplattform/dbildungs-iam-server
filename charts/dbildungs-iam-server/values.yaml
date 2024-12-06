@@ -178,14 +178,14 @@ status:
 cronjobs:
   enabled: true
   image:
-    tag: DBP-1083-latest
-    repository: ghcr.io/hpi-schul-cloud/cron-tools
+    tag: '1.1.0'
+    repository: docker.io/schulcloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
   keycloakClientId: spsh-service
   jwksFilePath: /keys/jwks.json
-  backendHostname: '{{ $.Values.frontendHostname }}'
+  c: '{{ $.Values.frontendHostname }}'
   scriptDir: scripts
   jobs:
     cron-trigger-1:
