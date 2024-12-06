@@ -14,7 +14,6 @@ import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
-//import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 
@@ -59,7 +58,6 @@ export class LdapClientService {
         private readonly ldapInstanceConfig: LdapInstanceConfig,
         private readonly logger: ClassLogger,
         private readonly eventService: EventService,
-        //private readonly personRepo: PersonRepository,
     ) {
         this.mutex = new Mutex();
     }
@@ -350,15 +348,6 @@ export class LdapClientService {
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
-        if (!referrer) {
-            this.logger.error(
-                `Changing email-address in LDAP FAILED, no person/referrer found for personId:${personId}`,
-            );
-            return {
-                ok: false,
-                error: new LdapSearchError(LdapEntityType.LEHRER),
-            };
-        }
 
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: changeEmailAddress');
@@ -446,15 +435,6 @@ export class LdapClientService {
     public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
-        if (!referrer) {
-            this.logger.error(
-                `Changing userPassword (UEM) in LDAP FAILED, no person/referrer found for personId:${personId}`,
-            );
-            return {
-                ok: false,
-                error: new LdapSearchError(LdapEntityType.LEHRER),
-            };
-        }
         const userPassword: string = generatePassword();
 
         return this.mutex.runExclusive(async () => {

@@ -28,6 +28,7 @@ import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
+import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -882,6 +883,125 @@ describe('LDAP Client Service', () => {
                             mailAlternativeAddress: newEmailAddress,
                         }),
                     );
+                });
+            });
+        });
+    });
+
+    describe('changeUserPasswordByPersonId', () => {
+        describe('when bind returns error', () => {
+            it('should return falsy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.changeUserPasswordByPersonId(
+                    faker.string.uuid(),
+                    faker.internet.userName(),
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when person cannot be found by personID', () => {
+            it('should return LdapSearchError', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<PersonID> = await ldapClientService.changeUserPasswordByPersonId(
+                    faker.string.uuid(),
+                    faker.internet.userName(),
+                );
+
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                });
+            });
+        });
+
+        describe('when person can be found but modification fails', () => {
+            const fakePersonID: string = faker.string.uuid();
+            const fakeDN: string = faker.string.alpha();
+
+            it('should NOT publish event and throw LdapPersonEntryChangedEvent', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    dn: fakeDN,
+                                }),
+                            ],
+                        }),
+                    );
+                    clientMock.modify.mockRejectedValueOnce(new Error());
+
+                    return clientMock;
+                });
+
+                const result: Result<PersonID> = await ldapClientService.changeUserPasswordByPersonId(
+                    fakePersonID,
+                    faker.internet.userName(),
+                );
+
+                if (result.ok) throw Error();
+                expect(result.error).toStrictEqual(new LdapModifyUserPasswordError());
+                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                    `LDAP: Modifying userPassword (UEM) FAILED, errMsg:{}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person can be found and userPassword can be modified', () => {
+            let fakePersonID: string;
+            let fakeDN: string;
+
+            beforeEach(() => {
+                fakePersonID = faker.string.uuid();
+                fakeDN = faker.string.alpha();
+            });
+
+            describe('when', () => {
+                it('should publish event and return new (UEM) userPassword', async () => {
+                    ldapClientMock.getClient.mockImplementation(() => {
+                        clientMock.bind.mockResolvedValueOnce();
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [
+                                    createMock<Entry>({
+                                        dn: fakeDN,
+                                    }),
+                                ],
+                            }),
+                        );
+                        clientMock.modify.mockResolvedValueOnce(undefined);
+
+                        return clientMock;
+                    });
+
+                    const result: Result<PersonID> = await ldapClientService.changeUserPasswordByPersonId(
+                        fakePersonID,
+                        faker.internet.userName(),
+                    );
+
+                    if (!result.ok) throw Error();
+                    expect(result.value).toHaveLength(8);
+                    expect(loggerMock.info).toHaveBeenLastCalledWith(
+                        `LDAP: Successfully modified userPassword (UEM) for personId:${fakePersonID}`,
+                    );
+                    expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
                 });
             });
         });
