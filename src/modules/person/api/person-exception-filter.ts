@@ -10,6 +10,7 @@ import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
 
 @Catch(PersonDomainError, DuplicatePersonalnummerError)
 export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError> {
@@ -61,6 +62,13 @@ export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError>
             new DbiamPersonError({
                 code: 400,
                 i18nKey: PersonErrorI18nTypes.PERSONALNUMMER_NICHT_EINDEUTIG,
+            }),
+        ],
+        [
+            PersonUserPasswordModificationError.name,
+            new DbiamPersonError({
+                code: 500,
+                i18nKey: PersonErrorI18nTypes.PERSON_PASSWORD_MODIFICATION_ERROR,
             }),
         ],
     ]);
