@@ -44,6 +44,7 @@ import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from './person-email-response.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
+import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -117,6 +118,10 @@ describe('PersonController', () => {
                 {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
+                },
+                {
+                    provide: LdapClientService,
+                    useValue: createMock<LdapClientService>(),
                 },
             ],
         }).compile();
