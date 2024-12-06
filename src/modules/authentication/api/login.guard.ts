@@ -22,7 +22,7 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
     public override async canActivate(context: ExecutionContext): Promise<boolean> {
         const request: Request = context.switchToHttp().getRequest<Request>();
         const res: Response = context.switchToHttp().getResponse<Response>();
-        const requiredStepUpLevel: StepUpLevel | undefined = request.query['requiredStepUpLevel'] as StepUpLevel;
+        const requiredStepUpLevel: StepUpLevel = request.query['requiredStepUpLevel'] as StepUpLevel;
 
         if (request.query['redirectUrl']) {
             request.session.redirectUrl = request.query['redirectUrl'] as string;
@@ -32,10 +32,8 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
             request.session.requiredStepupLevel = requiredStepUpLevel;
         }
         if (
-            (request.isAuthenticated() && request.passportUser?.stepUpLevel === StepUpLevel.GOLD) ||
-            (request.isAuthenticated() &&
-                request.session.requiredStepupLevel &&
-                request.session.requiredStepupLevel === (request.passportUser?.stepUpLevel ?? StepUpLevel.NONE))
+            request.isAuthenticated() &&
+            request.session.requiredStepupLevel === (request.passportUser?.stepUpLevel ?? StepUpLevel.NONE)
         ) {
             return true;
         }
