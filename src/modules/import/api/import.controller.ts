@@ -155,7 +155,14 @@ export class ImportController {
             const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
+            );
         }
+
+        this.logger.info(
+            `Admin: ${permissions.personFields.id}) hat für Schule: ${body.organisationId} einen CSV Import durchgeführt.`,
+        );
     }
 
     @UseGuards(StepUpGuard)

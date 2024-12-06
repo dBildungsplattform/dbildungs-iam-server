@@ -319,6 +319,9 @@ export class ImportWorkflow {
         if (result.ok) {
             importVorgang.complete();
             await this.importDataRepository.deleteByImportVorgangId(importvorgangId);
+            this.logger.info(
+                `Der Importvorgang ${importvorgangId} ist abgeschlossen (status=${importVorgang.status}).`,
+            );
         } else {
             importVorgang.fail();
         }

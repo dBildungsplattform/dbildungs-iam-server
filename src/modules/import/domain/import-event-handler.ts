@@ -16,6 +16,7 @@ import { ImportExecutedEvent } from '../../../shared/events/import-executed.even
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { OrganisationByIdAndName } from './import-workflow.js';
 import { Injectable } from '@nestjs/common';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 // export type OrganisationByIdAndName = Pick<Organisation<true>, 'id' | 'name'>;
 // export type TextFilePersonFields = {
@@ -42,6 +43,7 @@ export class ImportEventHandler {
         private readonly importDataRepository: ImportDataRepository,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
         private readonly importVorgangRepository: ImportVorgangRepository,
+        private readonly logger: ClassLogger,
     ) {}
 
     // Initialize the aggregate with the selected Organisation and Rolle
@@ -129,6 +131,16 @@ export class ImportEventHandler {
                     importDataItem.nachname,
                     createPersonenkontexte,
                 );
+
+            if (!(savedPersonWithPersonenkontext instanceof DomainError)) {
+                this.logger.info(
+                    `System hat einen neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
+                );
+            } else {
+                this.logger.info(
+                    `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${savedPersonWithPersonenkontext.message}`,
+                );
+            }
 
             savedPersonenWithPersonenkontext.push(savedPersonWithPersonenkontext);
 
