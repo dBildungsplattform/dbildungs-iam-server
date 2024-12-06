@@ -124,7 +124,8 @@ backend:
     interval: 30m
     endpoints:
       - port: 'web'
-  extraEnvVars: ["NODE_OPTIONS='--max-old-space-size=3584'"]
+  extraEnvVars:
+    NODE_OPTIONS: "--max-old-space-size=3584"
   extraVolumes: []
   volumeMounts:
     - mountPath: /app/config/config.json
