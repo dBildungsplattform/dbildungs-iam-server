@@ -7,7 +7,11 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
 data:
   config-json: |-
+    {{- if .Values.backend.config.alternativeConfigJson }}
+    {{- tpl .Values.backend.config.alternativeConfigFile . | nindent 4 }}
+    {{- else }}
     {{ .Files.Get "config/config.json" | nindent 4 }}
+    {{- end }}
   NODE_ENV: "prod"
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}

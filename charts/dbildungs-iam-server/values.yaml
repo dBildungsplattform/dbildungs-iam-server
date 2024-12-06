@@ -65,7 +65,7 @@ backend:
   replicaCount: 1
   image:
     repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-    tag: ''
+    tag: 'DBP-1107'
     pullPolicy: Always
   containerPorts:
     http: 8080
@@ -133,6 +133,9 @@ backend:
       subPath: secrets-json
       name: secret-volume
   extraVolumeMounts: []
+  config: 
+    alternativeConfigJson: false
+    alternativeConfigFile: {}
 
 redis:
   enabled: true
