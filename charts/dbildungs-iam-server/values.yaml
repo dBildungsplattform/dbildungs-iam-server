@@ -124,9 +124,7 @@ backend:
     interval: 30m
     endpoints:
       - port: 'web'
-  extraEnvVars:
-    - name: NODE_OPTIONS
-      value: "--max-old-space-size=3584"
+  extraEnvVars: []
   extraVolumes: []
   volumeMounts:
     - mountPath: /app/config/config.json
@@ -141,6 +139,7 @@ backend:
     renameWaitingTimeInSeconds: 3
     stepUpTimeoutInSeconds: 900
     stepUpTimeoutEnabled: 'false'
+    nodeOptions: "--max-old-space-size=3584"
 
 autoscaling:
   enabled: false

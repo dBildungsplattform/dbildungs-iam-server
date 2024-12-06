@@ -79,6 +79,8 @@ spec:
               protocol: TCP
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
+            - name: NODE_OPTIONS
+              value: {{ .Values.backend.env.nodeOptions }}
             {{- if .Values.backend.extraEnvVars }}
             {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
             {{- end }}
