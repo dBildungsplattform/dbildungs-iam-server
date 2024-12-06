@@ -8,14 +8,7 @@ import { LdapConfigModule } from './ldap-config.module.js';
 import { LdapClient } from './domain/ldap-client.js';
 
 @Module({
-    imports: [
-        LoggerModule.register(LdapModule.name),
-        LdapConfigModule,
-        RolleModule,
-        //PersonModule,
-        OrganisationModule,
-        //PersonenKontextModule,
-    ],
+    imports: [LoggerModule.register(LdapModule.name), LdapConfigModule, RolleModule, OrganisationModule],
     providers: [LdapEventHandler, LdapClientService, LdapClient],
     exports: [LdapEventHandler, LdapClientService, LdapClient],
 })

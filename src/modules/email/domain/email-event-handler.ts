@@ -419,7 +419,7 @@ export class EmailEventHandler {
 
         const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
         if (!personReferrer.ok) {
-            return; //error logging is done getPersonReferrerOrError
+            return; //error logging is done in getPersonReferrerOrError
         }
         for (const email of existingEmails) {
             if (email.enabled) {
@@ -477,7 +477,7 @@ export class EmailEventHandler {
         if (!organisationKennung.ok) return;
         const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
         if (!personReferrer.ok) {
-            return; //error logging is done getPersonReferrerOrError
+            return; //error logging is done in getPersonReferrerOrError
         }
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
@@ -514,7 +514,7 @@ export class EmailEventHandler {
         if (!organisationKennung.ok) return;
         const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
         if (!personReferrer.ok) {
-            return; //error logging is done getPersonReferrerOrError
+            return; //error logging is done in getPersonReferrerOrError
         }
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
