@@ -384,6 +384,11 @@ describe('ItsLearning Persons Event Handler', () => {
                         serviceProviderExternalSystems: [ServiceProviderSystem.ITSLEARNING],
                         isItslearningOrga: true,
                     }),
+                    makeKontextEventData({
+                        orgaTyp: OrganisationsTyp.KLASSE,
+                        parentOrgaId: undefined,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.ITSLEARNING],
+                    }),
                 ],
             );
 

@@ -206,7 +206,7 @@ export class ItsLearningPersonsEventHandler {
                 if (pk.orgaTyp == OrganisationsTyp.SCHULE) {
                     if (!pk.isItslearningOrga) return false;
                 } else if (pk.orgaTyp == OrganisationsTyp.KLASSE) {
-                    if (!pk.parentOrgaId || !schoolsWithItslearning.has(pk.parentOrgaId)) return;
+                    if (!pk.parentOrgaId || !schoolsWithItslearning.has(pk.parentOrgaId)) return false;
                 } else {
                     return false;
                 }
