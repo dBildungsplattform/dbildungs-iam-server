@@ -99,17 +99,18 @@ export class UsernameGeneratorService {
         // Check Keycloak
         const searchResult: Result<User<true>, DomainError> = await this.kcUserService.findOne({ username });
         if (searchResult.ok) {
-            return true;
+            return true; // Username exists in Keycloak
         } else if (!(searchResult.error instanceof EntityNotFoundError)) {
-            throw searchResult.error;
+            throw searchResult.error; // Something else went wrong with Keycloak search
         }
 
         // Check OX Blacklist for the username. If it exists then return true.
         const oxUser: OxUserBlacklistEntity | null = await this.findByOxUsername(username);
+
         if (oxUser) {
-            return true;
+            return true; // Username exists in the blacklist
         }
 
-        return false;
+        return false; // Username is available
     }
 }

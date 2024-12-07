@@ -189,6 +189,12 @@ describe('The UsernameGenerator Service', () => {
             error: new EntityNotFoundError('Not found'),
         });
 
+        // Arrange Keycloak response (simulate the user not found in Keycloak)
+        kcUserService.findOne.mockResolvedValueOnce({
+            ok: false,
+            error: new EntityNotFoundError('Not found'),
+        });
+
         // Act: Generate the username
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
 
