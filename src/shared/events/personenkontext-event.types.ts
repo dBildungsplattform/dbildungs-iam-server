@@ -19,6 +19,7 @@ export type PersonenkontextEventKontextData = {
     rolleId: RolleID;
     rolle: RollenArt;
     orgaId: OrganisationID;
+    parentOrgaId?: OrganisationID;
     orgaTyp?: OrganisationsTyp;
     orgaKennung?: string;
 
