@@ -115,11 +115,12 @@ describe('DbiamPersonenUebersicht', () => {
         });
 
         describe('when most recent PK is last or later in list', () => {
-            it('should set lastModifiedZuordnungen to value of latest PK updatedAt timestamp', () => {
+            it('should set lastModifiedZuordnungen to value of latest PK updatedAt timestamp', async () => {
                 personenkontexte = [personenkontextPast, personenkontextRecent];
 
                 const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
-                    sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
+                    await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
+
                 if (res instanceof EntityNotFoundError) throw res;
                 const [responses, lastModified]: [DBiamPersonenzuordnungResponse[], Date?] = res;
 
@@ -130,11 +131,11 @@ describe('DbiamPersonenUebersicht', () => {
         });
 
         describe('when most recentPK is first in list', () => {
-            it('should set lastModifiedZuordnungen to value of latest PK updatedAt timestamp', () => {
+            it('should set lastModifiedZuordnungen to value of latest PK updatedAt timestamp', async () => {
                 personenkontexte = [personenkontextRecent, personenkontextPast];
 
                 const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
-                    sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
+                    await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
                 if (res instanceof EntityNotFoundError) throw res;
                 const [responses, lastModified]: [DBiamPersonenzuordnungResponse[], Date?] = res;
 
