@@ -172,7 +172,7 @@ describe('The UsernameGenerator Service', () => {
         });
     });
 
-    it.only('should add a number when username exists in blacklist', async () => {
+    it('should add a number when username exists in blacklist', async () => {
         // Arrange: Create the OxUserBlacklistEntity with the username
         const usernameInBlacklist: string = 'mmeyer';
         const oxUser: OxUserBlacklistEntity = new OxUserBlacklistEntity();
@@ -194,8 +194,5 @@ describe('The UsernameGenerator Service', () => {
 
         // Assert: The generated username should have the counter appended
         expect(generatedUsername).toEqual({ ok: true, value: 'mmeyer1' });
-
-        // Clean up: Remove the ox user after the test
-        await em.removeAndFlush(oxUser);
     });
 });
