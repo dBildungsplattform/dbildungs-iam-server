@@ -1,6 +1,10 @@
 # Scan & Publish image and helm chart on push, deployment on push, delete deployment on branch deletion, scheduled trivy scanner
 name: "Dev Pipeline"
 
+concurrency: 
+  group: release-helm-chart
+  cancel-in-progress: false
+
 # All triggers have to be in one file, so that the trivy results can be compared to identify introduced vulnerabilities
 # See DBP-340
 on:
@@ -10,10 +14,6 @@ on:
   schedule:
     - cron: '0 2 * * *'
   delete:
-
-concurrency:
-  group: dbildungs-iam-server-${{ github.event.ref }}
-  cancel-in-progress: true
 
 jobs:
   codeql_analyze:
@@ -118,57 +118,57 @@ jobs:
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
   
-  deploy:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    needs:
-      - branch_meta
-      - create_branch_identifier
-      - wait_for_helm_chart_to_get_published
-      - build_image_on_push
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@5
-    with:
-      dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
-      schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
-      dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
-      dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
-      namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-    secrets: inherit
+  # deploy:
+  #   if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+  #   needs:
+  #     - branch_meta
+  #     - create_branch_identifier
+  #     - wait_for_helm_chart_to_get_published
+  #     - build_image_on_push
+  #   uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@5
+  #   with:
+  #     dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
+  #     schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
+  #     dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
+  #     dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
+  #     namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
+  #   secrets: inherit
 
-  # On Delete
-  create_branch_identifier_for_deletion:
-    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
-    with:
-      branch: ${{ github.event.ref }}
+  # # On Delete
+  # create_branch_identifier_for_deletion:
+  #   if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
+  #   uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
+  #   with:
+  #     branch: ${{ github.event.ref }}
 
-  delete_namespace:
-    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
-    needs:
-      - create_branch_identifier_for_deletion
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@5
-    with:
-      namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
-    secrets:
-      SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+  # delete_namespace:
+  #   if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
+  #   needs:
+  #     - create_branch_identifier_for_deletion
+  #   uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@5
+  #   with:
+  #     namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
+  #   secrets:
+  #     SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
 
-  delete_successful:
-    if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    needs:
-      - delete_namespace
-      - create_branch_identifier_for_deletion
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Deletion workflow of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done"
+  # delete_successful:
+  #   if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
+  #   needs:
+  #     - delete_namespace
+  #     - create_branch_identifier_for_deletion
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: echo "Deletion workflow of namespace" ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }} "done"
 
-  # Scheduled
-  scheduled_trivy_scan:
-    name: "Scheduled trivy scan of latest image"
-    if: ${{ github.event_name == 'schedule' }}
-    permissions:
-      packages: read
-      security-events: write
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
-    with:
-      image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
-      fail_on_vulnerabilites: false
-      report_location: "Dockerfile"
+  # # Scheduled
+  # scheduled_trivy_scan:
+  #   name: "Scheduled trivy scan of latest image"
+  #   if: ${{ github.event_name == 'schedule' }}
+  #   permissions:
+  #     packages: read
+  #     security-events: write
+  #   uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
+  #   with:
+  #     image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
+  #     fail_on_vulnerabilites: false
+  #     report_location: "Dockerfile"
