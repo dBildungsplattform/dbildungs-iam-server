@@ -545,6 +545,11 @@
             "personId": 60,
             "organisationId": 702,
             "rolleId": 1
+        },
+        {
+            "personId": 63,
+            "organisationId": 0,
+            "rolleId": 102
         }
     ]
 }

@@ -12,6 +12,12 @@
             "username": "migration",
             "vorname": "migration",
             "familienname": "migration"
+        },
+        {
+            "id": 3,
+            "username": "nextcloud",
+            "vorname": "nextcloud",
+            "familienname": "nextcloud"
         }
     ]
 }
