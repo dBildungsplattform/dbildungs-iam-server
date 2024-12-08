@@ -508,7 +508,7 @@ export class OxEventHandler {
         }
 
         this.logger.info(
-            `User created in OX, userId:${createUserResult.value.id}, email:${createUserResult.value.primaryEmail}`,
+            `User created in OX, oxUserId:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}, personId:${personId}`,
         );
 
         mostRecentRequestedEmailAddress.oxUserID = createUserResult.value.id;
