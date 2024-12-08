@@ -16,6 +16,7 @@ import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 export type PersonData = {
     vorname: string;
@@ -27,6 +28,8 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
+    // DEFAULT_RETRIES = 5 & EXPONENTIAL_BACKOFF_FACTOR = 3, will produce retry sequence: 1sek, 3sek, 9sek, 27sek, 81sek
+
     public static readonly DEFAULT_RETRIES: number = 5;
 
     public static readonly EXPONENTIAL_BACKOFF_FACTOR: number = 3;
@@ -493,43 +496,49 @@ export class LdapClientService {
         });
     }
 
-    private executeWithRetry<T>(
+    private async executeWithRetry<T>(
         func: () => Promise<Result<T>>,
         retries: number,
         delay: number = 1000,
     ): Promise<Result<T>> {
-        const attempt = (remainingRetries: number, currentDelay: number): Promise<Result<T>> => {
-            const currentAttempt: number = retries - remainingRetries + 1;
-            return func()
-                .then((result: Result<T>) => {
-                    if (result.ok) {
-                        return result;
-                    } else {
-                        throw new Error(`Function returned error: ${result.error.message}`);
-                    }
-                })
-                .catch((error: Error) => {
-                    this.logger.error(`Attempt ${currentAttempt}: Failed with error: ${error.message}`);
-                    if (remainingRetries === 0) {
-                        this.logger.error(`All ${retries} attempts failed. Exiting with failure.`);
-                        return {
-                            ok: false,
-                            error: new Error('Maximum retries reached without success.'),
-                        };
-                    }
-                    this.logger.warning(
-                        `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${
-                            remainingRetries - 1
-                        }`,
-                    );
-                    return this.sleep(currentDelay).then(
-                        () =>
-                            attempt(remainingRetries - 1, currentDelay * LdapClientService.EXPONENTIAL_BACKOFF_FACTOR), // Exponential backoff
-                    );
-                });
-        };
+        let currentAttempt: number = 0;
 
-        return attempt(retries, delay);
+        while (currentAttempt < retries) {
+            currentAttempt++;
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                const result: Result<T, Error> = await func();
+                if (result.ok || result.error instanceof DomainError) {
+                    return result;
+                } else {
+                    throw new Error(`Function returned non Domain error: ${result.error.message}`);
+                }
+            } catch (error) {
+                this.logger.error(`Attempt ${currentAttempt}: Failed`);
+                if (currentAttempt >= retries) {
+                    this.logger.error(`All ${retries} attempts failed. Exiting with failure.`);
+                    return {
+                        ok: false,
+                        error: new Error('Maximum retries reached without success.'),
+                    };
+                }
+
+                const currentDelay: number =
+                    delay * Math.pow(LdapClientService.EXPONENTIAL_BACKOFF_FACTOR, currentAttempt - 1);
+                this.logger.warning(
+                    `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
+                );
+
+                // eslint-disable-next-line no-await-in-loop
+                await this.sleep(currentDelay);
+            }
+        }
+
+        // Fallback to ensure the function always returns a value (should never reach here due to return in loop).
+        return {
+            ok: false,
+            error: new Error('Unexpected failure in executeWithRetry.'),
+        };
     }
 
     private async sleep(ms: number): Promise<void> {

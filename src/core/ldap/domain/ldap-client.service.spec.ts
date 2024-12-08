@@ -127,7 +127,7 @@ describe('LDAP Client Service', () => {
         expect(em).toBeDefined();
     });
 
-    describe('getRootName', () => {
+    describe('getRootName', () => { //WORKS
         it('when emailDomain is neither schule-sh.de nor ersatzschule-sh.de should return LdapEmailDomainError', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
@@ -180,7 +180,7 @@ describe('LDAP Client Service', () => {
         });
     });
 
-    describe('isLehrerExisting', () => {
+    describe('isLehrerExisting', () => { //WORKS
         const fakeEmailDomain: string = 'schule-sh.de';
         it('when lehrer exists should return true', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
@@ -234,7 +234,7 @@ describe('LDAP Client Service', () => {
         });
     });
 
-    describe('creation', () => {
+    describe('creation', () => { //WORKS
         const fakeEmailDomain: string = 'schule-sh.de';
 
         describe('lehrer', () => {
@@ -281,7 +281,7 @@ describe('LDAP Client Service', () => {
                 expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
             });
 
-            it('when adding fails should log error', async () => {
+            it('when adding fails should log error', async () => { //REASON
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] })); //mock: lehrer not present
