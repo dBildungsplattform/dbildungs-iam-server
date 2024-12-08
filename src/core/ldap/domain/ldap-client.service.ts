@@ -523,7 +523,8 @@ export class LdapClientService {
                         }`,
                     );
                     return this.sleep(currentDelay).then(
-                        () => attempt(remainingRetries - 1, currentDelay * LdapClientService.EXPONENTIAL_BACKOFF_FACTOR), // Exponential backoff
+                        () =>
+                            attempt(remainingRetries - 1, currentDelay * LdapClientService.EXPONENTIAL_BACKOFF_FACTOR), // Exponential backoff
                     );
                 });
         };
