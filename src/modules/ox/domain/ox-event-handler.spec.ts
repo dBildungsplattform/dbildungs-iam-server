@@ -546,7 +546,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `No requested email-address found for personId:${personId}`,
+                `No REQUESTED email-address found for personId:${personId}`,
             );
         });
 
@@ -828,7 +828,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `No requested email-address found for personId:${personId}`,
+                `No REQUESTED email-address found for personId:${personId}`,
             );
         });
 
@@ -878,12 +878,12 @@ describe('OxEventHandler', () => {
         it('should publish OxUserChangedEvent on success', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(getRequestedEmailAddresses(email));
-
+            const currentAliases: string[] = [faker.internet.email()];
             //mock getData
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
                 value: createMock<GetDataForUserResponse>({
-                    aliases: [faker.internet.email()],
+                    aliases: currentAliases,
                     username: oxUserName,
                     id: oxUserId,
                     primaryEmail: email,
@@ -900,6 +900,14 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(2);
             expect(loggerMock.error).toHaveBeenCalledTimes(0);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Found mostRecentRequested Email-Address:${JSON.stringify(email)} For personId:${personId}`,
+            );
+            //use regex, because strict comparison fails, local test-var currentAliases has changed by the implemented function when expect is checked here
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                expect.stringMatching(/Found Current aliases:.* For personId:/),
+            );
+            expect(loggerMock.info).toHaveBeenCalledWith(`Added New alias:${email} For personId:${personId}`);
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${email}`,
             );
