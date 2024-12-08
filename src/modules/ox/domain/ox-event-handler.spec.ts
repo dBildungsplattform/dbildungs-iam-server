@@ -599,7 +599,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `User created in OX, userId:${fakeOXUserId}, email:${event.address}`,
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}`,
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}`,
@@ -720,7 +720,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `User created in OX, userId:${fakeOXUserId}, email:${event.address}`,
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}`,
             );
             expect(loggerMock.error).toHaveBeenLastCalledWith(
                 `Persisting oxUserId on emailAddress for personId:${personId} failed`,
