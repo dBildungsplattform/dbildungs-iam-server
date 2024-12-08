@@ -908,7 +908,7 @@ describe('OxEventHandler', () => {
                     personId: personId,
                     keycloakUsername: referrer,
                     oxUserId: oxUserId,
-                    oxUserName: oxUserName,
+                    oxUserName: referrer, //this is the new OxUserName, it's changed on renaming in SPSH
                     oxContextId: contextId,
                     oxContextName: contextName,
                     primaryEmail: email,
