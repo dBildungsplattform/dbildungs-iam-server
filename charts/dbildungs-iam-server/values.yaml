@@ -58,6 +58,12 @@ auth:
   pi_user_resolver: ''
   pi_user_realm: ''
   redis_password: ''
+  vidis_base_url: ''
+  vidis_username: ''
+  vidis_password: ''
+  vidis_region_name: ''
+  vidis_keycloak_group: ''
+  vidis_keycloak_role: ''
 
 backend:
   replicaCount: 1
@@ -156,8 +162,8 @@ status:
 cronjobs:
   enabled: true
   image:
-    tag: DBP-1083-latest
-    repository: ghcr.io/hpi-schul-cloud/cron-tools
+    tag: '1.1.0'
+    repository: docker.io/schulcloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'

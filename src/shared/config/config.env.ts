@@ -9,6 +9,7 @@ import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
 import { envToOptionalBoolean } from './utils.js';
+import { VidisConfig } from './vidis.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -21,6 +22,7 @@ export type Config = {
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
     OX: Partial<OxConfig>;
     SYSTEM: Partial<SystemConfig>;
+    VIDIS: Partial<VidisConfig>;
 };
 
 export default (): Config => ({
@@ -86,5 +88,13 @@ export default (): Config => ({
             ? parseInt(process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS'])
             : undefined,
         STEP_UP_TIMEOUT_ENABLED: process.env['SYSTEM_STEP_UP_TIMEOUT_ENABLED']?.toLowerCase() as 'true' | 'false',
+    },
+    VIDIS: {
+        BASE_URL: process.env['VIDIS_BASE_URL'],
+        USERNAME: process.env['VIDIS_USERNAME'],
+        PASSWORD: process.env['VIDIS_PASSWORD'],
+        REGION_NAME: process.env['VIDIS_REGION_NAME'],
+        KEYCLOAK_GROUP: process.env['VIDIS_KEYCLOAK_GROUP'],
+        KEYCLOAK_ROLE: process.env['VIDIS_KEYCLOAK_ROLE'],
     },
 });
