@@ -28,11 +28,7 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
-    // DEFAULT_RETRIES = 5 & EXPONENTIAL_BACKOFF_FACTOR = 3, will produce retry sequence: 1sek, 3sek, 9sek, 27sek, 81sek
-
-    public static readonly DEFAULT_RETRIES: number = 3;
-
-    public static readonly EXPONENTIAL_BACKOFF_FACTOR: number = 3;
+    public static readonly DEFAULT_RETRIES: number = 4; // e.g. DEFAULT_RETRIES = 4 will produce retry sequence: 1sek, 8sek, 27sek, 64sek (1000ms * retrycounter^3)
 
     public static readonly OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT: string = 'schule-sh.de';
 
@@ -513,9 +509,7 @@ export class LdapClientService {
                     throw new Error(`Function returned non Domain error: ${result.error.message}`);
                 }
             } catch (error) {
-                this.logger.error(`Attempt ${currentAttempt}: Failed`);
-                const currentDelay: number =
-                    delay * Math.pow(LdapClientService.EXPONENTIAL_BACKOFF_FACTOR, currentAttempt - 1);
+                const currentDelay: number = delay * Math.pow(currentAttempt, 3);
                 this.logger.warning(
                     `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
                 );
