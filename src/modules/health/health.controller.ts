@@ -29,7 +29,7 @@ export class HealthController {
     public check(): Promise<HealthCheckResult> {
         return this.health.check([
             (): Promise<HealthIndicatorResult> =>
-                this.mikroOrm.pingCheck('database', { connection: this.em.getConnection() }),
+                this.mikroOrm.pingCheck('database', { connection: this.em.getConnection('read'), timeout: 3000 }),
             (): Promise<HealthIndicatorResult> => this.keycloak.check(),
             (): Promise<HealthIndicatorResult> => this.redis.check(),
         ]);

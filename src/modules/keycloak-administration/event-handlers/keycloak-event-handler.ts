@@ -13,6 +13,7 @@ import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OXContextName } from '../../../shared/types/ox-ids.types.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
 
 @Injectable()
 export class KeycloakEventHandler {
@@ -91,6 +92,23 @@ export class KeycloakEventHandler {
             );
             this.logger.error(
                 `OxMetadataInKeycloakChangedEvent will NOT be published, email-address for personId:${event.personId} in REQUESTED status will NOT be ENABLED!`,
+            );
+        }
+    }
+
+    @EventHandler(EmailAddressDisabledEvent)
+    public async handleEmailAddressDisabledEvent(event: EmailAddressDisabledEvent): Promise<void> {
+        this.logger.info(`Received EmailAddressDisabledEvent personId:${event.personId}, username:${event.username}`);
+
+        const updateResult: Result<void> = await this.kcUserService.removeOXUserAttributes(event.username);
+
+        if (updateResult.ok) {
+            this.logger.info(
+                `Removed OX access for personId:${event.personId} & username:${event.username} in Keycloak`,
+            );
+        } else {
+            this.logger.error(
+                `Updating user in Keycloak FAILED for EmailAddressDisabledEvent, personId:${event.personId}, username:${event.username}`,
             );
         }
     }

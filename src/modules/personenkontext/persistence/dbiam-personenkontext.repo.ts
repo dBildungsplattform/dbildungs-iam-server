@@ -12,6 +12,8 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 
+export type RollenCount = { rollenart: string; count: string };
+
 function mapEntityToAggregate(
     entity: PersonenkontextEntity,
     personenkontextFactory: PersonenkontextFactory,
@@ -306,5 +308,18 @@ export class DBiamPersonenkontextRepo {
         }
 
         return groupedByPerson;
+    }
+
+    public async getPersonenkontextRollenCount(): Promise<RollenCount[]> {
+        const query: string = `SELECT rollenart, COUNT(*) as count
+                               FROM (
+                                   SELECT DISTINCT person_id, rollenart
+                                   FROM personenkontext
+                                   JOIN rolle ON personenkontext.rolle_id = rolle.id
+                               ) as distinct_roles
+                               GROUP BY rollenart;`;
+
+        const result: RollenCount[] = await this.em.execute(query, []);
+        return result;
     }
 }

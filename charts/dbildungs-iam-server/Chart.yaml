@@ -4,8 +4,3 @@ version: 0.2.0
 description: dBildungs-IAM-server
 type: application
 appVersion: ""
-dependencies:
-- name: redis
-  repository: https://charts.bitnami.com/bitnami
-  version: 20.3.0
-  condition: redis.enabled 

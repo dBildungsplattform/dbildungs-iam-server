@@ -9,7 +9,7 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { Personenkontext, mapAggregateToPartial } from '../domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from './dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo, RollenCount } from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
@@ -650,6 +650,27 @@ describe('dbiam Personenkontext Repo', () => {
 
             expect(result.has(person2.id)).toBe(true);
             expect(result.get(person2.id)).toHaveLength(2);
+        });
+    });
+
+    describe('getPersonenkontextRollenCount', () => {
+        it('should return the correct count of unique persons for a given role', async () => {
+            const person: Person<true> = await createPerson();
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolle instanceof DomainError) throw Error();
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, { personId: person.id, rolleId: rolle.id }),
+            );
+
+            const rollenCount: RollenCount[] = await sut.getPersonenkontextRollenCount();
+            expect(rollenCount.length).toBe(1);
+            if (rollenCount.length > 0) {
+                expect(rollenCount[0]!.count).toBe('1');
+                expect(rollenCount[0]!.rollenart).toBe(rolle.rollenart);
+            } else {
+                throw Error();
+            }
         });
     });
 });

@@ -1,4 +1,5 @@
 export type ExternalSystemIDs = {
+    ID_NEXTCLOUD?: string[];
     ID_ITSLEARNING?: string[];
     ID_OX?: string[];
 };

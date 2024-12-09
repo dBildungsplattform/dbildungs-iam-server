@@ -492,6 +492,7 @@ export class PersonRepository {
 
         person.referrer = person.username;
         const userDo: User<false> = User.createNew(person.username, undefined, {
+            ID_NEXTCLOUD: [person.id],
             ID_ITSLEARNING: [person.id],
             ID_OX: [person.id],
         });
