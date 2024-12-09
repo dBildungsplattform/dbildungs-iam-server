@@ -69,9 +69,8 @@ export class EmailRepo {
         if (!emailAddresses || !emailAddresses[0]) return null;
 
         if (emailAddresses.length > 1) {
-            this.logger.warning(`Multiple EmailAddresses Found In REQUESTED Status For personId:${personId}`);
-            this.logger.info(
-                `Only Most Recently Updated EmailAddresses Will Be Returned, address: ${emailAddresses[0].address}, personId:${personId}`,
+            this.logger.warning(
+                `Multiple EmailAddresses Found In REQUESTED Status For personId:${personId}, Will Only Return address:${emailAddresses[0].address}`,
             );
         }
 
