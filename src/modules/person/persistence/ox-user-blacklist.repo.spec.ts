@@ -86,7 +86,7 @@ describe('OxUserBlacklistRepo', () => {
                 const fakeUsername: OXUserName = faker.internet.userName();
                 await createEntity(undefined, undefined, fakeUsername);
 
-                const findResult: Option<OxUserBlacklistEntry<true>> = await sut.findByUsername(fakeUsername);
+                const findResult: Option<OxUserBlacklistEntry<true>> = await sut.findByOxUsername(fakeUsername);
 
                 if (!findResult) throw Error();
                 expect(findResult.username).toStrictEqual(fakeUsername);
@@ -95,7 +95,7 @@ describe('OxUserBlacklistRepo', () => {
 
         describe('when entity CANNOT be found by username', () => {
             it('should return null', async () => {
-                const findResult: Option<OxUserBlacklistEntry<true>> = await sut.findByUsername(
+                const findResult: Option<OxUserBlacklistEntry<true>> = await sut.findByOxUsername(
                     faker.internet.userName(),
                 );
 

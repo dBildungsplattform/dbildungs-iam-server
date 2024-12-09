@@ -47,7 +47,7 @@ export class OxUserBlacklistRepo {
         return null;
     }
 
-    public async findByUsername(oxUsername: OXUserName): Promise<Option<OxUserBlacklistEntry<true>>> {
+    public async findByOxUsername(oxUsername: OXUserName): Promise<Option<OxUserBlacklistEntry<true>>> {
         const oxUserBlacklistEntity: Option<OxUserBlacklistEntity> = await this.em.findOne(OxUserBlacklistEntity, {
             username: oxUsername,
         });
