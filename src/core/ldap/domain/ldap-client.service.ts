@@ -30,7 +30,7 @@ export type PersonData = {
 export class LdapClientService {
     // DEFAULT_RETRIES = 5 & EXPONENTIAL_BACKOFF_FACTOR = 3, will produce retry sequence: 1sek, 3sek, 9sek, 27sek, 81sek
 
-    public static readonly DEFAULT_RETRIES: number = 5;
+    public static readonly DEFAULT_RETRIES: number = 3;
 
     public static readonly EXPONENTIAL_BACKOFF_FACTOR: number = 3;
 
@@ -501,10 +501,9 @@ export class LdapClientService {
         retries: number,
         delay: number = 1000,
     ): Promise<Result<T>> {
-        let currentAttempt: number = 0;
+        let currentAttempt: number = 1;
 
-        while (currentAttempt < retries) {
-            currentAttempt++;
+        while (currentAttempt <= retries) {
             try {
                 // eslint-disable-next-line no-await-in-loop
                 const result: Result<T, Error> = await func();
@@ -515,14 +514,6 @@ export class LdapClientService {
                 }
             } catch (error) {
                 this.logger.error(`Attempt ${currentAttempt}: Failed`);
-                if (currentAttempt >= retries) {
-                    this.logger.error(`All ${retries} attempts failed. Exiting with failure.`);
-                    return {
-                        ok: false,
-                        error: new Error('Maximum retries reached without success.'),
-                    };
-                }
-
                 const currentDelay: number =
                     delay * Math.pow(LdapClientService.EXPONENTIAL_BACKOFF_FACTOR, currentAttempt - 1);
                 this.logger.warning(
@@ -532,12 +523,12 @@ export class LdapClientService {
                 // eslint-disable-next-line no-await-in-loop
                 await this.sleep(currentDelay);
             }
+            currentAttempt++;
         }
-
-        // Fallback to ensure the function always returns a value (should never reach here due to return in loop).
+        this.logger.error(`All ${retries} attempts failed. Exiting with failure.`);
         return {
             ok: false,
-            error: new Error('Unexpected failure in executeWithRetry.'),
+            error: new Error('Maximum retries reached without success.'),
         };
     }
 
