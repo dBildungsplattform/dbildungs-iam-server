@@ -10,7 +10,7 @@ import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fie
 import { createMock } from '@golevelup/ts-jest';
 import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
-import { TimeLimitOccasion } from '../domain/time-limit-occasion.enums.js';
+import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
 
 describe('UserinfoResponse', () => {
     const permissions: PersonPermissions = new PersonPermissions(

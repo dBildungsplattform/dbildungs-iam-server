@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TimeLimitOccasion } from '../domain/time-limit-occasion.enums.js';
+import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
 
 export class PersonTimeLimitInfoResponse {
     @ApiProperty({ nullable: true })

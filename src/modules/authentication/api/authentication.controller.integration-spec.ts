@@ -26,8 +26,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import PersonTimeLimitService from '../services/person-time-limit-info.service.js';
-import { TimeLimitOccasion } from '../domain/time-limit-occasion.enums.js';
+import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
+import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;

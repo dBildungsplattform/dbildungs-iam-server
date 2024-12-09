@@ -31,9 +31,9 @@ import { AuthenticationExceptionFilter } from './authentication-exception-filter
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { getLowestStepUpLevel } from '../passport/oidc.strategy.js';
-import PersonTimeLimitService from '../services/person-time-limit-info.service.js';
-import { PersonTimeLimitInfo } from '../domain/person-time-limit-info.js';
+import { PersonTimeLimitInfo } from '../../person/domain/person-time-limit-info.js';
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
+import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
 
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')

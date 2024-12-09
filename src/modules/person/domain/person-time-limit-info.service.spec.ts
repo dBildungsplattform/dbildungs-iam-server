@@ -5,9 +5,10 @@ import PersonTimeLimitService from './person-time-limit-info.service.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
 import { Person } from '../../person/domain/person.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { PersonTimeLimitInfo } from '../domain/person-time-limit-info.js';
 import { TimeLimitOccasion } from '../domain/time-limit-occasion.enums.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonTimeLimitInfo } from './person-time-limit-info.js';
+import { KOPERS_DEADLINE_IN_DAYS } from './person-time-limit.js';
 
 describe('PersonTimeLimitService', () => {
     let module: TestingModule;
@@ -61,7 +62,7 @@ describe('PersonTimeLimitService', () => {
             const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
 
             const expectedDeadline: Date = new Date(pesonenkontext.createdAt);
-            expectedDeadline.setDate(expectedDeadline.getDate() + 56);
+            expectedDeadline.setDate(expectedDeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
 
             expect(result).toEqual<PersonTimeLimitInfo[]>([
                 {

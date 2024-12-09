@@ -78,6 +78,7 @@ import { PersonEmailResponse } from './person-email-response.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
+import { KOPERS_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -218,7 +219,7 @@ export class PersonController {
                 await this.dBiamPersonenkontextService.getKopersPersonenkontext(personResult.value.id);
             if (kopersKontext) {
                 const koperslockDate: Date = new Date(kopersKontext.createdAt);
-                koperslockDate.setDate(koperslockDate.getDate() + 56);
+                koperslockDate.setDate(koperslockDate.getDate() + KOPERS_DEADLINE_IN_DAYS);
             }
         }
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(

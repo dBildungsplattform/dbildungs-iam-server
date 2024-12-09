@@ -13,7 +13,7 @@ import { JwtStrategy } from './passport/jwt.strategy.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
-import PersonTimeLimitService from './services/person-time-limit-info.service.js';
+import PersonTimeLimitService from '../person/domain/person-time-limit-info.service.js';
 
 @Module({
     imports: [
