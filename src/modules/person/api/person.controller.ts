@@ -552,7 +552,7 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<Result<string>> {
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowedOrRequesterIsPerson(
             params.personId,
             permissions,
         );

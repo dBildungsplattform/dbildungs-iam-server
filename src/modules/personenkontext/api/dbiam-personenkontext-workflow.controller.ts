@@ -209,7 +209,7 @@ export class DbiamPersonenkontextWorkflowController {
     }
 
     @Post()
-    @UseGuards(StepUpGuard)
+    //@UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
         description: 'Person with Personenkontext was successfully created.',

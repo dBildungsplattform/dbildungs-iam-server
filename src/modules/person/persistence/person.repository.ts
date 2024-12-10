@@ -246,6 +246,20 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
+    public async getPersonIfAllowedOrRequesterIsPerson(
+        personId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<Person<true>>> {
+        if (personId == permissions.personFields.id) {
+            let person: Option<Person<true>> = await this.findById(personId);
+            if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+            person = await this.extendPersonWithKeycloakData(person);
+            return { ok: true, value: person };
+        }
+
+        return this.getPersonIfAllowed(personId, permissions);
+    }
+
     public async extendPersonWithKeycloakData(person: Person<true>): Promise<Person<true>> {
         if (!person.keycloakUserId) {
             return person;

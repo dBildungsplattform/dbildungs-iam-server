@@ -972,7 +972,7 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError(),
                 });
@@ -992,7 +992,7 @@ describe('PersonController', () => {
 
             it('should throw HttpNotFoundException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError(),
                 });
@@ -1012,7 +1012,7 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
                     ok: true,
                     value: createMock<Person<true>>({ referrer: undefined }),
                 });
@@ -1033,7 +1033,10 @@ describe('PersonController', () => {
 
             it('should reset UEM-password for person', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
 
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
@@ -1055,7 +1058,10 @@ describe('PersonController', () => {
                     ok: false,
                     error: new PersonDomainError('Person', 'entityId', undefined),
                 });
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
 
                 await expect(
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
