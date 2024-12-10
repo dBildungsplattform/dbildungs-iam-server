@@ -67,5 +67,7 @@ export default (): {
         ENDPOINT: process.env['OX_ENDPOINT'],
         USERNAME: process.env['OX_USERNAME'],
         PASSWORD: process.env['OX_PASSWORD'],
+        CONTEXT_ID: process.env['OX_CONTEXT_ID'],
+        CONTEXT_NAME: process.env['OX_CONTEXT_NAME'],
     },
 });
