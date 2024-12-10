@@ -16,7 +16,6 @@ import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
 
 export type PersonData = {
     vorname: string;
@@ -28,7 +27,7 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
-    public static readonly DEFAULT_RETRIES: number = 4; // e.g. DEFAULT_RETRIES = 4 will produce retry sequence: 1sek, 8sek, 27sek, 64sek (1000ms * retrycounter^3)
+    public static readonly DEFAULT_RETRIES: number = 2; // e.g. DEFAULT_RETRIES = 4 will produce retry sequence: 1sek, 8sek, 27sek, 64sek (1000ms * retrycounter^3)
 
     public static readonly OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT: string = 'schule-sh.de';
 
@@ -498,15 +497,19 @@ export class LdapClientService {
         delay: number = 1000,
     ): Promise<Result<T>> {
         let currentAttempt: number = 1;
+        let result: Result<T, Error> = {
+            ok: false,
+            error: new Error('executeWithRetry default fallback'),
+        };
 
         while (currentAttempt <= retries) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                const result: Result<T, Error> = await func();
-                if (result.ok || result.error instanceof DomainError) {
+                result = await func();
+                if (result.ok) {
                     return result;
                 } else {
-                    throw new Error(`Function returned non Domain error: ${result.error.message}`);
+                    throw new Error(`Function returned error: ${result.error.message}`);
                 }
             } catch (error) {
                 const currentDelay: number = delay * Math.pow(currentAttempt, 3);
@@ -520,10 +523,7 @@ export class LdapClientService {
             currentAttempt++;
         }
         this.logger.error(`All ${retries} attempts failed. Exiting with failure.`);
-        return {
-            ok: false,
-            error: new Error('Maximum retries reached without success.'),
-        };
+        return result;
     }
 
     private async sleep(ms: number): Promise<void> {
