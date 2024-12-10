@@ -253,9 +253,10 @@ describe('LDAP Client Service', () => {
             const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, 'schule-sh.de');
 
             expect(result.ok).toBeFalsy();
-            expect(clientMock.bind).toHaveBeenCalledTimes(2);
+            expect(clientMock.bind).toHaveBeenCalledTimes(3);
             expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
             expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
         });
     });
 
