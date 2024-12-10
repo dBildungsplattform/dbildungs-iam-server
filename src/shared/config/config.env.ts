@@ -8,6 +8,7 @@ import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
+import { FeatureFlagConfig } from './featureflag.config.js';
 import { VidisConfig } from './vidis.config.js';
 
 export type Config = {
@@ -16,6 +17,7 @@ export type Config = {
     REDIS: Partial<RedisConfig>;
     LDAP: Partial<LdapConfig>;
     FRONTEND: Partial<FrontendConfig>;
+    FEATUREFLAG: Partial<FeatureFlagConfig>;
     HOST: Partial<HostConfig>;
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
@@ -51,6 +53,12 @@ export default (): Config => ({
         LOGOUT_REDIRECT: process.env['FRONTEND_LOGOUT_REDIRECT'],
         STATUS_REDIRECT_URL: process.env['STATUS_REDIRECT_URL'],
     },
+    FEATUREFLAG: {
+        FEATURE_FLAG_ROLLE_BEARBEITEN:
+            (process.env['FEATURE_FLAG_ROLLE_BEARBEITEN']?.toLowerCase() as 'true' | 'false') ?? 'false',
+        FEATURE_FLAG_BEFRISTUNG_BEARBEITEN:
+            (process.env['FEATURE_FLAG_BEFRISTUNG_BEARBEITEN']?.toLowerCase() as 'true' | 'false') ?? 'false',
+    },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
     },
@@ -58,7 +66,7 @@ export default (): Config => ({
         PASSWORD: process.env['REDIS_PASSWORD'],
     },
     ITSLEARNING: {
-        ENABLED: process.env['ITSLEARNING_ENABLED']?.toLowerCase() as 'true' | 'false',
+        ENABLED: (process.env['ITSLEARNING_ENABLED']?.toLowerCase() as 'true' | 'false') ?? 'false',
         ENDPOINT: process.env['ITSLEARNING_ENDPOINT'],
         USERNAME: process.env['ITSLEARNING_USERNAME'],
         PASSWORD: process.env['ITSLEARNING_PASSWORD'],
@@ -71,7 +79,7 @@ export default (): Config => ({
         REALM: process.env['PI_REALM'],
     },
     OX: {
-        ENABLED: process.env['OX_ENABLED']?.toLowerCase() as 'true' | 'false',
+        ENABLED: (process.env['OX_ENABLED']?.toLowerCase() as 'true' | 'false') ?? 'false',
         ENDPOINT: process.env['OX_ENDPOINT'],
         USERNAME: process.env['OX_USERNAME'],
         PASSWORD: process.env['OX_PASSWORD'],
