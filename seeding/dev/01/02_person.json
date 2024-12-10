@@ -458,14 +458,6 @@
             "password": "SPSHtest1!",
             "vorname": "Herold",
             "familienname": "Janssen"
-        },
-        {
-            "id": 63,
-            "username": "nextcloud",
-            "vorname": "nextcloud",
-            "password": "SPSHnextcloud1!",
-            "familienname": "nextcloud",
-            "personalnummer": "5555555"
         }
     ]
 }
