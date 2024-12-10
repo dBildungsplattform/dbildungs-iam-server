@@ -161,6 +161,7 @@ export class ImportController {
             this.logger.error(
                 `Admin: ${permissions.personFields.id}) hat versucht mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
             );
+            throw schulConnexError;
         }
 
         this.logger.info(

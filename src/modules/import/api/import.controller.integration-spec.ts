@@ -41,6 +41,7 @@ import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { ImportVorgangResponse } from './importvorgang.response.js';
 import { ImportStatus } from '../domain/import.enums.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { KeycloakAdministrationService } from '../../keycloak-administration/domain/keycloak-admin-client.service.js';
 
 describe('Import API', () => {
     let app: INestApplication;
@@ -98,6 +99,16 @@ describe('Import API', () => {
                             }),
                     }),
                 },
+                {
+                    provide: KeycloakAdministrationService,
+                    useValue: createMock<KeycloakAdministrationService>({
+                        getAuthedKcAdminClient: () =>
+                            Promise.resolve({
+                                ok: true,
+                                value: createMock(),
+                            }),
+                    }),
+                },
             ],
         })
             .overrideModule(KeycloakConfigModule)
@@ -118,6 +129,7 @@ describe('Import API', () => {
         personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personPermissionsMock);
         personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
         personPermissionsMock.personFields.username = faker.internet.userName();
+
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -584,14 +596,6 @@ describe('Import API', () => {
             await em.persistAndFlush(klasse);
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
 
-            const klasse1A: OrganisationEntity = new OrganisationEntity();
-            klasse1A.typ = OrganisationsTyp.KLASSE;
-            klasse1A.name = '1A';
-            klasse1A.administriertVon = schule.id;
-            klasse1A.zugehoerigZu = schule.id;
-            await em.persistAndFlush(klasse1A);
-            await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
-
             const sus: Rolle<true> | DomainError = await rolleRepo.save(
                 DoFactory.createRolle(false, {
                     rollenart: RollenArt.LERN,
@@ -602,24 +606,21 @@ describe('Import API', () => {
             if (sus instanceof DomainError) throw sus;
 
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false, { organisationId: schule.id, rolleId: sus.id }),
+                DoFactory.createImportVorgang(false, {
+                    organisationId: schule.id,
+                    rolleId: sus.id,
+                    status: ImportStatus.FINISHED,
+                }),
             );
             const importDataItem: ImportDataItem<true> = await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
                     importvorgangId: importVorgang.id,
                     klasse: klasse.name,
                     personalnummer: undefined,
+                    username: faker.internet.userName(),
+                    password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
                 }),
             );
-
-            const params: ImportvorgangByIdBodyParams = {
-                importvorgangId: faker.string.uuid(),
-            };
-            //execute the import
-            const executeResponse: Response = await request(app.getHttpServer() as App)
-                .post('/import/execute')
-                .send(params);
-            if (executeResponse.status !== 204) throw new Error('Import could not be executed');
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/import/${importVorgang.id}/download`)
