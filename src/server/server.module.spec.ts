@@ -5,7 +5,7 @@ import { OIDC_CLIENT } from '../modules/authentication/services/oidc-client.serv
 import { MiddlewareConsumer } from '@nestjs/common';
 import { createMock } from '@golevelup/ts-jest';
 import { RedisClientType } from 'redis';
-import { ConfigTestModule } from '../../test/utils/index.js';
+import { ConfigTestModule, LoggingTestModule } from '../../test/utils/index.js';
 
 jest.mock('redis', () => ({
     createClient: (): RedisClientType => createMock<RedisClientType>(),
@@ -16,7 +16,7 @@ describe('ServerModule', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ServerModule, ConfigTestModule],
+            imports: [ServerModule, ConfigTestModule, LoggingTestModule],
         })
             .overrideProvider(OIDC_CLIENT)
             .useValue(

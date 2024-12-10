@@ -20,6 +20,7 @@ const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototy
 describe('LoginGuard', () => {
     let module: TestingModule;
     let sut: LoginGuard;
+    let logger: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -37,6 +38,7 @@ describe('LoginGuard', () => {
         }).compile();
 
         sut = module.get(LoginGuard);
+        logger = module.get(ClassLogger);
     }, 30 * 1_000);
 
     afterAll(async () => {
@@ -56,7 +58,21 @@ describe('LoginGuard', () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
-            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+            });
+            contextMock.switchToHttp().getResponse.mockReturnValue({});
 
             await sut.canActivate(contextMock);
 
@@ -86,7 +102,20 @@ describe('LoginGuard', () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
-            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+            });
 
             await sut.canActivate(contextMock);
 
@@ -98,7 +127,20 @@ describe('LoginGuard', () => {
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             const redirectUrl: string = faker.internet.url();
-            contextMock.switchToHttp().getRequest<Request>().query = { redirectUrl };
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    redirectUrl,
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    redirectUrl: redirectUrl,
+                },
+            });
 
             await sut.canActivate(contextMock);
 
@@ -154,6 +196,30 @@ describe('LoginGuard', () => {
                     },
                 }),
             );
+        });
+
+        it('should log successful login', async () => {
+            canActivateSpy.mockResolvedValueOnce(true);
+            logInSpy.mockResolvedValueOnce(undefined);
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    requiredStepUpLevel: 'gold',
+                },
+                isAuthenticated: jest.fn().mockReturnValue(true),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+            });
+
+            await sut.canActivate(contextMock);
+
+            expect(logger.info).toHaveBeenCalledWith('Benutzer test hat sich im Schulportal angemeldet.');
         });
     });
 });
