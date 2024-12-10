@@ -1,7 +1,12 @@
 import { faker } from '@faker-js/faker';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DoFactory,
+    LoggingTestModule,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
@@ -19,6 +24,7 @@ import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enu
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -28,7 +34,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [MapperTestModule, LoggingTestModule],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -103,6 +109,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     describe('/GET rolle mocked Rolle-repo', () => {
         describe('createRolle', () => {
+            const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
             it('should throw an HTTP exception when rolleFactory.createNew returns DomainError', async () => {
                 const createRolleParams: CreateRolleBodyParams = {
                     name: ' SuS',
@@ -118,7 +125,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     value: organisation,
                 });
 
-                await expect(rolleController.createRolle(createRolleParams)).rejects.toThrow(
+                await expect(rolleController.createRolle(createRolleParams, permissionsMock)).rejects.toThrow(
                     NameForRolleWithTrailingSpaceError,
                 );
             });

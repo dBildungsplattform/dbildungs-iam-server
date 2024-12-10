@@ -5,6 +5,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../../test/utils/index.js';
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
@@ -83,6 +84,7 @@ describe('Personenuebersicht API Mocked', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
                 MapperTestModule,
+                LoggingTestModule,
             ],
             providers: [ServiceProviderRepo, RolleFactory, OrganisationRepository],
         })

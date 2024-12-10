@@ -85,7 +85,10 @@ export class OrganisationController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
+    public async createOrganisation(
+        @Permissions() permissions: PersonPermissions,
+        @Body() params: CreateOrganisationBodyParams,
+    ): Promise<OrganisationResponse> {
         const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =
             await this.organisationRepository.findRootDirectChildren();
 
@@ -106,6 +109,7 @@ export class OrganisationController {
         }
         const result: Result<Organisation<true>, DomainError> = await this.organisationService.createOrganisation(
             organisation,
+            permissions,
         );
         if (!result.ok) {
             if (result.error instanceof OrganisationSpecificationError) {
@@ -133,6 +137,7 @@ export class OrganisationController {
     public async updateOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: UpdateOrganisationBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse> {
         const existingOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             params.organisationId,
@@ -156,6 +161,7 @@ export class OrganisationController {
 
         const result: Result<Organisation<true>, DomainError> = await this.organisationService.updateOrganisation(
             existingOrganisation,
+            permissions,
         );
 
         if (result.ok) {
@@ -423,12 +429,18 @@ export class OrganisationController {
     @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
     @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
-    public async deleteKlasse(@Param() params: OrganisationByIdParams): Promise<void> {
+    public async deleteKlasse(
+        @Param() params: OrganisationByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
         if (await this.dBiamPersonenkontextRepo.isOrganisationAlreadyAssigned(params.organisationId)) {
             throw new OrganisationIstBereitsZugewiesenError();
         }
 
-        const result: Option<DomainError> = await this.organisationRepository.deleteKlasse(params.organisationId);
+        const result: Option<DomainError> = await this.organisationRepository.deleteKlasse(
+            params.organisationId,
+            permissions,
+        );
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
@@ -450,18 +462,19 @@ export class OrganisationController {
     public async updateOrganisationName(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByNameBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
         const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
             params.organisationId,
             body.name,
             body.version,
+            permissions,
         );
 
         if (result instanceof DomainError) {
             if (result instanceof OrganisationSpecificationError) {
                 throw result;
             }
-
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
