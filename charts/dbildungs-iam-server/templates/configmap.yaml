@@ -18,3 +18,8 @@ data:
   BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
   LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
   LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"
+  OX_ENABLED: "{{ .Values.ox.enabled }}"
+  OX_USERNAME: "{{ .Values.ox.username }}"
+  OX_ENDPOINT: "{{ .Values.ox.endpoint }}"
+  OX_CONTEXT_ID: "{{ .Values.ox.contextId }}"
+  OX_CONTEXT_NAME: "{{ .Values.ox.contextName }}"
