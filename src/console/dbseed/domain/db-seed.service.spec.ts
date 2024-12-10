@@ -479,6 +479,24 @@ describe('DbSeedService', () => {
                 expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(0);
             });
         });
+
+        describe('error in person factory', () => {
+            it('should throw Domain Error', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/invalidPerson/06_technical-user.json`,
+                    'utf-8',
+                );
+
+                // return DomainError
+                personFactory.createNew.mockResolvedValueOnce(new NameForOrganisationWithTrailingSpaceError());
+
+                await expect(dbSeedService.seedTechnicalUser(fileContentAsStr)).rejects.toThrow(
+                    NameForOrganisationWithTrailingSpaceError,
+                );
+                expect(personRepoMock.create).toHaveBeenCalledTimes(0);
+                expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(0);
+            });
+        });
     });
 
     describe('seedPersonkontext', () => {
