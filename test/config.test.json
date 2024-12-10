@@ -64,6 +64,14 @@
         "USER_RESOLVER": "mariadb_resolver",
         "REALM": "defrealm"
     },
+    "VIDIS": {
+        "BASE_URL": "",
+        "USERNAME": "",
+        "PASSWORD": "",
+        "REGION_NAME": "test-region",
+        "KEYCLOAK_GROUP": "VIDIS-service",
+        "KEYCLOAK_ROLE": "VIDIS-user"
+    },
     "OX": {
         "ENABLED": "false",
         "ENDPOINT": "https://ox_ip:ox_port/webservices/",

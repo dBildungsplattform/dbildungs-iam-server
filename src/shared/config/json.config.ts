@@ -14,6 +14,7 @@ import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { ImportConfig } from './import.config.js';
 import { FeatureFlagConfig } from './featureflag.config.js';
+import { VidisConfig } from './vidis.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -71,4 +72,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => SystemConfig)
     public readonly SYSTEM!: SystemConfig;
+
+    @ValidateNested()
+    @Type(() => VidisConfig)
+    public readonly VIDIS!: VidisConfig;
 }
