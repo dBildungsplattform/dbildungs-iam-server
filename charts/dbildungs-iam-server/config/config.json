@@ -50,10 +50,6 @@
     "ROOT_OEFFENTLICH": "oeffentlich",
     "ROOT_ERSATZ": "ersatz"
   },
-  "OX": {
-    "CONTEXT_ID": "1337",
-    "CONTEXT_NAME": "contextname"
-  },
   "PRIVACYIDEA": {
     "ENDPOINT": "http://localhost:5000",
     "USERNAME": "admin",
