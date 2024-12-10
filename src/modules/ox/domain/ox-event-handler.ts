@@ -46,10 +46,10 @@ export class OxEventHandler {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
 
         this.ENABLED = oxConfig.ENABLED === 'true';
-        this.authUser = oxConfig.USERNAME;
-        this.authPassword = oxConfig.PASSWORD;
-        this.contextID = oxConfig.CONTEXT_ID;
-        this.contextName = oxConfig.CONTEXT_NAME;
+        this.authUser = oxConfig.USERNAME || '';
+        this.authPassword = oxConfig.PASSWORD || '';
+        this.contextID = oxConfig.CONTEXT_ID || '';
+        this.contextName = oxConfig.CONTEXT_NAME || '';
     }
 
     @EventHandler(EmailAddressChangedEvent)

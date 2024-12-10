@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
-import { Hash, createHash } from 'crypto';
+import { createHash, Hash } from 'crypto';
 import { XMLBuilder } from 'fast-xml-parser';
 import { lastValueFrom } from 'rxjs';
 
@@ -28,9 +28,9 @@ export class OxService {
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
 
-        this.endpoint = oxConfig.ENDPOINT;
-        this.username = oxConfig.USERNAME;
-        this.password = oxConfig.PASSWORD;
+        this.endpoint = oxConfig.ENDPOINT || '';
+        this.username = oxConfig.USERNAME || '';
+        this.password = oxConfig.PASSWORD || '';
     }
 
     public async send<ResponseBody, ResultType>(
