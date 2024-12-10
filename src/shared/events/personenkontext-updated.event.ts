@@ -36,6 +36,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
         rolleId: pk.rolleId,
         rolle: rolle.rollenart,
         orgaId: pk.organisationId,
+        parentOrgaId: orga.administriertVon,
         orgaTyp: orga.typ,
         orgaKennung: orga.kennung,
         isItslearningOrga: orga.itslearningEnabled,

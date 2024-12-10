@@ -13,7 +13,8 @@ import {
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonResponse } from '../actions/read-person.action.js';
 import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.js';
@@ -107,8 +108,16 @@ export class ItsLearningPersonsEventHandler {
                 return this.logger.info('Not enabled, ignoring event.');
             }
 
+            // Collect all itslearning-orgas
+            const schoolsWithItslearning: Set<OrganisationID> = new Set(
+                event.currentKontexte
+                    .filter((pk: PersonenkontextUpdatedData) => pk.isItslearningOrga)
+                    .map((pk: PersonenkontextUpdatedData) => pk.orgaId),
+            );
+
             // Find all removed or current kontexte that have itslearning
             const [currentKontexte]: [PersonenkontextUpdatedData[]] = this.filterRelevantKontexte(
+                schoolsWithItslearning,
                 event.currentKontexte,
             );
 
@@ -187,14 +196,23 @@ export class ItsLearningPersonsEventHandler {
         }
     }
 
-    private filterRelevantKontexte<T extends [...PersonenkontextUpdatedData[][]]>(...kontexte: T): [...T] {
+    private filterRelevantKontexte<T extends [...PersonenkontextUpdatedData[][]]>(
+        schoolsWithItslearning: Set<OrganisationID>,
+        ...kontexte: T
+    ): [...T] {
         // Only keep personenkontexte, that are at itslearning organisations and have a serviceprovider with itslearning-system
         const filteredKontexte: [...T] = kontexte.map((pks: PersonenkontextUpdatedData[]) =>
-            pks.filter(
-                (pk: PersonenkontextUpdatedData) =>
-                    pk.isItslearningOrga &&
-                    pk.serviceProviderExternalSystems.includes(ServiceProviderSystem.ITSLEARNING),
-            ),
+            pks.filter((pk: PersonenkontextUpdatedData) => {
+                if (pk.orgaTyp == OrganisationsTyp.SCHULE) {
+                    if (!pk.isItslearningOrga) return false;
+                } else if (pk.orgaTyp == OrganisationsTyp.KLASSE) {
+                    if (!pk.parentOrgaId || !schoolsWithItslearning.has(pk.parentOrgaId)) return false;
+                } else {
+                    return false;
+                }
+
+                return pk.serviceProviderExternalSystems.includes(ServiceProviderSystem.ITSLEARNING);
+            }),
         ) as [...T];
 
         return filteredKontexte;

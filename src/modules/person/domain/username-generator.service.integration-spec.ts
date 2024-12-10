@@ -10,24 +10,44 @@ import {
     InvalidAttributeLengthError,
     InvalidCharacterSetError,
 } from '../../../shared/error/index.js';
+import { EntityManager } from '@mikro-orm/postgresql';
+import { OxUserBlacklistEntity } from '../persistence/ox-user-blacklist.entity.js';
+import {
+    DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    ConfigTestModule,
+} from '../../../../test/utils/index.js';
+import { MikroORM } from '@mikro-orm/core';
 
 describe('The UsernameGenerator Service', () => {
     let module: TestingModule;
     let service: UsernameGeneratorService;
     let kcUserService: DeepMocked<KeycloakUserService>;
+    let em: EntityManager;
+    let orm: MikroORM;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 UsernameGeneratorService,
                 { provide: KeycloakUserService, useValue: createMock<KeycloakUserService>() },
             ],
         }).compile();
+        orm = module.get(MikroORM);
         service = module.get(UsernameGeneratorService);
         kcUserService = module.get(KeycloakUserService);
+        em = module.get(EntityManager);
+
+        await DatabaseTestModule.setupDatabase(orm);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+
+    beforeEach(async () => {
+        await DatabaseTestModule.clearDatabase(orm);
     });
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 
@@ -150,5 +170,35 @@ describe('The UsernameGenerator Service', () => {
             ok: false,
             error: new InvalidNameError('Could not generate valid username'),
         });
+    });
+
+    it('should add a number when username exists in blacklist', async () => {
+        // Arrange: Create the OxUserBlacklistEntity with the username
+        const usernameInBlacklist: string = 'mmeyer';
+        const oxUser: OxUserBlacklistEntity = new OxUserBlacklistEntity();
+        oxUser.username = usernameInBlacklist;
+        oxUser.email = 'email';
+        oxUser.name = 'meyer';
+
+        // Persist the OxUserBlacklistEntity to the real database
+        await em.persistAndFlush(oxUser);
+
+        // Arrange Keycloak response (simulate the user not found in Keycloak)
+        kcUserService.findOne.mockResolvedValueOnce({
+            ok: false,
+            error: new EntityNotFoundError('Not found'),
+        });
+
+        // Arrange Keycloak response (simulate the user not found in Keycloak)
+        kcUserService.findOne.mockResolvedValueOnce({
+            ok: false,
+            error: new EntityNotFoundError('Not found'),
+        });
+
+        // Act: Generate the username
+        const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
+
+        // Assert: The generated username should have the counter appended
+        expect(generatedUsername).toEqual({ ok: true, value: 'mmeyer1' });
     });
 });
