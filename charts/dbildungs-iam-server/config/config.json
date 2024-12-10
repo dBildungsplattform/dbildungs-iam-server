@@ -24,11 +24,11 @@
     "SERVICE_CLIENT_ID": "spsh-service"
   },
   "REDIS": {
-    "HOST": "dbildungs-iam-server-redis-cluster",
+    "HOST": "dbildungs-iam-server-redis",
     "PORT": 6379,
     "USERNAME": "default",
-    "USE_TLS": false,
-    "CLUSTERED": true
+    "PASSWORD": "",
+    "USE_TLS": false
   },
   "DATA": {
     "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
@@ -59,5 +59,10 @@
   },
   "IMPORT": {
     "IMPORT_FILE_MAXGROESSE_IN_MB": 10
+  },
+  "SYSTEM": {
+    "RENAME_WAITING_TIME_IN_SECONDS": 3,
+    "STEP_UP_TIMEOUT_ENABLED": "true",
+    "STEP_UP_TIMEOUT_IN_SECONDS": 10
   }
 }

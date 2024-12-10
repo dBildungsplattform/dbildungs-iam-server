@@ -5,10 +5,11 @@ import { HostConfig } from './host.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
+import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
 
-export default (): {
+export type Config = {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
     REDIS: Partial<RedisConfig>;
@@ -18,7 +19,10 @@ export default (): {
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
     OX: Partial<OxConfig>;
-} => ({
+    SYSTEM: Partial<SystemConfig>;
+};
+
+export default (): Config => ({
     DB: {
         DB_NAME: process.env['DB_NAME'],
         USERNAME: process.env['DB_USERNAME'],
@@ -35,12 +39,15 @@ export default (): {
         URL: process.env['LDAP_URL'],
         BIND_DN: process.env['LDAP_BIND_DN'],
         ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
+        OEFFENTLICHE_SCHULEN_DOMAIN: process.env['LDAP_OEFFENTLICHE_SCHULEN_DOMAIN'],
+        ERSATZSCHULEN_DOMAIN: process.env['LDAP_ERSATZSCHULEN_DOMAIN'],
     },
     FRONTEND: {
         SESSION_SECRET: process.env['FRONTEND_SESSION_SECRET'],
         OIDC_CALLBACK_URL: process.env['FRONTEND_OIDC_CALLBACK_URL'],
         DEFAULT_LOGIN_REDIRECT: process.env['FRONTEND_DEFAULT_LOGIN_REDIRECT'],
         LOGOUT_REDIRECT: process.env['FRONTEND_LOGOUT_REDIRECT'],
+        STATUS_REDIRECT_URL: process.env['STATUS_REDIRECT_URL'],
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
@@ -60,7 +67,6 @@ export default (): {
         PASSWORD: process.env['PI_ADMIN_PASSWORD'],
         USER_RESOLVER: process.env['PI_USER_RESOLVER'],
         REALM: process.env['PI_REALM'],
-        RENAME_WAITING_TIME_IN_SECONDS: parseInt(process.env['PI_RENAME_WAITING_TIME'] || '0'),
     },
     OX: {
         ENABLED: process.env['OX_ENABLED']?.toLowerCase() as 'true' | 'false',
@@ -69,5 +75,14 @@ export default (): {
         PASSWORD: process.env['OX_PASSWORD'],
         CONTEXT_ID: process.env['OX_CONTEXT_ID'],
         CONTEXT_NAME: process.env['OX_CONTEXT_NAME'],
+    },
+    SYSTEM: {
+        RENAME_WAITING_TIME_IN_SECONDS: process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS']
+            ? parseInt(process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS'])
+            : undefined,
+        STEP_UP_TIMEOUT_IN_SECONDS: process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS']
+            ? parseInt(process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS'])
+            : undefined,
+        STEP_UP_TIMEOUT_ENABLED: process.env['SYSTEM_STEP_UP_TIMEOUT_ENABLED']?.toLowerCase() as 'true' | 'false',
     },
 });

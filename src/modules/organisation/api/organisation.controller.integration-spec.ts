@@ -34,6 +34,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 describe('Organisation API', () => {
     let app: INestApplication;
@@ -116,6 +117,9 @@ describe('Organisation API', () => {
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
+
+        const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
+        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
 
         orm = module.get(MikroORM);
         em = module.get(EntityManager);

@@ -46,6 +46,7 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 
 describe('Rolle API', () => {
@@ -118,6 +119,9 @@ describe('Rolle API', () => {
         personRepo = module.get(PersonRepository);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         personFactory = module.get(PersonFactory);
+
+        const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
+        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
 
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
