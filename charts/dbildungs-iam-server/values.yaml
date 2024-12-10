@@ -50,9 +50,14 @@ auth:
   pi_user_realm: ''
   pi_rename_waiting_time: ''
   redis_password: ''
-  ox_enabled: 'false'
-  ox_username: ''
   ox_password: ''
+
+ox:
+  enabled: false
+  username: ''
+  endpoint: ''
+  contextId: ''
+  contextName: ''
 
 backend:
   replicaCount: 1
