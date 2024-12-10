@@ -578,6 +578,21 @@ describe('Import API', () => {
 
             expect(executeResponse.status).toBe(404);
         });
+
+        it('should return 500 if the import vorgang has no organisation ID', async () => {
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, { organisationId: undefined, rolleId: faker.string.uuid() }),
+            );
+            const params: ImportvorgangByIdBodyParams = {
+                importvorgangId: importVorgang.id,
+            };
+
+            const executeResponse: Response = await request(app.getHttpServer() as App)
+                .post('/import/execute')
+                .send(params);
+
+            expect(executeResponse.status).toBe(500);
+        });
     });
 
     describe('/GET doownload', () => {
@@ -638,13 +653,9 @@ describe('Import API', () => {
         });
 
         it('should return 404 if the import transaction is not found', async () => {
-            const params: ImportvorgangByIdBodyParams = {
-                importvorgangId: faker.string.uuid(),
-            };
-
             const executeResponse: Response = await request(app.getHttpServer() as App)
-                .post('/import/execute')
-                .send(params);
+                .get(`/import/${faker.string.uuid()}/download`)
+                .send();
 
             expect(executeResponse.status).toBe(404);
         });
