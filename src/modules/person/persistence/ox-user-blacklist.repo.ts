@@ -96,6 +96,9 @@ export class OxUserBlacklistRepo {
             return new EntityNotFoundError('OxUserBlacklistEntity');
         }
 
+        oxUserBlacklistEntity.assign(mapAggregateToData(oxUserBlacklistEntry));
+        await this.em.persistAndFlush(oxUserBlacklistEntity);
+
         return mapEntityToAggregate(oxUserBlacklistEntity);
     }
 }
