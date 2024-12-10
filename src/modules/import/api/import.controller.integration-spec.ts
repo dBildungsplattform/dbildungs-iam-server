@@ -501,6 +501,74 @@ describe('Import API', () => {
     });
 
     describe('/POST execute', () => {
+        it('should return 204 No Content', async () => {
+            const schule: OrganisationEntity = new OrganisationEntity();
+            schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
+            await em.persistAndFlush(schule);
+            await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+
+            const klasse: OrganisationEntity = new OrganisationEntity();
+            klasse.typ = OrganisationsTyp.KLASSE;
+            klasse.name = '1a';
+            klasse.administriertVon = schule.id;
+            klasse.zugehoerigZu = schule.id;
+            await em.persistAndFlush(klasse);
+            await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
+
+            const klasse1A: OrganisationEntity = new OrganisationEntity();
+            klasse1A.typ = OrganisationsTyp.KLASSE;
+            klasse1A.name = '1A';
+            klasse1A.administriertVon = schule.id;
+            klasse1A.zugehoerigZu = schule.id;
+            await em.persistAndFlush(klasse1A);
+            await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
+
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
+
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, { organisationId: schule.id, rolleId: sus.id }),
+            );
+            await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importVorgang.id,
+                    klasse: klasse.name,
+                    personalnummer: undefined,
+                }),
+            );
+
+            const params: ImportvorgangByIdBodyParams = {
+                importvorgangId: importVorgang.id,
+            };
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .post('/import/execute')
+                .send(params);
+
+            expect(response.status).toBe(204);
+        });
+
+        it('should return 404 if the import transaction is not found', async () => {
+            const params: ImportvorgangByIdBodyParams = {
+                importvorgangId: faker.string.uuid(),
+            };
+
+            const executeResponse: Response = await request(app.getHttpServer() as App)
+                .post('/import/execute')
+                .send(params);
+
+            expect(executeResponse.status).toBe(404);
+        });
+    });
+
+    describe('/GET doownload', () => {
         it('should return 200 OK with the file', async () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
@@ -534,7 +602,7 @@ describe('Import API', () => {
             if (sus instanceof DomainError) throw sus;
 
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, { organisationId: schule.id, rolleId: sus.id }),
             );
             const importDataItem: ImportDataItem<true> = await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
@@ -545,14 +613,17 @@ describe('Import API', () => {
             );
 
             const params: ImportvorgangByIdBodyParams = {
-                importvorgangId: importVorgang.id,
-                organisationId: schule.id,
-                rolleId: sus.id,
+                importvorgangId: faker.string.uuid(),
             };
-
-            const response: Response = await request(app.getHttpServer() as App)
+            //execute the import
+            const executeResponse: Response = await request(app.getHttpServer() as App)
                 .post('/import/execute')
                 .send(params);
+            if (executeResponse.status !== 204) throw new Error('Import could not be executed');
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/import/${importVorgang.id}/download`)
+                .send();
 
             expect(response.status).toBe(200);
             expect(response.type).toBe('text/plain');
@@ -568,8 +639,6 @@ describe('Import API', () => {
         it('should return 404 if the import transaction is not found', async () => {
             const params: ImportvorgangByIdBodyParams = {
                 importvorgangId: faker.string.uuid(),
-                organisationId: faker.string.uuid(),
-                rolleId: faker.string.uuid(),
             };
 
             const executeResponse: Response = await request(app.getHttpServer() as App)
@@ -698,6 +767,30 @@ describe('Import API', () => {
             const pagedResponse: PagedResponse<ImportVorgangResponse> =
                 response.body as PagedResponse<ImportVorgangResponse>;
             expect(pagedResponse.items).toHaveLength(1);
+        });
+    });
+
+    describe('/GET importstatus by id', () => {
+        it('should return 200 OK with import ststus', async () => {
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, { status: ImportStatus.COMPLETED }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/import/${importVorgang.id}/status`)
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.text).toBe(ImportStatus.COMPLETED);
+        });
+
+        it('should return 404 if importvorgang does not exist', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/import/${faker.string.uuid()}/status`)
+                .send();
+
+            expect(response.status).toBe(404);
         });
     });
 });

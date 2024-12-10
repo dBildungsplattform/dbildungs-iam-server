@@ -9,6 +9,7 @@ import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
 import { VidisConfig } from './vidis.config.js';
+import { ImportConfig } from './import.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -22,6 +23,7 @@ export type Config = {
     OX: Partial<OxConfig>;
     SYSTEM: Partial<SystemConfig>;
     VIDIS: Partial<VidisConfig>;
+    IMPORT: Partial<ImportConfig>;
 };
 
 export default (): Config => ({
@@ -92,5 +94,11 @@ export default (): Config => ({
         REGION_NAME: process.env['VIDIS_REGION_NAME'],
         KEYCLOAK_GROUP: process.env['VIDIS_KEYCLOAK_GROUP'],
         KEYCLOAK_ROLE: process.env['VIDIS_KEYCLOAK_ROLE'],
+    },
+    IMPORT: {
+        PASSPHRASE_SECRET: process.env['PASSPHRASE_SECRET'],
+        IMPORT_FILE_MAXGROESSE_IN_MB: process.env['IMPORT_FILE_MAXGROESSE_IN_MB']
+            ? parseInt(process.env['IMPORT_FILE_MAXGROESSE_IN_MB'])
+            : undefined,
     },
 });

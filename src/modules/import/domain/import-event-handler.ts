@@ -17,21 +17,7 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { OrganisationByIdAndName } from './import-workflow.js';
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-
-// export type OrganisationByIdAndName = Pick<Organisation<true>, 'id' | 'name'>;
-// export type TextFilePersonFields = {
-//     klasse: string | undefined;
-//     vorname: string;
-//     nachname: string;
-//     username: string | undefined;
-//     password: string | undefined;
-// };
-
-// export type RolleAndOrganisationByName = {
-//     rollenName: string;
-//     organisationsname: string;
-// };
-
+import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 @Injectable()
 export class ImportEventHandler {
     public selectedOrganisationId!: string;
@@ -43,18 +29,14 @@ export class ImportEventHandler {
         private readonly importDataRepository: ImportDataRepository,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
         private readonly importVorgangRepository: ImportVorgangRepository,
+        private readonly importPasswordEncryptor: ImportPasswordEncryptor,
         private readonly logger: ClassLogger,
     ) {}
 
-    // Initialize the aggregate with the selected Organisation and Rolle
-    public initialize(organisationId: string, rolleId: string): void {
-        this.selectedOrganisationId = organisationId;
-        this.selectedRolleId = rolleId;
-    }
-
     @EventHandler(ImportExecutedEvent)
     public async handleExecuteImport(event: ImportExecutedEvent): Promise<void> {
-        this.initialize(event.organisationId, event.rolleId);
+        this.selectedOrganisationId = event.organisationId;
+        this.selectedRolleId = event.rolleId;
 
         //Optimierung: private methode gibt eine map zurück
         const klassenByIDandName: OrganisationByIdAndName[] = [];
@@ -89,9 +71,6 @@ export class ImportEventHandler {
             //TODO: Log and return
             throw new EntityNotFoundError('ImportDataItem', importvorgangId);
         }
-
-        importVorgang.execute();
-        await this.importVorgangRepository.save(importVorgang);
 
         //create Person With PKs
         //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
@@ -137,7 +116,7 @@ export class ImportEventHandler {
                     `System hat einen neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
                 );
             } else {
-                this.logger.info(
+                return this.logger.error(
                     `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${savedPersonWithPersonenkontext.message}`,
                 );
             }
@@ -145,9 +124,12 @@ export class ImportEventHandler {
             savedPersonenWithPersonenkontext.push(savedPersonWithPersonenkontext);
 
             //saved import data items with username and password
-            if (savedPersonWithPersonenkontext instanceof DomainError) {
-                throw savedPersonWithPersonenkontext;
+            if (!savedPersonWithPersonenkontext.person.newPassword) {
+                return this.logger.error(
+                    `Person with ID ${savedPersonWithPersonenkontext.person.id} has no start password!`,
+                );
             }
+
             importDataItemsWithLoginInfo.push(
                 ImportDataItem.construct(
                     importDataItem.id,
@@ -160,7 +142,9 @@ export class ImportEventHandler {
                     importDataItem.personalnummer,
                     importDataItem.validationErrors,
                     savedPersonWithPersonenkontext.person.referrer,
-                    savedPersonWithPersonenkontext.person.newPassword,
+                    await this.importPasswordEncryptor.encryptPassword(
+                        savedPersonWithPersonenkontext.person.newPassword,
+                    ),
                 ),
             );
         }

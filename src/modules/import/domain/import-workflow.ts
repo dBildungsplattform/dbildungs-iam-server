@@ -29,6 +29,7 @@ import { ImportExecutedEvent } from '../../../shared/events/import-executed.even
 import { EventService } from '../../../core/eventbus/index.js';
 import { ImportStatus } from './import.enums.js';
 import { ImportDomainError } from './import-domain.error.js';
+import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -56,15 +57,16 @@ export class ImportWorkflow {
 
     public readonly CSV_FILE_VALID_HEADERS: string[] = ['nachname', 'vorname', 'klasse'];
 
-    public selectedOrganisationId!: string;
+    private selectedOrganisationId!: string;
 
-    public selectedRolleId!: string;
+    private selectedRolleId!: string;
 
     private constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly importDataRepository: ImportDataRepository,
         private readonly importVorgangRepository: ImportVorgangRepository,
+        private readonly importPasswordEncryptor: ImportPasswordEncryptor,
         private readonly eventService: EventService,
         private readonly logger: ClassLogger,
     ) {}
@@ -74,6 +76,7 @@ export class ImportWorkflow {
         organisationRepository: OrganisationRepository,
         importDataRepository: ImportDataRepository,
         importVorgangRepository: ImportVorgangRepository,
+        importPasswordEncryptor: ImportPasswordEncryptor,
         eventService: EventService,
         logger: ClassLogger,
     ): ImportWorkflow {
@@ -82,13 +85,14 @@ export class ImportWorkflow {
             organisationRepository,
             importDataRepository,
             importVorgangRepository,
+            importPasswordEncryptor,
             eventService,
             logger,
         );
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
-    public initialize(organisationId: string, rolleId: string): void {
+    private initialize(organisationId: string, rolleId: string): void {
         this.selectedOrganisationId = organisationId;
         this.selectedRolleId = rolleId;
     }
@@ -96,8 +100,11 @@ export class ImportWorkflow {
     // Check References and Permissions
     public async validateImport(
         file: Express.Multer.File,
+        organisationId: string,
+        rolleId: string,
         permissions: PersonPermissions,
     ): Promise<DomainError | ImportUploadResultFields> {
+        this.initialize(organisationId, rolleId);
         const referenceCheck: DomainError | RolleAndOrganisationByName = await this.checkReferences(
             this.selectedOrganisationId,
             this.selectedRolleId,
@@ -227,19 +234,7 @@ export class ImportWorkflow {
                 error: permissionCheckError,
             };
         }
-        //Optimierung: private methode gibt eine map zurück
-        const klassenByIDandName: OrganisationByIdAndName[] = [];
-        const klassen: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
-            this.selectedOrganisationId,
-        ]);
-        klassen.forEach((value: Organisation<true>) => {
-            if (value.typ === OrganisationsTyp.KLASSE) {
-                klassenByIDandName.push({
-                    id: value.id,
-                    name: value.name,
-                });
-            }
-        });
+
         // Get all import data items with importvorgangId
         //Optimierung: für das folgeTicket mit z.B. 800 Lehrer , muss der thread so manipuliert werden (sobald ein Resultat da ist, wird der nächste request abgeschickt)
         //Optimierung: Process 10 dataItems at time for createPersonWithPersonenkontexte
@@ -252,13 +247,17 @@ export class ImportWorkflow {
                 error: new EntityNotFoundError('ImportVorgang', importvorgangId),
             };
         }
-
-        const [, total]: Counted<ImportDataItem<true>> =
-            await this.importDataRepository.findByImportVorgangId(importvorgangId);
-        if (total === 0) {
+        //Will never happen
+        if (!importVorgang.organisationId) {
             return {
                 ok: false,
-                error: new EntityNotFoundError('ImportDataItem', importvorgangId),
+                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
+            };
+        }
+        if (!importVorgang.rolleId) {
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing a rolle id', importvorgangId),
             };
         }
 
@@ -266,12 +265,7 @@ export class ImportWorkflow {
         await this.importVorgangRepository.save(importVorgang);
 
         this.eventService.publish(
-            new ImportExecutedEvent(
-                importvorgangId,
-                this.selectedOrganisationId, //should come from importVorgang
-                this.selectedRolleId, //should come from importVorgang
-                permissions,
-            ),
+            new ImportExecutedEvent(importvorgangId, importVorgang.organisationId, importVorgang.rolleId, permissions),
         );
 
         return {
@@ -296,6 +290,19 @@ export class ImportWorkflow {
                 error: new EntityNotFoundError('ImportVorgang', importvorgangId),
             };
         }
+        //Will never happen
+        if (!importVorgang.organisationId) {
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
+            };
+        }
+        if (!importVorgang.rolleId) {
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing a rolle id', importvorgangId),
+            };
+        }
 
         if (importVorgang.status !== ImportStatus.FINISHED) {
             return {
@@ -303,6 +310,8 @@ export class ImportWorkflow {
                 error: new ImportDomainError('ImportVorgang is still in progress', importvorgangId),
             };
         }
+
+        this.initialize(importVorgang.organisationId, importVorgang.rolleId);
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
@@ -476,11 +485,20 @@ export class ImportWorkflow {
         const headerImportInfo: string = `Schule:${orga.name} - Rolle:${rolle.name}`;
         const headerUserInfo: string = '\n\nKlasse - Vorname - Nachname - Benutzername - Passwort';
         fileContent += headerImportInfo + headerUserInfo;
-
+        /* eslint-disable no-await-in-loop */
         for (const importedDataItem of importedDataItems) {
-            const userInfo: string = `\n${importedDataItem.klasse} - ${importedDataItem.vorname} - ${importedDataItem.nachname} - ${importedDataItem.username} - ${importedDataItem.password}`;
+            let password: string = ''; //will never happen that the password is empty
+            if (importedDataItem.password) {
+                password = await this.importPasswordEncryptor.decryptPassword(
+                    importedDataItem.password,
+                    importedDataItem.importvorgangId,
+                );
+            }
+
+            const userInfo: string = `\n${importedDataItem.klasse} - ${importedDataItem.vorname} - ${importedDataItem.nachname} - ${importedDataItem.username} - ${password}`;
             fileContent += userInfo;
         }
+        /* eslint-disable no-await-in-loop */
 
         try {
             const buffer: Buffer = Buffer.from(fileContent, 'utf8');

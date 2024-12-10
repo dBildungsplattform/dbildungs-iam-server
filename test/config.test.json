@@ -79,7 +79,8 @@
         "PASSWORD": "password"
     },
     "IMPORT": {
-        "IMPORT_FILE_MAXGROESSE_IN_MB": 1
+        "IMPORT_FILE_MAXGROESSE_IN_MB": 1,
+        "PASSPHRASE_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R"
     },
     "SYSTEM": {
         "RENAME_WAITING_TIME_IN_SECONDS": 5,

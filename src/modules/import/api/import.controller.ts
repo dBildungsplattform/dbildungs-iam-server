@@ -98,8 +98,12 @@ export class ImportController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<ImportUploadResponse> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        importWorkflow.initialize(body.organisationId, body.rolleId);
-        const result: DomainError | ImportUploadResultFields = await importWorkflow.validateImport(file, permissions);
+        const result: DomainError | ImportUploadResultFields = await importWorkflow.validateImport(
+            file,
+            body.organisationId,
+            body.rolleId,
+            permissions,
+        );
         if (result instanceof DomainError) {
             if (result instanceof ImportDomainError) {
                 throw result;
@@ -121,8 +125,8 @@ export class ImportController {
     @UseGuards(StepUpGuard)
     @ApiProduces('text/plain')
     @Post('execute')
-    @HttpCode(HttpStatus.OK)
-    @ApiOkResponse({
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNoContentResponse({
         description: 'The execution of the import transaction was initiated successfully.',
         type: undefined,
     })
@@ -141,13 +145,12 @@ export class ImportController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        importWorkflow.initialize(body.organisationId, body.rolleId);
         const result: Result<void> = await importWorkflow.executeImport(body.importvorgangId, permissions);
 
         if (!result.ok) {
             if (result.error instanceof ImportDomainError) {
                 this.logger.error(
-                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${result.error.message}`,
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchzuführen. Fehler: ${result.error.message}`,
                 );
                 throw result.error;
             }
@@ -156,12 +159,12 @@ export class ImportController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht für Schule: ${body.organisationId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
             );
         }
 
         this.logger.info(
-            `Admin: ${permissions.personFields.id}) hat für Schule: ${body.organisationId} einen CSV Import durchgeführt.`,
+            `Admin: ${permissions.personFields.id}) hat mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchgeführt.`,
         );
     }
 
@@ -228,7 +231,7 @@ export class ImportController {
     }
 
     @ApiProduces('text/plain')
-    @Post('download')
+    @Get(':importvorgangId/download')
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description: 'The import result file was generated and downloaded successfully.',
@@ -248,13 +251,12 @@ export class ImportController {
         description: 'Internal server error while generating the import result file.',
     })
     public async downloadFile(
-        @Body() body: ImportvorgangByIdBodyParams,
+        @Param() params: ImportvorgangByIdBodyParams,
         @Res({ passthrough: true }) res: Response,
         @Permissions() permissions: PersonPermissions,
     ): Promise<StreamableFile> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        importWorkflow.initialize(body.organisationId, body.rolleId);
-        const result: Result<Buffer> = await importWorkflow.downloadFile(body.importvorgangId, permissions);
+        const result: Result<Buffer> = await importWorkflow.downloadFile(params.importvorgangId, permissions);
 
         if (!result.ok) {
             if (result.error instanceof ImportDomainError) {
@@ -265,7 +267,7 @@ export class ImportController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
         } else {
-            const fileName: string = importWorkflow.getFileName(body.importvorgangId);
+            const fileName: string = importWorkflow.getFileName(params.importvorgangId);
             const contentDisposition: string = `attachment; filename="${fileName}"`;
             res.set({
                 'Content-Type': 'text/plain',

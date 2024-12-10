@@ -6,6 +6,7 @@ import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 
 @Injectable()
 export class ImportWorkflowFactory {
@@ -14,6 +15,7 @@ export class ImportWorkflowFactory {
         private readonly organisationRepository: OrganisationRepository,
         private readonly importDataRepository: ImportDataRepository,
         private readonly importVorgangRepository: ImportVorgangRepository,
+        private readonly importPasswordEncryptor: ImportPasswordEncryptor,
         private readonly eventService: EventService,
         private readonly logger: ClassLogger,
     ) {}
@@ -24,6 +26,7 @@ export class ImportWorkflowFactory {
             this.organisationRepository,
             this.importDataRepository,
             this.importVorgangRepository,
+            this.importPasswordEncryptor,
             this.eventService,
             this.logger,
         );
