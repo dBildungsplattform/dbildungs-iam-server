@@ -300,7 +300,7 @@ describe('PersonRepository Integration', () => {
     describe('create', () => {
         describe('When Normal Call Without Hashed Password', () => {
             describe('when person has already keycloak user', () => {
-                it('should return Domain Error', async () => {
+                it('should return Person', async () => {
                     usernameGeneratorService.generateUsername.mockResolvedValueOnce({
                         ok: true,
                         value: 'testusername',
@@ -314,21 +314,10 @@ describe('PersonRepository Integration', () => {
                         throw person;
                     }
                     person.keycloakUserId = faker.string.uuid();
-                    kcUserServiceMock.create.mockResolvedValueOnce({
-                        ok: true,
-                        value: '',
-                    });
-                    kcUserServiceMock.setPassword.mockResolvedValueOnce({
-                        ok: true,
-                        value: '',
-                    });
-                    kcUserServiceMock.delete.mockResolvedValueOnce({
-                        ok: true,
-                        value: undefined,
-                    });
+
                     const result: Person<true> | DomainError = await sut.create(person);
 
-                    expect(result).toBeInstanceOf(DomainError);
+                    expect(result).toBeInstanceOf(Person);
                     expect(kcUserServiceMock.create).not.toHaveBeenCalled();
                 });
             });
