@@ -542,7 +542,6 @@ export class PersonController {
     }
 
     @Patch(':personId/uem-password')
-    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiAcceptedResponse({ description: 'UEM-password for person was successfully reset.', type: String })
     @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions to update person.' })
