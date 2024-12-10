@@ -21,3 +21,9 @@ data:
   LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"
   LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.ldap.ersatzschulenDomain }}"
   STATUS_REDIRECT_URL: "{{ .Values.status.url }}"
+
+  OX_ENABLED: "{{ .Values.ox.enabled }}"
+  OX_USERNAME: "{{ .Values.ox.username }}"
+  OX_ENDPOINT: "{{ .Values.ox.endpoint }}"
+  OX_CONTEXT_ID: "{{ .Values.ox.contextId }}"
+  OX_CONTEXT_NAME: "{{ .Values.ox.contextName }}"

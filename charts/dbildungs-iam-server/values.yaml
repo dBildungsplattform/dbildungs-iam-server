@@ -60,6 +60,14 @@ auth:
   vidis_region_name: ''
   vidis_keycloak_group: ''
   vidis_keycloak_role: ''
+  ox_password: ''
+
+ox:
+  enabled: false
+  username: ''
+  endpoint: ''
+  contextId: ''
+  contextName: ''
 
 backend:
   replicaCount: 1

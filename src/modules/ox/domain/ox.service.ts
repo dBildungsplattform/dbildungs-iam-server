@@ -63,9 +63,9 @@ export class OxService {
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
 
-        this.endpoint = oxConfig.ENDPOINT;
-        this.username = oxConfig.USERNAME;
-        this.password = oxConfig.PASSWORD;
+        this.endpoint = oxConfig.ENDPOINT || '';
+        this.username = oxConfig.USERNAME || '';
+        this.password = oxConfig.PASSWORD || '';
     }
 
     public async send<ResponseBody, ResultType>(

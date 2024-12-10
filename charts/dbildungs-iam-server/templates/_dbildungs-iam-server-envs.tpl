@@ -136,4 +136,9 @@
               secretKeyRef:
                   name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
                   key: vidis-keycloak-role
+          - name: OX_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                  name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+                  key: ox-password
 {{- end}}
