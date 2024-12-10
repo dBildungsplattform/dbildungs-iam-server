@@ -6,21 +6,21 @@ export class OxConfig {
 
     @IsString()
     @IsOptional()
-    public readonly ENDPOINT!: string | undefined;
+    public readonly ENDPOINT!: string;
 
     @IsNumberString()
     @IsOptional()
-    public readonly CONTEXT_ID!: string | undefined;
+    public readonly CONTEXT_ID!: string;
 
     @IsString()
     @IsOptional()
-    public readonly CONTEXT_NAME!: string | undefined;
+    public readonly CONTEXT_NAME!: string;
 
     @IsString()
     @IsOptional()
-    public readonly USERNAME!: string | undefined;
+    public readonly USERNAME!: string;
 
     @IsString()
     @IsOptional()
-    public readonly PASSWORD!: string | undefined;
+    public readonly PASSWORD!: string;
 }
