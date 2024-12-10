@@ -84,6 +84,10 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                 },
+                IMPORT: {
+                    IMPORT_FILE_MAXGROESSE_IN_MB: 10,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
                     STEP_UP_TIMEOUT_ENABLED: 'true',
@@ -213,6 +217,10 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                },
+                IMPORT: {
+                    IMPORT_FILE_MAXGROESSE_IN_MB: 10,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,

@@ -29,4 +29,22 @@ describe('Config Loader', () => {
             });
         });
     });
+
+    describe('Import Config', () => {
+        it('should load import configuration with parsed integer values', () => {
+            process.env['IMPORT_FILE_MAXGROESSE_IN_MB'] = '10';
+
+            const config: Config = configEnv();
+            expect(config.IMPORT).toEqual({
+                IMPORT_FILE_MAXGROESSE_IN_MB: 10,
+            });
+        });
+
+        it('should set undefined for import values if not provided', () => {
+            const config: Config = configEnv();
+            expect(config.IMPORT).toEqual({
+                IMPORT_FILE_MAXGROESSE_IN_MB: undefined,
+            });
+        });
+    });
 });

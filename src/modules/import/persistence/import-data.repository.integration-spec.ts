@@ -154,7 +154,7 @@ describe('ImportDataRepository', () => {
     });
 
     describe('save', () => {
-        it('should save a new importDataItem', async () => {
+        it('should create a new importDataItem', async () => {
             const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
                 .id;
             const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, { importvorgangId });
@@ -162,6 +162,29 @@ describe('ImportDataRepository', () => {
             const savedImportDataItem: ImportDataItem<true> = await sut.save(importDataItem);
 
             expect(savedImportDataItem.id).toBeDefined();
+        });
+
+        it('should update an existing importDataItem', async () => {
+            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
+                .id;
+            const createdImportDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
+                importvorgangId,
+            });
+            const savedImportDataItem: ImportDataItem<true> = await sut.save(createdImportDataItem);
+
+            savedImportDataItem.nachname = faker.name.lastName();
+            savedImportDataItem.vorname = faker.name.firstName();
+            savedImportDataItem.klasse = '1A';
+
+            const result: ImportDataItem<true> = await sut.save(savedImportDataItem);
+
+            expect(result.id).toBeDefined();
+            expect(result.nachname).toBe(savedImportDataItem.nachname);
+            expect(result.vorname).toBe(savedImportDataItem.vorname);
+            expect(result.klasse).toBe(savedImportDataItem.klasse);
+            expect(result.nachname).not.toBe(createdImportDataItem.nachname);
+            expect(result.vorname).not.toBe(createdImportDataItem.vorname);
+            expect(result.klasse).not.toBe(createdImportDataItem.klasse);
         });
     });
 

@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
-import { OrganisationID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { IsUUID } from 'class-validator';
 
 export class ImportvorgangByIdBodyParams {
     @IsUUID()
@@ -10,16 +9,4 @@ export class ImportvorgangByIdBodyParams {
         nullable: false,
     })
     public importvorgangId!: string;
-
-    @IsString()
-    @IsNotEmpty()
-    @IsUUID()
-    @ApiProperty({ type: String })
-    public readonly organisationId!: OrganisationID;
-
-    @IsString()
-    @IsNotEmpty()
-    @IsUUID()
-    @ApiProperty({ type: String })
-    public readonly rolleId!: RolleID;
 }

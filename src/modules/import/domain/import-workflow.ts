@@ -13,13 +13,7 @@ import Papa, { ParseResult } from 'papaparse';
 import { CSVImportDataItemDTO } from './csv-import-data-item.dto.js';
 import { ImportCSVFileParsingError } from './import-csv-file-parsing.error.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
-import {
-    PersonenkontextCreationService,
-    PersonPersonenkontext,
-} from '../../personenkontext/domain/personenkontext-creation.service.js';
-import { DbiamCreatePersonenkontextBodyParams } from '../../personenkontext/api/param/dbiam-create-personenkontext.body.params.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ImportTextFileCreationError } from './import-text-file-creation.error.js';
 import { ImportCSVFileEmptyError } from './import-csv-file-empty.error.js';
 import { ImportNurLernAnSchuleUndKlasseError } from './import-nur-lern-an-schule-und-klasse.error.js';
@@ -31,6 +25,11 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportDataItem } from './import-data-item.js';
 import { ImportVorgang } from './import-vorgang.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
+import { ImportExecutedEvent } from '../../../shared/events/import-executed.event.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { ImportStatus } from './import.enums.js';
+import { ImportDomainError } from './import-domain.error.js';
+import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -58,39 +57,42 @@ export class ImportWorkflow {
 
     public readonly CSV_FILE_VALID_HEADERS: string[] = ['nachname', 'vorname', 'klasse'];
 
-    public selectedOrganisationId!: string;
+    private selectedOrganisationId!: string;
 
-    public selectedRolleId!: string;
+    private selectedRolleId!: string;
 
     private constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly importDataRepository: ImportDataRepository,
-        private readonly personenkontextCreationService: PersonenkontextCreationService,
-        private readonly logger: ClassLogger,
         private readonly importVorgangRepository: ImportVorgangRepository,
+        private readonly importPasswordEncryptor: ImportPasswordEncryptor,
+        private readonly eventService: EventService,
+        private readonly logger: ClassLogger,
     ) {}
 
     public static createNew(
         rolleRepo: RolleRepo,
         organisationRepository: OrganisationRepository,
         importDataRepository: ImportDataRepository,
-        personenkontextCreationService: PersonenkontextCreationService,
-        logger: ClassLogger,
         importVorgangRepository: ImportVorgangRepository,
+        importPasswordEncryptor: ImportPasswordEncryptor,
+        eventService: EventService,
+        logger: ClassLogger,
     ): ImportWorkflow {
         return new ImportWorkflow(
             rolleRepo,
             organisationRepository,
             importDataRepository,
-            personenkontextCreationService,
-            logger,
             importVorgangRepository,
+            importPasswordEncryptor,
+            eventService,
+            logger,
         );
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
-    public initialize(organisationId: string, rolleId: string): void {
+    private initialize(organisationId: string, rolleId: string): void {
         this.selectedOrganisationId = organisationId;
         this.selectedRolleId = rolleId;
     }
@@ -98,8 +100,11 @@ export class ImportWorkflow {
     // Check References and Permissions
     public async validateImport(
         file: Express.Multer.File,
+        organisationId: string,
+        rolleId: string,
         permissions: PersonPermissions,
     ): Promise<DomainError | ImportUploadResultFields> {
+        this.initialize(organisationId, rolleId);
         const referenceCheck: DomainError | RolleAndOrganisationByName = await this.checkReferences(
             this.selectedOrganisationId,
             this.selectedRolleId,
@@ -221,7 +226,7 @@ export class ImportWorkflow {
         };
     }
 
-    public async executeImport(importvorgangId: string, permissions: PersonPermissions): Promise<Result<Buffer>> {
+    public async executeImport(importvorgangId: string, permissions: PersonPermissions): Promise<Result<void>> {
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
         if (permissionCheckError) {
             return {
@@ -229,21 +234,8 @@ export class ImportWorkflow {
                 error: permissionCheckError,
             };
         }
-        //Optimierung: private methode gibt eine map zurück
-        const klassenByIDandName: OrganisationByIdAndName[] = [];
-        const klassen: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
-            this.selectedOrganisationId,
-        ]);
-        klassen.forEach((value: Organisation<true>) => {
-            if (value.typ === OrganisationsTyp.KLASSE) {
-                klassenByIDandName.push({
-                    id: value.id,
-                    name: value.name,
-                });
-            }
-        });
+
         // Get all import data items with importvorgangId
-        const textFilePersonFieldsList: TextFilePersonFields[] = [];
         //Optimierung: für das folgeTicket mit z.B. 800 Lehrer , muss der thread so manipuliert werden (sobald ein Resultat da ist, wird der nächste request abgeschickt)
         //Optimierung: Process 10 dataItems at time for createPersonWithPersonenkontexte
         // const offset: number = 0;
@@ -255,6 +247,71 @@ export class ImportWorkflow {
                 error: new EntityNotFoundError('ImportVorgang', importvorgangId),
             };
         }
+        //Will never happen
+        if (!importVorgang.organisationId) {
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
+            };
+        }
+        if (!importVorgang.rolleId) {
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing a rolle id', importvorgangId),
+            };
+        }
+
+        importVorgang.execute();
+        await this.importVorgangRepository.save(importVorgang);
+
+        this.eventService.publish(
+            new ImportExecutedEvent(importvorgangId, importVorgang.organisationId, importVorgang.rolleId, permissions),
+        );
+
+        return {
+            ok: true,
+            value: undefined,
+        };
+    }
+
+    public async downloadFile(importvorgangId: string, permissions: PersonPermissions): Promise<Result<Buffer>> {
+        const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
+        if (permissionCheckError) {
+            return {
+                ok: false,
+                error: permissionCheckError,
+            };
+        }
+
+        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
+        if (!importVorgang) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
+            };
+        }
+        //Will never happen
+        if (!importVorgang.organisationId) {
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
+            };
+        }
+        if (!importVorgang.rolleId) {
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing a rolle id', importvorgangId),
+            };
+        }
+
+        if (importVorgang.status !== ImportStatus.FINISHED) {
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is still in progress', importvorgangId),
+            };
+        }
+
+        this.initialize(importVorgang.organisationId, importVorgang.rolleId);
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
@@ -265,86 +322,15 @@ export class ImportWorkflow {
             };
         }
 
-        importVorgang.execute();
-        await this.importVorgangRepository.save(importVorgang);
-
-        //create Person With PKs
-        //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
-        const savedPersonenWithPersonenkontext: (DomainError | PersonPersonenkontext)[] = [];
-        /* eslint-disable no-await-in-loop */
-        for (const importDataItem of importDataItems) {
-            const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
-                (organisationByIdAndName: OrganisationByIdAndName) =>
-                    organisationByIdAndName.name === importDataItem.klasse, //Klassennamen sind case sensitive
-            );
-            if (!klasse) {
-                importVorgang.fail();
-                await this.importVorgangRepository.save(importVorgang);
-
-                throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
-                    `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
-                ]);
-            }
-
-            const createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[] = [
-                {
-                    organisationId: this.selectedOrganisationId,
-                    rolleId: this.selectedRolleId,
-                },
-                {
-                    organisationId: klasse.id,
-                    rolleId: this.selectedRolleId,
-                },
-            ];
-
-            // TODO: Refactor this. We want to save the persons in bulk, and not get bogged down with checks.
-            // We should not use the CreationService here
-            const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
-                await this.personenkontextCreationService.createPersonWithPersonenkontexte(
-                    permissions,
-                    importDataItem.vorname,
-                    importDataItem.nachname,
-                    createPersonenkontexte,
-                );
-            if (!(savedPersonWithPersonenkontext instanceof DomainError)) {
-                this.logger.info(
-                    `System hat einen neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
-                );
-            } else {
-                this.logger.info(
-                    `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${savedPersonWithPersonenkontext.message}`,
-                );
-            }
-            savedPersonenWithPersonenkontext.push(savedPersonWithPersonenkontext);
-        }
-        /* eslint-disable no-await-in-loop */
-
-        //Save Benutzer + Passwort in the Liste
-        savedPersonenWithPersonenkontext.forEach((personPersonenkontext: DomainError | PersonPersonenkontext) => {
-            if (!(personPersonenkontext instanceof DomainError)) {
-                const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
-                    (klasseByIDandName: OrganisationByIdAndName) =>
-                        personPersonenkontext.personenkontexte.some(
-                            (pk: Personenkontext<true>) => pk.organisationId === klasseByIDandName.id,
-                        ),
-                );
-
-                textFilePersonFieldsList.push({
-                    klasse: klasse?.name,
-                    vorname: personPersonenkontext.person.vorname,
-                    nachname: personPersonenkontext.person.familienname,
-                    username: personPersonenkontext.person.referrer,
-                    password: personPersonenkontext.person.newPassword,
-                });
-            }
-        });
-
         //Create text file.
-        const result: Result<Buffer> = await this.createTextFile(textFilePersonFieldsList);
+        const result: Result<Buffer> = await this.createTextFile(importDataItems);
 
         if (result.ok) {
             importVorgang.complete();
             await this.importDataRepository.deleteByImportVorgangId(importvorgangId);
+            this.logger.info(
+                `Der Importvorgang ${importvorgangId} ist abgeschlossen (status=${importVorgang.status}).`,
+            );
         } else {
             importVorgang.fail();
         }
@@ -474,7 +460,7 @@ export class ImportWorkflow {
         );
     }
 
-    private async createTextFile(textFilePersonFieldsList: TextFilePersonFields[]): Promise<Result<Buffer>> {
+    private async createTextFile(importedDataItems: ImportDataItem<true>[]): Promise<Result<Buffer>> {
         const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
             this.organisationRepository.findById(this.selectedOrganisationId),
             this.rolleRepo.findById(this.selectedRolleId),
@@ -499,11 +485,20 @@ export class ImportWorkflow {
         const headerImportInfo: string = `Schule:${orga.name} - Rolle:${rolle.name}`;
         const headerUserInfo: string = '\n\nKlasse - Vorname - Nachname - Benutzername - Passwort';
         fileContent += headerImportInfo + headerUserInfo;
+        /* eslint-disable no-await-in-loop */
+        for (const importedDataItem of importedDataItems) {
+            let password: string = ''; //will never happen that the password is empty
+            if (importedDataItem.password) {
+                password = await this.importPasswordEncryptor.decryptPassword(
+                    importedDataItem.password,
+                    importedDataItem.importvorgangId,
+                );
+            }
 
-        for (const textFilePersonFields of textFilePersonFieldsList) {
-            const userInfo: string = `\n${textFilePersonFields.klasse} - ${textFilePersonFields.vorname} - ${textFilePersonFields.nachname} - ${textFilePersonFields.username} - ${textFilePersonFields.password}`;
+            const userInfo: string = `\n${importedDataItem.klasse} - ${importedDataItem.vorname} - ${importedDataItem.nachname} - ${importedDataItem.username} - ${password}`;
             fileContent += userInfo;
         }
+        /* eslint-disable no-await-in-loop */
 
         try {
             const buffer: Buffer = Buffer.from(fileContent, 'utf8');
