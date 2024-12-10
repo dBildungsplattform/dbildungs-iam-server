@@ -133,7 +133,7 @@ jobs:
       dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
       # database_deletion: ${{ github.ref_name == 'main' && 'true' || 'false' }}"
-      database_deletion: "true"
+      database_deletion: "true" # to force database deletion this has be set to true
     secrets: inherit
 
   # On Delete
