@@ -1,4 +1,4 @@
-import { IsBooleanString, IsNumberString, IsOptional, IsString } from 'class-validator';
+import { IsBooleanString, IsOptional, IsString } from 'class-validator';
 
 export class OxConfig {
     @IsBooleanString()
@@ -8,7 +8,7 @@ export class OxConfig {
     @IsOptional()
     public readonly ENDPOINT!: string;
 
-    @IsNumberString()
+    @IsString()
     @IsOptional()
     public readonly CONTEXT_ID!: string;
 
