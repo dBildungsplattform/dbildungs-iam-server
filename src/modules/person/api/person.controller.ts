@@ -301,8 +301,9 @@ export class PersonController {
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
         // Find all organisations where user has permission
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
             true,
+            false,
         );
 
         // Find all Personen on child-orgas (+root orgas)
