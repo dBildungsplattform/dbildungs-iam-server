@@ -228,7 +228,7 @@ describe('ImportWorkflow', () => {
 
         it('should return ImportCSVFileMaxUsersError if the csv file exceeds the number of maximum allowed users', async () => {
             const file: Express.Multer.File = createMock<Express.Multer.File>();
-            file.buffer = Buffer.from('Nachname;Vorname;Klasse\r\nTest;Hans;1A\r\nTest;Marie;1B');
+            file.buffer = Buffer.from('Nachname;Vorname;Klasse\r\nTest;Hans;1A\r\nTest;Marie;1B\r\n');
 
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
             rolleMock.rollenart = RollenArt.LERN;

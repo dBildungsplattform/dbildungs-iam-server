@@ -441,7 +441,7 @@ export class ImportWorkflow {
             return new ImportCSVFileEmptyError();
         }
 
-        if ((csvContent.match(/[\r\n]/g) || []).length > this.IMPORT_MAX_NUMBER_OF_USERS) {
+        if ((csvContent.match(/[\r\n]/g) || []).length - 1 > this.IMPORT_MAX_NUMBER_OF_USERS) {
             return new ImportCSVFileMaxUsersError();
         }
 
