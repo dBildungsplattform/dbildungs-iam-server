@@ -191,6 +191,16 @@
             ],
             "serviceProviderIds": [],
             "istTechnisch": true
+        },
+        {
+            "id": 102,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "Technical User NextCloud",
+            "rollenart": "SYSADMIN",
+            "merkmale": [],
+            "systemrechte": ["PERSONEN_LESEN"],
+            "serviceProviderIds": [],
+            "istTechnisch": true
         }
     ]
 }
