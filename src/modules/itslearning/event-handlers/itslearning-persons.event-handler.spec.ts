@@ -260,7 +260,9 @@ describe('ItsLearning Persons Event Handler', () => {
                 },
                 eventID,
             );
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${eventID}] Person with ID ${person.id} created in itsLearning!`);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `[EventID: ${eventID}] Person with ID ${person.id} created in itsLearning!`,
+            );
         });
 
         it('should log error if person could not be created', async () => {
