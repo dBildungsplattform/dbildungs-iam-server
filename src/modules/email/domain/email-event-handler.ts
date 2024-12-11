@@ -253,9 +253,11 @@ export class EmailEventHandler {
 
         if (email.address !== event.emailAddress) {
             this.logger.warning(
-                `Mismatch between requested(${email.address}) and received(${event.emailAddress}) address from OX`,
+                `Mismatch between requested(${email.address}) and received(${event.emailAddress}) address from OX, personId:${event.personId}`,
             );
-            this.logger.warning(`Overriding ${email.address} with ${event.emailAddress}) from OX`);
+            this.logger.warning(
+                `Overriding ${email.address} with ${event.emailAddress}) from OX, personId:${event.personId}`,
+            );
             email.setAddress(event.emailAddress);
         }
 
@@ -264,9 +266,13 @@ export class EmailEventHandler {
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
 
         if (persistenceResult instanceof DomainError) {
-            return this.logger.error(`Could not enable email, error is ${persistenceResult.message}`);
+            return this.logger.error(
+                `Could not enable email for personId:${event.personId}, error is ${persistenceResult.message}`,
+            );
         } else {
-            return this.logger.info(`Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED`);
+            return this.logger.info(
+                `Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED, personId:${event.personId}`,
+            );
         }
     }
 
