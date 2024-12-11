@@ -20,6 +20,8 @@ const logInSpy: jest.SpyInstance = jest.spyOn(AuthGuard(['jwt', 'oidc']).prototy
 describe('LoginGuard', () => {
     let module: TestingModule;
     let sut: LoginGuard;
+    let configMock: DeepMocked<ConfigService>;
+    let logger: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -37,6 +39,8 @@ describe('LoginGuard', () => {
         }).compile();
 
         sut = module.get(LoginGuard);
+        configMock = module.get(ConfigService);
+        logger = module.get(ClassLogger);
     }, 30 * 1_000);
 
     afterAll(async () => {
@@ -56,7 +60,21 @@ describe('LoginGuard', () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
-            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+            });
+            contextMock.switchToHttp().getResponse.mockReturnValue({});
 
             await sut.canActivate(contextMock);
 
@@ -72,21 +90,36 @@ describe('LoginGuard', () => {
             await expect(sut.canActivate(contextMock)).resolves.toBe(false);
         });
 
-        it('should refuse on exception', async () => {
+        it('should retry on exception', async () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockRejectedValueOnce('Something broke');
 
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
 
-            await expect(sut.canActivate(contextMock)).resolves.toBe(false);
+            await expect(sut.canActivate(contextMock)).resolves.toBe(true);
+            const request: Request = contextMock.switchToHttp().getRequest<Request>();
+            expect(request.session.passport?.user.redirect_uri).not.toBeNull();
         });
 
         it('should call logIn of superclass', async () => {
             canActivateSpy.mockResolvedValueOnce(true);
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
-            contextMock.switchToHttp().getRequest<DeepMocked<Request>>().isAuthenticated.mockReturnValue(false);
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+            });
 
             await sut.canActivate(contextMock);
 
@@ -98,7 +131,20 @@ describe('LoginGuard', () => {
             logInSpy.mockResolvedValueOnce(undefined);
             const contextMock: DeepMocked<ExecutionContext> = createMock();
             const redirectUrl: string = faker.internet.url();
-            contextMock.switchToHttp().getRequest<Request>().query = { redirectUrl };
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    redirectUrl,
+                },
+                isAuthenticated: jest.fn().mockReturnValue(false),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    redirectUrl: redirectUrl,
+                },
+            });
 
             await sut.canActivate(contextMock);
 
@@ -141,6 +187,11 @@ describe('LoginGuard', () => {
         });
 
         it('should throw HttpFoundException exception if KeycloakUser does not exist', async () => {
+            configMock.getOrThrow.mockReturnValueOnce({
+                ERROR_PAGE_REDIRECT: faker.internet.url(),
+                OIDC_CALLBACK_URL: faker.internet.url(),
+            });
+
             canActivateSpy.mockRejectedValueOnce(new KeycloakUserNotFoundError());
             logInSpy.mockResolvedValueOnce(undefined);
 
@@ -154,6 +205,30 @@ describe('LoginGuard', () => {
                     },
                 }),
             );
+        });
+
+        it('should log successful login', async () => {
+            canActivateSpy.mockResolvedValueOnce(true);
+            logInSpy.mockResolvedValueOnce(undefined);
+            const contextMock: DeepMocked<ExecutionContext> = createMock();
+            contextMock.switchToHttp().getRequest.mockReturnValue({
+                query: {
+                    requiredStepUpLevel: 'gold',
+                },
+                isAuthenticated: jest.fn().mockReturnValue(true),
+                passportUser: {
+                    userinfo: {
+                        preferred_username: 'test',
+                    },
+                },
+                session: {
+                    requiredStepUpLevel: StepUpLevel.GOLD,
+                },
+            });
+
+            await sut.canActivate(contextMock);
+
+            expect(logger.info).toHaveBeenCalledWith('Benutzer test hat sich im Schulportal angemeldet.');
         });
     });
 });

@@ -55,7 +55,7 @@ describe('configloader', () => {
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     ROOT: 'sh',
@@ -69,8 +69,16 @@ describe('configloader', () => {
                     USER_RESOLVER: 'mariadb_resolver',
                     REALM: 'defrealm',
                 },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
                 OX: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
@@ -175,7 +183,7 @@ describe('configloader', () => {
                     ADMIN_PASSWORD: 'password',
                 },
                 ITSLEARNING: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
@@ -190,8 +198,16 @@ describe('configloader', () => {
                     USER_RESOLVER: 'mariadb_resolver',
                     REALM: 'defrealm',
                 },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
                 OX: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',

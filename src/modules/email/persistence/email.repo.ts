@@ -73,23 +73,36 @@ export class EmailRepo {
     public async findByPersonSortedByUpdatedAtDesc(
         personId: PersonID,
         status?: EmailAddressStatus,
-    ): Promise<Option<EmailAddress<true>[]>> {
-        const emailAddressEntities: Option<EmailAddressEntity[]> = await this.em.find(
+    ): Promise<EmailAddress<true>[]> {
+        const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
             EmailAddressEntity,
             {
                 personId: { $eq: personId },
             },
             { orderBy: { updatedAt: QueryOrder.DESC } },
         );
-        if (!emailAddressEntities || emailAddressEntities.length === 0) return undefined;
+
+        let emails: EmailAddress<true>[] = emailAddressEntities.map(mapEntityToAggregate);
 
         if (status) {
-            const filtered: EmailAddress<true>[] = emailAddressEntities
-                .map(mapEntityToAggregate)
-                .filter((ea: EmailAddress<true>) => ea.status === status);
-            return filtered.length === 0 ? undefined : filtered;
+            emails = emails.filter((ea: EmailAddress<true>) => ea.status === status);
         }
-        return emailAddressEntities.map(mapEntityToAggregate);
+
+        return emails;
+    }
+
+    public async findByAddress(address: string): Promise<Option<EmailAddress<true>>> {
+        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
+            EmailAddressEntity,
+            {
+                address: { $eq: address },
+            },
+            { orderBy: { updatedAt: QueryOrder.DESC } },
+        );
+
+        if (!emailAddressEntity) return undefined;
+
+        return mapEntityToAggregate(emailAddressEntity);
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {
