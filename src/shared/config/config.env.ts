@@ -100,5 +100,8 @@ export default (): Config => ({
         IMPORT_FILE_MAXGROESSE_IN_MB: process.env['IMPORT_FILE_MAXGROESSE_IN_MB']
             ? parseInt(process.env['IMPORT_FILE_MAXGROESSE_IN_MB'])
             : undefined,
+        IMPORT_MAX_NUMBER_OF_USERS: process.env['IMPORT_MAX_NUMBER_OF_USERS']
+            ? parseInt(process.env['IMPORT_MAX_NUMBER_OF_USERS'])
+            : undefined,
     },
 });

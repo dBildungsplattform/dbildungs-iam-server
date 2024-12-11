@@ -30,6 +30,10 @@ import { EventService } from '../../../core/eventbus/index.js';
 import { ImportStatus } from './import.enums.js';
 import { ImportDomainError } from './import-domain.error.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { ImportConfig } from '../../../shared/config/import.config.js';
+import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -57,6 +61,8 @@ export class ImportWorkflow {
 
     public readonly CSV_FILE_VALID_HEADERS: string[] = ['nachname', 'vorname', 'klasse'];
 
+    private IMPORT_MAX_NUMBER_OF_USERS!: number;
+
     private selectedOrganisationId!: string;
 
     private selectedRolleId!: string;
@@ -69,7 +75,10 @@ export class ImportWorkflow {
         private readonly importPasswordEncryptor: ImportPasswordEncryptor,
         private readonly eventService: EventService,
         private readonly logger: ClassLogger,
-    ) {}
+        private readonly config: ConfigService<ServerConfig>,
+    ) {
+        this.IMPORT_MAX_NUMBER_OF_USERS = this.config.getOrThrow<ImportConfig>('IMPORT').IMPORT_MAX_NUMBER_OF_USERS;
+    }
 
     public static createNew(
         rolleRepo: RolleRepo,
@@ -79,6 +88,7 @@ export class ImportWorkflow {
         importPasswordEncryptor: ImportPasswordEncryptor,
         eventService: EventService,
         logger: ClassLogger,
+        config: ConfigService<ServerConfig>,
     ): ImportWorkflow {
         return new ImportWorkflow(
             rolleRepo,
@@ -88,6 +98,7 @@ export class ImportWorkflow {
             importPasswordEncryptor,
             eventService,
             logger,
+            config,
         );
     }
 
@@ -428,6 +439,10 @@ export class ImportWorkflow {
         const csvContent: string = file.buffer.toString().replace(/['"]+/g, '');
         if (!csvContent) {
             return new ImportCSVFileEmptyError();
+        }
+
+        if ((csvContent.match(/[\r\n]/g) || []).length > this.IMPORT_MAX_NUMBER_OF_USERS) {
+            return new ImportCSVFileMaxUsersError();
         }
 
         return new Promise<ParseResult<CSVImportDataItemDTO>>(

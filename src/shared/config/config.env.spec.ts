@@ -33,10 +33,12 @@ describe('Config Loader', () => {
     describe('Import Config', () => {
         it('should load import configuration with parsed integer values', () => {
             process.env['IMPORT_FILE_MAXGROESSE_IN_MB'] = '10';
+            process.env['IMPORT_MAX_NUMBER_OF_USERS'] = '2000';
 
             const config: Config = configEnv();
             expect(config.IMPORT).toEqual({
                 IMPORT_FILE_MAXGROESSE_IN_MB: 10,
+                IMPORT_MAX_NUMBER_OF_USERS: 2000,
             });
         });
 
@@ -44,6 +46,7 @@ describe('Config Loader', () => {
             const config: Config = configEnv();
             expect(config.IMPORT).toEqual({
                 IMPORT_FILE_MAXGROESSE_IN_MB: undefined,
+                IMPORT_MAX_NUMBER_OF_USERS: undefined,
             });
         });
     });

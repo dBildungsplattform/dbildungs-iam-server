@@ -7,6 +7,8 @@ import { ImportVorgangRepository } from '../persistence/import-vorgang.repositor
 import { EventService } from '../../../core/eventbus/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
 
 @Injectable()
 export class ImportWorkflowFactory {
@@ -18,6 +20,7 @@ export class ImportWorkflowFactory {
         private readonly importPasswordEncryptor: ImportPasswordEncryptor,
         private readonly eventService: EventService,
         private readonly logger: ClassLogger,
+        private readonly config: ConfigService<ServerConfig>,
     ) {}
 
     public createNew(): ImportWorkflow {
@@ -29,6 +32,7 @@ export class ImportWorkflowFactory {
             this.importPasswordEncryptor,
             this.eventService,
             this.logger,
+            this.config,
         );
     }
 }

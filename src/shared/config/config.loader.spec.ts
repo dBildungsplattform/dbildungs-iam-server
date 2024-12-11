@@ -86,6 +86,7 @@ describe('configloader', () => {
                 },
                 IMPORT: {
                     IMPORT_FILE_MAXGROESSE_IN_MB: 10,
+                    IMPORT_MAX_NUMBER_OF_USERS: 2000,
                     PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
                 },
                 SYSTEM: {
@@ -220,6 +221,7 @@ describe('configloader', () => {
                 },
                 IMPORT: {
                     IMPORT_FILE_MAXGROESSE_IN_MB: 10,
+                    IMPORT_MAX_NUMBER_OF_USERS: 2000,
                     PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
                 },
                 SYSTEM: {
