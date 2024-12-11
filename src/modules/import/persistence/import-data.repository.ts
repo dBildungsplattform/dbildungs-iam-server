@@ -1,8 +1,8 @@
 import { EntityManager, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItemScope } from './import-data-item.scope.js';
+import { ImportDataItem } from '../domain/import-data-item.js';
 
 export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): RequiredEntityData<ImportDataItemEntity> {
     return {
@@ -20,7 +20,7 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.id,
         entity.createdAt,
         entity.updatedAt,
-        entity.importvorgangId,
+        entity.importvorgangId.id,
         entity.nachname,
         entity.vorname,
         entity.klasse,
