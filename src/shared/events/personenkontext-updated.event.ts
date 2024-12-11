@@ -9,7 +9,6 @@ import {
     type PersonenkontextEventKontextData,
     type PersonenkontextEventPersonData,
 } from './personenkontext-event.types.js';
-import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
 
 export type PersonenkontextUpdatedPersonData = PersonenkontextEventPersonData;
 
@@ -37,6 +36,7 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
         rolleId: pk.rolleId,
         rolle: rolle.rollenart,
         orgaId: pk.organisationId,
+        parentOrgaId: orga.administriertVon,
         orgaTyp: orga.typ,
         orgaKennung: orga.kennung,
         isItslearningOrga: orga.itslearningEnabled,
@@ -71,16 +71,6 @@ export class PersonenkontextUpdatedEvent extends BaseEvent {
             newKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             removedKontexte.map(mapPersonenkontextAndRolleAggregateToData),
             currentKontexte.map(mapPersonenkontextAndRolleAggregateToData),
-        );
-    }
-
-    /**
-     * Check if @currentKontexte contains at least one PersonenkontextEventKontextData which satisfies the condition
-     * 'rolle is LEHR'.
-     */
-    public containsAnyCurrentPKWithRollenartLehr(): boolean {
-        return this.currentKontexte.some(
-            (pkEventKontextData: PersonenkontextEventKontextData) => pkEventKontextData.rolle === RollenArt.LEHR,
         );
     }
 }

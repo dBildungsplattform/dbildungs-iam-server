@@ -32,6 +32,7 @@ import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
+import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -46,6 +47,7 @@ export class CronController {
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly userLockRepository: UserLockRepository,
         private readonly logger: ClassLogger,
+        private readonly serviceProviderService: ServiceProviderService,
     ) {}
 
     @Put('kopers-lock')
@@ -370,6 +372,41 @@ export class CronController {
             return allSuccessful;
         } catch (error) {
             throw new Error('Failed to unlock users due to an internal server error.');
+        }
+    }
+
+    @Put('vidis-angebote')
+    @HttpCode(HttpStatus.OK)
+    @ApiCreatedResponse({ description: 'VIDIS Angebote were successfully updated.', type: Boolean })
+    @ApiBadRequestResponse({ description: 'VIDIS Angebote were not successfully updated.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update VIDIS Angebote.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to update VIDIS Angebote.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to update VIDIS Angebote.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while trying to update VIDIS Angebote.',
+    })
+    public async updateServiceProvidersForVidisAngebote(@Permissions() permissions: PersonPermissions): Promise<void> {
+        const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.CRON_DURCHFUEHREN,
+        ]);
+        if (!hasCronJobPermission) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Insufficient permissions'),
+                ),
+            );
+        }
+        try {
+            await this.serviceProviderService.updateServiceProvidersForVidis();
+        } catch (error) {
+            let errorMessage: string = 'unbekannt';
+            if (error instanceof DomainError) {
+                errorMessage = error.message;
+            }
+            this.logger.info(
+                `ServiceProvider für VIDIS-Angebote konnten nicht aktualisiert werden. Fehler: ${errorMessage}`,
+            );
+            throw error;
         }
     }
 }
