@@ -68,7 +68,7 @@ export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError>
             PersonUserPasswordModificationError.name,
             new DbiamPersonError({
                 code: 500,
-                i18nKey: PersonErrorI18nTypes.PERSON_PASSWORD_MODIFICATION_ERROR,
+                i18nKey: PersonErrorI18nTypes.PERSON_UEM_PASSWORD_MODIFICATION_ERROR,
             }),
         ],
     ]);

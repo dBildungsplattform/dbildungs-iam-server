@@ -948,6 +948,7 @@ describe('PersonController', () => {
                 true,
             );
             personRepositoryMock.updatePersonMetadata.mockResolvedValue(new MismatchedRevisionError(''));
+
             await expect(
                 personController.updateMetadata(params, bodyWithInvalidRevision, personPermissionsMock),
             ).rejects.toThrow(HttpException);
@@ -1042,6 +1043,10 @@ describe('PersonController', () => {
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
                 ).resolves.not.toThrow();
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                    person.id,
+                    person.referrer,
+                );
             });
         });
 
@@ -1067,6 +1072,10 @@ describe('PersonController', () => {
                     personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
                 ).rejects.toThrow(PersonUserPasswordModificationError);
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                    person.id,
+                    person.referrer,
+                );
             });
         });
     });
