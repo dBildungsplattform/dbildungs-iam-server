@@ -131,7 +131,7 @@
         {
             "id": 14,
             "administeredBySchulstrukturknoten": 0,
-            "name": "IQSH Mitarbeiter ohne Landes-E-Mail",
+            "name": "IQSH Mitarbeiter",
             "rollenart": "LEHR",
             "merkmale": ["KOPERS_PFLICHT"],
             "systemrechte": [],
