@@ -183,7 +183,7 @@ export class LdapEventHandler {
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
         );
 
-        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.address);
+        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.referrer, event.address);
     }
 
     @EventHandler(EmailAddressChangedEvent)
@@ -192,6 +192,6 @@ export class LdapEventHandler {
             `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}`,
         );
 
-        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.newAddress);
+        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.referrer, event.newAddress);
     }
 }
