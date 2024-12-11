@@ -51,6 +51,8 @@ export class LdapClientService {
 
     private static readonly RELAX_OID: string = '1.3.6.1.4.1.4203.666.5.12'; // Relax Control
 
+    private static readonly GROUPS: string = 'groups';
+
     private mutex: Mutex;
 
     public constructor(
@@ -148,7 +150,7 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const groupResult: Result<boolean, Error> = await this.addPersonToGroup(referrer, parseInt(schulId));
+            const groupResult: Result<boolean, Error> = await this.addPersonToGroup(referrer, schulId);
             if (!groupResult.ok) {
                 this.logger.error(`LDAP: Failed to add lehrer ${referrer} to group lehrer-${schulId}`);
                 return groupResult;
@@ -317,7 +319,6 @@ export class LdapClientService {
                     error: new LdapSearchError(LdapEntityType.LEHRER),
                 };
             }
-            // await this.removePersonFromGroup(referrer, parseInt(searchResultLehrer.searchEntries[0].ou));
             await client.del(searchResultLehrer.searchEntries[0].dn);
             this.logger.info(`LDAP: Successfully deleted lehrer by person:${referrer}`);
 
@@ -343,7 +344,7 @@ export class LdapClientService {
                 };
             }
             const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
-            await this.removePersonFromGroup(person.referrer, parseInt(orgaKennung));
+            await this.removePersonFromGroup(person.referrer, orgaKennung);
             await client.del(lehrerUid);
             this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
 
@@ -446,29 +447,52 @@ export class LdapClientService {
         });
     }
 
-    public async addPersonToGroup(personUid: string, schoolReferrer: number): Promise<Result<boolean>> {
+    public async addPersonToGroup(personUid: string, schoolReferrer: string): Promise<Result<boolean>> {
         const groupId: string = 'lehrer-' + schoolReferrer;
         this.logger.info(`LDAP: Adding person ${personUid} to group ${groupId}`);
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
 
-        const searchResultGroup: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
-            filter: `(cn=${groupId})`,
+        const orgUnitDn: string = `ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
+        const searchResultOrgUnit: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+            filter: `(ou=${groupId})`,
         });
 
-        if (!searchResultGroup.searchEntries[0]) {
-            this.logger.info(`LDAP: Group ${groupId} not found, creating group`);
+        if (!searchResultOrgUnit.searchEntries[0]) {
+            this.logger.info(`LDAP: organizationalUnit ${schoolReferrer} not found, creating organizationalUnit`);
 
-            const groupDn: string = `cn=${groupId},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
-            const newGroup: { cn: string; objectclass: string[]; uniqueMember: string[] } = {
-                cn: groupId,
-                objectclass: ['groupOfUniqueNames'],
-                uniqueMember: [this.getLehrerUid(personUid, 'users')],
+            const newOrgUnit: { ou: string; objectClass: string } = {
+                ou: schoolReferrer,
+                objectClass: 'organizationalUnit',
             };
+            await client.add(orgUnitDn, newOrgUnit);
+        }
 
+        const orgRoleDn: string = `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
+        const searchResultOrgRole: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+            filter: `(cn=${LdapClientService.GROUPS},ou=${schoolReferrer})`,
+        });
+        if (!searchResultOrgRole.searchEntries[0]) {
+            const newOrgRole: { cn: string; objectClass: string } = {
+                cn: LdapClientService.GROUPS,
+                objectClass: 'organizationalRole',
+            };
+            await client.add(orgRoleDn, newOrgRole);
+        }
+
+        const lehrerDn: string = `cn=${groupId},cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
+        const searchResultGroupOfNames: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+            filter: `(cn=${groupId}, cn=${LdapClientService.GROUPS},ou=${schoolReferrer})`,
+        });
+        if (!searchResultGroupOfNames.searchEntries[0]) {
+            const newLehrerGroup: { cn: string; objectclass: string[]; member: string[] } = {
+                cn: groupId,
+                objectclass: ['groupOfNames'],
+                member: [this.getLehrerUid(personUid, 'users')],
+            };
             try {
-                await client.add(groupDn, newGroup);
+                await client.add(lehrerDn, newLehrerGroup);
                 this.logger.info(`LDAP: Successfully created group ${groupId} and added person ${personUid}`);
                 return { ok: true, value: true };
             } catch (err) {
@@ -478,14 +502,12 @@ export class LdapClientService {
             }
         }
 
-        const groupDn: string = searchResultGroup.searchEntries[0].dn;
-
         try {
-            await client.modify(groupDn, [
+            await client.modify(lehrerDn, [
                 new Change({
                     operation: 'add',
                     modification: new Attribute({
-                        type: 'uniqueMember',
+                        type: 'member',
                         values: [this.getLehrerUid(personUid, 'users')],
                     }),
                 }),
@@ -499,24 +521,23 @@ export class LdapClientService {
         }
     }
 
-    public async removePersonFromGroup(personUid: string, schoolReferrer: number): Promise<Result<boolean>> {
+    public async removePersonFromGroup(personUid: string, schoolReferrer: string): Promise<Result<boolean>> {
         const groupId: string = 'lehrer-' + schoolReferrer;
         this.logger.info(`LDAP: Removing person ${personUid} from group ${groupId}`);
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
-        const searchResultGroup: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
-            filter: `(cn=${groupId})`,
-        });
+        const dn: string = `cn=${groupId},cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
+        const searchResultOrgUnit: SearchResult = await client.search(dn, { scope: 'base' });
 
-        if (!searchResultGroup.searchEntries[0]) {
+        if (!searchResultOrgUnit.searchEntries[0]) {
             const errMsg: string = `LDAP: Group ${groupId} not found`;
             this.logger.error(errMsg);
             return { ok: false, error: new Error(errMsg) };
         }
-        const groupDn: string = searchResultGroup.searchEntries[0].dn;
+        const groupDn: string = searchResultOrgUnit.searchEntries[0].dn;
         try {
-            if (typeof searchResultGroup.searchEntries[0]['uniqueMember'] === 'string') {
+            if (typeof searchResultOrgUnit.searchEntries[0]['member'] === 'string') {
                 await client.del(groupDn);
                 this.logger.info(`LDAP: Successfully removed person ${personUid} from group ${groupId}`);
                 this.logger.info(`LDAP: Successfully deleted group ${groupId}`);
@@ -526,7 +547,7 @@ export class LdapClientService {
                 new Change({
                     operation: 'delete',
                     modification: new Attribute({
-                        type: 'uniqueMember',
+                        type: 'member',
                         values: [this.getLehrerUid(personUid, 'users')],
                     }),
                 }),

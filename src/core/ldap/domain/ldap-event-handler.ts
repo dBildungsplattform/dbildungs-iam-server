@@ -153,51 +153,42 @@ export class LdapEventHandler {
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, new personenkontexte: ${event.newKontexte.length}, deleted personenkontexte: ${event.removedKontexte.length}`,
         );
 
-        if (!event.containsAnyCurrentPKWithRollenartLehr()) {
-            // Delete all removed personenkontexte if rollenart === LEHR
-            await Promise.allSettled(
-                event.removedKontexte
-                    .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
-                    .map((pk: PersonenkontextEventKontextData) => {
-                        if (!pk.orgaKennung) {
-                            return Promise.reject(new Error('Organisation has no Kennung'));
-                        }
-                        return this.getEmailDomainForOrganisationId(pk.orgaId)
-                            .catch((error: Error) => {
-                                this.logger.error(`Error while getEmailDomainForOrganisationId: ${error.message}`);
-                                return Promise.reject(error);
-                            })
-                            .then((emailDomain: Result<string>) => {
-                                if (emailDomain.ok) {
-                                    this.logger.info(
-                                        `Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`,
-                                    );
-                                    return this.ldapClientService
-                                        .deleteLehrer(event.person, pk.orgaKennung!, emailDomain.value)
-                                        .then((deletionResult: Result<PersonData>) => {
-                                            if (!deletionResult.ok) {
-                                                this.logger.error(deletionResult.error.message);
-                                            }
-                                            return deletionResult;
-                                        })
-                                        .catch((error: Error) => {
-                                            this.logger.error(`Error while deleteLehrer: ${error.message}`);
-                                            return Promise.reject(error);
-                                        });
-                                } else {
-                                    this.logger.error(
-                                        `LdapClientService deleteLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
-                                    );
-                                    return Promise.reject(new Error('Invalid email domain'));
-                                }
-                            });
-                    }),
-            );
-        } else {
-            this.logger.info(
-                `Keep lehrer in LDAP, personId:${event.person.id}, because person keeps PK(s) with rollenArt LEHR`,
-            );
-        }
+        await Promise.allSettled(
+            event.removedKontexte
+                .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
+                .map((pk: PersonenkontextEventKontextData) => {
+                    if (!pk.orgaKennung) {
+                        return Promise.reject(new Error('Organisation has no Kennung'));
+                    }
+                    return this.getEmailDomainForOrganisationId(pk.orgaId)
+                        .catch((error: Error) => {
+                            this.logger.error(`Error while getEmailDomainForOrganisationId: ${error.message}`);
+                            return Promise.reject(error);
+                        })
+                        .then((emailDomain: Result<string>) => {
+                            if (emailDomain.ok) {
+                                this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
+                                return this.ldapClientService
+                                    .deleteLehrer(event.person, pk.orgaKennung!, emailDomain.value)
+                                    .then((deletionResult: Result<PersonData>) => {
+                                        if (!deletionResult.ok) {
+                                            this.logger.error(deletionResult.error.message);
+                                        }
+                                        return deletionResult;
+                                    })
+                                    .catch((error: Error) => {
+                                        this.logger.error(`Error while deleteLehrer: ${error.message}`);
+                                        return Promise.reject(error);
+                                    });
+                            } else {
+                                this.logger.error(
+                                    `LdapClientService deleteLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
+                                );
+                                return Promise.reject(new Error('Invalid email domain'));
+                            }
+                        });
+                }),
+        );
 
         // Create personenkontexte if rollenart === LEHR
         await Promise.allSettled(
