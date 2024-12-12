@@ -20,10 +20,7 @@ export default class PersonTimeLimitService {
             return [];
         }
         const lockInfos: PersonTimeLimitInfo[] = [];
-        if (
-            !person.personalnummer &&
-            (await this.dBiamPersonenkontextService.isPersonalnummerRequiredForAnyPersonenkontextForPerson(person.id))
-        ) {
+        if (!person.personalnummer) {
             const kopersKontext: Personenkontext<true> | undefined =
                 await this.dBiamPersonenkontextService.getKopersPersonenkontext(person.id);
             if (kopersKontext) {

@@ -53,9 +53,6 @@ describe('PersonTimeLimitService', () => {
             person.personalnummer = undefined;
             personRepoMock.findById.mockResolvedValue(person);
 
-            dBiamPersonenkontextServiceMock.isPersonalnummerRequiredForAnyPersonenkontextForPerson.mockResolvedValue(
-                true,
-            );
             const pesonenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
             dBiamPersonenkontextServiceMock.getKopersPersonenkontext.mockResolvedValue(pesonenkontext);
 
