@@ -49,5 +49,16 @@ describe('Config Loader', () => {
                 IMPORT_MAX_NUMBER_OF_USERS: undefined,
             });
         });
+
+        it('should load import configuration with parsed not integer values', () => {
+            process.env['IMPORT_FILE_MAXGROESSE_IN_MB'] = 'string';
+            process.env['IMPORT_MAX_NUMBER_OF_USERS'] = 'string';
+
+            const config: Config = configEnv();
+            expect(config.IMPORT).toEqual({
+                IMPORT_FILE_MAXGROESSE_IN_MB: undefined,
+                IMPORT_MAX_NUMBER_OF_USERS: undefined,
+            });
+        });
     });
 });

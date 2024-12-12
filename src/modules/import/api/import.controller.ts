@@ -60,6 +60,7 @@ import { Paged } from '../../../shared/paging/paged.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { ImportStatus } from '../domain/import.enums.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { ContentDisposition, ContentType } from '../../../shared/http/http.headers.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -270,10 +271,12 @@ export class ImportController {
         } else {
             const fileName: string = importWorkflow.getFileName(params.importvorgangId);
             const contentDisposition: string = `attachment; filename="${fileName}"`;
-            res.set({
-                'Content-Type': 'text/plain',
-                'Content-Disposition': contentDisposition,
-            });
+
+            const headers: Record<string, string> = {} as Record<string, string>;
+            headers[ContentType] = 'text/plain';
+            headers[ContentDisposition] = contentDisposition;
+            res.set(headers);
+
             return new StreamableFile(result.value);
         }
     }

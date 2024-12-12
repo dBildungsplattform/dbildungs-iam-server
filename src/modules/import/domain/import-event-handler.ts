@@ -38,7 +38,6 @@ export class ImportEventHandler {
         this.selectedOrganisationId = event.organisationId;
         this.selectedRolleId = event.rolleId;
 
-        //Optimierung: private methode gibt eine map zurück
         const klassenByIDandName: OrganisationByIdAndName[] = [];
         const klassen: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
             this.selectedOrganisationId,
@@ -51,35 +50,26 @@ export class ImportEventHandler {
                 });
             }
         });
-        // Get all import data items with importvorgangId
-        const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
-        //Optimierung: für das folgeTicket mit z.B. 800 Lehrer , muss der thread so manipuliert werden (sobald ein Resultat da ist, wird der nächste request abgeschickt)
-        //Optimierung: Process 10 dataItems at time for createPersonWithPersonenkontexte
-        // const offset: number = 0;
-        // const limit: number = 10;
 
+        const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
         const importvorgangId: string = event.importVorgangId;
         const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
         if (!importVorgang) {
-            //TODO: Log and return
             throw new EntityNotFoundError('ImportVorgang', importvorgangId);
         }
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
         if (total === 0) {
-            //TODO: Log and return
-            throw new EntityNotFoundError('ImportDataItem', importvorgangId);
+            return this.logger.error(`No import data itemns found for Importvorgang:${importvorgangId}`);
         }
 
-        //create Person With PKs
         //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
-        const savedPersonenWithPersonenkontext: (DomainError | PersonPersonenkontext)[] = [];
         /* eslint-disable no-await-in-loop */
         for (const importDataItem of importDataItems) {
             const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                 (organisationByIdAndName: OrganisationByIdAndName) =>
-                    organisationByIdAndName.name === importDataItem.klasse, //Klassennamen sind case sensitive
+                    organisationByIdAndName.name === importDataItem.klasse,
             );
             if (!klasse) {
                 importVorgang.fail();
@@ -101,8 +91,6 @@ export class ImportEventHandler {
                 },
             ];
 
-            // TODO: Refactor this. We want to save the persons in bulk, and not get bogged down with checks.
-            // We should not use the CreationService here
             const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
                 await this.personenkontextCreationService.createPersonWithPersonenkontexte(
                     event.permissions,
@@ -121,9 +109,6 @@ export class ImportEventHandler {
                 );
             }
 
-            savedPersonenWithPersonenkontext.push(savedPersonWithPersonenkontext);
-
-            //saved import data items with username and password
             if (!savedPersonWithPersonenkontext.person.newPassword) {
                 return this.logger.error(
                     `Person with ID ${savedPersonWithPersonenkontext.person.id} has no start password!`,
@@ -156,7 +141,7 @@ export class ImportEventHandler {
             ),
         );
 
-        importVorgang.finsih();
+        importVorgang.finish();
         await this.importVorgangRepository.save(importVorgang);
     }
 }

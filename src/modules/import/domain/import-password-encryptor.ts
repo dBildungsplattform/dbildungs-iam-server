@@ -10,6 +10,8 @@ import { ImportDomainError } from './import-domain.error.js';
 export class ImportPasswordEncryptor {
     private PASSPHRASE_SECRET!: string;
 
+    private PASSPHRASE_SALT!: string;
+
     private readonly ALGORITHM: string = 'aes-256-ctr';
 
     private readonly INPUT_ENCODING: Encoding = 'utf8';
@@ -18,6 +20,7 @@ export class ImportPasswordEncryptor {
 
     public constructor(private readonly config: ConfigService<ServerConfig>) {
         this.PASSPHRASE_SECRET = this.config.getOrThrow<ImportConfig>('IMPORT').PASSPHRASE_SECRET;
+        this.PASSPHRASE_SALT = this.config.getOrThrow<ImportConfig>('IMPORT').PASSPHRASE_SALT;
     }
 
     public async encryptPassword(password: string): Promise<string> {
@@ -49,6 +52,6 @@ export class ImportPasswordEncryptor {
     }
 
     private async generateKey(): Promise<Buffer> {
-        return (await promisify(scrypt)(this.PASSPHRASE_SECRET, 'salt', 32)) as Buffer;
+        return (await promisify(scrypt)(this.PASSPHRASE_SECRET, this.PASSPHRASE_SALT, 32)) as Buffer;
     }
 }

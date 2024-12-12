@@ -1608,11 +1608,12 @@
         },
         "username": {
           "name": "username",
-          "type": "varchar(255)",
+          "type": "varchar(50)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "length": 50,
           "mappedType": "string"
         },
         "password": {

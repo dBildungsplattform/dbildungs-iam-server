@@ -221,8 +221,7 @@ export class ImportWorkflow {
 
             return this.importDataRepository.save(importDataItem);
         });
-        //Datensätze persistieren
-        //TODO: 50 ImportDataItems per call direkt einmail persistieren
+
         await Promise.all(promises);
 
         savedImportvorgang.validate(invalidImportDataItems.length);
@@ -253,6 +252,7 @@ export class ImportWorkflow {
         // const limit: number = 10;
         const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
         if (!importVorgang) {
+            this.logger.warning(`Importvorgang: ${importvorgangId} not found`);
             return {
                 ok: false,
                 error: new EntityNotFoundError('ImportVorgang', importvorgangId),
@@ -260,12 +260,14 @@ export class ImportWorkflow {
         }
         //Will never happen
         if (!importVorgang.organisationId) {
+            this.logger.error(`Importvorgang:${importvorgangId} does not have an organisation id`);
             return {
                 ok: false,
                 error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
             };
         }
         if (!importVorgang.rolleId) {
+            this.logger.error(`Importvorgang:${importvorgangId} does not have a rolle id`);
             return {
                 ok: false,
                 error: new ImportDomainError('ImportVorgang is missing a rolle id', importvorgangId),

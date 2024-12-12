@@ -97,11 +97,12 @@ export default (): Config => ({
     },
     IMPORT: {
         PASSPHRASE_SECRET: process.env['PASSPHRASE_SECRET'],
-        IMPORT_FILE_MAXGROESSE_IN_MB: process.env['IMPORT_FILE_MAXGROESSE_IN_MB']
-            ? parseInt(process.env['IMPORT_FILE_MAXGROESSE_IN_MB'])
-            : undefined,
-        IMPORT_MAX_NUMBER_OF_USERS: process.env['IMPORT_MAX_NUMBER_OF_USERS']
-            ? parseInt(process.env['IMPORT_MAX_NUMBER_OF_USERS'])
-            : undefined,
+        PASSPHRASE_SALT: process.env['PASSPHRASE_SALT'],
+        IMPORT_FILE_MAXGROESSE_IN_MB: isNaN(Number(process.env['IMPORT_FILE_MAXGROESSE_IN_MB']))
+            ? undefined
+            : Number(process.env['IMPORT_FILE_MAXGROESSE_IN_MB']),
+        IMPORT_MAX_NUMBER_OF_USERS: isNaN(Number(process.env['IMPORT_MAX_NUMBER_OF_USERS']))
+            ? undefined
+            : Number(process.env['IMPORT_MAX_NUMBER_OF_USERS']),
     },
 });

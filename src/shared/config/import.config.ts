@@ -12,4 +12,8 @@ export class ImportConfig {
     @IsString()
     @IsNotEmpty()
     public readonly PASSPHRASE_SECRET!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    public readonly PASSPHRASE_SALT!: string;
 }

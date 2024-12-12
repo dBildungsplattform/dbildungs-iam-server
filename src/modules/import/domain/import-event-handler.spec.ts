@@ -106,16 +106,20 @@ describe('ImportEventHandler', () => {
             expect(personenkontextCreationServiceMock.createPersonWithPersonenkontexte).not.toHaveBeenCalled();
         });
 
-        it('should return EntityNotFoundError if the import transaction does not have any import data items', async () => {
+        it('should log error if the import transaction does not have any import data items', async () => {
             organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE }),
             ]);
-            importVorgangRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createImportVorgang(true));
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(
+                DoFactory.createImportVorgang(true, { id: importvorgangId }),
+            );
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[], 0]);
-            const error: DomainError = new EntityNotFoundError('ImportDataItem', importvorgangId);
 
-            await expect(sut.handleExecuteImport(event)).rejects.toThrowError(error);
+            await sut.handleExecuteImport(event);
 
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `No import data itemns found for Importvorgang:${importvorgangId}`,
+            );
             expect(personenkontextCreationServiceMock.createPersonWithPersonenkontexte).not.toHaveBeenCalled();
         });
 
