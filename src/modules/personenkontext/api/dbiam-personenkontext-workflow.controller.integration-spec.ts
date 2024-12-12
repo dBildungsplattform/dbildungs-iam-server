@@ -10,6 +10,7 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
@@ -42,7 +43,6 @@ import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-pe
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
     const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
@@ -83,6 +83,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,
                 KeycloakAdministrationModule,
+                LoggingTestModule,
             ],
             providers: [
                 {
@@ -92,10 +93,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 {
                     provide: PersonPermissionsRepo,
                     useValue: createMock<PersonPermissionsRepo>(),
-                },
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
                 },
                 {
                     provide: APP_INTERCEPTOR,

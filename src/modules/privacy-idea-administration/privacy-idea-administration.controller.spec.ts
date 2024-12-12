@@ -16,7 +16,6 @@ import { PrivacyIdeaAdministrationController } from './privacy-idea-administrati
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
 import { TokenStateResponse } from './token-state.response.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 
@@ -53,10 +52,6 @@ describe('PrivacyIdeaAdministrationController', () => {
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
-                },
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
                 },
             ],
         }).compile();

@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
@@ -19,7 +19,6 @@ import { DbiamPersonenkontextWorkflowController } from './dbiam-personenkontext-
 import { PersonenkontextWorkflowResponse } from './response/dbiam-personenkontext-workflow-response.js';
 import { PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
 import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 describe('DbiamPersonenkontextWorkflowController Test', () => {
     let module: TestingModule;
@@ -29,7 +28,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [MapperTestModule, LoggingTestModule],
             providers: [
                 DbiamPersonenkontextWorkflowController,
                 {
@@ -47,10 +46,6 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                 {
                     provide: PersonenkontextCreationService,
                     useValue: createMock<PersonenkontextCreationService>(),
-                },
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
                 },
             ],
         }).compile();
