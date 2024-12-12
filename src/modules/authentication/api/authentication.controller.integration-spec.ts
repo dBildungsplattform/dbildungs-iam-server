@@ -40,7 +40,7 @@ describe('AuthenticationController', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock<KeycloakUserService>();
     let keyCloakConfig: KeycloakConfig;
-    let personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService>;
+    const personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService> = createMock<PersonTimeLimitService>();
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -80,7 +80,7 @@ describe('AuthenticationController', () => {
                 },
                 {
                     provide: PersonTimeLimitService,
-                    useValue: createMock<PersonTimeLimitService>(),
+                    useValue: personTimeLimitServiceMock,
                 },
             ],
         }).compile();
@@ -95,7 +95,6 @@ describe('AuthenticationController', () => {
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
-        personTimeLimitServiceMock = module.get(PersonTimeLimitService);
     });
 
     afterEach(() => {
