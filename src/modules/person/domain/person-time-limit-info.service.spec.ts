@@ -69,34 +69,46 @@ describe('PersonTimeLimitService', () => {
             ]);
         });
 
-        it('should return PersonTimeLimitInfo array with earliest Koperslock', async () => {
-            const person: Person<true> = DoFactory.createPerson(true);
-            person.personalnummer = undefined;
-            personRepoMock.findById.mockResolvedValue(person);
+        it.each([
+            {
+                personenkontextDates: ['2021-01-02', '2021-01-01'],
+                expectedDate: '2021-01-01',
+            },
+            {
+                personenkontextDates: ['2021-01-01', '2021-01-02'],
+                expectedDate: '2021-01-01',
+            },
+        ])(
+            'should return PersonTimeLimitInfo array with earliest Koperslock',
+            async ({
+                personenkontextDates,
+                expectedDate,
+            }: {
+                personenkontextDates: string[];
+                expectedDate: string;
+            }) => {
+                const person: Person<true> = DoFactory.createPerson(true);
+                person.personalnummer = undefined;
+                personRepoMock.findById.mockResolvedValue(person);
 
-            const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-                createdAt: new Date('2021-01-02'),
-            });
-            const personenkontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-                createdAt: new Date('2021-01-01'),
-            });
-            dBiamPersonenkontextServiceMock.getKopersPersonenkontexte.mockResolvedValue([
-                personenkontext,
-                personenkontext2,
-            ]);
+                const personenkontexte: Personenkontext<true>[] = personenkontextDates.map((date: string) =>
+                    DoFactory.createPersonenkontext(true, { createdAt: new Date(date) }),
+                );
+                dBiamPersonenkontextServiceMock.getKopersPersonenkontexte.mockResolvedValue(personenkontexte);
 
-            const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
+                const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
 
-            const expectedDeadline: Date = new Date(personenkontext2.createdAt);
-            expectedDeadline.setDate(expectedDeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
+                const expectedDeadline: Date = new Date(expectedDate);
+                expectedDeadline.setDate(expectedDeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
 
-            expect(result).toEqual<PersonTimeLimitInfo[]>([
-                {
-                    occasion: TimeLimitOccasion.KOPERS,
-                    deadline: expectedDeadline,
-                },
-            ]);
-        });
+                expect(result).toEqual<PersonTimeLimitInfo[]>([
+                    {
+                        occasion: TimeLimitOccasion.KOPERS,
+                        deadline: expectedDeadline,
+                    },
+                ]);
+            },
+        );
 
         it('should return empty array when person isnt found ', async () => {
             personRepoMock.findById.mockResolvedValue(null);
