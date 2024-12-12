@@ -115,7 +115,7 @@ describe('DBiamPersonenkontextService', () => {
         });
     });
 
-    describe('getKopersPersonenkontext', () => {
+    describe('getKopersPersonenkontexte', () => {
         describe('when a person has a personenkontext with a rolle with koperspflichtig merkmale', () => {
             it('should return the personenkontext', async () => {
                 const personenkontexte: Personenkontext<true>[] = [
@@ -137,8 +137,43 @@ describe('DBiamPersonenkontextService', () => {
                 mapRollen.set('2', DoFactory.createRolle(true, { rollenart: RollenArt.LEIT, merkmale: [], id: '2' }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                const result: Personenkontext<true> | undefined = await sut.getKopersPersonenkontext('1');
-                expect(result).toEqual(personenkontexte[0]);
+                const result: Personenkontext<true>[] = await sut.getKopersPersonenkontexte('1');
+                expect(result[0]).toEqual(personenkontexte[0]);
+            });
+        });
+
+        describe('when a person has multiple personenkontexts with a rolle with koperspflichtig merkmale', () => {
+            it('should return the personenkontext', async () => {
+                const personenkontexte: Personenkontext<true>[] = [
+                    personenkontextFactory.construct('1', faker.date.past(), faker.date.recent(), '', '1', '1', '1'),
+                    personenkontextFactory.construct('2', faker.date.past(), faker.date.recent(), '', '1', '2', '2'),
+                    personenkontextFactory.construct('3', faker.date.past(), faker.date.recent(), '', '1', '1', '3'),
+                ];
+                dbiamPersonenKontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
+
+                const mapRollen: Map<string, Rolle<true>> = new Map();
+                mapRollen.set(
+                    '1',
+                    DoFactory.createRolle(true, {
+                        rollenart: RollenArt.LEHR,
+                        merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                        id: '1',
+                    }),
+                );
+                mapRollen.set(
+                    '2',
+                    DoFactory.createRolle(true, {
+                        rollenart: RollenArt.LEHR,
+                        merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                        id: '2',
+                    }),
+                );
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+
+                const result: Personenkontext<true>[] = await sut.getKopersPersonenkontexte('1');
+                expect(result.length).toBe(2);
+                expect(result[0]).toEqual(personenkontexte[0]);
+                expect(result[1]).toEqual(personenkontexte[1]);
             });
         });
 
@@ -165,8 +200,8 @@ describe('DBiamPersonenkontextService', () => {
                 mapRollen.set('2', DoFactory.createRolle(true, { rollenart: RollenArt.LEIT, merkmale: [], id: '2' }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
 
-                const result: Personenkontext<true> | undefined = await sut.getKopersPersonenkontext('1');
-                expect(result).toBeUndefined();
+                const result: Personenkontext<true>[] = await sut.getKopersPersonenkontexte('1');
+                expect(result.length).toBe(0);
             });
         });
     });

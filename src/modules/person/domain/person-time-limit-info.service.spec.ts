@@ -54,11 +54,40 @@ describe('PersonTimeLimitService', () => {
             personRepoMock.findById.mockResolvedValue(person);
 
             const pesonenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
-            dBiamPersonenkontextServiceMock.getKopersPersonenkontext.mockResolvedValue(pesonenkontext);
+            dBiamPersonenkontextServiceMock.getKopersPersonenkontexte.mockResolvedValue([pesonenkontext]);
 
             const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
 
             const expectedDeadline: Date = new Date(pesonenkontext.createdAt);
+            expectedDeadline.setDate(expectedDeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
+
+            expect(result).toEqual<PersonTimeLimitInfo[]>([
+                {
+                    occasion: TimeLimitOccasion.KOPERS,
+                    deadline: expectedDeadline,
+                },
+            ]);
+        });
+
+        it('should return PersonTimeLimitInfo array with earliest Koperslock', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            person.personalnummer = undefined;
+            personRepoMock.findById.mockResolvedValue(person);
+
+            const personenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                createdAt: new Date('2021-01-02'),
+            });
+            const personenkontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                createdAt: new Date('2021-01-01'),
+            });
+            dBiamPersonenkontextServiceMock.getKopersPersonenkontexte.mockResolvedValue([
+                personenkontext,
+                personenkontext2,
+            ]);
+
+            const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
+
+            const expectedDeadline: Date = new Date(personenkontext2.createdAt);
             expectedDeadline.setDate(expectedDeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
 
             expect(result).toEqual<PersonTimeLimitInfo[]>([

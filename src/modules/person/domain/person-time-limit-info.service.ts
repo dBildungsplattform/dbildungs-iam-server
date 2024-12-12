@@ -21,15 +21,18 @@ export default class PersonTimeLimitService {
         }
         const lockInfos: PersonTimeLimitInfo[] = [];
         if (!person.personalnummer) {
-            const kopersKontext: Personenkontext<true> | undefined =
-                await this.dBiamPersonenkontextService.getKopersPersonenkontext(person.id);
-            if (kopersKontext) {
-                const kopersdeadline: Date = new Date(kopersKontext.createdAt);
+            const kopersKontexte: Personenkontext<true>[] =
+                await this.dBiamPersonenkontextService.getKopersPersonenkontexte(person.id);
+            if (kopersKontexte.length > 0) {
+                const earliestKopersKontext: Personenkontext<true> = kopersKontexte.reduce(
+                    (prev: Personenkontext<true>, current: Personenkontext<true>) =>
+                        prev.createdAt < current.createdAt ? prev : current,
+                );
+                const kopersdeadline: Date = new Date(earliestKopersKontext.createdAt);
                 kopersdeadline.setDate(kopersdeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
                 lockInfos.push(new PersonTimeLimitInfo(TimeLimitOccasion.KOPERS, kopersdeadline));
             }
         }
-
         return lockInfos;
     }
 }
