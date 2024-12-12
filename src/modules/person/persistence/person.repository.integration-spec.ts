@@ -2195,7 +2195,7 @@ describe('PersonRepository Integration', () => {
             });
         });
         describe('findOrganisationAdminsByOrganisationId', () => {
-            it('should return a list of personIds for persons without a personenkontext', async () => {
+            it('should return a list of admins', async () => {
                 const personEntity1: PersonEntity = new PersonEntity();
                 const person1: Person<true> = DoFactory.createPerson(true);
                 await em.persistAndFlush(personEntity1.assign(mapAggregateToData(person1)));
@@ -2214,13 +2214,7 @@ describe('PersonRepository Integration', () => {
                     rolleId: rolle1Result.id,
                 });
                 await dbiamPersonenkontextRepoInternal.save(personenKontext1);
-                // person without personenkontext but within the time limit for org_unassignment_Date
-                const person4: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: new Date() });
-                const personEntity4: PersonEntity = new PersonEntity();
-                await em.persistAndFlush(personEntity4.assign(mapAggregateToData(person4)));
-                person4.id = personEntity4.id;
-
-                //get person ids without personenkontext
+                //get admins
                 const admins: string[] = await sut.findOrganisationAdminsByOrganisationId(
                     personenKontext1.organisationId,
                 );

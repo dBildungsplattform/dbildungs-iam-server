@@ -813,18 +813,14 @@ export class PersonRepository {
 
     public async findOrganisationAdminsByOrganisationId(organisation_id: string): Promise<string[]> {
         const filters: QBFilterQuery<PersonEntity> = {
-            $and: [
-                {
-                    personenKontexte: {
-                        $some: {
-                            organisationId: organisation_id,
-                            rolleId: {
-                                rollenart: 'LEIT',
-                            },
-                        },
+            personenKontexte: {
+                $some: {
+                    organisationId: organisation_id,
+                    rolleId: {
+                        rollenart: 'LEIT',
                     },
                 },
-            ],
+            },
         };
         const admins: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return admins.map((admin: PersonEntity) => admin.vorname + ' ' + admin.familienname);
