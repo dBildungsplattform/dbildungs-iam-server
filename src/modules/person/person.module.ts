@@ -24,6 +24,6 @@ import { OxUserBlacklistRepo } from './persistence/ox-user-blacklist.repo.js';
         ServiceProviderRepo,
         OxUserBlacklistRepo,
     ],
-    exports: [PersonService, PersonFactory, PersonRepository, OxUserBlacklistRepo],
+    exports: [PersonService, PersonFactory, PersonRepository],
 })
 export class PersonModule {}
