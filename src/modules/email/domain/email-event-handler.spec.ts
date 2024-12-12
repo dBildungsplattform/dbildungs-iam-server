@@ -56,7 +56,7 @@ function getEmail(): EmailAddress<true> {
     );
 }
 
-describe('Email Event Handler', () => {
+describe('EmailEventHandler', () => {
     let app: INestApplication;
 
     let emailEventHandler: EmailEventHandler;
@@ -1220,10 +1220,10 @@ describe('Email Event Handler', () => {
                 await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(
-                    `Mismatch between requested(${emailAddress}) and received(${event.emailAddress}) address from OX`,
+                    `Mismatch between requested(${emailAddress}) and received(${event.emailAddress}) address from OX, personId:${event.personId}`,
                 );
                 expect(loggerMock.warning).toHaveBeenLastCalledWith(
-                    `Overriding ${emailAddress} with ${event.emailAddress}) from OX`,
+                    `Overriding ${emailAddress} with ${event.emailAddress}) from OX, personId:${event.personId}`,
                 );
             });
         });
@@ -1243,7 +1243,7 @@ describe('Email Event Handler', () => {
                 await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `Could not enable email, error is EmailAddress with ID 1 could not be updated`,
+                    `Could not enable email for personId:${event.personId}, error is EmailAddress with ID 1 could not be updated`,
                 );
             });
         });
@@ -1262,7 +1262,7 @@ describe('Email Event Handler', () => {
                 await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
-                    `Changed email-address:${fakeEmail} from REQUESTED to ENABLED`,
+                    `Changed email-address:${fakeEmail} from REQUESTED to ENABLED, personId:${event.personId}`,
                 );
             });
         });
