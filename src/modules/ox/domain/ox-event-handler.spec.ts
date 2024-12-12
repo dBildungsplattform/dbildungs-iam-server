@@ -129,6 +129,7 @@ describe('OxEventHandler', () => {
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
+                faker.internet.userName(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -190,6 +191,7 @@ describe('OxEventHandler', () => {
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
+                faker.internet.userName(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -414,6 +416,7 @@ describe('OxEventHandler', () => {
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
+                faker.internet.userName(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -481,6 +484,7 @@ describe('OxEventHandler', () => {
             personId = faker.string.uuid();
             event = new EmailAddressGeneratedEvent(
                 personId,
+                faker.internet.userName(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -772,6 +776,7 @@ describe('OxEventHandler', () => {
             contextName: faker.string.alpha();
             event = new EmailAddressChangedEvent(
                 personId,
+                faker.internet.userName(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 faker.string.uuid(),
