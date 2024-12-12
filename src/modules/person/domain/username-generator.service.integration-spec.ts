@@ -216,6 +216,7 @@ describe('UsernameGeneratorService', () => {
 
         // Assert: The generated username should have the counter appended
         expect(loggerMock.info).toHaveBeenLastCalledWith(`Next Available Username Is:mmeyer1`);
+
         expect(generatedUsername).toEqual({ ok: true, value: 'mmeyer1' });
     });
 });

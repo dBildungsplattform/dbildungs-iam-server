@@ -101,7 +101,7 @@ describe('OxUserBlacklistRepo', () => {
         });
     });
 
-    describe('findByUsername', () => {
+    describe('findByOxUsername', () => {
         describe('when entity can be found by username', () => {
             it('should return OxUserBlacklistEntry', async () => {
                 const fakeUsername: OXUserName = faker.internet.userName();
