@@ -34,6 +34,7 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ImportConfig } from '../../../shared/config/import.config.js';
 import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
+import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -139,6 +140,10 @@ export class ImportWorkflow {
 
             if (parsedData.errors.length > 0) {
                 return new ImportCSVFileParsingError(parsedData.errors);
+            }
+
+            if (parsedData.data.length === 0) {
+                return new ImportCSVFileContainsNoUsersError();
             }
 
             parsedDataItems = plainToInstance(CSVImportDataItemDTO, parsedData.data);

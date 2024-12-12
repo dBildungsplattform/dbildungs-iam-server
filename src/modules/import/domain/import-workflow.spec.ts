@@ -33,6 +33,7 @@ import { ImportStatus } from './import.enums.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
+import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -247,6 +248,30 @@ describe('ImportWorkflow', () => {
                 personpermissionsMock,
             );
             expect(result).toBeInstanceOf(ImportCSVFileMaxUsersError);
+            expect(importDataRepositoryMock.save).not.toHaveBeenCalled();
+        });
+
+        it('should return ImportCSVFileContainsNoUsersError if the csv file contains no data items', async () => {
+            const file: Express.Multer.File = createMock<Express.Multer.File>();
+            file.buffer = Buffer.from('Nachname;Vorname;Klasse');
+
+            const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>();
+            rolleMock.rollenart = RollenArt.LERN;
+            rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE }),
+            );
+            rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+
+            const result: DomainError | ImportUploadResultFields = await sut.validateImport(
+                file,
+                SELECTED_ORGANISATION_ID,
+                SELECTED_ROLLE_ID,
+                personpermissionsMock,
+            );
+            expect(result).toBeInstanceOf(ImportCSVFileContainsNoUsersError);
             expect(importDataRepositoryMock.save).not.toHaveBeenCalled();
         });
 
