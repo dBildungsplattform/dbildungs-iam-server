@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20241206143703 extends Migration {
+export class Migration20241212134515 extends Migration {
     public async up(): Promise<void> {
         this.addSql('alter type "import_status_enum" add value if not exists \'FINISHED\';');
 
@@ -10,7 +10,7 @@ export class Migration20241206143703 extends Migration {
         );
 
         this.addSql(
-            'alter table "importdataitem" add column "username" varchar(255) null, add column "password" varchar(255) null;',
+            'alter table "importdataitem" add column "username" varchar(50) null, add column "password" varchar(255) null;',
         );
     }
 
