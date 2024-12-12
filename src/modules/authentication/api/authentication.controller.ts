@@ -50,7 +50,7 @@ export class AuthenticationController {
         @Inject(OIDC_CLIENT) private client: Client,
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
-        private personTimeLimitService: PersonTimeLimitService,
+        private readonly personTimeLimitService: PersonTimeLimitService,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');

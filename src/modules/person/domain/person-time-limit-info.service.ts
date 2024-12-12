@@ -27,6 +27,7 @@ export default class PersonTimeLimitService {
                 const earliestKopersKontext: Personenkontext<true> = kopersKontexte.reduce(
                     (prev: Personenkontext<true>, current: Personenkontext<true>) =>
                         prev.createdAt < current.createdAt ? prev : current,
+                    kopersKontexte[0]!,
                 );
                 const kopersdeadline: Date = new Date(earliestKopersKontext.createdAt);
                 kopersdeadline.setDate(kopersdeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
