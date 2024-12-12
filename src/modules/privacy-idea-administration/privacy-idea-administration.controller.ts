@@ -42,7 +42,6 @@ import { TokenStateResponse } from './token-state.response.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
 @ApiTags('2FA')
