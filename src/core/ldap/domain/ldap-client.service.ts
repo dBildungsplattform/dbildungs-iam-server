@@ -304,7 +304,7 @@ export class LdapClientService {
 
     public async deleteLehrerByReferrer(referrer: string): Promise<Result<string>> {
         return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: deleteLehrer');
+            this.logger.info('LDAP: deleteLehrer by referrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
@@ -320,7 +320,7 @@ export class LdapClientService {
                 };
             }
             await client.del(searchResultLehrer.searchEntries[0].dn);
-            this.logger.info(`LDAP: Successfully deleted lehrer by person:${referrer}`);
+            this.logger.info(`LDAP: Successfully deleted lehrer by referrer:${referrer}`);
 
             return { ok: true, value: referrer };
         });
@@ -331,7 +331,7 @@ export class LdapClientService {
         if (!rootName.ok) return rootName;
 
         return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: deleteLehrer');
+            this.logger.info('LDAP: deleteLehrer by person');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
@@ -456,7 +456,7 @@ export class LdapClientService {
 
         const orgUnitDn: string = `ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
         const searchResultOrgUnit: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
-            filter: `(ou=${groupId})`,
+            filter: `(ou=${schoolReferrer})`,
         });
 
         if (!searchResultOrgUnit.searchEntries[0]) {
@@ -470,9 +470,12 @@ export class LdapClientService {
         }
 
         const orgRoleDn: string = `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
-        const searchResultOrgRole: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
-            filter: `(cn=${LdapClientService.GROUPS},ou=${schoolReferrer})`,
-        });
+        const searchResultOrgRole: SearchResult = await client.search(
+            `ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+            {
+                filter: `(cn=${LdapClientService.GROUPS})`,
+            },
+        );
         if (!searchResultOrgRole.searchEntries[0]) {
             const newOrgRole: { cn: string; objectClass: string } = {
                 cn: LdapClientService.GROUPS,
@@ -482,9 +485,12 @@ export class LdapClientService {
         }
 
         const lehrerDn: string = `cn=${groupId},cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
-        const searchResultGroupOfNames: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
-            filter: `(cn=${groupId}, cn=${LdapClientService.GROUPS},ou=${schoolReferrer})`,
-        });
+        const searchResultGroupOfNames: SearchResult = await client.search(
+            `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+            {
+                filter: `(cn=${groupId})`,
+            },
+        );
         if (!searchResultGroupOfNames.searchEntries[0]) {
             const newLehrerGroup: { cn: string; objectclass: string[]; member: string[] } = {
                 cn: groupId,
