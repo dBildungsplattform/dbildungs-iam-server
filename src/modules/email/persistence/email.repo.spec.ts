@@ -27,6 +27,7 @@ import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-alread
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('EmailRepo', () => {
@@ -45,6 +46,7 @@ describe('EmailRepo', () => {
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 UsernameGeneratorService,
+                OxUserBlacklistRepo,
                 EmailRepo,
                 EmailFactory,
                 PersonFactory,
