@@ -67,8 +67,9 @@ export class PersonPermissions implements IPersonPermissions {
     public async getOrgIdsWithSystemrecht(
         systemrechte: RollenSystemRecht[],
         withChildren: boolean = false,
+        matchAll: boolean = true,
     ): Promise<PermittedOrgas> {
-        if (await this.hasSystemrechteAtRootOrganisation(systemrechte)) {
+        if (await this.hasSystemrechteAtRootOrganisation(systemrechte, matchAll)) {
             return { all: true };
         }
         const organisationIDs: Set<OrganisationID> = new Set();
@@ -80,7 +81,12 @@ export class PersonPermissions implements IPersonPermissions {
 
         for (const pk of personKontextFields) {
             const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
-            if (rolle && systemrechte.every((r: RollenSystemRecht) => rolle.hasSystemRecht(r))) {
+            if (
+                rolle &&
+                (matchAll
+                    ? systemrechte.every((r: RollenSystemRecht) => rolle.hasSystemRecht(r))
+                    : systemrechte.some((r: RollenSystemRecht) => rolle.hasSystemRecht(r)))
+            ) {
                 organisationIDs.add(pk.organisationId);
             }
         }
@@ -102,6 +108,7 @@ export class PersonPermissions implements IPersonPermissions {
     public async hasSystemrechteAtOrganisation(
         organisationId: OrganisationID,
         systemrechte: RollenSystemRecht[],
+        matchAll: boolean = true,
     ): Promise<boolean> {
         const checks: Promise<boolean>[] = systemrechte.map(
             (systemrecht: RollenSystemRecht): Promise<boolean> =>
@@ -109,11 +116,16 @@ export class PersonPermissions implements IPersonPermissions {
         );
         const results: boolean[] = await Promise.all(checks);
 
-        return results.every((result: boolean): boolean => result);
+        return matchAll
+            ? results.every((result: boolean): boolean => result)
+            : results.some((result: boolean): boolean => result);
     }
 
-    public async hasSystemrechteAtRootOrganisation(systemrechte: RollenSystemRecht[]): Promise<boolean> {
-        return this.hasSystemrechteAtOrganisation(this.organisationRepo.ROOT_ORGANISATION_ID, systemrechte);
+    public async hasSystemrechteAtRootOrganisation(
+        systemrechte: RollenSystemRecht[],
+        matchAll: boolean = true,
+    ): Promise<boolean> {
+        return this.hasSystemrechteAtOrganisation(this.organisationRepo.ROOT_ORGANISATION_ID, systemrechte, matchAll);
     }
 
     public async hasSystemrechtAtOrganisation(
