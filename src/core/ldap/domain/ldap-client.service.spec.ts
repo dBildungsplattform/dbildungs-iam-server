@@ -238,7 +238,7 @@ describe('LDAP Client Service', () => {
 
     describe('addPersonToGroup', () => {
         const fakePersonUid: string = 'test-user';
-        const fakeSchoolId: number = 123;
+        const fakeSchoolId: string = '123';
         const fakeGroupId: string = `lehrer-${fakeSchoolId}`;
         const fakeGroupDn: string = `cn=${fakeGroupId},dc=schule-sh,dc=de`;
 
@@ -1087,6 +1087,7 @@ describe('LDAP Client Service', () => {
         const fakePersonUid: string = 'user123';
         const fakeGroupDn: string = `cn=${fakeGroupId},dc=schule-sh,dc=de`;
         const fakeLehrerUid: string = `uid=${fakePersonUid},ou=users,dc=schule-sh,dc=de`;
+        const fakeDienstStellenNummer: string = '123';
 
         it('should successfully remove person from group with multiple members', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
@@ -1106,7 +1107,10 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+                fakePersonUid,
+                fakeDienstStellenNummer,
+            );
 
             expect(result.ok).toBeTruthy();
             expect(clientMock.modify).toHaveBeenCalledWith(fakeGroupDn, [
@@ -1141,7 +1145,10 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+                fakePersonUid,
+                fakeDienstStellenNummer,
+            );
 
             expect(result.ok).toBeTruthy();
             expect(clientMock.del).toHaveBeenCalledWith(fakeGroupDn);
@@ -1163,7 +1170,10 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+                fakePersonUid,
+                fakeDienstStellenNummer,
+            );
 
             expect(result.ok).toBeFalsy();
             if (result.ok) {
@@ -1180,7 +1190,10 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+                fakePersonUid,
+                fakeDienstStellenNummer,
+            );
 
             expect(result.ok).toBeFalsy();
             if (result.ok) {
@@ -1207,7 +1220,10 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(fakePersonUid, 123);
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+                fakePersonUid,
+                fakeDienstStellenNummer,
+            );
 
             expect(result.ok).toBeFalsy();
             if (result.ok) {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { Attribute, Change, Client, Control, SearchResult } from 'ldapts';
+import { Attribute, Change, Client, Control, Entry, SearchResult } from 'ldapts';
 import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
@@ -298,8 +298,80 @@ export class LdapClientService {
                 this.logger.info(`LDAP: Successfully updated uid for person:${oldReferrer} to ${newUid}`);
             }
 
+            if (newUid) {
+                const groupUpdateResult: Result<string> = await this.updateMemberDnInGroups(
+                    oldReferrer,
+                    newUid,
+                    client,
+                );
+                if (!groupUpdateResult.ok) return groupUpdateResult;
+            }
+
             return { ok: true, value: oldReferrer };
         });
+    }
+
+    private async updateMemberDnInGroups(
+        oldReferrer: string,
+        newReferrer: string,
+        client: Client,
+    ): Promise<Result<string>> {
+        const oldReferrerUid: string = this.getLehrerUid(oldReferrer, 'users');
+        const newReferrerUid: string = this.getLehrerUid(newReferrer, 'users');
+
+        const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+            scope: 'sub',
+            filter: `(member=${oldReferrerUid})`,
+            attributes: ['dn', 'member'],
+            returnAttributeValues: true,
+        });
+
+        const groupEntries: Entry[] = searchResult.searchEntries;
+
+        if (groupEntries.length === 0) {
+            this.logger.info(`LDAP: No groups found for person:${oldReferrer}`);
+            return { ok: true, value: `No groups found for person:${oldReferrer}` };
+        }
+
+        await Promise.allSettled(
+            groupEntries.map(async (entry: Entry) => {
+                const groupDn: string = entry.dn;
+                const members: string | string[] | Buffer | Buffer[] | undefined = entry['member'];
+                let existingMembers: string[] = [];
+
+                if (Array.isArray(members)) {
+                    existingMembers = members.map((member: string | Buffer) => {
+                        if (Buffer.isBuffer(member)) {
+                            return member.toString('utf-8');
+                        } else {
+                            return member;
+                        }
+                    });
+                } else if (typeof members === 'string') {
+                    existingMembers = [members];
+                } else if (Buffer.isBuffer(members)) {
+                    existingMembers = [members.toString('utf-8')];
+                } else {
+                    existingMembers = [];
+                }
+
+                const updatedMembers: (string | Buffer)[] = existingMembers.map((member: string | Buffer) =>
+                    member === oldReferrerUid ? newReferrerUid : member,
+                );
+
+                await client.modify(groupDn, [
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: 'member',
+                            values: updatedMembers.map((member: string | Buffer) => member.toString()),
+                        }),
+                    }),
+                ]);
+                this.logger.info(`LDAP: Updated member data for group: ${groupDn}`);
+            }),
+        );
+        return { ok: true, value: `Updated member data for ${groupEntries.length} groups.` };
     }
 
     public async deleteLehrerByReferrer(referrer: string): Promise<Result<string>> {
