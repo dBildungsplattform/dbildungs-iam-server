@@ -194,7 +194,6 @@ export class LdapClientService {
             } catch (err) {
                 const errMsg: string = JSON.stringify(err);
                 this.logger.error(`LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:${errMsg}`);
-
                 return { ok: false, error: new LdapCreateLehrerError() };
             }
         });

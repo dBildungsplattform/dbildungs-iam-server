@@ -1097,7 +1097,7 @@ describe('LDAP Client Service', () => {
                         searchEntries: [
                             createMock<Entry>({
                                 dn: fakeGroupDn,
-                                uniqueMember: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
+                                member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
                             }),
                         ],
                     }),
@@ -1107,7 +1107,7 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+            const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
             );
@@ -1117,7 +1117,7 @@ describe('LDAP Client Service', () => {
                 new Change({
                     operation: 'delete',
                     modification: new Attribute({
-                        type: 'uniqueMember',
+                        type: 'member',
                         values: [fakeLehrerUid],
                     }),
                 }),
@@ -1135,7 +1135,7 @@ describe('LDAP Client Service', () => {
                         searchEntries: [
                             createMock<Entry>({
                                 dn: fakeGroupDn,
-                                uniqueMember: `${fakeLehrerUid}`,
+                                member: `${fakeLehrerUid}`,
                             }),
                         ],
                     }),
@@ -1145,7 +1145,7 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+            const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
             );
@@ -1170,17 +1170,15 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+            const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
             );
 
             expect(result.ok).toBeFalsy();
-            if (result.ok) {
-                throw Error();
-            }
+            if (result.ok) throw Error();
             expect(result.error).toBeInstanceOf(Error);
-            expect(result.error.message).toContain(`LDAP: Group ${fakeGroupId} not found`);
+            expect(result.error?.message).toContain(`LDAP: Group ${fakeGroupId} not found`);
             expect(loggerMock.error).toHaveBeenCalledWith(`LDAP: Group ${fakeGroupId} not found`);
         });
 
@@ -1190,15 +1188,13 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+            const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
             );
 
             expect(result.ok).toBeFalsy();
-            if (result.ok) {
-                throw Error();
-            }
+            if (result.ok) throw Error();
             expect(result.error).toBeInstanceOf(Error);
         });
 
@@ -1210,7 +1206,7 @@ describe('LDAP Client Service', () => {
                         searchEntries: [
                             createMock<Entry>({
                                 dn: fakeGroupDn,
-                                uniqueMember: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
+                                member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
                             }),
                         ],
                     }),
@@ -1220,15 +1216,13 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+            const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
             );
 
             expect(result.ok).toBeFalsy();
-            if (result.ok) {
-                throw Error();
-            }
+            if (result.ok) throw Error();
             expect(result.error).toBeInstanceOf(LdapRemovePersonFromGroupError);
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `LDAP: Failed to remove person from group ${fakeGroupId}, errMsg: Error: Modify error`,
