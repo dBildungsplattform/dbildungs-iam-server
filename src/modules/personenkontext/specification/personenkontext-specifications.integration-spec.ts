@@ -3,6 +3,7 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     KeycloakConfigTestModule,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -27,7 +28,6 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { LoggingModule } from '../../../shared/logging/logging.module.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -70,7 +70,7 @@ describe('PersonenkontextSpecifications Integration', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
                 MapperTestModule,
-                LoggingModule,
+                LoggingTestModule,
             ],
             providers: [
                 PersonRepository,
