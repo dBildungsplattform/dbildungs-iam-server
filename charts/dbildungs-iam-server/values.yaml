@@ -169,7 +169,7 @@ cronjobs:
   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
   keycloakClientId: spsh-service
   jwksFilePath: /keys/jwks.json
-  c: '{{ $.Values.frontendHostname }}'
+  backendHostname: '{{ $.Values.frontendHostname }}'
   scriptDir: scripts
   jobs:
     cron-trigger-1:
