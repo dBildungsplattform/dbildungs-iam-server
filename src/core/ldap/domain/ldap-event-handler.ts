@@ -155,7 +155,10 @@ export class LdapEventHandler {
 
         await Promise.allSettled(
             event.removedKontexte
-                .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
+                .filter(
+                    (pk: PersonenkontextEventKontextData) =>
+                        pk.rolle === RollenArt.LEHR && !this.hatZuordnungZuOrganisationNachLoeschen(event, pk),
+                )
                 .map((pk: PersonenkontextEventKontextData) => {
                     if (!pk.orgaKennung) {
                         return Promise.reject(new Error('Organisation has no Kennung'));
@@ -207,7 +210,7 @@ export class LdapEventHandler {
                         .then((emailDomain: Result<string>) => {
                             if (emailDomain.ok) {
                                 return this.ldapClientService
-                                    .createLehrer(event.person, emailDomain.value, pk.orgaKennung!, undefined)
+                                    .createLehrer(event.person, emailDomain.value, pk.orgaKennung!)
                                     .then((creationResult: Result<PersonData>) => {
                                         if (!creationResult.ok) {
                                             this.logger.error(creationResult.error.message);
@@ -245,5 +248,16 @@ export class LdapEventHandler {
         );
 
         await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.newAddress);
+    }
+
+    public hatZuordnungZuOrganisationNachLoeschen(
+        personenkontextUpdatedEvent: PersonenkontextUpdatedEvent,
+        personenkontextEventKontextData: PersonenkontextEventKontextData,
+    ): boolean {
+        const orgaId: OrganisationID = personenkontextEventKontextData.orgaId;
+        const currentOrgaIds: OrganisationID[] = personenkontextUpdatedEvent.currentKontexte.map(
+            (pk: PersonenkontextEventKontextData) => pk.orgaId,
+        );
+        return currentOrgaIds.includes(orgaId);
     }
 }

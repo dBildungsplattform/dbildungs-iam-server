@@ -469,13 +469,10 @@ export class LdapClientService {
             await client.add(orgUnitDn, newOrgUnit);
         }
 
-        const orgRoleDn: string = `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
-        const searchResultOrgRole: SearchResult = await client.search(
-            `ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
-            {
-                filter: `(cn=${LdapClientService.GROUPS})`,
-            },
-        );
+        const orgRoleDn: string = `cn=${LdapClientService.GROUPS},${orgUnitDn}`;
+        const searchResultOrgRole: SearchResult = await client.search(orgUnitDn, {
+            filter: `(cn=${LdapClientService.GROUPS})`,
+        });
         if (!searchResultOrgRole.searchEntries[0]) {
             const newOrgRole: { cn: string; objectClass: string } = {
                 cn: LdapClientService.GROUPS,
@@ -484,13 +481,10 @@ export class LdapClientService {
             await client.add(orgRoleDn, newOrgRole);
         }
 
-        const lehrerDn: string = `cn=${groupId},cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
-        const searchResultGroupOfNames: SearchResult = await client.search(
-            `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
-            {
-                filter: `(cn=${groupId})`,
-            },
-        );
+        const lehrerDn: string = `cn=${groupId},${orgRoleDn}`;
+        const searchResultGroupOfNames: SearchResult = await client.search(orgRoleDn, {
+            filter: `(cn=${groupId})`,
+        });
         if (!searchResultGroupOfNames.searchEntries[0]) {
             const newLehrerGroup: { cn: string; objectclass: string[]; member: string[] } = {
                 cn: groupId,
@@ -506,6 +500,11 @@ export class LdapClientService {
                 this.logger.error(errMsg);
                 return { ok: false, error: new LdapAddPersonToGroupError() };
             }
+        }
+
+        if (this.isPersonInSearchResult(searchResultGroupOfNames, personUid)) {
+            this.logger.info(`LDAP: Person ${personUid} is already in group ${groupId}`);
+            return { ok: true, value: false };
         }
 
         try {
@@ -533,8 +532,17 @@ export class LdapClientService {
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
-        const dn: string = `cn=${groupId},cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
-        const searchResultOrgUnit: SearchResult = await client.search(dn, { scope: 'base' });
+        const searchResultOrgUnit: SearchResult = await client.search(
+            `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+            {
+                filter: `(cn=${groupId})`,
+            },
+        );
+
+        if (!this.isPersonInSearchResult(searchResultOrgUnit, personUid)) {
+            this.logger.info(`LDAP: Person ${personUid} is not in group ${groupId}`);
+            return { ok: true, value: false };
+        }
 
         if (!searchResultOrgUnit.searchEntries[0]) {
             const errMsg: string = `LDAP: Group ${groupId} not found`;
@@ -565,5 +573,33 @@ export class LdapClientService {
             this.logger.error(errMsg);
             return { ok: false, error: new LdapRemovePersonFromGroupError() };
         }
+    }
+
+    private isPersonInSearchResult(searchResult: SearchResult, personUid: string): boolean | undefined {
+        if (!searchResult.searchEntries[0]) return;
+        const member: string | string[] | Buffer | Buffer[] | undefined = searchResult.searchEntries[0]['member'];
+        const lehrerUid: string = this.getLehrerUid(personUid, 'users');
+
+        if (typeof member === 'string') {
+            return member === lehrerUid;
+        }
+
+        if (Buffer.isBuffer(member)) {
+            return member.toString() === lehrerUid;
+        }
+
+        if (Array.isArray(member)) {
+            return member.some((entry: string | Buffer) => {
+                if (typeof entry === 'string') {
+                    return entry === lehrerUid;
+                }
+                if (Buffer.isBuffer(entry)) {
+                    return entry.toString() === lehrerUid;
+                }
+                return false;
+            });
+        }
+
+        return false;
     }
 }
