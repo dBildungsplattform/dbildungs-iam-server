@@ -612,7 +612,7 @@ export class LdapClientService {
 
         if (!this.isPersonInSearchResult(searchResultOrgUnit, personUid)) {
             this.logger.info(`LDAP: Person ${personUid} is not in group ${groupId}`);
-            return { ok: true, value: false };
+            return { ok: false, error: new Error(`Person ${personUid} is not in group ${groupId}`) };
         }
 
         if (!searchResultOrgUnit.searchEntries[0]) {

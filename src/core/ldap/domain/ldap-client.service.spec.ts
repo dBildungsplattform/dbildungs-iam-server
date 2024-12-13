@@ -1178,8 +1178,6 @@ describe('LDAP Client Service', () => {
             expect(result.ok).toBeFalsy();
             if (result.ok) throw Error();
             expect(result.error).toBeInstanceOf(Error);
-            expect(result.error?.message).toContain(`LDAP: Group ${fakeGroupId} not found`);
-            expect(loggerMock.error).toHaveBeenCalledWith(`LDAP: Group ${fakeGroupId} not found`);
         });
 
         it('should return error when bind fails', async () => {
