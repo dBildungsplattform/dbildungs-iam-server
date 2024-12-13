@@ -62,7 +62,7 @@ export class ImportWorkflow {
 
     public readonly CSV_FILE_VALID_HEADERS: string[] = ['nachname', 'vorname', 'klasse'];
 
-    private IMPORT_MAX_NUMBER_OF_USERS!: number;
+    private CSV_MAX_NUMBER_OF_USERS!: number;
 
     private selectedOrganisationId!: string;
 
@@ -78,7 +78,7 @@ export class ImportWorkflow {
         private readonly logger: ClassLogger,
         private readonly config: ConfigService<ServerConfig>,
     ) {
-        this.IMPORT_MAX_NUMBER_OF_USERS = this.config.getOrThrow<ImportConfig>('IMPORT').IMPORT_MAX_NUMBER_OF_USERS;
+        this.CSV_MAX_NUMBER_OF_USERS = this.config.getOrThrow<ImportConfig>('IMPORT').CSV_MAX_NUMBER_OF_USERS;
     }
 
     public static createNew(
@@ -448,7 +448,7 @@ export class ImportWorkflow {
             return new ImportCSVFileEmptyError();
         }
 
-        if ((csvContent.match(/[\r\n]/g) || []).length - 1 > this.IMPORT_MAX_NUMBER_OF_USERS) {
+        if ((csvContent.match(/[\r\n]/g) || []).length - 1 > this.CSV_MAX_NUMBER_OF_USERS) {
             return new ImportCSVFileMaxUsersError();
         }
 

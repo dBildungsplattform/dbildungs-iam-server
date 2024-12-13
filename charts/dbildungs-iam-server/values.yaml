@@ -64,6 +64,8 @@ auth:
   vidis_region_name: ''
   vidis_keycloak_group: ''
   vidis_keycloak_role: ''
+  import_passphrase_secret: ''
+  import_passphrase_salt: ''
 
 backend:
   replicaCount: 1
@@ -192,3 +194,7 @@ cronjobs:
       endpoint: '/api/cron/unlock'
       httpMethod: 'PUT'
       script: 'cron_trigger.sh'
+
+import:
+  csvFileMaxSizeInMB: 10
+  csvMaxNumberOfUsers: 2000
