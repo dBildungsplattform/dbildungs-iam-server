@@ -45,6 +45,17 @@ export class ImportDataRepository {
         }
     }
 
+    public async createMany(importDataItems: ImportDataItem<false>[]): Promise<string[]> {
+        const entities: ImportDataItemEntity[] = importDataItems.map((importDataItem: ImportDataItem<false>) =>
+            this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem)),
+        );
+
+        const entityIds: string[] = await this.em.insertMany(entities);
+        await this.em.persistAndFlush(entities);
+
+        return entityIds;
+    }
+
     public async findByImportVorgangId(
         importvorgangId: string,
         offset?: number,
