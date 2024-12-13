@@ -110,6 +110,13 @@ export class LdapClientService {
         );
     }
 
+    public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
+        return this.executeWithRetry(
+            () => this.changeUserPasswordByPersonIdInternal(personId, referrer),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
     public async isLehrerExisting(referrer: string, domain: string): Promise<Result<boolean>> {
         return this.executeWithRetry(
             () => this.isLehrerExistingInternal(referrer, domain),
@@ -483,7 +490,10 @@ export class LdapClientService {
         });
     }
 
-    public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
+    private async changeUserPasswordByPersonIdInternal(
+        personId: PersonID,
+        referrer: PersonReferrer,
+    ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         const userPassword: string = generatePassword();
