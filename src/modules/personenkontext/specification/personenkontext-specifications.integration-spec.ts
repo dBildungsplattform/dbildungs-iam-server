@@ -3,6 +3,7 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     KeycloakConfigTestModule,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -69,6 +70,7 @@ describe('PersonenkontextSpecifications Integration', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
                 MapperTestModule,
+                LoggingTestModule,
             ],
             providers: [
                 PersonRepository,
