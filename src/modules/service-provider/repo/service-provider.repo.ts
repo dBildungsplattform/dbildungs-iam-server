@@ -74,6 +74,24 @@ export class ServiceProviderRepo {
         return serviceProvider && mapEntityToAggregate(serviceProvider);
     }
 
+    public async findByName(name: string): Promise<Option<ServiceProvider<true>>> {
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
+            name: name,
+        });
+        if (serviceProvider) {
+            return mapEntityToAggregate(serviceProvider);
+        }
+
+        return null;
+    }
+
+    public async findByKeycloakGroup(groupname: string): Promise<ServiceProvider<true>[]> {
+        const serviceProviders: ServiceProviderEntity[] = await this.em.find(ServiceProviderEntity, {
+            keycloakGroup: groupname,
+        });
+        return serviceProviders.map(mapEntityToAggregate);
+    }
+
     public async find(options?: ServiceProviderFindOptions): Promise<ServiceProvider<true>[]> {
         const exclude: readonly ['logo'] | undefined = options?.withLogo ? undefined : ['logo'];
 
@@ -108,7 +126,7 @@ export class ServiceProviderRepo {
         }
     }
 
-    private async create(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
+    public async create(serviceProvider: ServiceProvider<false>): Promise<ServiceProvider<true>> {
         const serviceProviderEntity: ServiceProviderEntity = this.em.create(
             ServiceProviderEntity,
             mapAggregateToData(serviceProvider),
@@ -159,5 +177,15 @@ export class ServiceProviderRepo {
         );
 
         return serviceProviders;
+    }
+
+    public async deleteById(id: string): Promise<boolean> {
+        const deletedPersons: number = await this.em.nativeDelete(ServiceProviderEntity, { id });
+        return deletedPersons > 0;
+    }
+
+    public async deleteByName(name: string): Promise<boolean> {
+        const deletedPersons: number = await this.em.nativeDelete(ServiceProviderEntity, { name: name });
+        return deletedPersons > 0;
     }
 }

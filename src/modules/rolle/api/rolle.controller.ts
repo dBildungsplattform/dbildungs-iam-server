@@ -11,6 +11,7 @@ import {
     Put,
     Query,
     UseFilters,
+    UseGuards,
 } from '@nestjs/common';
 import {
     ApiBadRequestResponse,
@@ -60,6 +61,7 @@ import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -171,10 +173,11 @@ export class RolleController {
     }
 
     @Post()
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Create a new rolle.' })
     @ApiCreatedResponse({ description: 'The rolle was successfully created.', type: RolleResponse })
-    @ApiBadRequestResponse({ description: 'The input was not valid.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the rolle.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rolle.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the rolle.' })
@@ -182,13 +185,11 @@ export class RolleController {
         const orgResult: Result<OrganisationDo<true>, DomainError> = await this.orgService.findOrganisationById(
             params.administeredBySchulstrukturknoten,
         );
-
         if (!orgResult.ok) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(orgResult.error),
             );
         }
-
         const rolle: DomainError | Rolle<false> = this.rolleFactory.createNew(
             params.name,
             params.administeredBySchulstrukturknoten,
@@ -203,13 +204,16 @@ export class RolleController {
         if (rolle instanceof DomainError) {
             throw rolle;
         }
-
-        const result: Rolle<true> = await this.rolleRepo.save(rolle);
+        const result: Rolle<true> | DomainError = await this.rolleRepo.save(rolle);
+        if (result instanceof DomainError) {
+            throw result;
+        }
 
         return new RolleResponse(result);
     }
 
     @Patch(':rolleId')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ description: 'Add systemrecht to a rolle.' })
     @ApiOkResponse({ description: 'The systemrecht was successfully added to rolle.' })
@@ -253,6 +257,7 @@ export class RolleController {
     }
 
     @Put(':rolleId/serviceProviders')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ description: 'Add a service-provider to a rolle by id.' })
     @ApiOkResponse({ description: 'Adding service-provider finished successfully.', type: [ServiceProviderResponse] })
@@ -313,6 +318,7 @@ export class RolleController {
     }
 
     @Delete(':rolleId/serviceProviders')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ description: 'Remove a service-provider from a rolle by id.' })
     @ApiOkResponse({ description: 'Removing service-provider finished successfully.' })
@@ -342,6 +348,7 @@ export class RolleController {
     }
 
     @Put(':rolleId')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ description: 'Update rolle.' })
     @ApiOkResponse({
@@ -387,6 +394,7 @@ export class RolleController {
     }
 
     @Delete(':rolleId')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })
     @ApiNoContentResponse({ description: 'Role was deleted successfully.' })

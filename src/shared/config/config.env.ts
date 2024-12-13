@@ -5,18 +5,27 @@ import { HostConfig } from './host.config.js';
 import { ItsLearningConfig } from './itslearning.config.js';
 import { LdapConfig } from './ldap.config.js';
 import { PrivacyIdeaConfig } from './privacyidea.config.js';
+import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
+import { RedisConfig } from './redis.config.js';
+import { envToOptionalBoolean } from './utils.js';
+import { VidisConfig } from './vidis.config.js';
 
-export default (): {
+export type Config = {
     DB: Partial<DbConfig>;
     KEYCLOAK: Partial<KeycloakConfig>;
+    REDIS: Partial<RedisConfig>;
     LDAP: Partial<LdapConfig>;
     FRONTEND: Partial<FrontendConfig>;
     HOST: Partial<HostConfig>;
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
     OX: Partial<OxConfig>;
-} => ({
+    SYSTEM: Partial<SystemConfig>;
+    VIDIS: Partial<VidisConfig>;
+};
+
+export default (): Config => ({
     DB: {
         DB_NAME: process.env['DB_NAME'],
         USERNAME: process.env['DB_USERNAME'],
@@ -33,21 +42,30 @@ export default (): {
         URL: process.env['LDAP_URL'],
         BIND_DN: process.env['LDAP_BIND_DN'],
         ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
+        OEFFENTLICHE_SCHULEN_DOMAIN: process.env['LDAP_OEFFENTLICHE_SCHULEN_DOMAIN'],
+        ERSATZSCHULEN_DOMAIN: process.env['LDAP_ERSATZSCHULEN_DOMAIN'],
     },
     FRONTEND: {
         SESSION_SECRET: process.env['FRONTEND_SESSION_SECRET'],
         OIDC_CALLBACK_URL: process.env['FRONTEND_OIDC_CALLBACK_URL'],
         DEFAULT_LOGIN_REDIRECT: process.env['FRONTEND_DEFAULT_LOGIN_REDIRECT'],
         LOGOUT_REDIRECT: process.env['FRONTEND_LOGOUT_REDIRECT'],
+        STATUS_REDIRECT_URL: process.env['STATUS_REDIRECT_URL'],
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],
     },
+    REDIS: {
+        PASSWORD: process.env['REDIS_PASSWORD'],
+    },
     ITSLEARNING: {
-        ENABLED: process.env['ITSLEARNING_ENABLED']?.toLowerCase() as 'true' | 'false',
+        ENABLED: envToOptionalBoolean('ITSLEARNING_ENABLED'),
         ENDPOINT: process.env['ITSLEARNING_ENDPOINT'],
         USERNAME: process.env['ITSLEARNING_USERNAME'],
         PASSWORD: process.env['ITSLEARNING_PASSWORD'],
+        ROOT: process.env['ITSLEARNING_ROOT'],
+        ROOT_OEFFENTLICH: process.env['ITSLEARNING_ROOT_OEFFENTLICH'],
+        ROOT_ERSATZ: process.env['ITSLEARNING_ROOT_ERSATZ'],
     },
     PRIVACYIDEA: {
         ENDPOINT: process.env['PI_BASE_URL'],
@@ -55,12 +73,28 @@ export default (): {
         PASSWORD: process.env['PI_ADMIN_PASSWORD'],
         USER_RESOLVER: process.env['PI_USER_RESOLVER'],
         REALM: process.env['PI_REALM'],
-        RENAME_WAITING_TIME_IN_SECONDS: parseInt(process.env['PI_RENAME_WAITING_TIME'] || '0'),
     },
     OX: {
-        ENABLED: process.env['OX_ENABLED']?.toLowerCase() as 'true' | 'false',
+        ENABLED: envToOptionalBoolean('OX_ENABLED'),
         ENDPOINT: process.env['OX_ENDPOINT'],
         USERNAME: process.env['OX_USERNAME'],
         PASSWORD: process.env['OX_PASSWORD'],
+    },
+    SYSTEM: {
+        RENAME_WAITING_TIME_IN_SECONDS: process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS']
+            ? parseInt(process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS'])
+            : undefined,
+        STEP_UP_TIMEOUT_IN_SECONDS: process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS']
+            ? parseInt(process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS'])
+            : undefined,
+        STEP_UP_TIMEOUT_ENABLED: process.env['SYSTEM_STEP_UP_TIMEOUT_ENABLED']?.toLowerCase() as 'true' | 'false',
+    },
+    VIDIS: {
+        BASE_URL: process.env['VIDIS_BASE_URL'],
+        USERNAME: process.env['VIDIS_USERNAME'],
+        PASSWORD: process.env['VIDIS_PASSWORD'],
+        REGION_NAME: process.env['VIDIS_REGION_NAME'],
+        KEYCLOAK_GROUP: process.env['VIDIS_KEYCLOAK_GROUP'],
+        KEYCLOAK_ROLE: process.env['VIDIS_KEYCLOAK_ROLE'],
     },
 });

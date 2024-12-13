@@ -36,8 +36,10 @@ function mapPersonenkontextAndRolleAggregateToData([pk, orga, rolle]: [
         rolleId: pk.rolleId,
         rolle: rolle.rollenart,
         orgaId: pk.organisationId,
+        parentOrgaId: orga.administriertVon,
         orgaTyp: orga.typ,
         orgaKennung: orga.kennung,
+        isItslearningOrga: orga.itslearningEnabled,
         serviceProviderExternalSystems: rolle.serviceProviderData.map((sp: ServiceProvider<true>) => sp.externalSystem),
     };
 }
@@ -47,6 +49,11 @@ export class PersonenkontextUpdatedEvent extends BaseEvent {
         public readonly person: PersonenkontextEventPersonData,
         public readonly newKontexte: PersonenkontextEventKontextData[],
         public readonly removedKontexte: PersonenkontextEventKontextData[],
+        /**
+         * Property @currentKontexte contains all Personenkontexte for a person at the time of event-creation,
+         * inclusive the Personenkontexte which shall be created, exclusive the Personenkontexte which shall be removed.
+         * Therefore, instances of this event-type can be interpreted as the most recent versions of Personenkontexte for a person.
+         */
         public readonly currentKontexte: PersonenkontextEventKontextData[],
     ) {
         super();

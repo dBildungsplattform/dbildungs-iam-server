@@ -13,6 +13,7 @@ import {
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Person } from '../../person/domain/person.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
@@ -26,9 +27,12 @@ function makeKontextEventData(props?: Partial<PersonenkontextUpdatedData> | unde
     return {
         id: props?.id ?? faker.string.uuid(),
         orgaId: props?.orgaId ?? faker.string.uuid(),
+        parentOrgaId: props?.parentOrgaId ?? faker.string.uuid(),
         rolle: props?.rolle ?? faker.helpers.enumValue(RollenArt),
         rolleId: props?.rolleId ?? faker.string.uuid(),
+        orgaTyp: props?.orgaTyp ?? OrganisationsTyp.SCHULE,
         serviceProviderExternalSystems: props?.serviceProviderExternalSystems ?? [ServiceProviderSystem.ITSLEARNING],
+        isItslearningOrga: props?.isItslearningOrga ?? true,
     };
 }
 
@@ -335,12 +339,57 @@ describe('ItsLearning Persons Event Handler', () => {
             expect(updatePersonSpy).toHaveBeenCalledTimes(1);
         });
 
+        it('should call updateMemberships with correct number of kontexte', async () => {
+            const schoolKontext: PersonenkontextUpdatedData = makeKontextEventData({
+                serviceProviderExternalSystems: [ServiceProviderSystem.ITSLEARNING],
+            });
+            const klasseKontext: PersonenkontextUpdatedData = makeKontextEventData({
+                parentOrgaId: schoolKontext.orgaId,
+                isItslearningOrga: false,
+                serviceProviderExternalSystems: [ServiceProviderSystem.ITSLEARNING],
+                orgaTyp: OrganisationsTyp.KLASSE,
+            });
+
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
+                [],
+                [],
+                [schoolKontext, klasseKontext],
+            );
+
+            jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);
+            const updateMembershipsSpy: jest.SpyInstance = jest
+                .spyOn(sut, 'updateMemberships')
+                .mockResolvedValueOnce(undefined);
+            jest.spyOn(sut, 'deletePerson').mockResolvedValueOnce(undefined);
+
+            await sut.updatePersonenkontexteEventHandler(event);
+
+            expect(updateMembershipsSpy).toHaveBeenCalledTimes(1);
+            expect(updateMembershipsSpy).toHaveBeenCalledWith(event.person.id, expect.objectContaining({ length: 2 }));
+        });
+
         it('should not call updatePerson, if no relevant kontext exists', async () => {
             const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
                 { id: faker.string.uuid(), vorname: faker.person.firstName(), familienname: faker.person.lastName() },
                 [],
                 [],
-                [makeKontextEventData({ serviceProviderExternalSystems: [ServiceProviderSystem.NONE] })],
+                [
+                    makeKontextEventData({
+                        serviceProviderExternalSystems: [ServiceProviderSystem.NONE],
+                        isItslearningOrga: false,
+                    }),
+                    makeKontextEventData({
+                        orgaTyp: OrganisationsTyp.LAND,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.ITSLEARNING],
+                        isItslearningOrga: true,
+                    }),
+                    makeKontextEventData({
+                        orgaTyp: OrganisationsTyp.KLASSE,
+                        parentOrgaId: undefined,
+                        serviceProviderExternalSystems: [ServiceProviderSystem.ITSLEARNING],
+                    }),
+                ],
             );
 
             const updatePersonSpy: jest.SpyInstance = jest.spyOn(sut, 'updatePerson').mockResolvedValueOnce(undefined);

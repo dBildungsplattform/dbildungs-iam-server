@@ -28,6 +28,9 @@ import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -42,6 +45,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         traegerschaft: organisation.traegerschaft,
         emailDomain: organisation.emailDomain,
         emailAddress: organisation.emailAdress,
+        itslearningEnabled: organisation.itslearningEnabled,
     };
 }
 
@@ -50,6 +54,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.id,
         entity.createdAt,
         entity.updatedAt,
+        entity.version,
         entity.administriertVon,
         entity.zugehoerigZu,
         entity.kennung,
@@ -60,6 +65,7 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.traegerschaft,
         entity.emailDomain,
         entity.emailAddress,
+        entity.itslearningEnabled,
     );
 }
 
@@ -80,6 +86,7 @@ export class OrganisationRepository {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
+        private readonly logger: ClassLogger,
         private readonly eventService: EventService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
@@ -424,7 +431,11 @@ export class OrganisationRepository {
         return;
     }
 
-    public async updateKlassenname(id: string, newName: string): Promise<DomainError | Organisation<true>> {
+    public async updateKlassenname(
+        id: string,
+        newName: string,
+        version: number,
+    ): Promise<DomainError | Organisation<true>> {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
         if (!organisationFound) {
@@ -445,10 +456,53 @@ export class OrganisationRepository {
                 }
             }
         }
+        organisationFound.setVersionForUpdate(version);
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
+
         return organisationEntity;
+    }
+
+    public async setEnabledForitslearning(
+        personPermissions: PersonPermissions,
+        id: string,
+    ): Promise<DomainError | Organisation<true>> {
+        if (!(await personPermissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SCHULEN_VERWALTEN]))) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+
+        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, id);
+
+        if (!organisationEntity) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+
+        if (organisationEntity.typ !== OrganisationsTyp.SCHULE) {
+            return new EntityCouldNotBeUpdated('Organisation', id, [
+                'Only organisations of typ SCHULE can be enabled for ITSLearning.',
+            ]);
+        }
+
+        organisationEntity.itslearningEnabled = true;
+        organisationEntity.version += 1;
+
+        this.logger.info(
+            `User with personId:${personPermissions.personFields.id} enabled itslearning for organisationId:${id}`,
+        );
+
+        await this.em.persistAndFlush(organisationEntity);
+
+        this.eventService.publish(
+            new SchuleItslearningEnabledEvent(
+                organisationEntity.id,
+                organisationEntity.typ,
+                organisationEntity.kennung,
+                organisationEntity.name,
+            ),
+        );
+
+        return mapEntityToAggregate(organisationEntity);
     }
 
     public async saveSeedData(organisation: Organisation<boolean>): Promise<Organisation<true>> {
@@ -493,6 +547,12 @@ export class OrganisationRepository {
             OrganisationEntity,
             organisation.id,
         );
+
+        if (organisationEntity.version !== organisation.version) {
+            throw new OrganisationUpdateOutdatedError();
+        }
+        organisationEntity.version += 1;
+
         organisationEntity.assign(mapAggregateToData(organisation));
 
         await this.em.persistAndFlush(organisationEntity);
@@ -500,7 +560,7 @@ export class OrganisationRepository {
         return mapEntityToAggregate(organisationEntity);
     }
 
-    private async findOrganisationZuordnungErsatzOderOeffentlich(
+    public async findOrganisationZuordnungErsatzOderOeffentlich(
         organisationId: OrganisationID | undefined,
     ): Promise<RootDirectChildrenType> {
         const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =

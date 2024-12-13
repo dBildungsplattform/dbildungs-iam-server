@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, FilterQuery, Loaded, QBFilterQuery, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, FilterQuery, Loaded, QBFilterQuery, RequiredEntityData, raw } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -27,7 +27,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -36,7 +36,8 @@ import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
-import { PrivacyIdeaConfig } from '../../../shared/config/privacyidea.config.js';
+import { SystemConfig } from '../../../shared/config/system.config.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -149,7 +150,7 @@ export type PersonenQueryParams = {
 export class PersonRepository {
     public readonly ROOT_ORGANISATION_ID: string;
 
-    public readonly PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS: number;
+    public readonly RENAME_WAITING_TIME_IN_SECONDS: number;
 
     public constructor(
         private readonly kcUserService: KeycloakUserService,
@@ -160,8 +161,7 @@ export class PersonRepository {
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
-        this.PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS =
-            config.getOrThrow<PrivacyIdeaConfig>('PRIVACYIDEA').RENAME_WAITING_TIME_IN_SECONDS;
+        this.RENAME_WAITING_TIME_IN_SECONDS = config.getOrThrow<SystemConfig>('SYSTEM').RENAME_WAITING_TIME_IN_SECONDS;
     }
 
     private async getPersonScopeWithPermissions(
@@ -257,7 +257,7 @@ export class PersonRepository {
         if (!keyCloakUserDataResponse.ok) {
             return person;
         }
-        person.userLock = (await this.userLockRepository.findPersonById(person.id)) ?? undefined;
+        person.userLock = await this.userLockRepository.findByPersonId(person.id);
         person.isLocked = keyCloakUserDataResponse.value.enabled === false;
         return person;
     }
@@ -463,7 +463,7 @@ export class PersonRepository {
             this.eventService.publish(PersonRenamedEvent.fromPerson(person, oldReferrer));
             // wait for privacyIDEA to update the username
             await new Promise<void>((resolve: () => void) =>
-                setTimeout(resolve, this.PRIVACYIDEA_RENAME_WAITING_TIME_IN_SECONDS * 1000),
+                setTimeout(resolve, this.RENAME_WAITING_TIME_IN_SECONDS * 1000),
             );
         }
 
@@ -492,6 +492,7 @@ export class PersonRepository {
 
         person.referrer = person.username;
         const userDo: User<false> = User.createNew(person.username, undefined, {
+            ID_NEXTCLOUD: [person.id],
             ID_ITSLEARNING: [person.id],
             ID_OX: [person.id],
         });
@@ -573,7 +574,7 @@ export class PersonRepository {
 
         const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
-        scope.sortBy(sortField, sortOrder);
+        scope.sortBy(raw(`lower(${sortField})`), sortOrder);
 
         if (queryParams.suchFilter) {
             scope.findBySearchString(queryParams.suchFilter);
@@ -653,6 +654,23 @@ export class PersonRepository {
                 return new DuplicatePersonalnummerError(`Personalnummer ${personalnummer} already exists.`);
             }
             newPersonalnummer = personalnummer;
+
+            // Remove KoPers-Lock, if existing
+            const userLocks: UserLock[] | undefined = await this.userLockRepository.findByPersonId(personId);
+
+            if (userLocks && userLocks.length > 0) {
+                const koperslock: UserLock | undefined = userLocks.find(
+                    (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
+                );
+                if (koperslock && personFound.keycloakUserId) {
+                    await this.kcUserService.updateKeycloakUserStatus(
+                        personId,
+                        personFound.keycloakUserId,
+                        koperslock,
+                        false,
+                    );
+                }
+            }
         }
         //Update name
         if (hasNameChanged) {
@@ -752,9 +770,19 @@ export class PersonRepository {
                 {
                     personenKontexte: {
                         $some: {
-                            createdAt: { $lte: daysAgo }, //Check that createdAt is older than 56 days
+                            createdAt: { $lte: daysAgo }, // Check that createdAt is older than 56 days
                             rolleId: {
                                 merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
+                            },
+                        },
+                    },
+                },
+                {
+                    $not: {
+                        // Ensure no corresponding user_lock entry exists
+                        userLocks: {
+                            $some: {
+                                locked_occasion: PersonLockOccasion.KOPERS_GESPERRT,
                             },
                         },
                     },

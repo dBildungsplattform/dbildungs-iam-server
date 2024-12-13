@@ -26,19 +26,19 @@ export class EmailAddress<WasPersisted extends boolean> {
         updatedAt: Date,
         personId: PersonID,
         address: string,
-        enabled: EmailAddressStatus,
+        status: EmailAddressStatus,
         oxUserId?: string,
     ): EmailAddress<true> {
-        return new EmailAddress(id, createdAt, updatedAt, personId, address, enabled, oxUserId);
+        return new EmailAddress(id, createdAt, updatedAt, personId, address, status, oxUserId);
     }
 
     public static createNew(
         personId: PersonID,
         address: string,
-        enabled: EmailAddressStatus,
+        status: EmailAddressStatus,
         oxUserId?: string,
     ): EmailAddress<false> {
-        return new EmailAddress(undefined, undefined, undefined, personId, address, enabled, oxUserId);
+        return new EmailAddress(undefined, undefined, undefined, personId, address, status, oxUserId);
     }
 
     public enable(): boolean {
@@ -79,6 +79,10 @@ export class EmailAddress<WasPersisted extends boolean> {
 
     public get enabledOrRequested(): boolean {
         return this.addressStatus === EmailAddressStatus.ENABLED || this.addressStatus === EmailAddressStatus.REQUESTED;
+    }
+
+    public get disabled(): boolean {
+        return this.addressStatus === EmailAddressStatus.DISABLED;
     }
 
     public get personId(): PersonID {

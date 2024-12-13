@@ -1,10 +1,17 @@
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { ArrayType, Entity, Property } from '@mikro-orm/core';
+import { ArrayType, Entity, ManyToOne, Property, Ref } from '@mikro-orm/core';
+import { ImportVorgangEntity } from './import-vorgang.entity.js';
 
 @Entity({ tableName: 'importdataitem' })
 export class ImportDataItemEntity extends TimestampedEntity {
-    @Property({ columnType: 'uuid' })
-    public readonly importvorgangId!: string;
+    @ManyToOne({
+        fieldName: 'importvorgang_id',
+        columnType: 'uuid',
+        ref: true,
+        nullable: false,
+        entity: () => ImportVorgangEntity,
+    })
+    public readonly importvorgangId!: Ref<ImportVorgangEntity>;
 
     @Property()
     public readonly nachname!: string;

@@ -35,6 +35,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { PersonenkontextMigrationRuntype } from '../domain/personenkontext.enums.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 
 describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
@@ -105,7 +106,7 @@ describe('dbiam Personenkontext API', () => {
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
             username: faker.internet.userName(),
-            password: faker.string.alphanumeric(8),
+            password: generatePassword(),
         });
         if (personResult instanceof DomainError) {
             throw personResult;
@@ -129,9 +130,12 @@ describe('dbiam Personenkontext API', () => {
 
     describe('/GET personenkontexte for person', () => {
         it('should return personenkontexte for the person', async () => {
-            const rolleA: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-            const rolleB: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
-            const rolleC: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const rolleC: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleA instanceof DomainError) throw Error();
+            if (rolleB instanceof DomainError) throw Error();
+            if (rolleC instanceof DomainError) throw Error();
 
             const personA: Person<true> = await createPerson();
             if (personA instanceof DomainError) {
@@ -216,13 +220,14 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                         merkmale: [],
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
@@ -249,13 +254,14 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                         merkmale: [],
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
@@ -296,12 +302,13 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
@@ -326,12 +333,13 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 await personenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
@@ -386,12 +394,13 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
@@ -414,12 +423,13 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
@@ -443,12 +453,13 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
@@ -471,12 +482,13 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LERN,
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
@@ -502,13 +514,14 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                         merkmale: [],
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
@@ -531,13 +544,14 @@ describe('dbiam Personenkontext API', () => {
                 const organisation: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false, { typ: OrganisationsTyp.SCHULE }),
                 );
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                         merkmale: [],
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 const personpermissions: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);

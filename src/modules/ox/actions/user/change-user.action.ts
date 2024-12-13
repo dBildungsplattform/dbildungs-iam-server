@@ -1,16 +1,22 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
 import { AuthParams, OxBaseAction } from '../ox-base-action.js';
+import { OXUserID } from '../../../../shared/types/ox-ids.types.js';
 
 // Incomplete
 export type ChangeUserParams = AuthParams & {
     contextId: string;
 
-    username: string;
-    email1: string;
-    primaryEmail: string;
-    defaultSenderAddress: string;
-    aliases: string[];
+    userId: OXUserID;
+    username?: string;
+    givenname?: string;
+    surname?: string;
+    displayname?: string;
+
+    email1?: string;
+    primaryEmail?: string;
+    defaultSenderAddress?: string;
+    aliases?: string[];
 };
 
 export type ChangeUserResponseBody = {
@@ -38,8 +44,12 @@ export class ChangeUserAction extends OxBaseAction<ChangeUserResponseBody, void>
                 },
 
                 'tns:usrdata': {
+                    'ns6:id': this.params.userId,
                     'ns6:email1': this.params.email1,
                     'ns6:name': this.params.username,
+                    'ns6:given_name': this.params.givenname,
+                    'ns6:sur_name': this.params.surname,
+                    'ns6:display_name': this.params.displayname,
                     'ns6:primaryEmail': this.params.primaryEmail,
                     'ns6:defaultSenderAddress': this.params.defaultSenderAddress,
                     'ns6:aliases': this.params.aliases,

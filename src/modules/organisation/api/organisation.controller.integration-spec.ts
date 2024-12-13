@@ -33,6 +33,8 @@ import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 describe('Organisation API', () => {
     let app: INestApplication;
@@ -116,6 +118,9 @@ describe('Organisation API', () => {
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();
 
+        const stepUpGuard: StepUpGuard = module.get(StepUpGuard);
+        stepUpGuard.canActivate = jest.fn().mockReturnValue(true);
+
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
@@ -166,7 +171,7 @@ describe('Organisation API', () => {
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
                     username: faker.internet.userName(),
-                    password: faker.string.alphanumeric(8),
+                    password: generatePassword(),
                 });
                 if (personData instanceof DomainError) {
                     throw personData;
@@ -181,12 +186,13 @@ describe('Organisation API', () => {
                 await em.persistAndFlush(organisation);
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
-                const rolle: Rolle<true> = await rolleRepo.save(
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
                     DoFactory.createRolle(false, {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LERN,
                     }),
                 );
+                if (rolle instanceof DomainError) throw Error();
 
                 await dBiamPersonenkontextRepoInternal.save(
                     createPersonenkontext(false, {

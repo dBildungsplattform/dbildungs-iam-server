@@ -7,6 +7,9 @@ import { ServiceProviderFactory } from './domain/service-provider.factory.js';
 import { ServiceProviderService } from './domain/service-provider.service.js';
 import { CreateGroupAndRoleHandler } from './repo/service-provider-event-handler.js';
 import { ServiceProviderRepo } from './repo/service-provider.repo.js';
+import { VidisModule } from '../vidis/vidis.module.js';
+import { OrganisationModule } from '../organisation/organisation.module.js';
+import { OrganisationServiceProviderRepo } from './repo/organisation-service-provider.repo.js';
 
 @Module({
     imports: [
@@ -14,8 +17,16 @@ import { ServiceProviderRepo } from './repo/service-provider.repo.js';
         KeycloakAdministrationModule,
         EventModule,
         forwardRef(() => RolleModule),
+        VidisModule,
+        OrganisationModule,
     ],
-    providers: [ServiceProviderRepo, ServiceProviderFactory, ServiceProviderService, CreateGroupAndRoleHandler],
+    providers: [
+        ServiceProviderRepo,
+        ServiceProviderFactory,
+        ServiceProviderService,
+        CreateGroupAndRoleHandler,
+        OrganisationServiceProviderRepo,
+    ],
     exports: [ServiceProviderRepo, ServiceProviderFactory, ServiceProviderService],
 })
 export class ServiceProviderModule {}

@@ -10,7 +10,8 @@
         "OIDC_CALLBACK_URL": "http://localhost:9091/api/frontend/login",
         "DEFAULT_LOGIN_REDIRECT": "/",
         "LOGOUT_REDIRECT": "/",
-        "ERROR_PAGE_REDIRECT": "/login-error"
+        "ERROR_PAGE_REDIRECT": "/login-error",
+        "STATUS_REDIRECT_URL": "/"
     },
     "DB": {
         "CLIENT_URL": "postgres://127.0.0.1:5432",
@@ -48,7 +49,7 @@
         "DEFAULT_LOG_LEVEL": "info"
     },
     "ITSLEARNING": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "https://itslearning-test.example.com",
         "USERNAME": "username",
         "PASSWORD": "password",
@@ -63,13 +64,26 @@
         "USER_RESOLVER": "mariadb_resolver",
         "REALM": "defrealm"
     },
+    "VIDIS": {
+        "BASE_URL": "",
+        "USERNAME": "",
+        "PASSWORD": "",
+        "REGION_NAME": "test-region",
+        "KEYCLOAK_GROUP": "VIDIS-service",
+        "KEYCLOAK_ROLE": "VIDIS-user"
+    },
     "OX": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "https://ox_ip:ox_port/webservices/",
         "USERNAME": "username",
         "PASSWORD": "password"
     },
     "IMPORT": {
         "IMPORT_FILE_MAXGROESSE_IN_MB": 1
+    },
+    "SYSTEM": {
+        "RENAME_WAITING_TIME_IN_SECONDS": 5,
+        "STEP_UP_TIMEOUT_ENABLED": "true",
+        "STEP_UP_TIMEOUT_IN_SECONDS": 900
     }
 }

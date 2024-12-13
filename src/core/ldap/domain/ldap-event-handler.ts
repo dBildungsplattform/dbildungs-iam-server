@@ -12,6 +12,8 @@ import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/per
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -35,7 +37,7 @@ export class LdapEventHandler {
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonenkontextDeletedEvent, personId:${event.personId}`);
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByPersonId(event.personId);
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.referrer);
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         }
@@ -128,33 +130,26 @@ export class LdapEventHandler {
         }
     }
 
+    @EventHandler(PersonRenamedEvent)
+    public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
+        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
+        const modifyResult: Result<PersonID> = await this.ldapClientService.modifyPersonAttributes(
+            event.oldReferrer,
+            event.vorname,
+            event.familienname,
+            event.referrer,
+        );
+        if (!modifyResult.ok) {
+            this.logger.error(modifyResult.error.message);
+            return;
+        }
+        this.logger.info(`Successfully modified person attributes for personId:${event.personId}`);
+    }
+
     @EventHandler(PersonenkontextUpdatedEvent)
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, new personenkontexte: ${event.newKontexte.length}, deleted personenkontexte: ${event.removedKontexte.length}`,
-        );
-
-        // Delete all removed personenkontexte if rollenart === LEHR
-        await Promise.allSettled(
-            event.removedKontexte
-                .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
-                .map(async (pk: PersonenkontextEventKontextData) => {
-                    const emailDomain: Result<string> = await this.getEmailDomainForOrganisationId(pk.orgaId);
-                    if (emailDomain.ok) {
-                        this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
-                        const deletionResult: Result<PersonData> = await this.ldapClientService.deleteLehrer(
-                            event.person,
-                            emailDomain.value,
-                        );
-                        if (!deletionResult.ok) {
-                            this.logger.error(deletionResult.error.message);
-                        }
-                    } else {
-                        this.logger.error(
-                            `LdapClientService deleteLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
-                        );
-                    }
-                }),
         );
 
         // Create personenkontexte if rollenart === LEHR
@@ -189,5 +184,14 @@ export class LdapEventHandler {
         );
 
         await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.address);
+    }
+
+    @EventHandler(EmailAddressChangedEvent)
+    public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}`,
+        );
+
+        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.newAddress);
     }
 }

@@ -4,6 +4,8 @@ namespaceOverride: ''
 
 backendHostname: ''
 keycloakHostname: ''
+keycloak2ndHostname: ""
+backend2ndHostname: ""
 
 containerSecurityContext:
   enabled: true
@@ -29,6 +31,13 @@ database:
 ldap:
   url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
   bindDN: cn=admin,dc=schule-sh,dc=de
+  oeffentlicheSchulenDomain: schule-sh.de
+  ersatzschulenDomain: ersatzschule-sh.de
+
+itslearning:
+  root: sh
+  rootOeffentlich: oeffentlich
+  rootErsatz: ersatz
 
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
@@ -48,7 +57,13 @@ auth:
   pi_admin_password: ''
   pi_user_resolver: ''
   pi_user_realm: ''
-  pi_rename_waiting_time: ''
+  redis_password: ''
+  vidis_base_url: ''
+  vidis_username: ''
+  vidis_password: ''
+  vidis_region_name: ''
+  vidis_keycloak_group: ''
+  vidis_keycloak_role: ''
 
 backend:
   replicaCount: 1
@@ -67,8 +82,8 @@ backend:
       memory: 200Mi
   startupProbe:
     enabled: true
-    initialDelaySeconds: 60
-    periodSeconds: 60
+    initialDelaySeconds: 10
+    periodSeconds: 10
     failureThreshold: 5
     httpGet:
       scheme: 'HTTP'
@@ -92,6 +107,8 @@ backend:
     enabled: true
     command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev', '']
   ingress:
+    # Only enable if 2nd host name is defined
+    enabled2nd: false
     enabled: true
     ingressClassName: nginx
     pathType: Prefix
@@ -109,6 +126,8 @@ backend:
       http: 80
   serviceMonitor:
     enabled: true
+    path: "/metrics"
+    interval: 30m
     endpoints:
       - port: 'web'
   extraEnvVars: []
@@ -122,46 +141,54 @@ backend:
       subPath: secrets-json
       name: secret-volume
   extraVolumeMounts: []
+  env:
+    renameWaitingTimeInSeconds: 3
+    stepUpTimeoutInSeconds: 900
+    stepUpTimeoutEnabled: 'false'
 
-redis:
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 60
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: "80%"
+
+status:
+  url: 'https://status.dev.spsh.dbildungsplattform.de/'
+
+cronjobs:
+  enabled: true
   image:
-    name: redis
-    repository: redis
-    tag: '7.2.4'
+    tag: '1.1.0'
+    repository: docker.io/schulcloud/cron-tools
     pullPolicy: IfNotPresent
-  args:
-    - '/data/tls/redis.conf'
-  containerPorts:
-    redis: 6379
-  resources:
-    limits:
-      cpu: 2
-      memory: 4G
-    requests:
-      cpu: 200m
-      memory: 200Mi
-  livenessProbe:
-    enabled: true
-    tcpSocket:
-      port: 6379
-    initialDelaySeconds: 15
-    timeoutSeconds: 2
-  readinessProbe:
-    enabled: true
-    tcpSocket:
-      port: 6379
-    initialDelaySeconds: 5
-    timeoutSeconds: 1
-  startupProbe:
-    enabled: true
-    tcpSocket:
-      port: 6379
-    failureThreshold: 30
-    periodSeconds: 10
-  service:
-    type: ClusterIP
-    ports:
-      redis: 6379
-  extraEnvVars: []
-  extraVolumes: []
-  extraVolumeMounts: []
+  port: 5656
+  keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
+  keycloakClientId: spsh-service
+  jwksFilePath: /keys/jwks.json
+  backendHostname: '{{ $.Values.frontendHostname }}'
+  scriptDir: scripts
+  jobs:
+    cron-trigger-1:
+      schedule: 20 0 * * *
+      endpoint: '/api/cron/kopers-lock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-2:
+      schedule: 40 0 * * *
+      endpoint: '/api/cron/kontext-expired'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-3:
+      schedule: 50 0 * * *
+      endpoint: '/api/cron/person-without-org'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-4:
+      schedule: 10 0 * * *
+      endpoint: '/api/cron/unlock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
