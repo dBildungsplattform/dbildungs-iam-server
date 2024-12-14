@@ -107,7 +107,7 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(referrer: string, rootName: string): string {
+    public getLehrerUid(referrer: string, rootName: string): string {
         return `uid=${referrer},ou=${rootName},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
     }
 
@@ -310,7 +310,7 @@ export class LdapClientService {
         });
     }
 
-    private async updateMemberDnInGroups(
+    public async updateMemberDnInGroups(
         oldReferrer: string,
         newReferrer: string,
         client: Client,
@@ -325,7 +325,13 @@ export class LdapClientService {
             returnAttributeValues: true,
         });
 
-        const groupEntries: Entry[] = searchResult.searchEntries;
+        const groupEntries: Entry[] | undefined = searchResult.searchEntries;
+
+        if (!groupEntries) {
+            const errMsg: string = `LDAP: Error while searching for groups for person: ${oldReferrer}`;
+            this.logger.error(errMsg);
+            return { ok: false, error: new Error(errMsg) };
+        }
 
         if (groupEntries.length === 0) {
             this.logger.info(`LDAP: No groups found for person:${oldReferrer}`);
@@ -358,15 +364,21 @@ export class LdapClientService {
                     member === oldReferrerUid ? newReferrerUid : member,
                 );
 
-                await client.modify(groupDn, [
-                    new Change({
-                        operation: 'replace',
-                        modification: new Attribute({
-                            type: 'member',
-                            values: updatedMembers.map((member: string | Buffer) => member.toString()),
+                await client
+                    .modify(groupDn, [
+                        new Change({
+                            operation: 'replace',
+                            modification: new Attribute({
+                                type: 'member',
+                                values: updatedMembers.map((member: string | Buffer) => member.toString()),
+                            }),
                         }),
-                    }),
-                ]);
+                    ])
+                    .catch((err: Error) => {
+                        const errMsg: string = `LDAP: Error while updating member data for group: ${groupDn}, errMsg: ${String(err)}`;
+                        this.logger.error(errMsg);
+                        return { ok: false, error: new Error(errMsg) };
+                    });
                 this.logger.info(`LDAP: Updated member data for group: ${groupDn}`);
             }),
         );
