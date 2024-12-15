@@ -563,7 +563,8 @@ describe('LDAP Client Service', () => {
                     ldapEntryUUID: faker.string.uuid(),
                 };
                 const fakeErsatzSchuleAddressDomain: string = 'ersatzschule-sh.de';
-                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=ersatzSchulen,' + mockLdapInstanceConfig.BASE_DN;
+                const lehrerUid: string =
+                    'uid=' + testLehrer.referrer + ',ou=ersatzSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeErsatzSchuleAddressDomain,
@@ -1195,7 +1196,10 @@ describe('LDAP Client Service', () => {
                         searchEntries: [
                             createMock<Entry>({
                                 dn: fakeGroupDn,
-                                member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN],
+                                member: [
+                                    `${fakeLehrerUid}`,
+                                    'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN,
+                                ],
                             }),
                         ],
                     }),
@@ -1302,7 +1306,10 @@ describe('LDAP Client Service', () => {
                         searchEntries: [
                             createMock<Entry>({
                                 dn: fakeGroupDn,
-                                member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN],
+                                member: [
+                                    `${fakeLehrerUid}`,
+                                    'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN,
+                                ],
                             }),
                         ],
                     }),
