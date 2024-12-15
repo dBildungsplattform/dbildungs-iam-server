@@ -666,10 +666,7 @@ export class LdapClientService {
                 if (typeof entry === 'string') {
                     return entry === lehrerUid;
                 }
-                if (Buffer.isBuffer(entry)) {
-                    return entry.toString() === lehrerUid;
-                }
-                return false;
+                return entry.toString() === lehrerUid;
             });
         }
 
