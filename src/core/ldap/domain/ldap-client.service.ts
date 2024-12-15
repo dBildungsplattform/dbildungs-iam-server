@@ -7,15 +7,15 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap-person-entry-changed.event.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
 import { LdapModifyEmailError } from '../error/ldap-modify-email.error.js';
-import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
-import { Person } from '../../../modules/person/domain/person.js';
+import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 
@@ -41,6 +41,10 @@ export class LdapClientService {
 
     public static readonly MAIL_ALTERNATIVE_ADDRESS: string = 'mailAlternativeAddress';
 
+    public static readonly USER_PASSWORD: string = 'userPassword';
+
+    public static readonly DC_SCHULE_SH_DC_DE: string = 'dc=schule-sh,dc=de';
+
     public static readonly GID_NUMBER: string = '100'; //because 0 to 99 are used for statically allocated user groups on Unix-systems
 
     public static readonly UID_NUMBER: string = '100'; //to match the GID_NUMBER rule above and 0 is reserved for super-user
@@ -58,7 +62,6 @@ export class LdapClientService {
         private readonly ldapInstanceConfig: LdapInstanceConfig,
         private readonly logger: ClassLogger,
         private readonly eventService: EventService,
-        private readonly personRepo: PersonRepository,
     ) {
         this.mutex = new Mutex();
     }
@@ -115,12 +118,6 @@ export class LdapClientService {
             this.logger.error(`Could not get root-name because email-domain is invalid, domain:${domain}`);
         }
         return rootName;
-    }
-
-    private async getPersonReferrerOrUndefined(personId: PersonID): Promise<string | undefined> {
-        const person: Option<Person<true>> = await this.personRepo.findById(personId);
-
-        return person?.referrer;
     }
 
     public async createLehrer(
@@ -433,18 +430,13 @@ export class LdapClientService {
         });
     }
 
-    public async changeEmailAddressByPersonId(personId: PersonID, newEmailAddress: string): Promise<Result<PersonID>> {
-        const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
-        if (!referrer) {
-            this.logger.error(
-                `Changing email-address in LDAP FAILED, no person/referrer found for personId:${personId}`,
-            );
-            return {
-                ok: false,
-                error: new LdapSearchError(LdapEntityType.LEHRER),
-            };
-        }
-
+    public async changeEmailAddressByPersonId(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        newEmailAddress: string,
+    ): Promise<Result<PersonID>> {
+        // Converted to avoid PersonRepository-ref, UEM-password-generation
+        //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: changeEmailAddress');
             const splitted: string[] = newEmailAddress.split('@');
@@ -682,5 +674,53 @@ export class LdapClientService {
         }
 
         return false;
+    }
+
+    public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
+        // Converted to avoid PersonRepository-ref, UEM-password-generation
+        //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
+        const userPassword: string = generatePassword();
+
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: changeUserPassword');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+                scope: 'sub',
+                filter: `(uid=${referrer})`,
+                attributes: [LdapClientService.USER_PASSWORD],
+                returnAttributeValues: true,
+            });
+            if (!searchResult.searchEntries[0]) {
+                this.logger.error(`Modification FAILED, no entry for person:${referrer}`);
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
+
+            try {
+                await client.modify(searchResult.searchEntries[0].dn, [
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: LdapClientService.USER_PASSWORD,
+                            values: [userPassword],
+                        }),
+                    }),
+                ]);
+                this.logger.info(`LDAP: Successfully modified userPassword (UEM) for personId:${personId}`);
+                this.eventService.publish(new LdapPersonEntryChangedEvent(personId, undefined, undefined, true));
+
+                return { ok: true, value: userPassword };
+            } catch (err) {
+                const errMsg: string = JSON.stringify(err);
+                this.logger.error(`LDAP: Modifying userPassword (UEM) FAILED, errMsg:${errMsg}`);
+
+                return { ok: false, error: new LdapModifyUserPasswordError() };
+            }
+        });
     }
 }

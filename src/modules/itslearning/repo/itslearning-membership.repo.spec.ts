@@ -45,11 +45,15 @@ describe('Itslearning Person Repo', () => {
     describe('readMembershipsForPerson', () => {
         it('should call the itslearning API', async () => {
             const personId: string = faker.string.uuid();
+            const syncID: string = faker.string.uuid();
 
-            await sut.readMembershipsForPerson(personId);
+            await sut.readMembershipsForPerson(personId, syncID);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ personId }));
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(ReadMembershipsForPersonAction));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ personId }), syncID);
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
+                expect.any(ReadMembershipsForPersonAction),
+                syncID,
+            );
         });
 
         it('should return the result', async () => {
@@ -83,11 +87,15 @@ describe('Itslearning Person Repo', () => {
                     roleType: faker.helpers.enumValue(IMSESRoleType),
                 },
             ];
+            const syncID: string = faker.string.uuid();
 
-            await sut.createMemberships(memberships);
+            await sut.createMemberships(memberships, syncID);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ params: memberships }));
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreateMembershipsAction));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
+                expect.objectContaining({ params: memberships }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreateMembershipsAction), syncID);
         });
 
         it('should not return error on success', async () => {
@@ -133,11 +141,15 @@ describe('Itslearning Person Repo', () => {
     describe('removeMemberships', () => {
         it('should call the itslearning API', async () => {
             const membershipIDs: string[] = [faker.string.uuid()];
+            const syncID: string = faker.string.uuid();
 
-            await sut.removeMemberships(membershipIDs);
+            await sut.removeMemberships(membershipIDs, syncID);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ membershipIDs }));
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeleteMembershipsAction));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
+                expect.objectContaining({ membershipIDs }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeleteMembershipsAction), syncID);
         });
 
         it('should not return error on success', async () => {
@@ -171,11 +183,15 @@ describe('Itslearning Person Repo', () => {
             it('should read current memberships for person', async () => {
                 const personId: string = faker.string.uuid();
                 itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: [] }); // Read Memberships
+                const syncID: string = faker.string.uuid();
 
-                await sut.setMemberships(personId, []);
+                await sut.setMemberships(personId, [], syncID);
 
-                expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ personId }));
-                expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(ReadMembershipsForPersonAction));
+                expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ personId }), syncID);
+                expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
+                    expect.any(ReadMembershipsForPersonAction),
+                    syncID,
+                );
             });
 
             it('should abort if memberships can not be read', async () => {

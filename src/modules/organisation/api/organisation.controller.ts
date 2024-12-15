@@ -79,7 +79,7 @@ export class OrganisationController {
     ) {}
 
     @Post()
-    // @UseGuards(StepUpGuard) --> SPSH-1519 (Not Possible due to migration at the moment)
+    @UseGuards(StepUpGuard)
     @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
     @ApiBadRequestResponse({ description: 'The organisation already exists.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
@@ -471,7 +471,7 @@ export class OrganisationController {
     }
 
     @Put(':organisationId/enable-for-its-learning')
-    //@UseGuards(StepUpGuard) --> SPSH-1519 (Not Possible due to migration at the moment)
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The organization was successfully enabled for itslearning.',
         type: OrganisationResponseLegacy,

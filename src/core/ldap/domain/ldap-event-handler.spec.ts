@@ -889,6 +889,7 @@ describe('LDAP Event Handler', () => {
         it('should call ldap client changeEmailAddressByPersonId', async () => {
             const event: EmailAddressGeneratedEvent = new EmailAddressGeneratedEvent(
                 faker.string.uuid(),
+                faker.internet.userName(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -908,6 +909,7 @@ describe('LDAP Event Handler', () => {
         it('should call ldap client changeEmailAddressByPersonId', async () => {
             const event: EmailAddressChangedEvent = new EmailAddressChangedEvent(
                 faker.string.uuid(),
+                faker.internet.userName(),
                 faker.string.uuid(),
                 faker.internet.email(),
                 faker.string.uuid(),

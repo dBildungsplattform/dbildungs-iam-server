@@ -56,18 +56,25 @@ export class EmailRepo {
         return mapEntityToAggregate(emailAddressEntity);
     }
 
+    /**
+     * Will return the most recently updated EmailAddress if multiple EmailAddresses with REQUESTED status can be found for personId, warning will be logged in this case.
+     * @param personId
+     */
     public async findRequestedByPerson(personId: PersonID): Promise<Option<EmailAddress<true>>> {
-        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
-            EmailAddressEntity,
-            {
-                personId: { $eq: personId },
-                status: { $eq: EmailAddressStatus.REQUESTED },
-            },
-            {},
+        const emailAddresses: EmailAddress<true>[] = await this.findByPersonSortedByUpdatedAtDesc(
+            personId,
+            EmailAddressStatus.REQUESTED,
         );
-        if (!emailAddressEntity) return undefined;
 
-        return mapEntityToAggregate(emailAddressEntity);
+        if (!emailAddresses || !emailAddresses[0]) return null;
+
+        if (emailAddresses.length > 1) {
+            this.logger.warning(
+                `Multiple EmailAddresses Found In REQUESTED Status For personId:${personId}, Will Only Return address:${emailAddresses[0].address}`,
+            );
+        }
+
+        return emailAddresses[0];
     }
 
     public async findByPersonSortedByUpdatedAtDesc(
@@ -89,6 +96,20 @@ export class EmailRepo {
         }
 
         return emails;
+    }
+
+    public async findByAddress(address: string): Promise<Option<EmailAddress<true>>> {
+        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
+            EmailAddressEntity,
+            {
+                address: { $eq: address },
+            },
+            { orderBy: { updatedAt: QueryOrder.DESC } },
+        );
+
+        if (!emailAddressEntity) return undefined;
+
+        return mapEntityToAggregate(emailAddressEntity);
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {
