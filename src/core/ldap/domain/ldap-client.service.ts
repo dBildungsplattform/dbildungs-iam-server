@@ -622,15 +622,15 @@ export class LdapClientService {
             },
         );
 
-        if (!this.isPersonInSearchResult(searchResultOrgUnit, personUid)) {
-            this.logger.info(`LDAP: Person ${personUid} is not in group ${groupId}`);
-            return { ok: false, error: new Error(`Person ${personUid} is not in group ${groupId}`) };
-        }
-
         if (!searchResultOrgUnit.searchEntries[0]) {
             const errMsg: string = `LDAP: Group ${groupId} not found`;
             this.logger.error(errMsg);
             return { ok: false, error: new Error(errMsg) };
+        }
+
+        if (!this.isPersonInSearchResult(searchResultOrgUnit, personUid)) {
+            this.logger.info(`LDAP: Person ${personUid} is not in group ${groupId}`);
+            return { ok: false, error: new Error(`Person ${personUid} is not in group ${groupId}`) };
         }
         const groupDn: string = searchResultOrgUnit.searchEntries[0].dn;
         try {

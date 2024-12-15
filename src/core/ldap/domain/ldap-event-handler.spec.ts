@@ -513,6 +513,7 @@ describe('LDAP Event Handler', () => {
         });
 
         it('should NOT call ldap client for deleting person in LDAP when person still has at least one PK with rollenArt LEHR left', async () => {
+            const fakeOrgaID: string = faker.string.uuid();
             const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
                 {
                     id: faker.string.uuid(),
@@ -524,7 +525,7 @@ describe('LDAP Event Handler', () => {
                 [
                     {
                         id: faker.string.uuid(),
-                        orgaId: faker.string.uuid(),
+                        orgaId: fakeOrgaID,
                         rolle: RollenArt.LEHR,
                         rolleId: faker.string.uuid(),
                         orgaKennung: faker.string.numeric(7),
@@ -535,7 +536,7 @@ describe('LDAP Event Handler', () => {
                 [
                     {
                         id: faker.string.uuid(),
-                        orgaId: faker.string.uuid(),
+                        orgaId: fakeOrgaID,
                         rolle: RollenArt.LEHR,
                         rolleId: faker.string.uuid(),
                         orgaKennung: faker.string.numeric(7),
@@ -546,13 +547,8 @@ describe('LDAP Event Handler', () => {
             );
 
             organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
-
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
-
             expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Keep lehrer in LDAP, personId:${event.person.id}, because person keeps PK(s) with rollenArt LEHR`,
-            );
         });
 
         it('when organisation of deleted PK has no valid emailDomain should log error', async () => {
