@@ -44,6 +44,7 @@ auth:
   keycloak_adminSecret: ''
   keycloak_clientSecret: ''
   ldap_admin_password: ''
+  ldap_base_dn: ''
   secrets_json: ''
   frontend_sessionSecret: ''
   itslearning_enabled: ''

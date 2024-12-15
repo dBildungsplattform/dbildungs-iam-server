@@ -47,6 +47,14 @@ describe('LDAP Client Service', () => {
 
     let person: Person<true>;
     let personWithoutReferrer: Person<true>;
+    const mockLdapInstanceConfig: LdapInstanceConfig = {
+        BASE_DN: 'dc=example,dc=com',
+        OEFFENTLICHE_SCHULEN_DOMAIN: 'schule-sh.de',
+        ERSATZSCHULEN_DOMAIN: 'ersatzschule-sh.de',
+        URL: '',
+        BIND_DN: '',
+        ADMIN_PASSWORD: '',
+    };
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -55,11 +63,16 @@ describe('LDAP Client Service', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 LdapModule,
                 MapperTestModule,
+                LdapConfigModule,
             ],
             providers: [
                 {
                     provide: APP_PIPE,
                     useClass: GlobalValidationPipe,
+                },
+                {
+                    provide: LdapInstanceConfig,
+                    useValue: mockLdapInstanceConfig,
                 },
             ],
         })
@@ -73,6 +86,8 @@ describe('LDAP Client Service', () => {
             .useValue(createMock<EventService>())
             .overrideProvider(PersonRepository)
             .useValue(createMock<PersonRepository>())
+            .overrideProvider(LdapInstanceConfig)
+            .useValue(mockLdapInstanceConfig)
             .compile();
 
         orm = module.get(MikroORM);
@@ -240,7 +255,7 @@ describe('LDAP Client Service', () => {
         const fakePersonUid: string = 'test-user';
         const fakeSchoolReferrer: string = '123';
         const fakeGroupId: string = `lehrer-${fakeSchoolReferrer}`;
-        const fakeGroupDn: string = `cn=${fakeGroupId},cn=groups,ou=${fakeSchoolReferrer},dc=schule-sh,dc=de`;
+        const fakeGroupDn: string = `cn=${fakeGroupId},cn=groups,ou=${fakeSchoolReferrer},${mockLdapInstanceConfig.BASE_DN}`;
 
         it('should successfully add a person to an existing group', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
@@ -300,7 +315,7 @@ describe('LDAP Client Service', () => {
 
             expect(result.ok).toBeTruthy();
             expect(clientMock.add).toHaveBeenCalledWith(
-                `ou=${fakeSchoolReferrer},dc=schule-sh,dc=de`,
+                `ou=${fakeSchoolReferrer},${mockLdapInstanceConfig.BASE_DN}`,
                 expect.objectContaining({ ou: fakeSchoolReferrer, objectClass: 'organizationalUnit' }),
             );
         });
@@ -458,7 +473,8 @@ describe('LDAP Client Service', () => {
                     referrer: faker.lorem.word(),
                     ldapEntryUUID: faker.string.uuid(),
                 };
-                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
+                const lehrerUid: string =
+                    'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeEmailDomain,
@@ -483,7 +499,8 @@ describe('LDAP Client Service', () => {
                     familienname: faker.person.lastName(),
                     referrer: faker.lorem.word(),
                 };
-                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
+                const lehrerUid: string =
+                    'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeEmailDomain,
@@ -515,7 +532,8 @@ describe('LDAP Client Service', () => {
                     familienname: faker.person.lastName(),
                     referrer: faker.lorem.word(),
                 };
-                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
+                const lehrerUid: string =
+                    'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeEmailDomain,
@@ -545,7 +563,7 @@ describe('LDAP Client Service', () => {
                     ldapEntryUUID: faker.string.uuid(),
                 };
                 const fakeErsatzSchuleAddressDomain: string = 'ersatzschule-sh.de';
-                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=ersatzSchulen,dc=schule-sh,dc=de';
+                const lehrerUid: string = 'uid=' + testLehrer.referrer + ',ou=ersatzSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeErsatzSchuleAddressDomain,
@@ -558,7 +576,8 @@ describe('LDAP Client Service', () => {
             });
 
             it('when lehrer already exists', async () => {
-                const lehrerUid: string = 'uid=' + person.referrer + ',ou=oeffentlicheSchulen,dc=schule-sh,dc=de';
+                const lehrerUid: string =
+                    'uid=' + person.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
@@ -1164,8 +1183,8 @@ describe('LDAP Client Service', () => {
     describe('removePersonFromGroup', () => {
         const fakeGroupId: string = 'lehrer-123';
         const fakePersonUid: string = 'user123';
-        const fakeGroupDn: string = `cn=${fakeGroupId},dc=schule-sh,dc=de`;
-        const fakeLehrerUid: string = `uid=${fakePersonUid},ou=users,dc=schule-sh,dc=de`;
+        const fakeGroupDn: string = `cn=${fakeGroupId},${mockLdapInstanceConfig.BASE_DN}`;
+        const fakeLehrerUid: string = `uid=${fakePersonUid},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeDienstStellenNummer: string = '123';
 
         it('should successfully remove person from group with multiple members', async () => {
@@ -1176,7 +1195,7 @@ describe('LDAP Client Service', () => {
                         searchEntries: [
                             createMock<Entry>({
                                 dn: fakeGroupDn,
-                                member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
+                                member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN],
                             }),
                         ],
                     }),
@@ -1283,7 +1302,7 @@ describe('LDAP Client Service', () => {
                         searchEntries: [
                             createMock<Entry>({
                                 dn: fakeGroupDn,
-                                member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,dc=schule-sh,dc=de'],
+                                member: [`${fakeLehrerUid}`, 'uid=otherUser,ou=users,' + mockLdapInstanceConfig.BASE_DN],
                             }),
                         ],
                     }),
@@ -1313,7 +1332,7 @@ describe('LDAP Client Service', () => {
                     searchEntries: [
                         {
                             dn: fakeGroupDn,
-                            member: `uid=other-user,ou=users,dc=schule-sh,dc=de`, // Als string
+                            member: `uid=other-user,ou=users,${mockLdapInstanceConfig.BASE_DN}`,
                         },
                     ],
                     searchReferences: [],
@@ -1333,7 +1352,7 @@ describe('LDAP Client Service', () => {
         });
 
         it('should return true when person is in group (member as Buffer)', async () => {
-            const bufferMember: Buffer = Buffer.from(`uid=${fakePersonUid},ou=users,dc=schule-sh,dc=de`);
+            const bufferMember: Buffer = Buffer.from(`uid=${fakePersonUid},ou=users,${mockLdapInstanceConfig.BASE_DN}`);
 
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
@@ -1384,14 +1403,48 @@ describe('LDAP Client Service', () => {
             expect(result.error).toBeInstanceOf(Error);
             expect(result.error?.message).toContain(`Group ${fakeGroupId} not found`);
         });
+
+        it('should return true when person is in group (member as Buffer array)', async () => {
+            const bufferMemberArray: Buffer[] = [
+                Buffer.from(`uid=${fakePersonUid},ou=users,${mockLdapInstanceConfig.BASE_DN}`),
+                Buffer.from(`uid=other-user,ou=users,${mockLdapInstanceConfig.BASE_DN}`),
+            ];
+
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce({
+                    searchEntries: [
+                        {
+                            dn: fakeGroupDn,
+                            member: bufferMemberArray,
+                        },
+                    ],
+                    searchReferences: [],
+                });
+                clientMock.modify.mockResolvedValueOnce();
+
+                return clientMock;
+            });
+
+            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+                fakePersonUid,
+                fakeDienstStellenNummer,
+            );
+
+            expect(result.ok).toBeTruthy();
+            if (!result.ok) throw Error();
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `LDAP: Successfully removed person ${fakePersonUid} from group ${fakeGroupId}`,
+            );
+        });
     });
 
     describe('updateMemberDnInGroups', () => {
         const fakeOldReferrer: string = 'old-user';
         const fakeNewReferrer: string = 'new-user';
-        const fakeOldReferrerUid: string = `uid=${fakeOldReferrer},ou=users,dc=schule-sh,dc=de`;
-        const fakeNewReferrerUid: string = `uid=${fakeNewReferrer},ou=users,dc=schule-sh,dc=de`;
-        const fakeGroupDn: string = 'cn=lehrer-group,dc=schule-sh,dc=de';
+        const fakeOldReferrerUid: string = `uid=${fakeOldReferrer},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
+        const fakeNewReferrerUid: string = `uid=${fakeNewReferrer},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
+        const fakeGroupDn: string = 'cn=lehrer-group,' + mockLdapInstanceConfig.BASE_DN;
 
         beforeEach(() => {
             jest.clearAllMocks();
@@ -1403,7 +1456,7 @@ describe('LDAP Client Service', () => {
                     searchEntries: [
                         {
                             dn: fakeGroupDn,
-                            member: [fakeOldReferrerUid, 'uid=other-user,ou=users,dc=schule-sh,dc=de'],
+                            member: [fakeOldReferrerUid, 'uid=other-user,ou=users,' + mockLdapInstanceConfig.BASE_DN],
                         },
                     ],
                     searchReferences: [],
@@ -1425,7 +1478,7 @@ describe('LDAP Client Service', () => {
                     operation: 'replace',
                     modification: new Attribute({
                         type: 'member',
-                        values: [fakeNewReferrerUid, 'uid=other-user,ou=users,dc=schule-sh,dc=de'],
+                        values: [fakeNewReferrerUid, 'uid=other-user,ou=users,' + mockLdapInstanceConfig.BASE_DN],
                     }),
                 }),
             ]);
@@ -1502,6 +1555,7 @@ describe('LDAP Client Service', () => {
                 `LDAP: Error while searching for groups for person: ${fakeOldReferrer}`,
             );
         });
+
         it('should handle member as Buffer correctly', async () => {
             const bufferMember: Buffer = Buffer.from(fakeOldReferrerUid);
 
@@ -1573,7 +1627,7 @@ describe('LDAP Client Service', () => {
         it('should handle member as an array of Buffers correctly', async () => {
             const bufferMembers: Buffer[] = [
                 Buffer.from(fakeOldReferrerUid),
-                Buffer.from('uid=other-user,ou=users,dc=schule-sh,dc=de'),
+                Buffer.from('uid=other-user,ou=users,' + mockLdapInstanceConfig.BASE_DN),
             ];
 
             clientMock.search.mockResolvedValueOnce({
@@ -1602,7 +1656,7 @@ describe('LDAP Client Service', () => {
                     operation: 'replace',
                     modification: new Attribute({
                         type: 'member',
-                        values: [fakeNewReferrerUid, 'uid=other-user,ou=users,dc=schule-sh,dc=de'],
+                        values: [fakeNewReferrerUid, 'uid=other-user,ou=users,' + mockLdapInstanceConfig.BASE_DN],
                     }),
                 }),
             ]);

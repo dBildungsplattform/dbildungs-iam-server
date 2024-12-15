@@ -41,8 +41,6 @@ export class LdapClientService {
 
     public static readonly MAIL_ALTERNATIVE_ADDRESS: string = 'mailAlternativeAddress';
 
-    public static readonly DC_SCHULE_SH_DC_DE: string = 'dc=schule-sh,dc=de';
-
     public static readonly GID_NUMBER: string = '100'; //because 0 to 99 are used for statically allocated user groups on Unix-systems
 
     public static readonly UID_NUMBER: string = '100'; //to match the GID_NUMBER rule above and 0 is reserved for super-user
@@ -108,7 +106,7 @@ export class LdapClientService {
     }
 
     public getLehrerUid(referrer: string, rootName: string): string {
-        return `uid=${referrer},ou=${rootName},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
+        return `uid=${referrer},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
     private getRootNameOrError(domain: string): Result<string> {
@@ -157,7 +155,7 @@ export class LdapClientService {
             }
 
             const searchResultLehrer: SearchResult = await client.search(
-                `ou=${rootName.value},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+                `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
                     filter: `(uid=${person.referrer})`,
                 },
@@ -210,7 +208,7 @@ export class LdapClientService {
             if (!bindResult.ok) return bindResult;
 
             const searchResultLehrer: SearchResult = await client.search(
-                `ou=${rootName.value},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+                `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
                     filter: `(uid=${referrer})`,
                 },
@@ -234,7 +232,7 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+            const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
                 filter: `(uid=${oldReferrer})`,
                 attributes: ['givenName', 'sn', 'uid'],
@@ -318,7 +316,7 @@ export class LdapClientService {
         const oldReferrerUid: string = this.getLehrerUid(oldReferrer, 'users');
         const newReferrerUid: string = this.getLehrerUid(newReferrer, 'users');
 
-        const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+        const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
             scope: 'sub',
             filter: `(member=${oldReferrerUid})`,
             attributes: ['dn', 'member'],
@@ -392,7 +390,7 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const searchResultLehrer: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+            const searchResultLehrer: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
                 filter: `(uid=${referrer})`,
             });
@@ -465,7 +463,7 @@ export class LdapClientService {
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
             const searchResult: SearchResult = await client.search(
-                `ou=${rootName.value},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+                `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
                     scope: 'sub',
                     filter: `(uid=${referrer})`,
@@ -537,8 +535,8 @@ export class LdapClientService {
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
 
-        const orgUnitDn: string = `ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
-        const searchResultOrgUnit: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
+        const orgUnitDn: string = `ou=${schoolReferrer},${this.ldapInstanceConfig.BASE_DN}`;
+        const searchResultOrgUnit: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
             filter: `(ou=${schoolReferrer})`,
         });
 
@@ -616,7 +614,7 @@ export class LdapClientService {
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
         const searchResultOrgUnit: SearchResult = await client.search(
-            `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${LdapClientService.DC_SCHULE_SH_DC_DE}`,
+            `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${this.ldapInstanceConfig.BASE_DN}`,
             {
                 filter: `(cn=${groupId})`,
             },
