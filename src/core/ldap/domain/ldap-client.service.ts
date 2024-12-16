@@ -590,7 +590,7 @@ export class LdapClientService {
             }
         }
 
-        if (this.isPersonInSearchResult(searchResultGroupOfNames.searchEntries[0], personUid)) {
+        if (this.isPersonInSearchResult(searchResultGroupOfNames.searchEntries[0], lehrerUid)) {
             this.logger.info(`LDAP: Person ${personUid} is already in group ${groupId}`);
             return { ok: true, value: false };
         }
