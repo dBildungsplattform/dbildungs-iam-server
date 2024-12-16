@@ -33,6 +33,7 @@ ldap:
   bindDN: cn=admin,dc=schule-sh,dc=de
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
+  base_dn: dc=schule-sh,dc=de
 
 itslearning:
   root: sh
@@ -46,7 +47,6 @@ auth:
   keycloak_adminSecret: ''
   keycloak_clientSecret: ''
   ldap_admin_password: ''
-  ldap_base_dn: ''
   secrets_json: ''
   frontend_sessionSecret: ''
   itslearning_enabled: ''
