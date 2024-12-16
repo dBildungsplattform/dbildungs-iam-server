@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 declare const EVENT_MARKER: unique symbol;
 
 export abstract class BaseEvent {
@@ -6,4 +8,7 @@ export abstract class BaseEvent {
     public readonly [EVENT_MARKER]!: never;
 
     public readonly createdAt: Date = new Date();
+
+    // For now generate random ID. In the future this should be replaced with the sessions correlation-ID or similar
+    public readonly eventID: string = randomUUID();
 }
