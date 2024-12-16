@@ -55,6 +55,8 @@ export class LdapClientService {
 
     private static readonly GROUPS: string = 'groups';
 
+    private static readonly USERS_OU: string = 'users';
+
     private mutex: Mutex;
 
     public constructor(
@@ -298,7 +300,10 @@ export class LdapClientService {
                     newUid,
                     client,
                 );
-                if (!groupUpdateResult.ok) return groupUpdateResult;
+                if (!groupUpdateResult.ok) {
+                    this.logger.error(`LDAP: Failed to update groups for person: ${oldReferrer}`);
+                    return groupUpdateResult;
+                }
             }
 
             return { ok: true, value: oldReferrer };
@@ -310,8 +315,8 @@ export class LdapClientService {
         newReferrer: string,
         client: Client,
     ): Promise<Result<string>> {
-        const oldReferrerUid: string = this.getLehrerUid(oldReferrer, 'users');
-        const newReferrerUid: string = this.getLehrerUid(newReferrer, 'users');
+        const oldReferrerUid: string = this.getLehrerUid(oldReferrer, LdapClientService.USERS_OU);
+        const newReferrerUid: string = this.getLehrerUid(newReferrer, LdapClientService.USERS_OU);
 
         const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
             scope: 'sub',
@@ -562,7 +567,7 @@ export class LdapClientService {
             const newLehrerGroup: { cn: string; objectclass: string[]; member: string[] } = {
                 cn: groupId,
                 objectclass: ['groupOfNames'],
-                member: [this.getLehrerUid(personUid, 'users')],
+                member: [this.getLehrerUid(personUid, LdapClientService.USERS_OU)],
             };
             try {
                 await client.add(lehrerDn, newLehrerGroup);
@@ -575,7 +580,7 @@ export class LdapClientService {
             }
         }
 
-        if (this.isPersonInSearchResult(searchResultGroupOfNames, personUid)) {
+        if (this.isPersonInSearchResult(searchResultGroupOfNames.searchEntries[0], personUid)) {
             this.logger.info(`LDAP: Person ${personUid} is already in group ${groupId}`);
             return { ok: true, value: false };
         }
@@ -586,7 +591,7 @@ export class LdapClientService {
                     operation: 'add',
                     modification: new Attribute({
                         type: 'member',
-                        values: [this.getLehrerUid(personUid, 'users')],
+                        values: [this.getLehrerUid(personUid, LdapClientService.USERS_OU)],
                     }),
                 }),
             ]);
@@ -618,7 +623,7 @@ export class LdapClientService {
             return { ok: false, error: new Error(errMsg) };
         }
 
-        if (!this.isPersonInSearchResult(searchResultOrgUnit, personUid)) {
+        if (!this.isPersonInSearchResult(searchResultOrgUnit.searchEntries[0], personUid)) {
             this.logger.info(`LDAP: Person ${personUid} is not in group ${groupId}`);
             return { ok: false, error: new Error(`Person ${personUid} is not in group ${groupId}`) };
         }
@@ -635,7 +640,7 @@ export class LdapClientService {
                     operation: 'delete',
                     modification: new Attribute({
                         type: 'member',
-                        values: [this.getLehrerUid(personUid, 'users')],
+                        values: [this.getLehrerUid(personUid, LdapClientService.USERS_OU)],
                     }),
                 }),
             ]);
@@ -648,10 +653,9 @@ export class LdapClientService {
         }
     }
 
-    private isPersonInSearchResult(searchResult: SearchResult, personUid: string): boolean | undefined {
-        if (!searchResult.searchEntries[0]) return;
-        const member: string | string[] | Buffer | Buffer[] | undefined = searchResult.searchEntries[0]['member'];
-        const lehrerUid: string = this.getLehrerUid(personUid, 'users');
+    private isPersonInSearchResult(searchEntry: Entry, personUid: string): boolean | undefined {
+        const member: string | string[] | Buffer | Buffer[] | undefined = searchEntry['member'];
+        const lehrerUid: string = this.getLehrerUid(personUid, LdapClientService.USERS_OU);
 
         if (typeof member === 'string') {
             return member === lehrerUid;

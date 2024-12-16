@@ -901,6 +901,30 @@ describe('LDAP Client Service', () => {
                     expect(clientMock.modify).not.toHaveBeenCalled();
                     expect(clientMock.modifyDN).not.toHaveBeenCalled();
                 });
+
+                it('should return error if updateMemberDnInGroups fails', async () => {
+                    const oldReferrer: string = faker.internet.userName();
+                    const newUid: string = faker.string.alphanumeric(6);
+
+                    jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValueOnce({
+                        ok: false,
+                        error: new Error('Failed to update groups'),
+                    });
+
+                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                        oldReferrer,
+                        undefined,
+                        undefined,
+                        newUid,
+                    );
+
+                    expect(result.ok).toBeFalsy();
+                    if (result.ok) throw Error();
+                    expect(result.error?.message).toBe('Failed to update groups');
+                    expect(loggerMock.error).toHaveBeenCalledWith(
+                        `LDAP: Failed to update groups for person: ${oldReferrer}`,
+                    );
+                });
             });
         });
     });
