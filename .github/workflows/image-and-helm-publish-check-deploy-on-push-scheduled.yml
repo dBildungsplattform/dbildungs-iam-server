@@ -46,49 +46,21 @@ jobs:
       contents: read
     secrets: inherit
 
-  determine_image_tag_and_chart_version:
-    name: "Determine image tag and chart version from branch name"
-    runs-on: ubuntu-latest
-    outputs:
-      image_tag: ${{ steps.create_image_tag.outputs.image_tag }}
-      chart_version: ${{ steps.create_image_tag.outputs.chart_version }}
-    steps:
-      - id: create_image_tag
-        run: |
-          timestamp=`echo $(date +'%Y%m%d-%H%M')`
-          regex_long='^([[:alpha:]]+?-[[:digit:]]+-[[:digit:]]+)'
-          regex_short='^([[:alpha:]]+?-[[:digit:]]+)'
-          if [[ $GITHUB_REF_NAME =~ $regex_long ]]; then
-            tag="${BASH_REMATCH[1]}"
-            chart_version="0.0.0-$(echo ${tag} | tr [A-Z] [a-z])-${timestamp}"
-          elif [[ $GITHUB_REF_NAME =~ $regex_short ]]; then
-            tag="${BASH_REMATCH[1]}"
-            chart_version="0.0.0-$(echo ${tag} | tr [A-Z] [a-z])-${timestamp}"
-          elif [[ "${{ github.ref_name }}" != 'main' ]]; then
-            tag=""
-            chart_version=""
-          else
-          echo "::error::Couldn't extract ticket from branch $GITHUB_REF_NAME. If not main the branch name should begin alpha-digit or alpha-digit-digit blocks (e.g. SPSH-1234-test-name or release-1-1-optional-text)"
-            exit 1
-          fi
-          echo "image_tag=${tag}" >> "$GITHUB_OUTPUT"
-          echo "chart_version=${chart_version}" >> "$GITHUB_OUTPUT"
-
   build_image_on_push:
     needs: 
-      - determine_image_tag_and_chart_version
+      - create_branch_identifier
     name: "Publish image and scan with trivy"
     if: ${{ github.event_name == 'push' }}
     permissions:
       packages: write
       security-events: write
       contents: read
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@DBP-1179-spsh-image-tag-generation # todo: change to new version
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
     with:
       image_name: "dbildungs-iam-server"
       run_trivy_scan: true
       image_tag_generation: ${{ github.ref_name == 'main' && 'commit_hash' || 'specified' }}
-      image_tag: ${{ github.ref_name == 'main' && '' || needs.determine_image_tag_and_chart_version.outputs.image_tag }}
+      image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
       add_latest_tag: ${{ github.ref_name == 'main' }}
       container_registry: "ghcr.io"
       fail_on_vulnerabilites: false
@@ -121,16 +93,16 @@ jobs:
   release_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
-      - determine_image_tag_and_chart_version
+      - create_branch_identifier
       - select_helm_version_generation_and_image_tag_generation
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
     secrets: inherit
     with:
       chart_name: dbildungs-iam-server
       image_tag_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_IMAGE_TAG_GENERATION }}
-      image_tag: ${{ github.ref_name == 'main' && '' || needs.determine_image_tag_and_chart_version.outputs.image_tag }}
+      image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
       helm_chart_version_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERSION_GENERATION }}
-      helm_chart_version: ${{ github.ref_name == 'main' && '' || needs.determine_image_tag_and_chart_version.outputs.chart_version }}
+      helm_chart_version: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.chart_version_from_branch }}
 
   wait_for_helm_chart_to_get_published:
     needs:
@@ -148,7 +120,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
       - branch_meta
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1179-convert-branch-to-image-tag-and-chart-version # todo change back to correct version
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
   
@@ -173,7 +145,7 @@ jobs:
   # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6 
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1179-convert-branch-to-image-tag-and-chart-version # todo change back to correct version
     with:
       branch: ${{ github.event.ref }}
 
