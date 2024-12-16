@@ -55,8 +55,6 @@ export class LdapClientService {
 
     private static readonly GROUPS: string = 'groups';
 
-    private static readonly USERS_OU: string = 'users';
-
     private mutex: Mutex;
 
     public constructor(
@@ -639,7 +637,7 @@ export class LdapClientService {
             return { ok: false, error: new Error(errMsg) };
         }
 
-        if (!this.isPersonInSearchResult(searchResultOrgUnit.searchEntries[0], referrer)) {
+        if (!this.isPersonInSearchResult(searchResultOrgUnit.searchEntries[0], lehrerUid)) {
             this.logger.info(`LDAP: Person ${referrer} is not in group ${groupId}`);
             return { ok: false, error: new Error(`Person ${referrer} is not in group ${groupId}`) };
         }
@@ -669,9 +667,8 @@ export class LdapClientService {
         }
     }
 
-    private isPersonInSearchResult(searchEntry: Entry, personUid: string): boolean | undefined {
+    private isPersonInSearchResult(searchEntry: Entry, lehrerUid: string): boolean | undefined {
         const member: string | string[] | Buffer | Buffer[] | undefined = searchEntry['member'];
-        const lehrerUid: string = this.getLehrerUid(personUid, LdapClientService.USERS_OU);
 
         if (typeof member === 'string') {
             return member === lehrerUid;
