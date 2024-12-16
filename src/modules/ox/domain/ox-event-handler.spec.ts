@@ -3,7 +3,7 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonID } from '../../../shared/types/index.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/index.js';
 import { OxEventHandler } from './ox-event-handler.js';
 import { OxService } from './ox.service.js';
 import { CreateUserAction } from '../actions/user/create-user.action.js';
@@ -476,21 +476,23 @@ describe('OxEventHandler', () => {
 
     describe('handleEmailAddressGeneratedEvent', () => {
         let personId: PersonID;
+        let referrer: PersonReferrer;
         let event: EmailAddressGeneratedEvent;
         let person: Person<true>;
 
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
+            referrer = faker.internet.userName();
             event = new EmailAddressGeneratedEvent(
                 personId,
-                faker.internet.userName(),
+                referrer,
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: faker.internet.userName() });
+            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: referrer });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -517,7 +519,7 @@ describe('OxEventHandler', () => {
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(ExistsUserAction));
             expect(oxServiceMock.send).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Cannot create user in OX, username:${person.referrer} already exists`,
+                `Cannot create user in OX, username:${person.referrer} already exists, personId:${personId}`,
             );
         });
 
@@ -527,7 +529,9 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`Person not found for personId:${personId}`);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `Person not found for personId:${personId}, referrer:${referrer}`,
+            );
         });
 
         it('should log error when person has no referrer set', async () => {
@@ -603,7 +607,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}`,
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, referrer:${referrer}`,
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}`,
@@ -660,7 +664,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, error: Unknown OX-error`,
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, personId:${personId}, referrer:${referrer}, error: Unknown OX-error`,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
@@ -724,10 +728,10 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}`,
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, referrer:${referrer}`,
             );
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Persisting oxUserId on emailAddress for personId:${personId} failed`,
+                `Persisting oxUserId on emailAddress failed, personId:${personId}, referrer:${referrer}`,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });
@@ -750,7 +754,9 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`Could not create user in OX, error: Request failed`);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `Could not create user in OX, personId:${personId}, referrer:${referrer}, error: Request failed`,
+            );
         });
     });
 
@@ -776,7 +782,7 @@ describe('OxEventHandler', () => {
             contextName: faker.string.alpha();
             event = new EmailAddressChangedEvent(
                 personId,
-                faker.internet.userName(),
+                referrer,
                 faker.string.uuid(),
                 faker.internet.email(),
                 faker.string.uuid(),
@@ -800,7 +806,9 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressChangedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`Person not found for personId:${personId}`);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `Person not found for personId:${personId}, referrer:${referrer}`,
+            );
         });
 
         it('should log error when person has no referrer set', async () => {
@@ -822,7 +830,9 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressChangedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`Person with personId:${personId} has no OXUserId`);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `Person has no OXUserId, personId:${personId}, referrer:${referrer}`,
+            );
         });
 
         it('should log error when no requestedEmailAddress is found for person', async () => {
@@ -850,7 +860,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Cannot get data for user with username:${person.referrer} from OX, Aborting Email-Address Change`,
+                `Cannot get data for username:${person.referrer} from OX, Aborting Email-Address Change, personId:${personId}, referrer:${referrer}`,
             );
         });
 
@@ -876,7 +886,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(2);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could not change email-address for oxUserId:${person.oxUserId} in OX, error: Request failed`,
+                `Could not change email-address for oxUserId:${person.oxUserId}, personId:${personId}, referrer:${referrer}, error: Request failed`,
             );
         });
 
@@ -909,12 +919,12 @@ describe('OxEventHandler', () => {
                 `Found mostRecentRequested Email-Address:${JSON.stringify(email)} For personId:${personId}`,
             );
             //use regex, because strict comparison fails, local test-var currentAliases has changed by the implemented function when expect is checked here
+            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringMatching(/Found Current aliases:.*/));
             expect(loggerMock.info).toHaveBeenCalledWith(
-                expect.stringMatching(/Found Current aliases:.* For personId:/),
+                `Added New alias:${email}, personId:${personId}, referrer:${referrer}`,
             );
-            expect(loggerMock.info).toHaveBeenCalledWith(`Added New alias:${email} For personId:${personId}`);
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${email}`,
+                `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${email}, personId:${personId}, referrer:${referrer}`,
             );
             expect(eventServiceMock.publish).toHaveBeenLastCalledWith(
                 expect.objectContaining({
