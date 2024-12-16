@@ -1,8 +1,8 @@
 import { IsBooleanString, IsOptional, IsString } from 'class-validator';
 
 export class OxConfig {
-    @IsBooleanString()
-    public readonly ENABLED!: 'true' | 'false';
+    @IsBoolean()
+    public readonly ENABLED!: boolean;
 
     @IsString()
     @IsOptional()

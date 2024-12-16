@@ -23,7 +23,7 @@ import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
-import { GroupMemberParams } from '../actions/group/ox-group.types.js';
+import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
 import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../actions/group/create-group.action.js';
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
 import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actions/group/list-groups.action.js';
@@ -32,6 +32,21 @@ import {
     ChangeByModuleAccessAction,
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import {
+    ListGroupsForUserAction,
+    ListGroupsForUserParams,
+    ListGroupsForUserResponse,
+} from '../actions/group/list-groups-for-user.action.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import {
+    RemoveMemberFromGroupAction,
+    RemoveMemberFromGroupResponse,
+} from '../actions/group/remove-member-from-group.action.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 @Injectable()
 export class OxEventHandler {
@@ -47,7 +62,7 @@ export class OxEventHandler {
 
     private static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
 
-    private static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'Lehrer of ';
+    private static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'lehrer-';
 
     public constructor(
         private readonly logger: ClassLogger,
@@ -58,7 +73,6 @@ export class OxEventHandler {
         configService: ConfigService<ServerConfig>,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
-
         this.ENABLED = oxConfig.ENABLED === 'true';
         this.authUser = oxConfig.USERNAME || '';
         this.authPassword = oxConfig.PASSWORD || '';
@@ -90,6 +104,198 @@ export class OxEventHandler {
         }
 
         await this.createOxUser(event.personId, event.orgaKennung);
+    }
+
+    @EventHandler(EmailAddressAlreadyExistsEvent)
+    public async handleEmailAddressAlreadyExistsEvent(event: EmailAddressAlreadyExistsEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressAlreadyExistsEvent, personId:${event.personId}, orgaKennung:${event.orgaKennung}`,
+        );
+
+        // Check if the functionality is enabled
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        // Fetch the person's details using their personId
+        const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
+        if (!person) {
+            return this.logger.error(`Person not found for personId:${event.personId}`);
+        }
+
+        // If the person doesn't have an OX user ID, log an error and stop the process
+        if (!person.oxUserId) {
+            return this.logger.error(
+                `Person with personId:${event.personId} does not have an oxUserId. Cannot add to group.`,
+            );
+        }
+
+        // Fetch or create the relevant OX group based on orgaKennung (group identifier)
+        const oxGroupIdResult: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
+            OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + event.orgaKennung,
+            OxEventHandler.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + event.orgaKennung,
+        );
+
+        if (!oxGroupIdResult.ok) {
+            return this.logger.error(`Failed to get or create OX group for orgaKennung:${event.orgaKennung}`);
+        }
+
+        // Add the user to the OX group
+        const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
+            oxGroupIdResult.value,
+            person.oxUserId,
+        );
+
+        if (!addUserToGroupResult.ok) {
+            return this.logger.error(
+                `Failed to add user with personId:${event.personId} to OX group with id:${oxGroupIdResult.value}`,
+            );
+        }
+
+        // Log the successful addition of the user to the group
+        this.logger.info(
+            `Successfully added user with personId:${event.personId} to OX group with id:${oxGroupIdResult.value}`,
+        );
+
+        // Should always be true
+        if (person.referrer && person.email) {
+            // Publish an OxUserChangedEvent after successful addition to the group
+            this.eventService.publish(
+                new OxUserChangedEvent(
+                    event.personId,
+                    person.referrer,
+                    person.oxUserId,
+                    person.referrer,
+                    this.contextID,
+                    this.contextName,
+                    person.email,
+                ),
+            );
+        }
+    }
+
+    @EventHandler(EmailAddressDisabledEvent)
+    public async handleEmailAddressDisabledEvent(event: EmailAddressDisabledEvent): Promise<void> {
+        this.logger.info(`Received EmailAddressDisabledEvent, personId:${event.personId}, username:${event.username}`);
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+        const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
+        if (!person) return this.logger.error(`Could Not Find Person For personId:${event.personId}`);
+        if (!person.oxUserId) {
+            return this.logger.error(
+                `Could Not Remove Person From OxGroups, No OxUserId For personId:${event.personId}`,
+            );
+        }
+
+        //remove oxUser as member from all its oxGroups
+        //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
+        await this.removeOxUserFromAllItsOxGroups(person.oxUserId, person.id);
+    }
+
+    @EventHandler(PersonenkontextUpdatedEvent)
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
+        this.logger.info(
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, deleted personenkontexte: ${event.removedKontexte.length}`,
+        );
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+        const person: Option<Person<true>> = await this.personRepository.findById(event.person.id);
+        if (!person) {
+            return this.logger.error(`Could Not Find Person For personId:${event.person.id}`);
+        }
+        if (!person.oxUserId) {
+            return this.logger.error(`OxUserId Not Defined For personId:${event.person.id}`);
+        }
+        // For each removed personenkontext and if rollenart === LEHR
+        const rollenArtLehrPKs: PersonenkontextEventKontextData[] = event.removedKontexte.filter(
+            (pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR,
+        );
+        // Await the requests to OX explicitly to avoid transaction-exceptions on OX-side regarding concurrent modifications
+        /* eslint-disable no-await-in-loop */
+        for (const pk of rollenArtLehrPKs) {
+            const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(
+                OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung,
+            );
+            if (oxGroupId instanceof DomainError) {
+                return this.logger.error(
+                    `Could Not Get OxGroupId For oxGroupName:${OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + pk.orgaKennung}`,
+                );
+            }
+            //Logging is done in removeOxUserFromOxGroup
+            await this.removeOxUserFromOxGroup(oxGroupId, person.oxUserId);
+        }
+    }
+
+    // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
+    @EventHandler(PersonDeletedEvent)
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
+        this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
+
+        // Check if the functionality is enabled
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        if (!event.emailAddress) {
+            return this.logger.error('Cannot Create OX-change-user-request, Email-Address Is Not Defined');
+        }
+
+        const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(event.emailAddress);
+        if (!emailAddress) {
+            return this.logger.error(
+                `Cannot Create OX-change-user-request For address:${event.emailAddress} Could Not Be Found`,
+            );
+        }
+        if (!emailAddress.oxUserID) {
+            return this.logger.error(
+                `Cannot Create OX-change-user-request For address:${event.emailAddress}, OxUserId Is Not Defined`,
+            );
+        }
+
+        //remove oxUser as member from all its oxGroups
+        //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
+        await this.removeOxUserFromAllItsOxGroups(emailAddress.oxUserID, event.personId);
+
+        //change oxUserName to avoid conflicts for future OX-createUser-requests
+        const params: ChangeUserParams = {
+            contextId: this.contextID,
+            userId: emailAddress.oxUserID,
+            username: emailAddress.id, //person-id is not available anymore when event is received
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: ChangeUserAction = new ChangeUserAction(params);
+
+        const result: Result<void, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(
+                `Could Not Change OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent, error: ${result.error.message}`,
+            );
+        }
+
+        return this.logger.info(
+            `Successfully Changed OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent`,
+        );
+    }
+
+    private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID): Promise<void> {
+        const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
+            await this.getOxGroupsForOxUserId(oxUserId);
+        if (!listGroupsForUserResponse.ok) {
+            return this.logger.error(`Retrieving OxGroups For OxUser Failed, personId:${personId}`);
+        }
+        //Removal from Standard-Group is possible even when user is member of other OxGroups
+        const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
+        // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
+        /* eslint-disable no-await-in-loop */
+        for (const oxGroup of oxGroups) {
+            //logging of results is done in removeOxUserFromOxGroup
+            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId);
+        }
     }
 
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
@@ -200,8 +406,47 @@ export class OxEventHandler {
 
         if (!result.ok) {
             this.logger.error(`Could Not Add OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        } else {
+            this.logger.info(`Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
         }
-        this.logger.info(`Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        return result;
+    }
+
+    private async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
+        const params: ListGroupsForUserParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const action: ListGroupsForUserAction = new ListGroupsForUserAction(params);
+        const result: Result<ListGroupsForUserResponse, DomainError> = await this.oxService.send(action);
+        if (!result.ok) {
+            this.logger.error(`Could Not Retrieve OxGroups For OxUser, oxUserId:${oxUserId}`);
+        } else {
+            this.logger.info(`Successfully Retrieved OxGroups For OxUser, oxUserId:${oxUserId}`);
+        }
+        return result;
+    }
+
+    private async removeOxUserFromOxGroup(
+        oxGroupId: OXGroupID,
+        oxUserId: OXUserID,
+    ): Promise<Result<RemoveMemberFromGroupResponse>> {
+        const params: GroupMemberParams = {
+            contextId: this.contextID,
+            groupId: oxGroupId,
+            memberId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const action: RemoveMemberFromGroupAction = new RemoveMemberFromGroupAction(params);
+        const result: Result<RemoveMemberFromGroupResponse, DomainError> = await this.oxService.send(action);
+        if (!result.ok) {
+            this.logger.error(`Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        } else {
+            this.logger.info(`Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+        }
 
         return result;
     }
@@ -373,6 +618,7 @@ export class OxEventHandler {
 
         const params: ChangeUserParams = {
             contextId: this.contextID,
+            userId: getDataResult.value.id,
             username: getDataResult.value.username,
             givenname: person.vorname,
             surname: person.familienname,
