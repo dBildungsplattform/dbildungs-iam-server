@@ -248,8 +248,9 @@ describe('LDAP Client Service', () => {
     });
 
     describe('addPersonToGroup', () => {
-        const fakePersonUid: string = 'test-user';
+        const fakeReferrer: string = 'test-user';
         const fakeSchoolReferrer: string = '123';
+        const fakeLehrerUid: string = `uid=${fakeReferrer},ou=oeffentlicheSchulen,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeGroupId: string = `lehrer-${fakeSchoolReferrer}`;
         const fakeGroupDn: string = `cn=${fakeGroupId},cn=groups,ou=${fakeSchoolReferrer},${mockLdapInstanceConfig.BASE_DN}`;
 
@@ -271,7 +272,11 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.addPersonToGroup(fakePersonUid, fakeSchoolReferrer);
+            const result: Result<boolean> = await ldapClientService.addPersonToGroup(
+                fakeReferrer,
+                fakeSchoolReferrer,
+                fakeLehrerUid,
+            );
 
             expect(result.ok).toBeTruthy();
             expect(clientMock.modify).toHaveBeenCalledWith(fakeGroupDn, [
@@ -279,12 +284,12 @@ describe('LDAP Client Service', () => {
                     operation: 'add',
                     modification: new Attribute({
                         type: 'member',
-                        values: [ldapClientService.getLehrerUid(fakePersonUid, 'users')],
+                        values: [fakeLehrerUid],
                     }),
                 }),
             ]);
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `LDAP: Successfully added person ${fakePersonUid} to group ${fakeGroupId}`,
+                `LDAP: Successfully added person ${fakeReferrer} to group ${fakeGroupId}`,
             );
         });
 
@@ -307,7 +312,11 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.addPersonToGroup(fakePersonUid, fakeSchoolReferrer);
+            const result: Result<boolean> = await ldapClientService.addPersonToGroup(
+                fakeReferrer,
+                fakeSchoolReferrer,
+                fakeLehrerUid,
+            );
 
             expect(result.ok).toBeTruthy();
             expect(clientMock.add).toHaveBeenCalledWith(
@@ -335,16 +344,20 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.addPersonToGroup(fakePersonUid, fakeSchoolReferrer);
+            const result: Result<boolean> = await ldapClientService.addPersonToGroup(
+                fakeReferrer,
+                fakeSchoolReferrer,
+                fakeLehrerUid,
+            );
 
             expect(result.ok).toBeTruthy();
             expect(clientMock.add).toHaveBeenCalledWith(fakeGroupDn, {
                 cn: fakeGroupId,
                 objectclass: ['groupOfNames'],
-                member: [ldapClientService.getLehrerUid(fakePersonUid, 'users')],
+                member: [fakeLehrerUid],
             });
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `LDAP: Successfully created group ${fakeGroupId} and added person ${fakePersonUid}`,
+                `LDAP: Successfully created group ${fakeGroupId} and added person ${fakeReferrer}`,
             );
         });
 
@@ -366,7 +379,11 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.addPersonToGroup(fakePersonUid, fakeSchoolReferrer);
+            const result: Result<boolean> = await ldapClientService.addPersonToGroup(
+                fakeReferrer,
+                fakeSchoolReferrer,
+                fakeLehrerUid,
+            );
 
             expect(result.ok).toBeFalsy();
             if (result.ok) throw Error();
@@ -394,7 +411,11 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.addPersonToGroup(fakePersonUid, fakeSchoolReferrer);
+            const result: Result<boolean> = await ldapClientService.addPersonToGroup(
+                fakeReferrer,
+                fakeSchoolReferrer,
+                fakeLehrerUid,
+            );
 
             expect(result.ok).toBeFalsy();
             if (result.ok) throw Error();
@@ -410,7 +431,11 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.addPersonToGroup(fakePersonUid, fakeSchoolReferrer);
+            const result: Result<boolean> = await ldapClientService.addPersonToGroup(
+                fakeReferrer,
+                fakeSchoolReferrer,
+                fakeLehrerUid,
+            );
 
             expect(result.ok).toBeFalsy();
             if (result.ok) throw Error();
@@ -428,7 +453,7 @@ describe('LDAP Client Service', () => {
                             searchEntries: [
                                 createMock<Entry>({
                                     dn: fakeGroupDn,
-                                    member: [ldapClientService.getLehrerUid(fakePersonUid, 'users')],
+                                    member: [fakeLehrerUid],
                                 }),
                             ],
                         }),
@@ -437,14 +462,18 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean> = await ldapClientService.addPersonToGroup(fakePersonUid, fakeSchoolReferrer);
+            const result: Result<boolean> = await ldapClientService.addPersonToGroup(
+                fakeReferrer,
+                fakeSchoolReferrer,
+                fakeLehrerUid,
+            );
 
             expect(result.ok).toBeTruthy();
             if (!result.ok) throw Error();
             expect(result.value).toBe(false);
             expect(clientMock.modify).not.toHaveBeenCalled();
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `LDAP: Person ${fakePersonUid} is already in group ${fakeGroupId}`,
+                `LDAP: Person ${fakeReferrer} is already in group ${fakeGroupId}`,
             );
         });
     });
@@ -1225,6 +1254,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeTruthy();
@@ -1263,6 +1293,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeTruthy();
@@ -1288,6 +1319,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeFalsy();
@@ -1304,6 +1336,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeFalsy();
@@ -1335,6 +1368,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeFalsy();
@@ -1363,6 +1397,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeFalsy();
@@ -1393,6 +1428,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeTruthy();
@@ -1416,6 +1452,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeFalsy();
@@ -1449,6 +1486,7 @@ describe('LDAP Client Service', () => {
             const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
+                fakeLehrerUid,
             );
 
             expect(result.ok).toBeTruthy();
@@ -1487,6 +1525,7 @@ describe('LDAP Client Service', () => {
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
                 fakeOldReferrer,
                 fakeNewReferrer,
+                fakeOldReferrerUid,
                 clientMock2,
             );
             expect(result.ok).toBeTruthy();
@@ -1517,6 +1556,7 @@ describe('LDAP Client Service', () => {
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
                 fakeOldReferrer,
                 fakeNewReferrer,
+                fakeOldReferrerUid,
                 clientMock3,
             );
 
@@ -1543,6 +1583,7 @@ describe('LDAP Client Service', () => {
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
                 fakeOldReferrer,
                 fakeNewReferrer,
+                fakeOldReferrerUid,
                 clientMock5,
             );
 
@@ -1564,6 +1605,7 @@ describe('LDAP Client Service', () => {
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
                 fakeOldReferrer,
                 fakeNewReferrer,
+                fakeOldReferrerUid,
                 clientMock4,
             );
 
@@ -1594,6 +1636,7 @@ describe('LDAP Client Service', () => {
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
                 fakeOldReferrer,
                 fakeNewReferrer,
+                fakeOldReferrerUid,
                 clientMock,
             );
 
@@ -1627,6 +1670,7 @@ describe('LDAP Client Service', () => {
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
                 fakeOldReferrer,
                 fakeNewReferrer,
+                fakeOldReferrerUid,
                 clientMock,
             );
 
@@ -1665,6 +1709,7 @@ describe('LDAP Client Service', () => {
             const result: Result<string, Error> = await ldapClientService.updateMemberDnInGroups(
                 fakeOldReferrer,
                 fakeNewReferrer,
+                fakeOldReferrerUid,
                 clientMock,
             );
 
@@ -1799,6 +1844,34 @@ describe('LDAP Client Service', () => {
                     expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
                 });
             });
+        });
+    });
+    describe('createNewLehrerUidFromOldUid', () => {
+        it('should replace the old uid with the new referrer and join the DN parts with commas', () => {
+            const oldUid: string = 'uid=oldUser,ou=users,dc=example,dc=com';
+            const newReferrer: string = 'newUser';
+
+            const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
+
+            expect(result).toBe('uid=newUser,ou=users,dc=example,dc=com');
+        });
+
+        it('should handle a DN with only a uid component', () => {
+            const oldUid: string = 'uid=oldUser';
+            const newReferrer: string = 'newUser';
+
+            const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
+
+            expect(result).toBe('uid=newUser');
+        });
+
+        it('should handle an empty DN string', () => {
+            const oldUid: string = '';
+            const newReferrer: string = 'newUser';
+
+            const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
+
+            expect(result).toBe('uid=newUser');
         });
     });
 });
