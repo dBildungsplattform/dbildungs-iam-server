@@ -16,6 +16,7 @@ import {
     UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
     ApiAcceptedResponse,
     ApiBadGatewayResponse,
@@ -33,55 +34,54 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { EventService } from '../../../core/eventbus/index.js';
+import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { ApiOkResponsePaginated, Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { ScopeOrder } from '../../../shared/persistence/index.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
-import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
-import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonenQueryParams } from './personen-query.param.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
-import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { PersonRepository } from '../persistence/person.repository.js';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { Person } from '../domain/person.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { PersonScope } from '../persistence/person.scope.js';
-import { ScopeOrder } from '../../../shared/persistence/index.js';
-import { PersonFactory } from '../domain/person.factory.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
-import { ConfigService } from '@nestjs/config';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { PersonDomainError } from '../domain/person-domain.error.js';
-import { PersonExceptionFilter } from './person-exception-filter.js';
+import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
-import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { LockUserBodyParams } from './lock-user.body.params.js';
-import { PersonLockResponse } from './person-lock.response.js';
-import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { PersonDomainError } from '../domain/person-domain.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
-import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { DbiamPersonError } from './dbiam-person.error.js';
-import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
-import { EventService } from '../../../core/eventbus/index.js';
-import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
-import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { PersonEmailResponse } from './person-email-response.js';
-import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
-import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { PersonLockOccasion } from '../domain/person.enums.js';
-import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
+import { PersonLockOccasion } from '../domain/person.enums.js';
+import { PersonFactory } from '../domain/person.factory.js';
+import { Person } from '../domain/person.js';
+import { PersonApiMapper } from '../mapper/person-api.mapper.js';
+import { PersonRepository } from '../persistence/person.repository.js';
+import { PersonScope } from '../persistence/person.scope.js';
+import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
+import { DbiamPersonError } from './dbiam-person.error.js';
+import { LockUserBodyParams } from './lock-user.body.params.js';
+import { PersonByIdParams } from './person-by-id.param.js';
+import { PersonEmailResponse } from './person-email-response.js';
+import { PersonExceptionFilter } from './person-exception-filter.js';
+import { PersonLockResponse } from './person-lock.response.js';
+import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
+import { PersonenQueryParams } from './personen-query.param.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { UpdatePersonBodyParams } from './update-person.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -626,6 +626,7 @@ export class PersonController {
     }
 
     @Patch(':personId/uem-password')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.ACCEPTED)
     @ApiAcceptedResponse({ description: 'UEM-password for person was successfully reset.', type: String })
     @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions to update person.' })
@@ -651,6 +652,42 @@ export class PersonController {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new PersonDomainError('Person-Referrer NOT defined', params.personId),
+                ),
+            );
+        }
+        const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
+            personResult.value.id,
+            personResult.value.referrer,
+        );
+
+        if (!changeUserPasswordResult.ok) {
+            throw new PersonUserPasswordModificationError(personResult.value.id);
+        }
+
+        return { ok: true, value: changeUserPasswordResult.value };
+    }
+
+    @Patch('uem-password')
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiAcceptedResponse({ description: 'UEM-password for person was successfully reset.', type: String })
+    @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions to update person.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    @UseInterceptors(ResultInterceptor)
+    public async resetUEMPassword(@Permissions() permissions: PersonPermissions): Promise<Result<string>> {
+        const personId: string = permissions.personFields.id;
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowedOrRequesterIsPerson(
+            personId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person', personId)),
+            );
+        }
+        if (!personResult.value.referrer) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new PersonDomainError('Person-Referrer NOT defined', personId),
                 ),
             );
         }
