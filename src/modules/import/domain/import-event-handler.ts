@@ -53,7 +53,6 @@ export class ImportEventHandler {
             }
         });
 
-        const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
         const importvorgangId: string = event.importVorgangId;
         const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
         if (!importVorgang) {
@@ -76,12 +75,6 @@ export class ImportEventHandler {
                 event.permissions,
             );
         }
-
-        await Promise.allSettled(
-            importDataItemsWithLoginInfo.map(async (importDataItem: ImportDataItem<true>) =>
-                this.importDataRepository.save(importDataItem),
-            ),
-        );
 
         importVorgang.finish();
         await this.importVorgangRepository.save(importVorgang);
