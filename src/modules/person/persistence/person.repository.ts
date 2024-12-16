@@ -329,6 +329,7 @@ export class PersonRepository {
         const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
             {
                 id: personId,
+                referrer: person.referrer,
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,
