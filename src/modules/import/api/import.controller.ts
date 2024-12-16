@@ -58,9 +58,9 @@ import { ImportVorgangRepository } from '../persistence/import-vorgang.repositor
 import { ImportVorgang } from '../domain/import-vorgang.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { ImportStatus } from '../domain/import.enums.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ContentDisposition, ContentType } from '../../../shared/http/http.headers.js';
+import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -285,14 +285,14 @@ export class ImportController {
     @ApiOperation({ description: 'Get status for the import transaction by id.' })
     @ApiOkResponse({
         description: 'The status for the import transaction was successfully returned.',
-        type: String,
+        type: ImportVorgangStatusResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the status for the import transaction by id.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get status for the import transaction by id.' })
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while getting status for the import transaction by id.',
     })
-    public async getImportStatus(@Param() params: ImportvorgangByIdParams): Promise<ImportStatus> {
+    public async getImportStatus(@Param() params: ImportvorgangByIdParams): Promise<ImportVorgangStatusResponse> {
         const result: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(params.importvorgangId);
         if (!result) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -302,6 +302,6 @@ export class ImportController {
             );
         }
 
-        return result.status;
+        return new ImportVorgangStatusResponse(result);
     }
 }

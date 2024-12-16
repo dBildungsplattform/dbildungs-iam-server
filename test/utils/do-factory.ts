@@ -250,6 +250,7 @@ export class DoFactory {
             organisationsname: faker.lorem.word(),
             dataItemCount: 100,
             status: ImportStatus.STARTED,
+            totalDataItemImported: 0,
             importByPersonId: faker.string.uuid(),
             rolleId: faker.string.uuid(),
             organisationId: faker.string.uuid(),

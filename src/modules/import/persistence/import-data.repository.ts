@@ -45,15 +45,14 @@ export class ImportDataRepository {
         }
     }
 
-    public async createMany(importDataItems: ImportDataItem<false>[]): Promise<string[]> {
-        const entities: ImportDataItemEntity[] = importDataItems.map((importDataItem: ImportDataItem<false>) =>
-            this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem)),
-        );
+    public async saveAll(importDataItems: ImportDataItem<false>[]): Promise<string[]> {
+        const entities: ImportDataItemEntity[] = importDataItems.map((importDataItem: ImportDataItem<false>) => {
+            return this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
+        });
 
-        const entityIds: string[] = await this.em.insertMany(entities);
         await this.em.persistAndFlush(entities);
 
-        return entityIds;
+        return entities.map((entity: ImportDataItemEntity) => entity.id);
     }
 
     public async findByImportVorgangId(

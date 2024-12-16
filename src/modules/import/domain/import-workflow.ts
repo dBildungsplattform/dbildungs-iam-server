@@ -186,48 +186,55 @@ export class ImportWorkflow {
         );
 
         const savedImportvorgang: ImportVorgang<true> = await this.importVorgangRepository.save(importVorgang);
+        const totalImportDataItems: number = parsedDataItems.length;
+        /* eslint-disable no-await-in-loop */
+        while (parsedDataItems.length > 0) {
+            const dataItems: CSVImportDataItemDTO[] = parsedDataItems.splice(0, 50);
 
-        const promises: Promise<ImportDataItem<true>>[] = parsedDataItems.map((value: CSVImportDataItemDTO) => {
-            const importDataItemErrors: string[] = [];
+            const importDataItems: ImportDataItem<false>[] = dataItems.map((value: CSVImportDataItemDTO) => {
+                const importDataItemErrors: string[] = [];
 
-            // Validate object
-            for (const error of validateSync(value, { forbidUnknownValues: true })) {
-                if (error.constraints) {
-                    for (const message of Object.values(error.constraints)) {
-                        importDataItemErrors.push(message);
+                // Validate object
+                for (const error of validateSync(value, { forbidUnknownValues: true })) {
+                    if (error.constraints) {
+                        for (const message of Object.values(error.constraints)) {
+                            importDataItemErrors.push(message);
+                        }
                     }
                 }
-            }
 
-            if (value.klasse) {
-                const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
-                    (organisationByIdAndName: OrganisationByIdAndName) => organisationByIdAndName.name === value.klasse, //Klassennamen sind case sensitive
+                if (value.klasse) {
+                    const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
+                        (organisationByIdAndName: OrganisationByIdAndName) =>
+                            organisationByIdAndName.name === value.klasse, //Klassennamen sind case sensitive
+                    );
+
+                    //Only check if the Klasse exists
+                    //Do not need to check if the Klasse can be assigned to rolle for now, because we only impport RollenArt=LERN
+                    if (!klasse) {
+                        importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_KLASSE_NOT_FOUND);
+                    }
+                }
+
+                const importDataItem: ImportDataItem<false> = ImportDataItem.createNew(
+                    savedImportvorgang.id,
+                    value.nachname,
+                    value.vorname,
+                    value.klasse,
+                    value.personalnummer,
+                    importDataItemErrors,
                 );
 
-                //Only check if the Klasse exists
-                //Do not need to check if the Klasse can be assigned to rolle for now, because we only impport RollenArt=LERN
-                if (!klasse) {
-                    importDataItemErrors.push(ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_KLASSE_NOT_FOUND);
+                if (importDataItemErrors.length > 0) {
+                    invalidImportDataItems.push(importDataItem);
                 }
-            }
 
-            const importDataItem: ImportDataItem<false> = ImportDataItem.createNew(
-                savedImportvorgang.id,
-                value.nachname,
-                value.vorname,
-                value.klasse,
-                value.personalnummer,
-                importDataItemErrors,
-            );
+                return importDataItem;
+            });
 
-            if (importDataItemErrors.length > 0) {
-                invalidImportDataItems.push(importDataItem);
-            }
-
-            return this.importDataRepository.save(importDataItem);
-        });
-
-        await Promise.all(promises);
+            await this.importDataRepository.saveAll(importDataItems);
+        }
+        /* eslint-disable no-await-in-loop */
 
         savedImportvorgang.validate(invalidImportDataItems.length);
         await this.importVorgangRepository.save(savedImportvorgang);
@@ -235,7 +242,7 @@ export class ImportWorkflow {
         return {
             importVorgangId: savedImportvorgang.id,
             isValid: invalidImportDataItems.length === 0,
-            totalImportDataItems: parsedDataItems.length,
+            totalImportDataItems: totalImportDataItems,
             totalInvalidImportDataItems: invalidImportDataItems.length,
             invalidImportDataItems,
         };
@@ -250,11 +257,6 @@ export class ImportWorkflow {
             };
         }
 
-        // Get all import data items with importvorgangId
-        //Optimierung: für das folgeTicket mit z.B. 800 Lehrer , muss der thread so manipuliert werden (sobald ein Resultat da ist, wird der nächste request abgeschickt)
-        //Optimierung: Process 10 dataItems at time for createPersonWithPersonenkontexte
-        // const offset: number = 0;
-        // const limit: number = 10;
         const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
         if (!importVorgang) {
             this.logger.warning(`Importvorgang: ${importvorgangId} not found`);

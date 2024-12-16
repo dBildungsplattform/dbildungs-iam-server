@@ -234,4 +234,22 @@ describe('ImportDataRepository', () => {
             expect(findTotal).toBe(0);
         });
     });
+
+    describe('saveAll', () => {
+        it('should create all importDataItems', async () => {
+            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
+                .id;
+            const importDataItems: ImportDataItem<false>[] = [
+                DoFactory.createImportDataItem(false, { importvorgangId }),
+                DoFactory.createImportDataItem(false, { importvorgangId }),
+            ];
+
+            const savedImportDataItems: string[] = await sut.saveAll(importDataItems);
+
+            expect(
+                savedImportDataItems.every((savedImportDataItem: string) => savedImportDataItem !== undefined),
+            ).toBeTruthy();
+            expect(savedImportDataItems.length).toBe(importDataItems.length);
+        });
+    });
 });

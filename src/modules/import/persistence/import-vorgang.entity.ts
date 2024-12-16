@@ -31,4 +31,7 @@ export class ImportVorgangEntity extends TimestampedEntity {
         onCreate: () => ImportStatus.STARTED,
     })
     public status!: ImportStatus & Opt;
+
+    @Property({ type: 'int' })
+    public totalDataItemImported!: number;
 }

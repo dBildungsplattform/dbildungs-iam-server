@@ -10,6 +10,7 @@ export class ImportVorgang<WasPersisted extends boolean> {
         public organisationsname: string,
         public dataItemCount: number,
         public status: Persisted<ImportStatus, WasPersisted>,
+        public totalDataItemImported: number,
         public importByPersonId?: string,
         public rolleId?: string,
         public organisationId?: string,
@@ -24,6 +25,7 @@ export class ImportVorgang<WasPersisted extends boolean> {
         organisationsname: string,
         dataItemCount: number,
         status: ImportStatus,
+        totalDataItemImported: number,
         importByPersonId?: string,
         rolleId?: string,
         organisationId?: string,
@@ -37,6 +39,7 @@ export class ImportVorgang<WasPersisted extends boolean> {
             organisationsname,
             dataItemCount,
             status,
+            totalDataItemImported,
             importByPersonId,
             rolleId,
             organisationId,
@@ -61,6 +64,7 @@ export class ImportVorgang<WasPersisted extends boolean> {
             organisationsname,
             dataItemCount,
             undefined,
+            0,
             importByPersonId,
             rolleId,
             organisationId,
@@ -89,5 +93,9 @@ export class ImportVorgang<WasPersisted extends boolean> {
 
     public finish(): void {
         this.status = ImportStatus.FINISHED;
+    }
+
+    public updateImportDataItems(totalDataItemImported: number): void {
+        this.totalDataItemImported = totalDataItemImported;
     }
 }
