@@ -42,6 +42,7 @@ import { ImportVorgangResponse } from './importvorgang.response.js';
 import { ImportStatus } from '../domain/import.enums.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { KeycloakAdministrationService } from '../../keycloak-administration/domain/keycloak-admin-client.service.js';
+import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 
 describe('Import API', () => {
     let app: INestApplication;
@@ -793,8 +794,7 @@ describe('Import API', () => {
                 .send();
 
             expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-            expect(response.text).toBe(ImportStatus.COMPLETED);
+            expect(response.body).toEqual({ status: ImportStatus.COMPLETED } as ImportVorgangStatusResponse);
         });
 
         it('should return 404 if importvorgang does not exist', async () => {
