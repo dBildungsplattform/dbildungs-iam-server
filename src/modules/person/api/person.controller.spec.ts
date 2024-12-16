@@ -1096,4 +1096,102 @@ describe('PersonController', () => {
             });
         });
     });
+
+    describe('resetUEMPassword', () => {
+        describe('when person does not exist', () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpException', async () => {
+                personRepositoryMock.findBy.mockResolvedValue([[], 0]);
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError(),
+                });
+
+                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when permissions are insufficient to reset user-password', () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpNotFoundException', async () => {
+                personRepositoryMock.findById.mockResolvedValue(undefined);
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError(),
+                });
+
+                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person does NOT have a defined referrer', () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpException', async () => {
+                personRepositoryMock.findBy.mockResolvedValue([[], 0]);
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<Person<true>>({ referrer: undefined }),
+                });
+
+                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when resetting UEM-password for self', () => {
+            const person: Person<true> = getPerson();
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should reset UEM-password for person', async () => {
+                personPermissionsMock.personFields.id = person.id;
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
+                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                    ok: true,
+                    value: person.id,
+                });
+
+                await expect(personController.resetUEMPassword(personPermissionsMock)).resolves.not.toThrow();
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                    person.id,
+                    person.referrer,
+                );
+            });
+        });
+
+        describe('when resetting UEM-password for self returns a SchulConnexError', () => {
+            const person: Person<true> = getPerson();
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpException', async () => {
+                personRepositoryMock.findById.mockResolvedValue(person);
+                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                    ok: false,
+                    error: new PersonDomainError('Person', 'entityId', undefined),
+                });
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
+
+                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(
+                    PersonUserPasswordModificationError,
+                );
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                    person.id,
+                    person.referrer,
+                );
+            });
+        });
+    });
 });
