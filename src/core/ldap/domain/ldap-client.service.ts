@@ -434,10 +434,27 @@ export class LdapClientService {
             }
             const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
             await this.removePersonFromGroup(person.referrer, orgaKennung, lehrerUid);
-            await client.del(lehrerUid);
-            this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
+            try {
+                const searchResultLehrer: SearchResult = await client.search(
+                    `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
+                    {
+                        filter: `(uid=${person.referrer})`,
+                    },
+                );
+                if (!searchResultLehrer.searchEntries[0]) {
+                    this.logger.info(`LDAP: Lehrer ${lehrerUid} does not exist, nothing to delete`);
 
-            return { ok: true, value: person };
+                    return { ok: true, value: person };
+                }
+                await client.del(lehrerUid);
+                this.logger.info(`LDAP: Successfully deleted lehrer ${lehrerUid}`);
+
+                return { ok: true, value: person };
+            } catch (err) {
+                const errMsg: string = JSON.stringify(err);
+                this.logger.error(`LDAP: Deleting lehrer FAILED, uid:${lehrerUid}, errMsg:${errMsg}`);
+                return { ok: false, error: new LdapCreateLehrerError() };
+            }
         });
     }
 
