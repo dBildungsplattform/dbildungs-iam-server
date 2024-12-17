@@ -25,20 +25,16 @@ export type OxErrorType = {
 };
 
 function isOxErrorType(err: unknown): err is OxErrorType {
-    if (
-        err &&
+    return !!(err &&
         typeof err === 'object' &&
         'response' in err &&
         typeof err.response === 'object' &&
         err.response &&
         'data' in err.response &&
         typeof err.response.data === 'string' &&
-        err.response.data
-    ) {
-        return true;
-    }
+        err.response.data);
 
-    return false;
+
 }
 
 @Injectable()
@@ -63,9 +59,9 @@ export class OxService {
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
 
-        this.endpoint = oxConfig.ENDPOINT || '';
-        this.username = oxConfig.USERNAME || '';
-        this.password = oxConfig.PASSWORD || '';
+        this.endpoint = oxConfig.ENDPOINT;
+        this.username = oxConfig.USERNAME;
+        this.password = oxConfig.PASSWORD;
     }
 
     public async send<ResponseBody, ResultType>(

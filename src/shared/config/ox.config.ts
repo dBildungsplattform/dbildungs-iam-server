@@ -1,26 +1,21 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumberString, IsString } from 'class-validator';
 
 export class OxConfig {
     @IsBoolean()
     public readonly ENABLED!: boolean;
 
     @IsString()
-    @IsOptional()
-    public readonly ENDPOINT?: string;
+    public readonly ENDPOINT!: string;
+
+    @IsNumberString()
+    public readonly CONTEXT_ID!: string;
 
     @IsString()
-    @IsOptional()
-    public readonly CONTEXT_ID?: string;
+    public readonly CONTEXT_NAME!: string;
 
     @IsString()
-    @IsOptional()
-    public readonly CONTEXT_NAME?: string;
+    public readonly USERNAME!: string;
 
     @IsString()
-    @IsOptional()
-    public readonly USERNAME?: string;
-
-    @IsString()
-    @IsOptional()
-    public readonly PASSWORD?: string;
+    public readonly PASSWORD!: string;
 }
