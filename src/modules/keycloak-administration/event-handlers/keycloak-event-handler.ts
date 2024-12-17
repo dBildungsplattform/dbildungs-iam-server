@@ -26,7 +26,7 @@ export class KeycloakEventHandler {
         configService: ConfigService<ServerConfig>,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
-        this.contextName = oxConfig.CONTEXT_NAME || '';
+        this.contextName = oxConfig.CONTEXT_NAME;
     }
 
     @EventHandler(PersonenkontextCreatedMigrationEvent)
