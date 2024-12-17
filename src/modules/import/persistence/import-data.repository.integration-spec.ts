@@ -244,7 +244,7 @@ describe('ImportDataRepository', () => {
                 DoFactory.createImportDataItem(false, { importvorgangId }),
             ];
 
-            const savedImportDataItems: string[] = await sut.saveAll(importDataItems);
+            const savedImportDataItems: string[] = await sut.createAll(importDataItems);
 
             expect(
                 savedImportDataItems.every((savedImportDataItem: string) => savedImportDataItem !== undefined),

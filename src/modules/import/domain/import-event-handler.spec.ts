@@ -269,7 +269,7 @@ describe('ImportEventHandler', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `System hat einen neuen Benutzer ${person.referrer} (${person.id}) angelegt.`,
             );
-            expect(importDataRepositoryMock.save).toHaveBeenCalled();
+            expect(importDataRepositoryMock.replaceAll).toHaveBeenCalled();
             expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(2);
         });
     });

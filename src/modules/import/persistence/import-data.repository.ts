@@ -81,7 +81,7 @@ export class ImportDataRepository {
      * @returns
      */
 
-    public async updateAll(importDataItems: ImportDataItem<true>[]): Promise<ImportDataItem<true>[]> {
+    public async replaceAll(importDataItems: ImportDataItem<true>[]): Promise<ImportDataItem<true>[]> {
         const ids: string[] = importDataItems.map((importDataItem: ImportDataItem<true>) => importDataItem.id);
 
         const entitiesCount: number = await this.em.count(ImportDataItemEntity, { id: { $in: ids } });

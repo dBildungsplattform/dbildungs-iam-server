@@ -173,6 +173,6 @@ export class ImportEventHandler {
             );
         }
         /* eslint-disable no-await-in-loop */
-        await this.importDataRepository.updateAll(importDataItemsWithLoginInfo);
+        await this.importDataRepository.replaceAll(importDataItemsWithLoginInfo);
     }
 }
