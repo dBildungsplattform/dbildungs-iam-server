@@ -27,4 +27,10 @@ export class ImportDataItemEntity extends TimestampedEntity {
 
     @Property({ type: ArrayType, nullable: true })
     public validationErrors?: string[];
+
+    @Property({ nullable: true, length: 50 })
+    public username?: string;
+
+    @Property({ nullable: true })
+    public password?: string;
 }
