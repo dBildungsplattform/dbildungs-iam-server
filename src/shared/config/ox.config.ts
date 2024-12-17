@@ -1,4 +1,4 @@
-import { IsBooleanString, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class OxConfig {
     @IsBoolean()

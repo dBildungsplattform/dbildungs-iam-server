@@ -73,7 +73,7 @@ export class OxEventHandler {
         configService: ConfigService<ServerConfig>,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
-        this.ENABLED = oxConfig.ENABLED === 'true';
+        this.ENABLED = oxConfig.ENABLED;
         this.authUser = oxConfig.USERNAME || '';
         this.authPassword = oxConfig.PASSWORD || '';
         this.contextID = oxConfig.CONTEXT_ID || '';
