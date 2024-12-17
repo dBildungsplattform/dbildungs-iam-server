@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -284,9 +284,7 @@ describe('OxEventHandler', () => {
                 expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
                 expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(ListGroupsAction));
 
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Retrieve Groups For Context, contextId:undefined`,
-                );
+                expect(loggerMock.error).toHaveBeenCalledWith(`Could Not Retrieve Groups For Context, contextId:10`);
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
         });
@@ -768,8 +766,8 @@ describe('OxEventHandler', () => {
             email = faker.internet.email();
             oxUserId = faker.string.numeric();
             oxUserName = faker.internet.userName();
-            contextId: faker.string.numeric();
-            contextName: faker.string.alpha();
+            contextId = '10';
+            contextName = 'testContext';
             event = new EmailAddressChangedEvent(
                 personId,
                 faker.string.uuid(),
