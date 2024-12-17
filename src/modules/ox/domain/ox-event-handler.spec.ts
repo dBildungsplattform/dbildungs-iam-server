@@ -108,6 +108,49 @@ describe('OxEventHandler', () => {
         });
     }
 
+    /**
+     * Mock group retrieval as successful
+     * @param oxUserId
+     * @param oxGroupId default is 'groupId'
+     */
+    function mockGroupRetrievalRequestSuccessful(oxUserId: OXUserID, oxGroupId: OXGroupID = 'groupId'): void {
+        oxServiceMock.send.mockResolvedValueOnce({
+            ok: true,
+            value: {
+                groups: [
+                    {
+                        displayname: 'groupDisplayName',
+                        id: oxGroupId,
+                        name: 'groupName',
+                        memberIds: [oxUserId],
+                    },
+                ],
+            },
+        });
+    }
+
+    /**
+     * mock exists-oxUser-request
+     * @param exists default is FALSE
+     */
+    function mockExistsUserRequest(exists: boolean = false): void {
+        if (exists) {
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    exists: true,
+                },
+            });
+        } else {
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    exists: false,
+                },
+            });
+        }
+    }
+
     afterAll(async () => {
         await module.close();
     });
@@ -146,12 +189,7 @@ describe('OxEventHandler', () => {
                 ]);
 
                 //mock exists-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        exists: false,
-                    },
-                });
+                mockExistsUserRequest(false);
                 //mock create-oxUser-request
                 const fakeOXUserId: string = faker.string.uuid();
                 mockUserCreationRequest(fakeOXUserId, event.address);
@@ -208,12 +246,7 @@ describe('OxEventHandler', () => {
                 ]);
 
                 //mock exists-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        exists: false,
-                    },
-                });
+                mockExistsUserRequest(false);
                 //mock create-oxUser-request
                 const fakeOXUserId: string = faker.string.uuid();
                 mockUserCreationRequest(fakeOXUserId, event.address);
@@ -266,12 +299,7 @@ describe('OxEventHandler', () => {
                 ]);
 
                 //mock exists-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        exists: false,
-                    },
-                });
+                mockExistsUserRequest(false);
                 //mock create-oxUser-request
                 const fakeOXUserId: string = faker.string.uuid();
                 mockUserCreationRequest(fakeOXUserId, event.address);
@@ -299,12 +327,7 @@ describe('OxEventHandler', () => {
                 ]);
 
                 //mock exists-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        exists: false,
-                    },
-                });
+                mockExistsUserRequest(false);
                 //mock create-oxUser-request
                 const fakeOXUserId: string = faker.string.uuid();
                 mockUserCreationRequest(fakeOXUserId, event.address);
@@ -359,12 +382,7 @@ describe('OxEventHandler', () => {
                 ]);
 
                 //mock exists-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        exists: false,
-                    },
-                });
+                mockExistsUserRequest(false);
                 //mock create-oxUser-request
                 const fakeOXUserId: string = faker.string.uuid();
                 mockUserCreationRequest(fakeOXUserId, event.address);
@@ -431,12 +449,7 @@ describe('OxEventHandler', () => {
                 ]);
 
                 //mock exists-oxUser-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        exists: false,
-                    },
-                });
+                mockExistsUserRequest(false);
                 //mock create-oxUser-request
                 const fakeOXUserId: string = faker.string.uuid();
                 mockUserCreationRequest(fakeOXUserId, event.address);
@@ -505,12 +518,7 @@ describe('OxEventHandler', () => {
             personRepositoryMock.findById.mockResolvedValueOnce(person);
             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
             //mock exists-oxUser-request
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: {
-                    exists: true,
-                },
-            });
+            mockExistsUserRequest(true);
 
             await sut.handleEmailAddressGeneratedEvent(event);
 
@@ -561,12 +569,7 @@ describe('OxEventHandler', () => {
             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
 
             //mock exists-oxUser-request
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: {
-                    exists: false,
-                },
-            });
+            mockExistsUserRequest(false);
             //mock create-oxUser-request
             const fakeOXUserId: string = faker.string.uuid();
             mockUserCreationRequest(fakeOXUserId, event.address);
@@ -618,12 +621,7 @@ describe('OxEventHandler', () => {
             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
 
             //mock exists-oxUser-request
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: {
-                    exists: false,
-                },
-            });
+            mockExistsUserRequest(false);
             //mock create-oxUser-request
             const fakeOXUserId: string = faker.string.uuid();
             mockUserCreationRequest(fakeOXUserId, event.address);
@@ -672,12 +670,7 @@ describe('OxEventHandler', () => {
             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
 
             //mock exists-oxUser-request
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: {
-                    exists: false,
-                },
-            });
+            mockExistsUserRequest(false);
             //mock create-oxUser-request
             const fakeOXUserId: string = faker.string.uuid();
             mockUserCreationRequest(fakeOXUserId, event.address);
@@ -1152,19 +1145,7 @@ describe('OxEventHandler', () => {
                 );
 
                 // Mock group retrieval successfully
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [
-                            {
-                                displayname: 'groupDisplayName',
-                                id: 'groupId',
-                                name: 'groupName',
-                                memberIds: [oxUserId],
-                            },
-                        ],
-                    },
-                });
+                mockGroupRetrievalRequestSuccessful(oxUserId);
 
                 // Mock removal as member from oxGroups successfully
                 oxServiceMock.send.mockResolvedValueOnce({
@@ -1204,19 +1185,7 @@ describe('OxEventHandler', () => {
                 );
 
                 // Mock group retrieval successfully
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [
-                            {
-                                displayname: 'groupDisplayName',
-                                id: 'groupId',
-                                name: 'groupName',
-                                memberIds: [oxUserId],
-                            },
-                        ],
-                    },
-                });
+                mockGroupRetrievalRequestSuccessful(oxUserId);
 
                 // Mock removal as member from oxGroups successfully
                 oxServiceMock.send.mockResolvedValueOnce({
@@ -1447,20 +1416,8 @@ describe('OxEventHandler', () => {
                     oxUserId: oxUserId,
                 });
                 personRepositoryMock.findById.mockResolvedValue(person);
-                //mock Ox-getOxGroupByName-request is successful
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [
-                            {
-                                displayname: 'groupDisplayName',
-                                id: oxGroupId,
-                                name: 'groupName',
-                                memberIds: [oxUserId],
-                            },
-                        ],
-                    },
-                });
+                // Mock group retrieval successfully
+                mockGroupRetrievalRequestSuccessful(oxUserId, oxGroupId);
                 //mock Ox-removeOxUserFromOxGroup-request is successful
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
