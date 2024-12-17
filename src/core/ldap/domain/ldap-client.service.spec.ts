@@ -988,6 +988,28 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeTruthy();
             });
 
+            it('should return error when deletion fails', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.del.mockRejectedValueOnce(new Error());
+                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>());
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [createMock<Entry>()],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<PersonData> = await ldapClientService.deleteLehrer(
+                    person,
+                    fakeOrgaKennung,
+                    fakeEmailDomain,
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+
             it('when called with person without referrer should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
