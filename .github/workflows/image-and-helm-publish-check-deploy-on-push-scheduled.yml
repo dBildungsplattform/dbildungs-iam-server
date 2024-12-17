@@ -114,13 +114,13 @@ jobs:
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@3
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@6
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
       - branch_meta
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1179-convert-branch-to-image-tag-and-chart-version # todo change back to correct version
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
   
@@ -145,7 +145,7 @@ jobs:
   # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1179-convert-branch-to-image-tag-and-chart-version # todo change back to correct version
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
     with:
       branch: ${{ github.event.ref }}
 
