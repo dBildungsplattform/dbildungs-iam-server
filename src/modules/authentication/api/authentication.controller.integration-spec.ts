@@ -26,6 +26,8 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
+import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -38,7 +40,7 @@ describe('AuthenticationController', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock<KeycloakUserService>();
     let keyCloakConfig: KeycloakConfig;
-
+    const personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService> = createMock<PersonTimeLimitService>();
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -75,6 +77,10 @@ describe('AuthenticationController', () => {
                 {
                     provide: KeycloakUserService,
                     useValue: keycloakUserServiceMock,
+                },
+                {
+                    provide: PersonTimeLimitService,
+                    useValue: personTimeLimitServiceMock,
                 },
             ],
         }).compile();
@@ -274,6 +280,13 @@ describe('AuthenticationController', () => {
                 ok: true,
                 value: person.updatedAt,
             });
+
+            personTimeLimitServiceMock.getPersonTimeLimitInfo.mockResolvedValueOnce([
+                {
+                    occasion: TimeLimitOccasion.KOPERS,
+                    deadline: faker.date.future(),
+                },
+            ]);
 
             const requestMock: Request = setupRequest();
             const result: UserinfoResponse = await authController.info(permissions, requestMock);
