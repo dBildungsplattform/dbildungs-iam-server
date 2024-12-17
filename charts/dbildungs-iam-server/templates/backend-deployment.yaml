@@ -44,10 +44,10 @@ spec:
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
           env:
-              {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
-              {{- if .Values.backend.extraEnvVars }}
-              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
-              {{- end }}
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+            {{- if .Values.backend.extraEnvVars }}
+            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
