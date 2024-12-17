@@ -20,7 +20,7 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { PersonFactory } from '../domain/person.factory.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonReferrer } from '../../../shared/types/index.js';
 import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { ConfigService } from '@nestjs/config';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -392,7 +392,7 @@ describe('PersonController', () => {
 
     describe('findPersons', () => {
         const options: {
-            referrer: string;
+            referrer: PersonReferrer;
             lastName: string;
             firstName: string;
         } = {

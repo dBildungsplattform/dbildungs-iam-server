@@ -12,6 +12,7 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { UnauthorizedException } from '@nestjs/common';
+import { PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('PersonFrontendController', () => {
     let module: TestingModule;
@@ -47,7 +48,7 @@ describe('PersonFrontendController', () => {
 
     describe('findPersons', () => {
         const options: {
-            referrer: string;
+            referrer: PersonReferrer;
             lastName: string;
             firstName: string;
         } = {

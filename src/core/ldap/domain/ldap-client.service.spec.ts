@@ -18,7 +18,7 @@ import { Person } from '../../../modules/person/domain/person.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
 import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
@@ -549,7 +549,7 @@ describe('LDAP Client Service', () => {
             });
             describe('when modifying', () => {
                 it('Should Update LDAP When called with Attributes', async () => {
-                    const oldReferrer: string = faker.internet.userName();
+                    const oldReferrer: PersonReferrer = faker.internet.userName();
                     const newGivenName: string = faker.person.firstName();
                     const newSn: string = faker.person.lastName();
                     const newUid: string = faker.string.alphanumeric(6);

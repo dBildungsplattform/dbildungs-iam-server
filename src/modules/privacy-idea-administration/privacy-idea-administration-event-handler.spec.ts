@@ -7,6 +7,7 @@ import { TestingModule, Test } from '@nestjs/testing';
 import { ConfigTestModule, LoggingTestModule } from '../../../test/utils/index.js';
 import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
 import { ResetTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { PersonReferrer } from '../../shared/types/aggregate-ids.types.js';
 
 export const mockPrivacyIdeaToken: PrivacyIdeaToken = {
     active: true,
@@ -73,7 +74,7 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
 
     describe('handlePersonDeletedEvent', () => {
         let personId: string;
-        let referrer: string;
+        let referrer: PersonReferrer;
         let emailAddress: string;
         let event: PersonDeletedEvent;
         let mockResetTokenResponse: ResetTokenResponse;

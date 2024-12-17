@@ -14,7 +14,7 @@ export class PersonRenamedEvent extends BaseEvent {
         super();
     }
 
-    public static fromPerson(person: Person<true>, oldReferrer: string): PersonRenamedEvent {
+    public static fromPerson(person: Person<true>, oldReferrer: PersonReferrer): PersonRenamedEvent {
         return new PersonRenamedEvent(person.id, person.vorname, person.familienname, person.referrer, oldReferrer);
     }
 }
