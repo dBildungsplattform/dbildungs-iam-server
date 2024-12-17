@@ -247,7 +247,7 @@ export class EmailEventHandler {
             PersonReferrer | undefined
         >();
         const personIdsSet: Set<PersonID> = new Set<PersonID>();
-        personenkontexte.map((pk: Personenkontext<true>) => {
+        personenkontexte.forEach((pk: Personenkontext<true>) => {
             personIdsSet.add(pk.personId);
             personIdReferrerMap.set(pk.personId, pk.referrer);
         });
