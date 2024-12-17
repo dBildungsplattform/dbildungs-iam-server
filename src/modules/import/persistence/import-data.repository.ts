@@ -36,23 +36,12 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
 export class ImportDataRepository {
     public constructor(private readonly em: EntityManager) {}
 
-    //Optimierung: alle 50 Datensätze mit einem Call persistieren
     public async save(importDataItem: ImportDataItem<boolean>): Promise<ImportDataItem<true>> {
         if (importDataItem.id) {
             return this.update(importDataItem);
         } else {
             return this.create(importDataItem);
         }
-    }
-
-    public async saveAll(importDataItems: ImportDataItem<false>[]): Promise<string[]> {
-        const entities: ImportDataItemEntity[] = importDataItems.map((importDataItem: ImportDataItem<false>) => {
-            return this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
-        });
-
-        await this.em.persistAndFlush(entities);
-
-        return entities.map((entity: ImportDataItemEntity) => entity.id);
     }
 
     public async findByImportVorgangId(
@@ -74,6 +63,37 @@ export class ImportDataRepository {
     public async deleteByImportVorgangId(importvorgangId: string): Promise<void> {
         //Optimierung: check if there are any items to delete when ImportVorgang will be saved in his own table
         await this.em.nativeDelete(ImportDataItemEntity, { importvorgangId: importvorgangId });
+    }
+
+    public async createAll(importDataItems: ImportDataItem<false>[]): Promise<string[]> {
+        const entities: ImportDataItemEntity[] = importDataItems.map((importDataItem: ImportDataItem<false>) => {
+            return this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
+        });
+
+        await this.em.persistAndFlush(entities);
+
+        return entities.map((entity: ImportDataItemEntity) => entity.id);
+    }
+
+    /**
+     * Replace import data entities matching the ids with the given import data items.
+     * @param importDataItems all the import data items will be replaced in the DB.
+     * @returns
+     */
+
+    public async updateAll(importDataItems: ImportDataItem<true>[]): Promise<ImportDataItem<true>[]> {
+        const ids: string[] = importDataItems.map((importDataItem: ImportDataItem<true>) => importDataItem.id);
+
+        const entitiesCount: number = await this.em.count(ImportDataItemEntity, { id: { $in: ids } });
+
+        if (entitiesCount !== importDataItems.length) {
+            throw new Error('Not all entities found');
+        }
+
+        importDataItems.map((importDataItem: ImportDataItem<true>) => importDataItem.id);
+        const updateResult: ImportDataItemEntity[] = await this.em.upsertMany(ImportDataItemEntity, importDataItems);
+
+        return updateResult.map((entity: ImportDataItemEntity) => mapEntityToAggregate(entity));
     }
 
     private async create(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {

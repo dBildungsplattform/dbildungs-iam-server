@@ -26,6 +26,8 @@ export class ImportEventHandler {
 
     public selectedRolleId!: string;
 
+    private readonly NUMBER_OF_USERS_PRO_REQUEST: number = 25;
+
     public constructor(
         private readonly organisationRepository: OrganisationRepository,
         private readonly importDataRepository: ImportDataRepository,
@@ -67,13 +69,19 @@ export class ImportEventHandler {
 
         /* eslint-disable no-await-in-loop */
         while (importDataItems.length > 0) {
-            const dataItemsToImport: ImportDataItem<true>[] = importDataItems.splice(0, 25);
+            const dataItemsToImport: ImportDataItem<true>[] = importDataItems.splice(
+                0,
+                this.NUMBER_OF_USERS_PRO_REQUEST,
+            );
             await this.savePersonWithPersonenkontext(
                 importVorgang,
                 dataItemsToImport,
                 klassenByIDandName,
                 event.permissions,
             );
+
+            importVorgang.incrementTotalImportDataItems(dataItemsToImport.length);
+            await this.importVorgangRepository.save(importVorgang);
         }
 
         importVorgang.finish();
@@ -165,13 +173,6 @@ export class ImportEventHandler {
             );
         }
         /* eslint-disable no-await-in-loop */
-        await Promise.allSettled(
-            importDataItemsWithLoginInfo.map(async (importDataItem: ImportDataItem<true>) =>
-                this.importDataRepository.save(importDataItem),
-            ),
-        );
-
-        importVorgang.updateImportDataItems(dataItems.length);
-        await this.importVorgangRepository.save(importVorgang);
+        await this.importDataRepository.updateAll(importDataItemsWithLoginInfo);
     }
 }

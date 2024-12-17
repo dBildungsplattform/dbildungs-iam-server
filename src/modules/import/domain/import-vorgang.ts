@@ -95,7 +95,7 @@ export class ImportVorgang<WasPersisted extends boolean> {
         this.status = ImportStatus.FINISHED;
     }
 
-    public updateImportDataItems(totalDataItemImported: number): void {
-        this.totalDataItemImported = totalDataItemImported;
+    public incrementTotalImportDataItems(totalDataItemImported: number): void {
+        this.totalDataItemImported += totalDataItemImported;
     }
 }

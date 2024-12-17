@@ -232,7 +232,7 @@ export class ImportWorkflow {
                 return importDataItem;
             });
 
-            await this.importDataRepository.saveAll(importDataItems);
+            await this.importDataRepository.createAll(importDataItems);
         }
         /* eslint-disable no-await-in-loop */
 
