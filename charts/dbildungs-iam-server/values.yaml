@@ -68,10 +68,10 @@ auth:
 
 ox:
   enabled: false
-  username: ''
-  endpoint: ''
-  contextId: ''
-  contextName: ''
+  username: 'oxadmin'
+  endpoint: 'https://webmail.example.com'
+  contextId: '10'
+  contextName: '10'
 
 backend:
   replicaCount: 1
