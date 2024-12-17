@@ -63,7 +63,7 @@
         "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
     },
     "ITSLEARNING": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "https://itslearning-test.example.com",
         "USERNAME": "username",
         "PASSWORD": "password",
@@ -72,7 +72,7 @@
         "ROOT_ERSATZ": "ersatz"
     },
     "OX": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "http://ox.dev.spsh.dbildungsplattform.de/webservices/",
         "CONTEXT_ID": "1337",
         "CONTEXT_NAME": "contextname",
@@ -85,6 +85,14 @@
         "PASSWORD": "admin",
         "USER_RESOLVER": "mariadb_resolver",
         "REALM": "defrealm"
+    },
+    "VIDIS": {
+        "BASE_URL": "https://service-stage.vidis.schule",
+        "USERNAME": "username",
+        "PASSWORD": "password",
+        "REGION_NAME": "test-region",
+        "KEYCLOAK_GROUP": "VIDIS-service",
+        "KEYCLOAK_ROLE": "VIDIS-user"
     },
     "IMPORT": {
         "IMPORT_FILE_MAXGROESSE_IN_MB": 10

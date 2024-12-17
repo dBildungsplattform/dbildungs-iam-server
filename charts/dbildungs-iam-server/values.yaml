@@ -4,6 +4,8 @@ namespaceOverride: ''
 
 backendHostname: ''
 keycloakHostname: ''
+keycloak2ndHostname: ""
+backend2ndHostname: ""
 
 containerSecurityContext:
   enabled: true
@@ -32,6 +34,11 @@ ldap:
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
 
+itslearning:
+  root: sh
+  rootOeffentlich: oeffentlich
+  rootErsatz: ersatz
+
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
   existingSecret: ''
@@ -50,10 +57,13 @@ auth:
   pi_admin_password: ''
   pi_user_resolver: ''
   pi_user_realm: ''
-  system_rename_waiting_time_in_seconds: ''
-  system_step_up_timeout_in_seconds: ''
-  system_step_up_timeout_enabled: ''
   redis_password: ''
+  vidis_base_url: ''
+  vidis_username: ''
+  vidis_password: ''
+  vidis_region_name: ''
+  vidis_keycloak_group: ''
+  vidis_keycloak_role: ''
 
 backend:
   replicaCount: 1
@@ -97,6 +107,8 @@ backend:
     enabled: true
     command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev', '']
   ingress:
+    # Only enable if 2nd host name is defined
+    enabled2nd: false
     enabled: true
     ingressClassName: nginx
     pathType: Prefix
@@ -114,6 +126,8 @@ backend:
       http: 80
   serviceMonitor:
     enabled: true
+    path: "/metrics"
+    interval: 30m
     endpoints:
       - port: 'web'
   extraEnvVars: []
@@ -127,38 +141,11 @@ backend:
       subPath: secrets-json
       name: secret-volume
   extraVolumeMounts: []
-
-redis:
-  enabled: true
-  image:
-    registry: docker.io
-    repository: bitnami/redis
-    tag: 7.4.1-debian-12-r2
-  replica:
-    replicaCount: 1
-  sentinel:
-    enabled: true
-  pdb:
-    create: false
-  networkPolicy:
-    enabled: false
-  serviceAccount:
-    create: false
-  auth:
-    existingSecret: ''
-  podLabels:
-    app.kubernetes.io/component: server-redis
-  commonLabels:
-    app.kubernetes.io/name: dbildungs-iam-server
-  resources:
-    limits:
-      cpu: 300m
-      memory: 512Mi
-    requests:
-      cpu: 125m
-      memory: 128Mi
-  metrics:
-    enabled: true
+  env:
+    renameWaitingTimeInSeconds: 3
+    stepUpTimeoutInSeconds: 900
+    stepUpTimeoutEnabled: 'false'
+    maxOldSpaceSize: 3584
 
 autoscaling:
   enabled: false
@@ -166,14 +153,18 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 60
 
+podDisruptionBudget:
+  enabled: true
+  minAvailable: "80%"
+
 status:
   url: 'https://status.dev.spsh.dbildungsplattform.de/'
 
 cronjobs:
   enabled: true
   image:
-    tag: DBP-1083-latest
-    repository: ghcr.io/hpi-schul-cloud/cron-tools
+    tag: '1.1.0'
+    repository: docker.io/schulcloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'

@@ -13,6 +13,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  tls:
+  - hosts:
+      - {{ .Values.backendHostname  }}
   ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
   rules:
     - host: {{ .Values.backendHostname }}
