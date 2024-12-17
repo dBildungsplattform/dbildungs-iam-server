@@ -87,7 +87,6 @@ export class EmailEventHandler {
                 if (existingEmail) {
                     await this.changeEmail(
                         event.personId,
-                        event.referrer,
                         pkForRolleWithSPReference.personenkontext.organisationId,
                         existingEmail,
                     );
@@ -292,7 +291,7 @@ export class EmailEventHandler {
 
         if (persistenceResult instanceof DomainError) {
             return this.logger.error(
-                `Could not enable email for personId:${event.personId}, referrer:${event.keycloakUsername}, error is ${persistenceResult.message}`,
+                `Could not ENABLE email for personId:${event.personId}, referrer:${event.keycloakUsername}, error is ${persistenceResult.message}`,
             );
         } else {
             return this.logger.info(
@@ -460,7 +459,7 @@ export class EmailEventHandler {
         for (const email of existingEmails) {
             if (email.enabled) {
                 return this.logger.info(
-                    `Existing email for personId:${personId}, referrer:${personReferrer.value} already enabled`,
+                    `Existing email for personId:${personId}, referrer:${personReferrer.value} already ENABLED`,
                 );
             } else if (email.disabled) {
                 // If we find a disabled address, we just enable it again
@@ -485,7 +484,7 @@ export class EmailEventHandler {
                     );
                 } else {
                     this.logger.error(
-                        `Could not enable email for personId:${personId}, referrer:${personReferrer.value}, error is ${persistenceResult.message}`,
+                        `Could not ENABLE email for personId:${personId}, referrer:${personReferrer.value}, error is ${persistenceResult.message}`,
                     );
                 }
 
@@ -560,7 +559,6 @@ export class EmailEventHandler {
 
     private async changeEmail(
         personId: PersonID,
-        referrer: PersonReferrer | undefined,
         organisationId: OrganisationID,
         oldEmail: EmailAddress<true>,
     ): Promise<void> {
@@ -572,17 +570,17 @@ export class EmailEventHandler {
         }
         const email: Result<EmailAddress<false>> = await this.emailFactory.createNew(personId, organisationId);
         if (!email.ok) {
-            await this.createAndPersistFailedEmailAddress(personId, referrer);
+            await this.createAndPersistFailedEmailAddress(personId, personReferrer.value);
 
             return this.logger.error(
-                `Could not create change-email for personId:${personId}, referrer:${referrer}, error is ${email.error.message}`,
+                `Could not create change-email for personId:${personId}, referrer:${personReferrer.value}, error is ${email.error.message}`,
             );
         }
         email.value.request();
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
         if (persistenceResult instanceof EmailAddress) {
             this.logger.info(
-                `Successfully persisted change-email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${referrer}`,
+                `Successfully persisted change-email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
             this.eventService.publish(
                 new EmailAddressChangedEvent(
@@ -597,7 +595,7 @@ export class EmailEventHandler {
             );
         } else {
             this.logger.error(
-                `Could not persist change-email for personId:${personId}, referrer:${referrer}, error is ${persistenceResult.message}`,
+                `Could not persist change-email for personId:${personId}, referrer:${personReferrer.value}, error is ${persistenceResult.message}`,
             );
         }
     }
