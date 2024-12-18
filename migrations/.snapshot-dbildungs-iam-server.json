@@ -1322,6 +1322,15 @@
             "VALID"
           ],
           "mappedType": "enum"
+        },
+        "total_data_item_imported": {
+          "name": "total_data_item_imported",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "integer"
         }
       },
       "name": "importvorgang",
