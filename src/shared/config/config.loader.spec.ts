@@ -53,7 +53,6 @@ describe('configloader', () => {
                 LDAP: {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
-                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
                     ENABLED: true,
@@ -188,7 +187,6 @@ describe('configloader', () => {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'password',
-                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
                     ENABLED: true,

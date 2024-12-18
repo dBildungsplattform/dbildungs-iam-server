@@ -13,7 +13,6 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
-    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
@@ -37,7 +36,6 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { PersonenkontextMigrationRuntype } from '../domain/personenkontext.enums.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
-import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 
 describe('dbiam Personenkontext API', () => {
     let app: INestApplication;
@@ -58,7 +56,6 @@ describe('dbiam Personenkontext API', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,
                 KeycloakAdministrationModule,
-                LoggingTestModule,
             ],
             providers: [
                 {
@@ -85,7 +82,6 @@ describe('dbiam Personenkontext API', () => {
                 },
                 PersonFactory,
                 UsernameGeneratorService,
-                OxUserBlacklistRepo,
             ],
         })
             .overrideModule(KeycloakConfigModule)

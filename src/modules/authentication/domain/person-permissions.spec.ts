@@ -240,46 +240,6 @@ describe('PersonPermissions', () => {
             expect(permittedOrgas.orgaIds).toContain('1');
             expect(permittedOrgas.orgaIds).not.toContain('2');
         });
-
-        it('should return organisations when matching one systemrecht', async () => {
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                undefined,
-                faker.string.uuid(),
-            );
-
-            dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValue(false);
-
-            const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
-            dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
-            const rolle: Rolle<true> = createMock<Rolle<true>>();
-            rolle.systemrechte = [RollenSystemRecht.PERSONEN_LESEN];
-            rolleRepoMock.findByIds.mockResolvedValueOnce(new Map<string, Rolle<true>>([['1', rolle]]));
-
-            const personPermissions: PersonPermissions = new PersonPermissions(
-                dbiamPersonenkontextRepoMock,
-                organisationRepoMock,
-                rolleRepoMock,
-                person,
-            );
-
-            const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(
-                [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
-                false,
-                false,
-            );
-            if (permittedOrgas.all) {
-                fail('permittedOrgas.all should be false');
-            }
-            expect(permittedOrgas.orgaIds).toContain('1');
-            expect(permittedOrgas.orgaIds).not.toContain('2');
-        });
     });
 
     describe('getPersonenkontextewithRoles', () => {
@@ -354,36 +314,6 @@ describe('PersonPermissions', () => {
 
             expect(result).toBeTruthy();
             expect(dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation).toHaveBeenCalledTimes(1);
-        });
-
-        it('should return true if person has one of the systemrechte', async () => {
-            const person: Person<true> = Person.construct(
-                faker.string.uuid(),
-                faker.date.past(),
-                faker.date.recent(),
-                faker.person.lastName(),
-                faker.person.firstName(),
-                '1',
-                faker.lorem.word(),
-                undefined,
-                faker.string.uuid(),
-            );
-            dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
-            dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            const personPermissions: PersonPermissions = new PersonPermissions(
-                dbiamPersonenkontextRepoMock,
-                organisationRepoMock,
-                rolleRepoMock,
-                person,
-            );
-            const result: boolean = await personPermissions.hasSystemrechteAtOrganisation(
-                '2',
-                [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
-                false,
-            );
-            expect(result).toBeTruthy();
-            expect(dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation).toHaveBeenCalledTimes(2);
         });
     });
 

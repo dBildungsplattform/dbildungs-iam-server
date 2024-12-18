@@ -260,9 +260,8 @@ describe('PersonenkontextController', () => {
                 );
 
                 expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
-                    [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
+                    [RollenSystemRecht.PERSONEN_VERWALTEN],
                     true,
-                    false,
                 );
                 expect(result.items.length).toBe(1);
                 if (result.items[0]) {
@@ -303,9 +302,8 @@ describe('PersonenkontextController', () => {
                 );
 
                 expect(permissionsMock.getOrgIdsWithSystemrecht).toHaveBeenCalledWith(
-                    [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
+                    [RollenSystemRecht.PERSONEN_VERWALTEN],
                     true,
-                    false,
                 );
                 expect(result.items.length).toBe(1);
                 if (result.items[0]) {

@@ -45,12 +45,11 @@ describe('Itslearning Person Repo', () => {
     describe('readPerson', () => {
         it('should call the itslearning API', async () => {
             const personId: string = faker.string.uuid();
-            const syncID: string = faker.string.uuid();
 
-            await sut.readPerson(personId, syncID);
+            await sut.readPerson(personId);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ id: personId }), syncID);
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(ReadPersonAction), syncID);
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ id: personId }));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(ReadPersonAction));
         });
 
         it('should return the result', async () => {
@@ -102,16 +101,11 @@ describe('Itslearning Person Repo', () => {
                 ok: true,
                 value: undefined,
             }); // CreatePersonAction
-            const syncID: string = faker.string.uuid();
 
-            await sut.updateEmail(personId, email, syncID);
+            await sut.updateEmail(personId, email);
 
-            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(
-                1,
-                expect.objectContaining({ id: personId }),
-                syncID,
-            );
-            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(1, expect.any(ReadPersonAction), syncID);
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(1, expect.objectContaining({ id: personId }));
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(1, expect.any(ReadPersonAction));
             expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(
                 2,
                 expect.objectContaining({
@@ -124,9 +118,8 @@ describe('Itslearning Person Repo', () => {
                         email,
                     },
                 }),
-                syncID,
             );
-            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(2, expect.any(CreatePersonAction), syncID);
+            expect(itsLearningServiceMock.send).toHaveBeenNthCalledWith(2, expect.any(CreatePersonAction));
         });
 
         it('should not update email, if person was not found', async () => {
@@ -157,15 +150,11 @@ describe('Itslearning Person Repo', () => {
                 ok: true,
                 value: undefined,
             }); // CreatePersonAction
-            const syncID: string = faker.string.uuid();
 
-            await sut.createOrUpdatePerson(createParams, syncID);
+            await sut.createOrUpdatePerson(createParams);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
-                expect.objectContaining({ params: createParams }),
-                syncID,
-            );
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreatePersonAction), syncID);
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ params: createParams }));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreatePersonAction));
         });
 
         it('should not return error on success', async () => {
@@ -213,12 +202,11 @@ describe('Itslearning Person Repo', () => {
                 ok: true,
                 value: undefined,
             }); // DeletePersonAction
-            const syncID: string = faker.string.uuid();
 
-            await sut.deletePerson(personId, syncID);
+            await sut.deletePerson(personId);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ id: personId }), syncID);
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction), syncID);
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ id: personId }));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonAction));
         });
 
         it('should not return error on success', async () => {

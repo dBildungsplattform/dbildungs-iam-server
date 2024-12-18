@@ -20,8 +20,4 @@ export class LdapConfig {
     @IsString()
     @IsOptional()
     public readonly ERSATZSCHULEN_DOMAIN?: string;
-
-    @IsString()
-    @IsNotEmpty()
-    public readonly BASE_DN!: string;
 }
