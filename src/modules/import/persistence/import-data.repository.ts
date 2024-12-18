@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItemScope } from './import-data-item.scope.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
+import { ImportDomainError } from '../domain/import-domain.error.js';
 
 export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): RequiredEntityData<ImportDataItemEntity> {
     return {
@@ -87,7 +88,10 @@ export class ImportDataRepository {
         const entitiesCount: number = await this.em.count(ImportDataItemEntity, { id: { $in: ids } });
 
         if (entitiesCount !== importDataItems.length) {
-            throw new Error('Not all entities found');
+            throw new ImportDomainError(
+                `Update all has failed because not all entities were found. importDataItemsCount:${importDataItems.length}, numberOfEntitiesFound:${entitiesCount}`,
+                'IMPORT_DATA_ITEM_NOT_FOUND',
+            );
         }
 
         importDataItems.map((importDataItem: ImportDataItem<true>) => importDataItem.id);
