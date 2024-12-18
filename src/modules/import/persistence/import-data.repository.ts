@@ -94,7 +94,6 @@ export class ImportDataRepository {
             );
         }
 
-        importDataItems.map((importDataItem: ImportDataItem<true>) => importDataItem.id);
         const updateResult: ImportDataItemEntity[] = await this.em.upsertMany(ImportDataItemEntity, importDataItems);
 
         return updateResult.map((entity: ImportDataItemEntity) => mapEntityToAggregate(entity));
