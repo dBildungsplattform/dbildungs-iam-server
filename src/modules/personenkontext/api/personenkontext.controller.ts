@@ -134,9 +134,8 @@ export class PersonenkontextController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<PersonenkontextdatensatzResponse>> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
             true,
-            false,
         );
 
         const result: Paged<Personenkontext<true>> = await this.personenkontextService.findAllPersonenkontexte(

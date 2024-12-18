@@ -9,7 +9,6 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 
 @Injectable()
 export class PersonDeleteService {
@@ -41,33 +40,30 @@ export class PersonDeleteService {
 
             const removedPersonenkontexts: PersonenkontextEventKontextData[] = await Promise.all(
                 personenKontexts.map((personenKontext: Personenkontext<true>) => {
-                    return personenKontext.getRolle().then((rolle: Option<Rolle<true>>) => {
-                        if (rolle) {
-                            return personenKontext
-                                .getOrganisation()
-                                .then((organisation: Option<Organisation<true>>) => {
-                                    const orgaKennung: string | undefined = organisation?.kennung;
-                                    return {
-                                        id: personenKontext.id,
-                                        rolleId: personenKontext.rolleId,
-                                        orgaId: personenKontext.organisationId,
-                                        rolle: rolle.rollenart,
-                                        orgaKennung: orgaKennung,
-                                        // The itslearning event listener doesn't care about removed kontexte, only the current kontexte.
-                                        // Instead of querying the DB for all relevant organisations, we just set a default value.
-                                        isItslearningOrga: false,
-                                        serviceProviderExternalSystems: rolle.serviceProviderData.map(
-                                            (sp: ServiceProvider<true>) => sp.externalSystem,
-                                        ),
-                                    };
-                                });
-                        } else {
-                            return Promise.reject();
-                        }
-                    });
+                    return new Promise<PersonenkontextEventKontextData>(
+                        (resolve: (value: PersonenkontextEventKontextData) => void, reject: () => void) => {
+                            personenKontext.getRolle().then(
+                                (rolle: Option<Rolle<true>>) =>
+                                    rolle
+                                        ? resolve({
+                                              id: personenKontext.id,
+                                              rolleId: personenKontext.rolleId,
+                                              orgaId: personenKontext.organisationId,
+                                              rolle: rolle.rollenart,
+                                              // The itslearning event listener doesn't care about removed kontexte, only the current kontexte.
+                                              // Instead of querying the DB for all relevant organisations, we just set a default value.
+                                              isItslearningOrga: false,
+                                              serviceProviderExternalSystems: rolle.serviceProviderData.map(
+                                                  (sp: ServiceProvider<true>) => sp.externalSystem,
+                                              ),
+                                          })
+                                        : reject(),
+                                () => reject(),
+                            );
+                        },
+                    );
                 }),
             );
-
             return { ok: true, value: removedPersonenkontexts };
         } catch (error) {
             if (error instanceof Error) {

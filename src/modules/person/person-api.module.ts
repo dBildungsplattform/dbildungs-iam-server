@@ -13,12 +13,10 @@ import { PersonInfoController } from './api/person-info.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
 import { PersonDeleteModule } from './person-deletion/person-delete.module.js';
 import { EmailModule } from '../email/email.module.js';
-import { LdapModule } from '../../core/ldap/ldap.module.js';
 
 @Module({
     imports: [
         PersonModule,
-        LdapModule,
         EmailModule,
         RolleModule,
         OrganisationModule,

@@ -9,7 +9,6 @@ export class LdapInstanceConfig implements LdapConfig {
         public URL: string,
         public BIND_DN: string,
         public ADMIN_PASSWORD: string,
-        public BASE_DN: string,
         public OEFFENTLICHE_SCHULEN_DOMAIN?: string,
         public ERSATZSCHULEN_DOMAIN?: string,
     ) {}
@@ -24,7 +23,6 @@ export class LdapInstanceConfig implements LdapConfig {
                     ldapConfig.URL,
                     ldapConfig.BIND_DN,
                     ldapConfig.ADMIN_PASSWORD,
-                    ldapConfig.BASE_DN,
                     ldapConfig.OEFFENTLICHE_SCHULEN_DOMAIN,
                     ldapConfig.ERSATZSCHULEN_DOMAIN,
                 );

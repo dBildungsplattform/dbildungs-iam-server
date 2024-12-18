@@ -13,10 +13,9 @@ import { ItsLearningIMSESService } from '../itslearning.service.js';
 export class ItslearningGroupRepo {
     public constructor(private readonly itslearningService: ItsLearningIMSESService) {}
 
-    public async readGroup(id: OrganisationID, syncId?: string): Promise<Option<GroupResponse>> {
+    public async readGroup(id: OrganisationID): Promise<Option<GroupResponse>> {
         const groupResult: Result<GroupResponse, DomainError> = await this.itslearningService.send(
             new ReadGroupAction(id),
-            syncId,
         );
 
         if (!groupResult.ok) {
@@ -26,10 +25,10 @@ export class ItslearningGroupRepo {
         return groupResult.value;
     }
 
-    public async createOrUpdateGroup(params: CreateGroupParams, syncId?: string): Promise<Option<DomainError>> {
+    public async createOrUpdateGroup(params: CreateGroupParams): Promise<Option<DomainError>> {
         const createAction: CreateGroupAction = new CreateGroupAction(params);
 
-        const createResult: Result<void, DomainError> = await this.itslearningService.send(createAction, syncId);
+        const createResult: Result<void, DomainError> = await this.itslearningService.send(createAction);
 
         if (!createResult.ok) {
             return createResult.error;
@@ -38,10 +37,10 @@ export class ItslearningGroupRepo {
         return undefined;
     }
 
-    public async createOrUpdateGroups(params: CreateGroupParams[], syncId?: string): Promise<Option<DomainError>> {
+    public async createOrUpdateGroups(params: CreateGroupParams[]): Promise<Option<DomainError>> {
         const createAction: CreateGroupsAction = new CreateGroupsAction(params);
 
-        const createResult: Result<void, DomainError> = await this.itslearningService.send(createAction, syncId);
+        const createResult: Result<void, DomainError> = await this.itslearningService.send(createAction);
 
         if (!createResult.ok) {
             return createResult.error;
@@ -50,11 +49,8 @@ export class ItslearningGroupRepo {
         return undefined;
     }
 
-    public async deleteGroup(id: OrganisationID, syncId?: string): Promise<Option<DomainError>> {
-        const deleteResult: Result<void, DomainError> = await this.itslearningService.send(
-            new DeleteGroupAction(id),
-            syncId,
-        );
+    public async deleteGroup(id: OrganisationID): Promise<Option<DomainError>> {
+        const deleteResult: Result<void, DomainError> = await this.itslearningService.send(new DeleteGroupAction(id));
 
         if (!deleteResult.ok) {
             return deleteResult.error;

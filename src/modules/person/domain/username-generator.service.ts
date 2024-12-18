@@ -8,16 +8,14 @@ import {
     InvalidAttributeLengthError,
 } from '../../../shared/error/index.js';
 import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
-import { OxUserBlacklistRepo } from '../persistence/ox-user-blacklist.repo.js';
-import { OxUserBlacklistEntry } from './ox-user-blacklist-entry.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { OxUserBlacklistEntity } from '../persistence/ox-user-blacklist.entity.js';
+import { EntityManager } from '@mikro-orm/postgresql';
 
 @Injectable()
 export class UsernameGeneratorService {
     public constructor(
-        private readonly logger: ClassLogger,
+        private readonly em: EntityManager,
         private kcUserService: KeycloakUserService,
-        private oxUserBlacklistRepo: OxUserBlacklistRepo,
     ) {}
 
     public async generateUsername(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
@@ -82,17 +80,22 @@ export class UsernameGeneratorService {
         while (await this.usernameExists(calculatedUsername + counter)) {
             counter = counter + 1;
         }
-        this.logger.info(`Next Available Username Is:${calculatedUsername + counter}`);
-
+        /* eslint-disable no-await-in-loop */
         return calculatedUsername + counter;
     }
 
-    /**
-     * This method can throw errors e.g. if Keycloak search fails.
-     * @param username
-     * @private
-     */
-    private async usernameExists(username: string): Promise<boolean> {
+    public async findByOxUsername(username: string): Promise<OxUserBlacklistEntity | null> {
+        const person: Option<OxUserBlacklistEntity> = await this.em.findOne(OxUserBlacklistEntity, {
+            username: username,
+        });
+        if (person) {
+            return person;
+        }
+
+        return null;
+    }
+
+    public async usernameExists(username: string): Promise<boolean> {
         // Check Keycloak
         const searchResult: Result<User<true>, DomainError> = await this.kcUserService.findOne({ username });
         if (searchResult.ok) {
@@ -102,8 +105,12 @@ export class UsernameGeneratorService {
         }
 
         // Check OX Blacklist for the username. If it exists then return true.
-        const oxUser: Option<OxUserBlacklistEntry<true>> = await this.oxUserBlacklistRepo.findByOxUsername(username);
+        const oxUser: OxUserBlacklistEntity | null = await this.findByOxUsername(username);
 
-        return !!oxUser;
+        if (oxUser) {
+            return true; // Username exists in the blacklist
+        }
+
+        return false; // Username is available
     }
 }

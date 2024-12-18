@@ -308,27 +308,22 @@ export class DbSeedService {
         /* eslint-disable no-await-in-loop */
         for (const file of files) {
             /* eslint-disable no-await-in-loop */
-            const creationParams: PersonCreationParams = {
-                familienname: file.familienname,
-                vorname: file.vorname,
-                username: file.username,
-                password: file.password,
-            };
-
-            const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
-
-            if (person instanceof DomainError) {
-                this.logger.error('Could not create technical user:');
-                this.logger.error(JSON.stringify(person));
-                throw person;
-            }
-
-            person.keycloakUserId = file.keycloakUserId;
+            const person: Person<false> = Person.construct(
+                undefined,
+                undefined,
+                undefined,
+                file.familienname,
+                file.vorname,
+                '1',
+                file.username,
+                file.keycloakUserId,
+            );
 
             const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
                 person,
                 undefined,
                 this.getValidUuidOrUndefined(file.overrideId),
+                true,
             );
             if (persistedPerson instanceof Person && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(

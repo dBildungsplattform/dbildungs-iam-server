@@ -68,18 +68,13 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.createKlasseEventHandler(event);
 
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams, string]>(
-                {
-                    id: event.id,
-                    name: event.name!,
-                    parentId: event.administriertVon!,
-                    type: 'Unspecified',
-                },
-                `${event.eventID}-KLASSE-CREATED`,
-            );
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Klasse with ID ${event.id} created.`,
-            );
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams]>({
+                id: event.id,
+                name: event.name!,
+                parentId: event.administriertVon!,
+                type: 'Unspecified',
+            });
+            expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.id} created.`);
         });
 
         it('should skip event, if not enabled', async () => {
@@ -92,7 +87,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.createKlasseEventHandler(event);
 
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
             expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
@@ -105,9 +100,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.createKlasseEventHandler(event);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${event.eventID}] Klasse has no parent organisation. Aborting.`,
-            );
+            expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no parent organisation. Aborting.');
         });
 
         it('should log error, if the klasse has no name', async () => {
@@ -119,7 +112,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.createKlasseEventHandler(event);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Klasse has no name. Aborting.`);
+            expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no name. Aborting.');
         });
 
         it('should log info, if the parent school is not itslearning enabled', async () => {
@@ -133,7 +126,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.createKlasseEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `[EventID: ${event.eventID}] Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
+                `Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
             );
         });
 
@@ -149,9 +142,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             ); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Could not create Klasse in itsLearning: Error`,
-            );
+            expect(loggerMock.error).toHaveBeenLastCalledWith('Could not create Klasse in itsLearning: Error');
         });
     });
 
@@ -166,18 +157,13 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.updatedKlasseEventHandler(event);
 
-            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams, string]>(
-                {
-                    id: event.organisationId,
-                    name: event.name,
-                    parentId: event.administriertVon!,
-                    type: 'Unspecified',
-                },
-                `${event.eventID}-KLASSE-UPDATED`,
-            );
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was updated.`,
-            );
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams]>({
+                id: event.organisationId,
+                name: event.name,
+                parentId: event.administriertVon!,
+                type: 'Unspecified',
+            });
+            expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.organisationId} was updated.`);
         });
 
         it('should skip event, if not enabled', async () => {
@@ -190,7 +176,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.updatedKlasseEventHandler(event);
 
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
             expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
@@ -203,9 +189,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.updatedKlasseEventHandler(event);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${event.eventID}] Klasse has no parent organisation. Aborting.`,
-            );
+            expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no parent organisation. Aborting.');
             expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
@@ -214,7 +198,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.updatedKlasseEventHandler(event);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Klasse has no name. Aborting.`);
+            expect(loggerMock.error).toHaveBeenCalledWith('Klasse has no name. Aborting.');
             expect(itslearningGroupRepoMock.createOrUpdateGroup).not.toHaveBeenCalled();
         });
 
@@ -229,7 +213,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.updatedKlasseEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `[EventID: ${event.eventID}] Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
+                `Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
             );
         });
 
@@ -246,9 +230,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.updatedKlasseEventHandler(event);
 
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Could not update Klasse in itsLearning: Error`,
-            );
+            expect(loggerMock.error).toHaveBeenLastCalledWith('Could not update Klasse in itsLearning: Error');
         });
     });
 
@@ -259,13 +241,8 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.deletedKlasseEventHandler(event);
 
-            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenLastCalledWith(
-                event.organisationId,
-                `${event.eventID}-KLASSE-DELETED`,
-            );
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was deleted.`,
-            );
+            expect(itslearningGroupRepoMock.deleteGroup).toHaveBeenLastCalledWith(event.organisationId);
+            expect(loggerMock.info).toHaveBeenLastCalledWith(`Klasse with ID ${event.organisationId} was deleted.`);
         });
 
         it('should skip event, if not enabled', async () => {
@@ -274,7 +251,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.deletedKlasseEventHandler(event);
 
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
             expect(itslearningGroupRepoMock.deleteGroup).not.toHaveBeenCalled();
         });
 
@@ -284,9 +261,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.deletedKlasseEventHandler(event);
 
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Could not delete Klasse in itsLearning: Error`,
-            );
+            expect(loggerMock.error).toHaveBeenLastCalledWith('Could not delete Klasse in itsLearning: Error');
         });
     });
 
@@ -302,7 +277,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.schuleItslearningEnabledEventHandler(event);
 
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
             expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
         });
 
@@ -317,7 +292,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE"!`,
+                `The organisation with ID ${event.organisationId} is not of type "SCHULE"!`,
             );
             expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
         });
@@ -335,7 +310,7 @@ describe('ItsLearning Organisations Event Handler', () => {
 
             await sut.schuleItslearningEnabledEventHandler(event);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
+            expect(loggerMock.error).toHaveBeenCalledWith('Ersatzschule, ignoring.');
             expect(itslearningGroupRepoMock.createOrUpdateGroups).not.toHaveBeenCalled();
         });
 
@@ -357,7 +332,7 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Could not create Schule (ID ${event.organisationId}) and its Klassen in itsLearning: Error`,
+                `Could not create Schule (ID ${event.organisationId}) and its Klassen in itsLearning: Error`,
             );
         });
 
@@ -385,31 +360,28 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 2 Klassen were created.`,
+                `Schule with ID ${event.organisationId} and its 2 Klassen were created.`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
-                [
-                    {
-                        id: event.organisationId,
-                        name: `${event.kennung} (${event.name})`,
-                        type: 'School',
-                        parentId: sut.ROOT_OEFFENTLICH,
-                    },
-                    {
-                        id: klasse1.id,
-                        name: `${klasse1.name}`,
-                        type: 'Unspecified',
-                        parentId: event.organisationId,
-                    },
-                    {
-                        id: klasse2.id,
-                        name: `Unbenannte Klasse`,
-                        type: 'Unspecified',
-                        parentId: event.organisationId,
-                    },
-                ],
-                `${event.eventID}-SCHULE-SYNC`,
-            );
+            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[]]>([
+                {
+                    id: event.organisationId,
+                    name: `${event.kennung} (${event.name})`,
+                    type: 'School',
+                    parentId: sut.ROOT_OEFFENTLICH,
+                },
+                {
+                    id: klasse1.id,
+                    name: `${klasse1.name}`,
+                    type: 'Unspecified',
+                    parentId: event.organisationId,
+                },
+                {
+                    id: klasse2.id,
+                    name: `Unbenannte Klasse`,
+                    type: 'Unspecified',
+                    parentId: event.organisationId,
+                },
+            ]);
         });
 
         it('should set default name for schule', async () => {
@@ -428,19 +400,16 @@ describe('ItsLearning Organisations Event Handler', () => {
             await sut.schuleItslearningEnabledEventHandler(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 0 Klassen were created.`,
+                `Schule with ID ${event.organisationId} and its 0 Klassen were created.`,
             );
-            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
-                [
-                    {
-                        id: event.organisationId,
-                        name: `${event.kennung} (Unbenannte Schule)`,
-                        type: 'School',
-                        parentId: sut.ROOT_OEFFENTLICH,
-                    },
-                ],
-                `${event.eventID}-SCHULE-SYNC`,
-            );
+            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[]]>([
+                {
+                    id: event.organisationId,
+                    name: `${event.kennung} (Unbenannte Schule)`,
+                    type: 'School',
+                    parentId: sut.ROOT_OEFFENTLICH,
+                },
+            ]);
         });
     });
 });

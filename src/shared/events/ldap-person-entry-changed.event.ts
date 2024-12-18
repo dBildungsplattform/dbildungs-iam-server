@@ -6,7 +6,6 @@ export class LdapPersonEntryChangedEvent extends BaseEvent {
         public readonly personId: PersonID,
         public readonly mailPrimaryAddress?: string,
         public readonly mailAlternativeAddress?: string,
-        public readonly userPasswordChanged?: boolean,
     ) {
         super();
     }

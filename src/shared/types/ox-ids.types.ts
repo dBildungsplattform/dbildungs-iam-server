@@ -1,8 +1,5 @@
 import { Flavor } from './flavor.types.js';
 
-declare const oxEmailSymbol: unique symbol;
-export type OXEmail = Flavor<string, typeof oxEmailSymbol>;
-
 declare const oxUserIdSymbol: unique symbol;
 export type OXUserID = Flavor<string, typeof oxUserIdSymbol>;
 
