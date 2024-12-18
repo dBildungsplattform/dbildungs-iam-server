@@ -2,15 +2,19 @@ import {
     Body,
     Controller,
     Delete,
+    Get,
     HttpCode,
+    HttpException,
     HttpStatus,
     Param,
     ParseFilePipeBuilder,
     Post,
+    Query,
     Res,
     StreamableFile,
     UploadedFile,
     UseFilters,
+    UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -45,6 +49,18 @@ import { ImportDomainError } from '../domain/import-domain.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { ImportvorgangQueryParams } from './importvorgang-query.param.js';
+import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
+import { ImportVorgangResponse } from './importvorgang.response.js';
+import { PagedResponse } from '../../../shared/paging/paged.response.js';
+import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
+import { ImportVorgang } from '../domain/import-vorgang.js';
+import { Paged } from '../../../shared/paging/paged.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { ContentDisposition, ContentType } from '../../../shared/http/http.headers.js';
+import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -52,8 +68,13 @@ import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 @ApiOAuth2(['openid'])
 @Controller({ path: 'import' })
 export class ImportController {
-    public constructor(private readonly importWorkflowFactory: ImportWorkflowFactory) {}
+    public constructor(
+        private readonly importWorkflowFactory: ImportWorkflowFactory,
+        private readonly logger: ClassLogger,
+        private readonly importVorgangRepository: ImportVorgangRepository,
+    ) {}
 
+    @UseGuards(StepUpGuard)
     @Post('upload')
     @ApiConsumes('multipart/form-data')
     @ApiOkResponse({ description: 'Returns an import upload response object.', type: ImportUploadResponse })
@@ -78,8 +99,12 @@ export class ImportController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<ImportUploadResponse> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        importWorkflow.initialize(body.organisationId, body.rolleId);
-        const result: DomainError | ImportUploadResultFields = await importWorkflow.validateImport(file, permissions);
+        const result: DomainError | ImportUploadResultFields = await importWorkflow.validateImport(
+            file,
+            body.organisationId,
+            body.rolleId,
+            permissions,
+        );
         if (result instanceof DomainError) {
             if (result instanceof ImportDomainError) {
                 throw result;
@@ -98,15 +123,13 @@ export class ImportController {
         );
     }
 
+    @UseGuards(StepUpGuard)
     @ApiProduces('text/plain')
     @Post('execute')
-    @HttpCode(HttpStatus.OK)
-    @ApiOkResponse({
-        description: 'Import transaction was executed successfully. The text file can be downloaded',
-        schema: {
-            type: 'string',
-            format: 'binary',
-        },
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNoContentResponse({
+        description: 'The execution of the import transaction was initiated successfully.',
+        type: undefined,
     })
     @ApiNotFoundResponse({ description: 'The import transaction does not exist.' })
     @ApiBadRequestResponse({
@@ -120,32 +143,34 @@ export class ImportController {
     })
     public async executeImport(
         @Body() body: ImportvorgangByIdBodyParams,
-        @Res({ passthrough: true }) res: Response,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<StreamableFile> {
+    ): Promise<void> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        importWorkflow.initialize(body.organisationId, body.rolleId);
-        const result: Result<Buffer> = await importWorkflow.executeImport(body.importvorgangId, permissions);
+        const result: Result<void> = await importWorkflow.executeImport(body.importvorgangId, permissions);
 
         if (!result.ok) {
             if (result.error instanceof ImportDomainError) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchzuführen. Fehler: ${result.error.message}`,
+                );
                 throw result.error;
             }
 
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            const schulConnexError: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
             );
-        } else {
-            const fileName: string = importWorkflow.getFileName(body.importvorgangId);
-            const contentDisposition: string = `attachment; filename="${fileName}"`;
-            res.set({
-                'Content-Type': 'text/plain',
-                'Content-Disposition': contentDisposition,
-            });
-            return new StreamableFile(result.value);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchzuführen. Fehler: ${schulConnexError.message}`,
+            );
+            throw schulConnexError;
         }
+
+        this.logger.info(
+            `Admin: ${permissions.personFields.id}) hat mit dem Importvorgang: ${body.importvorgangId} einen CSV Import durchgeführt.`,
+        );
     }
 
+    @UseGuards(StepUpGuard)
     @Delete(':importvorgangId')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ description: 'Delete a role by id.' })
@@ -169,5 +194,114 @@ export class ImportController {
                 );
             }
         }
+    }
+
+    @Get('history')
+    @ApiOperation({ description: 'Get the history of import.' })
+    @ApiOkResponse({
+        description: 'The import transactions were successfully returned',
+        type: [ImportVorgangResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get import transactions.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get import transactions.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting import transactions.' })
+    public async findImportTransactions(
+        @Query() queryParams: ImportvorgangQueryParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<PagedResponse<ImportVorgangResponse>> {
+        const [result, total]: [ImportVorgang<true>[], number] = await this.importVorgangRepository.findAuthorized(
+            permissions,
+            {
+                status: queryParams.status,
+                personId: permissions.personFields.id,
+                rolleIds: queryParams.rolleIds,
+                organisationIds: queryParams.organisationIds,
+                offset: queryParams.offset,
+                limit: queryParams.limit,
+            },
+        );
+
+        const pagedImportVorgangResponse: Paged<ImportVorgangResponse> = {
+            total: total,
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? result.length,
+            items: result.map((importVorgang: ImportVorgang<true>) => new ImportVorgangResponse(importVorgang)),
+        };
+
+        return new PagedResponse(pagedImportVorgangResponse);
+    }
+
+    @ApiProduces('text/plain')
+    @Get(':importvorgangId/download')
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description: 'The import result file was generated and downloaded successfully.',
+        schema: {
+            type: 'string',
+            format: 'binary',
+        },
+    })
+    @ApiNotFoundResponse({ description: 'The import transaction does not exist.' })
+    @ApiBadRequestResponse({
+        description: 'Something went wrong with the found import transaction.',
+        type: DbiamImportError,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to download the import result.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to download the import result.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while generating the import result file.',
+    })
+    public async downloadFile(
+        @Param() params: ImportvorgangByIdBodyParams,
+        @Res({ passthrough: true }) res: Response,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<StreamableFile> {
+        const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
+        const result: Result<Buffer> = await importWorkflow.downloadFile(params.importvorgangId, permissions);
+
+        if (!result.ok) {
+            if (result.error instanceof ImportDomainError) {
+                throw result.error;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
+            );
+        } else {
+            const fileName: string = importWorkflow.getFileName(params.importvorgangId);
+            const contentDisposition: string = `attachment; filename="${fileName}"`;
+
+            const headers: Record<string, string> = {} as Record<string, string>;
+            headers[ContentType] = 'text/plain';
+            headers[ContentDisposition] = contentDisposition;
+            res.set(headers);
+
+            return new StreamableFile(result.value);
+        }
+    }
+
+    @Get(':importvorgangId/status')
+    @ApiOperation({ description: 'Get status for the import transaction by id.' })
+    @ApiOkResponse({
+        description: 'The status for the import transaction was successfully returned.',
+        type: ImportVorgangStatusResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the status for the import transaction by id.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permission to get status for the import transaction by id.' })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error while getting status for the import transaction by id.',
+    })
+    public async getImportStatus(@Param() params: ImportvorgangByIdParams): Promise<ImportVorgangStatusResponse> {
+        const result: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(params.importvorgangId);
+        if (!result) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('ImportVorgang', params.importvorgangId),
+                ),
+            );
+        }
+
+        return new ImportVorgangStatusResponse(result);
     }
 }

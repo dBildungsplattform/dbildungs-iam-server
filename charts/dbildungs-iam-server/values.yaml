@@ -58,6 +58,22 @@ auth:
   pi_user_resolver: ''
   pi_user_realm: ''
   redis_password: ''
+  vidis_base_url: ''
+  vidis_username: ''
+  vidis_password: ''
+  vidis_region_name: ''
+  vidis_keycloak_group: ''
+  vidis_keycloak_role: ''
+  import_passphrase_secret: ''
+  import_passphrase_salt: ''
+  ox_password: ''
+
+ox:
+  enabled: false
+  username: 'oxadmin'
+  endpoint: 'https://webmail.example.com'
+  contextId: '10'
+  contextName: '10'
 
 backend:
   replicaCount: 1
@@ -139,6 +155,7 @@ backend:
     renameWaitingTimeInSeconds: 3
     stepUpTimeoutInSeconds: 900
     stepUpTimeoutEnabled: 'false'
+    maxOldSpaceSize: 3584
 
 autoscaling:
   enabled: false
@@ -156,8 +173,8 @@ status:
 cronjobs:
   enabled: true
   image:
-    tag: DBP-1083-latest
-    repository: ghcr.io/hpi-schul-cloud/cron-tools
+    tag: '1.1.0'
+    repository: docker.io/schulcloud/cron-tools
     pullPolicy: IfNotPresent
   port: 5656
   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
@@ -186,3 +203,7 @@ cronjobs:
       endpoint: '/api/cron/unlock'
       httpMethod: 'PUT'
       script: 'cron_trigger.sh'
+
+import:
+  csvFileMaxSizeInMB: 10
+  csvMaxNumberOfUsers: 2000

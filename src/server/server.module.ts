@@ -39,6 +39,7 @@ import { CronModule } from '../modules/cron/cron.module.js';
 import { ImportApiModule } from '../modules/import/import-api.module.js';
 import { ReporterModule } from '../modules/metrics/reporter/reporter.module.js';
 import { StatusModule } from '../modules/status/status.module.js';
+import { VidisModule } from '../modules/vidis/vidis.module.js';
 
 @Module({
     imports: [
@@ -100,6 +101,7 @@ import { StatusModule } from '../modules/status/status.module.js';
         ImportApiModule,
         ReporterModule,
         StatusModule,
+        VidisModule,
     ],
     providers: [
         {

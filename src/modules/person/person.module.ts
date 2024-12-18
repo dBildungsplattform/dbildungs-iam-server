@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonService } from './domain/person.service.js';
 import { UsernameGeneratorService } from './domain/username-generator.service.js';
@@ -11,8 +11,16 @@ import { ServiceProviderRepo } from '../service-provider/repo/service-provider.r
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
 import { OxUserBlacklistRepo } from './persistence/ox-user-blacklist.repo.js';
+import PersonTimeLimitService from './domain/person-time-limit-info.service.js';
+import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+
 @Module({
-    imports: [KeycloakAdministrationModule, LoggerModule.register(PersonModule.name), EventModule],
+    imports: [
+        KeycloakAdministrationModule,
+        LoggerModule.register(PersonModule.name),
+        EventModule,
+        forwardRef(() => PersonenKontextModule),
+    ],
     providers: [
         PersonRepository,
         PersonService,
@@ -23,7 +31,8 @@ import { OxUserBlacklistRepo } from './persistence/ox-user-blacklist.repo.js';
         RolleFactory,
         ServiceProviderRepo,
         OxUserBlacklistRepo,
+        PersonTimeLimitService,
     ],
-    exports: [PersonService, PersonFactory, PersonRepository],
+    exports: [PersonService, PersonFactory, PersonRepository, PersonTimeLimitService],
 })
 export class PersonModule {}

@@ -62,7 +62,16 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
             request.session.passport = { user: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL } };
             return true;
         }
-
-        return request.isAuthenticated();
+        const isAuthenticated: boolean = request.isAuthenticated();
+        if (isAuthenticated) {
+            this.logger.info(
+                `Benutzer ${request.passportUser?.userinfo.preferred_username} hat sich im Schulportal angemeldet.`,
+            );
+        } else {
+            this.logger.error(
+                `Fehlergeschlagener Login mit Benutzer ${request.passportUser?.userinfo.preferred_username}`,
+            );
+        }
+        return isAuthenticated;
     }
 }

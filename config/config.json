@@ -86,8 +86,19 @@
         "USER_RESOLVER": "mariadb_resolver",
         "REALM": "defrealm"
     },
+    "VIDIS": {
+        "BASE_URL": "https://service-stage.vidis.schule",
+        "USERNAME": "username",
+        "PASSWORD": "password",
+        "REGION_NAME": "test-region",
+        "KEYCLOAK_GROUP": "VIDIS-service",
+        "KEYCLOAK_ROLE": "VIDIS-user"
+    },
     "IMPORT": {
-        "IMPORT_FILE_MAXGROESSE_IN_MB": 10
+        "CSV_FILE_MAX_SIZE_IN_MB": 10,
+        "CSV_MAX_NUMBER_OF_USERS": 200,
+        "PASSPHRASE_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
+        "PASSPHRASE_SALT": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M"
     },
     "SYSTEM": {
         "RENAME_WAITING_TIME_IN_SECONDS": 3,
