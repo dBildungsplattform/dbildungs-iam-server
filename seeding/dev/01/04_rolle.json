@@ -131,7 +131,7 @@
         {
             "id": 14,
             "administeredBySchulstrukturknoten": 0,
-            "name": "IQSH Mitarbeiter ohne Landes-E-Mail",
+            "name": "IQSH Mitarbeiter",
             "rollenart": "LEHR",
             "merkmale": ["KOPERS_PFLICHT"],
             "systemrechte": [],
@@ -189,6 +189,16 @@
                 "MIGRATION_DURCHFUEHREN",
                 "PERSON_SYNCHRONISIEREN"
             ],
+            "serviceProviderIds": [],
+            "istTechnisch": true
+        },
+        {
+            "id": 102,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "Technical User NextCloud",
+            "rollenart": "SYSADMIN",
+            "merkmale": [],
+            "systemrechte": ["PERSONEN_LESEN"],
             "serviceProviderIds": [],
             "istTechnisch": true
         }
