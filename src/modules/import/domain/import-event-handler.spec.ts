@@ -24,6 +24,7 @@ import { ImportExecutedEvent } from '../../../shared/events/import-executed.even
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 import { ImportDomainError } from './import-domain.error.js';
+import { ImportStatus } from './import.enums.js';
 
 describe('ImportEventHandler', () => {
     let module: TestingModule;
@@ -179,7 +180,10 @@ describe('ImportEventHandler', () => {
                 `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${error.message}`,
             );
             expect(importDataRepositoryMock.save).not.toHaveBeenCalled();
-            expect(importVorgangRepositoryMock.save).not.toHaveBeenCalled();
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledWith({
+                ...importvorgang,
+                status: ImportStatus.FAILED,
+            });
         });
 
         it('should log error if the person has no start password', async () => {
@@ -222,7 +226,10 @@ describe('ImportEventHandler', () => {
             expect(person.newPassword).toBeUndefined();
             expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${person.id} has no start password!`);
             expect(importDataRepositoryMock.save).not.toHaveBeenCalled();
-            expect(importVorgangRepositoryMock.save).not.toHaveBeenCalled();
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledWith({
+                ...importvorgang,
+                status: ImportStatus.FAILED,
+            });
         });
 
         it('should log info if the person and PKs were saved successfully', async () => {
