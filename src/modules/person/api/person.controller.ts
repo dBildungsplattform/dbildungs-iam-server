@@ -50,7 +50,7 @@ import { ResultInterceptor } from '../../../shared/util/result-interceptor.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
@@ -637,7 +637,7 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<Result<string>> {
         //check that logged-in user is allowed to update person
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowedOrRequesterIsPerson(
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowed(
             params.personId,
             permissions,
         );
@@ -674,30 +674,26 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     @UseInterceptors(ResultInterceptor)
     public async resetUEMPassword(@Permissions() permissions: PersonPermissions): Promise<Result<string>> {
-        const personId: string = permissions.personFields.id;
-        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowedOrRequesterIsPerson(
-            personId,
-            permissions,
-        );
-        if (!personResult.ok) {
+        const { id, referrer }: PersonFields = permissions.personFields;
+        if (!id) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person', personId)),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person', id)),
             );
         }
-        if (!personResult.value.referrer) {
+        if (!referrer) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new PersonDomainError('Person-Referrer NOT defined', personId),
+                    new PersonDomainError('Person-Referrer NOT defined', id),
                 ),
             );
         }
         const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
-            personResult.value.id,
-            personResult.value.referrer,
+            id,
+            referrer,
         );
 
         if (!changeUserPasswordResult.ok) {
-            throw new PersonUserPasswordModificationError(personResult.value.id);
+            throw new PersonUserPasswordModificationError(id);
         }
 
         return { ok: true, value: changeUserPasswordResult.value };
