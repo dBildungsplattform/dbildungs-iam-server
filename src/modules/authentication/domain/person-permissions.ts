@@ -49,7 +49,7 @@ export class PersonPermissions implements IPersonPermissions {
             vorname: person.vorname,
             familienname: person.familienname,
             rufname: person.rufname,
-            username: person.username,
+            username: person.referrer,
             geschlecht: person.geschlecht,
             geburtsdatum: person.geburtsdatum,
             updatedAt: person.updatedAt,

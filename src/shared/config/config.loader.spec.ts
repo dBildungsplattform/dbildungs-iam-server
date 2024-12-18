@@ -70,12 +70,26 @@ describe('configloader', () => {
                     USER_RESOLVER: 'mariadb_resolver',
                     REALM: 'defrealm',
                 },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
                 OX: {
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
+                },
+                IMPORT: {
+                    CSV_FILE_MAX_SIZE_IN_MB: 10,
+                    CSV_MAX_NUMBER_OF_USERS: 2000,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                    PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
@@ -192,6 +206,14 @@ describe('configloader', () => {
                     USER_RESOLVER: 'mariadb_resolver',
                     REALM: 'defrealm',
                 },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
                 OX: {
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
@@ -199,6 +221,12 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                },
+                IMPORT: {
+                    CSV_FILE_MAX_SIZE_IN_MB: 10,
+                    CSV_MAX_NUMBER_OF_USERS: 2000,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                    PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,

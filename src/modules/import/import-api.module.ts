@@ -5,17 +5,18 @@ import { ImportModule } from './import.module.js';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ImportConfig } from '../../shared/config/import.config.js';
+import { LoggerModule } from '../../core/logging/logger.module.js';
 
 @Module({
     imports: [
         ImportModule,
+        LoggerModule.register(ImportApiModule.name),
         MulterModule.registerAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => ({
                 limits: {
                     fileSize:
-                        configService.getOrThrow<ImportConfig>('IMPORT').IMPORT_FILE_MAXGROESSE_IN_MB *
-                        Math.pow(1024, 2),
+                        configService.getOrThrow<ImportConfig>('IMPORT').CSV_FILE_MAX_SIZE_IN_MB * Math.pow(1024, 2),
                 },
             }),
             inject: [ConfigService],

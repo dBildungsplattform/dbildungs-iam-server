@@ -211,6 +211,7 @@ export class PersonController {
         const personEmailResponse: Option<PersonEmailResponse> = await this.emailRepo.getEmailAddressAndStatusForPerson(
             personResult.value,
         );
+
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,
             false,
