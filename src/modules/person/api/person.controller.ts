@@ -674,22 +674,22 @@ export class PersonController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
     @UseInterceptors(ResultInterceptor)
     public async resetUEMPassword(@Permissions() permissions: PersonPermissions): Promise<Result<string>> {
-        const { id, referrer }: PersonFields = permissions.personFields;
+        const { id, username }: PersonFields = permissions.personFields;
         if (!id) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('Person', id)),
             );
         }
-        if (!referrer) {
+        if (!username) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new PersonDomainError('Person-Referrer NOT defined', id),
+                    new PersonDomainError('Person-Username NOT defined', id),
                 ),
             );
         }
         const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
             id,
-            referrer,
+            username,
         );
 
         if (!changeUserPasswordResult.ok) {
