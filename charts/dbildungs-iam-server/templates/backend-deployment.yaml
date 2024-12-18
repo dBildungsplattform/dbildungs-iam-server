@@ -10,6 +10,11 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.backend.replicaCount }}
   {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 50%
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ template "common.names.name" . }}
