@@ -1103,31 +1103,23 @@ describe('PersonController', () => {
             personPermissionsMock = createMock<PersonPermissions>();
 
             it('should throw HttpException', async () => {
-                personRepositoryMock.findBy.mockResolvedValue([[], 0]);
-
-                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
-                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
-            });
-        });
-
-        describe('when permissions are insufficient to reset user-password', () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
-            it('should throw HttpNotFoundException', async () => {
-                personRepositoryMock.findById.mockResolvedValue(undefined);
-
                 await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
 
         describe('when person does NOT have a defined referrer', () => {
-            personPermissionsMock = createMock<PersonPermissions>();
+            const person: Person<true> = getPerson();
+            person.referrer = undefined;
+            const permissions: PersonPermissions = new PersonPermissions(
+                createMock<DBiamPersonenkontextRepo>(),
+                createMock<OrganisationRepository>(),
+                createMock<RolleRepo>(),
+                person,
+            );
 
             it('should throw HttpException', async () => {
-                personRepositoryMock.findBy.mockResolvedValue([[], 0]);
-
-                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
+                await expect(personController.resetUEMPassword(permissions)).rejects.toThrow(HttpException);
                 expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
             });
         });
@@ -1156,7 +1148,7 @@ describe('PersonController', () => {
             });
         });
 
-        describe('when resetting UEM-password for self returns a SchulConnexError', () => {
+        describe('when setting password in LDAP fails', () => {
             const person: Person<true> = getPerson();
             const permissions: PersonPermissions = new PersonPermissions(
                 createMock<DBiamPersonenkontextRepo>(),
@@ -1165,7 +1157,7 @@ describe('PersonController', () => {
                 person,
             );
 
-            it('should throw HttpException', async () => {
+            it('should throw DomainError', async () => {
                 ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
                     ok: false,
                     error: new PersonDomainError('Person', 'entityId', undefined),
