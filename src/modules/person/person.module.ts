@@ -13,6 +13,7 @@ import { EventModule } from '../../core/eventbus/event.module.js';
 import { OxUserBlacklistRepo } from './persistence/ox-user-blacklist.repo.js';
 import PersonTimeLimitService from './domain/person-time-limit-info.service.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+
 @Module({
     imports: [
         KeycloakAdministrationModule,
