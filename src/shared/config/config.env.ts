@@ -10,6 +10,7 @@ import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
 import { envToOptionalBoolean } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
+import { ImportConfig } from './import.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -23,6 +24,7 @@ export type Config = {
     OX: Partial<OxConfig>;
     SYSTEM: Partial<SystemConfig>;
     VIDIS: Partial<VidisConfig>;
+    IMPORT: Partial<ImportConfig>;
 };
 
 export default (): Config => ({
@@ -44,6 +46,7 @@ export default (): Config => ({
         ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
         OEFFENTLICHE_SCHULEN_DOMAIN: process.env['LDAP_OEFFENTLICHE_SCHULEN_DOMAIN'],
         ERSATZSCHULEN_DOMAIN: process.env['LDAP_ERSATZSCHULEN_DOMAIN'],
+        BASE_DN: process.env['LDAP_BASE_DN'],
     },
     FRONTEND: {
         SESSION_SECRET: process.env['FRONTEND_SESSION_SECRET'],
@@ -79,6 +82,8 @@ export default (): Config => ({
         ENDPOINT: process.env['OX_ENDPOINT'],
         USERNAME: process.env['OX_USERNAME'],
         PASSWORD: process.env['OX_PASSWORD'],
+        CONTEXT_ID: process.env['OX_CONTEXT_ID'],
+        CONTEXT_NAME: process.env['OX_CONTEXT_NAME'],
     },
     SYSTEM: {
         RENAME_WAITING_TIME_IN_SECONDS: process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS']
@@ -96,5 +101,15 @@ export default (): Config => ({
         REGION_NAME: process.env['VIDIS_REGION_NAME'],
         KEYCLOAK_GROUP: process.env['VIDIS_KEYCLOAK_GROUP'],
         KEYCLOAK_ROLE: process.env['VIDIS_KEYCLOAK_ROLE'],
+    },
+    IMPORT: {
+        PASSPHRASE_SECRET: process.env['PASSPHRASE_SECRET'],
+        PASSPHRASE_SALT: process.env['PASSPHRASE_SALT'],
+        CSV_FILE_MAX_SIZE_IN_MB: isNaN(Number(process.env['CSV_FILE_MAX_SIZE_IN_MB']))
+            ? undefined
+            : Number(process.env['CSV_FILE_MAX_SIZE_IN_MB']),
+        CSV_MAX_NUMBER_OF_USERS: isNaN(Number(process.env['CSV_MAX_NUMBER_OF_USERS']))
+            ? undefined
+            : Number(process.env['CSV_MAX_NUMBER_OF_USERS']),
     },
 });

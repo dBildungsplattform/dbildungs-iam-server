@@ -106,7 +106,7 @@ describe('ImportVorgangRepository', () => {
             expect(result.id).toBeDefined();
         });
 
-        it('should updated an existing ImportVorgang', async () => {
+        it('should update an existing ImportVorgang', async () => {
             const importVorgang: ImportVorgang<false> = DoFactory.createImportVorgang(false);
             const createdImportVorgang: ImportVorgang<true> = await sut.save(importVorgang);
             createdImportVorgang.status = ImportStatus.VALID;

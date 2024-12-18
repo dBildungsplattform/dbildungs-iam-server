@@ -167,16 +167,22 @@ describe('ItsLearning Persons Event Handler', () => {
             it('should create or update user', async () => {
                 itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(person.id));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
+                await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith({
-                    id: person.id,
-                    firstName: person.vorname,
-                    lastName: person.familienname,
-                    username: person.referrer,
-                    institutionRoleType: rollenartToIMSESInstitutionRole(rolleWithItslearning.rollenart),
-                });
-                expect(loggerMock.info).toHaveBeenCalledWith(`Updated person with ID ${person.id} in itslearning!`);
+                expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
+                    {
+                        id: person.id,
+                        firstName: person.vorname,
+                        lastName: person.familienname,
+                        username: person.referrer,
+                        institutionRoleType: rollenartToIMSESInstitutionRole(rolleWithItslearning.rollenart),
+                    },
+                    `${event.eventID}-SYNC-PERSON`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `[EventID: ${event.eventID}] Updated person with ID ${person.id} in itslearning!`,
+                );
             });
 
             it('should log error if creation failed', async () => {
@@ -184,11 +190,12 @@ describe('ItsLearning Persons Event Handler', () => {
                     new ItsLearningError('Error Test'),
                 );
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(person.id));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
+                await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not create/update person with ID ${person.id} in itslearning!`,
+                    `[EventID: ${event.eventID}] Could not create/update person with ID ${person.id} in itslearning!`,
                 );
             });
 
@@ -199,7 +206,8 @@ describe('ItsLearning Persons Event Handler', () => {
                     value: { deleted: 0, updated: 1 },
                 } satisfies Result<SetMembershipsResult, DomainError>);
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(person.id));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
+                await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(itslearningMembershipRepoMock.setMemberships).toHaveBeenCalledWith(
                     person.id,
@@ -213,9 +221,10 @@ describe('ItsLearning Persons Event Handler', () => {
                             role: rolleWithItslearning.rollenart,
                         },
                     ]),
+                    `${event.eventID}-SYNC-PERSON-MEMBERSHIPS`,
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Created/Updated 1 and deleted 0 memberships for person with ID ${person.id} to itslearning!`,
+                    `[EventID: ${event.eventID}] Created/Updated 1 and deleted 0 memberships for person with ID ${person.id} to itslearning!`,
                 );
             });
 
@@ -226,10 +235,11 @@ describe('ItsLearning Persons Event Handler', () => {
                     error: new ItsLearningError('Error Test'),
                 } satisfies Result<SetMembershipsResult, DomainError>);
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(person.id));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
+                await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not delete person with ID ${person.id} from itslearning!`,
+                    `[EventID: ${event.eventID}] Could not delete person with ID ${person.id} from itslearning!`,
                 );
             });
         });
@@ -258,18 +268,23 @@ describe('ItsLearning Persons Event Handler', () => {
             it('should delete person', async () => {
                 itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(undefined);
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(person.id));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
+                await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(person.id);
+                expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(
+                    person.id,
+                    `${event.eventID}-DELETE`,
+                );
             });
 
             it('should log error if deletion failed', async () => {
                 itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(new ItsLearningError('Error Test'));
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(person.id));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(person.id);
+                await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not delete person with ID ${person.id} from itslearning!`,
+                    `[EventID: ${event.eventID}] Could not delete person with ID ${person.id} from itslearning!`,
                 );
             });
         });
@@ -279,18 +294,24 @@ describe('ItsLearning Persons Event Handler', () => {
                 const personId: string = faker.string.uuid();
                 personRepoMock.findById.mockResolvedValueOnce(undefined);
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(personId));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(personId);
+                await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${personId} could not be found!`);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `[EventID: ${event.eventID}] Person with ID ${personId} could not be found!`,
+                );
             });
 
             it('should log error, if person has no username', async () => {
                 const personId: string = faker.string.uuid();
                 personRepoMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true, { referrer: undefined }));
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(personId));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(personId);
+                await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${personId} has no username!`);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `[EventID: ${event.eventID}] Person with ID ${personId} has no username!`,
+                );
             });
         });
 
@@ -298,9 +319,12 @@ describe('ItsLearning Persons Event Handler', () => {
             it('should log info and return', async () => {
                 sut.ENABLED = false;
 
-                await sut.personExternalSystemSyncEventHandler(new PersonExternalSystemsSyncEvent(faker.string.uuid()));
+                const event: PersonExternalSystemsSyncEvent = new PersonExternalSystemsSyncEvent(faker.string.uuid());
+                await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `[EventID: ${event.eventID}] Not enabled, ignoring event.`,
+                );
             });
         });
     });
