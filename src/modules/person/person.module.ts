@@ -10,6 +10,7 @@ import { RolleFactory } from '../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../service-provider/repo/service-provider.repo.js';
 import { OrganisationRepository } from '../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
+import { OxUserBlacklistRepo } from './persistence/ox-user-blacklist.repo.js';
 import PersonTimeLimitService from './domain/person-time-limit-info.service.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 @Module({
@@ -28,6 +29,7 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
         OrganisationRepository,
         RolleFactory,
         ServiceProviderRepo,
+        OxUserBlacklistRepo,
         PersonTimeLimitService,
     ],
     exports: [PersonService, PersonFactory, PersonRepository, PersonTimeLimitService],

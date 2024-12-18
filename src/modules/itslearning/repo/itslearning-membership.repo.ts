@@ -37,14 +37,23 @@ export class ItslearningMembershipRepo {
         this.ROOT_NAMES = [itslearningConfig.ROOT, itslearningConfig.ROOT_OEFFENTLICH, itslearningConfig.ROOT_ERSATZ];
     }
 
-    public readMembershipsForPerson(personId: PersonID): Promise<Result<MembershipResponse[], DomainError>> {
-        return this.itslearningService.send(new ReadMembershipsForPersonAction(personId));
+    public readMembershipsForPerson(
+        personId: PersonID,
+        syncId?: string,
+    ): Promise<Result<MembershipResponse[], DomainError>> {
+        return this.itslearningService.send(new ReadMembershipsForPersonAction(personId), syncId);
     }
 
-    public async createMemberships(memberships: CreateMembershipParams[]): Promise<Option<DomainError>> {
+    public async createMemberships(
+        memberships: CreateMembershipParams[],
+        syncId?: string,
+    ): Promise<Option<DomainError>> {
         const createMembershipsAction: CreateMembershipsAction = new CreateMembershipsAction(memberships);
 
-        const createResult: Result<void, DomainError> = await this.itslearningService.send(createMembershipsAction);
+        const createResult: Result<void, DomainError> = await this.itslearningService.send(
+            createMembershipsAction,
+            syncId,
+        );
 
         if (!createResult.ok) {
             return createResult.error;
@@ -53,9 +62,10 @@ export class ItslearningMembershipRepo {
         return undefined;
     }
 
-    public async removeMemberships(membershipIDs: string[]): Promise<Option<DomainError>> {
+    public async removeMemberships(membershipIDs: string[], syncId?: string): Promise<Option<DomainError>> {
         const deleteResult: Result<void, DomainError> = await this.itslearningService.send(
             new DeleteMembershipsAction(membershipIDs),
+            syncId,
         );
 
         if (!deleteResult.ok) {
@@ -68,14 +78,17 @@ export class ItslearningMembershipRepo {
     public async setMemberships(
         personId: PersonID,
         memberships: SetMembershipParams[],
+        syncId?: string,
     ): Promise<Result<SetMembershipsResult, DomainError>> {
         const returnResult: SetMembershipsResult = {
             updated: 0,
             deleted: 0,
         };
 
-        const currentMemberships: Result<MembershipResponse[], DomainError> =
-            await this.readMembershipsForPerson(personId);
+        const currentMemberships: Result<MembershipResponse[], DomainError> = await this.readMembershipsForPerson(
+            personId,
+            syncId,
+        );
 
         if (!currentMemberships.ok) {
             return {
@@ -111,6 +124,7 @@ export class ItslearningMembershipRepo {
         if (membershipsToBeRemoved.length > 0) {
             const deleteError: Option<DomainError> = await this.removeMemberships(
                 membershipsToBeRemoved.map((mr: MembershipResponse) => mr.id),
+                syncId,
             );
 
             if (deleteError) {
@@ -134,7 +148,7 @@ export class ItslearningMembershipRepo {
         );
 
         if (membershipsToCreateOrUpdate.length > 0) {
-            const createError: Option<DomainError> = await this.createMemberships(membershipsToCreateOrUpdate);
+            const createError: Option<DomainError> = await this.createMemberships(membershipsToCreateOrUpdate, syncId);
 
             if (createError) {
                 this.logger.error(
