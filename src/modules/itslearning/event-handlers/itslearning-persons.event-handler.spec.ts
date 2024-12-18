@@ -86,13 +86,12 @@ describe('ItsLearning Persons Event Handler', () => {
                 ok: true,
                 value: { deleted: 0, updated: 1 },
             } satisfies Result<SetMembershipsResult, DomainError>);
-            const eventID: string = faker.string.uuid();
 
-            await sut.updateMemberships(personId, currentKontexte, eventID);
+            await sut.updateMemberships(personId, currentKontexte);
 
             expect(itslearningMembershipRepoMock.setMemberships).toHaveBeenCalledTimes(1);
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `[EventID: ${eventID}] Set ${currentKontexte.length} memberships for person ${personId}`,
+                `Set ${currentKontexte.length} memberships for person ${personId}`,
             );
         });
 
@@ -104,13 +103,12 @@ describe('ItsLearning Persons Event Handler', () => {
                 SetMembershipsResult,
                 DomainError
             >);
-            const eventID: string = faker.string.uuid();
 
-            await sut.updateMemberships(personId, currentKontexte, eventID);
+            await sut.updateMemberships(personId, currentKontexte);
 
             expect(itslearningMembershipRepoMock.setMemberships).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${eventID}] Could not set ${currentKontexte.length} memberships for person ${personId}`,
+                `Could not set ${currentKontexte.length} memberships for person ${personId}`,
                 error,
             );
         });
@@ -120,24 +118,22 @@ describe('ItsLearning Persons Event Handler', () => {
         it('should delete person in itsLearning', async () => {
             const personID: string = faker.string.uuid();
             itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(undefined);
-            const eventID: string = faker.string.uuid();
 
-            await sut.deletePerson(personID, eventID);
+            await sut.deletePerson(personID);
 
             expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID);
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${eventID}] Person with ID ${personID} deleted.`);
+            expect(loggerMock.info).toHaveBeenCalledWith(`Person with ID ${personID} deleted.`);
         });
 
         it('should log error if person could not be deleted', async () => {
             const personID: string = faker.string.uuid();
             itslearningPersonRepoMock.deletePerson.mockResolvedValueOnce(new ItsLearningError('Test Error'));
-            const eventID: string = faker.string.uuid();
 
-            await sut.deletePerson(personID, eventID);
+            await sut.deletePerson(personID);
 
             expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID);
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${eventID}] Could not delete person with ID ${personID} from itsLearning.`,
+                `Could not delete person with ID ${personID} from itsLearning.`,
             );
         });
     });
@@ -165,48 +161,38 @@ describe('ItsLearning Persons Event Handler', () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
             itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
             itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined); // Create person
-            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
 
-            await sut.personRenamedEventHandler(event);
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
 
-            expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
-                {
-                    id: person.id,
-                    firstName: person.vorname,
-                    lastName: person.familienname,
-                    username: person.referrer,
-                    institutionRoleType: personResponse.institutionRole,
-                },
-                `${event.eventID}-PERSON-RENAMED-UPDATE`,
-            );
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                `[EventID: ${event.eventID}] Person with ID ${person.id} updated in itsLearning!`,
-            );
+            expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith({
+                id: person.id,
+                firstName: person.vorname,
+                lastName: person.familienname,
+                username: person.referrer,
+                institutionRoleType: personResponse.institutionRole,
+            });
+            expect(loggerMock.info).toHaveBeenCalledWith(`Person with ID ${person.id} updated in itsLearning!`);
         });
 
         it('should log error if person could not be updated', async () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
             itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
             itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Create person
-            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
 
-            await sut.personRenamedEventHandler(event);
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
 
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${event.eventID}] Person with ID ${person.id} could not be updated in itsLearning!`,
+                `Person with ID ${person.id} could not be updated in itsLearning!`,
             );
         });
 
         describe('when person is invalid', () => {
             it('should log error, if person has no referrer', async () => {
                 const [person]: [Person<true>, PersonResponse] = createPersonAndResponse({ referrer: undefined });
-                const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
 
-                await sut.personRenamedEventHandler(event);
+                await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
 
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Person with ID ${person.id} has no username!`,
-                );
+                expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${person.id} has no username!`);
             });
         });
 
@@ -214,12 +200,11 @@ describe('ItsLearning Persons Event Handler', () => {
             it('should log info', async () => {
                 const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
                 itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(undefined); // Read person
-                const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
 
-                await sut.personRenamedEventHandler(event);
+                await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Person with ID ${person.id} is not in itslearning, ignoring.`,
+                    `Person with ID ${person.id} is not in itslearning, ignoring.`,
                 );
             });
         });
@@ -227,11 +212,10 @@ describe('ItsLearning Persons Event Handler', () => {
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
             const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
-            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
 
-            await sut.personRenamedEventHandler(event);
+            await sut.personRenamedEventHandler(PersonRenamedEvent.fromPerson(person, faker.internet.userName()));
 
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
         });
     });
 
@@ -246,34 +230,27 @@ describe('ItsLearning Persons Event Handler', () => {
         it('should send person to itsLearning', async () => {
             const kontextData: PersonenkontextUpdatedData = makeKontextEventData({ rolle: RollenArt.LERN });
             itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined);
-            const eventID: string = faker.string.uuid();
 
-            await sut.updatePerson(person, [kontextData], eventID);
+            await sut.updatePerson(person, [kontextData]);
 
-            expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith(
-                {
-                    id: person.id,
-                    firstName: person.vorname,
-                    lastName: person.familienname,
-                    username: person.referrer,
-                    institutionRoleType: IMSESInstitutionRoleType.STUDENT,
-                },
-                eventID,
-            );
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                `[EventID: ${eventID}] Person with ID ${person.id} created in itsLearning!`,
-            );
+            expect(itslearningPersonRepoMock.createOrUpdatePerson).toHaveBeenCalledWith({
+                id: person.id,
+                firstName: person.vorname,
+                lastName: person.familienname,
+                username: person.referrer,
+                institutionRoleType: IMSESInstitutionRoleType.STUDENT,
+            });
+            expect(loggerMock.info).toHaveBeenCalledWith(`Person with ID ${person.id} created in itsLearning!`);
         });
 
         it('should log error if person could not be created', async () => {
             const kontextData: PersonenkontextUpdatedData = makeKontextEventData({ rolle: RollenArt.LERN });
             itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(new ItsLearningError('Test Error'));
-            const eventID: string = faker.string.uuid();
 
-            await sut.updatePerson(person, [kontextData], eventID);
+            await sut.updatePerson(person, [kontextData]);
 
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${eventID}] Person with ID ${person.id} could not be sent to itsLearning! Error: Test Error`,
+                `Person with ID ${person.id} could not be sent to itsLearning! Error: Test Error`,
             );
         });
 
@@ -281,13 +258,10 @@ describe('ItsLearning Persons Event Handler', () => {
             it('should log error, if person has no referrer', async () => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { referrer, ...personWithoutReferrer }: PersonenkontextUpdatedPersonData = person;
-                const eventID: string = faker.string.uuid();
 
-                await sut.updatePerson(personWithoutReferrer, [createMock()], eventID);
+                await sut.updatePerson(personWithoutReferrer, [createMock()]);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${eventID}] Person with ID ${person.id} has no username!`,
-                );
+                expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${person.id} has no username!`);
             });
         });
     });
@@ -310,14 +284,8 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
-            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(
-                personId,
-                email,
-                `${generatedEvent.eventID}-EMAIL-UPDATE`,
-            );
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                `[EventID: ${generatedEvent.eventID}] Updated E-Mail for person with ID ${personId}!`,
-            );
+            expect(itslearningPersonRepoMock.updateEmail).toHaveBeenCalledWith(personId, email);
+            expect(loggerMock.info).toHaveBeenCalledWith(`Updated E-Mail for person with ID ${personId}!`);
         });
 
         it('should log error, if email could not be updated', async () => {
@@ -325,9 +293,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(
-                `[EventID: ${generatedEvent.eventID}] Could not update E-Mail for person with ID ${personId}!`,
-            );
+            expect(loggerMock.error).toHaveBeenCalledWith(`Could not update E-Mail for person with ID ${personId}!`);
         });
 
         it('should skip event, if not enabled', async () => {
@@ -336,9 +302,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.oxUserChangedEventHandler(generatedEvent);
 
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                `[EventID: ${generatedEvent.eventID}] Not enabled, ignoring email update.`,
-            );
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring email update.');
         });
     });
 
@@ -402,11 +366,7 @@ describe('ItsLearning Persons Event Handler', () => {
             await sut.updatePersonenkontexteEventHandler(event);
 
             expect(updateMembershipsSpy).toHaveBeenCalledTimes(1);
-            expect(updateMembershipsSpy).toHaveBeenCalledWith(
-                event.person.id,
-                expect.objectContaining({ length: 2 }),
-                `${event.eventID}-UPDATE-MEMBERSHIPS`,
-            );
+            expect(updateMembershipsSpy).toHaveBeenCalledWith(event.person.id, expect.objectContaining({ length: 2 }));
         });
 
         it('should not call updatePerson, if no relevant kontext exists', async () => {
@@ -452,7 +412,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.updatePersonenkontexteEventHandler(event);
 
-            expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event.');
         });
     });
 });

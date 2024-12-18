@@ -41,7 +41,6 @@ import {
 } from '../../../../test/utils/organisation-test-helper.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
-import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -95,7 +94,6 @@ describe('dbiam Personenkontext Repo', () => {
                 PersonFactory,
                 PersonRepository,
                 UsernameGeneratorService,
-                OxUserBlacklistRepo,
                 RolleFactory,
                 RolleRepo,
                 ServiceProviderRepo,

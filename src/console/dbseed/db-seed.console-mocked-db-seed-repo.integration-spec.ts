@@ -25,7 +25,6 @@ import { DBiamPersonenkontextService } from '../../modules/personenkontext/domai
 import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { LdapClient } from '../../core/ldap/domain/ldap-client.js';
-import { OxUserBlacklistRepo } from '../../modules/person/persistence/ox-user-blacklist.repo.js';
 
 describe('DbSeedConsoleMockedDbSeedRepo', () => {
     let module: TestingModule;
@@ -51,7 +50,6 @@ describe('DbSeedConsoleMockedDbSeedRepo', () => {
             providers: [
                 UsernameGeneratorService,
                 DBiamPersonenkontextRepo,
-                OxUserBlacklistRepo,
                 DbSeedConsole,
                 DbSeedService,
                 DBiamPersonenkontextService,

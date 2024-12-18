@@ -10,7 +10,6 @@ import { DomainError } from '../../../shared/error/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('PersonDeleteService', () => {
     let module: TestingModule;
@@ -119,7 +118,7 @@ describe('PersonDeleteService', () => {
         });
 
         describe('when no error during loading of personenkontexte', () => {
-            it('should succeed', async () => {
+            it('should log error', async () => {
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
                     createMock<Personenkontext<true>>({
                         // eslint-disable-next-line @typescript-eslint/require-await
@@ -127,9 +126,6 @@ describe('PersonDeleteService', () => {
                             return DoFactory.createRolle(true, {
                                 serviceProviderData: [DoFactory.createServiceProvider(true)],
                             });
-                        },
-                        getOrganisation(): Promise<Option<Organisation<true>>> {
-                            return Promise.resolve(DoFactory.createOrganisation(true));
                         },
                     }),
                 ]);

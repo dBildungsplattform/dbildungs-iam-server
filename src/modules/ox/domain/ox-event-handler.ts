@@ -302,13 +302,9 @@ export class OxEventHandler {
         const requestedEmailAddresses: Option<EmailAddress<true>[]> =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId, EmailAddressStatus.REQUESTED);
         if (!requestedEmailAddresses || !requestedEmailAddresses[0]) {
-            this.logger.error(`No REQUESTED email-address found for personId:${personId}`);
+            this.logger.error(`No requested email-address found for personId:${personId}`);
             return undefined;
         }
-        this.logger.info(
-            `Found mostRecentRequested Email-Address:${JSON.stringify(requestedEmailAddresses[0].address)} For personId:${personId}`,
-        );
-
         return requestedEmailAddresses[0];
     }
 
@@ -511,7 +507,7 @@ export class OxEventHandler {
         }
 
         this.logger.info(
-            `User created in OX, oxUserId:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}, personId:${personId}`,
+            `User created in OX, userId:${createUserResult.value.id}, email:${createUserResult.value.primaryEmail}`,
         );
 
         mostRecentRequestedEmailAddress.oxUserID = createUserResult.value.id;
@@ -618,18 +614,15 @@ export class OxEventHandler {
             );
         }
         const newAliasesArray: string[] = getDataResult.value.aliases;
-        this.logger.info(`Found Current aliases:${JSON.stringify(newAliasesArray)} For personId:${personId}`);
-
         newAliasesArray.push(requestedEmailAddressString);
-        this.logger.info(`Added New alias:${requestedEmailAddressString} For personId:${personId}`);
 
         const params: ChangeUserParams = {
             contextId: this.contextID,
-            userId: person.oxUserId,
-            username: person.referrer,
+            userId: getDataResult.value.id,
+            username: getDataResult.value.username,
             givenname: person.vorname,
             surname: person.familienname,
-            displayname: person.referrer, //IS EXPLICITLY NOT SET to vorname+familienname
+            displayname: person.referrer,
             defaultSenderAddress: requestedEmailAddressString,
             email1: requestedEmailAddressString,
             aliases: newAliasesArray,
@@ -659,8 +652,8 @@ export class OxEventHandler {
             new OxUserChangedEvent(
                 personId,
                 person.referrer,
-                person.oxUserId,
-                person.referrer, //strictEquals the new OxUsername
+                getDataResult.value.id,
+                getDataResult.value.username,
                 this.contextID,
                 this.contextName,
                 requestedEmailAddressString,

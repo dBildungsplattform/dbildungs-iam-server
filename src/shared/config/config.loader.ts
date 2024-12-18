@@ -35,7 +35,7 @@ export function loadConfigFiles(): JsonConfig {
         merged = merge(json, env);
     }
 
-    const mergedConfig: JsonConfig = plainToInstance(JsonConfig, merged, { enableImplicitConversion: false });
+    const mergedConfig: JsonConfig = plainToInstance(JsonConfig, merged, { enableImplicitConversion: true });
 
     const errors: ValidationError[] = validateSync(mergedConfig, {
         skipMissingProperties: false,

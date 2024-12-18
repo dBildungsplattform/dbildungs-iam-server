@@ -38,19 +38,19 @@ export class ItsLearningOrganisationsEventHandler {
 
     @EventHandler(KlasseCreatedEvent)
     public async createKlasseEventHandler(event: KlasseCreatedEvent): Promise<void> {
-        this.logger.info(`[EventID: ${event.eventID}] Received KlasseCreatedEvent, ID: ${event.id}`);
+        this.logger.info(`Received KlasseCreatedEvent, ID: ${event.id}`);
 
         if (!this.ENABLED) {
-            this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            this.logger.info('Not enabled, ignoring event.');
             return;
         }
 
         if (!event.administriertVon) {
-            return this.logger.error(`[EventID: ${event.eventID}] Klasse has no parent organisation. Aborting.`);
+            return this.logger.error('Klasse has no parent organisation. Aborting.');
         }
 
         if (!event.name) {
-            return this.logger.error(`[EventID: ${event.eventID}] Klasse has no name. Aborting.`);
+            return this.logger.error('Klasse has no name. Aborting.');
         }
 
         {
@@ -58,7 +58,7 @@ export class ItsLearningOrganisationsEventHandler {
             const parent: Option<Organisation<true>> = await this.organisationRepo.findById(event.administriertVon);
             if (!parent?.itslearningEnabled) {
                 return this.logger.info(
-                    `[EventID: ${event.eventID}] Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
+                    `Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
                 );
             }
         }
@@ -70,37 +70,30 @@ export class ItsLearningOrganisationsEventHandler {
             parentId: event.administriertVon,
         };
 
-        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(
-            params,
-            `${event.eventID}-KLASSE-CREATED`,
-        );
+        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(params);
 
         if (createError) {
-            return this.logger.error(
-                `[EventID: ${event.eventID}] Could not create Klasse in itsLearning: ${createError.message}`,
-            );
+            return this.logger.error(`Could not create Klasse in itsLearning: ${createError.message}`);
         }
 
-        this.logger.info(`[EventID: ${event.eventID}] Klasse with ID ${event.id} created.`);
+        this.logger.info(`Klasse with ID ${event.id} created.`);
     }
 
     @EventHandler(KlasseUpdatedEvent)
     public async updatedKlasseEventHandler(event: KlasseUpdatedEvent): Promise<void> {
-        this.logger.info(
-            `[EventID: ${event.eventID}] Received KlasseUpdatedEvent, ID: ${event.organisationId}, new name: ${event.name}`,
-        );
+        this.logger.info(`Received KlasseUpdatedEvent, ID: ${event.organisationId}, new name: ${event.name}`);
 
         if (!this.ENABLED) {
-            this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            this.logger.info('Not enabled, ignoring event.');
             return;
         }
 
         if (!event.administriertVon) {
-            return this.logger.error(`[EventID: ${event.eventID}] Klasse has no parent organisation. Aborting.`);
+            return this.logger.error('Klasse has no parent organisation. Aborting.');
         }
 
         if (!event.name) {
-            return this.logger.error(`[EventID: ${event.eventID}] Klasse has no name. Aborting.`);
+            return this.logger.error('Klasse has no name. Aborting.');
         }
 
         {
@@ -108,7 +101,7 @@ export class ItsLearningOrganisationsEventHandler {
             const parent: Option<Organisation<true>> = await this.organisationRepo.findById(event.administriertVon);
             if (!parent?.itslearningEnabled) {
                 return this.logger.info(
-                    `[EventID: ${event.eventID}] Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
+                    `Parent Organisation (${event.administriertVon}) is not an itslearning schule.`,
                 );
             }
         }
@@ -120,58 +113,44 @@ export class ItsLearningOrganisationsEventHandler {
             parentId: event.administriertVon,
         };
 
-        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(
-            params,
-            `${event.eventID}-KLASSE-UPDATED`,
-        );
+        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroup(params);
 
         if (createError) {
-            return this.logger.error(
-                `[EventID: ${event.eventID}] Could not update Klasse in itsLearning: ${createError.message}`,
-            );
+            return this.logger.error(`Could not update Klasse in itsLearning: ${createError.message}`);
         }
 
-        this.logger.info(`[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was updated.`);
+        this.logger.info(`Klasse with ID ${event.organisationId} was updated.`);
     }
 
     @EventHandler(KlasseDeletedEvent)
     public async deletedKlasseEventHandler(event: KlasseDeletedEvent): Promise<void> {
-        this.logger.info(`[EventID: ${event.eventID}] Received KlasseUpdatedEvent, ID: ${event.organisationId}`);
+        this.logger.info(`Received KlasseUpdatedEvent, ID: ${event.organisationId}`);
 
         if (!this.ENABLED) {
-            this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            this.logger.info('Not enabled, ignoring event.');
             return;
         }
 
-        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(
-            event.organisationId,
-            `${event.eventID}-KLASSE-DELETED`,
-        );
+        const deleteError: Option<DomainError> = await this.itslearningGroupRepo.deleteGroup(event.organisationId);
 
         if (deleteError) {
-            return this.logger.error(
-                `[EventID: ${event.eventID}] Could not delete Klasse in itsLearning: ${deleteError.message}`,
-            );
+            return this.logger.error(`Could not delete Klasse in itsLearning: ${deleteError.message}`);
         }
 
-        this.logger.info(`[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was deleted.`);
+        this.logger.info(`Klasse with ID ${event.organisationId} was deleted.`);
     }
 
     @EventHandler(SchuleItslearningEnabledEvent)
     public async schuleItslearningEnabledEventHandler(event: SchuleItslearningEnabledEvent): Promise<void> {
-        this.logger.info(
-            `[EventID: ${event.eventID}] Received EnableSchuleItslearningEvent, ID: ${event.organisationId}`,
-        );
+        this.logger.info(`Received EnableSchuleItslearningEvent, ID: ${event.organisationId}`);
 
         if (!this.ENABLED) {
-            this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
+            this.logger.info('Not enabled, ignoring event.');
             return;
         }
 
         if (event.typ !== OrganisationsTyp.SCHULE) {
-            this.logger.error(
-                `[EventID: ${event.eventID}] The organisation with ID ${event.organisationId} is not of type "SCHULE"!`,
-            );
+            this.logger.error(`The organisation with ID ${event.organisationId} is not of type "SCHULE"!`);
             return;
         }
 
@@ -181,7 +160,7 @@ export class ItsLearningOrganisationsEventHandler {
         ]);
 
         if (rootType === RootDirectChildrenType.ERSATZ) {
-            this.logger.error(`[EventID: ${event.eventID}] Ersatzschule, ignoring.`);
+            this.logger.error('Ersatzschule, ignoring.');
             return;
         }
 
@@ -203,19 +182,14 @@ export class ItsLearningOrganisationsEventHandler {
             parentId: this.ROOT_OEFFENTLICH,
         });
 
-        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroups(
-            createParams,
-            `${event.eventID}-SCHULE-SYNC`,
-        );
+        const createError: Option<DomainError> = await this.itslearningGroupRepo.createOrUpdateGroups(createParams);
 
         if (createError) {
             return this.logger.error(
-                `[EventID: ${event.eventID}] Could not create Schule (ID ${event.organisationId}) and its Klassen in itsLearning: ${createError.message}`,
+                `Could not create Schule (ID ${event.organisationId}) and its Klassen in itsLearning: ${createError.message}`,
             );
         }
 
-        this.logger.info(
-            `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its ${klassen.length} Klassen were created.`,
-        );
+        this.logger.info(`Schule with ID ${event.organisationId} and its ${klassen.length} Klassen were created.`);
     }
 }

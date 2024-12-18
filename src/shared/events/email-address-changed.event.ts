@@ -1,5 +1,5 @@
 import { BaseEvent } from './base-event.js';
-import { EmailAddressID, PersonID, PersonReferrer } from '../types/index.js';
+import { EmailAddressID, PersonID } from '../types/index.js';
 
 /**
  * This event should be triggered when an existing email-address is deactivated for a user and persisted successfully in the database and
@@ -10,7 +10,6 @@ import { EmailAddressID, PersonID, PersonReferrer } from '../types/index.js';
 export class EmailAddressChangedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
-        public readonly referrer: PersonReferrer,
         public readonly oldEmailAddressId: EmailAddressID,
         public readonly oldAddress: string,
         public readonly newEmailAddressId: EmailAddressID,
