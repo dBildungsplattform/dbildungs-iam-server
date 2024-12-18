@@ -26,7 +26,7 @@ export class ImportEventHandler {
 
     public selectedRolleId!: string;
 
-    private readonly NUMBER_OF_USERS_PRO_REQUEST: number = 25;
+    private readonly USER_IMPORT_BATCH_SIZE: number = 25;
 
     public constructor(
         private readonly organisationRepository: OrganisationRepository,
@@ -67,12 +67,9 @@ export class ImportEventHandler {
             return this.logger.error(`No import data itemns found for Importvorgang:${importvorgangId}`);
         }
 
-        /* eslint-disable no-await-in-loop */
         while (importDataItems.length > 0) {
-            const dataItemsToImport: ImportDataItem<true>[] = importDataItems.splice(
-                0,
-                this.NUMBER_OF_USERS_PRO_REQUEST,
-            );
+            const dataItemsToImport: ImportDataItem<true>[] = importDataItems.splice(0, this.USER_IMPORT_BATCH_SIZE);
+            // eslint-disable-next-line no-await-in-loop
             await this.savePersonWithPersonenkontext(
                 importVorgang,
                 dataItemsToImport,
@@ -81,6 +78,7 @@ export class ImportEventHandler {
             );
 
             importVorgang.incrementTotalImportDataItems(dataItemsToImport.length);
+            // eslint-disable-next-line no-await-in-loop
             await this.importVorgangRepository.save(importVorgang);
         }
 
@@ -96,7 +94,7 @@ export class ImportEventHandler {
     ): Promise<void> {
         const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
         //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
-        /* eslint-disable no-await-in-loop */
+
         for (const importDataItem of dataItems) {
             const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                 (organisationByIdAndName: OrganisationByIdAndName) =>
@@ -104,6 +102,7 @@ export class ImportEventHandler {
             );
             if (!klasse) {
                 importVorgang.fail();
+                // eslint-disable-next-line no-await-in-loop
                 await this.importVorgangRepository.save(importVorgang);
 
                 throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
@@ -123,6 +122,7 @@ export class ImportEventHandler {
             ];
 
             const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
+                // eslint-disable-next-line no-await-in-loop
                 await this.personenkontextCreationService.createPersonWithPersonenkontexte(
                     permissions,
                     importDataItem.vorname,
@@ -139,6 +139,10 @@ export class ImportEventHandler {
                     `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${savedPersonWithPersonenkontext.message}`,
                 );
 
+                importVorgang.fail();
+                // eslint-disable-next-line no-await-in-loop
+                await this.importVorgangRepository.save(importVorgang);
+
                 throw new ImportDomainError(
                     `The creation of person with personenkontexte for the import transaction:${importVorgang.id} failed`,
                     importVorgang.id,
@@ -148,6 +152,9 @@ export class ImportEventHandler {
             if (!savedPersonWithPersonenkontext.person.newPassword) {
                 this.logger.error(`Person with ID ${savedPersonWithPersonenkontext.person.id} has no start password!`);
 
+                importVorgang.fail();
+                // eslint-disable-next-line no-await-in-loop
+                await this.importVorgangRepository.save(importVorgang);
                 throw new ImportDomainError(
                     `The creation for a password for the person with ID ${savedPersonWithPersonenkontext.person.id} for the import transaction:${importVorgang.id} has failed`,
                     importVorgang.id,
@@ -166,13 +173,14 @@ export class ImportEventHandler {
                     importDataItem.personalnummer,
                     importDataItem.validationErrors,
                     savedPersonWithPersonenkontext.person.referrer,
+                    // eslint-disable-next-line no-await-in-loop
                     await this.importPasswordEncryptor.encryptPassword(
                         savedPersonWithPersonenkontext.person.newPassword,
                     ),
                 ),
             );
         }
-        /* eslint-disable no-await-in-loop */
+
         await this.importDataRepository.replaceAll(importDataItemsWithLoginInfo);
     }
 }
