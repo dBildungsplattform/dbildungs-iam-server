@@ -1,4 +1,4 @@
-import { EntityManager, RequiredEntityData } from '@mikro-orm/postgresql';
+import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItemScope } from './import-data-item.scope.js';
@@ -12,6 +12,8 @@ export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): Req
         klasse: importDataItem.klasse,
         personalnummer: importDataItem.personalnummer,
         validationErrors: importDataItem.validationErrors,
+        username: importDataItem.username,
+        password: importDataItem.password,
     };
 }
 
@@ -26,6 +28,8 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.klasse,
         entity.personalnummer,
         entity.validationErrors,
+        entity.username,
+        entity.password,
     );
 }
 @Injectable()
@@ -33,12 +37,12 @@ export class ImportDataRepository {
     public constructor(private readonly em: EntityManager) {}
 
     //Optimierung: alle 50 Datensätze mit einem Call persistieren
-    public async save(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {
-        const entity: ImportDataItemEntity = this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
-
-        await this.em.persistAndFlush(entity);
-
-        return mapEntityToAggregate(entity);
+    public async save(importDataItem: ImportDataItem<boolean>): Promise<ImportDataItem<true>> {
+        if (importDataItem.id) {
+            return this.update(importDataItem);
+        } else {
+            return this.create(importDataItem);
+        }
     }
 
     public async findByImportVorgangId(
@@ -60,5 +64,23 @@ export class ImportDataRepository {
     public async deleteByImportVorgangId(importvorgangId: string): Promise<void> {
         //Optimierung: check if there are any items to delete when ImportVorgang will be saved in his own table
         await this.em.nativeDelete(ImportDataItemEntity, { importvorgangId: importvorgangId });
+    }
+
+    private async create(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {
+        const entity: ImportDataItemEntity = this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
+
+        await this.em.persistAndFlush(entity);
+
+        return mapEntityToAggregate(entity);
+    }
+
+    private async update(importDataItem: ImportDataItem<true>): Promise<ImportDataItem<true>> {
+        const entity: Loaded<ImportDataItemEntity> = await this.em.findOneOrFail(
+            ImportDataItemEntity,
+            importDataItem.id,
+        );
+        this.em.assign(entity, mapAggregateToData(importDataItem));
+        await this.em.persistAndFlush(entity);
+        return mapEntityToAggregate(entity);
     }
 }

@@ -8,7 +8,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { EmailRepo, mapAggregateToData } from './email.repo.js';
 import { EmailFactory } from '../domain/email.factory.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
@@ -27,6 +27,8 @@ import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-alread
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -37,11 +39,14 @@ describe('EmailRepo', () => {
     let organisationRepository: OrganisationRepository;
     let orm: MikroORM;
 
+    let loggerMock: DeepMocked<ClassLogger>;
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 UsernameGeneratorService,
+                OxUserBlacklistRepo,
                 EmailRepo,
                 EmailFactory,
                 PersonFactory,
@@ -83,6 +88,8 @@ describe('EmailRepo', () => {
         organisationRepository = module.get(OrganisationRepository);
         orm = module.get(MikroORM);
 
+        loggerMock = module.get(ClassLogger);
+
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -116,12 +123,12 @@ describe('EmailRepo', () => {
         return organisationRepository.save(organisation);
     }
 
-    async function createPersonAndOrganisationAndEmailAddress(
+    async function createEmailAddress(
         status: EmailAddressStatus,
-    ): Promise<[Person<true>, Organisation<true>, EmailAddress<true>]> {
-        const person: Person<true> = await createPerson();
-        const organisation: Organisation<true> = await createOrganisation();
-        const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
+        personId: PersonID,
+        organisationId: OrganisationID,
+    ): Promise<EmailAddress<true>> {
+        const email: Result<EmailAddress<false>> = await emailFactory.createNew(personId, organisationId);
         if (!email.ok) throw new Error();
 
         switch (status) {
@@ -135,7 +142,17 @@ describe('EmailRepo', () => {
         const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
         if (savedEmail instanceof DomainError) throw new Error();
 
-        return [person, organisation, savedEmail];
+        return savedEmail;
+    }
+
+    async function createPersonAndOrganisationAndEmailAddress(
+        status: EmailAddressStatus,
+    ): Promise<[Person<true>, Organisation<true>, EmailAddress<true>]> {
+        const person: Person<true> = await createPerson();
+        const organisation: Organisation<true> = await createOrganisation();
+        const email: EmailAddress<true> = await createEmailAddress(status, person.id, organisation.id);
+
+        return [person, organisation, email];
     }
 
     afterAll(async () => {
@@ -175,7 +192,7 @@ describe('EmailRepo', () => {
 
     describe('findRequestedByPerson', () => {
         describe('when email-address is found for personId', () => {
-            it('should return email with email-addresses by personId', async () => {
+            it('should return emailAddress by personId', async () => {
                 const [person, ,]: [Person<true>, Organisation<true>, EmailAddress<true>] =
                     await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
 
@@ -186,11 +203,32 @@ describe('EmailRepo', () => {
             });
         });
 
+        describe('when multiple email-addresses are found for personId', () => {
+            it('should return most recently updated emailAddress by personId and log warning', async () => {
+                const [person, organisation]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
+                const newerEmailAddress: EmailAddress<true> = await createEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                    person.id,
+                    organisation.id,
+                );
+
+                const foundEmail: Option<EmailAddress<true>> = await sut.findRequestedByPerson(person.id);
+                if (!foundEmail) throw Error();
+
+                expect(loggerMock.warning).toHaveBeenCalledWith(
+                    `Multiple EmailAddresses Found In REQUESTED Status For personId:${person.id}, Will Only Return address:${newerEmailAddress.address}`,
+                );
+
+                expect(foundEmail.address).toStrictEqual(newerEmailAddress.address);
+            });
+        });
+
         describe('when person does NOT exist', () => {
-            it('should return undefined', async () => {
+            it('should return null', async () => {
                 const foundEmail: Option<EmailAddress<true>> = await sut.findRequestedByPerson(faker.string.uuid());
 
-                expect(foundEmail).toBeUndefined();
+                expect(foundEmail).toBeNull();
             });
         });
     });
