@@ -38,7 +38,7 @@ import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/persona
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 import { SystemConfig } from '../../../shared/config/system.config.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
-import { KOPERS_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
+import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -811,7 +811,7 @@ export class PersonRepository {
 
     public async getPersonWithoutOrgDeleteList(): Promise<string[]> {
         const daysAgo: Date = new Date();
-        daysAgo.setDate(daysAgo.getDate() - 84);
+        daysAgo.setDate(daysAgo.getDate() - NO_KONTEXTE_DEADLINE_IN_DAYS);
 
         const filters: QBFilterQuery<PersonEntity> = {
             personenKontexte: {
