@@ -16,8 +16,7 @@ import { LoggerModule } from '../../core/logging/logger.module.js';
             useFactory: (configService: ConfigService) => ({
                 limits: {
                     fileSize:
-                        configService.getOrThrow<ImportConfig>('IMPORT').IMPORT_FILE_MAXGROESSE_IN_MB *
-                        Math.pow(1024, 2),
+                        configService.getOrThrow<ImportConfig>('IMPORT').CSV_FILE_MAX_SIZE_IN_MB * Math.pow(1024, 2),
                 },
             }),
             inject: [ConfigService],
