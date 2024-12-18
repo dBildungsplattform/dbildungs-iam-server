@@ -20,6 +20,7 @@ export type PersonFields = Pick<
     | 'geschlecht'
     | 'geburtsdatum'
     | 'updatedAt'
+    | 'referrer'
 >;
 type PersonKontextFields = Pick<Personenkontext<true>, 'rolleId' | 'organisationId'>;
 type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
@@ -53,6 +54,7 @@ export class PersonPermissions implements IPersonPermissions {
             geschlecht: person.geschlecht,
             geburtsdatum: person.geburtsdatum,
             updatedAt: person.updatedAt,
+            referrer: person.referrer,
         };
     }
 
