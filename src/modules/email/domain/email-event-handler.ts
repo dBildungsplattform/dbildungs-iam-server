@@ -33,6 +33,7 @@ import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonDomainError } from '../../person/domain/person-domain.error.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -182,9 +183,9 @@ export class EmailEventHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
-        this.logger.info(`Received handlePersonenkontextUpdatedEvent, personId:${event.person.id}`);
+        this.logger.info(`Received PersonenkontextUpdatedEvent, personId:${event.person.id}`);
 
-        await this.handlePerson(event.person.id);
+        await this.handlePerson(event.person.id, event.removedKontexte);
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
@@ -295,19 +296,25 @@ export class EmailEventHandler {
             };
         }
 
-        this.logger.info(`Found referrer${person.referrer} For personId:${personId}`);
+        this.logger.info(`Found referrer:${person.referrer} For personId:${personId}`);
         return {
             ok: true,
             value: person.referrer,
         };
     }
 
-    private async handlePerson(personId: PersonID): Promise<void> {
+    private async handlePerson(personId: PersonID, removedKontexte?: PersonenkontextEventKontextData[]): Promise<void> {
         // Map to store combinations of rolleId and organisationId as the key
         const rolleIdPKMap: Map<string, Personenkontext<true>> = new Map<string, Personenkontext<true>>();
 
         // Retrieve all personenkontexte for the given personId
-        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
+        let personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByPerson(personId);
+        // in case PersonenkontextUpdateEvent is result of PersonDeletion, no PK that is going to be removed, should trigger createOrEnableEmail
+        if (removedKontexte) {
+            personenkontexte = personenkontexte.filter((pk: Personenkontext<true>) =>
+                removedKontexte.every((removedPK: PersonenkontextEventKontextData) => removedPK.id != pk.id),
+            );
+        }
 
         // Array to hold the role IDs
         const rollenIds: string[] = [];
