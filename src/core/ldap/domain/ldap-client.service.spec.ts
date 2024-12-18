@@ -230,6 +230,32 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    describe('executeWithRetry', () => {
+        it('when writing operation fails it should automatically retry the operation', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.add.mockRejectedValue(new Error());
+                clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+
+                return clientMock;
+            });
+            const testLehrer: PersonData = {
+                id: faker.string.uuid(),
+                vorname: faker.person.firstName(),
+                familienname: faker.person.lastName(),
+                referrer: faker.lorem.word(),
+                ldapEntryUUID: faker.string.uuid(),
+            };
+            const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, 'schule-sh.de');
+
+            expect(result.ok).toBeFalsy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(3);
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
+        });
+    });
+
     describe('creation', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
 
@@ -295,7 +321,7 @@ describe('LDAP Client Service', () => {
                 const result: Result<PersonData> = await ldapClientService.createLehrer(testLehrer, fakeEmailDomain);
 
                 if (result.ok) throw Error();
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:{}`,
                 );
                 expect(result.error).toEqual(new LdapCreateLehrerError());
@@ -696,8 +722,8 @@ describe('LDAP Client Service', () => {
 
             it('should set mailAlternativeAddress as current mailPrimaryAddress and throw LdapPersonEntryChangedEvent', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
+                    clientMock.bind.mockResolvedValue();
+                    clientMock.search.mockResolvedValue(
                         createMock<SearchResult>({
                             searchEntries: [
                                 createMock<Entry>({
@@ -707,7 +733,7 @@ describe('LDAP Client Service', () => {
                             ],
                         }),
                     );
-                    clientMock.modify.mockRejectedValueOnce(new Error());
+                    clientMock.modify.mockRejectedValue(new Error());
 
                     return clientMock;
                 });
@@ -720,7 +746,7 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyEmailError());
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED, errMsg:{}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
