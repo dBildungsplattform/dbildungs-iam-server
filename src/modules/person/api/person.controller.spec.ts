@@ -142,6 +142,7 @@ describe('PersonController', () => {
     });
 
     function getPerson(): Person<true> {
+        const username: string = faker.lorem.word();
         return Person.construct(
             faker.string.uuid(),
             faker.date.past(),
@@ -149,9 +150,9 @@ describe('PersonController', () => {
             faker.person.lastName(),
             faker.person.firstName(),
             '1',
+            username,
             faker.lorem.word(),
-            faker.lorem.word(),
-            faker.string.uuid(),
+            username,
             undefined, // referrer
             undefined, // stammorganisation
             undefined, // initialenFamilienname
@@ -1046,7 +1047,7 @@ describe('PersonController', () => {
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
-                    person.referrer,
+                    person.username,
                 );
             });
         });
@@ -1075,7 +1076,7 @@ describe('PersonController', () => {
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
-                    person.referrer,
+                    person.username,
                 );
             });
         });
@@ -1091,8 +1092,9 @@ describe('PersonController', () => {
             });
         });
 
-        describe('when person does NOT have a defined referrer', () => {
+        describe('when person does NOT have a defined username', () => {
             const person: Person<true> = getPerson();
+            person.username = undefined;
             person.referrer = undefined;
             const permissions: PersonPermissions = new PersonPermissions(
                 createMock<DBiamPersonenkontextRepo>(),
@@ -1126,7 +1128,7 @@ describe('PersonController', () => {
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
-                    person.referrer,
+                    person.username,
                 );
             });
         });
@@ -1152,7 +1154,7 @@ describe('PersonController', () => {
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
-                    person.referrer,
+                    person.username,
                 );
             });
         });
