@@ -815,6 +815,39 @@ describe('OrganisationRepository', () => {
             });
         });
 
+        describe('when parent organisation does not exist in database', () => {
+            it('should return EntityNotFoundError', async () => {
+                const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+                parentOrganisation.id = faker.string.uuid();
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    administriertVon: parentOrganisation.id,
+                });
+                const savedOrganisation: Organisation<true> = await sut.save(organisation);
+
+                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisation.id, permissionsMock);
+                expect(result).toEqual(new EntityNotFoundError('Organisation', parentOrganisation.id));
+            });
+        });
+
+        describe('when parent organisation does exist in database but its name is undefined', () => {
+            it('should return EntityCouldNotBeUpdated error', async () => {
+                const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+                parentOrganisation.name = '';
+                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    administriertVon: savedParentOrganisation.id,
+                });
+                const savedOrganisation: Organisation<true> = await sut.save(organisation);
+
+                const result: Option<DomainError> = await sut.deleteKlasse(savedOrganisation.id, permissionsMock);
+                expect(result).toEqual(new EntityCouldNotBeUpdated('Organisation', savedOrganisation.id));
+            });
+        });
+
         describe('when organisation is not a Klasse', () => {
             it('should return EntityCouldNotBeUpdated', async () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
@@ -846,6 +879,47 @@ describe('OrganisationRepository', () => {
                 );
 
                 expect(result).toEqual(new EntityNotFoundError('Organisation', id));
+            });
+        });
+
+        describe('when parent organisation does not exist in database', () => {
+            it('should return EntityNotFoundError', async () => {
+                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+                parentOrganisation.id = faker.string.uuid();
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    administriertVon: parentOrganisation.id,
+                });
+                const savedOrganisation: Organisation<true> = await sut.save(organisation);
+
+                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                    savedOrganisation.id,
+                    'newName',
+                    1,
+                    permissionsMock,
+                );
+                expect(result).toEqual(new EntityNotFoundError('Organisation', parentOrganisation.id));
+            });
+        });
+
+        describe('when parent organisation does exist in database but its name is undefined', () => {
+            it('should return EntityCouldNotBeUpdated error', async () => {
+                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+                parentOrganisation.name = '';
+                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
+                const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                    typ: OrganisationsTyp.KLASSE,
+                    administriertVon: savedParentOrganisation.id,
+                });
+                const savedOrganisation: Organisation<true> = await sut.save(organisation);
+
+                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                    savedOrganisation.id,
+                    'newName',
+                    1,
+                    permissionsMock,
+                );
+                expect(result).toEqual(new EntityCouldNotBeUpdated('Organisation', savedOrganisation.id));
             });
         });
 
