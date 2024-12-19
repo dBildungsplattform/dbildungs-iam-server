@@ -40,6 +40,7 @@ import { SystemConfig } from '../../../shared/config/system.config.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
+import { KOPERS_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -249,6 +250,20 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
+    public async getPersonIfAllowedOrRequesterIsPerson(
+        personId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<Person<true>>> {
+        if (personId == permissions.personFields.id) {
+            let person: Option<Person<true>> = await this.findById(personId);
+            if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+            person = await this.extendPersonWithKeycloakData(person);
+            return { ok: true, value: person };
+        }
+
+        return this.getPersonIfAllowed(personId, permissions);
+    }
+
     public async extendPersonWithKeycloakData(person: Person<true>): Promise<Person<true>> {
         if (!person.keycloakUserId) {
             return person;
@@ -320,6 +335,7 @@ export class PersonRepository {
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,
+                referrer: person.referrer,
             },
             [],
             removedPersonenkontexts,
@@ -360,7 +376,6 @@ export class PersonRepository {
         person: Person<false>,
         hashedPassword?: string,
         personId?: string,
-        technicalUser: boolean = false,
     ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
@@ -389,7 +404,7 @@ export class PersonRepository {
             // Take ID from person to create keycloak user
             let personWithKeycloakUser: Person<true> | DomainError;
 
-            if (!technicalUser) {
+            if (!person.keycloakUserId) {
                 if (!hashedPassword) {
                     personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
                 } else {
@@ -779,7 +794,7 @@ export class PersonRepository {
 
     public async getKoPersUserLockList(): Promise<[PersonID, string][]> {
         const daysAgo: Date = new Date();
-        daysAgo.setDate(daysAgo.getDate() - 56);
+        daysAgo.setDate(daysAgo.getDate() - KOPERS_DEADLINE_IN_DAYS);
 
         const filters: QBFilterQuery<PersonEntity> = {
             $and: [
@@ -787,7 +802,7 @@ export class PersonRepository {
                 {
                     personenKontexte: {
                         $some: {
-                            createdAt: { $lte: daysAgo }, // Check that createdAt is older than 56 days
+                            createdAt: { $lte: daysAgo }, // Check that createdAt is older than KOPERS_DEADLINE_IN_DAYS
                             rolleId: {
                                 merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
                             },

@@ -79,6 +79,9 @@ import { PersonEmailResponse } from './person-email-response.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
+import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -97,9 +100,10 @@ export class PersonController {
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
-        config: ConfigService<ServerConfig>,
+        private readonly ldapClientService: LdapClientService,
         private readonly personApiMapper: PersonApiMapper,
         private readonly eventService: EventService,
+        config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
@@ -215,6 +219,7 @@ export class PersonController {
         const personEmailResponse: Option<PersonEmailResponse> = await this.emailRepo.getEmailAddressAndStatusForPerson(
             personResult.value,
         );
+
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,
             false,
@@ -309,8 +314,9 @@ export class PersonController {
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
         // Find all organisations where user has permission
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
             true,
+            false,
         );
 
         // Find all Personen on child-orgas (+root orgas)
@@ -617,5 +623,46 @@ export class PersonController {
             `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat die persoenlichen Daten von Benutzer ${result.referrer} (BenutzerId: ${result.id}) geändert.`,
         );
         return new PersonendatensatzResponse(result, false);
+    }
+
+    @Patch(':personId/uem-password')
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiAcceptedResponse({ description: 'UEM-password for person was successfully reset.', type: String })
+    @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions to update person.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    @UseInterceptors(ResultInterceptor)
+    public async resetUEMPasswordByPersonId(
+        @Param() params: PersonByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<Result<string>> {
+        //check that logged-in user is allowed to update person
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowedOrRequesterIsPerson(
+            params.personId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
+        }
+        if (!personResult.value.referrer) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new PersonDomainError('Person-Referrer NOT defined', params.personId),
+                ),
+            );
+        }
+        const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
+            personResult.value.id,
+            personResult.value.referrer,
+        );
+
+        if (!changeUserPasswordResult.ok) {
+            throw new PersonUserPasswordModificationError(personResult.value.id);
+        }
+
+        return { ok: true, value: changeUserPasswordResult.value };
     }
 }

@@ -28,6 +28,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -76,6 +77,7 @@ describe('PersonenkontextSpecifications Integration', () => {
                 PersonRepository,
                 PersonFactory,
                 UsernameGeneratorService,
+                OxUserBlacklistRepo,
                 PersonenkontextFactory,
                 {
                     provide: EmailRepo,

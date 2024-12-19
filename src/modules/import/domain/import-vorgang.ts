@@ -86,4 +86,8 @@ export class ImportVorgang<WasPersisted extends boolean> {
     public cancel(): void {
         this.status = ImportStatus.CANCELLED;
     }
+
+    public finish(): void {
+        this.status = ImportStatus.FINISHED;
+    }
 }

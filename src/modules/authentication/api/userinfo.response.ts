@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { StepUpLevel } from '../passport/oidc.strategy.js';
+import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
 
 export type UserinfoExtension = {
     password_updated_at?: Date;
@@ -74,10 +75,14 @@ export class UserinfoResponse {
     @ApiProperty({ nullable: false })
     public acr: StepUpLevel;
 
+    @ApiProperty({ type: PersonTimeLimitInfoResponse, isArray: true })
+    public timeLimits: PersonTimeLimitInfoResponse[];
+
     public constructor(
         info: PersonPermissions,
         personenkontexte: PersonenkontextRolleFieldsResponse[],
         acr: StepUpLevel,
+        timeLimits: PersonTimeLimitInfoResponse[],
         extension?: UserinfoExtension,
     ) {
         this.sub = info.personFields.keycloakUserId!;
@@ -93,5 +98,6 @@ export class UserinfoResponse {
         this.personenkontexte = personenkontexte;
         this.password_updated_at = extension?.password_updated_at?.toISOString();
         this.acr = acr;
+        this.timeLimits = timeLimits;
     }
 }

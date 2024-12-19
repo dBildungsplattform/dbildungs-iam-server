@@ -76,10 +76,15 @@
         "ENABLED": false,
         "ENDPOINT": "https://ox_ip:ox_port/webservices/",
         "USERNAME": "username",
-        "PASSWORD": "password"
+        "PASSWORD": "password",
+        "CONTEXT_ID": "10",
+        "CONTEXT_NAME": "testContext"
     },
     "IMPORT": {
-        "IMPORT_FILE_MAXGROESSE_IN_MB": 1
+        "CSV_FILE_MAX_SIZE_IN_MB": 1,
+        "CSV_MAX_NUMBER_OF_USERS": 2,
+        "PASSPHRASE_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
+        "PASSPHRASE_SALT": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M"
     },
     "SYSTEM": {
         "RENAME_WAITING_TIME_IN_SECONDS": 5,

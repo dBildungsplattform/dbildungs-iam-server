@@ -51,21 +51,23 @@ export class ItsLearningSyncEventHandler {
 
     @EventHandler(PersonExternalSystemsSyncEvent)
     public async personExternalSystemSyncEventHandler(event: PersonExternalSystemsSyncEvent): Promise<void> {
-        this.logger.info(`Received PersonExternalSystemsSyncEvent, ${event.personId}`);
+        this.logger.info(`[EventID: ${event.eventID}] Received PersonExternalSystemsSyncEvent, ${event.personId}`);
 
         if (!this.ENABLED) {
-            return this.logger.info('Not enabled, ignoring event.');
+            return this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
         }
 
         // Retrieve the person from the DB
         const person: Option<Person<true>> = await this.personRepo.findById(event.personId);
         if (!person) {
-            return this.logger.error(`Person with ID ${event.personId} could not be found!`);
+            return this.logger.error(
+                `[EventID: ${event.eventID}] Person with ID ${event.personId} could not be found!`,
+            );
         }
 
         // Check if person has a username
         if (!person.referrer) {
-            return this.logger.error(`Person with ID ${event.personId} has no username!`);
+            return this.logger.error(`[EventID: ${event.eventID}] Person with ID ${event.personId} has no username!`);
         }
 
         // Get all personenkontexte for this person
@@ -123,20 +125,25 @@ export class ItsLearningSyncEventHandler {
             );
 
             // Create or update the person in itslearning
-            const creationError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson({
-                id: person.id,
-                firstName: person.vorname,
-                lastName: person.familienname,
-                username: person.referrer,
-                institutionRoleType: rollenartToIMSESInstitutionRole(targetRole),
-                email: person.email,
-            });
+            const creationError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+                {
+                    id: person.id,
+                    firstName: person.vorname,
+                    lastName: person.familienname,
+                    username: person.referrer,
+                    institutionRoleType: rollenartToIMSESInstitutionRole(targetRole),
+                    email: person.email,
+                },
+                `${event.eventID}-SYNC-PERSON`,
+            );
 
             if (creationError) {
-                return this.logger.error(`Could not create/update person with ID ${person.id} in itslearning!`);
+                return this.logger.error(
+                    `[EventID: ${event.eventID}] Could not create/update person with ID ${person.id} in itslearning!`,
+                );
             }
 
-            this.logger.info(`Updated person with ID ${person.id} in itslearning!`);
+            this.logger.info(`[EventID: ${event.eventID}] Updated person with ID ${person.id} in itslearning!`);
 
             // Set the memberships
             const memberships: SetMembershipParams[] = relevantKontexte.map((pk: Personenkontext<true>) => ({
@@ -147,25 +154,36 @@ export class ItsLearningSyncEventHandler {
             }));
 
             const setMembershipsResult: Result<SetMembershipsResult, DomainError> =
-                await this.itslearningMembershipRepo.setMemberships(person.id, memberships);
+                await this.itslearningMembershipRepo.setMemberships(
+                    person.id,
+                    memberships,
+                    `${event.eventID}-SYNC-PERSON-MEMBERSHIPS`,
+                );
 
             if (!setMembershipsResult.ok) {
-                return this.logger.error(`Could not delete person with ID ${person.id} from itslearning!`);
+                return this.logger.error(
+                    `[EventID: ${event.eventID}] Could not delete person with ID ${person.id} from itslearning!`,
+                );
             }
 
             this.logger.info(
-                `Created/Updated ${setMembershipsResult.value.updated} and deleted ${setMembershipsResult.value.deleted} memberships for person with ID ${person.id} to itslearning!`,
+                `[EventID: ${event.eventID}] Created/Updated ${setMembershipsResult.value.updated} and deleted ${setMembershipsResult.value.deleted} memberships for person with ID ${person.id} to itslearning!`,
             );
         } else {
             this.logger.info(
-                `Deleting person with ID ${person.id} from itslearning (if they exist), because they have no relevant personenkontexte!`,
+                `[EventID: ${event.eventID}] Deleting person with ID ${person.id} from itslearning (if they exist), because they have no relevant personenkontexte!`,
             );
 
             // We don't have any relevant personenkontexte for this person, so we delete it
-            const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(person.id);
+            const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(
+                person.id,
+                `${event.eventID}-DELETE`,
+            );
 
             if (deleteError) {
-                return this.logger.error(`Could not delete person with ID ${person.id} from itslearning!`);
+                return this.logger.error(
+                    `[EventID: ${event.eventID}] Could not delete person with ID ${person.id} from itslearning!`,
+                );
             }
         }
     }
