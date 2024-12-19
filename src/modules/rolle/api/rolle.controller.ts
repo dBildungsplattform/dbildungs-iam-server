@@ -431,7 +431,16 @@ export class RolleController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
-        const rolleName: string = rolle?.name ?? 'ROLLE_NOT_FOUND';
+        if (!rolle) {
+            const error: DomainError = new EntityNotFoundError('Rolle', findRolleByIdParams.rolleId);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Rolle mit der ID ${findRolleByIdParams.rolleId} zu entfernen. Fehler: ${error.message}`,
+            );
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(error),
+            );
+        }
+        const rolleName: string = rolle.name;
 
         const result: Option<DomainError> = await this.rolleRepo.deleteAuthorized(
             findRolleByIdParams.rolleId,

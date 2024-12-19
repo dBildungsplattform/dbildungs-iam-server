@@ -425,10 +425,26 @@ export class OrganisationRepository {
             return error;
         }
 
-        let schoolName: string = 'SCHOOL_NOT_FOUND';
-        if (organisationEntity.zugehoerigZu) {
-            const school: Option<Organisation<true>> = await this.findById(organisationEntity.zugehoerigZu);
-            schoolName = school?.name ?? 'SCHOOL_NOT_FOUND';
+        let schoolName: string | undefined;
+        if (organisationEntity.administriertVon) {
+            const school: Option<Organisation<true>> = await this.findById(organisationEntity.administriertVon);
+            if (!school) {
+                const error: DomainError = new EntityNotFoundError('Organisation', organisationEntity.administriertVon);
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
+                );
+                return error;
+            }
+            schoolName = school.name;
+        }
+        if (!schoolName) {
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'The schoolName of a Klasse cannot be undefined.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
+            );
+            return error;
         }
         if (organisationEntity.typ !== OrganisationsTyp.KLASSE) {
             const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
@@ -467,10 +483,26 @@ export class OrganisationRepository {
             );
             return error;
         }
-        let schoolName: string = 'SCHOOL_NOT_FOUND';
-        if (organisationFound.zugehoerigZu) {
-            const school: Option<Organisation<true>> = await this.findById(organisationFound.zugehoerigZu);
-            schoolName = school?.name ?? 'SCHOOL_NOT_FOUND';
+        let schoolName: string | undefined;
+        if (organisationFound.administriertVon) {
+            const school: Option<Organisation<true>> = await this.findById(organisationFound.administriertVon);
+            if (!school) {
+                const error: DomainError = new EntityNotFoundError('Organisation', organisationFound.administriertVon);
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                );
+                return error;
+            }
+            schoolName = school.name;
+        }
+        if (!schoolName) {
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'The schoolName of a Klasse cannot be undefined.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+            );
+            return error;
         }
         if (organisationFound.typ !== OrganisationsTyp.KLASSE) {
             const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
