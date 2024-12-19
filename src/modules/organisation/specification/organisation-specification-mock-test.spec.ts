@@ -1,5 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigTestModule, DatabaseTestModule, DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    ConfigTestModule,
+    DatabaseTestModule,
+    DoFactory,
+    LoggingTestModule,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
@@ -17,7 +23,12 @@ describe('OrganisationSpecificationMockedRepoTest', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: false }), MapperTestModule],
+            imports: [
+                ConfigTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
+                MapperTestModule,
+                LoggingTestModule,
+            ],
             providers: [
                 OrganisationPersistenceMapperProfile,
                 {
