@@ -29,6 +29,7 @@ import { DeleteUserError } from './api/error/delete-user.error.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 import { TokenStateError } from './api/error/token-state.error.js';
 import { PIUnavailableError } from './api/error/pi-unavailable.error.js';
+import { PersonReferrer } from '../../shared/types/aggregate-ids.types.js';
 
 const mockErrorMsg: string = `Mock error`;
 
@@ -916,7 +917,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     });
 
     describe('deleteUser', () => {
-        const referrer: string = faker.string.alpha();
+        const referrer: PersonReferrer = faker.string.alpha();
         let mockJWTToken: string;
         beforeEach(() => {
             mockJWTToken = faker.string.alpha();

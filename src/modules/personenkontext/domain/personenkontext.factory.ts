@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OrganisationID, PersonID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { Personenkontext } from './personenkontext.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -55,7 +55,7 @@ export class PersonenkontextFactory {
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
-        referrer: string | undefined = undefined,
+        referrer: PersonReferrer | undefined = undefined,
         mandant: string | undefined = undefined,
         personenstatus: Personenstatus | undefined = undefined,
         jahrgangsstufe: Jahrgangsstufe | undefined = undefined,

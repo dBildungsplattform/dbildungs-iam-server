@@ -104,7 +104,7 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(referrer: string, rootName: string): string {
+    private getLehrerUid(referrer: PersonReferrer, rootName: string): string {
         return `uid=${referrer},ou=${rootName},${LdapClientService.DC_SCHULE_SH_DC_DE}`;
     }
 
@@ -121,7 +121,7 @@ export class LdapClientService {
         domain: string,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
     ): Promise<Result<PersonData>> {
-        const referrer: string | undefined = person.referrer;
+        const referrer: PersonReferrer | undefined = person.referrer;
         if (!referrer) {
             return {
                 ok: false,
@@ -184,7 +184,7 @@ export class LdapClientService {
         });
     }
 
-    public async isLehrerExisting(referrer: string, domain: string): Promise<Result<boolean>> {
+    public async isLehrerExisting(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
@@ -208,7 +208,7 @@ export class LdapClientService {
     }
 
     public async modifyPersonAttributes(
-        oldReferrer: string,
+        oldReferrer: PersonReferrer,
         newGivenName?: string,
         newSn?: string,
         newUid?: string,
@@ -286,7 +286,7 @@ export class LdapClientService {
         });
     }
 
-    public async deleteLehrerByReferrer(referrer: string): Promise<Result<string>> {
+    public async deleteLehrerByReferrer(referrer: PersonReferrer): Promise<Result<string>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer');
             const client: Client = this.ldapClient.getClient();
@@ -341,7 +341,6 @@ export class LdapClientService {
         newEmailAddress: string,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
-        //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: changeEmailAddress');
             const splitted: string[] = newEmailAddress.split('@');
@@ -427,7 +426,6 @@ export class LdapClientService {
 
     public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
-        //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         const userPassword: string = generatePassword();
 
         return this.mutex.runExclusive(async () => {
