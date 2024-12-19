@@ -12,7 +12,7 @@ import {
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
@@ -333,7 +333,6 @@ export class PersonRepository {
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,
-                referrer: person.referrer,
             },
             [],
             removedPersonenkontexts,
@@ -443,7 +442,7 @@ export class PersonRepository {
     }
 
     public async update(person: Person<true>): Promise<Person<true> | DomainError> {
-        let oldReferrer: string | undefined = '';
+        let oldReferrer: PersonReferrer | undefined = '';
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
         const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
         if (person.newPassword) {

@@ -746,7 +746,7 @@ describe('OxEventHandler', () => {
         let personId: PersonID;
         let event: EmailAddressChangedEvent;
         let person: Person<true>;
-        let referrer: string;
+        let referrer: PersonReferrer;
         let email: string;
         let oxUserId: string;
         let oxUserName: string;
