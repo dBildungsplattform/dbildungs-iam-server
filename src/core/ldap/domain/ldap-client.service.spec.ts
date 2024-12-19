@@ -18,7 +18,7 @@ import { Person } from '../../../modules/person/domain/person.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
 import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
@@ -140,8 +140,8 @@ describe('LDAP Client Service', () => {
         expect(em).toBeDefined();
     });
     describe('updateMemberDnInGroups', () => {
-        const fakeOldReferrer: string = 'old-user';
-        const fakeNewReferrer: string = 'new-user';
+        const fakeOldReferrer: PersonReferrer = 'old-user';
+        const fakeNewReferrer: PersonReferrer = 'new-user';
         const fakeOldReferrerUid: string = `uid=${fakeOldReferrer},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeNewReferrerUid: string = `uid=${fakeNewReferrer},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeGroupDn: string = 'cn=lehrer-group,' + mockLdapInstanceConfig.BASE_DN;
@@ -478,7 +478,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('addPersonToGroup', () => {
-        const fakeReferrer: string = 'test-user';
+        const fakeReferrer: PersonReferrer = 'test-user';
         const fakeSchoolReferrer: string = '123';
         const fakeLehrerUid: string = `uid=${fakeReferrer},ou=oeffentlicheSchulen,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeGroupId: string = `lehrer-${fakeSchoolReferrer}`;
@@ -904,7 +904,7 @@ describe('LDAP Client Service', () => {
             });
 
             it('should log an error and return the failed result if addPersonToGroup fails', async () => {
-                const referrer: string = 'test-user';
+                const referrer: PersonReferrer = 'test-user';
                 const schulId: string = '123';
                 const expectedGroupId: string = `lehrer-${schulId}`;
                 const errorMessage: string = `LDAP: Failed to add lehrer ${referrer} to group ${expectedGroupId}`;
@@ -1159,7 +1159,7 @@ describe('LDAP Client Service', () => {
             });
             describe('when modifying', () => {
                 it('Should Update LDAP When called with Attributes', async () => {
-                    const oldReferrer: string = faker.internet.userName();
+                    const oldReferrer: PersonReferrer = faker.internet.userName();
                     const newGivenName: string = faker.person.firstName();
                     const newSn: string = faker.person.lastName();
                     const newUid: string = faker.string.alphanumeric(6);
@@ -1211,7 +1211,7 @@ describe('LDAP Client Service', () => {
                 });
 
                 it('should return error if updateMemberDnInGroups fails', async () => {
-                    const oldReferrer: string = faker.internet.userName();
+                    const oldReferrer: PersonReferrer = faker.internet.userName();
                     const newUid: string = faker.string.alphanumeric(6);
 
                     jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValueOnce({
@@ -1897,7 +1897,7 @@ describe('LDAP Client Service', () => {
     describe('createNewLehrerUidFromOldUid', () => {
         it('should replace the old uid with the new referrer and join the DN parts with commas', () => {
             const oldUid: string = 'uid=oldUser,ou=users,dc=example,dc=com';
-            const newReferrer: string = 'newUser';
+            const newReferrer: PersonReferrer = 'newUser';
 
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
 
@@ -1906,7 +1906,7 @@ describe('LDAP Client Service', () => {
 
         it('should handle a DN with only a uid component', () => {
             const oldUid: string = 'uid=oldUser';
-            const newReferrer: string = 'newUser';
+            const newReferrer: PersonReferrer = 'newUser';
 
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
 
@@ -1915,7 +1915,7 @@ describe('LDAP Client Service', () => {
 
         it('should handle an empty DN string', () => {
             const oldUid: string = '';
-            const newReferrer: string = 'newUser';
+            const newReferrer: PersonReferrer = 'newUser';
 
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
 
