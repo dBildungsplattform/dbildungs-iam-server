@@ -10,6 +10,7 @@ import {
     DatabaseTestModule,
     DoFactory,
     KeycloakConfigTestModule,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
@@ -82,6 +83,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 PersonenKontextApiModule,
                 KeycloakAdministrationModule,
+                LoggingTestModule,
             ],
             providers: [
                 {
@@ -364,6 +366,12 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     organisationId: organisation.id,
                     rolleId: rolle.id,
                     personalnummer: '1234567',
+                    createPersonenkontexte: [
+                        {
+                            organisationId: organisation.id,
+                            rolleId: rolle.id,
+                        },
+                    ],
                 });
 
             expect(response.status).toBe(400);

@@ -38,6 +38,8 @@ import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/persona
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 import { SystemConfig } from '../../../shared/config/system.config.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { KOPERS_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
 
 /**
@@ -159,6 +161,7 @@ export class PersonRepository {
         private readonly em: EntityManager,
         private readonly eventService: EventService,
         private usernameGenerator: UsernameGeneratorService,
+        private logger: ClassLogger,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -678,11 +681,25 @@ export class PersonRepository {
                     (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
                 );
                 if (koperslock && personFound.keycloakUserId) {
-                    await this.kcUserService.updateKeycloakUserStatus(
+                    const lockResult: Result<void, DomainError> = await this.kcUserService.updateKeycloakUserStatus(
                         personId,
                         personFound.keycloakUserId,
                         koperslock,
                         false,
+                    );
+                    if (!lockResult.ok && lockResult.error instanceof DomainError) {
+                        const keyCloakUpdateError: DownstreamKeycloakError = new DownstreamKeycloakError(
+                            lockResult.error.message,
+                            personId,
+                            [lockResult.error.details],
+                        );
+                        this.logger.error(
+                            `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.referrer} (BenutzerId: ${personFound.id}) konnte durch Nachtragen der KoPers.-Nr. nicht aufgehoben werden. Fehler: ${keyCloakUpdateError.message}`,
+                        );
+                        throw keyCloakUpdateError;
+                    }
+                    this.logger.info(
+                        `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.referrer} (BenutzerId: ${personFound.id}) wurde durch Nachtragen der KoPers.-Nr. aufgehoben.`,
                     );
                 }
             }
