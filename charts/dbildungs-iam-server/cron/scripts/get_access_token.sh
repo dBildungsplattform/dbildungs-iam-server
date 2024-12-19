@@ -53,13 +53,13 @@ elif [ -n "$JWKS_FILE_PATH" ] && [ -f "$JWKS_FILE_PATH" ]; then
   # JWKS_FILE_PATH is set, use the file
   jwks=$(cat "$JWKS_FILE_PATH")
 else
-  echo "Error: No JWKS environment variable or JWKS file found." >> /var/log/cron.log
+  echo "Error: No JWKS environment variable or JWKS file found." >> "${LOG_FILE_PATH}"
   exit 1
 fi
 
 # Check if environment variables are set
 if [[ -z "$clientId" || -z "$kc_token_url" || -z "$jwks" ]]; then
-    echo "Error: CLIENT_ID, TOKEN_URL, and JWKS environment variables must be set." >> /var/log/cron.log
+    echo "Error: CLIENT_ID, TOKEN_URL, and JWKS environment variables must be set." >> "${LOG_FILE_PATH}"
     exit 1
 fi
 
@@ -68,7 +68,7 @@ key_json=$(echo "$jwks" | jq -c '.keys[0]')
 
 # Check if key_json is empty
 if [[ -z "$key_json" ]]; then
-  echo "Error: No keys found in JWKS." >> /var/log/cron.log
+  echo "Error: No keys found in JWKS." >> "${LOG_FILE_PATH}"
   exit 1
 fi
 
@@ -110,14 +110,14 @@ dq=INTEGER:0x$dq_dec
 qi=INTEGER:0x$qi_dec
 EOF
 
-echo "Starting to generate PEM-formatted private key" >> /var/log/cron.log
+echo "Starting to generate PEM-formatted private key" >> "${LOG_FILE_PATH}"
 
 # Generate the PEM-formatted private key
 temp_key_file=$(mktemp)
 openssl asn1parse -genconf "$asn1_structure" -out "$temp_key_file" > /dev/null 2>&1
 openssl rsa -in "$temp_key_file" -inform DER -outform PEM -out "$temp_key_file.pem" > /dev/null 2>&1
 
-echo "Ending to generate PEM-formatted private key" >> /var/log/cron.log
+echo "Ending to generate PEM-formatted private key" >> "${LOG_FILE_PATH}"
 
 # Remove temporary files
 rm "$asn1_structure" "$temp_key_file"
@@ -146,14 +146,14 @@ payload_base64=$(base64url_encode "$payload")
 # Combine header and payload
 header_payload="$header_base64.$payload_base64"
 
-echo "Payload created" >> /var/log/cron.log
+echo "Payload created" >> "${LOG_FILE_PATH}"
 
 # Sign the JWT
 signature=$(echo -n "$header_payload" | \
   openssl dgst -sha256 -sign "$temp_key_file.pem" | \
   openssl enc -base64 -A | tr '+/' '-_' | tr -d '=')
 
-echo "Signed the JWT" >> /var/log/cron.log
+echo "Signed the JWT" >> "${LOG_FILE_PATH}"
 
 # Remove the temporary PEM key file
 rm "$temp_key_file.pem"
@@ -166,7 +166,7 @@ response=$(wget -qO- --post-data "grant_type=client_credentials&client_id=$clien
   --header "Content-Type: application/x-www-form-urlencoded" \
   "$kc_token_url")
 
-echo "Access token requested" >> /var/log/cron.log
+echo "Access token requested" >> "${LOG_FILE_PATH}"
 
 # Check if the response contains an access token
 if echo "$response" | grep -q '"access_token"'; then
@@ -174,7 +174,7 @@ if echo "$response" | grep -q '"access_token"'; then
   access_token=$(echo "$response" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
   echo "$access_token"
 else
-  echo "Failed to retrieve access token. Response:" >> /var/log/cron.log
-  echo "$response" >> /var/log/cron.log
+  echo "Failed to retrieve access token. Response:" >> "${LOG_FILE_PATH}"
+  echo "$response" >> "${LOG_FILE_PATH}"
   exit 1
 fi

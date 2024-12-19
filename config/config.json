@@ -45,7 +45,8 @@
     "LDAP": {
         "URL": "ldap://localhost",
         "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
-        "ADMIN_PASSWORD": "admin"
+        "ADMIN_PASSWORD": "admin",
+        "BASE_DN": "dc=schule-sh,dc=de"
     },
     "DATA": {
         "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
@@ -63,7 +64,7 @@
         "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
     },
     "ITSLEARNING": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "https://itslearning-test.example.com",
         "USERNAME": "username",
         "PASSWORD": "password",
@@ -72,7 +73,7 @@
         "ROOT_ERSATZ": "ersatz"
     },
     "OX": {
-        "ENABLED": "false",
+        "ENABLED": false,
         "ENDPOINT": "http://ox.dev.spsh.dbildungsplattform.de/webservices/",
         "CONTEXT_ID": "1337",
         "CONTEXT_NAME": "contextname",
@@ -95,7 +96,10 @@
         "KEYCLOAK_ROLE": "VIDIS-user"
     },
     "IMPORT": {
-        "IMPORT_FILE_MAXGROESSE_IN_MB": 10
+        "CSV_FILE_MAX_SIZE_IN_MB": 10,
+        "CSV_MAX_NUMBER_OF_USERS": 200,
+        "PASSPHRASE_SECRET": "44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R",
+        "PASSPHRASE_SALT": "YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M"
     },
     "SYSTEM": {
         "RENAME_WAITING_TIME_IN_SECONDS": 3,

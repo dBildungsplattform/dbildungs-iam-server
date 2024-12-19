@@ -44,6 +44,7 @@ describe('DbSeedService', () => {
     let personenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let dbSeedReferenceRepoMock: DeepMocked<DbSeedReferenceRepo>;
     let kcUserService: DeepMocked<KeycloakUserService>;
+    let personFactory: DeepMocked<PersonFactory>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -108,6 +109,7 @@ describe('DbSeedService', () => {
         personenkontextServiceMock = module.get(DBiamPersonenkontextService);
         dbSeedReferenceRepoMock = module.get(DbSeedReferenceRepo);
         kcUserService = module.get(KeycloakUserService);
+        personFactory = module.get(PersonFactory);
     });
 
     afterAll(async () => {
@@ -440,6 +442,7 @@ describe('DbSeedService', () => {
                     'test@example.com',
                     faker.date.recent(),
                     {
+                        ID_NEXTCLOUD: [faker.string.uuid()],
                         ID_ITSLEARNING: [faker.string.uuid()],
                     },
                     true,
@@ -466,12 +469,31 @@ describe('DbSeedService', () => {
                     'utf-8',
                 );
 
-                const person: Person<true> = createMock<Person<true>>();
-
-                personRepoMock.create.mockResolvedValue(person);
+                const person: Person<false> = createMock<Person<true>>();
+                const personPersisted: Person<true> = createMock<Person<true>>();
+                personFactory.createNew.mockResolvedValueOnce(person);
+                personRepoMock.create.mockResolvedValue(personPersisted);
 
                 await dbSeedService.seedTechnicalUser(fileContentAsStr);
 
+                expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('error in person factory', () => {
+            it('should throw Domain Error', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/invalidPerson/06_technical-user.json`,
+                    'utf-8',
+                );
+
+                // return DomainError
+                personFactory.createNew.mockResolvedValueOnce(new NameForOrganisationWithTrailingSpaceError());
+
+                await expect(dbSeedService.seedTechnicalUser(fileContentAsStr)).rejects.toThrow(
+                    NameForOrganisationWithTrailingSpaceError,
+                );
+                expect(personRepoMock.create).toHaveBeenCalledTimes(0);
                 expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(0);
             });
         });
