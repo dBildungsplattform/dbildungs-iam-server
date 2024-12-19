@@ -791,8 +791,11 @@ describe('OrganisationRepository', () => {
         describe('when all validations succeed', () => {
             it('should succeed', async () => {
                 const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
                 const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                     typ: OrganisationsTyp.KLASSE,
+                    administriertVon: savedParentOrganisation.id,
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
 
@@ -815,9 +818,12 @@ describe('OrganisationRepository', () => {
         describe('when organisation is not a Klasse', () => {
             it('should return EntityCouldNotBeUpdated', async () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
                 const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                     typ: OrganisationsTyp.SONSTIGE,
                     name: 'test',
+                    administriertVon: savedParentOrganisation.id,
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
 
@@ -845,10 +851,13 @@ describe('OrganisationRepository', () => {
 
         describe('when organisation is not a Klasse', () => {
             it('should return EntityCouldNotBeUpdated', async () => {
+                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
                 const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                     typ: OrganisationsTyp.SONSTIGE,
                     name: 'test',
                     version: faker.number.int(),
+                    administriertVon: savedParentOrganisation.id,
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
                 const result: DomainError | Organisation<true> = await sut.updateKlassenname(
@@ -864,9 +873,12 @@ describe('OrganisationRepository', () => {
 
         describe('when name of organisation is empty', () => {
             it('should return OrganisationSpecificationError', async () => {
+                const parentOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
+                const savedParentOrganisation: Organisation<true> = await sut.save(parentOrganisation);
                 const organisation: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                     typ: OrganisationsTyp.KLASSE,
                     name: 'test',
+                    administriertVon: savedParentOrganisation.id,
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
                 const result: DomainError | Organisation<true> = await sut.updateKlassenname(
