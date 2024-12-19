@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
-export class Migration20241218233107 extends Migration {
+export class Migration20241219124504 extends Migration {
     public async up(): Promise<void> {
         this.addSql('alter table "importvorgang" drop column "import_by_person_id";');
 

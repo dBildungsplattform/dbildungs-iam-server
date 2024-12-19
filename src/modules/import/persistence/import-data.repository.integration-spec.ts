@@ -95,12 +95,20 @@ describe('ImportDataRepository', () => {
 
         beforeEach(async () => {
             const importvorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
             importvorgangId = importvorgang.id;
 
             const importvorgang2: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
 
             importDataItem1 = ImportDataItem.construct(
@@ -157,8 +165,15 @@ describe('ImportDataRepository', () => {
 
     describe('save', () => {
         it('should create a new importDataItem', async () => {
-            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
-                .id;
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
             const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, { importvorgangId });
 
             const savedImportDataItem: ImportDataItem<true> = await sut.save(importDataItem);
@@ -167,8 +182,15 @@ describe('ImportDataRepository', () => {
         });
 
         it('should update an existing importDataItem', async () => {
-            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
-                .id;
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
             const createdImportDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
                 importvorgangId,
             });
@@ -199,7 +221,15 @@ describe('ImportDataRepository', () => {
         let importvorgangId: string;
 
         beforeEach(async () => {
-            importvorgangId = (await importVorgangRepository.save(DoFactory.createImportVorgang(false))).id;
+            importvorgangId = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
 
             importDataItem1 = ImportDataItem.construct(
                 faker.string.uuid(),
@@ -239,8 +269,15 @@ describe('ImportDataRepository', () => {
 
     describe('createAll', () => {
         it('should create all importDataItems', async () => {
-            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
-                .id;
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
             const importDataItems: ImportDataItem<false>[] = [
                 DoFactory.createImportDataItem(false, { importvorgangId }),
                 DoFactory.createImportDataItem(false, { importvorgangId }),
@@ -261,7 +298,15 @@ describe('ImportDataRepository', () => {
         let importvorgangId: string;
 
         beforeEach(async () => {
-            importvorgangId = (await importVorgangRepository.save(DoFactory.createImportVorgang(false))).id;
+            importvorgangId = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
             importDataItem1 = await sut.save(DoFactory.createImportDataItem(false, { importvorgangId }));
             importDataItem2 = await sut.save(DoFactory.createImportDataItem(false, { importvorgangId }));
         });

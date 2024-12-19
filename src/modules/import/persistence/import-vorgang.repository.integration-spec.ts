@@ -36,6 +36,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationModule } from '../../organisation/organisation.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 
 describe('ImportVorgangRepository', () => {
     let module: TestingModule;
@@ -86,6 +87,11 @@ describe('ImportVorgangRepository', () => {
                 {
                     provide: UserLockRepository,
                     useValue: createMock<UserLockRepository>(),
+                },
+
+                {
+                    provide: OxUserBlacklistRepo,
+                    useValue: createMock<OxUserBlacklistRepo>(),
                 },
             ],
         }).compile();
