@@ -415,18 +415,55 @@ export class OrganisationRepository {
         return [organisations, total + entitiesForIds.length - duplicates, pageTotal];
     }
 
-    public async deleteKlasse(id: OrganisationID): Promise<Option<DomainError>> {
+    public async deleteKlasse(id: OrganisationID, permissions: PersonPermissions): Promise<Option<DomainError>> {
         const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (!organisationEntity) {
-            return new EntityNotFoundError('Organisation', id);
+            const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse mit der ID ${id} zu entfernen. Fehler: ${error.message}`,
+            );
+            return error;
         }
 
+        let schoolName: string | undefined;
+        if (organisationEntity.administriertVon) {
+            const school: Option<Organisation<true>> = await this.findById(organisationEntity.administriertVon);
+            if (!school) {
+                const error: DomainError = new EntityNotFoundError('Organisation', organisationEntity.administriertVon);
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
+                );
+                return error;
+            }
+            schoolName = school.name;
+        }
+        if (!schoolName) {
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'The schoolName of a Klasse cannot be undefined.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
+            );
+            return error;
+        }
         if (organisationEntity.typ !== OrganisationsTyp.KLASSE) {
-            return new EntityCouldNotBeUpdated('Organisation', id, ['Only Klassen can be deleted.']);
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'Only Klassen can be deleted.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} (${schoolName}) zu entfernen. Fehler: ${error.message}`,
+            );
+            return error;
         }
 
         await this.em.removeAndFlush(organisationEntity);
         this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
+
+        if (organisationEntity.zugehoerigZu) {
+            this.logger.info(
+                `Admin: ${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
+            );
+        }
 
         return;
     }
@@ -435,14 +472,46 @@ export class OrganisationRepository {
         id: string,
         newName: string,
         version: number,
+        permissions: PersonPermissions,
     ): Promise<DomainError | Organisation<true>> {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
         if (!organisationFound) {
-            return new EntityNotFoundError('Organisation', id);
+            const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+            );
+            return error;
+        }
+        let schoolName: string | undefined;
+        if (organisationFound.administriertVon) {
+            const school: Option<Organisation<true>> = await this.findById(organisationFound.administriertVon);
+            if (!school) {
+                const error: DomainError = new EntityNotFoundError('Organisation', organisationFound.administriertVon);
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                );
+                return error;
+            }
+            schoolName = school.name;
+        }
+        if (!schoolName) {
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'The schoolName of a Klasse cannot be undefined.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+            );
+            return error;
         }
         if (organisationFound.typ !== OrganisationsTyp.KLASSE) {
-            return new EntityCouldNotBeUpdated('Organisation', id, ['Only the name of Klassen can be updated.']);
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'Only the name of Klassen can be updated.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
+            );
+            return error;
         }
         //Specifications: it needs to be clarified how the specifications can be checked using DDD principles
         {
@@ -452,6 +521,9 @@ export class OrganisationRepository {
                     await organisationFound.checkKlasseSpecifications(this);
 
                 if (specificationError) {
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
+                    );
                     return specificationError;
                 }
             }
@@ -460,7 +532,9 @@ export class OrganisationRepository {
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);
         this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
-
+        this.logger.info(
+            `Admin: ${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
+        );
         return organisationEntity;
     }
 

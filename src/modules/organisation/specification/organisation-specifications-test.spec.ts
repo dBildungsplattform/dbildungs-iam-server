@@ -39,6 +39,7 @@ describe('OrganisationSpecificationTests', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [OrganisationPersistenceMapperProfile, OrganisationRepository],
         }).compile();

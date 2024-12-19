@@ -216,8 +216,12 @@ describe('Organisation API', () => {
 
         describe('should succeed', () => {
             it('if all conditions are passed', async () => {
+                const parentOrganisation: OrganisationEntity = new OrganisationEntity();
+                parentOrganisation.name = 'Parent Organisation';
+                await em.persistAndFlush(parentOrganisation);
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.KLASSE;
+                organisation.administriertVon = parentOrganisation.id;
                 await em.persistAndFlush(organisation);
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 
