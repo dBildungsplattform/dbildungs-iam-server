@@ -335,69 +335,87 @@ export class EmailEventHandler {
         const rollenIdWithSPReference: Option<string> = await this.getAnyRolleReferencesEmailServiceProvider(rollen);
 
         if (rollenIdWithSPReference) {
-            // Array to store matching Personenkontext objects for further processing
-            const pkOfRolleWithSPReferenceList: Personenkontext<true>[] = [];
-
-            // Check all combinations of rolleId and organisationId for this role
-            for (const pk of personenkontexte) {
-                if (pk.rolleId === rollenIdWithSPReference) {
-                    const key: string = `${pk.rolleId}-${pk.organisationId}`;
-                    const pkFromMap: Personenkontext<true> | undefined = rolleIdPKMap.get(key);
-                    if (pkFromMap) {
-                        pkOfRolleWithSPReferenceList.push(pkFromMap); // Collect valid matches
-                    }
-                }
-            }
-
-            // Process each valid Personenkontext
-            if (pkOfRolleWithSPReferenceList.length > 0) {
-                this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
-                // Iterate over all valid Personenkontext objects and trigger email creation
-                for (const pkOfRolleWithSPReference of pkOfRolleWithSPReferenceList) {
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.createOrEnableEmail(personId, pkOfRolleWithSPReference.organisationId);
-                }
-            } else {
-                this.logger.error(
-                    `Rolle with id:${rollenIdWithSPReference} references SP, but no matching Personenkontext found.`,
-                );
-            }
+            await this.handlePersonWithEmailSPReference(
+                personId,
+                personenkontexte,
+                rollenIdWithSPReference,
+                rolleIdPKMap,
+            );
         } else {
             // If no role references an SP, disable any existing emails
-            const existingEmails: Option<EmailAddress<true>[]> =
-                await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
+            await this.handlePersonWithoutEmailSPReference(personId);
+        }
+    }
 
-            let anyEmailWasDisabled: boolean = false;
-            if (existingEmails) {
-                await Promise.allSettled(
-                    existingEmails
-                        .filter((existingEmail: EmailAddress<true>) => !existingEmail.disabled)
-                        .map(async (existingEmail: EmailAddress<true>) => {
-                            this.logger.info(
-                                `Existing email found for personId:${personId}, address:${existingEmail.address}`,
-                            );
-                            existingEmail.disable();
-                            const persistenceResult: EmailAddress<true> | DomainError =
-                                await this.emailRepo.save(existingEmail);
+    private async handlePersonWithEmailSPReference(
+        personId: PersonID,
+        personenkontexte: Personenkontext<true>[],
+        rollenIdWithSPReference: string,
+        rolleIdPKMap: Map<string, Personenkontext<true>>,
+    ): Promise<void> {
+        // Array to store matching Personenkontext objects for further processing
+        const pkOfRolleWithSPReferenceList: Personenkontext<true>[] = [];
 
-                            if (persistenceResult instanceof EmailAddress) {
-                                anyEmailWasDisabled = true;
-                                this.logger.info(`Disabled and saved address:${persistenceResult.address}`);
-                            } else {
-                                this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
-                            }
-                        }),
-                );
+        // Check all combinations of rolleId and organisationId for this role
+        for (const pk of personenkontexte) {
+            if (pk.rolleId === rollenIdWithSPReference) {
+                const key: string = `${pk.rolleId}-${pk.organisationId}`;
+                const pkFromMap: Personenkontext<true> | undefined = rolleIdPKMap.get(key);
+                if (pkFromMap) {
+                    pkOfRolleWithSPReferenceList.push(pkFromMap); // Collect valid matches
+                }
+            }
+        }
 
-                if (anyEmailWasDisabled) {
-                    const person: Option<Person<true>> = await this.personRepository.findById(personId);
-                    if (!person || !person.referrer) {
-                        this.logger.error(
-                            `Could not publish EmailAddressDisabledEvent, personId:${personId} has no username`,
+        // Process each valid Personenkontext
+        if (pkOfRolleWithSPReferenceList.length > 0) {
+            this.logger.info(`Person with id:${personId} needs an email, creating or enabling address`);
+            // Iterate over all valid Personenkontext objects and trigger email creation
+            for (const pkOfRolleWithSPReference of pkOfRolleWithSPReferenceList) {
+                // eslint-disable-next-line no-await-in-loop
+                await this.createOrEnableEmail(personId, pkOfRolleWithSPReference.organisationId);
+            }
+        } else {
+            this.logger.error(
+                `Rolle with id:${rollenIdWithSPReference} references SP, but no matching Personenkontext found.`,
+            );
+        }
+    }
+
+    private async handlePersonWithoutEmailSPReference(personId: PersonID): Promise<void> {
+        const existingEmails: Option<EmailAddress<true>[]> =
+            await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
+
+        let anyEmailWasDisabled: boolean = false;
+        if (existingEmails) {
+            await Promise.allSettled(
+                existingEmails
+                    .filter((existingEmail: EmailAddress<true>) => !existingEmail.disabled)
+                    .map(async (existingEmail: EmailAddress<true>) => {
+                        this.logger.info(
+                            `Existing email found for personId:${personId}, address:${existingEmail.address}`,
                         );
-                    } else {
-                        this.eventService.publish(new EmailAddressDisabledEvent(personId, person.referrer));
-                    }
+                        existingEmail.disable();
+                        const persistenceResult: EmailAddress<true> | DomainError =
+                            await this.emailRepo.save(existingEmail);
+
+                        if (persistenceResult instanceof EmailAddress) {
+                            anyEmailWasDisabled = true;
+                            this.logger.info(`Disabled and saved address:${persistenceResult.address}`);
+                        } else {
+                            this.logger.error(`Could not disable email, error is ${persistenceResult.message}`);
+                        }
+                    }),
+            );
+
+            if (anyEmailWasDisabled) {
+                const person: Option<Person<true>> = await this.personRepository.findById(personId);
+                if (!person || !person.referrer) {
+                    this.logger.error(
+                        `Could not publish EmailAddressDisabledEvent, personId:${personId} has no username`,
+                    );
+                } else {
+                    this.eventService.publish(new EmailAddressDisabledEvent(personId, person.referrer));
                 }
             }
         }
