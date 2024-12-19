@@ -11,9 +11,10 @@ import { ItsLearningIMSESService } from '../itslearning.service.js';
 export class ItslearningPersonRepo {
     public constructor(private readonly itslearningService: ItsLearningIMSESService) {}
 
-    public async readPerson(id: PersonID): Promise<Option<PersonResponse>> {
+    public async readPerson(id: PersonID, syncId?: string): Promise<Option<PersonResponse>> {
         const personResult: Result<PersonResponse, DomainError> = await this.itslearningService.send(
             new ReadPersonAction(id),
+            syncId,
         );
 
         if (!personResult.ok) {
@@ -23,10 +24,10 @@ export class ItslearningPersonRepo {
         return personResult.value;
     }
 
-    public async createOrUpdatePerson(params: CreatePersonParams): Promise<Option<DomainError>> {
+    public async createOrUpdatePerson(params: CreatePersonParams, syncId?: string): Promise<Option<DomainError>> {
         const createAction: CreatePersonAction = new CreatePersonAction(params);
 
-        const createResult: Result<void, DomainError> = await this.itslearningService.send(createAction);
+        const createResult: Result<void, DomainError> = await this.itslearningService.send(createAction, syncId);
 
         if (!createResult.ok) {
             return createResult.error;
@@ -35,24 +36,30 @@ export class ItslearningPersonRepo {
         return undefined;
     }
 
-    public async updateEmail(personId: PersonID, email: string): Promise<Option<DomainError>> {
-        const person: Option<PersonResponse> = await this.readPerson(personId);
+    public async updateEmail(personId: PersonID, email: string, syncId?: string): Promise<Option<DomainError>> {
+        const person: Option<PersonResponse> = await this.readPerson(personId, syncId);
 
         // Person is not in itslearning, should not update the e-mail
         if (!person) return new ItsLearningError(`[updateEmail] person with ID ${personId} not found.`);
 
-        return this.createOrUpdatePerson({
-            id: personId,
-            firstName: person.firstName,
-            lastName: person.lastName,
-            institutionRoleType: person.institutionRole,
-            username: person.username,
-            email,
-        });
+        return this.createOrUpdatePerson(
+            {
+                id: personId,
+                firstName: person.firstName,
+                lastName: person.lastName,
+                institutionRoleType: person.institutionRole,
+                username: person.username,
+                email,
+            },
+            syncId,
+        );
     }
 
-    public async deletePerson(id: PersonID): Promise<Option<DomainError>> {
-        const deleteResult: Result<void, DomainError> = await this.itslearningService.send(new DeletePersonAction(id));
+    public async deletePerson(id: PersonID, syncId?: string): Promise<Option<DomainError>> {
+        const deleteResult: Result<void, DomainError> = await this.itslearningService.send(
+            new DeletePersonAction(id),
+            syncId,
+        );
 
         if (!deleteResult.ok) {
             return deleteResult.error;
