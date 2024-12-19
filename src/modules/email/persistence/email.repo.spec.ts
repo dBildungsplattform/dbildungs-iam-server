@@ -6,9 +6,9 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
 } from '../../../../test/utils/index.js';
-import { EmailRepo } from './email.repo.js';
+import { EmailRepo, mapAggregateToData } from './email.repo.js';
 import { EmailFactory } from '../domain/email.factory.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
@@ -23,11 +23,12 @@ import { MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { mapAggregateToData } from './email.repo.js';
 import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-already-has-enabled-email-address.error.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -38,11 +39,14 @@ describe('EmailRepo', () => {
     let organisationRepository: OrganisationRepository;
     let orm: MikroORM;
 
+    let loggerMock: DeepMocked<ClassLogger>;
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 UsernameGeneratorService,
+                OxUserBlacklistRepo,
                 EmailRepo,
                 EmailFactory,
                 PersonFactory,
@@ -84,6 +88,8 @@ describe('EmailRepo', () => {
         organisationRepository = module.get(OrganisationRepository);
         orm = module.get(MikroORM);
 
+        loggerMock = module.get(ClassLogger);
+
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
@@ -117,6 +123,38 @@ describe('EmailRepo', () => {
         return organisationRepository.save(organisation);
     }
 
+    async function createEmailAddress(
+        status: EmailAddressStatus,
+        personId: PersonID,
+        organisationId: OrganisationID,
+    ): Promise<EmailAddress<true>> {
+        const email: Result<EmailAddress<false>> = await emailFactory.createNew(personId, organisationId);
+        if (!email.ok) throw new Error();
+
+        switch (status) {
+            case EmailAddressStatus.ENABLED:
+                email.value.enable();
+                break;
+            case EmailAddressStatus.REQUESTED:
+                email.value.request();
+                break;
+        }
+        const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
+        if (savedEmail instanceof DomainError) throw new Error();
+
+        return savedEmail;
+    }
+
+    async function createPersonAndOrganisationAndEmailAddress(
+        status: EmailAddressStatus,
+    ): Promise<[Person<true>, Organisation<true>, EmailAddress<true>]> {
+        const person: Person<true> = await createPerson();
+        const organisation: Organisation<true> = await createOrganisation();
+        const email: EmailAddress<true> = await createEmailAddress(status, person.id, organisation.id);
+
+        return [person, organisation, email];
+    }
+
     afterAll(async () => {
         await orm.close();
         await module.close();
@@ -133,14 +171,9 @@ describe('EmailRepo', () => {
     describe('findEnabledByPerson', () => {
         describe('when email-address is found for personId', () => {
             it('should return email with email-addresses by personId', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
-                if (!email.ok) throw new Error();
+                const [person, ,]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.ENABLED);
 
-                email.value.enable();
-                const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-                if (savedEmail instanceof DomainError) throw new Error();
                 const foundEmail: Option<EmailAddress<true>> = await sut.findEnabledByPerson(person.id);
                 if (!foundEmail) throw Error();
 
@@ -159,15 +192,10 @@ describe('EmailRepo', () => {
 
     describe('findRequestedByPerson', () => {
         describe('when email-address is found for personId', () => {
-            it('should return email with email-addresses by personId', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
-                if (!email.ok) throw new Error();
+            it('should return emailAddress by personId', async () => {
+                const [person, ,]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
 
-                email.value.request();
-                const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-                if (savedEmail instanceof DomainError) throw new Error();
                 const foundEmail: Option<EmailAddress<true>> = await sut.findRequestedByPerson(person.id);
                 if (!foundEmail) throw Error();
 
@@ -175,11 +203,32 @@ describe('EmailRepo', () => {
             });
         });
 
+        describe('when multiple email-addresses are found for personId', () => {
+            it('should return most recently updated emailAddress by personId and log warning', async () => {
+                const [person, organisation]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
+                const newerEmailAddress: EmailAddress<true> = await createEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                    person.id,
+                    organisation.id,
+                );
+
+                const foundEmail: Option<EmailAddress<true>> = await sut.findRequestedByPerson(person.id);
+                if (!foundEmail) throw Error();
+
+                expect(loggerMock.warning).toHaveBeenCalledWith(
+                    `Multiple EmailAddresses Found In REQUESTED Status For personId:${person.id}, Will Only Return address:${newerEmailAddress.address}`,
+                );
+
+                expect(foundEmail.address).toStrictEqual(newerEmailAddress.address);
+            });
+        });
+
         describe('when person does NOT exist', () => {
-            it('should return undefined', async () => {
+            it('should return null', async () => {
                 const foundEmail: Option<EmailAddress<true>> = await sut.findRequestedByPerson(faker.string.uuid());
 
-                expect(foundEmail).toBeUndefined();
+                expect(foundEmail).toBeNull();
             });
         });
     });
@@ -187,14 +236,9 @@ describe('EmailRepo', () => {
     describe('findByPerson', () => {
         describe('when no status is provided and email-address is found for personId', () => {
             it('should return email with email-addresses by personId', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
-                if (!email.ok) throw new Error();
+                const [person, ,]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
 
-                email.value.request();
-                const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-                if (savedEmail instanceof DomainError) throw new Error();
                 const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     person.id,
                 );
@@ -206,44 +250,34 @@ describe('EmailRepo', () => {
         });
 
         describe('when no status is provided and person does NOT exist', () => {
-            it('should return undefined', async () => {
+            it('should return empty array', async () => {
                 const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     faker.string.uuid(),
                 );
 
-                expect(foundEmails).toBeUndefined();
+                expect(foundEmails).toEqual([]);
             });
         });
 
         describe('when ENABLED status is provided but only requested email-address is found for personId', () => {
-            it('should return undefined', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
-                if (!email.ok) throw new Error();
+            it('should return empty array', async () => {
+                const [person, ,]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
 
-                email.value.request();
-                const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-                if (savedEmail instanceof DomainError) throw new Error();
                 const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     person.id,
                     EmailAddressStatus.ENABLED,
                 );
 
-                expect(foundEmails).toBeUndefined();
+                expect(foundEmails).toEqual([]);
             });
         });
 
         describe('when ENABLED status is provided and email-address is found for personId', () => {
             it('should return undefined', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
-                if (!email.ok) throw new Error();
+                const [person, ,]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.ENABLED);
 
-                email.value.enable();
-                const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-                if (savedEmail instanceof DomainError) throw new Error();
                 const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     person.id,
                     EmailAddressStatus.ENABLED,
@@ -256,13 +290,13 @@ describe('EmailRepo', () => {
         });
 
         describe('when status is provided and person does NOT exist', () => {
-            it('should return undefined', async () => {
+            it('should return empty array', async () => {
                 const foundEmails: Option<EmailAddress<true>[]> = await sut.findByPersonSortedByUpdatedAtDesc(
                     faker.string.uuid(),
                     EmailAddressStatus.ENABLED,
                 );
 
-                expect(foundEmails).toBeUndefined();
+                expect(foundEmails).toEqual([]);
             });
         });
     });
@@ -281,16 +315,8 @@ describe('EmailRepo', () => {
 
         describe('when person has enabled email-address assigned', () => {
             it('should return enabled address', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const emailRequested: Result<EmailAddress<false>> = await emailFactory.createNew(
-                    person.id,
-                    organisation.id,
-                );
-                if (!emailRequested.ok) throw new Error();
-                emailRequested.value.request();
-                const savedRequestedEmail: EmailAddress<true> | DomainError = await sut.save(emailRequested.value);
-                if (savedRequestedEmail instanceof DomainError) throw new Error();
+                const [person, organisation]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
 
                 const emailEnabled: Result<EmailAddress<false>> = await emailFactory.createNew(
                     person.id,
@@ -313,16 +339,8 @@ describe('EmailRepo', () => {
 
         describe('when person has no enabled email-address assigned', () => {
             it('should return the most recently updated one', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const emailRequested: Result<EmailAddress<false>> = await emailFactory.createNew(
-                    person.id,
-                    organisation.id,
-                );
-                if (!emailRequested.ok) throw new Error();
-                emailRequested.value.request();
-                const savedRequestedEmail: EmailAddress<true> | DomainError = await sut.save(emailRequested.value);
-                if (savedRequestedEmail instanceof DomainError) throw new Error();
+                const [person, organisation]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
 
                 const emailFailed: Result<EmailAddress<false>> = await emailFactory.createNew(
                     person.id,
@@ -344,18 +362,33 @@ describe('EmailRepo', () => {
         });
     });
 
+    describe('findByAddress', () => {
+        describe('when emailAddress CANNOT be found via address', () => {
+            it('should throw error', async () => {
+                const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(faker.internet.email());
+                expect(emailAddress).toBeUndefined();
+            });
+        });
+
+        describe('when emailAddress can be found via address', () => {
+            it('should return emailAddress aggregate', async () => {
+                const [, , savedRequestedEmail]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
+
+                const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(savedRequestedEmail.address);
+                if (!emailAddress) throw new Error();
+
+                expect(emailAddress.address).toStrictEqual(savedRequestedEmail.address);
+            });
+        });
+    });
+
     describe('deactivateEmailAddress', () => {
         describe('when email-address exists', () => {
             it('should disable it and return EmailAddressEntity', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                await organisationRepository.save(organisation);
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
-                if (!email.ok) throw new Error();
-                email.value.enable();
+                const [, , savedEmail]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.ENABLED);
 
-                const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-                if (savedEmail instanceof DomainError) throw new Error();
                 const currentAddress: Option<string> = savedEmail.currentAddress;
                 if (!currentAddress) throw new Error();
                 const deactivationResult: EmailAddressEntity | EmailAddressNotFoundError =
@@ -367,13 +400,6 @@ describe('EmailRepo', () => {
 
         describe('when email-address does NOT exist', () => {
             it('should return EmailAddressNotFoundError', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
-                if (!email.ok) throw Error();
-                email.value.enable();
-                const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-                if (savedEmail instanceof DomainError) throw new Error();
                 const deactivationResult: EmailAddressEntity | EmailAddressNotFoundError =
                     await sut.deactivateEmailAddress(faker.internet.email());
 
@@ -385,13 +411,8 @@ describe('EmailRepo', () => {
     describe('save', () => {
         describe('when address is already persisted', () => {
             it('should use update method and return EmailAddress aggregate', async () => {
-                const person: Person<true> = await createPerson();
-                const organisation: Organisation<true> = await createOrganisation();
-                const email: Result<EmailAddress<false>> = await emailFactory.createNew(person.id, organisation.id);
-                if (!email.ok) throw Error();
-                email.value.enable();
-                const persistedValidEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-                if (persistedValidEmail instanceof DomainError) throw new Error();
+                const [, , persistedValidEmail]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                    await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.ENABLED);
 
                 persistedValidEmail.disable();
                 const persistedDisabledEmail: EmailAddress<true> | DomainError = await sut.save(persistedValidEmail);

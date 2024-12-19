@@ -53,9 +53,10 @@ describe('configloader', () => {
                 LDAP: {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     ROOT: 'sh',
@@ -78,11 +79,17 @@ describe('configloader', () => {
                     KEYCLOAK_ROLE: 'VIDIS-user',
                 },
                 OX: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
+                },
+                IMPORT: {
+                    CSV_FILE_MAX_SIZE_IN_MB: 10,
+                    CSV_MAX_NUMBER_OF_USERS: 2000,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                    PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
@@ -181,9 +188,10 @@ describe('configloader', () => {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'password',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
@@ -207,12 +215,18 @@ describe('configloader', () => {
                     KEYCLOAK_ROLE: 'VIDIS-user',
                 },
                 OX: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                },
+                IMPORT: {
+                    CSV_FILE_MAX_SIZE_IN_MB: 10,
+                    CSV_MAX_NUMBER_OF_USERS: 2000,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                    PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
