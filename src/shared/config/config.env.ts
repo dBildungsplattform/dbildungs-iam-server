@@ -46,6 +46,7 @@ export default (): Config => ({
         ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
         OEFFENTLICHE_SCHULEN_DOMAIN: process.env['LDAP_OEFFENTLICHE_SCHULEN_DOMAIN'],
         ERSATZSCHULEN_DOMAIN: process.env['LDAP_ERSATZSCHULEN_DOMAIN'],
+        BASE_DN: process.env['LDAP_BASE_DN'],
     },
     FRONTEND: {
         SESSION_SECRET: process.env['FRONTEND_SESSION_SECRET'],
@@ -81,6 +82,8 @@ export default (): Config => ({
         ENDPOINT: process.env['OX_ENDPOINT'],
         USERNAME: process.env['OX_USERNAME'],
         PASSWORD: process.env['OX_PASSWORD'],
+        CONTEXT_ID: process.env['OX_CONTEXT_ID'],
+        CONTEXT_NAME: process.env['OX_CONTEXT_NAME'],
     },
     SYSTEM: {
         RENAME_WAITING_TIME_IN_SECONDS: process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS']

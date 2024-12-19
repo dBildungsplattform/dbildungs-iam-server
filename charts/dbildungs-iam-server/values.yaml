@@ -33,6 +33,7 @@ ldap:
   bindDN: cn=admin,dc=schule-sh,dc=de
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
+  base_dn: dc=schule-sh,dc=de
 
 itslearning:
   root: sh
@@ -66,6 +67,14 @@ auth:
   vidis_keycloak_role: ''
   import_passphrase_secret: ''
   import_passphrase_salt: ''
+  ox_password: ''
+
+ox:
+  enabled: false
+  username: 'oxadmin'
+  endpoint: 'https://webmail.example.com'
+  contextId: '10'
+  contextName: '10'
 
 backend:
   replicaCount: 1

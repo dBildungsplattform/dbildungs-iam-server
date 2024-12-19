@@ -46,11 +46,15 @@ describe('Itslearning Group Repo', () => {
     describe('readGroup', () => {
         it('should call the itslearning API', async () => {
             const organisationId: string = faker.string.uuid();
+            const syncID: string = faker.string.uuid();
 
-            await sut.readGroup(organisationId);
+            await sut.readGroup(organisationId, syncID);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ id: organisationId }));
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(ReadGroupAction));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
+                expect.objectContaining({ id: organisationId }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(ReadGroupAction), syncID);
         });
 
         it('should return the result', async () => {
@@ -93,11 +97,15 @@ describe('Itslearning Group Repo', () => {
                 ok: true,
                 value: undefined,
             }); // CreateGroupAction
+            const syncID: string = faker.string.uuid();
 
-            await sut.createOrUpdateGroup(createParams);
+            await sut.createOrUpdateGroup(createParams, syncID);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ params: createParams }));
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreateGroupAction));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
+                expect.objectContaining({ params: createParams }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreateGroupAction), syncID);
         });
 
         it('should not return error on success', async () => {
@@ -150,11 +158,15 @@ describe('Itslearning Group Repo', () => {
                 ok: true,
                 value: undefined,
             }); // CreateGroupAction
+            const syncID: string = faker.string.uuid();
 
-            await sut.createOrUpdateGroups(createParams);
+            await sut.createOrUpdateGroups(createParams, syncID);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ params: createParams }));
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreateGroupsAction));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
+                expect.objectContaining({ params: createParams }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreateGroupsAction), syncID);
         });
 
         it('should not return error on success', async () => {
@@ -204,11 +216,15 @@ describe('Itslearning Group Repo', () => {
                 ok: true,
                 value: undefined,
             }); // DeletePersonAction
+            const syncID: string = faker.string.uuid();
 
-            await sut.deleteGroup(organisationId);
+            await sut.deleteGroup(organisationId, syncID);
 
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ id: organisationId }));
-            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeleteGroupAction));
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(
+                expect.objectContaining({ id: organisationId }),
+                syncID,
+            );
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeleteGroupAction), syncID);
         });
 
         it('should not return error on success', async () => {
