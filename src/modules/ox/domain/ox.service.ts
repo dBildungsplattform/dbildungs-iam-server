@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
-import { Hash, createHash } from 'crypto';
+import { createHash, Hash } from 'crypto';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 import { lastValueFrom } from 'rxjs';
 
@@ -25,7 +25,7 @@ export type OxErrorType = {
 };
 
 function isOxErrorType(err: unknown): err is OxErrorType {
-    if (
+    return !!(
         err &&
         typeof err === 'object' &&
         'response' in err &&
@@ -34,11 +34,7 @@ function isOxErrorType(err: unknown): err is OxErrorType {
         'data' in err.response &&
         typeof err.response.data === 'string' &&
         err.response.data
-    ) {
-        return true;
-    }
-
-    return false;
+    );
 }
 
 @Injectable()

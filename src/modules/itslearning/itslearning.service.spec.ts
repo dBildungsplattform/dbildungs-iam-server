@@ -58,6 +58,26 @@ describe('ItsLearningIMSESService', () => {
                 },
             );
         });
+        it('should include syncID if given', async () => {
+            const mockAction: DeepMocked<IMSESAction<unknown, unknown>> = createMock<IMSESAction<unknown, unknown>>();
+            mockAction.buildRequest.mockReturnValueOnce({});
+            mockAction.action = 'testAction';
+            httpServiceMock.post.mockReturnValueOnce(of({} as AxiosResponse));
+            const syncID: string = 'sync-id-test';
+
+            await sut.send(mockAction, syncID);
+
+            expect(httpServiceMock.post).toHaveBeenCalledWith(
+                'https://itslearning-test.example.com',
+                expect.stringContaining(syncID),
+                {
+                    headers: {
+                        'Content-Type': 'text/xml;charset=UTF-8',
+                        SOAPAction: `"testAction"`,
+                    },
+                },
+            );
+        });
 
         it('should call parseResponse of action and return result', async () => {
             const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock<IMSESAction<unknown, string>>();
