@@ -134,21 +134,12 @@ describe('OxEventHandler', () => {
      * @param exists default is FALSE
      */
     function mockExistsUserRequest(exists: boolean = false): void {
-        if (exists) {
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: {
-                    exists: true,
-                },
-            });
-        } else {
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: {
-                    exists: false,
-                },
-            });
-        }
+        oxServiceMock.send.mockResolvedValueOnce({
+            ok: true,
+            value: {
+                exists: exists,
+            },
+        });
     }
 
     afterAll(async () => {
