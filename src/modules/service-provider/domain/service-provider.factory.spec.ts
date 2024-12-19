@@ -38,6 +38,7 @@ describe('ServiceProviderFactory', () => {
                 const keycloakGroup: string = faker.string.alpha();
                 const keycloakRole: string = faker.string.alpha();
                 const externalSystem: ServiceProviderSystem = faker.helpers.enumValue(ServiceProviderSystem);
+                const vidisAngebotId: string = faker.string.numeric();
                 const example: ServiceProvider<true> = {
                     id: id,
                     createdAt: created,
@@ -53,6 +54,7 @@ describe('ServiceProviderFactory', () => {
                     keycloakRole: keycloakRole,
                     externalSystem: externalSystem,
                     requires2fa: false,
+                    vidisAngebotId: vidisAngebotId,
                 };
                 const serviceProvider: ServiceProvider<true> = sut.construct(
                     id,
@@ -69,6 +71,7 @@ describe('ServiceProviderFactory', () => {
                     keycloakRole,
                     externalSystem,
                     false,
+                    vidisAngebotId,
                 );
 
                 expect(serviceProvider).toEqual(example);

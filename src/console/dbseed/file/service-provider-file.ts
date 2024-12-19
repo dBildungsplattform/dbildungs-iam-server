@@ -30,4 +30,6 @@ export class ServiceProviderFile {
     public externalSystem?: ServiceProviderSystem;
 
     public requires2fa!: boolean;
+
+    public vidisAngebotId?: string;
 }

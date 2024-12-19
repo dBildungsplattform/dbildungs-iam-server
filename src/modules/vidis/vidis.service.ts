@@ -23,7 +23,7 @@ export class VidisService {
 
     public async getActivatedAngeboteByRegion(regionName: string): Promise<VidisAngebot[]> {
         const url: string = this.vidisConfig.BASE_URL + `/o/vidis-rest/v1.0/offers/activated/by-region/${regionName}`;
-        this.logger.info(`Fetching activated Angebote for region: ${regionName}`);
+        this.logger.info(`Fetching activated Angebote for region '${regionName}' from ${url}`);
         try {
             const response: AxiosResponse<VidisResponse<VidisOfferResponse>> = await firstValueFrom(
                 this.httpService.get(url, {
@@ -36,6 +36,7 @@ export class VidisService {
             const vidisOfferResponses: VidisOfferResponse[] = response.data.items;
             const vidisAngebote: VidisAngebot[] = vidisOfferResponses.map((offer: VidisOfferResponse) => {
                 return {
+                    angebotId: offer.offerId.toString(),
                     angebotVersion: offer.offerVersion,
                     angebotDescription: offer.offerDescription,
                     angebotLink: offer.offerLink,

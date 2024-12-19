@@ -6,7 +6,7 @@ export type VidisOfferCategoriesResponse = {
 };
 
 export type VidisOfferResponse = {
-    offerId?: number;
+    offerId: number;
     offerVersion: number;
     offerDescription: string;
     offerLink: string;

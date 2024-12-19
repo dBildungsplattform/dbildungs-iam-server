@@ -13,6 +13,7 @@ const mockVidisRegionName: string = 'test-region';
 
 const mockVidisAngebotResponses: VidisOfferResponse[] = [
     {
+        offerId: 1234567,
         offerVersion: 1,
         offerDescription:
             'Effiziente Organisation Ihrer Hausaufgaben mit der neuen Hausaufgaben Listen App Verlieren Sie nie wieder den Überblick über Ihre Aufgaben und Abgabefristen. Unsere Hausaufgaben Listen App bietet Ihnen eine strukturierte und benutzerfreundliche Lösung, um Ihre schulischen Verpflichtungen optimal zu verwalten. Funktionen der App: Übersichtliche Verwaltung: Behalten Sie alle Hausaufgaben, Projekte und To-Dos an einem zentralen Ort im Blick. Erinnerungsfunktion: Automatische Benachrichtigungen helfen Ihnen, keine Fristen mehr zu verpassen. Einfache Bedienung: Intuitive Benutzeroberfläche, die eine schnelle und unkomplizierte Nutzung ermöglicht. Kollaborationsmöglichkeit: Teilen Sie Aufgaben und Projekte mit Mitschülern, um effizienter zusammenzuarbeiten. Anpassbare Listen: Erstellen Sie individuelle Kategorien und Listen nach Ihren Bedürfnissen. Fortschrittsanzeige: Verfolgen Sie Ihre erledigten Aufgaben und sehen Sie Ihren Fortschritt in Echtzeit. Unsere Hausaufgaben Listen App ist kostenlos verfügbar und bietet Ihnen eine verlässliche Unterstützung bei der Organisation Ihres Schulalltags.',
@@ -24,6 +25,7 @@ const mockVidisAngebotResponses: VidisOfferResponse[] = [
         schoolActivations: ['DE-VIDIS-vidis_test_20202', 'DE-VIDIS-vidis_test_40404', 'DE-VIDIS-vidis_test_101010'],
     },
     {
+        offerId: 7654321,
         offerVersion: 1,
         offerDescription:
             'divomath ist eine Lernumgebung für Mathematik, die insbesondere dem Prinzip der Verstehensorientierung folgt. Sie bietet Unterrichtseinheiten für die dritte bis sechste Jahrgangsstufe.',
@@ -35,6 +37,7 @@ const mockVidisAngebotResponses: VidisOfferResponse[] = [
         schoolActivations: ['DE-VIDIS-vidis_test_30303', 'DE-VIDIS-vidis_test_20202', 'DE-VIDIS-vidis_test_101010'],
     },
     {
+        offerId: 9876543,
         offerVersion: 4,
         offerDescription: 'webtown test offer',
         offerLink: '?vidis_idp_hint=vidis-idp',
@@ -90,6 +93,7 @@ describe(`VidisService`, () => {
             const expectedVidisAngebote: VidisAngebot[] = expectedVidisOfferResponse.map(
                 (offer: VidisOfferResponse) => {
                     return {
+                        angebotId: offer.offerId.toString(),
                         angebotVersion: offer.offerVersion,
                         angebotDescription: offer.offerDescription,
                         angebotLink: offer.offerLink,

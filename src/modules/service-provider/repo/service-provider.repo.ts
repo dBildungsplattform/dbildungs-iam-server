@@ -29,6 +29,7 @@ export function mapAggregateToData(
         keycloakRole: serviceProvider.keycloakRole,
         externalSystem: serviceProvider.externalSystem,
         requires2fa: serviceProvider.requires2fa,
+        vidisAngebotId: serviceProvider.vidisAngebotId,
     };
 }
 
@@ -48,6 +49,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.keycloakRole,
         entity.externalSystem,
         entity.requires2fa,
+        entity.vidisAngebotId,
     );
 }
 
@@ -77,6 +79,17 @@ export class ServiceProviderRepo {
     public async findByName(name: string): Promise<Option<ServiceProvider<true>>> {
         const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
             name: name,
+        });
+        if (serviceProvider) {
+            return mapEntityToAggregate(serviceProvider);
+        }
+
+        return null;
+    }
+
+    public async findByVidisAngebotId(vidisAngebotId: string): Promise<Option<ServiceProvider<true>>> {
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
+            vidisAngebotId: vidisAngebotId,
         });
         if (serviceProvider) {
             return mapEntityToAggregate(serviceProvider);

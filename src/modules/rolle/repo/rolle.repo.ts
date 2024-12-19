@@ -95,6 +95,7 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
                 sp.keycloakRole,
                 sp.externalSystem,
                 sp.requires2fa,
+                sp.vidisAngebotId,
             );
         },
     );

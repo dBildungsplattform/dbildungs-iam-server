@@ -60,7 +60,7 @@ export class ServiceProviderService {
         await Promise.allSettled(
             vidisAngebote.map(async (angebot: VidisAngebot) => {
                 const existingServiceProvider: Option<ServiceProvider<true>> =
-                    await this.serviceProviderRepo.findByName(angebot.angebotTitle);
+                    await this.serviceProviderRepo.findByVidisAngebotId(angebot.angebotId);
 
                 const angebotLogoMediaType: string = this.determineMediaTypeFor(angebot.angebotLogo);
 
@@ -81,6 +81,7 @@ export class ServiceProviderService {
                         vidisKeycloakRole,
                         ServiceProviderSystem.NONE,
                         false,
+                        angebot.angebotId,
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
                 } else {
@@ -96,6 +97,7 @@ export class ServiceProviderService {
                         vidisKeycloakRole,
                         ServiceProviderSystem.NONE,
                         false,
+                        angebot.angebotId,
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
                 }
