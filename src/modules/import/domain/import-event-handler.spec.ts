@@ -23,6 +23,8 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportExecutedEvent } from '../../../shared/events/import-executed.event.js';
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
+import { ImportDomainError } from './import-domain.error.js';
+import { ImportStatus } from './import.enums.js';
 
 describe('ImportEventHandler', () => {
     let module: TestingModule;
@@ -167,13 +169,21 @@ describe('ImportEventHandler', () => {
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(error);
             organisationRepoMock.findById.mockResolvedValueOnce(schule);
 
-            await sut.handleExecuteImport(event);
+            const importDomainError: DomainError = new ImportDomainError(
+                `The creation of person with personenkontexte for the import transaction:${importvorgang.id} failed`,
+                importvorgang.id,
+            );
+
+            await expect(sut.handleExecuteImport(event)).rejects.toThrowError(importDomainError);
 
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${error.message}`,
             );
             expect(importDataRepositoryMock.save).not.toHaveBeenCalled();
-            expect(importVorgangRepositoryMock.save).not.toHaveBeenCalled();
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledWith({
+                ...importvorgang,
+                status: ImportStatus.FAILED,
+            });
         });
 
         it('should log error if the person has no start password', async () => {
@@ -206,12 +216,20 @@ describe('ImportEventHandler', () => {
             personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockResolvedValueOnce(pks);
             organisationRepoMock.findById.mockResolvedValueOnce(schule);
 
-            await sut.handleExecuteImport(event);
+            const error: DomainError = new ImportDomainError(
+                `The creation for a password for the person with ID ${person.id} for the import transaction:${importvorgang.id} has failed`,
+                importvorgang.id,
+            );
+
+            await expect(sut.handleExecuteImport(event)).rejects.toThrowError(error);
 
             expect(person.newPassword).toBeUndefined();
             expect(loggerMock.error).toHaveBeenCalledWith(`Person with ID ${person.id} has no start password!`);
             expect(importDataRepositoryMock.save).not.toHaveBeenCalled();
-            expect(importVorgangRepositoryMock.save).not.toHaveBeenCalled();
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledWith({
+                ...importvorgang,
+                status: ImportStatus.FAILED,
+            });
         });
 
         it('should log info if the person and PKs were saved successfully', async () => {
@@ -258,8 +276,8 @@ describe('ImportEventHandler', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `System hat einen neuen Benutzer ${person.referrer} (${person.id}) angelegt.`,
             );
-            expect(importDataRepositoryMock.save).toHaveBeenCalled();
-            expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(1);
+            expect(importDataRepositoryMock.replaceAll).toHaveBeenCalled();
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(2);
         });
     });
 });

@@ -12,6 +12,8 @@ import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportVorgangRepository } from './import-vorgang.repository.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { ImportDomainError } from '../domain/import-domain.error.js';
 
 describe('ImportDataRepository', () => {
     let module: TestingModule;
@@ -93,12 +95,20 @@ describe('ImportDataRepository', () => {
 
         beforeEach(async () => {
             const importvorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
             importvorgangId = importvorgang.id;
 
             const importvorgang2: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
 
             importDataItem1 = ImportDataItem.construct(
@@ -155,8 +165,15 @@ describe('ImportDataRepository', () => {
 
     describe('save', () => {
         it('should create a new importDataItem', async () => {
-            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
-                .id;
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
             const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, { importvorgangId });
 
             const savedImportDataItem: ImportDataItem<true> = await sut.save(importDataItem);
@@ -165,8 +182,15 @@ describe('ImportDataRepository', () => {
         });
 
         it('should update an existing importDataItem', async () => {
-            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
-                .id;
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
             const createdImportDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
                 importvorgangId,
             });
@@ -197,7 +221,15 @@ describe('ImportDataRepository', () => {
         let importvorgangId: string;
 
         beforeEach(async () => {
-            importvorgangId = (await importVorgangRepository.save(DoFactory.createImportVorgang(false))).id;
+            importvorgangId = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
 
             importDataItem1 = ImportDataItem.construct(
                 faker.string.uuid(),
@@ -232,6 +264,125 @@ describe('ImportDataRepository', () => {
             expect(result).toBeUndefined();
             expect(findResult.length).toBe(0);
             expect(findTotal).toBe(0);
+        });
+    });
+
+    describe('createAll', () => {
+        it('should create all importDataItems', async () => {
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
+            const importDataItems: ImportDataItem<false>[] = [
+                DoFactory.createImportDataItem(false, { importvorgangId }),
+                DoFactory.createImportDataItem(false, { importvorgangId }),
+            ];
+
+            const savedImportDataItems: string[] = await sut.createAll(importDataItems);
+
+            expect(
+                savedImportDataItems.every((savedImportDataItem: string) => savedImportDataItem !== undefined),
+            ).toBeTruthy();
+            expect(savedImportDataItems.length).toBe(importDataItems.length);
+        });
+    });
+
+    describe('replaceAll', () => {
+        let importDataItem1: ImportDataItem<true>;
+        let importDataItem2: ImportDataItem<true>;
+        let importvorgangId: string;
+
+        beforeEach(async () => {
+            importvorgangId = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
+            importDataItem1 = await sut.save(DoFactory.createImportDataItem(false, { importvorgangId }));
+            importDataItem2 = await sut.save(DoFactory.createImportDataItem(false, { importvorgangId }));
+        });
+
+        it('should replace all when found', async () => {
+            const newUsername: string = faker.internet.userName();
+            const newUsername2: string = faker.internet.userName();
+            const pass1: string = faker.internet.password({ length: 32 });
+            const pass2: string = faker.internet.password({ length: 32 });
+            const personalnummer: string = faker.random.alphaNumeric(7);
+
+            const updateImportDataItems: ImportDataItem<true>[] = [
+                {
+                    ...importDataItem1,
+                    username: newUsername,
+                    password: pass1,
+                    personalnummer: personalnummer,
+                    validationErrors: [],
+                },
+                {
+                    ...importDataItem2,
+                    username: newUsername2,
+                    password: pass2,
+                    validationErrors: [],
+                },
+            ];
+            const result: ImportDataItem<true>[] = await sut.replaceAll(updateImportDataItems);
+
+            expect(result.length).toBe(2);
+            expect(result[0]).toMatchObject({
+                id: importDataItem1.id,
+                importvorgangId: importvorgangId,
+                klasse: importDataItem1.klasse,
+                nachname: importDataItem1.nachname,
+                vorname: importDataItem1.vorname,
+                personalnummer: personalnummer,
+                validationErrors: [],
+                username: newUsername,
+                password: pass1,
+            });
+
+            expect(result[1]).toMatchObject({
+                id: importDataItem2.id,
+                importvorgangId: importvorgangId,
+                klasse: importDataItem2.klasse,
+                nachname: importDataItem2.nachname,
+                vorname: importDataItem2.vorname,
+                personalnummer: null,
+                validationErrors: [],
+                username: newUsername2,
+                password: pass2,
+            });
+        });
+
+        it('should throw an ImportDomainError if one data-item is not found', async () => {
+            const updateImportDataItems: ImportDataItem<true>[] = [
+                {
+                    ...importDataItem1,
+                    validationErrors: ['error1'],
+                },
+                {
+                    ...importDataItem2,
+                    validationErrors: ['error1'],
+                },
+                {
+                    ...DoFactory.createImportDataItem(true, { importvorgangId }),
+                    validationErrors: ['error1'],
+                },
+            ];
+
+            const importDomainError: DomainError = new ImportDomainError(
+                `Update all has failed because not all entities were found. importDataItemsCount:${updateImportDataItems.length}, numberOfEntitiesFound:${2}`,
+                'IMPORT_DATA_ITEM_NOT_FOUND',
+            );
+
+            await expect(sut.replaceAll(updateImportDataItems)).rejects.toThrowError(importDomainError);
         });
     });
 });

@@ -18,11 +18,15 @@ import { OrganisationByIdAndName } from './import-workflow.js';
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { ImportDomainError } from './import-domain.error.js';
 @Injectable()
 export class ImportEventHandler {
     public selectedOrganisationId!: string;
 
     public selectedRolleId!: string;
+
+    private readonly USER_IMPORT_BATCH_SIZE: number = 25;
 
     public constructor(
         private readonly organisationRepository: OrganisationRepository,
@@ -51,7 +55,6 @@ export class ImportEventHandler {
             }
         });
 
-        const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
         const importvorgangId: string = event.importVorgangId;
         const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
         if (!importVorgang) {
@@ -64,15 +67,42 @@ export class ImportEventHandler {
             return this.logger.error(`No import data itemns found for Importvorgang:${importvorgangId}`);
         }
 
+        while (importDataItems.length > 0) {
+            const dataItemsToImport: ImportDataItem<true>[] = importDataItems.splice(0, this.USER_IMPORT_BATCH_SIZE);
+            // eslint-disable-next-line no-await-in-loop
+            await this.savePersonWithPersonenkontext(
+                importVorgang,
+                dataItemsToImport,
+                klassenByIDandName,
+                event.permissions,
+            );
+
+            importVorgang.incrementTotalImportDataItems(dataItemsToImport.length);
+            // eslint-disable-next-line no-await-in-loop
+            await this.importVorgangRepository.save(importVorgang);
+        }
+
+        importVorgang.finish();
+        await this.importVorgangRepository.save(importVorgang);
+    }
+
+    private async savePersonWithPersonenkontext(
+        importVorgang: ImportVorgang<true>,
+        dataItems: ImportDataItem<true>[],
+        klassenByIDandName: OrganisationByIdAndName[],
+        permissions: PersonPermissions,
+    ): Promise<void> {
+        const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
         //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
-        /* eslint-disable no-await-in-loop */
-        for (const importDataItem of importDataItems) {
+
+        for (const importDataItem of dataItems) {
             const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                 (organisationByIdAndName: OrganisationByIdAndName) =>
                     organisationByIdAndName.name === importDataItem.klasse,
             );
             if (!klasse) {
                 importVorgang.fail();
+                // eslint-disable-next-line no-await-in-loop
                 await this.importVorgangRepository.save(importVorgang);
 
                 throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
@@ -92,8 +122,9 @@ export class ImportEventHandler {
             ];
 
             const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
+                // eslint-disable-next-line no-await-in-loop
                 await this.personenkontextCreationService.createPersonWithPersonenkontexte(
-                    event.permissions,
+                    permissions,
                     importDataItem.vorname,
                     importDataItem.nachname,
                     createPersonenkontexte,
@@ -104,14 +135,29 @@ export class ImportEventHandler {
                     `System hat einen neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
                 );
             } else {
-                return this.logger.error(
+                this.logger.error(
                     `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${savedPersonWithPersonenkontext.message}`,
+                );
+
+                importVorgang.fail();
+                // eslint-disable-next-line no-await-in-loop
+                await this.importVorgangRepository.save(importVorgang);
+
+                throw new ImportDomainError(
+                    `The creation of person with personenkontexte for the import transaction:${importVorgang.id} failed`,
+                    importVorgang.id,
                 );
             }
 
             if (!savedPersonWithPersonenkontext.person.newPassword) {
-                return this.logger.error(
-                    `Person with ID ${savedPersonWithPersonenkontext.person.id} has no start password!`,
+                this.logger.error(`Person with ID ${savedPersonWithPersonenkontext.person.id} has no start password!`);
+
+                importVorgang.fail();
+                // eslint-disable-next-line no-await-in-loop
+                await this.importVorgangRepository.save(importVorgang);
+                throw new ImportDomainError(
+                    `The creation for a password for the person with ID ${savedPersonWithPersonenkontext.person.id} for the import transaction:${importVorgang.id} has failed`,
+                    importVorgang.id,
                 );
             }
 
@@ -127,21 +173,14 @@ export class ImportEventHandler {
                     importDataItem.personalnummer,
                     importDataItem.validationErrors,
                     savedPersonWithPersonenkontext.person.referrer,
+                    // eslint-disable-next-line no-await-in-loop
                     await this.importPasswordEncryptor.encryptPassword(
                         savedPersonWithPersonenkontext.person.newPassword,
                     ),
                 ),
             );
         }
-        /* eslint-disable no-await-in-loop */
 
-        await Promise.allSettled(
-            importDataItemsWithLoginInfo.map(async (importDataItem: ImportDataItem<true>) =>
-                this.importDataRepository.save(importDataItem),
-            ),
-        );
-
-        importVorgang.finish();
-        await this.importVorgangRepository.save(importVorgang);
+        await this.importDataRepository.replaceAll(importDataItemsWithLoginInfo);
     }
 }
