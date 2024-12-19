@@ -61,6 +61,10 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ContentDisposition, ContentType } from '../../../shared/http/http.headers.js';
 import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
+import { ImportResultResponse } from './import-result.response.js';
+import { faker } from '@faker-js/faker';
+import { ImportStatus } from '../domain/import.enums.js';
+import { PagedQueryParams } from '../../../shared/paging/paged.query.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -303,5 +307,38 @@ export class ImportController {
         }
 
         return new ImportVorgangStatusResponse(result);
+    }
+
+    @Get('importedUsers')
+    @ApiOperation({ description: 'Get the list of imported users.' })
+    @ApiOkResponse({
+        description: 'The list of imported users was successfully returned',
+        type: [ImportResultResponse],
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the list of imported users.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get list of imported users.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting list of imported users.' })
+    public getImportedUsers(
+        @Query() queryParams: PagedQueryParams,
+        @Permissions() _permissions: PersonPermissions,
+    ): ImportResultResponse {
+        //Just for an example for the API response
+        const importVorgang: ImportVorgang<true> = ImportVorgang.construct(
+            faker.string.uuid(),
+            faker.date.past(),
+            faker.date.recent(),
+            faker.internet.userName(),
+            faker.lorem.word(),
+            faker.lorem.word(),
+            queryParams.limit ?? 100,
+            ImportStatus.STARTED,
+            0,
+            faker.string.uuid(),
+            faker.string.uuid(),
+            faker.string.uuid(),
+        );
+
+        return new ImportResultResponse(importVorgang);
     }
 }
