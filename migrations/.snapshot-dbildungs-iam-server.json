@@ -217,7 +217,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -446,7 +447,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -697,7 +699,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -940,7 +943,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1496,7 +1500,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1811,7 +1816,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2190,7 +2196,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -2988,7 +2995,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3295,7 +3303,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3580,7 +3589,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3986,7 +3996,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4233,7 +4244,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4297,7 +4309,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ],
           "mappedType": "enum"
         }
@@ -4489,7 +4502,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4814,7 +4828,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5162,7 +5177,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5650,7 +5666,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5940,7 +5957,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -6122,7 +6140,8 @@
         "PERSON_SYNCHRONISIEREN",
         "CRON_DURCHFUEHREN",
         "PERSONEN_ANLEGEN",
-        "IMPORT_DURCHFUEHREN"
+        "IMPORT_DURCHFUEHREN",
+        "PERSONEN_LESEN"
       ]
     },
     "service_provider_target_enum": {
