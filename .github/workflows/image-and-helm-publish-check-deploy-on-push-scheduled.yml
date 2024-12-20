@@ -152,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - shell: bash
-        run: sleep 1m 
+        run: sleep 1m
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
@@ -165,7 +165,7 @@ jobs:
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
-  
+
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
