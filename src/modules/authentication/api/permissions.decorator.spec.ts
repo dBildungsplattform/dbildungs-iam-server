@@ -4,6 +4,7 @@ import { PersonPermissions } from '../domain/person-permissions.js';
 import { ExecutionContext } from '@nestjs/common';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import express from 'express';
+import { PassportUser } from '../types/user.js';
 
 describe('The Permissions-Decorator', () => {
     let factory: (data: unknown, context: ExecutionContext) => Promise<PersonPermissions | undefined>;
@@ -44,6 +45,13 @@ describe('The Permissions-Decorator', () => {
         };
 
         await expect(factory(null, executionContext)).resolves.toBe(personPermissions);
+    });
+
+    it('should reject if passport user is set without personPermission function', async () => {
+        const context: ExecutionContext = createMock();
+        context.switchToHttp().getRequest<DeepMocked<express.Request>>().passportUser = {} as PassportUser;
+
+        await expect(factory(null, context)).rejects.toBeUndefined();
     });
 
     it('should reject if there is no passport user', async () => {
