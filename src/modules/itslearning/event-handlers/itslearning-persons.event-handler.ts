@@ -13,7 +13,8 @@ import {
     PersonenkontextUpdatedEvent,
     PersonenkontextUpdatedPersonData,
 } from '../../../shared/events/personenkontext-updated.event.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonResponse } from '../actions/read-person.action.js';
 import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.js';
@@ -36,64 +37,77 @@ export class ItsLearningPersonsEventHandler {
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
-        this.ENABLED = itsLearningConfig.ENABLED === 'true';
+        this.ENABLED = itsLearningConfig.ENABLED;
     }
 
     @EventHandler(PersonRenamedEvent)
     public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
-            this.logger.info(`Received PersonRenamedEvent, ${event.personId}`);
+            this.logger.info(`[EventID: ${event.eventID}] Received PersonRenamedEvent, ${event.personId}`);
 
             if (!this.ENABLED) {
-                return this.logger.info('Not enabled, ignoring event.');
+                return this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
             }
 
             if (!event.referrer) {
-                return this.logger.error(`Person with ID ${event.personId} has no username!`);
+                return this.logger.error(
+                    `[EventID: ${event.eventID}] Person with ID ${event.personId} has no username!`,
+                );
             }
 
             const readPersonResult: Option<PersonResponse> = await this.itslearningPersonRepo.readPerson(
                 event.personId,
+                `${event.eventID}-PERSON-EXISTS-CHECK`,
             );
 
             if (!readPersonResult) {
-                return this.logger.info(`Person with ID ${event.personId} is not in itslearning, ignoring.`);
+                return this.logger.info(
+                    `[EventID: ${event.eventID}] Person with ID ${event.personId} is not in itslearning, ignoring.`,
+                );
             }
 
-            const updatePersonError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson({
-                id: event.personId,
-                firstName: event.vorname,
-                lastName: event.familienname,
-                username: event.referrer,
-                institutionRoleType: readPersonResult.institutionRole,
-            });
+            const updatePersonError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+                {
+                    id: event.personId,
+                    firstName: event.vorname,
+                    lastName: event.familienname,
+                    username: event.referrer,
+                    institutionRoleType: readPersonResult.institutionRole,
+                },
+                `${event.eventID}-PERSON-RENAMED-UPDATE`,
+            );
 
             if (updatePersonError) {
-                return this.logger.error(`Person with ID ${event.personId} could not be updated in itsLearning!`);
+                return this.logger.error(
+                    `[EventID: ${event.eventID}] Person with ID ${event.personId} could not be updated in itsLearning!`,
+                );
             }
 
-            this.logger.info(`Person with ID ${event.personId} updated in itsLearning!`);
+            this.logger.info(`[EventID: ${event.eventID}] Person with ID ${event.personId} updated in itsLearning!`);
         });
     }
 
     @EventHandler(OxUserChangedEvent)
     public async oxUserChangedEventHandler(event: OxUserChangedEvent): Promise<void> {
         if (!this.ENABLED) {
-            return this.logger.info('Not enabled, ignoring email update.');
+            return this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring email update.`);
         }
 
         await this.personUpdateMutex.runExclusive(async () => {
-            this.logger.info(`Received OxUserChangedEvent, ${event.personId}`);
+            this.logger.info(`[EventID: ${event.eventID}] Received OxUserChangedEvent, ${event.personId}`);
 
             const updateError: Option<DomainError> = await this.itslearningPersonRepo.updateEmail(
                 event.personId,
                 event.primaryEmail,
+                `${event.eventID}-EMAIL-UPDATE`,
             );
 
             if (updateError) {
-                this.logger.error(`Could not update E-Mail for person with ID ${event.personId}!`);
+                this.logger.error(
+                    `[EventID: ${event.eventID}] Could not update E-Mail for person with ID ${event.personId}!`,
+                );
             } else {
-                this.logger.info(`Updated E-Mail for person with ID ${event.personId}!`);
+                this.logger.info(`[EventID: ${event.eventID}] Updated E-Mail for person with ID ${event.personId}!`);
             }
         });
     }
@@ -101,43 +115,56 @@ export class ItsLearningPersonsEventHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteEventHandler(event: PersonenkontextUpdatedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
-            this.logger.info(`Received PersonenkontextUpdatedEvent, ${event.person.id}`);
+            this.logger.info(`[EventID: ${event.eventID}] Received PersonenkontextUpdatedEvent, ${event.person.id}`);
 
             if (!this.ENABLED) {
-                return this.logger.info('Not enabled, ignoring event.');
+                return this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
             }
+
+            // Collect all itslearning-orgas
+            const schoolsWithItslearning: Set<OrganisationID> = new Set(
+                event.currentKontexte
+                    .filter((pk: PersonenkontextUpdatedData) => pk.isItslearningOrga)
+                    .map((pk: PersonenkontextUpdatedData) => pk.orgaId),
+            );
 
             // Find all removed or current kontexte that have itslearning
             const [currentKontexte]: [PersonenkontextUpdatedData[]] = this.filterRelevantKontexte(
+                schoolsWithItslearning,
                 event.currentKontexte,
             );
 
             if (currentKontexte.length > 0) {
                 // Person should have itslearning, create/update them as necessary
-                await this.updatePerson(event.person, currentKontexte);
+                await this.updatePerson(event.person, currentKontexte, `${event.eventID}-UPDATE-PERSON`);
 
                 // Synchronize memberships
-                await this.updateMemberships(event.person.id, currentKontexte);
+                await this.updateMemberships(event.person.id, currentKontexte, `${event.eventID}-UPDATE-MEMBERSHIPS`);
             } else {
                 // Delete person
-                await this.deletePerson(event.person.id);
+                await this.deletePerson(event.person.id, `${event.eventID}-DELETE-PERSON`);
             }
         });
     }
 
-    public async updateMemberships(personId: PersonID, currentKontexte: PersonenkontextUpdatedData[]): Promise<void> {
+    public async updateMemberships(
+        personId: PersonID,
+        currentKontexte: PersonenkontextUpdatedData[],
+        eventID: string,
+    ): Promise<void> {
         const setMembershipsResult: Result<unknown, DomainError> = await this.itslearningMembershipRepo.setMemberships(
             personId,
             currentKontexte.map((pk: PersonenkontextUpdatedData) => ({ organisationId: pk.orgaId, role: pk.rolle })),
+            eventID,
         );
 
         if (!setMembershipsResult.ok) {
             this.logger.error(
-                `Could not set ${currentKontexte.length} memberships for person ${personId}`,
+                `[EventID: ${eventID}] Could not set ${currentKontexte.length} memberships for person ${personId}`,
                 setMembershipsResult.error,
             );
         } else {
-            this.logger.info(`Set ${currentKontexte.length} memberships for person ${personId}`);
+            this.logger.info(`[EventID: ${eventID}] Set ${currentKontexte.length} memberships for person ${personId}`);
         }
     }
 
@@ -147,54 +174,67 @@ export class ItsLearningPersonsEventHandler {
     public async updatePerson(
         person: PersonenkontextUpdatedPersonData,
         currentPersonenkontexte: PersonenkontextUpdatedData[],
+        eventID: string,
     ): Promise<void> {
         if (!person.referrer) {
-            return this.logger.error(`Person with ID ${person.id} has no username!`);
+            return this.logger.error(`[EventID: ${eventID}] Person with ID ${person.id} has no username!`);
         }
 
         const targetRole: IMSESInstitutionRoleType = rollenartToIMSESInstitutionRole(
             determineHighestRollenart(currentPersonenkontexte.map((pk: PersonenkontextUpdatedData) => pk.rolle)),
         );
 
-        const createError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson({
-            id: person.id,
-            firstName: person.vorname,
-            lastName: person.familienname,
-            username: person.referrer,
-            institutionRoleType: targetRole,
-            email: person.email,
-        });
+        const createError: Option<DomainError> = await this.itslearningPersonRepo.createOrUpdatePerson(
+            {
+                id: person.id,
+                firstName: person.vorname,
+                lastName: person.familienname,
+                username: person.referrer,
+                institutionRoleType: targetRole,
+                email: person.email,
+            },
+            eventID,
+        );
 
         if (createError) {
             return this.logger.error(
-                `Person with ID ${person.id} could not be sent to itsLearning! Error: ${createError.message}`,
+                `[EventID: ${eventID}] Person with ID ${person.id} could not be sent to itsLearning! Error: ${createError.message}`,
             );
         }
 
-        return this.logger.info(`Person with ID ${person.id} created in itsLearning!`);
+        return this.logger.info(`[EventID: ${eventID}] Person with ID ${person.id} created in itsLearning!`);
     }
 
     /**
      * Delete this person in itslearning
      */
-    public async deletePerson(personID: PersonID): Promise<void> {
+    public async deletePerson(personID: PersonID, eventID: string): Promise<void> {
         const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(personID);
 
         if (!deleteError) {
-            this.logger.info(`Person with ID ${personID} deleted.`);
+            this.logger.info(`[EventID: ${eventID}] Person with ID ${personID} deleted.`);
         } else {
-            this.logger.error(`Could not delete person with ID ${personID} from itsLearning.`);
+            this.logger.error(`[EventID: ${eventID}] Could not delete person with ID ${personID} from itsLearning.`);
         }
     }
 
-    private filterRelevantKontexte<T extends [...PersonenkontextUpdatedData[][]]>(...kontexte: T): [...T] {
+    private filterRelevantKontexte<T extends [...PersonenkontextUpdatedData[][]]>(
+        schoolsWithItslearning: Set<OrganisationID>,
+        ...kontexte: T
+    ): [...T] {
         // Only keep personenkontexte, that are at itslearning organisations and have a serviceprovider with itslearning-system
         const filteredKontexte: [...T] = kontexte.map((pks: PersonenkontextUpdatedData[]) =>
-            pks.filter(
-                (pk: PersonenkontextUpdatedData) =>
-                    pk.isItslearningOrga &&
-                    pk.serviceProviderExternalSystems.includes(ServiceProviderSystem.ITSLEARNING),
-            ),
+            pks.filter((pk: PersonenkontextUpdatedData) => {
+                if (pk.orgaTyp == OrganisationsTyp.SCHULE) {
+                    if (!pk.isItslearningOrga) return false;
+                } else if (pk.orgaTyp == OrganisationsTyp.KLASSE) {
+                    if (!pk.parentOrgaId || !schoolsWithItslearning.has(pk.parentOrgaId)) return false;
+                } else {
+                    return false;
+                }
+
+                return pk.serviceProviderExternalSystems.includes(ServiceProviderSystem.ITSLEARNING);
+            }),
         ) as [...T];
 
         return filteredKontexte;

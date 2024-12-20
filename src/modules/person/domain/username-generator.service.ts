@@ -8,10 +8,17 @@ import {
     InvalidAttributeLengthError,
 } from '../../../shared/error/index.js';
 import { isDIN91379A, toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
+import { OxUserBlacklistRepo } from '../persistence/ox-user-blacklist.repo.js';
+import { OxUserBlacklistEntry } from './ox-user-blacklist-entry.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 @Injectable()
 export class UsernameGeneratorService {
-    public constructor(private kcUserService: KeycloakUserService) {}
+    public constructor(
+        private readonly logger: ClassLogger,
+        private kcUserService: KeycloakUserService,
+        private oxUserBlacklistRepo: OxUserBlacklistRepo,
+    ) {}
 
     public async generateUsername(firstname: string, lastname: string): Promise<Result<string, DomainError>> {
         // Check for minimum length
@@ -75,20 +82,28 @@ export class UsernameGeneratorService {
         while (await this.usernameExists(calculatedUsername + counter)) {
             counter = counter + 1;
         }
-        /* eslint-disable no-await-in-loop */
+        this.logger.info(`Next Available Username Is:${calculatedUsername + counter}`);
+
         return calculatedUsername + counter;
     }
 
-    public async usernameExists(username: string): Promise<boolean> {
-        const searchResult: Result<User<true>, DomainError> | { ok: false; error: DomainError } =
-            await this.kcUserService.findOne({ username: username });
+    /**
+     * This method can throw errors e.g. if Keycloak search fails.
+     * @param username
+     * @private
+     */
+    private async usernameExists(username: string): Promise<boolean> {
+        // Check Keycloak
+        const searchResult: Result<User<true>, DomainError> = await this.kcUserService.findOne({ username });
         if (searchResult.ok) {
-            return true;
-        } else {
-            if (searchResult.error instanceof EntityNotFoundError) {
-                return false;
-            }
+            return true; // Username exists in Keycloak
+        } else if (!(searchResult.error instanceof EntityNotFoundError)) {
+            throw searchResult.error; // Something else went wrong with Keycloak search
         }
-        throw searchResult.error;
+
+        // Check OX Blacklist for the username. If it exists then return true.
+        const oxUser: Option<OxUserBlacklistEntry<true>> = await this.oxUserBlacklistRepo.findByOxUsername(username);
+
+        return !!oxUser;
     }
 }

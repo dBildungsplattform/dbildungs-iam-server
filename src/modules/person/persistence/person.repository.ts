@@ -38,6 +38,9 @@ import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/persona
 import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
 import { SystemConfig } from '../../../shared/config/system.config.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
+import { KOPERS_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -158,6 +161,7 @@ export class PersonRepository {
         private readonly em: EntityManager,
         private readonly eventService: EventService,
         private usernameGenerator: UsernameGeneratorService,
+        private logger: ClassLogger,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -246,6 +250,20 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
+    public async getPersonIfAllowedOrRequesterIsPerson(
+        personId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<Person<true>>> {
+        if (personId == permissions.personFields.id) {
+            let person: Option<Person<true>> = await this.findById(personId);
+            if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+            person = await this.extendPersonWithKeycloakData(person);
+            return { ok: true, value: person };
+        }
+
+        return this.getPersonIfAllowed(personId, permissions);
+    }
+
     public async extendPersonWithKeycloakData(person: Person<true>): Promise<Person<true>> {
         if (!person.keycloakUserId) {
             return person;
@@ -317,6 +335,7 @@ export class PersonRepository {
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,
+                referrer: person.referrer,
             },
             [],
             removedPersonenkontexts,
@@ -357,7 +376,6 @@ export class PersonRepository {
         person: Person<false>,
         hashedPassword?: string,
         personId?: string,
-        technicalUser: boolean = false,
     ): Promise<Person<true> | DomainError> {
         const transaction: EntityManager = this.em.fork();
         await transaction.begin();
@@ -386,7 +404,7 @@ export class PersonRepository {
             // Take ID from person to create keycloak user
             let personWithKeycloakUser: Person<true> | DomainError;
 
-            if (!technicalUser) {
+            if (!person.keycloakUserId) {
                 if (!hashedPassword) {
                     personWithKeycloakUser = await this.createKeycloakUser(persistedPerson, this.kcUserService);
                 } else {
@@ -492,6 +510,7 @@ export class PersonRepository {
 
         person.referrer = person.username;
         const userDo: User<false> = User.createNew(person.username, undefined, {
+            ID_NEXTCLOUD: [person.id],
             ID_ITSLEARNING: [person.id],
             ID_OX: [person.id],
         });
@@ -662,11 +681,25 @@ export class PersonRepository {
                     (lock: UserLock) => lock.locked_occasion === PersonLockOccasion.KOPERS_GESPERRT,
                 );
                 if (koperslock && personFound.keycloakUserId) {
-                    await this.kcUserService.updateKeycloakUserStatus(
+                    const lockResult: Result<void, DomainError> = await this.kcUserService.updateKeycloakUserStatus(
                         personId,
                         personFound.keycloakUserId,
                         koperslock,
                         false,
+                    );
+                    if (!lockResult.ok && lockResult.error instanceof DomainError) {
+                        const keyCloakUpdateError: DownstreamKeycloakError = new DownstreamKeycloakError(
+                            lockResult.error.message,
+                            personId,
+                            [lockResult.error.details],
+                        );
+                        this.logger.error(
+                            `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.referrer} (BenutzerId: ${personFound.id}) konnte durch Nachtragen der KoPers.-Nr. nicht aufgehoben werden. Fehler: ${keyCloakUpdateError.message}`,
+                        );
+                        throw keyCloakUpdateError;
+                    }
+                    this.logger.info(
+                        `Die Sperre aufgrund von fehlender KoPers.-Nr. für Benutzer ${personFound.referrer} (BenutzerId: ${personFound.id}) wurde durch Nachtragen der KoPers.-Nr. aufgehoben.`,
                     );
                 }
             }
@@ -761,7 +794,7 @@ export class PersonRepository {
 
     public async getKoPersUserLockList(): Promise<[PersonID, string][]> {
         const daysAgo: Date = new Date();
-        daysAgo.setDate(daysAgo.getDate() - 56);
+        daysAgo.setDate(daysAgo.getDate() - KOPERS_DEADLINE_IN_DAYS);
 
         const filters: QBFilterQuery<PersonEntity> = {
             $and: [
@@ -769,7 +802,7 @@ export class PersonRepository {
                 {
                     personenKontexte: {
                         $some: {
-                            createdAt: { $lte: daysAgo }, // Check that createdAt is older than 56 days
+                            createdAt: { $lte: daysAgo }, // Check that createdAt is older than KOPERS_DEADLINE_IN_DAYS
                             rolleId: {
                                 merkmale: { merkmal: RollenMerkmal.KOPERS_PFLICHT },
                             },
@@ -808,5 +841,20 @@ export class PersonRepository {
 
         const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return personEntities.map((person: PersonEntity) => person.id);
+    }
+
+    public async findOrganisationAdminsByOrganisationId(organisation_id: string): Promise<string[]> {
+        const filters: QBFilterQuery<PersonEntity> = {
+            personenKontexte: {
+                $some: {
+                    organisationId: organisation_id,
+                    rolleId: {
+                        rollenart: 'LEIT',
+                    },
+                },
+            },
+        };
+        const admins: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        return admins.map((admin: PersonEntity) => admin.vorname + ' ' + admin.familienname);
     }
 }

@@ -16,6 +16,8 @@ import { PrivacyIdeaAdministrationController } from './privacy-idea-administrati
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { AssignTokenResponse, PrivacyIdeaToken, ResetTokenResponse } from './privacy-idea-api.types.js';
 import { TokenStateResponse } from './token-state.response.js';
+import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
+import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 
 describe('PrivacyIdeaAdministrationController', () => {
     let module: TestingModule;
@@ -41,6 +43,7 @@ describe('PrivacyIdeaAdministrationController', () => {
     beforeEach(async () => {
         module = await Test.createTestingModule({
             controllers: [PrivacyIdeaAdministrationController],
+            imports: [LoggingTestModule],
             providers: [
                 {
                     provide: PrivacyIdeaAdministrationService,
@@ -87,9 +90,23 @@ describe('PrivacyIdeaAdministrationController', () => {
                 ok: false,
                 error: new Error('Forbidden access'),
             });
-
+            personPermissionsMock = createMock<PersonPermissions>();
             await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
                 new HttpException('Forbidden access', HttpStatus.FORBIDDEN),
+            );
+        });
+        it('should return forbidden insufficient permissions', async () => {
+            const person: Person<true> = getPerson();
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+            personPermissionsMock = createMock<PersonPermissions>();
+            serviceMock.initializeSoftwareToken.mockRejectedValueOnce(
+                new SoftwareTokenInitializationError('SoftwareToken Error'),
+            );
+            await expect(sut.initializeSoftwareToken({ personId: 'user1' }, personPermissionsMock)).rejects.toThrow(
+                new SoftwareTokenInitializationError('SoftwareToken Error'),
             );
         });
     });
@@ -395,6 +412,21 @@ describe('PrivacyIdeaAdministrationController', () => {
             });
 
             await sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock);
+        });
+        it('should throw an error when trying to verify', async () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+            const person: Person<true> = getPerson();
+
+            personRepository.getPersonIfAllowed.mockResolvedValueOnce({
+                ok: true,
+                value: person,
+            });
+            const error: Error = new Error('verification failed');
+            serviceMock.verifyTokenEnrollment.mockRejectedValueOnce(error);
+
+            await expect(sut.verifyToken({ personId: 'user1', otp: '123456' }, personPermissionsMock)).rejects.toThrow(
+                error,
+            );
         });
 
         it('should return forbidden insufficient permissions', async () => {

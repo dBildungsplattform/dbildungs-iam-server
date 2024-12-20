@@ -4,6 +4,7 @@ import {
     Delete,
     Get,
     HttpCode,
+    HttpException,
     HttpStatus,
     NotImplementedException,
     Param,
@@ -78,6 +79,9 @@ import { PersonEmailResponse } from './person-email-response.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
+import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -96,9 +100,10 @@ export class PersonController {
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
-        config: ConfigService<ServerConfig>,
+        private readonly ldapClientService: LdapClientService,
         private readonly personApiMapper: PersonApiMapper,
         private readonly eventService: EventService,
+        config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
@@ -172,12 +177,19 @@ export class PersonController {
             params.personId,
             permissions,
         );
+        const person: Option<Person<true>> = await this.personRepository.findById(params.personId);
         // Throw an HTTP exception if the delete response is an error
         if (!response.ok) {
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${person?.referrer} (BenutzerId: ${person?.id}) zu löschen. Fehler: ${response.error.message}`,
+            );
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response.error),
             );
         }
+        this.logger.info(
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat Benutzer ${person?.referrer} (BenutzerId: ${person?.id}) gelöscht.`,
+        );
     }
 
     @Get(':personId')
@@ -207,6 +219,7 @@ export class PersonController {
         const personEmailResponse: Option<PersonEmailResponse> = await this.emailRepo.getEmailAddressAndStatusForPerson(
             personResult.value,
         );
+
         const response: PersonendatensatzResponse = new PersonendatensatzResponse(
             personResult.value,
             false,
@@ -301,8 +314,9 @@ export class PersonController {
     ): Promise<PagedResponse<PersonendatensatzResponse>> {
         // Find all organisations where user has permission
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.PERSONEN_LESEN],
             true,
+            false,
         );
 
         // Find all Personen on child-orgas (+root orgas)
@@ -404,21 +418,31 @@ export class PersonController {
             permissions,
         );
         if (!personResult.ok) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            const error: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('Person', params.personId),
                 ),
             );
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht das Password des Benutzers mit BenutzerId ${params.personId} zurückzusetzen. Fehler: ${error.message}`,
+            );
+            throw error;
         }
         personResult.value.resetPassword();
         const saveResult: Person<true> | DomainError = await this.personRepository.update(personResult.value);
 
         if (saveResult instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            const error: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(saveResult),
             );
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht das Password des Benutzers ${personResult.value.referrer} mit BenutzerId ${personResult.value.id} zurückzusetzen. Fehler: ${error.message}`,
+            );
+            throw error;
         }
-
+        this.logger.info(
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat das Passwort von Benutzer ${saveResult.referrer} (BenutzerId: ${saveResult.id}) zurueckgesetzt.`,
+        );
         return { ok: true, value: personResult.value.newPassword! };
     }
 
@@ -441,11 +465,34 @@ export class PersonController {
         );
 
         if (!personResult.ok) {
-            throw new NotFoundOrNoPermissionError(personId);
+            const error: NotFoundOrNoPermissionError = new NotFoundOrNoPermissionError(personId);
+            if (lockUserBodyParams.lock) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht einen Benutzer (BenutzerId: ${personId}) zu sperren. Fehler: ${error.message}.`,
+                );
+            } else {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht einen Benutzer (BenutzerId: ${personId}) zu entsperren. Fehler: ${error.message}.`,
+                );
+            }
+            throw error;
         }
 
         if (!personResult.value?.keycloakUserId) {
-            throw new PersonDomainError(`Person with id ${personId} has no keycloak id`, personId);
+            const error: PersonDomainError = new PersonDomainError(
+                `Person with id ${personId} has no keycloak id`,
+                personId,
+            );
+            if (lockUserBodyParams.lock) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${personResult.value.referrer} (BenutzerId: ${personId}) zu sperren. Fehler: ${error.message}.`,
+                );
+            } else {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht den Benutzer ${personResult.value.referrer} (BenutzerId: ${personId}) zu entsperren. Fehler: ${error.message}.`,
+                );
+            }
+            throw error;
         }
 
         const userLock: UserLock = {
@@ -463,7 +510,28 @@ export class PersonController {
             lockUserBodyParams.lock,
         );
         if (!result.ok) {
-            throw new DownstreamKeycloakError(result.error.message, personId, [result.error.details]);
+            const error: DownstreamKeycloakError = new DownstreamKeycloakError(result.error.message, personId, [
+                result.error.details,
+            ]);
+            if (lockUserBodyParams.lock) {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat versucht den Benutzer ${personResult.value.referrer} (BenutzerId: ${personId}) zu sperren. Fehler: ${error.message}.`,
+                );
+            } else {
+                this.logger.error(
+                    `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat versucht den Benutzer ${personResult.value.referrer} (BenutzerId: ${personId}) zu entsperren. Fehler: ${error.message}.`,
+                );
+            }
+            throw error;
+        }
+        if (lockUserBodyParams.lock) {
+            this.logger.info(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat Benutzer ${personResult.value.referrer} (BenutzerId: ${personId})) gesperrt (Befristung: ${userLock.locked_until?.toString() ?? 'unbefristet'}).`,
+            );
+        } else {
+            this.logger.info(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}, Sperrende Organisation: ${userLock.locked_by}) hat Benutzer ${personResult.value.referrer} (BenutzerId: ${personId})) entsperrt (Befristung: ${userLock.locked_until?.toString() ?? 'unbefristet'}).`,
+            );
         }
         return new PersonLockResponse(`User has been successfully ${lockUserBodyParams.lock ? '' : 'un'}locked.`);
     }
@@ -486,10 +554,17 @@ export class PersonController {
             [RollenSystemRecht.PERSON_SYNCHRONISIEREN],
         );
         if (!personResult.ok) {
-            throw new NotFoundOrNoPermissionError(personId);
+            const error: NotFoundOrNoPermissionError = new NotFoundOrNoPermissionError(personId);
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id} hat versucht Benutzer mit BenutzerId: ${personId} neu zu synchronisieren. Fehler: ${error.message}`,
+            );
+            throw error;
         }
 
         this.eventService.publish(new PersonExternalSystemsSyncEvent(personId));
+        this.logger.info(
+            `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id} hat für Benutzer ${personResult.value.referrer} (BenutzerId: ${personResult.value.id}) eine Synchronisation durchgeführt.`,
+        );
     }
 
     @Patch(':personId/metadata')
@@ -513,7 +588,14 @@ export class PersonController {
                 params.personId,
             ))
         ) {
-            throw new PersonDomainError('Person hat keine koperspflichtige Rolle', undefined);
+            const error: PersonDomainError = new PersonDomainError(
+                'Person hat keine koperspflichtige Rolle',
+                undefined,
+            );
+            this.logger.info(
+                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht die persoenlichen Daten des Benutzers mit BenutzerId: ${params.personId} zu verändern. Fehler: ${error.message}`,
+            );
+            throw error;
         }
         const result: Person<true> | DomainError = await this.personRepository.updatePersonMetadata(
             params.personId,
@@ -526,6 +608,9 @@ export class PersonController {
         );
 
         if (result instanceof DomainError) {
+            this.logger.info(
+                `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat versucht die persoenlichen Daten des Benutzers mit BenutzerId: ${params.personId} zu verändern. Fehler: ${result.message}`,
+            );
             if (result instanceof PersonDomainError || result instanceof DuplicatePersonalnummerError) {
                 throw result;
             }
@@ -534,6 +619,50 @@ export class PersonController {
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
             );
         }
+        this.logger.info(
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat die persoenlichen Daten von Benutzer ${result.referrer} (BenutzerId: ${result.id}) geändert.`,
+        );
         return new PersonendatensatzResponse(result, false);
+    }
+
+    @Patch(':personId/uem-password')
+    @HttpCode(HttpStatus.ACCEPTED)
+    @ApiAcceptedResponse({ description: 'UEM-password for person was successfully reset.', type: String })
+    @ApiNotFoundResponse({ description: 'The person does not exist or insufficient permissions to update person.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
+    @UseInterceptors(ResultInterceptor)
+    public async resetUEMPasswordByPersonId(
+        @Param() params: PersonByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<Result<string>> {
+        //check that logged-in user is allowed to update person
+        const personResult: Result<Person<true>> = await this.personRepository.getPersonIfAllowedOrRequesterIsPerson(
+            params.personId,
+            permissions,
+        );
+        if (!personResult.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', params.personId),
+                ),
+            );
+        }
+        if (!personResult.value.referrer) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new PersonDomainError('Person-Referrer NOT defined', params.personId),
+                ),
+            );
+        }
+        const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
+            personResult.value.id,
+            personResult.value.referrer,
+        );
+
+        if (!changeUserPasswordResult.ok) {
+            throw new PersonUserPasswordModificationError(personResult.value.id);
+        }
+
+        return { ok: true, value: changeUserPasswordResult.value };
     }
 }

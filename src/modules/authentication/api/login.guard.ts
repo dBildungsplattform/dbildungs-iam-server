@@ -31,7 +31,6 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
         if (requiredStepUpLevel) {
             request.session.requiredStepupLevel = requiredStepUpLevel;
         }
-
         if (
             request.isAuthenticated() &&
             request.session.requiredStepupLevel === (request.passportUser?.stepUpLevel ?? StepUpLevel.NONE)
@@ -46,10 +45,10 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
             await super.logIn(request);
         } catch (err) {
             this.logger.info(JSON.stringify(err));
+            const frontendConfig: FrontendConfig = this.configService.getOrThrow<FrontendConfig>('FRONTEND');
 
             if (err instanceof KeycloakUserNotFoundError) {
                 //Redirect to error page
-                const frontendConfig: FrontendConfig = this.configService.getOrThrow<FrontendConfig>('FRONTEND');
                 res.setHeader('location', frontendConfig.ERROR_PAGE_REDIRECT).status(403);
                 const msg: Record<string, unknown> = {
                     DbiamAuthenticationError: {
@@ -60,9 +59,19 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
                 throw new HttpFoundException(msg);
             }
 
-            return false;
+            request.session.passport = { user: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL } };
+            return true;
         }
-
-        return request.isAuthenticated();
+        const isAuthenticated: boolean = request.isAuthenticated();
+        if (isAuthenticated) {
+            this.logger.info(
+                `Benutzer ${request.passportUser?.userinfo.preferred_username} hat sich im Schulportal angemeldet.`,
+            );
+        } else {
+            this.logger.error(
+                `Fehlergeschlagener Login mit Benutzer ${request.passportUser?.userinfo.preferred_username}`,
+            );
+        }
+        return isAuthenticated;
     }
 }
