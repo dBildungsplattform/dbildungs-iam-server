@@ -4,7 +4,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
-import { ImportUploadResultFields, ImportWorkflow } from './import-workflow.js';
+import { ImportResult, ImportUploadResultFields, ImportWorkflow } from './import-workflow.js';
 import { ImportWorkflowFactory } from './import-workflow.factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -487,7 +487,7 @@ describe('ImportWorkflow', () => {
             expect(importDataRepositoryMock.deleteByImportVorgangId).not.toHaveBeenCalled();
         });
 
-        it('should return EntityNotFoundError if the ImportVorgang gas import data items', async () => {
+        it('should return EntityNotFoundError if the ImportVorgang has no import data items', async () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             importVorgangRepositoryMock.findById.mockResolvedValueOnce(
                 DoFactory.createImportVorgang(true, { status: ImportStatus.FINISHED }),
@@ -670,13 +670,101 @@ describe('ImportWorkflow', () => {
 
         it('should call the importDataRepository if the admin has permissions to cancel the import transaction', async () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true, {
+                status: ImportStatus.INVALID,
+            });
             importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
 
             const result: Result<void> = await sut.cancelImport(importvorgang.id, personpermissionsMock);
 
             expect(importDataRepositoryMock.deleteByImportVorgangId).toHaveBeenCalled();
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledWith({
+                ...importvorgang,
+                status: ImportStatus.CANCELLED,
+            });
             expect(result).toEqual({ ok: true, value: undefined });
+        });
+
+        it('should save importvorgang with status COMPLETED if the previous status was FINISHED', async () => {
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true, {
+                status: ImportStatus.FINISHED,
+            });
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
+
+            const result: Result<void> = await sut.cancelImport(importvorgang.id, personpermissionsMock);
+
+            expect(importDataRepositoryMock.deleteByImportVorgangId).toHaveBeenCalled();
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledWith({
+                ...importvorgang,
+                status: ImportStatus.COMPLETED,
+            });
+            expect(result).toEqual({ ok: true, value: undefined });
+        });
+    });
+
+    describe('getImportedUsers', () => {
+        it('should return MissingPermissionsError if the admin does not have permissions to execute the import transaction', async () => {
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+
+            const result: Result<ImportResult> = await sut.getImportedUsers(personpermissionsMock, faker.string.uuid());
+
+            expect(result).toEqual({
+                ok: false,
+                error: new MissingPermissionsError('Unauthorized to import data'),
+            });
+        });
+
+        it('should return EntityNotFoundError if a ImportVorgang does not exist', async () => {
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(null);
+            const importvorgangId: string = faker.string.uuid();
+
+            const result: Result<ImportResult> = await sut.getImportedUsers(personpermissionsMock, importvorgangId);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
+            });
+            expect(importPasswordEncryptorMock.decryptPassword).not.toHaveBeenCalled();
+        });
+
+        it('should return EntityNotFoundError if the ImportVorgang has no import data items', async () => {
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(
+                DoFactory.createImportVorgang(true, { status: ImportStatus.FINISHED }),
+            );
+            importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[], 0]);
+            const importvorgangId: string = faker.string.uuid();
+
+            const result: Result<ImportResult> = await sut.getImportedUsers(personpermissionsMock, importvorgangId);
+
+            expect(result).toEqual({
+                ok: false,
+                error: new EntityNotFoundError('ImportDataItem', importvorgangId),
+            });
+            expect(importPasswordEncryptorMock.decryptPassword).not.toHaveBeenCalled();
+        });
+
+        it('should return ImportResult if the ImportVorgang has any import data items', async () => {
+            personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+            const importvorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true, {
+                status: ImportStatus.FINISHED,
+            });
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
+            const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true);
+            importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
+
+            const result: Result<ImportResult> = await sut.getImportedUsers(personpermissionsMock, importvorgang.id);
+
+            expect(result).toEqual({
+                ok: true,
+                value: {
+                    importvorgang,
+                    importedDataItems: [importDataItem],
+                    count: 1,
+                },
+            });
         });
     });
 });

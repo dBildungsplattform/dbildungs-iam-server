@@ -325,12 +325,18 @@ describe('ImportDataRepository', () => {
                     password: pass1,
                     personalnummer: personalnummer,
                     validationErrors: [],
+                    setPassword: function (password: string): void {
+                        this.password = password;
+                    },
                 },
                 {
                     ...importDataItem2,
                     username: newUsername2,
                     password: pass2,
                     validationErrors: [],
+                    setPassword: function (password: string): void {
+                        this.password = password;
+                    },
                 },
             ];
             const result: ImportDataItem<true>[] = await sut.replaceAll(updateImportDataItems);
@@ -366,14 +372,23 @@ describe('ImportDataRepository', () => {
                 {
                     ...importDataItem1,
                     validationErrors: ['error1'],
+                    setPassword: function (password: string): void {
+                        this.password = password;
+                    },
                 },
                 {
                     ...importDataItem2,
                     validationErrors: ['error1'],
+                    setPassword: function (password: string): void {
+                        this.password = password;
+                    },
                 },
                 {
                     ...DoFactory.createImportDataItem(true, { importvorgangId }),
                     validationErrors: ['error1'],
+                    setPassword: function (password: string): void {
+                        this.password = password;
+                    },
                 },
             ];
 

@@ -198,6 +198,7 @@ export class ImportController {
         }
     }
 
+    @UseGuards(StepUpGuard)
     @Get('history')
     @ApiOperation({ description: 'Get the history of import.' })
     @ApiOkResponse({
@@ -234,6 +235,12 @@ export class ImportController {
         return new PagedResponse(pagedImportVorgangResponse);
     }
 
+    @UseGuards(StepUpGuard)
+    @ApiOperation({
+        deprecated: true,
+        description:
+            'Download the import result file by importvorgangId as text file is deprecated, please use the  GET/api/import/importedUsers.',
+    })
     @ApiProduces('text/plain')
     @Get(':importvorgangId/download')
     @HttpCode(HttpStatus.OK)
@@ -283,6 +290,7 @@ export class ImportController {
         }
     }
 
+    @UseGuards(StepUpGuard)
     @Get(':importvorgangId/status')
     @ApiOperation({ description: 'Get status for the import transaction by id.' })
     @ApiOkResponse({
@@ -307,10 +315,12 @@ export class ImportController {
         return new ImportVorgangStatusResponse(result);
     }
 
+    @UseGuards(StepUpGuard)
     @Get('importedUsers')
     @ApiOperation({ description: 'Get the list of imported users.' })
     @ApiOkResponse({
-        description: 'The list of imported users was successfully returned',
+        description:
+            'The list of imported users was successfully returned. After receiving all the imported users, please use the DELETE endpoint to remove imported data.',
         type: [ImportResultResponse],
         headers: PagingHeadersObject,
     })

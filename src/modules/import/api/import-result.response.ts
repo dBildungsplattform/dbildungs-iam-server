@@ -7,7 +7,7 @@ import { ImportDataItem } from '../domain/import-data-item.js';
 
 export class ImportResultResponse {
     @ApiProperty()
-    public id: string;
+    public importvorgandId: string;
 
     @ApiProperty()
     public rollenname: string;
@@ -16,10 +16,10 @@ export class ImportResultResponse {
     public organisationsname: string;
 
     @ApiProperty()
-    public ImportedUsers: Paged<ImportedUserResponse>;
+    public importedUsers: Paged<ImportedUserResponse>;
 
     public constructor(importResult: ImportResult, offset?: number, limit?: number) {
-        this.id = importResult.importvorgang.id;
+        this.importvorgandId = importResult.importvorgang.id;
         this.rollenname = importResult.importvorgang.rollename;
         this.organisationsname = importResult.importvorgang.organisationsname;
 
@@ -33,6 +33,6 @@ export class ImportResultResponse {
             ),
         };
 
-        this.ImportedUsers = new PagedResponse(pagedImportedUsersResponse);
+        this.importedUsers = new PagedResponse(pagedImportedUsersResponse);
     }
 }

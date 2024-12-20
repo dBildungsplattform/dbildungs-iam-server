@@ -160,7 +160,6 @@ export class ImportWorkflow {
             return new ImportCSVFileParsingError([error]);
         }
 
-        //Optimierung: private methode gibt eine map zurück
         const klassenByIDandName: OrganisationByIdAndName[] = [];
         const klassen: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
             this.selectedOrganisationId,
@@ -180,7 +179,7 @@ export class ImportWorkflow {
             //log no username found for adminn instead of throwing an error
             return new EntityNotFoundError('Person', permissions.personFields.id);
         }
-        //Create ImportVorgang
+
         const importVorgang: ImportVorgang<false> = ImportVorgang.createNew(
             permissions.personFields.username,
             referenceCheck.rollenName,
@@ -352,7 +351,11 @@ export class ImportWorkflow {
 
         await this.importDataRepository.deleteByImportVorgangId(importvorgangId);
 
-        importVorgang.cancel();
+        if (importVorgang.status === ImportStatus.FINISHED) {
+            importVorgang.complete();
+        } else {
+            importVorgang.cancel();
+        }
         await this.importVorgangRepository.save(importVorgang);
 
         return {
@@ -385,7 +388,6 @@ export class ImportWorkflow {
             };
         }
 
-        //map result
         const importedDataItems: ImportDataItem<true>[] = await Promise.all(
             importDataItems.map(async (importDataItem: ImportDataItem<true>) => {
                 const password: string = await this.getDecryptedPassword(importDataItem);
@@ -405,7 +407,6 @@ export class ImportWorkflow {
         };
     }
 
-    //Optimierung: CheckReferences auslagern?
     private async checkReferences(
         organisationId: string,
         rolleId: string,
