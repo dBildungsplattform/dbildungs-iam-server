@@ -76,6 +76,7 @@ describe('Personenuebersicht API', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
+                LoggingTestModule,
             ],
             providers: [
                 {
