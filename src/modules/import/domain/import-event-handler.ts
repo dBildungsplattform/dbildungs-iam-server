@@ -94,7 +94,6 @@ export class ImportEventHandler {
     ): Promise<void> {
         const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
         //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
-
         for (const importDataItem of dataItems) {
             const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                 (organisationByIdAndName: OrganisationByIdAndName) =>

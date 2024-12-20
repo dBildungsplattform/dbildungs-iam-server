@@ -57,6 +57,12 @@ export type RolleAndOrganisationByName = {
     organisationsname: string;
 };
 
+export type ImportResult = {
+    importvorgang: ImportVorgang<true>;
+    importedDataItems: ImportDataItem<true>[];
+    count: number;
+};
+
 export class ImportWorkflow {
     public readonly TEXT_FILENAME_NAME: string = '_spsh_csv_import_ergebnis.txt';
 
@@ -187,7 +193,6 @@ export class ImportWorkflow {
 
         const savedImportvorgang: ImportVorgang<true> = await this.importVorgangRepository.save(importVorgang);
         const totalImportDataItems: number = parsedDataItems.length;
-        /* eslint-disable no-await-in-loop */
         while (parsedDataItems.length > 0) {
             const dataItems: CSVImportDataItemDTO[] = parsedDataItems.splice(0, 50);
 
@@ -232,9 +237,9 @@ export class ImportWorkflow {
                 return importDataItem;
             });
 
+            // eslint-disable-next-line no-await-in-loop
             await this.importDataRepository.createAll(importDataItems);
         }
-        /* eslint-disable no-await-in-loop */
 
         savedImportvorgang.validate(invalidImportDataItems.length);
         await this.importVorgangRepository.save(savedImportvorgang);
@@ -249,43 +254,27 @@ export class ImportWorkflow {
     }
 
     public async executeImport(importvorgangId: string, permissions: PersonPermissions): Promise<Result<void>> {
-        const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
-        if (permissionCheckError) {
-            return {
-                ok: false,
-                error: permissionCheckError,
-            };
+        const importVorgangResult: Result<ImportVorgang<true>> = await this.checkPermissionsAndImportvorgangValidity(
+            importvorgangId,
+            permissions,
+        );
+
+        if (!importVorgangResult.ok) {
+            return importVorgangResult;
         }
 
-        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
-        if (!importVorgang) {
-            this.logger.warning(`Importvorgang: ${importvorgangId} not found`);
-            return {
-                ok: false,
-                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
-            };
-        }
-        //Will never happen
-        if (!importVorgang.organisationId) {
-            this.logger.error(`Importvorgang:${importvorgangId} does not have an organisation id`);
-            return {
-                ok: false,
-                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
-            };
-        }
-        if (!importVorgang.rolleId) {
-            this.logger.error(`Importvorgang:${importvorgangId} does not have a rolle id`);
-            return {
-                ok: false,
-                error: new ImportDomainError('ImportVorgang is missing a rolle id', importvorgangId),
-            };
-        }
+        const importVorgang: ImportVorgang<true> = importVorgangResult.value;
 
         importVorgang.execute();
         await this.importVorgangRepository.save(importVorgang);
 
         this.eventService.publish(
-            new ImportExecutedEvent(importvorgangId, importVorgang.organisationId, importVorgang.rolleId, permissions),
+            new ImportExecutedEvent(
+                importvorgangId,
+                importVorgang.organisationId!,
+                importVorgang.rolleId!,
+                permissions,
+            ),
         );
 
         return {
@@ -295,35 +284,16 @@ export class ImportWorkflow {
     }
 
     public async downloadFile(importvorgangId: string, permissions: PersonPermissions): Promise<Result<Buffer>> {
-        const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
-        if (permissionCheckError) {
-            return {
-                ok: false,
-                error: permissionCheckError,
-            };
+        const importVorgangResult: Result<ImportVorgang<true>> = await this.checkPermissionsAndImportvorgangValidity(
+            importvorgangId,
+            permissions,
+        );
+
+        if (!importVorgangResult.ok) {
+            return importVorgangResult;
         }
 
-        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
-        if (!importVorgang) {
-            return {
-                ok: false,
-                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
-            };
-        }
-        //Will never happen
-        if (!importVorgang.organisationId) {
-            return {
-                ok: false,
-                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
-            };
-        }
-        if (!importVorgang.rolleId) {
-            return {
-                ok: false,
-                error: new ImportDomainError('ImportVorgang is missing a rolle id', importvorgangId),
-            };
-        }
-
+        const importVorgang: ImportVorgang<true> = importVorgangResult.value;
         if (importVorgang.status !== ImportStatus.FINISHED) {
             return {
                 ok: false,
@@ -331,7 +301,7 @@ export class ImportWorkflow {
             };
         }
 
-        this.initialize(importVorgang.organisationId, importVorgang.rolleId);
+        this.initialize(importVorgang.organisationId!, importVorgang.rolleId!);
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
@@ -388,6 +358,50 @@ export class ImportWorkflow {
         return {
             ok: true,
             value: undefined,
+        };
+    }
+
+    public async getImportedUsers(
+        permissions: PersonPermissions,
+        importvorgangId: string,
+        offset?: number,
+        limit?: number,
+    ): Promise<Result<ImportResult>> {
+        const importVorgangResult: Result<ImportVorgang<true>> = await this.checkPermissionsAndImportvorgangValidity(
+            importvorgangId,
+            permissions,
+        );
+
+        if (!importVorgangResult.ok) {
+            return importVorgangResult;
+        }
+
+        const [importDataItems, total]: Counted<ImportDataItem<true>> =
+            await this.importDataRepository.findByImportVorgangId(importvorgangId, offset ?? 0, limit ?? 100);
+        if (total === 0) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('ImportDataItem', importvorgangId),
+            };
+        }
+
+        //map result
+        const importedDataItems: ImportDataItem<true>[] = await Promise.all(
+            importDataItems.map(async (importDataItem: ImportDataItem<true>) => {
+                const password: string = await this.getDecryptedPassword(importDataItem);
+                importDataItem.setPassword(password);
+
+                return importDataItem;
+            }),
+        );
+
+        return {
+            ok: true,
+            value: {
+                importvorgang: importVorgangResult.value,
+                importedDataItems,
+                count: total,
+            },
         };
     }
 
@@ -509,20 +523,14 @@ export class ImportWorkflow {
         const headerImportInfo: string = `Schule:${orga.name} - Rolle:${rolle.name}`;
         const headerUserInfo: string = '\n\nKlasse - Vorname - Nachname - Benutzername - Passwort';
         fileContent += headerImportInfo + headerUserInfo;
-        /* eslint-disable no-await-in-loop */
+
         for (const importedDataItem of importedDataItems) {
-            let password: string = ''; //will never happen that the password is empty
-            if (importedDataItem.password) {
-                password = await this.importPasswordEncryptor.decryptPassword(
-                    importedDataItem.password,
-                    importedDataItem.importvorgangId,
-                );
-            }
+            // eslint-disable-next-line no-await-in-loop
+            const password: string = await this.getDecryptedPassword(importedDataItem);
 
             const userInfo: string = `\n${importedDataItem.klasse} - ${importedDataItem.vorname} - ${importedDataItem.nachname} - ${importedDataItem.username} - ${password}`;
             fileContent += userInfo;
         }
-        /* eslint-disable no-await-in-loop */
 
         try {
             const buffer: Buffer = Buffer.from(fileContent, 'utf8');
@@ -536,5 +544,59 @@ export class ImportWorkflow {
                 error: new ImportTextFileCreationError([String(error)]),
             };
         }
+    }
+
+    private async checkPermissionsAndImportvorgangValidity(
+        importvorgangId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<ImportVorgang<true>>> {
+        const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
+        if (permissionCheckError) {
+            return {
+                ok: false,
+                error: permissionCheckError,
+            };
+        }
+
+        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(importvorgangId);
+        if (!importVorgang) {
+            this.logger.warning(`Importvorgang: ${importvorgangId} not found`);
+            return {
+                ok: false,
+                error: new EntityNotFoundError('ImportVorgang', importvorgangId),
+            };
+        }
+
+        if (!importVorgang.organisationId) {
+            this.logger.error(`Importvorgang:${importvorgangId} does not have an organisation id`);
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
+            };
+        }
+        if (!importVorgang.rolleId) {
+            this.logger.error(`Importvorgang:${importvorgangId} does not have a rolle id`);
+            return {
+                ok: false,
+                error: new ImportDomainError('ImportVorgang is missing a rolle id', importvorgangId),
+            };
+        }
+
+        return {
+            ok: true,
+            value: importVorgang,
+        };
+    }
+
+    private async getDecryptedPassword(importedDataItem: ImportDataItem<true>): Promise<string> {
+        let password: string = ''; //will never happen that the password is empty
+        if (importedDataItem.password) {
+            password = await this.importPasswordEncryptor.decryptPassword(
+                importedDataItem.password,
+                importedDataItem.importvorgangId,
+            );
+        }
+
+        return password;
     }
 }

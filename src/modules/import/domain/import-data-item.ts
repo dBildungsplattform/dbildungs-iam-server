@@ -61,4 +61,8 @@ export class ImportDataItem<WasPersisted extends boolean> {
             validationErrors,
         );
     }
+
+    public setPassword(password: string): void {
+        this.password = password;
+    }
 }

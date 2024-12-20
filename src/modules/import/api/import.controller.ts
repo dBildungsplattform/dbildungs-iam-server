@@ -40,7 +40,7 @@ import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { ImportUploadResultFields, ImportWorkflow } from '../domain/import-workflow.js';
+import { ImportResult, ImportUploadResultFields, ImportWorkflow } from '../domain/import-workflow.js';
 import { DbiamImportError } from './dbiam-import.error.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 import { Response } from 'express';
@@ -50,7 +50,7 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { ImportvorgangQueryParams } from './importvorgang-query.param.js';
+import { ImportvorgangQueryParams } from './importvorgang-query.params.js';
 import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
 import { ImportVorgangResponse } from './importvorgang.response.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
@@ -62,9 +62,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { ContentDisposition, ContentType } from '../../../shared/http/http.headers.js';
 import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 import { ImportResultResponse } from './import-result.response.js';
-import { faker } from '@faker-js/faker';
-import { ImportStatus } from '../domain/import.enums.js';
-import { PagedQueryParams } from '../../../shared/paging/paged.query.params.js';
+import { ImportResultQueryParams } from './import-result-query.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -319,26 +317,28 @@ export class ImportController {
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the list of imported users.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get list of imported users.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting list of imported users.' })
-    public getImportedUsers(
-        @Query() queryParams: PagedQueryParams,
+    public async getImportedUsers(
+        @Query() queryParams: ImportResultQueryParams,
         @Permissions() _permissions: PersonPermissions,
-    ): ImportResultResponse {
-        //Just for an example for the API response
-        const importVorgang: ImportVorgang<true> = ImportVorgang.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            faker.internet.userName(),
-            faker.lorem.word(),
-            faker.lorem.word(),
-            queryParams.limit ?? 100,
-            ImportStatus.STARTED,
-            0,
-            faker.string.uuid(),
-            faker.string.uuid(),
-            faker.string.uuid(),
+    ): Promise<ImportResultResponse> {
+        const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
+        const result: Result<ImportResult> = await importWorkflow.getImportedUsers(
+            _permissions,
+            queryParams.importvorgangId,
+            queryParams.offset,
+            queryParams.limit,
         );
 
-        return new ImportResultResponse(importVorgang);
+        if (!result.ok) {
+            if (result.error instanceof ImportDomainError) {
+                throw result.error;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
+            );
+        }
+
+        return new ImportResultResponse(result.value, queryParams.offset, queryParams.limit);
     }
 }
