@@ -87,8 +87,8 @@ jobs:
 
   build_image_on_push:
     needs:
-    - check_deployment_clearance
-    - create_branch_identifier
+      - check_deployment_clearance
+      - create_branch_identifier
     name: "Publish image and scan with trivy"
     if: ${{ github.event_name == 'push' && needs.check_deployment_clearance.outputs.deployment_clearance == 'true' }}
     permissions:
