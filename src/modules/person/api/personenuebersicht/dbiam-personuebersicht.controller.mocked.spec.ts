@@ -259,7 +259,7 @@ describe('Personenuebersicht API Mocked', () => {
             );
 
             jest.spyOn(DbiamPersonenuebersicht.prototype, 'createZuordnungenForKontexte').mockImplementation(() => {
-                return new EntityNotFoundError();
+                return Promise.resolve(new EntityNotFoundError('Some message here'));
             });
 
             personRepositoryMock.findByIds.mockResolvedValueOnce([person]);
