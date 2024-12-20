@@ -180,8 +180,7 @@ jobs:
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-      database_recreation: ${{ github.ref_name == 'main' && 'true' || 'false' }}
-      # database_recreation: "true" # to force database recreation this has be set to true
+      database_recreation: "true" # to prevent database recreation this has to be set to false
     secrets: inherit
 
   # On Delete
