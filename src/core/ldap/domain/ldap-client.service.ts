@@ -464,7 +464,6 @@ export class LdapClientService {
         newEmailAddress: string,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
-        //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: changeEmailAddress');
             const splitted: string[] = newEmailAddress.split('@');
@@ -606,14 +605,13 @@ export class LdapClientService {
                 return { ok: false, error: new LdapAddPersonToGroupError() };
             }
         }
-
         if (this.isPersonInSearchResult(searchResultGroupOfNames.searchEntries[0], lehrerUid)) {
             this.logger.info(`LDAP: Person ${personUid} is already in group ${groupId}`);
             return { ok: true, value: false };
         }
 
         try {
-            await client.modify(lehrerDn, [
+            await client.modify(searchResultGroupOfNames.searchEntries[0].dn, [
                 new Change({
                     operation: 'add',
                     modification: new Attribute({
