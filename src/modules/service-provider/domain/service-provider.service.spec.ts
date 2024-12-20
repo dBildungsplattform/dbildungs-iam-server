@@ -19,6 +19,7 @@ import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
+        angebotId: '1234567',
         angebotVersion: 1,
         angebotDescription:
             'Effiziente Organisation Ihrer Hausaufgaben mit der neuen Hausaufgaben Listen App Verlieren Sie nie wieder den Überblick über Ihre Aufgaben und Abgabefristen. Unsere Hausaufgaben Listen App bietet Ihnen eine strukturierte und benutzerfreundliche Lösung, um Ihre schulischen Verpflichtungen optimal zu verwalten. Funktionen der App: Übersichtliche Verwaltung: Behalten Sie alle Hausaufgaben, Projekte und To-Dos an einem zentralen Ort im Blick. Erinnerungsfunktion: Automatische Benachrichtigungen helfen Ihnen, keine Fristen mehr zu verpassen. Einfache Bedienung: Intuitive Benutzeroberfläche, die eine schnelle und unkomplizierte Nutzung ermöglicht. Kollaborationsmöglichkeit: Teilen Sie Aufgaben und Projekte mit Mitschülern, um effizienter zusammenzuarbeiten. Anpassbare Listen: Erstellen Sie individuelle Kategorien und Listen nach Ihren Bedürfnissen. Fortschrittsanzeige: Verfolgen Sie Ihre erledigten Aufgaben und sehen Sie Ihren Fortschritt in Echtzeit. Unsere Hausaufgaben Listen App ist kostenlos verfügbar und bietet Ihnen eine verlässliche Unterstützung bei der Organisation Ihres Schulalltags.',
@@ -32,6 +33,7 @@ const mockVidisAngebote: VidisAngebot[] = [
         schoolActivations: ['DE-VIDIS-vidis_test_20202', 'DE-VIDIS-vidis_test_40404', 'DE-VIDIS-vidis_test_101010'],
     },
     {
+        angebotId: '7654321',
         angebotVersion: 1,
         angebotDescription:
             'divomath ist eine Lernumgebung für Mathematik, die insbesondere dem Prinzip der Verstehensorientierung folgt. Sie bietet Unterrichtseinheiten für die dritte bis sechste Jahrgangsstufe.',
@@ -45,6 +47,7 @@ const mockVidisAngebote: VidisAngebot[] = [
         schoolActivations: ['DE-VIDIS-vidis_test_30303', 'DE-VIDIS-vidis_test_20202', 'DE-VIDIS-vidis_test_101010'],
     },
     {
+        angebotId: '9876543',
         angebotVersion: 4,
         angebotDescription: 'webtown test offer',
         angebotLink: '?vidis_idp_hint=vidis-idp',
@@ -80,6 +83,7 @@ const mockExistingVidisServiceProviderContainedInVidisAngebote: ServiceProvider<
     keycloakRole: 'VIDIS-user',
     externalSystem: ServiceProviderSystem.NONE,
     requires2fa: false,
+    vidisAngebotId: '7654321',
 };
 
 const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> = {
@@ -97,6 +101,7 @@ const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> 
     keycloakRole: 'VIDIS-user',
     externalSystem: ServiceProviderSystem.NONE,
     requires2fa: false,
+    vidisAngebotId: '9999999',
 };
 
 const mockExistingServiceProviders: ServiceProvider<true>[] = [
@@ -278,7 +283,9 @@ describe('ServiceProviderService', () => {
         it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response already exists in SPSH.', async () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
-            serviceProviderRepo.findByName.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
+            serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(
+                mockExistingVidisServiceProviderContainedInVidisAngebote,
+            );
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
             if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             organisationServiceProviderRepo.save.mockResolvedValue();
@@ -287,7 +294,7 @@ describe('ServiceProviderService', () => {
 
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
-            expect(serviceProviderRepo.findByName).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
@@ -300,7 +307,7 @@ describe('ServiceProviderService', () => {
         it('should update ServiceProvider for VIDIS Angebote if ServiceProvider in VIDIS Angebot response does not exist in SPSH yet.', async () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
-            serviceProviderRepo.findByName.mockResolvedValue(null);
+            serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
             if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             organisationServiceProviderRepo.save.mockResolvedValue();
@@ -309,7 +316,7 @@ describe('ServiceProviderService', () => {
 
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
-            expect(serviceProviderRepo.findByName).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,
@@ -322,7 +329,7 @@ describe('ServiceProviderService', () => {
         it('should delete ServiceProvider for VIDIS Angebote in SPSH if ServiceProvider is not in VIDIS Angebot response.', async () => {
             vidisService.getActivatedAngeboteByRegion.mockResolvedValue(mockVidisAngebote);
             organisationServiceProviderRepo.deleteAll.mockResolvedValue(true);
-            serviceProviderRepo.findByName.mockResolvedValue(null);
+            serviceProviderRepo.findByVidisAngebotId.mockResolvedValue(null);
             serviceProviderRepo.save.mockResolvedValue(mockExistingVidisServiceProviderContainedInVidisAngebote);
             if (mockExistingSchulen[0]) organisationRepo.findByNameOrKennung.mockResolvedValue(mockExistingSchulen);
             organisationServiceProviderRepo.save.mockResolvedValue();
@@ -333,7 +340,7 @@ describe('ServiceProviderService', () => {
 
             expect(vidisService.getActivatedAngeboteByRegion).toHaveBeenCalledTimes(1);
             expect(organisationServiceProviderRepo.deleteAll).toHaveBeenCalledTimes(1);
-            expect(serviceProviderRepo.findByName).toHaveBeenCalledTimes(mockVidisAngebote.length);
+            expect(serviceProviderRepo.findByVidisAngebotId).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(serviceProviderRepo.save).toHaveBeenCalledTimes(mockVidisAngebote.length);
             expect(organisationRepo.findByNameOrKennung).toHaveBeenCalledTimes(
                 mockAllSchoolActivationsInVidisAngebote.length,

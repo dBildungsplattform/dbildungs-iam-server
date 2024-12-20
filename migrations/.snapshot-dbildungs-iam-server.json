@@ -2573,6 +2573,19 @@
             "SERVICE_PROVIDER"
           ]
         },
+        "import_status_enum": {
+          "name": "import_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "VALID",
+            "INVALID",
+            "INPROGRESS",
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
         "organisations_typ_enum": {
           "name": "organisations_typ_enum",
           "schema": "public",
@@ -5245,6 +5258,15 @@
           "primary": false,
           "nullable": false,
           "mappedType": "boolean"
+        },
+        "vidis_angebot_id": {
+          "name": "vidis_angebot_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
         }
       },
       "name": "service_provider",

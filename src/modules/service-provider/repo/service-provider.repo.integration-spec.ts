@@ -203,6 +203,33 @@ describe('ServiceProviderRepo', () => {
         });
     });
 
+    describe('findByVidisAngebotId', () => {
+        it('should find a ServiceProvider by its VIDIS Angebot ID', async () => {
+            const expectedServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            expectedServiceProvider.vidisAngebotId = '1234567';
+            const expectedPersistedServiceProvider: ServiceProvider<true> = await sut.save(expectedServiceProvider);
+            const anotherServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            anotherServiceProvider.vidisAngebotId = '7777777';
+            await sut.save(anotherServiceProvider);
+
+            const actualServiceProvider: Option<ServiceProvider<true>> = await sut.findByVidisAngebotId(
+                expectedServiceProvider.vidisAngebotId,
+            );
+
+            expect(actualServiceProvider).toEqual(expectedPersistedServiceProvider);
+        });
+
+        it('should return null if there are no existing ServiceProviders for the given VIDIS Angebot ID', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            serviceProvider.vidisAngebotId = '1234567';
+            await sut.save(serviceProvider);
+
+            const result: Option<ServiceProvider<true>> = await sut.findByVidisAngebotId('7777777');
+
+            expect(result).toBeFalsy();
+        });
+    });
+
     describe('findByKeycloakGroup', () => {
         it('should find a ServiceProvider by its Keycloak groupname', async () => {
             const expectedServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
