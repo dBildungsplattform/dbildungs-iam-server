@@ -19,7 +19,18 @@ export class PrivacyIdeaAdministrationEventHandler {
             event.referrer,
         );
         if (userTokens.length > 0) {
-            await this.privacyIdeaAdministrationService.resetToken(event.referrer);
+            try {
+                await this.privacyIdeaAdministrationService.resetToken(event.referrer);
+                this.logger.info(
+                    `System hat für Benutzer  ${event.referrer} (BenutzerId: ${event.personId}) den 2FA Token zurückgesetzt.`,
+                );
+            } catch (error) {
+                this.logger.error(
+                    `System hat versucht den 2FA Token von Benutzer ${event.referrer} (BenutzerId: ${event.personId}) zurückzusetzen.`,
+                    error,
+                );
+                throw error;
+            }
         }
         await this.privacyIdeaAdministrationService.deleteUserWrapper(event.referrer);
     }

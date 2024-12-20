@@ -70,6 +70,10 @@ describe('PersonenkontextRepo', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
     it('should be defined', () => {
         expect(sut).toBeDefined();
     });

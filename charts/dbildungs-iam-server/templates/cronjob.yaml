@@ -8,6 +8,8 @@ metadata:
 spec:
   schedule: {{ $job_options.schedule }}
   startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       backoffLimit: 0
@@ -22,10 +24,9 @@ spec:
             image: "{{ $.Values.cronjobs.image.repository }}:{{ $.Values.cronjobs.image.tag }}"
             imagePullPolicy: {{ $.Values.cronjobs.image.pullPolicy | default "Always"}}
             securityContext:
-              # not yet possible since we need to install some tools
-              # privileged: false
-              # runAsUser: 1000
-              # runAsNonRoot: true
+              privileged: false
+              runAsUser: 1000
+              runAsNonRoot: true
               capabilities:
                 drop:
                   - ALL
@@ -41,6 +42,8 @@ spec:
                   value: "https://{{ $.Values.backendHostname }}{{ $job_options.endpoint }}"
                 - name: HTTP_METHOD
                   value: "{{ $job_options.httpMethod }}"
+                - name: LOG_FILE_PATH
+                  value: "/tmp/log/cron.log"
             resources:
               limits:
                 memory: "128Mi"
@@ -52,11 +55,9 @@ spec:
               - "sh"
               - "-c"
               - |
-                  mkdir /scripts &&
-                  cp /scripts_tmp/*.sh /scripts/ &&
-                  chmod +x /scripts/*.sh &&
-                  touch /var/log/cron.log &&
-                  chmod 644 /var/log/cron.log &&
+                  mkdir /tmp/log/ &&
+                  touch /tmp/log/cron.log &&
+                  chmod 644 /tmp/log/cron.log &&
                   cd {{ $.Values.cronjobs.scriptDir }} &&
                   bash {{ $job_options.script }}
             volumeMounts:
@@ -65,7 +66,7 @@ spec:
                 subPath: jwks.json
                 readOnly: true
               - name: script-volume
-                mountPath: /scripts_tmp
+                mountPath: /scripts
                 readOnly: false
             ports:
             - containerPort: {{ $.Values.cronjobs.port }}
@@ -74,6 +75,7 @@ spec:
           - name: script-volume
             configMap:
               name: {{ template "common.names.name" $ }}-cronjob-scripts-configmap
+              defaultMode: 0555
           - name: secret-volume-jwks
             secret:
               secretName: dbildungs-iam-server

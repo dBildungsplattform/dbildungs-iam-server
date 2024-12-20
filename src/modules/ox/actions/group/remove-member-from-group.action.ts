@@ -1,12 +1,11 @@
 import { DomainError } from '../../../../shared/error/domain.error.js';
 import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
 import { OxBaseAction, OXRequestStatus } from '../ox-base-action.js';
-import { AddMemberToGroupResponseBody } from './add-member-to-group.action.js';
 import { GroupMemberParams } from './ox-group.types.js';
 
 export type RemoveMemberFromGroupResponse = {
     status: OXRequestStatus;
-    data: AddMemberToGroupResponseBody;
+    data: RemoveMemberFromGroupResponseBody;
 };
 
 export type RemoveMemberFromGroupResponseBody = {
