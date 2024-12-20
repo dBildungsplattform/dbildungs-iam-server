@@ -47,7 +47,7 @@ jobs:
     secrets: inherit
 
   build_image_on_push:
-    needs: 
+    needs:
       - create_branch_identifier
     name: "Publish image and scan with trivy"
     if: ${{ github.event_name == 'push' }}
@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - shell: bash
-        run: sleep 1m 
+        run: sleep 1m
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
@@ -123,7 +123,7 @@ jobs:
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
-  
+
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
@@ -138,8 +138,8 @@ jobs:
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-      database_recreation: ${{ github.ref_name == 'main' && 'true' || 'false' }}
-      # database_recreation: "true" # to force database recreation this has be set to true
+      # database_recreation: ${{ github.ref_name == 'main' && 'true' || 'false' }}
+      database_recreation: "true" # to force database recreation this has be set to true
     secrets: inherit
 
   # On Delete
