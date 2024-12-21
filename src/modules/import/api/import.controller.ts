@@ -188,7 +188,7 @@ export class ImportController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        const result: Result<void> = await importWorkflow.cancelImport(params.importvorgangId, permissions);
+        const result: Result<void> = await importWorkflow.cancelOrCompleteImport(params.importvorgangId, permissions);
         if (!result.ok) {
             if (result.error instanceof DomainError) {
                 throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

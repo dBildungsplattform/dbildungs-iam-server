@@ -646,7 +646,7 @@ describe('ImportWorkflow', () => {
         it('should return MissingPermissionsError if the admin does not have permissions to cancel the import transaction', async () => {
             personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
 
-            const result: Result<void> = await sut.cancelImport(faker.string.uuid(), personpermissionsMock);
+            const result: Result<void> = await sut.cancelOrCompleteImport(faker.string.uuid(), personpermissionsMock);
 
             expect(result).toEqual({
                 ok: false,
@@ -659,7 +659,7 @@ describe('ImportWorkflow', () => {
             importVorgangRepositoryMock.findById.mockResolvedValueOnce(null);
             const importVorgangId: string = faker.string.uuid();
 
-            const result: Result<void> = await sut.cancelImport(importVorgangId, personpermissionsMock);
+            const result: Result<void> = await sut.cancelOrCompleteImport(importVorgangId, personpermissionsMock);
 
             expect(result).toEqual({
                 ok: false,
@@ -675,7 +675,7 @@ describe('ImportWorkflow', () => {
             });
             importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
 
-            const result: Result<void> = await sut.cancelImport(importvorgang.id, personpermissionsMock);
+            const result: Result<void> = await sut.cancelOrCompleteImport(importvorgang.id, personpermissionsMock);
 
             expect(importDataRepositoryMock.deleteByImportVorgangId).toHaveBeenCalled();
             expect(importVorgangRepositoryMock.save).toHaveBeenCalledWith({
@@ -692,7 +692,7 @@ describe('ImportWorkflow', () => {
             });
             importVorgangRepositoryMock.findById.mockResolvedValueOnce(importvorgang);
 
-            const result: Result<void> = await sut.cancelImport(importvorgang.id, personpermissionsMock);
+            const result: Result<void> = await sut.cancelOrCompleteImport(importvorgang.id, personpermissionsMock);
 
             expect(importDataRepositoryMock.deleteByImportVorgangId).toHaveBeenCalled();
             expect(importVorgangRepositoryMock.save).toHaveBeenCalledWith({

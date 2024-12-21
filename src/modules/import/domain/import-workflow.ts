@@ -176,7 +176,6 @@ export class ImportWorkflow {
         const invalidImportDataItems: ImportDataItem<false>[] = [];
 
         if (permissions.personFields.username === undefined) {
-            //log no username found for adminn instead of throwing an error
             return new EntityNotFoundError('Person', permissions.personFields.id);
         }
 
@@ -332,7 +331,10 @@ export class ImportWorkflow {
         return importvorgangId + this.TEXT_FILENAME_NAME;
     }
 
-    public async cancelImport(importvorgangId: string, permissions: PersonPermissions): Promise<Result<void>> {
+    public async cancelOrCompleteImport(
+        importvorgangId: string,
+        permissions: PersonPermissions,
+    ): Promise<Result<void>> {
         const permissionCheckError: Option<DomainError> = await this.checkPermissions(permissions);
         if (permissionCheckError) {
             return {
@@ -465,7 +467,8 @@ export class ImportWorkflow {
             return new ImportCSVFileEmptyError();
         }
 
-        if ((csvContent.match(/[\r\n]/g) || []).length - 1 > this.CSV_MAX_NUMBER_OF_USERS) {
+        const numberOfRows: number = Math.ceil((csvContent.match(/[\r\n]/g) || []).length / 2);
+        if (numberOfRows > this.CSV_MAX_NUMBER_OF_USERS) {
             return new ImportCSVFileMaxUsersError();
         }
 

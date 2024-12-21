@@ -876,7 +876,7 @@ describe('Import API', () => {
     });
 
     describe('/GET import result', () => {
-        it('should return 200 OK with import result', async () => {
+        it('should return 200 OK with import result with provided limit', async () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
@@ -914,9 +914,19 @@ describe('Import API', () => {
                 }),
             );
 
+            await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importVorgang.id,
+                    klasse: '1a',
+                    personalnummer: undefined,
+                    username: faker.internet.userName(),
+                    password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                }),
+            );
+
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/import/importedUsers`)
-                .query({ importvorgangId: importVorgang.id, offsett: 0, limit: 10 })
+                .query({ importvorgangId: importVorgang.id, offsett: 0, limit: 1 })
                 .send();
 
             expect(response.status).toBe(200);
@@ -927,15 +937,99 @@ describe('Import API', () => {
                 organisationsname: schule.name,
                 importedUsers: {
                     offset: 0,
-                    limit: 10,
+                    limit: 1,
                     pageTotal: 1,
-                    total: 1,
+                    total: 2,
                     items: [
                         {
                             klasse: importDataItem.klasse,
                             vorname: importDataItem.vorname,
                             nachname: importDataItem.nachname,
                             benutzername: importDataItem.username,
+                            startpasswort: expect.any(String) as unknown as string,
+                        },
+                    ],
+                },
+            } as ImportResultResponse);
+        });
+
+        it('should return 200 OK with import result when limit not provided', async () => {
+            const schule: OrganisationEntity = new OrganisationEntity();
+            schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
+            await em.persistAndFlush(schule);
+            await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
+
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, {
+                    status: ImportStatus.COMPLETED,
+                    totalDataItemImported: 100,
+                    importByPersonId: undefined,
+                    rolleId: sus.id,
+                    organisationId: schule.id,
+                    organisationsname: schule.name,
+                    rollename: sus.name,
+                }),
+            );
+
+            const importDataItem: ImportDataItem<true> = await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importVorgang.id,
+                    klasse: '1a',
+                    personalnummer: undefined,
+                    username: faker.internet.userName(),
+                    password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                }),
+            );
+
+            const importDataItem2: ImportDataItem<true> = await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importVorgang.id,
+                    klasse: '1a',
+                    personalnummer: undefined,
+                    username: faker.internet.userName(),
+                    password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/import/importedUsers`)
+                .query({ importvorgangId: importVorgang.id, offsett: 0, limit: undefined })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body).toEqual({
+                importvorgandId: importVorgang.id,
+                rollenname: sus.name,
+                organisationsname: schule.name,
+                importedUsers: {
+                    offset: 0,
+                    limit: 2,
+                    pageTotal: 2,
+                    total: 2,
+                    items: [
+                        {
+                            klasse: importDataItem.klasse,
+                            vorname: importDataItem.vorname,
+                            nachname: importDataItem.nachname,
+                            benutzername: importDataItem.username,
+                            startpasswort: expect.any(String) as unknown as string,
+                        },
+                        {
+                            klasse: importDataItem2.klasse,
+                            vorname: importDataItem2.vorname,
+                            nachname: importDataItem2.nachname,
+                            benutzername: importDataItem2.username,
                             startpasswort: expect.any(String) as unknown as string,
                         },
                     ],
