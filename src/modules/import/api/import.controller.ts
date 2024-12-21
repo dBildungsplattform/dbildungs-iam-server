@@ -317,10 +317,12 @@ export class ImportController {
 
     @UseGuards(StepUpGuard)
     @Get('importedUsers')
-    @ApiOperation({ description: 'Get the list of imported users.' })
-    @ApiOkResponse({
+    @ApiOperation({
         description:
-            'The list of imported users was successfully returned. After receiving all the imported users, please use the DELETE endpoint to remove imported data.',
+            'Get the list of imported users. The maximum limit is 100. After receiving all the imported users, please use the DELETE endpoint to remove imported data.',
+    })
+    @ApiOkResponse({
+        description: 'The list of imported users was successfully returned.',
         type: [ImportResultResponse],
         headers: PagingHeadersObject,
     })

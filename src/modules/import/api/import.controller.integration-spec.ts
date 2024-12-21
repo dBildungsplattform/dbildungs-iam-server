@@ -1046,19 +1046,28 @@ describe('Import API', () => {
             expect(response.status).toBe(404);
         });
 
-        it('should return 500 if importvorgang does not have a rolleId', async () => {
+        it('should return 400 if request limit exceeds 100', async () => {
             const schule: OrganisationEntity = new OrganisationEntity();
             schule.typ = OrganisationsTyp.SCHULE;
             schule.name = 'Import Schule';
             await em.persistAndFlush(schule);
             await em.findOneOrFail(OrganisationEntity, { id: schule.id });
 
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
+
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
                     status: ImportStatus.COMPLETED,
                     totalDataItemImported: 100,
                     importByPersonId: undefined,
-                    rolleId: undefined,
+                    rolleId: sus.id,
                     organisationId: schule.id,
                     organisationsname: schule.name,
                 }),
@@ -1066,10 +1075,14 @@ describe('Import API', () => {
 
             const response: Response = await request(app.getHttpServer() as App)
                 .get(`/import/importedUsers`)
-                .query({ importvorgangId: importVorgang.id, offsett: 0, limit: 10 })
+                .query({ importvorgangId: importVorgang.id, offsett: 0, limit: 101 })
                 .send();
 
-            expect(response.status).toBe(500);
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({
+                code: 400,
+                i18nKey: 'IMPORT_RESULT_QUERY_LIMIT_ERROR',
+            });
         });
     });
 });

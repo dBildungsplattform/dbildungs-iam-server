@@ -35,6 +35,7 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { ImportConfig } from '../../../shared/config/import.config.js';
 import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
 import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
+import { ImportResultMaxUsersError } from './import-result-max-users.error.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -379,6 +380,13 @@ export class ImportWorkflow {
 
         if (!importVorgangResult.ok) {
             return importVorgangResult;
+        }
+
+        if (limit && limit > 100) {
+            return {
+                ok: false,
+                error: new ImportResultMaxUsersError(),
+            };
         }
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
