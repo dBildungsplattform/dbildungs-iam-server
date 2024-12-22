@@ -67,6 +67,7 @@ import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/persona
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1969,7 +1970,37 @@ describe('PersonRepository Integration', () => {
             expect(person.personalnummer).not.toEqual(newPersonalnummer);
             expect(result.personalnummer).toEqual(newPersonalnummer);
         });
+        it('should return an error when keyCloakUpdate failed', async () => {
+            const person: Person<true> = await savePerson(true);
+            const newFamilienname: string = faker.name.lastName();
+            const newVorname: string = faker.name.firstName();
+            const newPersonalnummer: string = faker.finance.pin(7);
+            const kopersLock: UserLock = {
+                person: person.id,
+                created_at: new Date(),
+                locked_by: 'cron',
+                locked_until: new Date(),
+                locked_occasion: PersonLockOccasion.KOPERS_GESPERRT,
+            };
 
+            await userLockRepository.createUserLock(kopersLock);
+            personPermissionsMock.canModifyPerson.mockResolvedValueOnce(true);
+            kcUserServiceMock.updateKeycloakUserStatus.mockResolvedValueOnce({
+                ok: false,
+                error: new KeycloakClientError('Could not update user status or database'),
+            });
+            await expect(
+                sut.updatePersonMetadata(
+                    person.id,
+                    newFamilienname,
+                    newVorname,
+                    newPersonalnummer,
+                    person.updatedAt,
+                    person.revision,
+                    personPermissionsMock,
+                ),
+            ).rejects.toThrow(DownstreamKeycloakError);
+        });
         it('should return EntityNotFound when person does not exit', async () => {
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 faker.string.uuid(),
@@ -2297,6 +2328,34 @@ describe('PersonRepository Integration', () => {
                 expect(personsWithOrgList).toContain(person2.id);
                 expect(personsWithOrgList).not.toContain(person3.id);
                 expect(personsWithOrgList).not.toContain(person4.id);
+            });
+        });
+        describe('findOrganisationAdminsByOrganisationId', () => {
+            it('should return a list of admins', async () => {
+                const personEntity1: PersonEntity = new PersonEntity();
+                const person1: Person<true> = DoFactory.createPerson(true);
+                await em.persistAndFlush(personEntity1.assign(mapAggregateToData(person1)));
+                person1.id = personEntity1.id;
+
+                const rolle1: Rolle<false> = DoFactory.createRolle(false, {
+                    name: 'rolle1',
+                    rollenart: RollenArt.LEIT,
+                    merkmale: [RollenMerkmal.KOPERS_PFLICHT],
+                });
+                const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
+                if (rolle1Result instanceof DomainError) throw Error();
+
+                const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
+                    personId: person1.id,
+                    rolleId: rolle1Result.id,
+                });
+                await dbiamPersonenkontextRepoInternal.save(personenKontext1);
+                //get admins
+                const admins: string[] = await sut.findOrganisationAdminsByOrganisationId(
+                    personenKontext1.organisationId,
+                );
+
+                expect(admins).toContain(person1.vorname + ' ' + person1.familienname);
             });
         });
     });
