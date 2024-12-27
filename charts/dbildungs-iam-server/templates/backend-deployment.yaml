@@ -13,8 +13,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 50%
-      maxSurge: 50%
+      maxUnavailable: {{ .Values.backend.maxUnavailable }}
+      maxSurge: {{ .Values.backend.maxSurge }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ template "common.names.name" . }}
