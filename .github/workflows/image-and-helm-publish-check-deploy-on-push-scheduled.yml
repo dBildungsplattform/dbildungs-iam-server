@@ -16,6 +16,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check_deployment_clearance:
+    name: "Check deployment clearance"
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      deployment_clearance: ${{ steps.determine_deployment_clearance.outputs.deployment_clearance }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get PR number
+        id: get_pr_number
+        run: |
+          PR_NUMBER=$(gh pr list --state open --head ${{ github.ref_name }} --json number --jq '.[0].number')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No existing PR found for ${{ github.ref_name }} "
+          else
+            echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          fi
+
+      - name: Get PR labels
+        id: get_pr_labels
+        if: ${{ env.PR_NUMBER != ''  }}
+        run: |
+          PR_LABELS=$(gh pr view ${{ env.PR_NUMBER }} --json labels --jq '.labels | map(.name) | join(",")')
+          echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
+
+      - name: Determine deployment clearance
+        id: determine_deployment_clearance
+        run: |
+          if [ -z "$env.PR_NUMBER" ] || [[ ${{ ! contains(env.PR_LABELS, 'prevent_auto_deployment') }} == true ]]; then
+            echo "Deployment clearance: true"
+            echo "deployment_clearance=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Deployment clearance: false"
+            echo "deployment_clearance=false" >> "$GITHUB_OUTPUT"
+          fi
+  
   codeql_analyze:
     name: "CodeQL"
     if: ${{ github.event_name == 'push' }}
@@ -48,9 +87,10 @@ jobs:
 
   build_image_on_push:
     needs:
+      - check_deployment_clearance
       - create_branch_identifier
     name: "Publish image and scan with trivy"
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ github.event_name == 'push' && needs.check_deployment_clearance.outputs.deployment_clearance == 'true' }}
     permissions:
       packages: write
       security-events: write
@@ -73,7 +113,9 @@ jobs:
       contents: read
 
   select_helm_version_generation_and_image_tag_generation:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    needs:
+      - check_deployment_clearance
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') && needs.check_deployment_clearance.outputs.deployment_clearance == 'true' }}
     runs-on: ubuntu-latest
     outputs:
       SELECT_HELM_VERSION_GENERATION: ${{ steps.select_generation.outputs.SELECT_HELM_VERSION_GENERATION }}
@@ -138,8 +180,7 @@ jobs:
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-      database_recreation: ${{ github.ref_name == 'main' && 'true' || 'false' }}
-      #database_recreation: "true" # to force database recreation this has be set to true
+      database_recreation: "true" # to prevent database recreation this has to be set to false
     secrets: inherit
 
   # On Delete
