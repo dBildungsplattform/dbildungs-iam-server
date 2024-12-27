@@ -77,6 +77,8 @@ ox:
 
 backend:
   replicaCount: 1
+  maxUnavailable: '50%'
+  maxSurge: '50%'
   image:
     repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
     tag: ''
