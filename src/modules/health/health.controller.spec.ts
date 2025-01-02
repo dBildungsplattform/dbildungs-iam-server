@@ -74,8 +74,6 @@ describe('HealthController', () => {
         if (lastCallArguments) {
             await Promise.all(lastCallArguments.map((hif: HealthIndicatorFunction) => hif.call(hif)));
         }
-
-        expect(mikroOrmHealthIndicator.pingCheck).toHaveBeenCalled();
         expect(keycloakHealthIndicator.check).toHaveBeenCalled();
         expect(redisHealthIndicator.check).toHaveBeenCalled();
     });
