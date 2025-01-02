@@ -93,7 +93,7 @@ describe('Import API with mocked ImportWorkflow', () => {
                 const personpermissionsMock: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
 
-                ImportWorkflowMock.cancelImport.mockResolvedValueOnce({
+                ImportWorkflowMock.cancelOrCompleteImport.mockResolvedValueOnce({
                     ok: false,
                     error: new MissingPermissionsError('Unauthorized to import data'),
                 });
