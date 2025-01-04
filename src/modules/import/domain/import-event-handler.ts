@@ -19,14 +19,12 @@ import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ImportDomainError } from './import-domain.error.js';
+import { ImportDataItemStatus } from './importDataItem.enum.js';
 @Injectable()
 export class ImportEventHandler {
     public selectedOrganisationId!: string;
 
     public selectedRolleId!: string;
-
-    private readonly USER_IMPORT_BATCH_SIZE: number = 25;
 
     public constructor(
         private readonly organisationRepository: OrganisationRepository,
@@ -63,51 +61,66 @@ export class ImportEventHandler {
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
+
         if (total === 0) {
-            return this.logger.error(`No import data itemns found for Importvorgang:${importvorgangId}`);
+            return this.logger.error(`No import data items found for Importvorgang:${importvorgangId}`);
         }
 
-        while (importDataItems.length > 0) {
-            const dataItemsToImport: ImportDataItem<true>[] = importDataItems.splice(0, this.USER_IMPORT_BATCH_SIZE);
-            // eslint-disable-next-line no-await-in-loop
-            await this.savePersonWithPersonenkontext(
-                importVorgang,
-                dataItemsToImport,
-                klassenByIDandName,
-                event.permissions,
-            );
+        let allItemsFailed: boolean = true;
 
-            importVorgang.incrementTotalImportDataItems(dataItemsToImport.length);
+        for (const dataItem of importDataItems) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await this.savePersonWithPersonenkontext(
+                    importVorgang,
+                    dataItem,
+                    klassenByIDandName,
+                    event.permissions,
+                );
+
+                if (dataItem.status === ImportDataItemStatus.SUCCESS) {
+                    allItemsFailed = false; // if at least one item succeeded then the import process won't fail
+                }
+            } catch (error) {
+                dataItem.status = ImportDataItemStatus.FAILED;
+                this.logger.error(`Error processing data item ${dataItem.id}`);
+            }
+
             // eslint-disable-next-line no-await-in-loop
-            await this.importVorgangRepository.save(importVorgang);
+            await this.importDataRepository.save(dataItem); // Update status in the database
+            importVorgang.incrementTotalImportDataItems(1); // Increment by 1
+            // eslint-disable-next-line no-await-in-loop
+            await this.importVorgangRepository.save(importVorgang); // Save updated state
         }
 
-        importVorgang.finish();
+        // Finalize the import process depending on the status on the items. If all items failed to be imported then we mark the whole import as failed. Otherwise it's finished.
+        if (allItemsFailed) {
+            importVorgang.fail();
+        } else {
+            importVorgang.finish();
+        }
         await this.importVorgangRepository.save(importVorgang);
     }
 
     private async savePersonWithPersonenkontext(
         importVorgang: ImportVorgang<true>,
-        dataItems: ImportDataItem<true>[],
+        importDataItem: ImportDataItem<true>,
         klassenByIDandName: OrganisationByIdAndName[],
         permissions: PersonPermissions,
     ): Promise<void> {
-        const importDataItemsWithLoginInfo: ImportDataItem<true>[] = [];
-        //We must create every peron individually otherwise it cannot assign the correct username when we have multiple users with the same name
-
-        for (const importDataItem of dataItems) {
+        try {
             const klasse: OrganisationByIdAndName | undefined = klassenByIDandName.find(
                 (organisationByIdAndName: OrganisationByIdAndName) =>
                     organisationByIdAndName.name === importDataItem.klasse,
             );
-            if (!klasse) {
-                importVorgang.fail();
-                // eslint-disable-next-line no-await-in-loop
-                await this.importVorgangRepository.save(importVorgang);
 
-                throw new EntityNotFoundError('Organisation', importDataItem.klasse, [
-                    `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found`,
-                ]);
+            if (!klasse) {
+                this.logger.error(
+                    `Klasse=${importDataItem.klasse} for ${importDataItem.vorname} ${importDataItem.nachname} was not found.`,
+                );
+                importDataItem.status = ImportDataItemStatus.FAILED;
+                await this.importDataRepository.save(importDataItem);
+                return;
             }
 
             const createPersonenkontexte: DbiamCreatePersonenkontextBodyParams[] = [
@@ -122,7 +135,6 @@ export class ImportEventHandler {
             ];
 
             const savedPersonWithPersonenkontext: DomainError | PersonPersonenkontext =
-                // eslint-disable-next-line no-await-in-loop
                 await this.personenkontextCreationService.createPersonWithPersonenkontexte(
                     permissions,
                     importDataItem.vorname,
@@ -130,57 +142,37 @@ export class ImportEventHandler {
                     createPersonenkontexte,
                 );
 
-            if (!(savedPersonWithPersonenkontext instanceof DomainError)) {
-                this.logger.info(
-                    `System hat einen neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
-                );
-            } else {
+            if (savedPersonWithPersonenkontext instanceof DomainError) {
                 this.logger.error(
-                    `System hat versucht einen neuen Benutzer für ${importDataItem.vorname} ${importDataItem.nachname} anzulegen. Fehler: ${savedPersonWithPersonenkontext.message}`,
+                    `Failed to create user for ${importDataItem.vorname} ${importDataItem.nachname}. Error: ${savedPersonWithPersonenkontext.message}`,
                 );
-
-                importVorgang.fail();
-                // eslint-disable-next-line no-await-in-loop
-                await this.importVorgangRepository.save(importVorgang);
-
-                throw new ImportDomainError(
-                    `The creation of person with personenkontexte for the import transaction:${importVorgang.id} failed`,
-                    importVorgang.id,
-                );
+                importDataItem.status = ImportDataItemStatus.FAILED;
+                return;
             }
 
             if (!savedPersonWithPersonenkontext.person.newPassword) {
                 this.logger.error(`Person with ID ${savedPersonWithPersonenkontext.person.id} has no start password!`);
-
-                importVorgang.fail();
-                // eslint-disable-next-line no-await-in-loop
-                await this.importVorgangRepository.save(importVorgang);
-                throw new ImportDomainError(
-                    `The creation for a password for the person with ID ${savedPersonWithPersonenkontext.person.id} for the import transaction:${importVorgang.id} has failed`,
-                    importVorgang.id,
-                );
+                importDataItem.status = ImportDataItemStatus.FAILED;
+                return;
             }
 
-            importDataItemsWithLoginInfo.push(
-                ImportDataItem.construct(
-                    importDataItem.id,
-                    importDataItem.createdAt,
-                    importDataItem.updatedAt,
-                    importDataItem.importvorgangId,
-                    importDataItem.nachname,
-                    importDataItem.vorname,
-                    importDataItem.klasse,
-                    importDataItem.personalnummer,
-                    importDataItem.validationErrors,
-                    savedPersonWithPersonenkontext.person.referrer,
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.importPasswordEncryptor.encryptPassword(
-                        savedPersonWithPersonenkontext.person.newPassword,
-                    ),
-                ),
+            importDataItem.username = savedPersonWithPersonenkontext.person.referrer;
+            importDataItem.password = await this.importPasswordEncryptor.encryptPassword(
+                savedPersonWithPersonenkontext.person.newPassword,
             );
-        }
+            importDataItem.status = ImportDataItemStatus.SUCCESS;
 
-        await this.importDataRepository.replaceAll(importDataItemsWithLoginInfo);
+            this.logger.info(
+                `Created user ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}).`,
+            );
+
+            await this.importVorgangRepository.save(importVorgang);
+        } catch (error) {
+            this.logger.error(
+                `Unexpected error while processing item ${importDataItem.vorname} ${importDataItem.nachname}`,
+            );
+            importDataItem.status = ImportDataItemStatus.FAILED;
+            await this.importDataRepository.save(importDataItem);
+        }
     }
 }

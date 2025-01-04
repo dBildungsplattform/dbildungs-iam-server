@@ -15,6 +15,7 @@ export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): Req
         validationErrors: importDataItem.validationErrors,
         username: importDataItem.username,
         password: importDataItem.password,
+        dataItemStatus: importDataItem.status,
     };
 }
 
