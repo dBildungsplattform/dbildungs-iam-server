@@ -258,7 +258,7 @@ describe('ImportEventHandler', () => {
             expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(2);
         });
 
-        it.only('should handle an unexpected error during savePersonWithPersonenkontext and log it', async () => {
+        it('should handle an unexpected error during savePersonWithPersonenkontext and log it', async () => {
             const klassen: Organisation<true>[] = [
                 DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, name: '1A' }),
             ];
