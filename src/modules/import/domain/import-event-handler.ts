@@ -69,23 +69,20 @@ export class ImportEventHandler {
         let allItemsFailed: boolean = true;
 
         for (const dataItem of importDataItems) {
-            try {
-                // eslint-disable-next-line no-await-in-loop
-                await this.savePersonWithPersonenkontext(dataItem, klassenByIDandName, event.permissions);
+            // eslint-disable-next-line no-await-in-loop
+            await this.savePersonWithPersonenkontext(dataItem, klassenByIDandName, event.permissions);
 
-                if (dataItem.status === ImportDataItemStatus.SUCCESS) {
-                    allItemsFailed = false; // if at least one item succeeded then the import process won't fail
-                }
-            } catch (error) {
-                dataItem.status = ImportDataItemStatus.FAILED;
-                this.logger.error(`Error processing data item ${dataItem.id}`);
+            if (dataItem.status === ImportDataItemStatus.SUCCESS) {
+                allItemsFailed = false; // if at least one item succeeded then the import process won't fail
             }
 
             // eslint-disable-next-line no-await-in-loop
-            await this.importDataRepository.save(dataItem); // Update status in the database
-            importVorgang.incrementTotalImportDataItems(1); // Increment by 1
+            await this.importDataRepository.save(dataItem);
+
+            importVorgang.incrementTotalImportDataItems(1);
+
             // eslint-disable-next-line no-await-in-loop
-            await this.importVorgangRepository.save(importVorgang); // Save updated state
+            await this.importVorgangRepository.save(importVorgang);
         }
 
         // Finalize the import process depending on the status on the items. If all items failed to be imported then we mark the whole import as failed. Otherwise it's finished.
@@ -164,7 +161,6 @@ export class ImportEventHandler {
                 `Unexpected error while processing item ${importDataItem.vorname} ${importDataItem.nachname}`,
             );
             importDataItem.status = ImportDataItemStatus.FAILED;
-            await this.importDataRepository.save(importDataItem);
         }
     }
 }

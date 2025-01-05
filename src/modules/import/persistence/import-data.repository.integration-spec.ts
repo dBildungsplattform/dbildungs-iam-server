@@ -195,7 +195,7 @@ describe('ImportDataRepository', () => {
             const createdImportDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
                 importvorgangId,
             });
-            createdImportDataItem.status = ImportDataItemStatus.SUCCESS; 
+            createdImportDataItem.status = ImportDataItemStatus.SUCCESS;
             const savedImportDataItem: ImportDataItem<true> = await sut.save(createdImportDataItem);
 
             savedImportDataItem.nachname = faker.name.lastName();

@@ -257,5 +257,29 @@ describe('ImportEventHandler', () => {
             expect(loggerMock.info).toHaveBeenCalledWith(`Created user ${person.referrer} (${person.id}).`);
             expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(2);
         });
+
+        it.only('should handle an unexpected error during savePersonWithPersonenkontext and log it', async () => {
+            const klassen: Organisation<true>[] = [
+                DoFactory.createOrganisation(true, { typ: OrganisationsTyp.KLASSE, name: '1A' }),
+            ];
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce(klassen);
+
+            const importVorgang: ImportVorgang<true> = DoFactory.createImportVorgang(true);
+            importVorgangRepositoryMock.findById.mockResolvedValueOnce(importVorgang);
+
+            const importDataItem: ImportDataItem<true> = DoFactory.createImportDataItem(true, { klasse: '1A' });
+            importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
+
+            const unexpectedError: Error = new Error('Unexpected error');
+            personenkontextCreationServiceMock.createPersonWithPersonenkontexte.mockRejectedValueOnce(unexpectedError);
+
+            await sut.handleExecuteImport(event);
+
+            expect(importDataItem.status).toBe(ImportDataItemStatus.FAILED);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `Unexpected error while processing item ${importDataItem.vorname} ${importDataItem.nachname}`,
+            );
+            expect(importDataRepositoryMock.save).toHaveBeenCalledWith(importDataItem);
+        });
     });
 });
