@@ -14,6 +14,7 @@ import { ImportVorgangRepository } from './import-vorgang.repository.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ImportDomainError } from '../domain/import-domain.error.js';
+import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 
 describe('ImportDataRepository', () => {
     let module: TestingModule;
@@ -194,11 +195,13 @@ describe('ImportDataRepository', () => {
             const createdImportDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
                 importvorgangId,
             });
+            createdImportDataItem.status = ImportDataItemStatus.SUCCESS; 
             const savedImportDataItem: ImportDataItem<true> = await sut.save(createdImportDataItem);
 
             savedImportDataItem.nachname = faker.name.lastName();
             savedImportDataItem.vorname = faker.name.firstName();
             savedImportDataItem.klasse = '1A';
+            savedImportDataItem.status = ImportDataItemStatus.SUCCESS;
 
             const result: ImportDataItem<true> = await sut.save(savedImportDataItem);
 

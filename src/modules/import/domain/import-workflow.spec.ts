@@ -371,7 +371,7 @@ describe('ImportWorkflow', () => {
 
             expect(result).toEqual({
                 ok: false,
-                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
+                error: new ImportDomainError('ImportVorgang is missing an organisation id', importvorgangId),
             });
             expect(importVorgangRepositoryMock.save).not.toHaveBeenCalled();
         });
@@ -450,7 +450,7 @@ describe('ImportWorkflow', () => {
 
             expect(result).toEqual({
                 ok: false,
-                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
+                error: new ImportDomainError('ImportVorgang is missing an organisation id', importvorgangId),
             });
             expect(importVorgangRepositoryMock.save).not.toHaveBeenCalled();
         });

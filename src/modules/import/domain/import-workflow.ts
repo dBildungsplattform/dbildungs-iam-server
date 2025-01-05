@@ -271,7 +271,7 @@ export class ImportWorkflow {
             this.logger.error(`Importvorgang:${importvorgangId} does not have an organisation id`);
             return {
                 ok: false,
-                error: new ImportDomainError('ImportVorgang is missing an organisazion id', importvorgangId),
+                error: new ImportDomainError('ImportVorgang is missing an organisation id', importvorgangId),
             };
         }
         if (!importVorgang.rolleId) {

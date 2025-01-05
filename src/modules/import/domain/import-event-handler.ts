@@ -71,12 +71,7 @@ export class ImportEventHandler {
         for (const dataItem of importDataItems) {
             try {
                 // eslint-disable-next-line no-await-in-loop
-                await this.savePersonWithPersonenkontext(
-                    importVorgang,
-                    dataItem,
-                    klassenByIDandName,
-                    event.permissions,
-                );
+                await this.savePersonWithPersonenkontext(dataItem, klassenByIDandName, event.permissions);
 
                 if (dataItem.status === ImportDataItemStatus.SUCCESS) {
                     allItemsFailed = false; // if at least one item succeeded then the import process won't fail
@@ -103,7 +98,6 @@ export class ImportEventHandler {
     }
 
     private async savePersonWithPersonenkontext(
-        importVorgang: ImportVorgang<true>,
         importDataItem: ImportDataItem<true>,
         klassenByIDandName: OrganisationByIdAndName[],
         permissions: PersonPermissions,
@@ -165,8 +159,6 @@ export class ImportEventHandler {
             this.logger.info(
                 `Created user ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}).`,
             );
-
-            await this.importVorgangRepository.save(importVorgang);
         } catch (error) {
             this.logger.error(
                 `Unexpected error while processing item ${importDataItem.vorname} ${importDataItem.nachname}`,
