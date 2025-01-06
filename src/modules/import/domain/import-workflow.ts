@@ -342,6 +342,7 @@ export class ImportWorkflow {
         const successfulDataItems: ImportDataItem<true>[] = importDataItems.filter(
             (dataItem: ImportDataItem<true>) => dataItem.status === ImportDataItemStatus.SUCCESS,
         );
+
         if (total === 0) {
             return {
                 ok: false,

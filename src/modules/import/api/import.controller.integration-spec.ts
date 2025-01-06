@@ -651,6 +651,7 @@ describe('Import API', () => {
                     status: ImportStatus.FINISHED,
                 }),
             );
+
             const importDataItem: ImportDataItem<true> = await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
                     importvorgangId: importVorgang.id,

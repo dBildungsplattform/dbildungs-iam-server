@@ -22,6 +22,7 @@ import { PersonenkontextDo } from '../../src/modules/personenkontext/domain/pers
 import { ImportDataItem } from '../../src/modules/import/domain/import-data-item.js';
 import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js';
 import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
+import { ImportDataItemStatus } from '../../src/modules/import/domain/importDataItem.enum.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -232,6 +233,7 @@ export class DoFactory {
             updatedAt: withId ? faker.date.recent() : undefined,
             klasse: faker.lorem.word({ length: 2 }),
             personalnummer: undefined,
+            status: ImportDataItemStatus.PENDING,
         };
         return Object.assign(Object.create(ImportDataItem.prototype) as ImportDataItem<boolean>, objectVallue, props);
     }

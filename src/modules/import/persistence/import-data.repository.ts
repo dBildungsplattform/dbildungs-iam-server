@@ -15,7 +15,7 @@ export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): Req
         validationErrors: importDataItem.validationErrors,
         username: importDataItem.username,
         password: importDataItem.password,
-        dataItemStatus: importDataItem.status,
+        status: importDataItem.status,
     };
 }
 
@@ -32,6 +32,7 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.validationErrors,
         entity.username,
         entity.password,
+        entity.status,
     );
 }
 @Injectable()
