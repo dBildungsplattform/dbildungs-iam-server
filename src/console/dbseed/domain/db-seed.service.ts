@@ -208,6 +208,7 @@ export class DbSeedService {
                 file.keycloakRole,
                 file.externalSystem ?? ServiceProviderSystem.NONE,
                 file.requires2fa,
+                file.vidisAngebotId,
             );
             if (file.overrideId) {
                 serviceProvider.id = this.getValidUuidOrUndefined(file.overrideId);

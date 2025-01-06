@@ -41,4 +41,7 @@ export class ServiceProviderEntity extends TimestampedEntity {
 
     @Property()
     public requires2fa!: boolean;
+
+    @Property({ nullable: true })
+    public vidisAngebotId?: string;
 }
