@@ -5,8 +5,6 @@ export class Migration20241219124504 extends Migration {
 
         this.addSql('alter table "importvorgang" rename column "import_by_person_id" to "person_id";');
 
-        this.addSql('alter table "importvorgang" add column "total_data_item_imported" int not null default 0;');
-
         this.addSql(
             'alter table "importvorgang" add constraint "importvorgang_person_id_foreign" foreign key ("person_id") references "person" ("id") on update cascade on delete set null;',
         );
@@ -23,9 +21,6 @@ export class Migration20241219124504 extends Migration {
         this.addSql('alter table "importvorgang" drop constraint "importvorgang_person_id_foreign";');
         this.addSql('alter table "importvorgang" drop constraint "importvorgang_rolle_id_foreign";');
         this.addSql('alter table "importvorgang" drop constraint "importvorgang_organisation_id_foreign";');
-
-        this.addSql('alter table "importvorgang" drop column "total_data_item_imported";');
-
         this.addSql('alter table "importvorgang" rename column "person_id" to "import_by_person_id";');
     }
 }

@@ -75,14 +75,6 @@ export class ImportEventHandler {
             if (dataItem.status === ImportDataItemStatus.SUCCESS) {
                 allItemsFailed = false; // if at least one item succeeded then the import process won't fail
             }
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.importDataRepository.save(dataItem);
-
-            importVorgang.incrementTotalImportDataItems(1);
-
-            // eslint-disable-next-line no-await-in-loop
-            await this.importVorgangRepository.save(importVorgang);
         }
 
         // Finalize the import process depending on the status on the items. If all items failed to be imported then we mark the whole import as failed. Otherwise it's finished.
@@ -138,12 +130,15 @@ export class ImportEventHandler {
                     `Failed to create user for ${importDataItem.vorname} ${importDataItem.nachname}. Error: ${savedPersonWithPersonenkontext.message}`,
                 );
                 importDataItem.status = ImportDataItemStatus.FAILED;
+                await this.importDataRepository.save(importDataItem);
                 return;
             }
 
             if (!savedPersonWithPersonenkontext.person.newPassword) {
                 this.logger.error(`Person with ID ${savedPersonWithPersonenkontext.person.id} has no start password!`);
                 importDataItem.status = ImportDataItemStatus.FAILED;
+
+                await this.importDataRepository.save(importDataItem);
                 return;
             }
 
@@ -152,6 +147,7 @@ export class ImportEventHandler {
                 savedPersonWithPersonenkontext.person.newPassword,
             );
             importDataItem.status = ImportDataItemStatus.SUCCESS;
+            await this.importDataRepository.save(importDataItem);
 
             this.logger.info(
                 `Created user ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}).`,
@@ -161,6 +157,7 @@ export class ImportEventHandler {
                 `Unexpected error while processing item ${importDataItem.vorname} ${importDataItem.nachname}`,
             );
             importDataItem.status = ImportDataItemStatus.FAILED;
+            await this.importDataRepository.save(importDataItem);
         }
     }
 }
