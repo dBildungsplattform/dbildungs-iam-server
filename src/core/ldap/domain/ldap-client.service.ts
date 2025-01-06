@@ -69,6 +69,22 @@ export class LdapClientService {
         this.mutex = new Mutex();
     }
 
+    //** BELOW ONLY PUBLIC FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
+
+    public async createLehrer(
+        person: PersonData,
+        domain: string,
+        schulId: string,
+        mail?: string,
+    ): Promise<Result<PersonData>> {
+        return this.executeWithRetry(
+            () => this.createLehrerInternal(person, domain, schulId, mail),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    //** BELOW ONLY PRIVATE FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
+
     private async bind(): Promise<Result<boolean>> {
         this.logger.info('LDAP: bind');
         try {
@@ -123,7 +139,7 @@ export class LdapClientService {
         return rootName;
     }
 
-    public async createLehrer(
+    private async createLehrerInternal(
         person: PersonData,
         domain: string,
         schulId: string,
