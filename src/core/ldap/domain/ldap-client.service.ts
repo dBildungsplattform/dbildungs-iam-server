@@ -219,7 +219,7 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(referrer: string, rootName: string): string {
+    private getLehrerUid(referrer: PersonReferrer, rootName: string): string {
         return `uid=${referrer},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
@@ -237,7 +237,7 @@ export class LdapClientService {
         schulId: string,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
     ): Promise<Result<PersonData>> {
-        const referrer: string | undefined = person.referrer;
+        const referrer: PersonReferrer | undefined = person.referrer;
         if (!referrer) {
             return {
                 ok: false,
@@ -305,7 +305,7 @@ export class LdapClientService {
         });
     }
 
-    private async isLehrerExistingInternal(referrer: string, domain: string): Promise<Result<boolean>> {
+    private async isLehrerExistingInternal(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
@@ -329,10 +329,10 @@ export class LdapClientService {
     }
 
     private async modifyPersonAttributesInternal(
-        oldReferrer: string,
+        oldReferrer: PersonReferrer,
         newGivenName?: string,
         newSn?: string,
-        newReferrer?: string,
+        newReferrer?: PersonReferrer,
     ): Promise<Result<string>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: modifyPersonAttributes');
@@ -496,7 +496,7 @@ export class LdapClientService {
         return { ok: true, value: `Updated member data for ${groupEntries.length} groups.` };
     }
 
-    private async deleteLehrerByReferrerInternal(referrer: string): Promise<Result<string>> {
+    private async deleteLehrerByReferrerInternal(referrer: PersonReferrer): Promise<Result<string>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer by referrer');
             const client: Client = this.ldapClient.getClient();
@@ -573,7 +573,6 @@ export class LdapClientService {
         newEmailAddress: string,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
-        //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: changeEmailAddress');
             const splitted: string[] = newEmailAddress.split('@');
@@ -741,7 +740,7 @@ export class LdapClientService {
     }
 
     private async removePersonFromGroupInternal(
-        referrer: string,
+        referrer: PersonReferrer,
         schoolReferrer: string,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
@@ -821,7 +820,6 @@ export class LdapClientService {
         referrer: PersonReferrer,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
-        //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         const userPassword: string = generatePassword();
 
         return this.mutex.runExclusive(async () => {
