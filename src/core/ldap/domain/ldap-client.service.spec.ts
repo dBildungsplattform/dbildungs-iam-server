@@ -1243,7 +1243,7 @@ describe('LDAP Client Service', () => {
                     const oldReferrer: PersonReferrer = faker.internet.userName();
                     const newUid: string = faker.string.alphanumeric(6);
 
-                    jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValueOnce({
+                    jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValue({
                         ok: false,
                         error: new Error('Failed to update groups'),
                     });
