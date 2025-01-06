@@ -34,6 +34,7 @@ import { EventModule } from '../../../core/eventbus/event.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
 import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
+import { ImportDataItemStatus } from './importDataItem.enum.js';
 
 describe('ImportWorkflow', () => {
     let module: TestingModule;
@@ -517,6 +518,7 @@ describe('ImportWorkflow', () => {
                 vorname: 'Max',
                 username: 'max.mustermann',
                 password: 'encrpytedpassword|iv',
+                status: ImportDataItemStatus.SUCCESS,
             });
             importDataRepositoryMock.findByImportVorgangId.mockResolvedValueOnce([[importDataItem], 1]);
 
