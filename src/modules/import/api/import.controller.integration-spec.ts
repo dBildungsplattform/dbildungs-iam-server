@@ -45,6 +45,7 @@ import { KeycloakAdministrationService } from '../../keycloak-administration/dom
 import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 
 describe('Import API', () => {
     let app: INestApplication;
@@ -657,6 +658,7 @@ describe('Import API', () => {
                     personalnummer: undefined,
                     username: faker.internet.userName(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                    status: ImportDataItemStatus.SUCCESS,
                 }),
             );
 
