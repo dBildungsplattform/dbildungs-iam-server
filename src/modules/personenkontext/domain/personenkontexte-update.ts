@@ -226,6 +226,9 @@ export class PersonenkontexteUpdate {
                     /* eslint-disable no-await-in-loop */
                     await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
                     deletedPKs.push(existingPK);
+                    this.logger.info(
+                        `Schulzuordnung (Organisation:${existingPK.organisationId}, Rolle:${existingPK.rolleId}) für Benutzer mit BenutzerId: {${existingPK.personId}}.'}`,
+                    );
                     /* eslint-disable no-await-in-loop */
                 } catch (err) {
                     this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
@@ -255,6 +258,9 @@ export class PersonenkontexteUpdate {
                 try {
                     const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepoInternal.save(sentPK);
                     createdPKs.push(savedPK);
+                    this.logger.info(
+                        `Schulzuordnung (Organisation:${sentPK.organisationId}, Rolle:${sentPK.rolleId}) für Benutzer mit BenutzerId: {${sentPK.personId}}. Befristung: ${sentPK.befristung?.toDateString() ?? 'unbefristet'}`,
+                    );
                 } catch (err) {
                     this.logger.error(
                         `Personenkontext with (person: ${sentPK.personId}, organisation: ${sentPK.organisationId}, rolle: ${sentPK.rolleId}) could not be added!`,
