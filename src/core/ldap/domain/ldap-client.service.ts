@@ -82,7 +82,7 @@ export class LdapClientService {
         );
     }
 
-    public async isLehrerExisting(referrer: string, domain: string): Promise<Result<boolean>> {
+    public async isLehrerExisting(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
         return this.executeWithRetry(
             () => this.isLehrerExistingInternal(referrer, domain),
             LdapClientService.DEFAULT_RETRIES,
@@ -90,10 +90,10 @@ export class LdapClientService {
     }
 
     public async modifyPersonAttributes(
-        oldReferrer: string,
+        oldReferrer: PersonReferrer,
         newGivenName?: string,
         newSn?: string,
-        newReferrer?: string,
+        newReferrer?: PersonReferrer,
     ): Promise<Result<string>> {
         return this.executeWithRetry(
             () => this.modifyPersonAttributesInternal(oldReferrer, newGivenName, newSn, newReferrer),
@@ -102,8 +102,8 @@ export class LdapClientService {
     }
 
     public async updateMemberDnInGroups(
-        oldReferrer: string,
-        newReferrer: string,
+        oldReferrer: PersonReferrer,
+        newReferrer: PersonReferrer,
         oldUid: string,
         client: Client,
     ): Promise<Result<string>> {
@@ -113,7 +113,7 @@ export class LdapClientService {
         );
     }
 
-    public async deleteLehrerByReferrer(referrer: string): Promise<Result<string>> {
+    public async deleteLehrerByReferrer(referrer: PersonReferrer): Promise<Result<string>> {
         return this.executeWithRetry(
             () => this.deleteLehrerByReferrerInternal(referrer),
             LdapClientService.DEFAULT_RETRIES,
@@ -150,7 +150,7 @@ export class LdapClientService {
     }
 
     public async removePersonFromGroup(
-        referrer: string,
+        referrer: PersonReferrer,
         schoolReferrer: string,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
@@ -169,7 +169,7 @@ export class LdapClientService {
 
     //** BELOW ONLY PUBLIC HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
 
-    public createNewLehrerUidFromOldUid(oldUid: string, newReferrer: string): string {
+    public createNewLehrerUidFromOldUid(oldUid: string, newReferrer: PersonReferrer): string {
         const splitted: string[] = oldUid.split(',');
         splitted[0] = `uid=${newReferrer}`;
         return splitted.join(',');
@@ -421,8 +421,8 @@ export class LdapClientService {
     }
 
     private async updateMemberDnInGroupsInternal(
-        oldReferrer: string,
-        newReferrer: string,
+        oldReferrer: PersonReferrer,
+        newReferrer: PersonReferrer,
         oldUid: string,
         client: Client,
     ): Promise<Result<string>> {
