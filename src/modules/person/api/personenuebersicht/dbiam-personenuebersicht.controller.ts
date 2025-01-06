@@ -92,23 +92,30 @@ export class DBiamPersonenuebersichtController {
                 this.config,
             );
 
-            persons.forEach((person: Person<true>) => {
-                const personenKontexte: Personenkontext<true>[] = allPersonenKontexte.get(person.id) ?? [];
-                const personenUebersichtenResult: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
-                    dbiamPersonenUebersicht.createZuordnungenForKontexte(personenKontexte, allRollen, allOrganisations);
-                if (personenUebersichtenResult instanceof EntityNotFoundError) {
-                    throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                        SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenUebersichtenResult),
+            await Promise.all(
+                persons.map(async (person: Person<true>) => {
+                    const personenKontexte: Personenkontext<true>[] = allPersonenKontexte.get(person.id) ?? [];
+                    const personenUebersichtenResult: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
+                        await dbiamPersonenUebersicht.createZuordnungenForKontexte(
+                            personenKontexte,
+                            allRollen,
+                            allOrganisations,
+                        );
+
+                    if (personenUebersichtenResult instanceof EntityNotFoundError) {
+                        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                            SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenUebersichtenResult),
+                        );
+                    }
+                    items.push(
+                        new DBiamPersonenuebersichtResponse(
+                            person,
+                            personenUebersichtenResult[0],
+                            personenUebersichtenResult[1],
+                        ),
                     );
-                }
-                items.push(
-                    new DBiamPersonenuebersichtResponse(
-                        person,
-                        personenUebersichtenResult[0],
-                        personenUebersichtenResult[1],
-                    ),
-                );
-            });
+                }),
+            );
         }
 
         return {
