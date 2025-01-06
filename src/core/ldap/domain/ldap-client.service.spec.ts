@@ -708,6 +708,35 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    //Demonstrated using isLehrerExisting function
+    describe('executeWithRetry', () => {
+        it('when operation fails it should automatically retry the operation', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockRejectedValue(new Error()); //mock existsLehrer
+
+                return clientMock;
+            });
+            const testLehrer: PersonData = {
+                id: faker.string.uuid(),
+                vorname: faker.person.firstName(),
+                familienname: faker.person.lastName(),
+                referrer: faker.lorem.word(),
+                ldapEntryUUID: faker.string.uuid(),
+            };
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting(
+                testLehrer.referrer!,
+                'schule-sh.de',
+            );
+
+            expect(result.ok).toBeFalsy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(3);
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
+        });
+    });
+
     describe('creation', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
         const fakeOrgaKennung: string = '123';
