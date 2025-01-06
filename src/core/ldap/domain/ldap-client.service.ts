@@ -754,4 +754,43 @@ export class LdapClientService {
             }
         });
     }
+
+    private async executeWithRetry<T>(
+        func: () => Promise<Result<T>>,
+        retries: number,
+        delay: number = 1000,
+    ): Promise<Result<T>> {
+        let currentAttempt: number = 1;
+        let result: Result<T, Error> = {
+            ok: false,
+            error: new Error('executeWithRetry default fallback'),
+        };
+
+        while (currentAttempt <= retries) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                result = await func();
+                if (result.ok) {
+                    return result;
+                } else {
+                    throw new Error(`Function returned error: ${result.error.message}`);
+                }
+            } catch (error) {
+                const currentDelay: number = delay * Math.pow(currentAttempt, 3);
+                this.logger.warning(
+                    `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
+                );
+
+                // eslint-disable-next-line no-await-in-loop
+                await this.sleep(currentDelay);
+            }
+            currentAttempt++;
+        }
+        this.logger.error(`All ${retries} attempts failed. Exiting with failure.`);
+        return result;
+    }
+
+    private async sleep(ms: number): Promise<void> {
+        return new Promise<void>((resolve: () => void) => setTimeout(resolve, ms));
+    }
 }
