@@ -167,6 +167,14 @@ export class LdapClientService {
         );
     }
 
+    //** BELOW ONLY PUBLIC HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
+
+    public createNewLehrerUidFromOldUid(oldUid: string, newReferrer: string): string {
+        const splitted: string[] = oldUid.split(',');
+        splitted[0] = `uid=${newReferrer}`;
+        return splitted.join(',');
+    }
+
     //** BELOW ONLY PRIVATE FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
 
     private async bind(): Promise<Result<boolean>> {
@@ -410,12 +418,6 @@ export class LdapClientService {
 
             return { ok: true, value: oldReferrer };
         });
-    }
-
-    private createNewLehrerUidFromOldUid(oldUid: string, newReferrer: string): string {
-        const splitted: string[] = oldUid.split(',');
-        splitted[0] = `uid=${newReferrer}`;
-        return splitted.join(',');
     }
 
     private async updateMemberDnInGroupsInternal(
