@@ -41,6 +41,7 @@ import { TokenInitBodyParams } from './token-init.body.params.js';
 import { TokenStateResponse } from './token-state.response.js';
 import { TokenVerifyBodyParams } from './token-verify.params.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
+import { PersonReferrer } from '../../shared/types/aggregate-ids.types.js';
 import { SoftwareTokenInitializationError } from './api/error/software-token-initialization.error.js';
 
 @UseFilters(new PrivacyIdeaAdministrationExceptionFilter())
@@ -103,7 +104,7 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<TokenStateResponse> {
-        const referrer: string = await this.getReferrerIfAllowedOrSelf(personId, permissions);
+        const referrer: PersonReferrer = await this.getReferrerIfAllowedOrSelf(personId, permissions);
         const piToken: PrivacyIdeaToken | undefined =
             await this.privacyIdeaAdministrationService.getTwoAuthState(referrer);
         return new TokenStateResponse(piToken);
@@ -122,7 +123,7 @@ export class PrivacyIdeaAdministrationController {
         @Query('personId') personId: string,
         @Permissions() permissions: PersonPermissions,
     ): Promise<boolean> {
-        const referrer: string = await this.getReferrerIfAllowed(personId, permissions);
+        const referrer: PersonReferrer = await this.getReferrerIfAllowed(personId, permissions);
         try {
             const response: ResetTokenResponse = await this.privacyIdeaAdministrationService.resetToken(referrer);
             this.logger.info(
@@ -163,7 +164,7 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: AssignHardwareTokenBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<AssignHardwareTokenResponse | undefined> {
-        const referrer: string = await this.getReferrerIfAllowed(params.userId, permissions);
+        const referrer: PersonReferrer = await this.getReferrerIfAllowed(params.userId, permissions);
         try {
             const result: AssignTokenResponse = await this.privacyIdeaAdministrationService.assignHardwareToken(
                 params.serial,
@@ -213,7 +214,7 @@ export class PrivacyIdeaAdministrationController {
         @Body() params: TokenVerifyBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const referrer: string = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
+        const referrer: PersonReferrer = await this.getReferrerIfAllowedOrSelf(params.personId, permissions);
         try {
             await this.privacyIdeaAdministrationService.verifyTokenEnrollment(referrer, params.otp);
             this.logger.info(
@@ -263,7 +264,10 @@ export class PrivacyIdeaAdministrationController {
         return personResult.value.referrer;
     }
 
-    private async getReferrerIfAllowedOrSelf(personId: string, permissions: PersonPermissions): Promise<string> {
+    private async getReferrerIfAllowedOrSelf(
+        personId: string,
+        permissions: PersonPermissions,
+    ): Promise<PersonReferrer> {
         if (personId === permissions.personFields.id) {
             const person: Option<Person<true>> = await this.personRepository.findById(personId);
             if (!person?.referrer) {
