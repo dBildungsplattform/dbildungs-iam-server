@@ -825,7 +825,7 @@ describe('LDAP Client Service', () => {
                 );
 
                 if (result.ok) throw Error();
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:{}`,
                 );
                 expect(result.error).toEqual(new LdapCreateLehrerError());
@@ -1383,7 +1383,7 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyEmailError());
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED, errMsg:{}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
@@ -1874,9 +1874,7 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyUserPasswordError());
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `LDAP: Modifying userPassword (UEM) FAILED, errMsg:{}`,
-                );
+                expect(loggerMock.error).toHaveBeenCalledWith(`LDAP: Modifying userPassword (UEM) FAILED, errMsg:{}`);
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
         });
