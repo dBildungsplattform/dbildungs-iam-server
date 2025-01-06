@@ -18,6 +18,8 @@ import { EventModule } from '../../../core/eventbus/index.js';
 import { Organisation } from './organisation.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('OrganisationServiceSpecificationTest', () => {
     let module: TestingModule;
@@ -35,6 +37,7 @@ describe('OrganisationServiceSpecificationTest', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [OrganisationService, OrganisationRepository, OrganisationPersistenceMapperProfile],
         }).compile();
@@ -74,6 +77,7 @@ describe('OrganisationServiceSpecificationTest', () => {
     });
 
     describe('create', () => {
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
         it('should return DomainError, when KlasseNurVonSchuleAdministriert specificaton is not satisfied and type is KLASSE', async () => {
             const klasseDo: Organisation<boolean> = DoFactory.createOrganisation(false, {
                 name: 'Klasse',
@@ -84,6 +88,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             const result: Result<Organisation<true>, DomainError> = await organisationService.createOrganisation(
                 klasseDo,
+                permissionsMock,
             );
 
             expect(result).toEqual<Result<Organisation<true>>>({
@@ -113,7 +118,10 @@ describe('OrganisationServiceSpecificationTest', () => {
                 zugehoerigZu: schule.id,
                 typ: OrganisationsTyp.KLASSE,
             });
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(weitereKlasseDo);
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                weitereKlasseDo,
+                permissionsMock,
+            );
 
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
@@ -122,6 +130,7 @@ describe('OrganisationServiceSpecificationTest', () => {
         });
     });
     describe('update', () => {
+        const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
         it('should return DomainError, when klasse specifications are not satisfied and type is klasse', async () => {
             const klasse: Organisation<boolean> = DoFactory.createOrganisation(false, {
                 name: 'klasse',
@@ -133,6 +142,7 @@ describe('OrganisationServiceSpecificationTest', () => {
 
             const result: Result<Organisation<true>, DomainError> = await organisationService.updateOrganisation(
                 klassePersisted,
+                permissionsMock,
             );
 
             expect(result).toEqual<Result<Organisation<true>>>({
