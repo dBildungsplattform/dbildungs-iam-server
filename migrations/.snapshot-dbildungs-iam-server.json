@@ -3969,8 +3969,8 @@
           "nullable": true,
           "mappedType": "string"
         },
-        "data_item_status": {
-          "name": "data_item_status",
+        "status": {
+          "name": "status",
           "type": "import_data_item_status_enum",
           "unsigned": false,
           "autoincrement": false,
