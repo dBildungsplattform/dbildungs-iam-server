@@ -816,7 +816,10 @@ export class LdapClientService {
         return false;
     }
 
-    private async changeUserPasswordByPersonIdInternal(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
+    private async changeUserPasswordByPersonIdInternal(
+        personId: PersonID,
+        referrer: PersonReferrer,
+    ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         //const referrer: string | undefined = await this.getPersonReferrerOrUndefined(personId);
         const userPassword: string = generatePassword();
