@@ -46,7 +46,12 @@ export class LdapTestModule implements OnModuleDestroy {
                             ? `ldap://${this.ldap.getHost()}:${this.ldap.getFirstMappedPort()}`
                             : ldapConfig.URL;
 
-                        return new LdapInstanceConfig(baseUrl, ldapConfig.BIND_DN, ldapConfig.ADMIN_PASSWORD);
+                        return new LdapInstanceConfig(
+                            baseUrl,
+                            ldapConfig.BIND_DN,
+                            ldapConfig.ADMIN_PASSWORD,
+                            ldapConfig.BASE_DN,
+                        );
                     },
                     inject: [ConfigService],
                 },

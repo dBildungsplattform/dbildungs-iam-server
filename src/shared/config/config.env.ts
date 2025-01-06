@@ -8,6 +8,7 @@ import { PrivacyIdeaConfig } from './privacyidea.config.js';
 import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
+import { FeatureFlagConfig } from './featureflag.config.js';
 import { envToOptionalBoolean } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
 import { ImportConfig } from './import.config.js';
@@ -18,6 +19,7 @@ export type Config = {
     REDIS: Partial<RedisConfig>;
     LDAP: Partial<LdapConfig>;
     FRONTEND: Partial<FrontendConfig>;
+    FEATUREFLAG: Partial<FeatureFlagConfig>;
     HOST: Partial<HostConfig>;
     ITSLEARNING: Partial<ItsLearningConfig>;
     PRIVACYIDEA: Partial<PrivacyIdeaConfig>;
@@ -46,6 +48,7 @@ export default (): Config => ({
         ADMIN_PASSWORD: process.env['LDAP_ADMIN_PASSWORD'],
         OEFFENTLICHE_SCHULEN_DOMAIN: process.env['LDAP_OEFFENTLICHE_SCHULEN_DOMAIN'],
         ERSATZSCHULEN_DOMAIN: process.env['LDAP_ERSATZSCHULEN_DOMAIN'],
+        BASE_DN: process.env['LDAP_BASE_DN'],
     },
     FRONTEND: {
         SESSION_SECRET: process.env['FRONTEND_SESSION_SECRET'],
@@ -53,6 +56,12 @@ export default (): Config => ({
         DEFAULT_LOGIN_REDIRECT: process.env['FRONTEND_DEFAULT_LOGIN_REDIRECT'],
         LOGOUT_REDIRECT: process.env['FRONTEND_LOGOUT_REDIRECT'],
         STATUS_REDIRECT_URL: process.env['STATUS_REDIRECT_URL'],
+    },
+    FEATUREFLAG: {
+        FEATURE_FLAG_ROLLE_BEARBEITEN:
+            (process.env['FEATURE_FLAG_ROLLE_BEARBEITEN']?.toLowerCase() as 'true' | 'false') ?? 'false',
+        FEATURE_FLAG_BEFRISTUNG_BEARBEITEN:
+            (process.env['FEATURE_FLAG_BEFRISTUNG_BEARBEITEN']?.toLowerCase() as 'true' | 'false') ?? 'false',
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],

@@ -26,6 +26,10 @@ describe('configloader', () => {
                     ERROR_PAGE_REDIRECT: '/error',
                     STATUS_REDIRECT_URL: '/',
                 },
+                FEATUREFLAG: {
+                    FEATURE_FLAG_ROLLE_BEARBEITEN: 'true',
+                    FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: 'true',
+                },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
                     USERNAME: 'admin',
@@ -53,6 +57,7 @@ describe('configloader', () => {
                 LDAP: {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
                     ENABLED: true,
@@ -106,6 +111,7 @@ describe('configloader', () => {
                 },
                 LDAP: { ADMIN_PASSWORD: 'password' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
+                FEATUREFLAG: {},
                 REDIS: { PASSWORD: 'password' },
                 ITSLEARNING: {
                     PASSWORD: 'password',
@@ -154,6 +160,10 @@ describe('configloader', () => {
                     ERROR_PAGE_REDIRECT: '/error',
                     STATUS_REDIRECT_URL: '/',
                 },
+                FEATUREFLAG: {
+                    FEATURE_FLAG_ROLLE_BEARBEITEN: 'true',
+                    FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: 'true',
+                },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
                     USERNAME: 'admin',
@@ -187,6 +197,7 @@ describe('configloader', () => {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'password',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
                     ENABLED: true,

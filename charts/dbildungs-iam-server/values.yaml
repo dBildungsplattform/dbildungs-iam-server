@@ -33,6 +33,7 @@ ldap:
   bindDN: cn=admin,dc=schule-sh,dc=de
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
+  base_dn: dc=schule-sh,dc=de
 
 itslearning:
   root: sh
@@ -203,6 +204,11 @@ cronjobs:
     cron-trigger-4:
       schedule: 10 0 * * *
       endpoint: '/api/cron/unlock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-5:
+      schedule: 30 0 * * *
+      endpoint: '/api/cron/vidis-angebote'
       httpMethod: 'PUT'
       script: 'cron_trigger.sh'
 
