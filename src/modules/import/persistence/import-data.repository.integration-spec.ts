@@ -388,4 +388,97 @@ describe('ImportDataRepository', () => {
             await expect(sut.replaceAll(updateImportDataItems)).rejects.toThrowError(importDomainError);
         });
     });
+
+    describe('countProcessedItems', () => {
+        let importvorgangId: string;
+        let importDataItem1: ImportDataItem<false>;
+        let importDataItem2: ImportDataItem<false>;
+        let importDataItem3: ImportDataItem<false>;
+        let entity1: ImportDataItemEntity;
+        let entity2: ImportDataItemEntity;
+        let entity3: ImportDataItemEntity;
+
+        beforeEach(async () => {
+            // Create a new importvorgang (import process)
+            const importvorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
+            );
+            importvorgangId = importvorgang.id;
+
+            // Create import data items
+            importDataItem1 = ImportDataItem.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                importvorgangId,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '1A',
+                undefined,
+            );
+            importDataItem2 = ImportDataItem.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                importvorgangId,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '1B',
+                undefined,
+            );
+            importDataItem3 = ImportDataItem.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                importvorgangId,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '1C',
+                undefined,
+            );
+
+            // Create entities and persist them
+            entity1 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem1));
+            entity2 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem2));
+            entity3 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem3));
+            await em.persistAndFlush([entity1, entity2, entity3]);
+
+            // Update the status of some items
+            entity1.status = ImportDataItemStatus.SUCCESS;
+            entity2.status = ImportDataItemStatus.FAILED;
+            entity3.status = ImportDataItemStatus.PENDING; // This will be ignored
+
+            await em.persistAndFlush([entity1, entity2, entity3]);
+        });
+
+        afterEach(async () => {
+            await em.removeAndFlush([entity1, entity2, entity3]);
+        });
+
+        it('should count processed items for the given importvorgangId', async () => {
+            // Calling the method to count items with status SUCCESS or FAILED
+            const count: number = await sut.countProcessedItems(importvorgangId);
+
+            // Since only entity1 (SUCCESS) and entity2 (FAILED) are processed, count should be 2
+            expect(count).toBe(2);
+        });
+
+        it('should return 0 if no items have processed status', async () => {
+            // Set all items to PENDING status to simulate unprocessed items
+            entity1.status = ImportDataItemStatus.PENDING;
+            entity2.status = ImportDataItemStatus.PENDING;
+            entity3.status = ImportDataItemStatus.PENDING;
+
+            await em.persistAndFlush([entity1, entity2, entity3]);
+
+            const count: number = await sut.countProcessedItems(importvorgangId);
+
+            // Since none of the items are processed, the count should be 0
+            expect(count).toBe(0);
+        });
+    });
 });
