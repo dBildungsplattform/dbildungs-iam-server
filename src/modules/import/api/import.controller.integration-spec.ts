@@ -848,7 +848,6 @@ describe('Import API', () => {
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
                 DoFactory.createImportVorgang(false, {
                     status: ImportStatus.COMPLETED,
-                    totalDataItemImported: 100,
                     importByPersonId: undefined,
                     rolleId: undefined,
                     organisationId: undefined,
@@ -864,7 +863,6 @@ describe('Import API', () => {
             expect(response.body).toEqual({
                 dataItemCount: 100,
                 status: ImportStatus.COMPLETED,
-                totalDataItemImported: 100,
             } as ImportVorgangStatusResponse);
         });
 

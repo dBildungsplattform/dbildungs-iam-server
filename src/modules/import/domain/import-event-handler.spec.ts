@@ -255,7 +255,7 @@ describe('ImportEventHandler', () => {
             await sut.handleExecuteImport(event);
 
             expect(loggerMock.info).toHaveBeenCalledWith(`Created user ${person.referrer} (${person.id}).`);
-            expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(2);
+            expect(importVorgangRepositoryMock.save).toHaveBeenCalledTimes(1);
         });
 
         it('should handle an unexpected error during savePersonWithPersonenkontext and log it', async () => {
