@@ -15,8 +15,11 @@ export class ImportResultResponse {
     @ApiProperty()
     public organisationsname: string;
 
-    @ApiProperty()
-    public importedUsers: Paged<ImportedUserResponse>;
+    @ApiProperty({
+        type: ImportedUserResponse, 
+        isArray: true,
+    })
+    public importedUsers: Paged<ImportedUserResponse>; 
 
     public constructor(importResult: ImportResult, offset?: number, limit?: number) {
         this.importvorgandId = importResult.importvorgang.id;
