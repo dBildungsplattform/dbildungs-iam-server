@@ -12,9 +12,9 @@ export class ImportVorgangStatusResponse {
     @ApiProperty()
     public totalDataItemImported: number;
 
-    public constructor(importVorgang: ImportVorgang<true>) {
+    public constructor(importVorgang: ImportVorgang<true>, processedItemCount: number) {
         this.dataItemCount = importVorgang.dataItemCount;
         this.status = importVorgang.status;
-        this.totalDataItemImported = importVorgang.totalDataItemImported;
+        this.totalDataItemImported = processedItemCount;
     }
 }

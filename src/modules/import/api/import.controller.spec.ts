@@ -20,6 +20,7 @@ import { HttpException } from '@nestjs/common';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
+import { ImportDataRepository } from '../persistence/import-data.repository.js';
 
 describe('Import API with mocked ImportWorkflow', () => {
     let sut: ImportController;
@@ -45,6 +46,10 @@ describe('Import API with mocked ImportWorkflow', () => {
                 {
                     provide: ImportVorgangRepository,
                     useValue: createMock<ImportVorgangRepository>(),
+                },
+                {
+                    provide: ImportDataRepository,
+                    useValue: createMock<ImportDataRepository>(),
                 },
                 ImportController,
             ],

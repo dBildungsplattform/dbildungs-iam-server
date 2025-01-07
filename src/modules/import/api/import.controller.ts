@@ -63,6 +63,7 @@ import { ContentDisposition, ContentType } from '../../../shared/http/http.heade
 import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 import { ImportResultResponse } from './import-result.response.js';
 import { ImportResultQueryParams } from './import-result-query.params.js';
+import { ImportDataRepository } from '../persistence/import-data.repository.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
 @ApiTags('import')
@@ -74,6 +75,7 @@ export class ImportController {
         private readonly importWorkflowFactory: ImportWorkflowFactory,
         private readonly logger: ClassLogger,
         private readonly importVorgangRepository: ImportVorgangRepository,
+        private readonly importDataRepository: ImportDataRepository,
     ) {}
 
     @UseGuards(StepUpGuard)
@@ -303,8 +305,10 @@ export class ImportController {
         description: 'Internal server error while getting status for the import transaction by id.',
     })
     public async getImportStatus(@Param() params: ImportvorgangByIdParams): Promise<ImportVorgangStatusResponse> {
-        const result: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(params.importvorgangId);
-        if (!result) {
+        const importVorgang: Option<ImportVorgang<true>> = await this.importVorgangRepository.findById(
+            params.importvorgangId,
+        );
+        if (!importVorgang) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
                     new EntityNotFoundError('ImportVorgang', params.importvorgangId),
@@ -312,7 +316,10 @@ export class ImportController {
             );
         }
 
-        return new ImportVorgangStatusResponse(result);
+        // Count processed items and add them to the response
+        const processedItemCount: number = await this.importDataRepository.countProcessedItems(params.importvorgangId);
+
+        return new ImportVorgangStatusResponse(importVorgang, processedItemCount);
     }
 
     @UseGuards(StepUpGuard)

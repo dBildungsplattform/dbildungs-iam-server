@@ -36,6 +36,7 @@ import { ImportConfig } from '../../../shared/config/import.config.js';
 import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js';
 import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
 import { ImportResultMaxUsersError } from './import-result-max-users.error.js';
+import { ImportDataItemStatus } from './importDataItem.enum.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -304,6 +305,13 @@ export class ImportWorkflow {
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
             await this.importDataRepository.findByImportVorgangId(importvorgangId);
+
+        //TODO: Remove this in the next pagination ticket because we won't be creating the file in the backend anymore so we will just send all data items to the Frontend
+        // There we will create the downloadable file with the successful data items and for the failed ones we just show them to the user separately.
+        const successfulDataItems: ImportDataItem<true>[] = importDataItems.filter(
+            (dataItem: ImportDataItem<true>) => dataItem.status === ImportDataItemStatus.SUCCESS,
+        );
+
         if (total === 0) {
             return {
                 ok: false,
@@ -312,7 +320,7 @@ export class ImportWorkflow {
         }
 
         //Create text file.
-        const result: Result<Buffer> = await this.createTextFile(importDataItems);
+        const result: Result<Buffer> = await this.createTextFile(successfulDataItems);
 
         if (result.ok) {
             importVorgang.complete();

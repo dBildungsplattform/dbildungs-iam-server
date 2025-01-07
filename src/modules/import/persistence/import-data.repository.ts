@@ -4,6 +4,7 @@ import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItemScope } from './import-data-item.scope.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDomainError } from '../domain/import-domain.error.js';
+import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 
 export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): RequiredEntityData<ImportDataItemEntity> {
     return {
@@ -15,6 +16,7 @@ export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): Req
         validationErrors: importDataItem.validationErrors,
         username: importDataItem.username,
         password: importDataItem.password,
+        status: importDataItem.status,
     };
 }
 
@@ -31,6 +33,7 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.validationErrors,
         entity.username,
         entity.password,
+        entity.status,
     );
 }
 @Injectable()
@@ -115,5 +118,12 @@ export class ImportDataRepository {
         this.em.assign(entity, mapAggregateToData(importDataItem));
         await this.em.persistAndFlush(entity);
         return mapEntityToAggregate(entity);
+    }
+
+    public async countProcessedItems(importvorgangId: string): Promise<number> {
+        return this.em.count(ImportDataItemEntity, {
+            importvorgangId,
+            status: { $in: [ImportDataItemStatus.SUCCESS, ImportDataItemStatus.FAILED] },
+        });
     }
 }
