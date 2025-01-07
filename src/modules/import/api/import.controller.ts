@@ -330,7 +330,7 @@ export class ImportController {
     })
     @ApiOkResponse({
         description: 'The list of imported users was successfully returned.',
-        type: [ImportResultResponse],
+        type: ImportResultResponse,
         headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get the list of imported users.' })
