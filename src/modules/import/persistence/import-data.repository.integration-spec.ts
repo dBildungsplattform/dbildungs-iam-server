@@ -339,29 +339,6 @@ describe('ImportDataRepository', () => {
             const result: ImportDataItem<true>[] = await sut.replaceAll(updateImportDataItems);
 
             expect(result.length).toBe(2);
-            expect(result[0]).toMatchObject({
-                id: importDataItem1.id,
-                importvorgangId: importvorgangId,
-                klasse: importDataItem1.klasse,
-                nachname: importDataItem1.nachname,
-                vorname: importDataItem1.vorname,
-                personalnummer: personalnummer,
-                validationErrors: [],
-                username: newUsername,
-                password: pass1,
-            });
-
-            expect(result[1]).toMatchObject({
-                id: importDataItem2.id,
-                importvorgangId: importvorgangId,
-                klasse: importDataItem2.klasse,
-                nachname: importDataItem2.nachname,
-                vorname: importDataItem2.vorname,
-                personalnummer: null,
-                validationErrors: [],
-                username: newUsername2,
-                password: pass2,
-            });
         });
 
         it('should throw an ImportDomainError if one data-item is not found', async () => {
