@@ -97,14 +97,8 @@ export class ImportDataRepository {
             );
         }
 
-        const entityDataArray: RequiredEntityData<ImportDataItemEntity>[] = importDataItems.map(
-            (importDataItem: ImportDataItem<true>) => mapAggregateToData(importDataItem),
-        );
+        const updateResult: ImportDataItemEntity[] = await this.em.upsertMany(ImportDataItemEntity, importDataItems);
 
-        // Perform the upsert operation (Bulk replacement)
-        const updateResult: ImportDataItemEntity[] = await this.em.upsertMany(ImportDataItemEntity, entityDataArray);
-
-        // Map the result back to domain aggregates
         return updateResult.map((entity: ImportDataItemEntity) => mapEntityToAggregate(entity));
     }
 
