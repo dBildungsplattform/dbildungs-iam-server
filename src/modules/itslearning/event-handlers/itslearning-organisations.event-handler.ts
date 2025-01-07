@@ -65,7 +65,7 @@ export class ItsLearningOrganisationsEventHandler {
 
         const params: CreateGroupParams = {
             id: event.id,
-            name: event.name,
+            name: this.makeKlasseName(event.name),
             type: 'Unspecified',
             parentId: event.administriertVon,
         };
@@ -115,7 +115,7 @@ export class ItsLearningOrganisationsEventHandler {
 
         const params: UpdateGroupParams = {
             id: event.organisationId,
-            name: event.name,
+            name: this.makeKlasseName(event.name),
             type: 'Unspecified',
             parentId: event.administriertVon,
         };
@@ -190,7 +190,7 @@ export class ItsLearningOrganisationsEventHandler {
             .filter((k: Organisation<true>) => k.typ === OrganisationsTyp.KLASSE)
             .map((o: Organisation<true>) => ({
                 id: o.id,
-                name: o.name || 'Unbenannte Klasse',
+                name: this.makeKlasseName(o.name),
                 type: 'Unspecified',
                 parentId: event.organisationId,
             }));
@@ -198,7 +198,7 @@ export class ItsLearningOrganisationsEventHandler {
         // Prepend the params for the schule
         createParams.unshift({
             id: event.organisationId,
-            name: `${event.kennung} (${event.name || 'Unbenannte Schule'})`,
+            name: this.makeSchulName(event.kennung, event.name),
             type: 'School',
             parentId: this.ROOT_OEFFENTLICH,
         });
@@ -217,5 +217,30 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(
             `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its ${klassen.length} Klassen were created.`,
         );
+    }
+
+    private makeSchulName(
+        dienststellennummer: string = 'Unbekannte Dienststellennummer',
+        name: string = 'Unbekannte Schule',
+    ): string {
+        // 64 max characters, subtract length of the dienststellennummer and 3 for the space and two parentheses
+        const spaceForName: number = 64 - dienststellennummer.length - 3;
+
+        let truncatedSchoolName: string = name;
+        if (truncatedSchoolName.length > spaceForName) {
+            truncatedSchoolName = `${truncatedSchoolName.slice(0, spaceForName - 3)}...`;
+        }
+
+        const fullName: string = `${dienststellennummer} (${truncatedSchoolName})`;
+        return fullName;
+    }
+
+    private makeKlasseName(name: string = 'Unbenannte Klasse'): string {
+        let truncatedClassName: string = name;
+        if (truncatedClassName.length > 64) {
+            truncatedClassName = `${truncatedClassName.slice(0, 64 - 3)}...`;
+        }
+
+        return truncatedClassName;
     }
 }
