@@ -177,7 +177,6 @@ describe('ImportVorgangRepository', () => {
                 'organisationsname',
                 'dataItemCount',
                 'status',
-                'totalDataItemImported',
                 'importByPersonId',
                 'rolleId',
                 'organisationId',
