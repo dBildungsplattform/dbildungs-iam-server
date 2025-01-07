@@ -166,7 +166,6 @@ describe('ImportVorgangRepository', () => {
                 faker.lorem.word(),
                 100,
                 ImportStatus.STARTED,
-                0,
                 faker.string.uuid(),
                 faker.string.uuid(),
                 faker.string.uuid(),

@@ -863,6 +863,7 @@ describe('Import API', () => {
             expect(response.body).toEqual({
                 dataItemCount: 100,
                 status: ImportStatus.COMPLETED,
+                totalDataItemImported: 0,
             } as ImportVorgangStatusResponse);
         });
 
