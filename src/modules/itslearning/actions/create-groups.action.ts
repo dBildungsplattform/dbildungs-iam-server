@@ -51,9 +51,9 @@ export class CreateGroupsAction extends IMSESMassAction<CreateGroupsResponseBody
                         'ims2:label': g.relationLabel,
                     },
                     'ims2:description': {
-                        'ims2:descShort': g.name,
-                        'ims2:descLong': g.longDescription,
-                        'ims2:descFull': g.fullDescription,
+                        'ims2:descShort': g.name.slice(0, 64),
+                        'ims2:descLong': g.longDescription?.slice(0, 256),
+                        'ims2:descFull': g.fullDescription?.slice(0, 2048),
                     },
                     'ims2:extension': extension && { 'ims1:extensionField': extension },
                 },
