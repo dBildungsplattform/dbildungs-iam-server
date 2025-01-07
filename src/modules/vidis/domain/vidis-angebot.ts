@@ -6,7 +6,7 @@ export type VidisAngebotKategorie = {
 };
 
 export type VidisAngebot = {
-    angebotId?: number;
+    angebotId: string;
     angebotVersion: number;
     angebotDescription: string;
     angebotLink: string;

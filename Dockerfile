@@ -29,5 +29,4 @@ RUN npm ci --omit-dev
 COPY --from=build /app/dist/ ./dist/
 COPY /seeding/ /app/seeding/
 COPY /keycloak-migrations/ /app/keycloak-migrations/
-
 CMD [ "node", "dist/src/server/main.js" ]
