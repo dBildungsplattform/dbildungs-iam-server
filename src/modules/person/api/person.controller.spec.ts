@@ -44,6 +44,8 @@ import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from './person-email-response.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
+import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -58,6 +60,7 @@ describe('PersonController', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let eventServiceMock: DeepMocked<EventService>;
+    let ldapClientServiceMock: DeepMocked<LdapClientService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -118,6 +121,10 @@ describe('PersonController', () => {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
+                {
+                    provide: LdapClientService,
+                    useValue: createMock<LdapClientService>(),
+                },
             ],
         }).compile();
         personController = module.get(PersonController);
@@ -130,6 +137,7 @@ describe('PersonController', () => {
         keycloakUserService = module.get(KeycloakUserService);
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
         eventServiceMock = module.get(EventService);
+        ldapClientServiceMock = module.get(LdapClientService);
     });
 
     function getPerson(): Person<true> {
@@ -143,7 +151,7 @@ describe('PersonController', () => {
             faker.lorem.word(),
             faker.lorem.word(),
             faker.string.uuid(),
-            undefined, // referrer
+            faker.person.fullName(), // referrer
             undefined, // stammorganisation
             undefined, // initialenFamilienname
             undefined, // initialenVorname
@@ -736,57 +744,68 @@ describe('PersonController', () => {
 
         describe('when locking a user is successful', () => {
             const person: Person<true> = getPerson();
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: true,
-                locked_by: 'Theo Tester',
-                locked_until: new Date(),
-            };
-            it('should return a success message', async () => {
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                const response: { message: string } = await personController.lockPerson(
-                    params.personId,
-                    lockUserBodyParams,
-                    personPermissionsMock,
-                );
+            it.each([[new Date()], [undefined]])(
+                'should return a success message when locked_until is %p',
+                async (lockedUntil: Date | undefined) => {
+                    const lockUserBodyParams: LockUserBodyParams = {
+                        lock: true,
+                        locked_by: 'Theo Tester',
+                        locked_until: lockedUntil,
+                    };
+                    personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                    keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                expect(response).toEqual({ message: 'User has been successfully locked.' });
-                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
-                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
-            });
+                    const response: { message: string } = await personController.lockPerson(
+                        params.personId,
+                        lockUserBodyParams,
+                        personPermissionsMock,
+                    );
+
+                    expect(response).toEqual({ message: 'User has been successfully locked.' });
+                    expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                    expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+                },
+            );
         });
 
         describe('when unlocking a user is successful', () => {
             const person: Person<true> = getPerson();
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: 'Theo Tester',
-                locked_until: new Date(),
-            };
-            it('should return a success message', async () => {
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                const response: { message: string } = await personController.lockPerson(
-                    params.personId,
-                    lockUserBodyParams,
-                    personPermissionsMock,
-                );
+            it.each([[new Date()], [undefined]])(
+                'should return a success message when locked_until is %p',
+                async (lockedUntil: Date | undefined) => {
+                    const lockUserBodyParams: LockUserBodyParams = {
+                        lock: false,
+                        locked_by: 'Theo Tester',
+                        locked_until: lockedUntil,
+                    };
+                    personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
+                    keycloakUserService.updateKeycloakUserStatus.mockResolvedValueOnce({ ok: true, value: undefined });
 
-                expect(response).toEqual({ message: 'User has been successfully unlocked.' });
-                expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
-                expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
-            });
+                    const response: { message: string } = await personController.lockPerson(
+                        params.personId,
+                        lockUserBodyParams,
+                        personPermissionsMock,
+                    );
+
+                    expect(response).toEqual({ message: 'User has been successfully unlocked.' });
+                    expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
+                    expect(keycloakUserService.updateKeycloakUserStatus).toHaveBeenCalledTimes(1);
+                },
+            );
         });
 
         describe('when person does not exist or no permissions', () => {
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: '2024-01-01T00:00:00Z',
-                locked_until: new Date(),
-            };
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
+                const lockUserBodyParams: LockUserBodyParams = {
+                    lock,
+                    locked_by: '2024-01-01T00:00:00Z',
+                    locked_until: new Date(),
+                };
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError('Person'),
@@ -798,15 +817,18 @@ describe('PersonController', () => {
         });
 
         describe('when keycloakUserId is missing', () => {
-            const lockUserBodyParams: LockUserBodyParams = {
-                lock: false,
-                locked_by: '2024-01-01T00:00:00Z',
-                locked_until: new Date(),
-            };
             const person: Person<true> = getPerson();
             person.keycloakUserId = undefined;
 
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
+                const lockUserBodyParams: LockUserBodyParams = {
+                    lock,
+                    locked_by: '2024-01-01T00:00:00Z',
+                    locked_until: new Date(),
+                };
                 personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: person,
@@ -821,9 +843,12 @@ describe('PersonController', () => {
             const person: Person<true> = getPerson();
             person.keycloakUserId = 'keycloak-12345';
 
-            it('should throw an error', async () => {
+            it.each([
+                { lock: false, description: 'lock is false' },
+                { lock: true, description: 'lock is true' },
+            ])('should throw an error when $description', async ({ lock }: { lock: boolean }) => {
                 const lockUserBodyParams: LockUserBodyParams = {
-                    lock: false,
+                    lock,
                     locked_by: '2024-01-01T00:00:00Z',
                     locked_until: new Date(),
                 };
@@ -878,8 +903,8 @@ describe('PersonController', () => {
             personId: faker.string.uuid(),
         };
         const body: PersonMetadataBodyParams = {
-            familienname: faker.name.lastName(),
-            vorname: faker.name.firstName(),
+            familienname: faker.person.lastName(),
+            vorname: faker.person.firstName(),
             personalnummer: faker.finance.pin(7),
             lastModified: faker.date.recent(),
             revision: '1',
@@ -910,7 +935,7 @@ describe('PersonController', () => {
             );
         });
 
-        it('should throw PersonalnummerRequiredError when personalnummer was not provided and faminlienname or vorname did not change', async () => {
+        it('should throw PersonalnummerRequiredError when personalnummer was not provided and familienname or vorname did not change', async () => {
             const person: Person<true> = getPerson();
             const bodyWithInvalidPersonalnummer: PersonMetadataBodyParams = {
                 familienname: person.familienname,
@@ -930,8 +955,8 @@ describe('PersonController', () => {
 
         it('should throw HttpException when revision is incorrect', async () => {
             const bodyWithInvalidRevision: PersonMetadataBodyParams = {
-                familienname: faker.name.lastName(),
-                vorname: faker.name.firstName(),
+                familienname: faker.person.lastName(),
+                vorname: faker.person.firstName(),
                 personalnummer: '',
                 lastModified: faker.date.recent(),
                 revision: '2',
@@ -940,6 +965,7 @@ describe('PersonController', () => {
                 true,
             );
             personRepositoryMock.updatePersonMetadata.mockResolvedValue(new MismatchedRevisionError(''));
+
             await expect(
                 personController.updateMetadata(params, bodyWithInvalidRevision, personPermissionsMock),
             ).rejects.toThrow(HttpException);
@@ -952,6 +978,122 @@ describe('PersonController', () => {
             await expect(personController.updateMetadata(params, body, personPermissionsMock)).rejects.toThrow(
                 PersonDomainError,
             );
+        });
+    });
+
+    describe('resetUEMPasswordByPersonId', () => {
+        describe('when person does not exist', () => {
+            const params: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpException', async () => {
+                personRepositoryMock.findBy.mockResolvedValue([[], 0]);
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError(),
+                });
+
+                await expect(
+                    personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when permissions are insufficient to reset user-password', () => {
+            const params: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpNotFoundException', async () => {
+                personRepositoryMock.findById.mockResolvedValue(undefined);
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: false,
+                    error: new EntityNotFoundError(),
+                });
+
+                await expect(
+                    personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person does NOT have a defined referrer', () => {
+            const params: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpException', async () => {
+                personRepositoryMock.findBy.mockResolvedValue([[], 0]);
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<Person<true>>({ referrer: undefined }),
+                });
+
+                await expect(
+                    personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
+                ).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when resetting UEM-password for a person by personId succeeds', () => {
+            const params: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+            const person: Person<true> = getPerson();
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should reset UEM-password for person', async () => {
+                personRepositoryMock.findById.mockResolvedValue(person);
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
+
+                await expect(
+                    personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
+                ).resolves.not.toThrow();
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                    person.id,
+                    person.referrer,
+                );
+            });
+        });
+
+        describe('when resetting UEM-password for a person returns a SchulConnexError', () => {
+            const params: PersonByIdParams = {
+                personId: faker.string.uuid(),
+            };
+            const person: Person<true> = getPerson();
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpException', async () => {
+                personRepositoryMock.findById.mockResolvedValue(person);
+                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                    ok: false,
+                    error: new PersonDomainError('Person', 'entityId', undefined),
+                });
+                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: person,
+                });
+
+                await expect(
+                    personController.resetUEMPasswordByPersonId(params, personPermissionsMock),
+                ).rejects.toThrow(PersonUserPasswordModificationError);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                    person.id,
+                    person.referrer,
+                );
+            });
         });
     });
 });

@@ -94,13 +94,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -216,7 +217,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -322,13 +324,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -444,7 +447,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -572,13 +576,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -694,7 +699,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -814,13 +820,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -936,7 +943,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1048,13 +1056,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -1296,7 +1305,6 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "default": "0",
           "mappedType": "integer"
         },
         "status": {
@@ -1308,13 +1316,14 @@
           "nullable": false,
           "nativeEnumName": "import_status_enum",
           "enumItems": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ],
           "mappedType": "enum"
         }
@@ -1359,13 +1368,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -1481,7 +1491,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1599,6 +1610,25 @@
           "primary": false,
           "nullable": true,
           "mappedType": "array"
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(50)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 50,
+          "mappedType": "string"
+        },
+        "password": {
+          "name": "password",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
         }
       },
       "name": "importdataitem",
@@ -1654,13 +1684,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -1776,7 +1807,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -1809,248 +1841,6 @@
           ]
         }
       }
-    },
-    {
-        "columns": {
-          "id": {
-            "name": "id",
-            "type": "uuid",
-            "unsigned": false,
-            "autoincrement": false,
-            "primary": false,
-            "nullable": false,
-            "mappedType": "uuid"
-          },
-          "created_at": {
-            "name": "created_at",
-            "type": "timestamptz",
-            "unsigned": false,
-            "autoincrement": false,
-            "primary": false,
-            "nullable": false,
-            "length": 6,
-            "mappedType": "datetime"
-          },
-          "updated_at": {
-            "name": "updated_at",
-            "type": "timestamptz",
-            "unsigned": false,
-            "autoincrement": false,
-            "primary": false,
-            "nullable": false,
-            "length": 6,
-            "mappedType": "datetime"
-          },
-          "email": {
-            "name": "email",
-            "type": "varchar(255)",
-            "unsigned": false,
-            "autoincrement": false,
-            "primary": false,
-            "nullable": false,
-            "mappedType": "string"
-          },
-          "name": {
-            "name": "name",
-            "type": "varchar(255)",
-            "unsigned": false,
-            "autoincrement": false,
-            "primary": false,
-            "nullable": false,
-            "mappedType": "string"
-          },
-          "username": {
-            "name": "username",
-            "type": "varchar(255)",
-            "unsigned": false,
-            "autoincrement": false,
-            "primary": false,
-            "nullable": false,
-            "mappedType": "string"
-          }
-        },
-        "name": "ox_user_blacklist",
-        "schema": "public",
-        "indexes": [
-          {
-            "keyName": "ox_user_blacklist_pkey",
-            "columnNames": [
-              "id"
-            ],
-            "composite": false,
-            "constraint": true,
-            "primary": true,
-            "unique": true
-          }
-        ],
-        "checks": [],
-        "foreignKeys": {},
-        "nativeEnums": {
-          "db_seed_status_enum": {
-            "name": "db_seed_status_enum",
-            "schema": "public",
-            "items": [
-              "STARTED",
-              "DONE",
-              "FAILED"
-            ]
-          },
-          "referenced_entity_type_enum": {
-            "name": "referenced_entity_type_enum",
-            "schema": "public",
-            "items": [
-              "PERSON",
-              "ORGANISATION",
-              "ROLLE",
-              "SERVICE_PROVIDER"
-            ]
-          },
-          "organisations_typ_enum": {
-            "name": "organisations_typ_enum",
-            "schema": "public",
-            "items": [
-              "ROOT",
-              "LAND",
-              "TRAEGER",
-              "SCHULE",
-              "KLASSE",
-              "ANBIETER",
-              "SONSTIGE ORGANISATION / EINRICHTUNG",
-              "UNBESTAETIGT"
-            ]
-          },
-          "traegerschaft_enum": {
-            "name": "traegerschaft_enum",
-            "schema": "public",
-            "items": [
-              "01",
-              "02",
-              "03",
-              "04",
-              "05",
-              "06"
-            ]
-          },
-          "geschlecht_enum": {
-            "name": "geschlecht_enum",
-            "schema": "public",
-            "items": [
-              "m",
-              "w",
-              "d",
-              "x"
-            ]
-          },
-          "vertrauensstufe_enum": {
-            "name": "vertrauensstufe_enum",
-            "schema": "public",
-            "items": [
-              "KEIN",
-              "UNBE",
-              "TEIL",
-              "VOLL"
-            ]
-          },
-          "email_address_status_enum": {
-            "name": "email_address_status_enum",
-            "schema": "public",
-            "items": [
-              "ENABLED",
-              "DISABLED",
-              "REQUESTED",
-              "FAILED"
-            ]
-          },
-          "rollen_art_enum": {
-            "name": "rollen_art_enum",
-            "schema": "public",
-            "items": [
-              "LERN",
-              "LEHR",
-              "EXTERN",
-              "ORGADMIN",
-              "LEIT",
-              "SYSADMIN"
-            ]
-          },
-          "personenstatus_enum": {
-            "name": "personenstatus_enum",
-            "schema": "public",
-            "items": [
-              "AKTIV"
-            ]
-          },
-          "jahrgangsstufe_enum": {
-            "name": "jahrgangsstufe_enum",
-            "schema": "public",
-            "items": [
-              "01",
-              "02",
-              "03",
-              "04",
-              "05",
-              "06",
-              "07",
-              "08",
-              "09",
-              "10"
-            ]
-          },
-          "rollen_merkmal_enum": {
-            "name": "rollen_merkmal_enum",
-            "schema": "public",
-            "items": [
-              "BEFRISTUNG_PFLICHT",
-              "KOPERS_PFLICHT"
-            ]
-          },
-          "rollen_system_recht_enum": {
-            "name": "rollen_system_recht_enum",
-            "schema": "public",
-            "items": [
-              "ROLLEN_VERWALTEN",
-              "PERSONEN_SOFORT_LOESCHEN",
-              "PERSONEN_VERWALTEN",
-              "SCHULEN_VERWALTEN",
-              "KLASSEN_VERWALTEN",
-              "SCHULTRAEGER_VERWALTEN",
-              "MIGRATION_DURCHFUEHREN",
-              "PERSON_SYNCHRONISIEREN",
-              "CRON_DURCHFUEHREN",
-              "PERSONEN_ANLEGEN",
-              "IMPORT_DURCHFUEHREN"
-            ]
-          },
-          "service_provider_target_enum": {
-            "name": "service_provider_target_enum",
-            "schema": "public",
-            "items": [
-              "URL",
-              "EMAIL",
-              "SCHULPORTAL_ADMINISTRATION"
-            ]
-          },
-          "service_provider_kategorie_enum": {
-            "name": "service_provider_kategorie_enum",
-            "schema": "public",
-            "items": [
-              "EMAIL",
-              "UNTERRICHT",
-              "VERWALTUNG",
-              "HINWEISE",
-              "ANGEBOTE"
-            ]
-          },
-          "service_provider_system_enum": {
-            "name": "service_provider_system_enum",
-            "schema": "public",
-            "items": [
-              "NONE",
-              "EMAIL",
-              "ITSLEARNING"
-            ]
-          }
-        }
     },
     {
       "columns": {
@@ -2239,6 +2029,519 @@
         },
         {
           "keyName": "organisation_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "import_status_enum": {
+          "name": "import_status_enum",
+          "schema": "public",
+          "items": [
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED",
+            "FAILED"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN",
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        }
+      },
+      "name": "ox_user_blacklist",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "ox_user_blacklist_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {},
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "import_status_enum": {
+          "name": "import_status_enum",
+          "schema": "public",
+          "items": [
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED",
+            "FAILED"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "MIGRATION_DURCHFUEHREN",
+            "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN",
+            "IMPORT_DURCHFUEHREN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        }
+      },
+      "name": "ox_user_blacklist",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "ox_user_blacklist_pkey",
           "columnNames": [
             "id"
           ],
@@ -2815,13 +3118,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -2937,7 +3241,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3121,13 +3426,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -3243,7 +3549,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3405,13 +3712,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -3527,7 +3835,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -3810,13 +4119,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -3932,7 +4242,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4056,13 +4367,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -4178,7 +4490,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4242,7 +4555,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ],
           "mappedType": "enum"
         }
@@ -4311,13 +4625,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -4433,7 +4748,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4635,13 +4951,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -4757,7 +5074,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -4940,6 +5258,15 @@
           "primary": false,
           "nullable": false,
           "mappedType": "boolean"
+        },
+        "vidis_angebot_id": {
+          "name": "vidis_angebot_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
         }
       },
       "name": "service_provider",
@@ -4982,13 +5309,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -5104,7 +5432,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5225,13 +5554,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -5468,13 +5798,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -5590,7 +5921,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5757,13 +6089,14 @@
           "name": "import_status_enum",
           "schema": "public",
           "items": [
-            "STARTED",
-            "VALID",
-            "INVALID",
-            "INPROGRESS",
             "CANCELLED",
             "COMPLETED",
-            "FAILED"
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
           ]
         },
         "organisations_typ_enum": {
@@ -5879,7 +6212,8 @@
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
-            "IMPORT_DURCHFUEHREN"
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN"
           ]
         },
         "service_provider_target_enum": {
@@ -5938,13 +6272,14 @@
       "name": "import_status_enum",
       "schema": "public",
       "items": [
-        "STARTED",
-        "VALID",
-        "INVALID",
-        "INPROGRESS",
         "CANCELLED",
         "COMPLETED",
-        "FAILED"
+        "FAILED",
+        "FINISHED",
+        "INPROGRESS",
+        "INVALID",
+        "STARTED",
+        "VALID"
       ]
     },
     "organisations_typ_enum": {
@@ -6060,7 +6395,8 @@
         "PERSON_SYNCHRONISIEREN",
         "CRON_DURCHFUEHREN",
         "PERSONEN_ANLEGEN",
-        "IMPORT_DURCHFUEHREN"
+        "IMPORT_DURCHFUEHREN",
+        "PERSONEN_LESEN"
       ]
     },
     "service_provider_target_enum": {
