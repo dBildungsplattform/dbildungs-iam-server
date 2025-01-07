@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
+import { PersonTimeLimitInfo } from '../../person/domain/person-time-limit-info.js';
 
 export class PersonTimeLimitInfoResponse {
     @ApiProperty()
@@ -8,8 +9,12 @@ export class PersonTimeLimitInfoResponse {
     @ApiProperty()
     public deadline: string;
 
-    public constructor(occasion: TimeLimitOccasion, deadline: Date) {
-        this.occasion = occasion;
-        this.deadline = deadline.toISOString();
+    @ApiProperty({ nullable: true })
+    public school?: string;
+
+    public constructor(personTimeLimitInfo: PersonTimeLimitInfo) {
+        this.occasion = personTimeLimitInfo.occasion;
+        this.deadline = personTimeLimitInfo.deadline.toISOString();
+        this.school = personTimeLimitInfo.school;
     }
 }
