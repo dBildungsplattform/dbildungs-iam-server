@@ -101,7 +101,7 @@ export class ImportDataRepository {
             (importDataItem: ImportDataItem<true>) => mapAggregateToData(importDataItem),
         );
 
-        // Perform the upsert operation
+        // Perform the upsert operation (Bulk replacement)
         const updateResult: ImportDataItemEntity[] = await this.em.upsertMany(ImportDataItemEntity, entityDataArray);
 
         // Map the result back to domain aggregates
