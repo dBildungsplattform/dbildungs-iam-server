@@ -16,6 +16,7 @@ import { UserRepresentationDto } from './keycloak-client/user-representation.dto
 import { ExternalSystemIDs, User } from './user.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
 import { UserLock } from './user-lock.js';
+import { PersonLockOccasion } from '../../person/domain/person.enums.js';
 
 export type FindUserFilter = {
     username?: string;
@@ -424,6 +425,7 @@ export class KeycloakUserService {
 
         const externalSystemIDs: ExternalSystemIDs = {};
         if (userReprDto.attributes) {
+            externalSystemIDs.ID_NEXTCLOUD = userReprDto.attributes['ID_NEXTCLOUD'] as string[];
             externalSystemIDs.ID_ITSLEARNING = userReprDto.attributes['ID_ITSLEARNING'] as string[];
             externalSystemIDs.ID_OX = userReprDto.attributes['ID_OX'] as string[];
         }
@@ -557,7 +559,14 @@ export class KeycloakUserService {
         try {
             //lock describes whether the user should be locked or not
             if (lock) {
-                await this.userLockRepository.createUserLock(userLock);
+                const existingUserLock: UserLock | void = (await this.userLockRepository.findByPersonId(personId)).find(
+                    (foundUserLock: UserLock) => foundUserLock.locked_occasion == PersonLockOccasion.MANUELL_GESPERRT,
+                );
+                if (existingUserLock) {
+                    await this.userLockRepository.update(userLock);
+                } else {
+                    await this.userLockRepository.createUserLock(userLock);
+                }
                 const kcAdminClient: KeycloakAdminClient = kcAdminClientResult.value;
                 await kcAdminClient.users.update({ id: keyCloakUserId }, { enabled: !lock });
             } else {

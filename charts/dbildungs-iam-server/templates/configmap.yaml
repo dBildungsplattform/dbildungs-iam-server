@@ -16,20 +16,29 @@ data:
   FRONTEND_DEFAULT_LOGIN_REDIRECT: "https://{{ .Values.backendHostname }}/"
   FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"
   BACKEND_HOSTNAME: "{{ .Values.backendHostname }}"
+  ERROR_PAGE_REDIRECT: "https://{{ .Values.backendHostname }}/login-error"
   LDAP_URL: '{{ .Values.ldap.url | replace "spsh-xxx" .Release.Namespace }}'
-  LDAP_BIND_DN: "{{ .Values.ldap.bindDN }}"
   LDAP_OEFFENTLICHE_SCHULEN_DOMAIN: "{{ .Values.ldap.oeffentlicheSchulenDomain }}"
   LDAP_ERSATZSCHULEN_DOMAIN: "{{ .Values.ldap.ersatzschulenDomain }}"
+  STATUS_REDIRECT_URL: "{{ .Values.status.url }}"
+  PI_BASE_URL:  "{{ .Values.privacyidea.url }}"
+  PI_RENAME_WAITING_TIME:  "{{ .Values.privacyidea.renameWaitingTime }}"
+  PI_REALM: "{{ .Values.privacyidea.realm }}"
+  PI_USER_RESOLVER: "{{ .Values.privacyidea.userResolver }}"
+  OX_ENABLED: "{{ .Values.ox.enabled }}"
+  OX_USERNAME: "{{ .Values.ox.username }}"
+  OX_ENDPOINT: "{{ .Values.ox.endpoint }}"
+  OX_CONTEXT_ID: "{{ .Values.ox.contextId }}"
+  OX_CONTEXT_NAME: "{{ .Values.ox.contextName }}"
+  SYSTEM_RENAME_WAITING_TIME_IN_SECONDS: "{{ .Values.backend.env.renameWaitingTimeInSeconds }}"
+  SYSTEM_STEP_UP_TIMEOUT_ENABLED: "{{ .Values.backend.env.stepUpTimeoutEnabled }}"
+  SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS: "{{ .Values.backend.env.stepUpTimeoutInSeconds }}"
   ITSLEARNING_ENABLED: "{{ .Values.itslearning.enabled }}"
   ITSLEARNING_ENDPOINT: "{{ .Values.itslearning.endpoint }}"
   ITSLEARNING_ROOT: '{{ .Values.itslearning.root }}'
   ITSLEARNING_ROOT_OEFFENTLICH: '{{ .Values.itslearning.rootOeffentlich }}'
   ITSLEARNING_ROOT_ERSATZ: '{{ .Values.itslearning.rootErsatz }}'
-  PI_BASE_URL:  "{{ .Values.privacyidea.url }}"
-  PI_RENAME_WAITING_TIME:  "{{ .Values.privacyidea.renameWaitingTime }}"
-  PI_REALM: "{{ .Values.privacyidea.realm }}"
-  PI_USER_RESOLVER: "{{ .Values.privacyidea.userResolver }}"
-  STATUS_REDIRECT_URL: "{{ .Values.status.url }}"
-  SYSTEM_RENAME_WAITING_TIME_IN_SECONDS: '{{ .Values.system.rename_waiting_time_in_seconds }}'
-  SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS: '{{ .Values.system.step_up_timeout_in_seconds }}'
-  SYSTEM_STEP_UP_TIMEOUT_ENABLED: '{{ .Values.system.step_up_timeout_enabled }}'
+  VIDIS_BASE_URL: '{{ .Values.vidis.url }}'
+  VIDIS_REGION_NAME: '{{ .Values.vidis.regionName }}'
+  VIDIS_KEYCLOAK_GROUP: '{{ .Values.vidis.keycloakGroup }}'
+  VIDIS_KEYCLOAK_ROLE: '{{ .Values.vidis.keycloakRole }}'

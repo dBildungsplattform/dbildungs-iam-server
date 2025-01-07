@@ -1,7 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS, MapperTestModule } from '../../../../test/utils/index.js';
+import {
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    LoggingTestModule,
+    MapperTestModule,
+} from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 
@@ -15,6 +19,7 @@ import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.j
 import { HttpException } from '@nestjs/common';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
+import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 
 describe('Import API with mocked ImportWorkflow', () => {
     let sut: ImportController;
@@ -23,7 +28,7 @@ describe('Import API with mocked ImportWorkflow', () => {
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [MapperTestModule],
+            imports: [MapperTestModule, LoggingTestModule],
             providers: [
                 {
                     provide: APP_PIPE,
@@ -36,6 +41,10 @@ describe('Import API with mocked ImportWorkflow', () => {
                 {
                     provide: ImportWorkflow,
                     useValue: createMock<ImportWorkflow>(),
+                },
+                {
+                    provide: ImportVorgangRepository,
+                    useValue: createMock<ImportVorgangRepository>(),
                 },
                 ImportController,
             ],
@@ -50,26 +59,24 @@ describe('Import API with mocked ImportWorkflow', () => {
         jest.resetAllMocks();
     });
 
-    describe('/POST execute the import transaction', () => {
+    describe('/POST download the import result', () => {
         describe('if the import result file cannot be created', () => {
             it('should throw an ImportTextFileCreationError', async () => {
                 const params: ImportvorgangByIdBodyParams = {
                     importvorgangId: faker.string.uuid(),
-                    organisationId: faker.string.uuid(),
-                    rolleId: faker.string.uuid(),
                 };
                 const responseMock: DeepMocked<Response> = createMock();
 
                 const personpermissionsMock: DeepMocked<PersonPermissions> = createMock();
                 personpermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
 
-                ImportWorkflowMock.executeImport.mockResolvedValueOnce({
+                ImportWorkflowMock.downloadFile.mockResolvedValueOnce({
                     ok: false,
                     error: new ImportTextFileCreationError(['Reason']),
                 });
                 importWorkflowFactoryMock.createNew.mockReturnValueOnce(ImportWorkflowMock);
 
-                await expect(sut.executeImport(params, responseMock, personpermissionsMock)).rejects.toThrow(
+                await expect(sut.downloadFile(params, responseMock, personpermissionsMock)).rejects.toThrow(
                     new ImportTextFileCreationError(['Reason']),
                 );
             });

@@ -4,7 +4,7 @@ import { Personenkontext } from '../../../personenkontext/domain/personenkontext
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { OrganisationsTyp, OrganisationsTypName } from '../../../organisation/domain/organisation.enums.js';
-import { RollenMerkmal, RollenMerkmalTypName } from '../../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenArtTypName, RollenMerkmal, RollenMerkmalTypName } from '../../../rolle/domain/rolle.enums.js';
 
 export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
@@ -22,6 +22,9 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
     public readonly rolle: string;
 
+    @ApiProperty({ enum: RollenArt, enumName: RollenArtTypName, nullable: false })
+    public readonly rollenArt: RollenArt;
+
     @ApiProperty({ type: String })
     public readonly administriertVon?: string;
 
@@ -37,11 +40,15 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, nullable: true })
     public readonly merkmale?: RollenMerkmal[];
 
+    @ApiProperty({ type: [String] })
+    public readonly admins?: string[];
+
     public constructor(
         personenkontext: Personenkontext<true>,
         organisation: OrganisationDo<true>,
         rolle: Rolle<true>,
         editable: boolean,
+        admins: string[] | undefined,
     ) {
         //use Organisation Aggregate as soon as there is one
         this.sskId = personenkontext.organisationId;
@@ -49,10 +56,12 @@ export class DBiamPersonenzuordnungResponse {
         this.sskName = organisation.name!;
         this.sskDstNr = organisation.kennung!;
         this.rolle = rolle.name;
+        this.rollenArt = rolle.rollenart;
         this.administriertVon = organisation.administriertVon;
         this.typ = organisation.typ;
         this.editable = editable;
         this.merkmale = rolle.merkmale;
         this.befristung = personenkontext.befristung;
+        this.admins = admins;
     }
 }

@@ -6,8 +6,8 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
-    MapperTestModule,
     LoggingTestModule,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonEntity } from './person.entity.js';
@@ -55,6 +55,7 @@ describe('PersonScope', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 PersonenKontextModule,
+                LoggingTestModule,
             ],
             providers: [
                 DBiamPersonenkontextRepoInternal,

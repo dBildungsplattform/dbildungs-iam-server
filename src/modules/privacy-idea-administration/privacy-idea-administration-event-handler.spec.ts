@@ -7,6 +7,8 @@ import { TestingModule, Test } from '@nestjs/testing';
 import { ConfigTestModule, LoggingTestModule } from '../../../test/utils/index.js';
 import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
 import { ResetTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { TokenResetError } from './api/error/token-reset.error.js';
+import { PersonReferrer } from '../../shared/types/aggregate-ids.types.js';
 
 export const mockPrivacyIdeaToken: PrivacyIdeaToken = {
     active: true,
@@ -73,7 +75,7 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
 
     describe('handlePersonDeletedEvent', () => {
         let personId: string;
-        let referrer: string;
+        let referrer: PersonReferrer;
         let emailAddress: string;
         let event: PersonDeletedEvent;
         let mockResetTokenResponse: ResetTokenResponse;
@@ -100,6 +102,13 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
                 expect(loggerMock.info).toHaveBeenCalledWith(`Received PersonDeletedEvent, personId:${event.personId}`);
                 expect(privacyIdeaAdministrationServiceMock.resetToken).toHaveBeenCalledTimes(1);
                 expect(privacyIdeaAdministrationServiceMock.deleteUserWrapper).toHaveBeenCalledTimes(1);
+            });
+            it('when token reset failed throw error', async () => {
+                privacyIdeaAdministrationServiceMock.getUserTokens.mockResolvedValueOnce([mockPrivacyIdeaToken]);
+                privacyIdeaAdministrationServiceMock.resetToken.mockRejectedValueOnce(new TokenResetError());
+
+                await expect(sut.handlePersonDeletedEvent(event)).rejects.toThrow(new TokenResetError());
+                expect(privacyIdeaAdministrationServiceMock.resetToken).toHaveBeenCalledTimes(1);
             });
         });
 

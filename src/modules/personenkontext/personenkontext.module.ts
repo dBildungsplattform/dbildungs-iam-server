@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { PersonenkontextRepo } from '../personenkontext/persistence/personenkontext.repo.js';
 import { PersonenkontextService } from '../personenkontext/domain/personenkontext.service.js';
@@ -17,7 +17,7 @@ import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflo
 @Module({
     imports: [
         EventModule,
-        PersonModule,
+        forwardRef(() => PersonModule),
         RolleModule,
         OrganisationModule,
         LoggerModule.register(PersonenKontextModule.name),

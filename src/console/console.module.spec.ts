@@ -2,13 +2,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConsoleModule } from './console.module.js';
 import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
+import { LoggingTestModule } from '../../test/utils/index.js';
+import { PersonModule } from '../modules/person/person.module.js';
+import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
 
 describe('ConsoleModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConsoleModule],
+            imports: [PersonModule, KeycloakAdministrationModule, ConsoleModule, LoggingTestModule],
         }).compile();
     });
 

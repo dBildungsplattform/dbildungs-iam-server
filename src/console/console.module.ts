@@ -11,7 +11,6 @@ import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
-import { UsernameGeneratorService } from '../modules/person/domain/username-generator.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { OrganisationModule } from '../modules/organisation/organisation.module.js';
 import { RolleModule } from '../modules/rolle/rolle.module.js';
@@ -93,7 +92,6 @@ import { KeycloakConsoleModule } from './keycloak/keycloak-console.module.js';
         DbInitMigrationConsole,
         DbCreateMigrationConsole,
         DbApplyMigrationConsole,
-        UsernameGeneratorService,
         DbSeedDataGeneratorConsole,
     ],
 })

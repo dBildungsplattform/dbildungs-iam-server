@@ -5,8 +5,8 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
-    MapperTestModule,
     LoggingTestModule,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
@@ -42,6 +42,7 @@ describe('PersonenkontextRepo', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [
                 PersonPersistenceMapperProfile,
@@ -67,6 +68,10 @@ describe('PersonenkontextRepo', () => {
 
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
     });
 
     it('should be defined', () => {

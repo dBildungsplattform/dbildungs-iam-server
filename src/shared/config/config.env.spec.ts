@@ -29,4 +29,36 @@ describe('Config Loader', () => {
             });
         });
     });
+
+    describe('Import Config', () => {
+        it('should load import configuration with parsed integer values', () => {
+            process.env['CSV_FILE_MAX_SIZE_IN_MB'] = '10';
+            process.env['CSV_MAX_NUMBER_OF_USERS'] = '2000';
+
+            const config: Config = configEnv();
+            expect(config.IMPORT).toEqual({
+                CSV_FILE_MAX_SIZE_IN_MB: 10,
+                CSV_MAX_NUMBER_OF_USERS: 2000,
+            });
+        });
+
+        it('should set undefined for import values if not provided', () => {
+            const config: Config = configEnv();
+            expect(config.IMPORT).toEqual({
+                CSV_FILE_MAX_SIZE_IN_MB: undefined,
+                CSV_MAX_NUMBER_OF_USERS: undefined,
+            });
+        });
+
+        it('should load import configuration with parsed not integer values', () => {
+            process.env['CSV_FILE_MAX_SIZE_IN_MB'] = 'string';
+            process.env['CSV_MAX_NUMBER_OF_USERS'] = 'string';
+
+            const config: Config = configEnv();
+            expect(config.IMPORT).toEqual({
+                CSV_FILE_MAX_SIZE_IN_MB: undefined,
+                CSV_MAX_NUMBER_OF_USERS: undefined,
+            });
+        });
+    });
 });

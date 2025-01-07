@@ -26,6 +26,10 @@ describe('configloader', () => {
                     ERROR_PAGE_REDIRECT: '/error',
                     STATUS_REDIRECT_URL: '/',
                 },
+                FEATUREFLAG: {
+                    FEATURE_FLAG_ROLLE_BEARBEITEN: 'true',
+                    FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: 'true',
+                },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
                     USERNAME: 'admin',
@@ -53,6 +57,7 @@ describe('configloader', () => {
                 LDAP: {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
                     ENABLED: true,
@@ -69,12 +74,26 @@ describe('configloader', () => {
                     USER_RESOLVER: 'mariadb_resolver',
                     REALM: 'defrealm',
                 },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
                 OX: {
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
+                },
+                IMPORT: {
+                    CSV_FILE_MAX_SIZE_IN_MB: 10,
+                    CSV_MAX_NUMBER_OF_USERS: 2000,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                    PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
@@ -92,6 +111,7 @@ describe('configloader', () => {
                 },
                 LDAP: { ADMIN_PASSWORD: 'password' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
+                FEATUREFLAG: {},
                 REDIS: { PASSWORD: 'password' },
                 ITSLEARNING: {
                     PASSWORD: 'password',
@@ -140,6 +160,10 @@ describe('configloader', () => {
                     ERROR_PAGE_REDIRECT: '/error',
                     STATUS_REDIRECT_URL: '/',
                 },
+                FEATUREFLAG: {
+                    FEATURE_FLAG_ROLLE_BEARBEITEN: 'true',
+                    FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: 'true',
+                },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
                     USERNAME: 'admin',
@@ -173,6 +197,7 @@ describe('configloader', () => {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'password',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
                     ENABLED: true,
@@ -190,6 +215,14 @@ describe('configloader', () => {
                     USER_RESOLVER: 'mariadb_resolver',
                     REALM: 'defrealm',
                 },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
                 OX: {
                     ENABLED: true,
                     ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
@@ -197,6 +230,12 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                },
+                IMPORT: {
+                    CSV_FILE_MAX_SIZE_IN_MB: 10,
+                    CSV_MAX_NUMBER_OF_USERS: 2000,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                    PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
                 },
                 SYSTEM: {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,

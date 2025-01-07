@@ -37,107 +37,223 @@ import { EmailAdressOnOrganisationTyp } from '../specification/email-on-organisa
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
 import { OrganisationsTyp } from './organisation.enums.js';
 import { KlasseWithoutNumberOrLetterError } from '../specification/error/klasse-without-number-or-letter.error.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 @Injectable()
 export class OrganisationService {
-    public constructor(private readonly organisationRepo: OrganisationRepository) {}
+    public constructor(
+        private readonly logger: ClassLogger,
+        private readonly organisationRepo: OrganisationRepository,
+    ) {}
+
+    private async logCreation(
+        permissions: PersonPermissions,
+        organisation: Organisation<boolean>,
+        error?: Error,
+    ): Promise<void> {
+        if (organisation.typ === OrganisationsTyp.KLASSE) {
+            if (organisation.zugehoerigZu) {
+                const school: Option<Organisation<true>> = await this.organisationRepo.findById(
+                    organisation.zugehoerigZu,
+                );
+                const schoolName: string = school?.name ?? 'SCHOOL_NOT_FOUND';
+                if (error) {
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht eine neue Klasse ${organisation.name} (${schoolName}) anzulegen. Fehler: ${error.message}`,
+                    );
+                } else {
+                    this.logger.info(
+                        `Admin: ${permissions.personFields.id}) hat eine neue Klasse angelegt: ${organisation.name} (${schoolName}).`,
+                    );
+                }
+            }
+        }
+        if (organisation.typ === OrganisationsTyp.SCHULE) {
+            if (error) {
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht eine neue Schule ${organisation.name} anzulegen. Fehler: ${error.message}`,
+                );
+            } else {
+                this.logger.info(
+                    `Admin: ${permissions.personFields.id}) hat eine neue Schule angelegt: ${organisation.name}.`,
+                );
+            }
+        }
+    }
+
+    private async logUpdate(
+        permissions: PersonPermissions,
+        organisation: Organisation<boolean>,
+        error?: Error,
+    ): Promise<void> {
+        if (organisation.typ === OrganisationsTyp.KLASSE) {
+            if (organisation.zugehoerigZu) {
+                const school: Option<Organisation<true>> = await this.organisationRepo.findById(
+                    organisation.zugehoerigZu,
+                );
+                let schoolName: string = 'SCHOOL_NOT_FOUND';
+                if (school) if (school.name) schoolName = school.name;
+
+                if (error) {
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisation.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
+                    );
+                } else {
+                    this.logger.info(
+                        `Admin: ${permissions.personFields.id}) hat eine Klasse geändert: ${organisation.name} (${schoolName}).`,
+                    );
+                }
+            }
+        }
+        if (organisation.typ === OrganisationsTyp.SCHULE) {
+            if (error) {
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht eine Schule ${organisation.name} zu verändern. Fehler: ${error.message}`,
+                );
+            } else {
+                this.logger.info(
+                    `Admin: ${permissions.personFields.id}) hat eine Schule geändert: ${organisation.name}.`,
+                );
+            }
+        }
+    }
 
     public async createOrganisation(
         organisationDo: Organisation<false>,
+        permissions: PersonPermissions,
     ): Promise<Result<Organisation<true>, DomainError>> {
         if (organisationDo.administriertVon && !(await this.organisationRepo.exists(organisationDo.administriertVon))) {
+            const error: DomainError = new EntityNotFoundError('Organisation', organisationDo.administriertVon);
+            await this.logCreation(permissions, organisationDo, error);
             return {
                 ok: false,
-                error: new EntityNotFoundError('Organisation', organisationDo.administriertVon),
+                error: error,
             };
         }
 
         if (organisationDo.zugehoerigZu && !(await this.organisationRepo.exists(organisationDo.zugehoerigZu))) {
+            const error: DomainError = new EntityNotFoundError('Organisation', organisationDo.zugehoerigZu);
+            await this.logCreation(permissions, organisationDo, error);
             return {
                 ok: false,
-                error: new EntityNotFoundError('Organisation', organisationDo.zugehoerigZu),
+                error: error,
             };
         }
 
         const validationFieldnamesResult: void | DomainError = this.validateFieldNames(organisationDo);
         if (validationFieldnamesResult) {
-            return { ok: false, error: validationFieldnamesResult };
+            const error: DomainError = validationFieldnamesResult;
+            await this.logCreation(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
 
         let validationResult: Result<void, DomainError> = await this.validateKennungRequiredForSchule(organisationDo);
         if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+            const error: DomainError = validationResult.error;
+            await this.logCreation(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
         validationResult = await this.validateNameRequiredForSchule(organisationDo);
         if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+            const error: DomainError = validationResult.error;
+            await this.logCreation(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
         validationResult = await this.validateSchuleKennungUnique(organisationDo);
         if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+            const error: DomainError = validationResult.error;
+            await this.logCreation(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
         validationResult = await this.validateEmailAdressOnOrganisationTyp(organisationDo);
         if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+            const error: DomainError = validationResult.error;
+            await this.logCreation(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
 
         const validateKlassen: Result<boolean, DomainError> = await this.validateKlassenSpecifications(organisationDo);
         if (!validateKlassen.ok) {
-            return { ok: false, error: validateKlassen.error };
+            const error: DomainError = validateKlassen.error;
+            await this.logCreation(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
 
         const organisation: Organisation<true> | OrganisationSpecificationError =
             await this.organisationRepo.save(organisationDo);
         if (organisation instanceof Organisation) {
+            await this.logCreation(permissions, organisation);
             return { ok: true, value: organisation };
         }
-        return { ok: false, error: new EntityCouldNotBeCreated(`Organization could not be created`) };
+
+        const error: DomainError = new EntityCouldNotBeCreated(`Organization could not be created`);
+        await this.logCreation(permissions, organisationDo, error);
+        return { ok: false, error: error };
     }
 
     public async updateOrganisation(
         organisationDo: Organisation<true>,
+        permissions: PersonPermissions,
     ): Promise<Result<Organisation<true>, DomainError>> {
         const storedOrganisation: Option<Organisation<true>> = await this.organisationRepo.findById(organisationDo.id);
         if (!storedOrganisation) {
-            return { ok: false, error: new EntityNotFoundError('Organisation', organisationDo.id) };
+            const error: DomainError = new EntityNotFoundError('Organisation', organisationDo.id);
+            await this.logUpdate(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
 
         const validationFieldnamesResult: void | DomainError = this.validateFieldNames(organisationDo);
         if (validationFieldnamesResult) {
-            return { ok: false, error: validationFieldnamesResult };
+            const error: DomainError = validationFieldnamesResult;
+            await this.logUpdate(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
 
         let validationResult: Result<void, DomainError> = await this.validateKennungRequiredForSchule(organisationDo);
         if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+            const error: DomainError = validationResult.error;
+            await this.logUpdate(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
         validationResult = await this.validateNameRequiredForSchule(organisationDo);
         if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+            const error: DomainError = validationResult.error;
+            await this.logUpdate(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
         validationResult = await this.validateSchuleKennungUnique(organisationDo);
         if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+            const error: DomainError = validationResult.error;
+            await this.logUpdate(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
         validationResult = await this.validateEmailAdressOnOrganisationTyp(organisationDo);
         if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+            const error: DomainError = validationResult.error;
+            await this.logUpdate(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
 
         const validateKlassen: Result<boolean, DomainError> = await this.validateKlassenSpecifications(organisationDo);
         if (!validateKlassen.ok) {
-            return { ok: false, error: validateKlassen.error };
+            const error: DomainError = validateKlassen.error;
+            await this.logUpdate(permissions, organisationDo, error);
+            return { ok: false, error: error };
         }
 
         const organisation: Organisation<true> | OrganisationSpecificationError =
             await this.organisationRepo.save(organisationDo);
         if (organisation instanceof Organisation) {
+            await this.logUpdate(permissions, organisation);
             return { ok: true, value: organisation };
         }
 
+        const error: DomainError = new EntityCouldNotBeUpdated(`Organization could not be updated`, organisationDo.id);
+        await this.logUpdate(permissions, organisationDo, error);
         return {
             ok: false,
-            error: new EntityCouldNotBeUpdated(`Organization could not be updated`, organisationDo.id),
+            error: error,
         };
     }
 

@@ -8,21 +8,25 @@ import {
     DoFactory,
 } from '../../../../test/utils/index.js';
 import { ImportDataRepository, mapAggregateToData, mapEntityToAggregate } from './import-data.repository.js';
-import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
+import { ImportDataItem } from '../domain/import-data-item.js';
+import { ImportVorgangRepository } from './import-vorgang.repository.js';
+import { ImportVorgang } from '../domain/import-vorgang.js';
 
 describe('ImportDataRepository', () => {
     let module: TestingModule;
     let sut: ImportDataRepository;
+    let importVorgangRepository: ImportVorgangRepository;
     let orm: MikroORM;
     let em: EntityManager;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [ImportDataRepository],
+            providers: [ImportDataRepository, ImportVorgangRepository],
         }).compile();
         sut = module.get(ImportDataRepository);
+        importVorgangRepository = module.get(ImportVorgangRepository);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
 
@@ -85,14 +89,23 @@ describe('ImportDataRepository', () => {
         let entity2: ImportDataItemEntity;
         let entity3: ImportDataItemEntity;
 
-        const importVorgnagsId: string = faker.string.uuid();
+        let importvorgangId: string;
 
         beforeEach(async () => {
+            const importvorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false),
+            );
+            importvorgangId = importvorgang.id;
+
+            const importvorgang2: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false),
+            );
+
             importDataItem1 = ImportDataItem.construct(
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
-                importVorgnagsId,
+                importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
                 '1A',
@@ -102,7 +115,7 @@ describe('ImportDataRepository', () => {
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
-                importVorgnagsId,
+                importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
                 '1B',
@@ -112,7 +125,7 @@ describe('ImportDataRepository', () => {
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
-                faker.string.uuid(),
+                importvorgang2.id,
                 faker.name.lastName(),
                 faker.name.firstName(),
                 '1C',
@@ -128,9 +141,9 @@ describe('ImportDataRepository', () => {
             await em.removeAndFlush([entity1, entity2, entity3]);
         });
 
-        it('should return importDataItems for the importVorgnagsId', async () => {
+        it('should return importDataItems for the importvorgangId', async () => {
             const [result, total]: [Option<ImportDataItem<true>[]>, number] = await sut.findByImportVorgangId(
-                importVorgnagsId,
+                importvorgangId,
                 0,
                 30,
             );
@@ -141,12 +154,37 @@ describe('ImportDataRepository', () => {
     });
 
     describe('save', () => {
-        it('should save a new importDataItem', async () => {
-            const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false);
+        it('should create a new importDataItem', async () => {
+            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
+                .id;
+            const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, { importvorgangId });
 
             const savedImportDataItem: ImportDataItem<true> = await sut.save(importDataItem);
 
             expect(savedImportDataItem.id).toBeDefined();
+        });
+
+        it('should update an existing importDataItem', async () => {
+            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
+                .id;
+            const createdImportDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
+                importvorgangId,
+            });
+            const savedImportDataItem: ImportDataItem<true> = await sut.save(createdImportDataItem);
+
+            savedImportDataItem.nachname = faker.name.lastName();
+            savedImportDataItem.vorname = faker.name.firstName();
+            savedImportDataItem.klasse = '1A';
+
+            const result: ImportDataItem<true> = await sut.save(savedImportDataItem);
+
+            expect(result.id).toBeDefined();
+            expect(result.nachname).toBe(savedImportDataItem.nachname);
+            expect(result.vorname).toBe(savedImportDataItem.vorname);
+            expect(result.klasse).toBe(savedImportDataItem.klasse);
+            expect(result.nachname).not.toBe(createdImportDataItem.nachname);
+            expect(result.vorname).not.toBe(createdImportDataItem.vorname);
+            expect(result.klasse).not.toBe(createdImportDataItem.klasse);
         });
     });
 
@@ -156,14 +194,16 @@ describe('ImportDataRepository', () => {
         let entity1: ImportDataItemEntity;
         let entity2: ImportDataItemEntity;
 
-        const importVorgnagsId: string = faker.string.uuid();
+        let importvorgangId: string;
 
         beforeEach(async () => {
+            importvorgangId = (await importVorgangRepository.save(DoFactory.createImportVorgang(false))).id;
+
             importDataItem1 = ImportDataItem.construct(
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
-                importVorgnagsId,
+                importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
                 '1A',
@@ -173,7 +213,7 @@ describe('ImportDataRepository', () => {
                 faker.string.uuid(),
                 faker.date.past(),
                 faker.date.recent(),
-                importVorgnagsId,
+                importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
                 '1B',
@@ -185,9 +225,9 @@ describe('ImportDataRepository', () => {
         });
 
         it('should delete all the import data items for the importVorgnagsId', async () => {
-            const result: void = await sut.deleteByImportVorgangId(importVorgnagsId);
+            const result: void = await sut.deleteByImportVorgangId(importvorgangId);
             const [findResult, findTotal]: [Option<ImportDataItem<true>[]>, number] =
-                await sut.findByImportVorgangId(importVorgnagsId);
+                await sut.findByImportVorgangId(importvorgangId);
 
             expect(result).toBeUndefined();
             expect(findResult.length).toBe(0);

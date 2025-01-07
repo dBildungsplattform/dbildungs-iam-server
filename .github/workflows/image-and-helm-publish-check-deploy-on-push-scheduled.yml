@@ -16,6 +16,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check_deployment_clearance:
+    name: "Check deployment clearance"
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      deployment_clearance: ${{ steps.determine_deployment_clearance.outputs.deployment_clearance }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Get PR number
+        id: get_pr_number
+        run: |
+          PR_NUMBER=$(gh pr list --state open --head ${{ github.ref_name }} --json number --jq '.[0].number')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No existing PR found for ${{ github.ref_name }} "
+          else
+            echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+          fi
+
+      - name: Get PR labels
+        id: get_pr_labels
+        if: ${{ env.PR_NUMBER != ''  }}
+        run: |
+          PR_LABELS=$(gh pr view ${{ env.PR_NUMBER }} --json labels --jq '.labels | map(.name) | join(",")')
+          echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
+
+      - name: Determine deployment clearance
+        id: determine_deployment_clearance
+        run: |
+          if [ -z "$env.PR_NUMBER" ] || [[ ${{ ! contains(env.PR_LABELS, 'prevent_auto_deployment') }} == true ]]; then
+            echo "Deployment clearance: true"
+            echo "deployment_clearance=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Deployment clearance: false"
+            echo "deployment_clearance=false" >> "$GITHUB_OUTPUT"
+          fi
+  
   codeql_analyze:
     name: "CodeQL"
     if: ${{ github.event_name == 'push' }}
@@ -47,8 +86,11 @@ jobs:
     secrets: inherit
 
   build_image_on_push:
+    needs:
+      - check_deployment_clearance
+      - create_branch_identifier
     name: "Publish image and scan with trivy"
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ github.event_name == 'push' && needs.check_deployment_clearance.outputs.deployment_clearance == 'true' }}
     permissions:
       packages: write
       security-events: write
@@ -57,7 +99,8 @@ jobs:
     with:
       image_name: "dbildungs-iam-server"
       run_trivy_scan: true
-      image_tag_generation: ${{ ( github.ref_name == 'main' || startsWith(github.ref_name,'dependabot/') )  && 'commit_hash' || 'ticket_from_branch' }}
+      image_tag_generation: ${{ github.ref_name == 'main' && 'commit_hash' || 'specified' }}
+      image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
       add_latest_tag: ${{ github.ref_name == 'main' }}
       container_registry: "ghcr.io"
       fail_on_vulnerabilites: false
@@ -70,33 +113,38 @@ jobs:
       contents: read
 
   select_helm_version_generation_and_image_tag_generation:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
+    needs:
+      - check_deployment_clearance
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') && needs.check_deployment_clearance.outputs.deployment_clearance == 'true' }}
     runs-on: ubuntu-latest
     outputs:
-      SELECT_HELM_VERION_GENERATION: ${{ steps.select_generation.outputs.SELECT_HELM_VERION_GENERATION }}
+      SELECT_HELM_VERSION_GENERATION: ${{ steps.select_generation.outputs.SELECT_HELM_VERSION_GENERATION }}
       SELECT_IMAGE_TAG_GENERATION: ${{ steps.select_generation.outputs.SELECT_IMAGE_TAG_GENERATION }}
     steps:
       - id: select_generation
         shell: bash
         run: |
           if ${{ github.ref_name == 'main' }}; then
-            echo "SELECT_HELM_VERION_GENERATION=timestamp" >> "$GITHUB_OUTPUT"
+            echo "SELECT_HELM_VERSION_GENERATION=timestamp" >> "$GITHUB_OUTPUT"
             echo "SELECT_IMAGE_TAG_GENERATION=commit_hash" >> "$GITHUB_OUTPUT"
           else
-            echo "SELECT_HELM_VERION_GENERATION=ticket_from_branch_timestamp" >> "$GITHUB_OUTPUT"
-            echo "SELECT_IMAGE_TAG_GENERATION=ticket_from_branch" >> "$GITHUB_OUTPUT"
+            echo "SELECT_HELM_VERSION_GENERATION=specified" >> "$GITHUB_OUTPUT"
+            echo "SELECT_IMAGE_TAG_GENERATION=specified" >> "$GITHUB_OUTPUT"
           fi
 
   release_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
+      - create_branch_identifier
       - select_helm_version_generation_and_image_tag_generation
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
     secrets: inherit
     with:
       chart_name: dbildungs-iam-server
-      helm_chart_version_generation: ${{ needs. select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERION_GENERATION  }}
-      image_tag_generation: ${{ needs. select_helm_version_generation_and_image_tag_generation.outputs.SELECT_IMAGE_TAG_GENERATION  }}
+      image_tag_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_IMAGE_TAG_GENERATION }}
+      image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
+      helm_chart_version_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERSION_GENERATION }}
+      helm_chart_version: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.chart_version_from_branch }}
 
   wait_for_helm_chart_to_get_published:
     needs:
@@ -104,20 +152,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - shell: bash
-        run: sleep 1m 
+        run: sleep 1m
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@3
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@6
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
       - branch_meta
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
-  
+
   deploy:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
@@ -125,19 +173,21 @@ jobs:
       - create_branch_identifier
       - wait_for_helm_chart_to_get_published
       - build_image_on_push
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@5
+      # change back before merge
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@DBP-1118-redis-rollout
     with:
       dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
+      database_recreation: "true" # to prevent database recreation this has to be set to false
     secrets: inherit
 
   # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy-branch-to-namespace.yml@3
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
     with:
       branch: ${{ github.event.ref }}
 

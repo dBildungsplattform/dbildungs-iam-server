@@ -8,8 +8,8 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
-    MapperTestModule,
     LoggingTestModule,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -25,6 +25,7 @@ import { faker } from '@faker-js/faker';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('PersonenkontextScope', () => {
@@ -47,6 +48,7 @@ describe('PersonenkontextScope', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [
                 PersonPersistenceMapperProfile,
@@ -155,6 +157,74 @@ describe('PersonenkontextScope', () => {
 
                 expect(total).toBe(30);
                 expect(personenkontext).toHaveLength(10);
+            });
+        });
+    });
+
+    describe('findByRollen', () => {
+        describe('when filtering for personenkontexte by rollenArt', () => {
+            beforeEach(async () => {
+                const rolleArten: RollenArt[] = [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN];
+
+                for (const rolleArt of rolleArten) {
+                    const person: PersonEntity = createPersonEntity();
+
+                    await em.persistAndFlush(person);
+
+                    const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
+                        10,
+                        false,
+                        DoFactory.createPersonenkontextDo,
+                        { personId: person.id },
+                    );
+                    for (const doObj of dos) {
+                        const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                            DoFactory.createRolle(false, { rollenart: rolleArt }),
+                        );
+                        if (rolle instanceof DomainError) throw Error();
+                        doObj.rolleId = rolle.id;
+                    }
+
+                    await em.persistAndFlush(
+                        // Don't use mapArray, because beforeMap does not get called
+                        // eslint-disable-next-line @typescript-eslint/no-loop-func
+                        dos.map((pkDo: PersonenkontextDo<false>) =>
+                            mapper.map(pkDo, PersonenkontextDo, PersonenkontextEntity),
+                        ),
+                    );
+                }
+            });
+
+            it('should return personenkontexte filtered by single rollenArt', async () => {
+                const scope: PersonenkontextScope = new PersonenkontextScope().findByRollen([RollenArt.LEIT]);
+                const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(10);
+                expect(personenkontext).toHaveLength(10);
+                expect(
+                    personenkontext.every(
+                        (pk: PersonenkontextEntity) => pk.rolleId.getEntity().rollenart === RollenArt.LEIT,
+                    ),
+                ).toBe(true);
+            });
+
+            it('should return personenkontexte filtered by multiple rollenArt', async () => {
+                const scope: PersonenkontextScope = new PersonenkontextScope().findByRollen([
+                    RollenArt.LEHR,
+                    RollenArt.LEIT,
+                ]);
+                const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(20);
+                expect(personenkontext).toHaveLength(20);
+            });
+
+            it('should return no personenkontexte for non-existent rollenArt', async () => {
+                const scope: PersonenkontextScope = new PersonenkontextScope().findByRollen([RollenArt.EXTERN]);
+                const [personenkontext, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(em);
+
+                expect(total).toBe(0);
+                expect(personenkontext).toHaveLength(0);
             });
         });
     });

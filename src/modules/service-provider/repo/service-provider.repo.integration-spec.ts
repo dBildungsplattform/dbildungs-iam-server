@@ -180,6 +180,74 @@ describe('ServiceProviderRepo', () => {
             expect(serviceProviderMap).toBeDefined();
         });
     });
+
+    describe('findByName', () => {
+        it('should find a ServiceProvider by its name if a ServiceProvider with the given name exists', async () => {
+            const expectedServiceProvider: ServiceProvider<true> = await sut.save(
+                DoFactory.createServiceProvider(false),
+            );
+
+            const actualServiceProvider: Option<ServiceProvider<true>> = await sut.findByName(
+                expectedServiceProvider.name,
+            );
+
+            expect(actualServiceProvider).toEqual(expectedServiceProvider);
+        });
+
+        it('should throw an error if there are no existing ServiceProviders for the given name', async () => {
+            await sut.save(DoFactory.createServiceProvider(false));
+
+            const result: Option<ServiceProvider<true>> = await sut.findByName('this-service-provider-does-not-exist');
+
+            expect(result).toBeFalsy();
+        });
+    });
+
+    describe('findByVidisAngebotId', () => {
+        it('should find a ServiceProvider by its VIDIS Angebot ID', async () => {
+            const expectedServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            expectedServiceProvider.vidisAngebotId = '1234567';
+            const expectedPersistedServiceProvider: ServiceProvider<true> = await sut.save(expectedServiceProvider);
+            const anotherServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            anotherServiceProvider.vidisAngebotId = '7777777';
+            await sut.save(anotherServiceProvider);
+
+            const actualServiceProvider: Option<ServiceProvider<true>> = await sut.findByVidisAngebotId(
+                expectedServiceProvider.vidisAngebotId,
+            );
+
+            expect(actualServiceProvider).toEqual(expectedPersistedServiceProvider);
+        });
+
+        it('should return null if there are no existing ServiceProviders for the given VIDIS Angebot ID', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            serviceProvider.vidisAngebotId = '1234567';
+            await sut.save(serviceProvider);
+
+            const result: Option<ServiceProvider<true>> = await sut.findByVidisAngebotId('7777777');
+
+            expect(result).toBeFalsy();
+        });
+    });
+
+    describe('findByKeycloakGroup', () => {
+        it('should find a ServiceProvider by its Keycloak groupname', async () => {
+            const expectedServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            expectedServiceProvider.keycloakGroup = 'keycloak-group-1';
+            const expectedPersistedServiceProvider: ServiceProvider<true> = await sut.save(expectedServiceProvider);
+            const anotherServiceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            anotherServiceProvider.keycloakGroup = 'keycloak-group-2';
+            await sut.save(anotherServiceProvider);
+
+            let result: ServiceProvider<true>[] = [];
+            if (expectedServiceProvider.keycloakGroup) {
+                result = await sut.findByKeycloakGroup(expectedServiceProvider.keycloakGroup);
+            }
+
+            expect(result).toEqual([expectedPersistedServiceProvider]);
+        });
+    });
+
     describe('fetchRolleServiceProvidersWithoutPerson', () => {
         it('should define serviceProviderResult', async () => {
             const role: RolleID = faker.string.uuid();
@@ -216,6 +284,28 @@ describe('ServiceProviderRepo', () => {
                 { rolle: { id: roleId } },
                 { populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'] },
             );
+        });
+    });
+
+    describe('deleteById', () => {
+        it('should delete an existing ServiceProvider by its id', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedPersistedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
+
+            const result: boolean = await sut.deleteById(persistedPersistedServiceProvider.id);
+
+            expect(result).toBeTruthy();
+        });
+    });
+
+    describe('deleteByName', () => {
+        it('should delete an existing ServiceProvider by its name', async () => {
+            const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            const persistedPersistedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
+
+            const result: boolean = await sut.deleteByName(persistedPersistedServiceProvider.name);
+
+            expect(result).toBeTruthy();
         });
     });
 });
