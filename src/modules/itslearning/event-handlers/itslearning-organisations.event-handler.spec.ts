@@ -437,6 +437,37 @@ describe('ItsLearning Organisations Event Handler', () => {
             );
         });
 
+        it('should set default dienststellennummer for schule', async () => {
+            const event: SchuleItslearningEnabledEvent = new SchuleItslearningEnabledEvent(
+                faker.string.uuid(),
+                OrganisationsTyp.SCHULE,
+                undefined,
+                faker.string.alphanumeric(10),
+            );
+            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
+                RootDirectChildrenType.OEFFENTLICH,
+            );
+            orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
+            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(undefined);
+
+            await sut.schuleItslearningEnabledEventHandler(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 0 Klassen were created.`,
+            );
+            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
+                [
+                    {
+                        id: event.organisationId,
+                        name: `Unbekannte Dienststellennummer (${event.name})`,
+                        type: 'School',
+                        parentId: sut.ROOT_OEFFENTLICH,
+                    },
+                ],
+                `${event.eventID}-SCHULE-SYNC`,
+            );
+        });
+
         it('should set default name for schule', async () => {
             const event: SchuleItslearningEnabledEvent = new SchuleItslearningEnabledEvent(
                 faker.string.uuid(),

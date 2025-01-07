@@ -222,24 +222,26 @@ export class ItsLearningOrganisationsEventHandler {
         );
     }
 
-    private makeSchulName(
-        dienststellennummer: string = 'Unbekannte Dienststellennummer',
-        name: string = 'Unbekannte Schule',
-    ): string {
-        // 75% of hard limit, subtract length of the dienststellennummer and 3 for the space and two parentheses
-        const spaceForName: number = SAFE_NAME_LIMIT - dienststellennummer.length - 3;
+    private makeSchulName(dienststellennummer: string | undefined, name: string | undefined): string {
+        const dienststellennummerOrDefault: string = dienststellennummer || 'Unbekannte Dienststellennummer';
+        const nameOrDefault: string = name || 'Unbenannte Schule';
 
-        let truncatedSchoolName: string = name;
+        // 75% of hard limit, subtract length of the dienststellennummer and 3 for the space and two parentheses
+        const spaceForName: number = SAFE_NAME_LIMIT - dienststellennummerOrDefault.length - 3;
+
+        let truncatedSchoolName: string = nameOrDefault;
         if (truncatedSchoolName.length > spaceForName) {
             truncatedSchoolName = `${truncatedSchoolName.slice(0, spaceForName - 3)}...`;
         }
 
-        const fullName: string = `${dienststellennummer} (${truncatedSchoolName})`;
+        const fullName: string = `${dienststellennummerOrDefault} (${truncatedSchoolName})`;
         return fullName;
     }
 
-    private makeKlasseName(name: string = 'Unbenannte Klasse'): string {
-        let truncatedClassName: string = name;
+    private makeKlasseName(name: string | undefined): string {
+        const nameOrDefault: string = name || 'Unbenannte Klasse';
+
+        let truncatedClassName: string = nameOrDefault;
         if (truncatedClassName.length > SAFE_NAME_LIMIT) {
             truncatedClassName = `${truncatedClassName.slice(0, SAFE_NAME_LIMIT - 3)}...`;
         }
