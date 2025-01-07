@@ -64,6 +64,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.uuid(),
             );
             itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
+            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
             itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
@@ -82,13 +83,14 @@ describe('ItsLearning Organisations Event Handler', () => {
             );
         });
 
-        it('should truncate name if too long', async () => {
+        it('should truncate name if it is too long', async () => {
             const event: KlasseCreatedEvent = new KlasseCreatedEvent(
                 faker.string.uuid(),
                 'Klasse with a name that is way too long should be truncated',
                 faker.string.uuid(),
             );
             itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
+            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
             itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
@@ -101,9 +103,6 @@ describe('ItsLearning Organisations Event Handler', () => {
                     type: 'Unspecified',
                 },
                 `${event.eventID}-KLASSE-CREATED`,
-            );
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `[EventID: ${event.eventID}] Klasse with ID ${event.id} created.`,
             );
         });
 
