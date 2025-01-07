@@ -4,6 +4,7 @@ import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../domain/per
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { AutoMap } from '@automapper/classes';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 
 @Entity({ tableName: 'personenkontext' })
 @Unique({ properties: ['personId', 'organisationId', 'rolleId'] })
@@ -22,9 +23,15 @@ export class PersonenkontextEntity extends TimestampedEntity {
 
     // TODO EW-636: get from access_token, see SchulConneX (Version 1.003.003.000) page 91
     @AutoMap()
-    @Property({ columnType: 'uuid', nullable: true })
+    @ManyToOne({
+        fieldName: 'organisation_id',
+        columnType: 'uuid',
+        ref: true,
+        nullable: false,
+        entity: () => OrganisationEntity,
+    })
     @Index({ name: 'personenkontext_organisation_id_index' })
-    public organisationId!: string;
+    public organisationId!: Ref<OrganisationEntity>;
 
     @ManyToOne({
         fieldName: 'rolle_id',

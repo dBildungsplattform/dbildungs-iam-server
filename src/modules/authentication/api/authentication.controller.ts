@@ -34,6 +34,15 @@ import { getLowestStepUpLevel } from '../passport/oidc.strategy.js';
 import { PersonTimeLimitInfo } from '../../person/domain/person-time-limit-info.js';
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
 import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
+import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
+import {
+    DBiamPersonenkontextRepo,
+    ExternalPkData,
+} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 
 @UseFilters(new AuthenticationExceptionFilter())
 @ApiTags('auth')
@@ -51,6 +60,8 @@ export class AuthenticationController {
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
         private readonly personTimeLimitService: PersonTimeLimitService,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly personRepo: PersonRepository,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
         const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
@@ -105,6 +116,28 @@ export class AuthenticationController {
                 }
             });
         });
+    }
+
+    @Get('externaldata')
+    @ApiBearerAuth()
+    @ApiOAuth2(['openid'])
+    @ApiOperation({ summary: 'External Data about logged in user.' })
+    @ApiUnauthorizedResponse({ description: 'User is not logged in.' })
+    @ApiOkResponse({ description: 'Returns external Data about the logged in user.', type: UserinfoResponse })
+    public async externalData(@Permissions() permissions: PersonPermissions): Promise<UserExeternalDataResponse> {
+        const person: Option<Person<true>> = await this.personRepo.findById(permissions.personFields.id);
+        const externalPkData: ExternalPkData[] = await this.personenkontextRepo.findExternalPkData(
+            permissions.personFields.id,
+        );
+
+        if (!person) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Person', permissions.personFields.id),
+                ),
+            );
+        }
+        return UserExeternalDataResponse.createNew(person, externalPkData, 'contextIdPlaceholder');
     }
 
     @Get('logininfo')
