@@ -1,5 +1,6 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { IMS_COMMON_SCHEMA, IMS_GROUP_MAN_DATA_SCHEMA, IMS_GROUP_MAN_MESS_SCHEMA } from '../schemas.js';
+import { ItslearningGroupLengthLimits } from '../types/groups.enum.js';
 import { IMSESMassAction } from './base-mass-action.js';
 import { CreateGroupParams } from './create-group.params.js';
 
@@ -51,9 +52,9 @@ export class CreateGroupsAction extends IMSESMassAction<CreateGroupsResponseBody
                         'ims2:label': g.relationLabel,
                     },
                     'ims2:description': {
-                        'ims2:descShort': g.name.slice(0, 64),
-                        'ims2:descLong': g.longDescription?.slice(0, 256),
-                        'ims2:descFull': g.fullDescription?.slice(0, 2048),
+                        'ims2:descShort': g.name.slice(0, ItslearningGroupLengthLimits.SHORT_DESC),
+                        'ims2:descLong': g.longDescription?.slice(0, ItslearningGroupLengthLimits.LONG_DESC),
+                        'ims2:descFull': g.fullDescription?.slice(0, ItslearningGroupLengthLimits.FULL_DESC),
                     },
                     'ims2:extension': extension && { 'ims1:extensionField': extension },
                 },

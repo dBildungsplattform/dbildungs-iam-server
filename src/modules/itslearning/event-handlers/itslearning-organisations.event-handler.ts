@@ -16,6 +16,9 @@ import { CreateGroupParams } from '../actions/create-group.params.js';
 import { UpdateGroupParams } from '../actions/update-group.action.js';
 import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
+import { ItslearningGroupLengthLimits } from '../types/groups.enum.js';
+
+const SAFE_NAME_LIMIT: number = Math.floor(ItslearningGroupLengthLimits.SHORT_DESC * 0.75);
 
 @Injectable()
 export class ItsLearningOrganisationsEventHandler {
@@ -223,8 +226,8 @@ export class ItsLearningOrganisationsEventHandler {
         dienststellennummer: string = 'Unbekannte Dienststellennummer',
         name: string = 'Unbekannte Schule',
     ): string {
-        // 64 max characters, subtract length of the dienststellennummer and 3 for the space and two parentheses
-        const spaceForName: number = 64 - dienststellennummer.length - 3;
+        // 75% of hard limit, subtract length of the dienststellennummer and 3 for the space and two parentheses
+        const spaceForName: number = SAFE_NAME_LIMIT - dienststellennummer.length - 3;
 
         let truncatedSchoolName: string = name;
         if (truncatedSchoolName.length > spaceForName) {
@@ -237,8 +240,8 @@ export class ItsLearningOrganisationsEventHandler {
 
     private makeKlasseName(name: string = 'Unbenannte Klasse'): string {
         let truncatedClassName: string = name;
-        if (truncatedClassName.length > 64) {
-            truncatedClassName = `${truncatedClassName.slice(0, 64 - 3)}...`;
+        if (truncatedClassName.length > SAFE_NAME_LIMIT) {
+            truncatedClassName = `${truncatedClassName.slice(0, SAFE_NAME_LIMIT - 3)}...`;
         }
 
         return truncatedClassName;
