@@ -29,6 +29,8 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
+    public static readonly DEFAULT_RETRIES: number = 3; // e.g. DEFAULT_RETRIES = 3 will produce retry sequence: 1sek, 8sek, 27sek (1000ms * retrycounter^3)
+
     public static readonly OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT: string = 'schule-sh.de';
 
     public static readonly ERSATZ_SCHULEN_DOMAIN_DEFAULT: string = 'ersatzschule-sh.de';
@@ -65,6 +67,115 @@ export class LdapClientService {
     ) {
         this.mutex = new Mutex();
     }
+
+    //** BELOW ONLY PUBLIC FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
+
+    public async createLehrer(
+        person: PersonData,
+        domain: string,
+        schulId: string,
+        mail?: string,
+    ): Promise<Result<PersonData>> {
+        return this.executeWithRetry(
+            () => this.createLehrerInternal(person, domain, schulId, mail),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async isLehrerExisting(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
+        return this.executeWithRetry(
+            () => this.isLehrerExistingInternal(referrer, domain),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async modifyPersonAttributes(
+        oldReferrer: PersonReferrer,
+        newGivenName?: string,
+        newSn?: string,
+        newReferrer?: PersonReferrer,
+    ): Promise<Result<string>> {
+        return this.executeWithRetry(
+            () => this.modifyPersonAttributesInternal(oldReferrer, newGivenName, newSn, newReferrer),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async updateMemberDnInGroups(
+        oldReferrer: PersonReferrer,
+        newReferrer: PersonReferrer,
+        oldUid: string,
+        client: Client,
+    ): Promise<Result<string>> {
+        return this.executeWithRetry(
+            () => this.updateMemberDnInGroupsInternal(oldReferrer, newReferrer, oldUid, client),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async deleteLehrerByReferrer(referrer: PersonReferrer): Promise<Result<string>> {
+        return this.executeWithRetry(
+            () => this.deleteLehrerByReferrerInternal(referrer),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async deleteLehrer(person: PersonData, orgaKennung: string, domain: string): Promise<Result<PersonData>> {
+        return this.executeWithRetry(
+            () => this.deleteLehrerInternal(person, orgaKennung, domain),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async addPersonToGroup(
+        personUid: string,
+        schoolReferrer: string,
+        lehrerUid: string,
+    ): Promise<Result<boolean>> {
+        return this.executeWithRetry(
+            () => this.addPersonToGroupInternal(personUid, schoolReferrer, lehrerUid),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async changeEmailAddressByPersonId(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        newEmailAddress: string,
+    ): Promise<Result<PersonID>> {
+        return this.executeWithRetry(
+            () => this.changeEmailAddressByPersonIdInternal(personId, referrer, newEmailAddress),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async removePersonFromGroup(
+        referrer: PersonReferrer,
+        schoolReferrer: string,
+        lehrerUid: string,
+    ): Promise<Result<boolean>> {
+        return this.executeWithRetry(
+            () => this.removePersonFromGroupInternal(referrer, schoolReferrer, lehrerUid),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
+        return this.executeWithRetry(
+            () => this.changeUserPasswordByPersonIdInternal(personId, referrer),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    //** BELOW ONLY PUBLIC HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
+
+    public createNewLehrerUidFromOldUid(oldUid: string, newReferrer: PersonReferrer): string {
+        const splitted: string[] = oldUid.split(',');
+        splitted[0] = `uid=${newReferrer}`;
+        return splitted.join(',');
+    }
+
+    //** BELOW ONLY PRIVATE FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
 
     private async bind(): Promise<Result<boolean>> {
         this.logger.info('LDAP: bind');
@@ -108,7 +219,7 @@ export class LdapClientService {
         };
     }
 
-    public getLehrerUid(referrer: PersonReferrer, rootName: string): string {
+    private getLehrerUid(referrer: PersonReferrer, rootName: string): string {
         return `uid=${referrer},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
@@ -120,7 +231,7 @@ export class LdapClientService {
         return rootName;
     }
 
-    public async createLehrer(
+    private async createLehrerInternal(
         person: PersonData,
         domain: string,
         schulId: string,
@@ -194,7 +305,7 @@ export class LdapClientService {
         });
     }
 
-    public async isLehrerExisting(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
+    private async isLehrerExistingInternal(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
@@ -217,7 +328,7 @@ export class LdapClientService {
         });
     }
 
-    public async modifyPersonAttributes(
+    private async modifyPersonAttributesInternal(
         oldReferrer: PersonReferrer,
         newGivenName?: string,
         newSn?: string,
@@ -309,13 +420,7 @@ export class LdapClientService {
         });
     }
 
-    public createNewLehrerUidFromOldUid(oldUid: string, newReferrer: PersonReferrer): string {
-        const splitted: string[] = oldUid.split(',');
-        splitted[0] = `uid=${newReferrer}`;
-        return splitted.join(',');
-    }
-
-    public async updateMemberDnInGroups(
+    private async updateMemberDnInGroupsInternal(
         oldReferrer: PersonReferrer,
         newReferrer: PersonReferrer,
         oldUid: string,
@@ -391,7 +496,7 @@ export class LdapClientService {
         return { ok: true, value: `Updated member data for ${groupEntries.length} groups.` };
     }
 
-    public async deleteLehrerByReferrer(referrer: PersonReferrer): Promise<Result<string>> {
+    private async deleteLehrerByReferrerInternal(referrer: PersonReferrer): Promise<Result<string>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer by referrer');
             const client: Client = this.ldapClient.getClient();
@@ -415,7 +520,11 @@ export class LdapClientService {
         });
     }
 
-    public async deleteLehrer(person: PersonData, orgaKennung: string, domain: string): Promise<Result<PersonData>> {
+    private async deleteLehrerInternal(
+        person: PersonData,
+        orgaKennung: string,
+        domain: string,
+    ): Promise<Result<PersonData>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
@@ -458,7 +567,7 @@ export class LdapClientService {
         });
     }
 
-    public async changeEmailAddressByPersonId(
+    private async changeEmailAddressByPersonIdInternal(
         personId: PersonID,
         referrer: PersonReferrer,
         newEmailAddress: string,
@@ -547,7 +656,7 @@ export class LdapClientService {
         });
     }
 
-    public async addPersonToGroup(
+    private async addPersonToGroupInternal(
         personUid: string,
         schoolReferrer: string,
         lehrerUid: string,
@@ -605,14 +714,13 @@ export class LdapClientService {
                 return { ok: false, error: new LdapAddPersonToGroupError() };
             }
         }
-
         if (this.isPersonInSearchResult(searchResultGroupOfNames.searchEntries[0], lehrerUid)) {
             this.logger.info(`LDAP: Person ${personUid} is already in group ${groupId}`);
             return { ok: true, value: false };
         }
 
         try {
-            await client.modify(lehrerDn, [
+            await client.modify(searchResultGroupOfNames.searchEntries[0].dn, [
                 new Change({
                     operation: 'add',
                     modification: new Attribute({
@@ -630,7 +738,7 @@ export class LdapClientService {
         }
     }
 
-    public async removePersonFromGroup(
+    private async removePersonFromGroupInternal(
         referrer: PersonReferrer,
         schoolReferrer: string,
         lehrerUid: string,
@@ -706,7 +814,10 @@ export class LdapClientService {
         return false;
     }
 
-    public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
+    private async changeUserPasswordByPersonIdInternal(
+        personId: PersonID,
+        referrer: PersonReferrer,
+    ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         const userPassword: string = generatePassword();
 
@@ -751,5 +862,44 @@ export class LdapClientService {
                 return { ok: false, error: new LdapModifyUserPasswordError() };
             }
         });
+    }
+
+    private async executeWithRetry<T>(
+        func: () => Promise<Result<T>>,
+        retries: number,
+        delay: number = 1000,
+    ): Promise<Result<T>> {
+        let currentAttempt: number = 1;
+        let result: Result<T, Error> = {
+            ok: false,
+            error: new Error('executeWithRetry default fallback'),
+        };
+
+        while (currentAttempt <= retries) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                result = await func();
+                if (result.ok) {
+                    return result;
+                } else {
+                    throw new Error(`Function returned error: ${result.error.message}`);
+                }
+            } catch (error) {
+                const currentDelay: number = delay * Math.pow(currentAttempt, 3);
+                this.logger.warning(
+                    `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
+                );
+
+                // eslint-disable-next-line no-await-in-loop
+                await this.sleep(currentDelay);
+            }
+            currentAttempt++;
+        }
+        this.logger.error(`All ${retries} attempts failed. Exiting with failure.`);
+        return result;
+    }
+
+    private async sleep(ms: number): Promise<void> {
+        return new Promise<void>((resolve: () => void) => setTimeout(resolve, ms));
     }
 }

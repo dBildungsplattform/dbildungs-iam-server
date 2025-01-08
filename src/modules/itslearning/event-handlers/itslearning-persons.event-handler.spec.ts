@@ -124,7 +124,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.deletePerson(personID, eventID);
 
-            expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID);
+            expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID, eventID);
             expect(loggerMock.info).toHaveBeenCalledWith(`[EventID: ${eventID}] Person with ID ${personID} deleted.`);
         });
 
@@ -135,7 +135,7 @@ describe('ItsLearning Persons Event Handler', () => {
 
             await sut.deletePerson(personID, eventID);
 
-            expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID);
+            expect(itslearningPersonRepoMock.deletePerson).toHaveBeenCalledWith(personID, eventID);
             expect(loggerMock.error).toHaveBeenCalledWith(
                 `[EventID: ${eventID}] Could not delete person with ID ${personID} from itsLearning.`,
             );
