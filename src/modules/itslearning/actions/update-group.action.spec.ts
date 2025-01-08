@@ -4,11 +4,14 @@ import { UpdateGroupAction } from './update-group.action.js';
 describe('UpdateGroupAction', () => {
     describe('buildRequest', () => {
         it('should return object', () => {
+            const schoolName: string = faker.word.adjective();
             const action: UpdateGroupAction = new UpdateGroupAction({
                 id: faker.string.uuid(),
-                name: `${faker.word.adjective()} school`,
+                name: `${schoolName} school`,
                 parentId: faker.string.uuid(),
                 type: 'School',
+                longDescription: `${schoolName} school (long description)`,
+                fullDescription: `${schoolName} school (full description)`,
             });
 
             expect(action.buildRequest()).toBeDefined();
