@@ -209,7 +209,7 @@ export class ItsLearningPersonsEventHandler {
      * Delete this person in itslearning
      */
     public async deletePerson(personID: PersonID, eventID: string): Promise<void> {
-        const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(personID);
+        const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(personID, eventID);
 
         if (!deleteError) {
             this.logger.info(`[EventID: ${eventID}] Person with ID ${personID} deleted.`);
