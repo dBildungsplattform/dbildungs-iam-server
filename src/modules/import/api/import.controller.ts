@@ -358,6 +358,6 @@ export class ImportController {
             );
         }
 
-        return new ImportResultResponse(result.value, queryParams.offset, queryParams.limit);
+        return new ImportResultResponse(result.value);
     }
 }
