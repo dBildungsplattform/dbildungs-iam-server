@@ -16,6 +16,9 @@ import { CreateGroupParams } from '../actions/create-group.params.js';
 import { UpdateGroupParams } from '../actions/update-group.action.js';
 import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
+import { ItslearningGroupLengthLimits } from '../types/groups.enum.js';
+
+const SAFE_NAME_LIMIT: number = Math.floor(ItslearningGroupLengthLimits.SHORT_DESC * 0.75);
 
 @Injectable()
 export class ItsLearningOrganisationsEventHandler {
@@ -65,7 +68,7 @@ export class ItsLearningOrganisationsEventHandler {
 
         const params: CreateGroupParams = {
             id: event.id,
-            name: event.name,
+            name: this.makeKlasseName(event.name),
             type: 'Unspecified',
             parentId: event.administriertVon,
         };
@@ -115,7 +118,7 @@ export class ItsLearningOrganisationsEventHandler {
 
         const params: UpdateGroupParams = {
             id: event.organisationId,
-            name: event.name,
+            name: this.makeKlasseName(event.name),
             type: 'Unspecified',
             parentId: event.administriertVon,
         };
@@ -190,7 +193,7 @@ export class ItsLearningOrganisationsEventHandler {
             .filter((k: Organisation<true>) => k.typ === OrganisationsTyp.KLASSE)
             .map((o: Organisation<true>) => ({
                 id: o.id,
-                name: o.name || 'Unbenannte Klasse',
+                name: this.makeKlasseName(o.name),
                 type: 'Unspecified',
                 parentId: event.organisationId,
             }));
@@ -198,7 +201,7 @@ export class ItsLearningOrganisationsEventHandler {
         // Prepend the params for the schule
         createParams.unshift({
             id: event.organisationId,
-            name: `${event.kennung} (${event.name || 'Unbenannte Schule'})`,
+            name: this.makeSchulName(event.kennung, event.name),
             type: 'School',
             parentId: this.ROOT_OEFFENTLICH,
         });
@@ -217,5 +220,32 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(
             `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its ${klassen.length} Klassen were created.`,
         );
+    }
+
+    private makeSchulName(dienststellennummer: string | undefined, name: string | undefined): string {
+        const dienststellennummerOrDefault: string = dienststellennummer || 'Unbekannte Dienststellennummer';
+        const nameOrDefault: string = name || 'Unbenannte Schule';
+
+        // 75% of hard limit, subtract length of the dienststellennummer and 3 for the space and two parentheses
+        const spaceForName: number = SAFE_NAME_LIMIT - dienststellennummerOrDefault.length - 3;
+
+        let truncatedSchoolName: string = nameOrDefault;
+        if (truncatedSchoolName.length > spaceForName) {
+            truncatedSchoolName = `${truncatedSchoolName.slice(0, spaceForName - 3)}...`;
+        }
+
+        const fullName: string = `${dienststellennummerOrDefault} (${truncatedSchoolName})`;
+        return fullName;
+    }
+
+    private makeKlasseName(name: string | undefined): string {
+        const nameOrDefault: string = name || 'Unbenannte Klasse';
+
+        let truncatedClassName: string = nameOrDefault;
+        if (truncatedClassName.length > SAFE_NAME_LIMIT) {
+            truncatedClassName = `${truncatedClassName.slice(0, SAFE_NAME_LIMIT - 3)}...`;
+        }
+
+        return truncatedClassName;
     }
 }
