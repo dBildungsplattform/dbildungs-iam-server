@@ -129,11 +129,20 @@ describe('LDAP Client Service', () => {
         await DatabaseTestModule.clearDatabase(orm);
         await orm.close();
         await app.close();
+        jest.clearAllTimers();
     });
 
     beforeEach(async () => {
         jest.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+        jest.spyOn(ldapClientService as any, 'executeWithRetry').mockImplementation((...args: unknown[]) => {
+            //Needed To globally mock the private executeWithRetry function (otherwise test run to long)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const func: () => Promise<Result<any>> = args[0] as () => Promise<Result<any>>;
+            return func();
+        });
     });
 
     it('should be defined', () => {
@@ -708,6 +717,67 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    describe('executeWithRetry', () => {
+        beforeEach(() => {
+            jest.restoreAllMocks(); //Needed To Reset the global executeWithRetry Mock
+        });
+
+        it('when operation succeeds should return value', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValue({ searchEntries: [] } as unknown as SearchResult);
+
+                return clientMock;
+            });
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting(
+                faker.lorem.word(),
+                'schule-sh.de',
+            );
+
+            expect(result.ok).toBeTruthy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(1);
+            expect(loggerMock.warning).not.toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+        });
+
+        it('when operation fails and throws Error it should automatically retry the operation', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockRejectedValue(new Error());
+
+                return clientMock;
+            });
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting(
+                faker.lorem.word(),
+                'schule-sh.de',
+            );
+
+            expect(result.ok).toBeFalsy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(3);
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
+        });
+
+        it('when operation fails and returns Error it should automatically retry the operation', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValue({} as SearchResult);
+                return clientMock;
+            });
+            const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
+                faker.string.uuid(),
+                faker.internet.userName(),
+                faker.internet.email(),
+            );
+
+            expect(result.ok).toBeFalsy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(0);
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
+        });
+    });
+
     describe('creation', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
         const fakeOrgaKennung: string = '123';
@@ -796,7 +866,7 @@ describe('LDAP Client Service', () => {
                 );
 
                 if (result.ok) throw Error();
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:{}`,
                 );
                 expect(result.error).toEqual(new LdapCreateLehrerError());
@@ -1214,7 +1284,7 @@ describe('LDAP Client Service', () => {
                     const oldReferrer: PersonReferrer = faker.internet.userName();
                     const newUid: string = faker.string.alphanumeric(6);
 
-                    jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValueOnce({
+                    jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValue({
                         ok: false,
                         error: new Error('Failed to update groups'),
                     });
@@ -1354,7 +1424,7 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyEmailError());
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED, errMsg:{}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
@@ -1845,9 +1915,7 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyUserPasswordError());
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `LDAP: Modifying userPassword (UEM) FAILED, errMsg:{}`,
-                );
+                expect(loggerMock.error).toHaveBeenCalledWith(`LDAP: Modifying userPassword (UEM) FAILED, errMsg:{}`);
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
         });
