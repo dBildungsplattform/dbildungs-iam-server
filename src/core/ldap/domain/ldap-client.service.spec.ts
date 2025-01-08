@@ -18,7 +18,7 @@ import { Person } from '../../../modules/person/domain/person.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
 import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
@@ -129,19 +129,28 @@ describe('LDAP Client Service', () => {
         await DatabaseTestModule.clearDatabase(orm);
         await orm.close();
         await app.close();
+        jest.clearAllTimers();
     });
 
     beforeEach(async () => {
         jest.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+        jest.spyOn(ldapClientService as any, 'executeWithRetry').mockImplementation((...args: unknown[]) => {
+            //Needed To globally mock the private executeWithRetry function (otherwise test run to long)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const func: () => Promise<Result<any>> = args[0] as () => Promise<Result<any>>;
+            return func();
+        });
     });
 
     it('should be defined', () => {
         expect(em).toBeDefined();
     });
     describe('updateMemberDnInGroups', () => {
-        const fakeOldReferrer: string = 'old-user';
-        const fakeNewReferrer: string = 'new-user';
+        const fakeOldReferrer: PersonReferrer = 'old-user';
+        const fakeNewReferrer: PersonReferrer = 'new-user';
         const fakeOldReferrerUid: string = `uid=${fakeOldReferrer},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeNewReferrerUid: string = `uid=${fakeNewReferrer},ou=users,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeGroupDn: string = 'cn=lehrer-group,' + mockLdapInstanceConfig.BASE_DN;
@@ -478,7 +487,7 @@ describe('LDAP Client Service', () => {
     });
 
     describe('addPersonToGroup', () => {
-        const fakeReferrer: string = 'test-user';
+        const fakeReferrer: PersonReferrer = 'test-user';
         const fakeSchoolReferrer: string = '123';
         const fakeLehrerUid: string = `uid=${fakeReferrer},ou=oeffentlicheSchulen,${mockLdapInstanceConfig.BASE_DN}`;
         const fakeGroupId: string = `lehrer-${fakeSchoolReferrer}`;
@@ -708,6 +717,67 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    describe('executeWithRetry', () => {
+        beforeEach(() => {
+            jest.restoreAllMocks(); //Needed To Reset the global executeWithRetry Mock
+        });
+
+        it('when operation succeeds should return value', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValue({ searchEntries: [] } as unknown as SearchResult);
+
+                return clientMock;
+            });
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting(
+                faker.lorem.word(),
+                'schule-sh.de',
+            );
+
+            expect(result.ok).toBeTruthy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(1);
+            expect(loggerMock.warning).not.toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+        });
+
+        it('when operation fails and throws Error it should automatically retry the operation', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockRejectedValue(new Error());
+
+                return clientMock;
+            });
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting(
+                faker.lorem.word(),
+                'schule-sh.de',
+            );
+
+            expect(result.ok).toBeFalsy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(3);
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
+        });
+
+        it('when operation fails and returns Error it should automatically retry the operation', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockResolvedValue({} as SearchResult);
+                return clientMock;
+            });
+            const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
+                faker.string.uuid(),
+                faker.internet.userName(),
+                faker.internet.email(),
+            );
+
+            expect(result.ok).toBeFalsy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(0);
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
+        });
+    });
+
     describe('creation', () => {
         const fakeEmailDomain: string = 'schule-sh.de';
         const fakeOrgaKennung: string = '123';
@@ -796,7 +866,7 @@ describe('LDAP Client Service', () => {
                 );
 
                 if (result.ok) throw Error();
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:{}`,
                 );
                 expect(result.error).toEqual(new LdapCreateLehrerError());
@@ -904,7 +974,7 @@ describe('LDAP Client Service', () => {
             });
 
             it('should log an error and return the failed result if addPersonToGroup fails', async () => {
-                const referrer: string = 'test-user';
+                const referrer: PersonReferrer = 'test-user';
                 const schulId: string = '123';
                 const expectedGroupId: string = `lehrer-${schulId}`;
                 const errorMessage: string = `LDAP: Failed to add lehrer ${referrer} to group ${expectedGroupId}`;
@@ -1159,7 +1229,7 @@ describe('LDAP Client Service', () => {
             });
             describe('when modifying', () => {
                 it('Should Update LDAP When called with Attributes', async () => {
-                    const oldReferrer: string = faker.internet.userName();
+                    const oldReferrer: PersonReferrer = faker.internet.userName();
                     const newGivenName: string = faker.person.firstName();
                     const newSn: string = faker.person.lastName();
                     const newUid: string = faker.string.alphanumeric(6);
@@ -1211,10 +1281,10 @@ describe('LDAP Client Service', () => {
                 });
 
                 it('should return error if updateMemberDnInGroups fails', async () => {
-                    const oldReferrer: string = faker.internet.userName();
+                    const oldReferrer: PersonReferrer = faker.internet.userName();
                     const newUid: string = faker.string.alphanumeric(6);
 
-                    jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValueOnce({
+                    jest.spyOn(ldapClientService, 'updateMemberDnInGroups').mockResolvedValue({
                         ok: false,
                         error: new Error('Failed to update groups'),
                     });
@@ -1354,7 +1424,7 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyEmailError());
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                expect(loggerMock.error).toHaveBeenCalledWith(
                     `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED, errMsg:{}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
@@ -1845,9 +1915,7 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyUserPasswordError());
-                expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `LDAP: Modifying userPassword (UEM) FAILED, errMsg:{}`,
-                );
+                expect(loggerMock.error).toHaveBeenCalledWith(`LDAP: Modifying userPassword (UEM) FAILED, errMsg:{}`);
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
         });
@@ -1897,7 +1965,7 @@ describe('LDAP Client Service', () => {
     describe('createNewLehrerUidFromOldUid', () => {
         it('should replace the old uid with the new referrer and join the DN parts with commas', () => {
             const oldUid: string = 'uid=oldUser,ou=users,dc=example,dc=com';
-            const newReferrer: string = 'newUser';
+            const newReferrer: PersonReferrer = 'newUser';
 
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
 
@@ -1906,7 +1974,7 @@ describe('LDAP Client Service', () => {
 
         it('should handle a DN with only a uid component', () => {
             const oldUid: string = 'uid=oldUser';
-            const newReferrer: string = 'newUser';
+            const newReferrer: PersonReferrer = 'newUser';
 
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
 
@@ -1915,7 +1983,7 @@ describe('LDAP Client Service', () => {
 
         it('should handle an empty DN string', () => {
             const oldUid: string = '';
-            const newReferrer: string = 'newUser';
+            const newReferrer: PersonReferrer = 'newUser';
 
             const result: string = ldapClientService.createNewLehrerUidFromOldUid(oldUid, newReferrer);
 
