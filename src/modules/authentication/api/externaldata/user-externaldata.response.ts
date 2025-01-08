@@ -4,10 +4,9 @@ import { UserExeternalDataResponseOnlineDateiablage } from './user-externaldata-
 import { UserExeternalDataResponseOpsh } from './user-externaldata-opsh.response.js';
 import { UserExeternalDataResponseOx } from './user-externaldata-ox.response.js';
 import { UserExeternalDataResponseVidis } from './user-externaldata-vidis.response.js';
-import { Person } from '../../../person/domain/person.js';
-import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { UserExeternalDataResponseOpshPk } from './user-externaldata-opsh-pk.response.js';
-import { ExternalPkData } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RequiredExternalPkData } from '../authentication.controller.js';
+import { UserExternaldataWorkflowAggregate } from '../../domain/user-extenaldata.workflow.js';
 
 export class UserExeternalDataResponse {
     @ApiProperty({ type: UserExeternalDataResponseOx })
@@ -39,24 +38,34 @@ export class UserExeternalDataResponse {
         this.onlineDateiablage = onlineDateiablage;
     }
 
-    public static createNew(
-        person: Person<true>,
-        pkData: ExternalPkData[],
-        contextId: string,
-    ): UserExeternalDataResponse {
-        const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.referrer!, contextId);
-        const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
+    public static createNew(workflow: UserExternaldataWorkflowAggregate): UserExeternalDataResponse {
+        if (!workflow.person) {
+            throw new Error(''); //TODO
+        }
+        if (!workflow.checkedExternalPkData) {
+            throw new Error(''); //TODO
+        }
+
+        const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(
+            workflow.person.referrer!,
+            workflow.contextID,
+        );
+        const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(
+            workflow.person.id,
+        );
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
-            pkData.map((pk: ExternalPkData) => pk.kennung),
+            workflow.checkedExternalPkData.map((pk: RequiredExternalPkData) => pk.kennung),
         );
         const opsh: UserExeternalDataResponseOpsh = new UserExeternalDataResponseOpsh(
-            person.vorname,
-            person.familienname,
-            pkData.map((pk: ExternalPkData) => new UserExeternalDataResponseOpshPk(pk.rollenart, pk.kennung)),
-            person.email,
+            workflow.person.vorname,
+            workflow.person.familienname,
+            workflow.checkedExternalPkData.map(
+                (pk: RequiredExternalPkData) => new UserExeternalDataResponseOpshPk(pk.rollenart, pk.kennung),
+            ),
+            workflow.person.email,
         );
         const onlineDateiablage: UserExeternalDataResponseOnlineDateiablage =
-            new UserExeternalDataResponseOnlineDateiablage(person.id);
+            new UserExeternalDataResponseOnlineDateiablage(workflow.person.id);
 
         return new UserExeternalDataResponse(ox, itslearning, vidis, opsh, onlineDateiablage);
     }
