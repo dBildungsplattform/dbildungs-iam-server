@@ -18,7 +18,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
         nullable: false,
         entity: () => PersonEntity,
     })
-    @Index({ name: 'personenkontext_person_id_index' })
+    @Index({ name: 'personenkontext_person_id_index', type: 'hash' })
     public personId!: Ref<PersonEntity>;
 
     // TODO EW-636: get from access_token, see SchulConneX (Version 1.003.003.000) page 91
@@ -30,7 +30,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
         nullable: false,
         entity: () => OrganisationEntity,
     })
-    @Index({ name: 'personenkontext_organisation_id_index' })
+    @Index({ name: 'personenkontext_organisation_id_index', type: 'hash' })
     public organisationId!: Ref<OrganisationEntity>;
 
     @ManyToOne({
@@ -40,6 +40,7 @@ export class PersonenkontextEntity extends TimestampedEntity {
         nullable: false,
         entity: () => RolleEntity,
     })
+    @Index({ name: 'personenkontext_rolle_id_index', type: 'hash' })
     public rolleId!: Ref<RolleEntity>;
 
     @AutoMap()
