@@ -1,51 +1,52 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { HttpException, NotImplementedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
+import { EventService } from '../../../core/eventbus/index.js';
+import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError } from '../../../shared/error/index.js';
+import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
+import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
-import { Personenstatus, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
-import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
-import { PersonByIdParams } from './person-by-id.param.js';
-import { PersonController } from './person.controller.js';
-import { PersonenQueryParams } from './personen-query.param.js';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
-import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { UsernameGeneratorService } from '../domain/username-generator.service.js';
-import { PersonRepository } from '../persistence/person.repository.js';
-import { Person } from '../domain/person.js';
-import { PersonendatensatzResponse } from './personendatensatz.response.js';
-import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
-import { PersonFactory } from '../domain/person.factory.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationID } from '../../../shared/types/index.js';
-import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError } from '../../../shared/error/index.js';
-import { ConfigService } from '@nestjs/config';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
-import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { PersonApiMapper } from '../mapper/person-api.mapper.js';
-import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
-import { LockUserBodyParams } from './lock-user.body.params.js';
-import { PersonDomainError } from '../domain/person-domain.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
-import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
-import { EventService } from '../../../core/eventbus/index.js';
-import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
+import { Personenstatus, SichtfreigabeType } from '../../personenkontext/domain/personenkontext.enums.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonDomainError } from '../domain/person-domain.error.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
-import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { PersonEmailResponse } from './person-email-response.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonLockOccasion } from '../domain/person.enums.js';
-import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
+import { PersonLockOccasion } from '../domain/person.enums.js';
+import { PersonFactory } from '../domain/person.factory.js';
+import { Person } from '../domain/person.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
+import { PersonApiMapper } from '../mapper/person-api.mapper.js';
+import { PersonRepository } from '../persistence/person.repository.js';
+import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
+import { LockUserBodyParams } from './lock-user.body.params.js';
+import { PersonByIdParams } from './person-by-id.param.js';
+import { PersonEmailResponse } from './person-email-response.js';
+import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
+import { PersonController } from './person.controller.js';
+import { PersonenQueryParams } from './personen-query.param.js';
+import { PersonendatensatzResponse } from './personendatensatz.response.js';
+import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -141,6 +142,7 @@ describe('PersonController', () => {
     });
 
     function getPerson(): Person<true> {
+        const username: string = faker.lorem.word();
         return Person.construct(
             faker.string.uuid(),
             faker.date.past(),
@@ -148,10 +150,9 @@ describe('PersonController', () => {
             faker.person.lastName(),
             faker.person.firstName(),
             '1',
+            username,
             faker.lorem.word(),
-            faker.lorem.word(),
-            faker.string.uuid(),
-            faker.person.fullName(), // referrer
+            username, // referrer
             undefined, // stammorganisation
             undefined, // initialenFamilienname
             undefined, // initialenVorname
@@ -168,6 +169,7 @@ describe('PersonController', () => {
             undefined, // vertrauensstufe
             undefined, // auskunftssperre
             undefined, // personalnummer
+            undefined, // orgUnassignmentDate
             [
                 {
                     person: '1',
@@ -177,7 +179,6 @@ describe('PersonController', () => {
                     created_at: new Date(),
                 },
             ], // userLock array
-            undefined, // orgUnassignmentDate
             undefined, // isLocked
             undefined, // email
         );
@@ -990,7 +991,7 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
-                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError(),
                 });
@@ -1010,7 +1011,7 @@ describe('PersonController', () => {
 
             it('should throw HttpNotFoundException', async () => {
                 personRepositoryMock.findById.mockResolvedValue(undefined);
-                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: false,
                     error: new EntityNotFoundError(),
                 });
@@ -1030,7 +1031,7 @@ describe('PersonController', () => {
 
             it('should throw HttpException', async () => {
                 personRepositoryMock.findBy.mockResolvedValue([[], 0]);
-                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: createMock<Person<true>>({ referrer: undefined }),
                 });
@@ -1051,7 +1052,7 @@ describe('PersonController', () => {
 
             it('should reset UEM-password for person', async () => {
                 personRepositoryMock.findById.mockResolvedValue(person);
-                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: person,
                 });
@@ -1062,7 +1063,7 @@ describe('PersonController', () => {
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
-                    person.referrer,
+                    person.username,
                 );
             });
         });
@@ -1080,7 +1081,7 @@ describe('PersonController', () => {
                     ok: false,
                     error: new PersonDomainError('Person', 'entityId', undefined),
                 });
-                personRepositoryMock.getPersonIfAllowedOrRequesterIsPerson.mockResolvedValueOnce({
+                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({
                     ok: true,
                     value: person,
                 });
@@ -1091,7 +1092,85 @@ describe('PersonController', () => {
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
                 expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
                     person.id,
-                    person.referrer,
+                    person.username,
+                );
+            });
+        });
+    });
+
+    describe('resetUEMPassword', () => {
+        describe('when person does not exist', () => {
+            personPermissionsMock = createMock<PersonPermissions>();
+
+            it('should throw HttpException', async () => {
+                await expect(personController.resetUEMPassword(personPermissionsMock)).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person does NOT have a defined username', () => {
+            const person: Person<true> = getPerson();
+            person.username = undefined;
+            person.referrer = undefined;
+            const permissions: PersonPermissions = new PersonPermissions(
+                createMock<DBiamPersonenkontextRepo>(),
+                createMock<OrganisationRepository>(),
+                createMock<RolleRepo>(),
+                person,
+            );
+
+            it('should throw HttpException', async () => {
+                await expect(personController.resetUEMPassword(permissions)).rejects.toThrow(HttpException);
+                expect(personRepositoryMock.update).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when resetting UEM-password for self', () => {
+            const person: Person<true> = getPerson();
+            const permissions: PersonPermissions = new PersonPermissions(
+                createMock<DBiamPersonenkontextRepo>(),
+                createMock<OrganisationRepository>(),
+                createMock<RolleRepo>(),
+                person,
+            );
+
+            it('should reset UEM-password for person', async () => {
+                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                    ok: true,
+                    value: person.id,
+                });
+
+                await expect(personController.resetUEMPassword(permissions)).resolves.not.toThrow();
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                    person.id,
+                    person.username,
+                );
+            });
+        });
+
+        describe('when setting password in LDAP fails', () => {
+            const person: Person<true> = getPerson();
+            const permissions: PersonPermissions = new PersonPermissions(
+                createMock<DBiamPersonenkontextRepo>(),
+                createMock<OrganisationRepository>(),
+                createMock<RolleRepo>(),
+                person,
+            );
+
+            it('should throw DomainError', async () => {
+                ldapClientServiceMock.changeUserPasswordByPersonId.mockResolvedValueOnce({
+                    ok: false,
+                    error: new PersonDomainError('Person', 'entityId', undefined),
+                });
+
+                await expect(personController.resetUEMPassword(permissions)).rejects.toThrow(
+                    PersonUserPasswordModificationError,
+                );
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledTimes(1);
+                expect(ldapClientServiceMock.changeUserPasswordByPersonId).toHaveBeenCalledWith(
+                    person.id,
+                    person.username,
                 );
             });
         });
