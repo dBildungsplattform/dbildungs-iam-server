@@ -5,12 +5,15 @@ import { CreateGroupsAction } from './create-groups.action.js';
 describe('CreateGroupsAction', () => {
     describe('buildRequest', () => {
         it('should return object', () => {
+            const schoolName: string = faker.word.adjective();
             const action: CreateGroupsAction = new CreateGroupsAction([
                 {
                     id: faker.string.uuid(),
-                    name: `${faker.word.adjective()} school`,
+                    name: `${schoolName} school`,
                     parentId: faker.string.uuid(),
                     type: 'School',
+                    longDescription: `${schoolName} school (long description)`,
+                    fullDescription: `${schoolName} school (full description)`,
                 },
             ]);
 
