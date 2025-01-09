@@ -1,3 +1,5 @@
+import { ImportDataItemStatus } from './importDataItem.enum.js';
+
 export class ImportDataItem<WasPersisted extends boolean> {
     private constructor(
         public id: Persisted<string, WasPersisted>,
@@ -11,6 +13,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
         public validationErrors?: string[],
         public username?: string,
         public password?: string,
+        public status?: ImportDataItemStatus,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -25,6 +28,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
         validationErrors?: string[],
         username?: string,
         password?: string,
+        status?: ImportDataItemStatus,
     ): ImportDataItem<WasPersisted> {
         return new ImportDataItem(
             id,
@@ -38,6 +42,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
             validationErrors,
             username,
             password,
+            status,
         );
     }
 
