@@ -504,7 +504,7 @@ describe('LDAP Client Service', () => {
                         createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for organizationalRole
                     )
                     .mockResolvedValueOnce(
-                        createMock<SearchResult>({ searchEntries: [createMock<Entry>()] }), // Search for groupOfNames
+                        createMock<SearchResult>({ searchEntries: [createMock<Entry>({ dn: fakeGroupDn })] }), // Search for groupOfNames
                     );
                 clientMock.modify.mockResolvedValueOnce();
 

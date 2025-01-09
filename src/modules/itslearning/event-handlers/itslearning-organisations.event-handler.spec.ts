@@ -64,6 +64,7 @@ describe('ItsLearning Organisations Event Handler', () => {
                 faker.string.uuid(),
             );
             itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
+            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
             itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
 
             await sut.createKlasseEventHandler(event);
@@ -79,6 +80,29 @@ describe('ItsLearning Organisations Event Handler', () => {
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `[EventID: ${event.eventID}] Klasse with ID ${event.id} created.`,
+            );
+        });
+
+        it('should truncate name if it is too long', async () => {
+            const event: KlasseCreatedEvent = new KlasseCreatedEvent(
+                faker.string.uuid(),
+                'Klasse with a name that is way too long should be truncated',
+                faker.string.uuid(),
+            );
+            itslearningGroupRepoMock.readGroup.mockResolvedValueOnce(createMock<GroupResponse>()); // ReadGroupAction
+            orgaRepoMock.findById.mockResolvedValueOnce(createMock<Organisation<true>>({ itslearningEnabled: true }));
+            itslearningGroupRepoMock.createOrUpdateGroup.mockResolvedValueOnce(undefined); // CreateGroupAction
+
+            await sut.createKlasseEventHandler(event);
+
+            expect(itslearningGroupRepoMock.createOrUpdateGroup).toHaveBeenLastCalledWith<[CreateGroupParams, string]>(
+                {
+                    id: event.id,
+                    name: 'Klasse with a name that is way too long shoul...',
+                    parentId: event.administriertVon!,
+                    type: 'Unspecified',
+                },
+                `${event.eventID}-KLASSE-CREATED`,
             );
         });
 
@@ -412,6 +436,37 @@ describe('ItsLearning Organisations Event Handler', () => {
             );
         });
 
+        it('should set default dienststellennummer for schule', async () => {
+            const event: SchuleItslearningEnabledEvent = new SchuleItslearningEnabledEvent(
+                faker.string.uuid(),
+                OrganisationsTyp.SCHULE,
+                undefined,
+                faker.string.alphanumeric(10),
+            );
+            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
+                RootDirectChildrenType.OEFFENTLICH,
+            );
+            orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
+            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(undefined);
+
+            await sut.schuleItslearningEnabledEventHandler(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 0 Klassen were created.`,
+            );
+            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
+                [
+                    {
+                        id: event.organisationId,
+                        name: `Unbekannte Dienststellennummer (${event.name})`,
+                        type: 'School',
+                        parentId: sut.ROOT_OEFFENTLICH,
+                    },
+                ],
+                `${event.eventID}-SCHULE-SYNC`,
+            );
+        });
+
         it('should set default name for schule', async () => {
             const event: SchuleItslearningEnabledEvent = new SchuleItslearningEnabledEvent(
                 faker.string.uuid(),
@@ -435,6 +490,37 @@ describe('ItsLearning Organisations Event Handler', () => {
                     {
                         id: event.organisationId,
                         name: `${event.kennung} (Unbenannte Schule)`,
+                        type: 'School',
+                        parentId: sut.ROOT_OEFFENTLICH,
+                    },
+                ],
+                `${event.eventID}-SCHULE-SYNC`,
+            );
+        });
+
+        it('should truncate name if too long', async () => {
+            const event: SchuleItslearningEnabledEvent = new SchuleItslearningEnabledEvent(
+                faker.string.uuid(),
+                OrganisationsTyp.SCHULE,
+                faker.string.numeric(7),
+                'Schule with a name that is way too long should be truncated',
+            );
+            orgaRepoMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
+                RootDirectChildrenType.OEFFENTLICH,
+            );
+            orgaRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
+            itslearningGroupRepoMock.createOrUpdateGroups.mockResolvedValueOnce(undefined);
+
+            await sut.schuleItslearningEnabledEventHandler(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `[EventID: ${event.eventID}] Schule with ID ${event.organisationId} and its 0 Klassen were created.`,
+            );
+            expect(itslearningGroupRepoMock.createOrUpdateGroups).toHaveBeenCalledWith<[CreateGroupParams[], string]>(
+                [
+                    {
+                        id: event.organisationId,
+                        name: `${event.kennung} (Schule with a name that is way too ...)`,
                         type: 'School',
                         parentId: sut.ROOT_OEFFENTLICH,
                     },

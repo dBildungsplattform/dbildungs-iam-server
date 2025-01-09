@@ -30,7 +30,7 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';
-import { PersonID, PersonReferrer, RolleID } from '../../../shared/types/index.js';
+import { PersonenkontextID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
@@ -187,7 +187,10 @@ describe('EmailEventHandler', () => {
             fakeRolleId = faker.string.uuid();
             fakeOrgaId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
-            event = createMock<PersonenkontextUpdatedEvent>({ person: { id: fakePersonId } });
+            event = createMock<PersonenkontextUpdatedEvent>({
+                person: { id: fakePersonId },
+                removedKontexte: undefined,
+            });
             personRenamedEvent = new PersonRenamedEvent(
                 fakePersonId,
                 faker.person.firstName(),
@@ -325,6 +328,7 @@ describe('EmailEventHandler', () => {
         let fakePersonId: PersonID;
         let fakeReferrer: PersonReferrer;
         let fakeRolleId: RolleID;
+        let fakePKId: PersonenkontextID;
         let fakeEmailAddressString: string;
         let event: PersonenkontextUpdatedEvent;
         let personenkontexte: Personenkontext<true>[];
@@ -338,10 +342,15 @@ describe('EmailEventHandler', () => {
             fakePersonId = faker.string.uuid();
             fakeReferrer = faker.internet.userName();
             fakeRolleId = faker.string.uuid();
+            fakePKId = faker.string.uuid();
             fakeEmailAddressString = faker.internet.email();
-            event = createMock<PersonenkontextUpdatedEvent>({ person: { id: fakePersonId, referrer: fakeReferrer } });
 
+            event = createMock<PersonenkontextUpdatedEvent>({
+                person: { id: fakePersonId, referrer: fakeReferrer },
+                removedKontexte: undefined,
+            });
             personenkontexte = [createMock<Personenkontext<true>>({ rolleId: fakeRolleId })];
+
             rolle = createMock<Rolle<true>>({ id: fakeRolleId, serviceProviderIds: [] });
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
@@ -732,6 +741,50 @@ describe('EmailEventHandler', () => {
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could not publish EmailAddressDisabledEvent, personId:${fakePersonId} has no username`,
+                );
+            });
+        });
+
+        describe(`when removedPersonenkontexte are not undefined`, () => {
+            it('should filter PKs of person to exclude the ones which will be removed', async () => {
+                event = createMock<PersonenkontextUpdatedEvent>({
+                    person: { id: fakePersonId },
+                    removedKontexte: [
+                        {
+                            id: fakePKId,
+                        },
+                    ],
+                });
+
+                dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
+                // mock that no rollenIds can be found
+                rolleRepoMock.findByIds.mockResolvedValueOnce(new Map<string, Rolle<true>>());
+                serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
+
+                //mock person with referrer is found
+                personRepositoryMock.findById.mockResolvedValueOnce(
+                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: faker.internet.userName() }),
+                );
+
+                // eslint-disable-next-line @typescript-eslint/require-await
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockImplementationOnce(async (personId: PersonID) => [
+                    new EmailAddress<true>(
+                        faker.string.uuid(),
+                        faker.date.past(),
+                        faker.date.recent(),
+                        personId,
+                        faker.internet.email(),
+                        EmailAddressStatus.DISABLED,
+                    ),
+                ]);
+
+                const persistedEmail: EmailAddress<true> = getEmail();
+                emailRepoMock.save.mockResolvedValueOnce(persistedEmail);
+
+                await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `Person with id:${fakePersonId} needs an email, creating or enabling address`,
                 );
             });
         });
