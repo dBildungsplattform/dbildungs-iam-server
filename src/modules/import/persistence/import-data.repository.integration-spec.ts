@@ -12,6 +12,7 @@ import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
 import { ImportVorgangRepository } from './import-vorgang.repository.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
+import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 
 describe('ImportDataRepository', () => {
     let module: TestingModule;
@@ -93,12 +94,20 @@ describe('ImportDataRepository', () => {
 
         beforeEach(async () => {
             const importvorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
             importvorgangId = importvorgang.id;
 
             const importvorgang2: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
 
             importDataItem1 = ImportDataItem.construct(
@@ -155,8 +164,15 @@ describe('ImportDataRepository', () => {
 
     describe('save', () => {
         it('should create a new importDataItem', async () => {
-            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
-                .id;
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
             const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, { importvorgangId });
 
             const savedImportDataItem: ImportDataItem<true> = await sut.save(importDataItem);
@@ -165,16 +181,25 @@ describe('ImportDataRepository', () => {
         });
 
         it('should update an existing importDataItem', async () => {
-            const importvorgangId: string = (await importVorgangRepository.save(DoFactory.createImportVorgang(false)))
-                .id;
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
             const createdImportDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
                 importvorgangId,
             });
+            createdImportDataItem.status = ImportDataItemStatus.SUCCESS;
             const savedImportDataItem: ImportDataItem<true> = await sut.save(createdImportDataItem);
 
             savedImportDataItem.nachname = faker.name.lastName();
             savedImportDataItem.vorname = faker.name.firstName();
             savedImportDataItem.klasse = '1A';
+            savedImportDataItem.status = ImportDataItemStatus.SUCCESS;
 
             const result: ImportDataItem<true> = await sut.save(savedImportDataItem);
 
@@ -197,7 +222,15 @@ describe('ImportDataRepository', () => {
         let importvorgangId: string;
 
         beforeEach(async () => {
-            importvorgangId = (await importVorgangRepository.save(DoFactory.createImportVorgang(false))).id;
+            importvorgangId = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
 
             importDataItem1 = ImportDataItem.construct(
                 faker.string.uuid(),
@@ -232,6 +265,124 @@ describe('ImportDataRepository', () => {
             expect(result).toBeUndefined();
             expect(findResult.length).toBe(0);
             expect(findTotal).toBe(0);
+        });
+    });
+
+    describe('createAll', () => {
+        it('should create all importDataItems', async () => {
+            const importvorgangId: string = (
+                await importVorgangRepository.save(
+                    DoFactory.createImportVorgang(false, {
+                        importByPersonId: undefined,
+                        rolleId: undefined,
+                        organisationId: undefined,
+                    }),
+                )
+            ).id;
+            const importDataItems: ImportDataItem<false>[] = [
+                DoFactory.createImportDataItem(false, { importvorgangId }),
+                DoFactory.createImportDataItem(false, { importvorgangId }),
+            ];
+
+            const savedImportDataItems: string[] = await sut.createAll(importDataItems);
+
+            expect(
+                savedImportDataItems.every((savedImportDataItem: string) => savedImportDataItem !== undefined),
+            ).toBeTruthy();
+            expect(savedImportDataItems.length).toBe(importDataItems.length);
+        });
+    });
+
+    describe('countProcessedItems', () => {
+        let importvorgangId: string;
+        let importDataItem1: ImportDataItem<false>;
+        let importDataItem2: ImportDataItem<false>;
+        let importDataItem3: ImportDataItem<false>;
+        let entity1: ImportDataItemEntity;
+        let entity2: ImportDataItemEntity;
+        let entity3: ImportDataItemEntity;
+
+        beforeEach(async () => {
+            // Create a new importvorgang (import process)
+            const importvorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
+            );
+            importvorgangId = importvorgang.id;
+
+            // Create import data items
+            importDataItem1 = ImportDataItem.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                importvorgangId,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '1A',
+                undefined,
+            );
+            importDataItem2 = ImportDataItem.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                importvorgangId,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '1B',
+                undefined,
+            );
+            importDataItem3 = ImportDataItem.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                importvorgangId,
+                faker.name.lastName(),
+                faker.name.firstName(),
+                '1C',
+                undefined,
+            );
+
+            // Create entities and persist them
+            entity1 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem1));
+            entity2 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem2));
+            entity3 = em.create(ImportDataItemEntity, mapAggregateToData(importDataItem3));
+            await em.persistAndFlush([entity1, entity2, entity3]);
+
+            // Update the status of some items
+            entity1.status = ImportDataItemStatus.SUCCESS;
+            entity2.status = ImportDataItemStatus.FAILED;
+            entity3.status = ImportDataItemStatus.PENDING; // This will be ignored
+
+            await em.persistAndFlush([entity1, entity2, entity3]);
+        });
+
+        afterEach(async () => {
+            await em.removeAndFlush([entity1, entity2, entity3]);
+        });
+
+        it('should count processed items for the given importvorgangId', async () => {
+            // Calling the method to count items with status SUCCESS or FAILED
+            const count: number = await sut.countProcessedItems(importvorgangId);
+
+            // Since only entity1 (SUCCESS) and entity2 (FAILED) are processed, count should be 2
+            expect(count).toBe(2);
+        });
+
+        it('should return 0 if no items have processed status', async () => {
+            // Set all items to PENDING status to simulate unprocessed items
+            entity1.status = ImportDataItemStatus.PENDING;
+            entity2.status = ImportDataItemStatus.PENDING;
+            entity3.status = ImportDataItemStatus.PENDING;
+
+            await em.persistAndFlush([entity1, entity2, entity3]);
+
+            const count: number = await sut.countProcessedItems(importvorgangId);
+
+            // Since none of the items are processed, the count should be 0
+            expect(count).toBe(0);
         });
     });
 });
