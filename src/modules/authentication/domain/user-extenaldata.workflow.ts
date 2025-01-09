@@ -2,7 +2,6 @@ import { ConfigService } from '@nestjs/config';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { OXContextID } from '../../../shared/types/ox-ids.types.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -12,6 +11,7 @@ import {
 } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RequiredExternalPkData } from '../api/authentication.controller.js';
 import { PersonPermissions } from './person-permissions.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 export class UserExternaldataWorkflowAggregate {
     public contextID: OXContextID;
@@ -37,18 +37,14 @@ export class UserExternaldataWorkflowAggregate {
         return new UserExternaldataWorkflowAggregate(personenkontextRepo, personRepo, configService);
     }
 
-    public async initialize(permissions: PersonPermissions): Promise<void> {
+    public async initialize(permissions: PersonPermissions): Promise<void | DomainError> {
         const person: Option<Person<true>> = await this.personRepo.findById(permissions.personFields.id);
         const externalPkData: ExternalPkData[] = await this.personenkontextRepo.findExternalPkData(
             permissions.personFields.id,
         );
 
         if (!person) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person', permissions.personFields.id),
-                ),
-            );
+            return new EntityNotFoundError('Person', permissions.personFields.id);
         }
         this.person = person;
 

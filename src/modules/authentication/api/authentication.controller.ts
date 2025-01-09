@@ -35,11 +35,10 @@ import { PersonTimeLimitInfo } from '../../person/domain/person-time-limit-info.
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
 import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
 import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
-import {
-    ExternalPkData,
-} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
+import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -128,7 +127,12 @@ export class AuthenticationController {
     @ApiOkResponse({ description: 'Returns external Data about the logged in user.', type: UserExeternalDataResponse })
     public async getExternalData(@Permissions() permissions: PersonPermissions): Promise<UserExeternalDataResponse> {
         const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
-        await workflow.initialize(permissions);
+        const response: void | DomainError = await workflow.initialize(permissions);
+        if (response instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response),
+            );
+        }
 
         return UserExeternalDataResponse.createNew(workflow);
     }
