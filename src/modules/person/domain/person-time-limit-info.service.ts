@@ -52,7 +52,7 @@ export default class PersonTimeLimitService {
                     const personenKontextExpires: Date = new Date(personenKontext.befristung);
 
                     const currentDate: Date = new Date();
-                    const timeDiffMs: number = Math.abs(personenKontextExpires.getTime() - currentDate.getTime());
+                    const timeDiffMs: number = personenKontextExpires.getTime() - currentDate.getTime();
                     const timeDiffDays: number = Math.floor(timeDiffMs / (1000 * 3600 * 24));
                     if (timeDiffDays <= KONTEXT_EXPIRES_IN_DAYS) {
                         const organisation: Option<Organisation<true>> = await personenKontext.getOrganisation();
