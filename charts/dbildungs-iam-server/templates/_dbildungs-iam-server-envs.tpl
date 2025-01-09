@@ -126,4 +126,9 @@
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: vidis-keycloak-role
+- name:BASIC_AUTH
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: auth
 {{- end}}

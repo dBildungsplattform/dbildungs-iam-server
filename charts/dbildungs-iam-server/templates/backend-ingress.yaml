@@ -31,3 +31,41 @@ spec:
                   number: {{ $.Values.backend.service.ports.http }}
           {{- end }}
 {{ end }}
+---
+{{if .Values.backend.ingress.healthenabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "common.names.name" . }}-health-backend
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /health
+    # authentication type
+    nginx.ingress.kubernetes.io/auth-type: basic
+    # name of the secret that contains the user/password definitions
+    nginx.ingress.kubernetes.io/auth-secret: {{ .Values.auth.secretName }}
+    # message to display with an appropriate context why the authentication is required
+    nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - user'    
+    {{- with .Values.backend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  tls:
+  - hosts:
+      - {{ .Values.backendHostname  }}
+  ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
+  rules:
+    - host: {{ .Values.backendHostname }}
+      http:
+        paths:
+          - path: /api/health
+            pathType: prefix
+            backend:
+              service:
+                name: {{ template "common.names.name" $ }}-backend
+                port:
+                  number: {{ $.Values.backend.service.ports.http }}
+          {{- end }}
+{{ end }}
