@@ -35,6 +35,7 @@ import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.fact
 import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { HttpException } from '@nestjs/common';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -338,6 +339,10 @@ describe('AuthenticationController', () => {
                     rollenart: RollenArt.LERN,
                     kennung: faker.lorem.word(),
                 },
+                {
+                    rollenart: RollenArt.EXTERN,
+                    kennung: undefined, //To Be Filtered Out
+                },
             ];
 
             personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);
@@ -354,6 +359,45 @@ describe('AuthenticationController', () => {
             expect(result.opsh.emailAdresse).toEqual(person.email);
             expect(result.opsh.personenkontexte.length).toEqual(2);
             expect(result.onlineDateiablage.personId).toEqual(person.id);
+        });
+
+        it('should throw error if aggregate doesnt initialize fields field correctly', async () => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '1',
+                faker.lorem.word(),
+                undefined,
+                faker.string.uuid(),
+            );
+            person.geburtsdatum = faker.date.past();
+
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+
+            const pkExternalData: ExternalPkData[] = [
+                {
+                    rollenart: RollenArt.LEHR,
+                    kennung: faker.lorem.word(),
+                },
+                {
+                    rollenart: RollenArt.LERN,
+                    kennung: faker.lorem.word(),
+                },
+            ];
+
+            personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);
+            personRepoMock.findById.mockResolvedValue(undefined);
+            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(pkExternalData);
+
+            await expect(authController.getExternalData(personPermissions)).rejects.toThrow(HttpException);
         });
     });
 

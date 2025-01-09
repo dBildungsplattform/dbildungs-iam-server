@@ -39,6 +39,7 @@ import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personen
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { UserExternaldataWorkflowAggregate } from '../domain/user-extenaldata.workflow.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { UserExternalDataWorkflowError } from '../../../shared/error/user-externaldata-workflow.error.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -127,14 +128,18 @@ export class AuthenticationController {
     @ApiOkResponse({ description: 'Returns external Data about the logged in user.', type: UserExeternalDataResponse })
     public async getExternalData(@Permissions() permissions: PersonPermissions): Promise<UserExeternalDataResponse> {
         const workflow: UserExternaldataWorkflowAggregate = this.userExternaldataWorkflowFactory.createNew();
-        const response: void | DomainError = await workflow.initialize(permissions);
-        if (response instanceof DomainError) {
+        await workflow.initialize(permissions);
+        if (!workflow.person || !workflow.checkedExternalPkData) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(response),
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new UserExternalDataWorkflowError(
+                        'UserExternaldataWorkflowAggregate has not been successfull initialized',
+                    ),
+                ),
             );
         }
 
-        return UserExeternalDataResponse.createNew(workflow);
+        return UserExeternalDataResponse.createNew(workflow.person, workflow.checkedExternalPkData, workflow.contextID);
     }
 
     @Get('logininfo')
