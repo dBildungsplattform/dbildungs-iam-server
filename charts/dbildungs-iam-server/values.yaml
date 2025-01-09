@@ -3,7 +3,7 @@ fullnameOverride: ''
 namespaceOverride: ''
 
 backendHostname: ''
-keycloakHostname: ''
+keycloakHostname: 'http://dbildungs-iam-keycloak'
 keycloak2ndHostname: ""
 backend2ndHostname: ""
 
