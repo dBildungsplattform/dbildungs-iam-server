@@ -67,5 +67,4 @@ spec:
                 name: {{ template "common.names.name" $ }}-backend
                 port:
                   number: {{ $.Values.backend.service.ports.http }}
-          {{- end }}
 {{ end }}
