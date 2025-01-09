@@ -3234,24 +3234,37 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "personenkontext_person_id_index",
           "columnNames": [
             "person_id"
           ],
           "composite": false,
-          "keyName": "personenkontext_person_id_index",
           "constraint": false,
           "primary": false,
-          "unique": false
+          "unique": false,
+          "type": "hash"
         },
         {
+          "keyName": "personenkontext_organisation_id_index",
           "columnNames": [
             "organisation_id"
           ],
           "composite": false,
-          "keyName": "personenkontext_organisation_id_index",
           "constraint": false,
           "primary": false,
-          "unique": false
+          "unique": false,
+          "type": "hash"
+        },
+        {
+          "keyName": "personenkontext_rolle_id_index",
+          "columnNames": [
+            "rolle_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "type": "hash"
         },
         {
           "keyName": "personenkontext_person_id_organisation_id_rolle_id_unique",
@@ -3607,15 +3620,6 @@
             "VALID"
           ],
           "mappedType": "enum"
-        },
-        "total_data_item_imported": {
-          "name": "total_data_item_imported",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
         }
       },
       "name": "importvorgang",
