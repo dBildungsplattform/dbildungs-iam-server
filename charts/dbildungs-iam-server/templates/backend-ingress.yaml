@@ -61,7 +61,7 @@ spec:
       http:
         paths:
           - path: /api/health
-            pathType: prefix
+            pathType: Prefix
             backend:
               service:
                 name: {{ template "common.names.name" $ }}-backend
