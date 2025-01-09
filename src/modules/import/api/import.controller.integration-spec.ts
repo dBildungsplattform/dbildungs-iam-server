@@ -43,6 +43,9 @@ import { ImportStatus } from '../domain/import.enums.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { KeycloakAdministrationService } from '../../keycloak-administration/domain/keycloak-admin-client.service.js';
 import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
+import { PersonEntity } from '../../person/persistence/person.entity.js';
+import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 
 describe('Import API', () => {
     let app: INestApplication;
@@ -546,8 +549,16 @@ describe('Import API', () => {
             );
             if (sus instanceof DomainError) throw sus;
 
+            const person: PersonEntity = em.create(PersonEntity, mapAggregateToData(DoFactory.createPerson(false)));
+            await em.persistAndFlush(person);
+            await em.findOneOrFail(PersonEntity, { id: person.id });
+
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false, { organisationId: schule.id, rolleId: sus.id }),
+                DoFactory.createImportVorgang(false, {
+                    organisationId: schule.id,
+                    rolleId: sus.id,
+                    importByPersonId: person.id,
+                }),
             );
             await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
@@ -581,8 +592,19 @@ describe('Import API', () => {
         });
 
         it('should return 500 if the import vorgang has no organisation ID', async () => {
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false, { organisationId: undefined, rolleId: faker.string.uuid() }),
+                DoFactory.createImportVorgang(false, {
+                    organisationId: undefined,
+                    rolleId: sus.id,
+                    importByPersonId: undefined,
+                }),
             );
             const params: ImportvorgangByIdBodyParams = {
                 importvorgangId: importVorgang.id,
@@ -625,9 +647,11 @@ describe('Import API', () => {
                 DoFactory.createImportVorgang(false, {
                     organisationId: schule.id,
                     rolleId: sus.id,
+                    importByPersonId: undefined,
                     status: ImportStatus.FINISHED,
                 }),
             );
+
             const importDataItem: ImportDataItem<true> = await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
                     importvorgangId: importVorgang.id,
@@ -635,6 +659,7 @@ describe('Import API', () => {
                     personalnummer: undefined,
                     username: faker.internet.userName(),
                     password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                    status: ImportDataItemStatus.SUCCESS,
                 }),
             );
 
@@ -665,7 +690,11 @@ describe('Import API', () => {
     describe('/DELETE deleteImportTransaction', () => {
         it('should return 204', async () => {
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
             await importDataRepository.save(
                 DoFactory.createImportDataItem(false, {
@@ -684,21 +713,48 @@ describe('Import API', () => {
     });
 
     describe('/GET history', () => {
-        const rolleId: string = faker.string.uuid();
-        const orgaId1: string = faker.string.uuid();
-        const orgaId2: string = faker.string.uuid();
+        let rolleId: string = faker.string.uuid();
+        let orgaId1: string = faker.string.uuid();
+        let orgaId2: string = faker.string.uuid();
 
         beforeEach(async () => {
+            const schule: OrganisationEntity = new OrganisationEntity();
+            schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
+            await em.persistAndFlush(schule);
+            await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+            orgaId1 = schule.id;
+
+            const schule2: OrganisationEntity = new OrganisationEntity();
+            schule2.typ = OrganisationsTyp.SCHULE;
+            await em.persistAndFlush(schule2);
+            await em.findOneOrFail(OrganisationEntity, { id: schule2.id });
+            orgaId2 = schule2.id;
+
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
+
+            rolleId = sus.id;
+
             await Promise.all([
                 importVorgangRepository.save(
                     DoFactory.createImportVorgang(false, {
                         organisationId: orgaId1,
+                        importByPersonId: undefined,
+                        rolleId: undefined,
                     }),
                 ),
                 importVorgangRepository.save(
                     DoFactory.createImportVorgang(false, {
                         rolleId: rolleId,
                         organisationId: orgaId2,
+                        importByPersonId: undefined,
                     }),
                 ),
             ]);
@@ -765,7 +821,11 @@ describe('Import API', () => {
         it('should return import history when search by status', async () => {
             personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
             const startedImport: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false),
+                DoFactory.createImportVorgang(false, {
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
             startedImport.status = ImportStatus.COMPLETED;
             await importVorgangRepository.save(startedImport);
@@ -784,9 +844,14 @@ describe('Import API', () => {
     });
 
     describe('/GET importstatus by id', () => {
-        it('should return 200 OK with import ststus', async () => {
+        it('should return 200 OK with import status', async () => {
             const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
-                DoFactory.createImportVorgang(false, { status: ImportStatus.COMPLETED }),
+                DoFactory.createImportVorgang(false, {
+                    status: ImportStatus.COMPLETED,
+                    importByPersonId: undefined,
+                    rolleId: undefined,
+                    organisationId: undefined,
+                }),
             );
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -794,7 +859,12 @@ describe('Import API', () => {
                 .send();
 
             expect(response.status).toBe(200);
-            expect(response.body).toEqual({ status: ImportStatus.COMPLETED } as ImportVorgangStatusResponse);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body).toEqual({
+                dataItemCount: 100,
+                status: ImportStatus.COMPLETED,
+                totalDataItemImported: 0,
+            } as ImportVorgangStatusResponse);
         });
 
         it('should return 404 if importvorgang does not exist', async () => {
