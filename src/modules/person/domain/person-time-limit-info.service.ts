@@ -68,8 +68,25 @@ export default class PersonTimeLimitService {
         );
 
         const organisationInfos: (PersonTimeLimitInfo | null)[] = await Promise.all(organisationPromises);
-        lockInfos.push(...organisationInfos.filter((info: PersonTimeLimitInfo | null) => info !== null));
+        const validInfos: PersonTimeLimitInfo[] = organisationInfos.filter(
+            (info: PersonTimeLimitInfo | null): info is PersonTimeLimitInfo => info !== null,
+        );
 
+        const latestInfosMap: Map<string, PersonTimeLimitInfo> = new Map();
+
+        validInfos.forEach((info: PersonTimeLimitInfo) => {
+            const orgName: string | undefined = info.school;
+            if (!orgName) {
+                return;
+            }
+            const existingInfo: PersonTimeLimitInfo | undefined = latestInfosMap.get(orgName);
+
+            if (!existingInfo || existingInfo.deadline < info.deadline) {
+                latestInfosMap.set(orgName, info);
+            }
+        });
+
+        lockInfos.push(...latestInfosMap.values());
         return lockInfos;
     }
 }
