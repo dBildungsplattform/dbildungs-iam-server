@@ -93,10 +93,10 @@ export class PrivacyIdeaAdministrationService {
         try {
             const response: AxiosResponse<AuthenticaitonResponse> = await firstValueFrom(
                 this.httpService
-                    .post(url, authPayload, {
+                    .post<AuthenticaitonResponse>(url, authPayload, {
                         headers: { 'Content-Type': 'application/json' },
                     })
-                    .pipe(catchError((error: AxiosError) => this.handleConnectionError(error))),
+                    .pipe(catchError((error: AxiosError<AuthenticaitonResponse>) => this.handleConnectionError(error))),
             );
             this.tokenExpiryTimestampMs = now + PrivacyIdeaAdministrationService.AUTHORIZATION_TIMEBOX_MS;
             this.jwtToken = response.data.result.value.token;
