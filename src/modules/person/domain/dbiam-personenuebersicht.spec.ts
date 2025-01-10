@@ -114,6 +114,32 @@ describe('DbiamPersonenUebersicht', () => {
             );
         });
 
+        describe('when organisation entity is not found in OrgaMap', () => {
+            it('should return EntityNotFoundError', async () => {
+                orgaMap = new Map();
+                personenkontexte = [personenkontextPast, personenkontextRecent];
+
+                const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
+                    await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
+
+                expect(res).toBeDefined();
+                expect(res).toBeInstanceOf(EntityNotFoundError);
+            });
+        });
+
+        describe('when rolle entity is not found in RolleMap', () => {
+            it('should return EntityNotFoundError', async () => {
+                rolleMap = new Map();
+                personenkontexte = [personenkontextPast, personenkontextRecent];
+
+                const res: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
+                    await sut.createZuordnungenForKontexte(personenkontexte, rolleMap, orgaMap, undefined);
+
+                expect(res).toBeDefined();
+                expect(res).toBeInstanceOf(EntityNotFoundError);
+            });
+        });
+
         describe('when most recent PK is last or later in list', () => {
             it('should set lastModifiedZuordnungen to value of latest PK updatedAt timestamp', async () => {
                 personenkontexte = [personenkontextPast, personenkontextRecent];
