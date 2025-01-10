@@ -41,7 +41,7 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
   annotations:
-    ingress.kubernetes.io/rewrite-target: /health
+    nginx.ingress.kubernetes.io/rewrite-target: /health
     # authentication type
     nginx.ingress.kubernetes.io/auth-type: basic
     # name of the secret that contains the user/password definitions
