@@ -2239,7 +2239,6 @@ describe('PersonRepository Integration', () => {
                 DoFactory.createOrganisation(false),
             );
 
-
             const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
             const rolle2Result: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
             if (rolle1Result instanceof DomainError) throw Error();

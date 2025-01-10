@@ -32,7 +32,7 @@ import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.facto
         OIDCClientProvider,
         PersonPermissionsRepo,
         SessionAccessTokenMiddleware,
-        UserExternaldataWorkflowFactory
+        UserExternaldataWorkflowFactory,
     ],
     controllers: [AuthenticationController],
     exports: [OIDCClientProvider, PersonPermissionsRepo],
