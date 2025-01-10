@@ -1,6 +1,7 @@
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { ArrayType, Entity, ManyToOne, Property, Ref } from '@mikro-orm/core';
+import { ArrayType, Entity, Enum, ManyToOne, Property, Ref } from '@mikro-orm/core';
 import { ImportVorgangEntity } from './import-vorgang.entity.js';
+import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 
 @Entity({ tableName: 'importdataitem' })
 export class ImportDataItemEntity extends TimestampedEntity {
@@ -33,4 +34,11 @@ export class ImportDataItemEntity extends TimestampedEntity {
 
     @Property({ nullable: true })
     public password?: string;
+
+    @Enum({
+        items: () => ImportDataItemStatus,
+        nativeEnumName: 'import_data_item_status_enum',
+        onCreate: () => ImportDataItemStatus.PENDING,
+    })
+    public status?: ImportDataItemStatus;
 }
