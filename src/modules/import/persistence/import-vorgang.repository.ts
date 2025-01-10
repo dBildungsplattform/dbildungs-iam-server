@@ -29,9 +29,9 @@ export function mapEntityToAggregate(entity: ImportVorgangEntity): ImportVorgang
         entity.organisationsname,
         entity.dataItemCount,
         entity.status,
-        entity.importByPersonId,
-        entity.rolleId,
-        entity.organisationId,
+        entity.importByPersonId?.unwrap().id,
+        entity.rolleId?.unwrap().id,
+        entity.organisationId?.unwrap().id,
     );
 }
 
