@@ -68,6 +68,7 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -83,6 +84,7 @@ describe('PersonRepository Integration', () => {
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personenkontextFactory: PersonenkontextFactory;
     let userLockRepository: UserLockRepository;
+    let organisationRepository: OrganisationRepository;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -137,6 +139,7 @@ describe('PersonRepository Integration', () => {
         dbiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
+        organisationRepository = module.get(OrganisationRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -2229,6 +2232,14 @@ describe('PersonRepository Integration', () => {
                 merkmale: [RollenMerkmal.KOPERS_PFLICHT],
             });
 
+            const organisation1: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const organisation2: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+
+
             const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
             const rolle2Result: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
             if (rolle1Result instanceof DomainError) throw Error();
@@ -2239,16 +2250,19 @@ describe('PersonRepository Integration', () => {
             const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person1.id,
                 rolleId: rolle1Result.id,
+                organisationId: organisation1.id,
             });
 
             const personenKontext2: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person2.id,
                 rolleId: rolle2Result.id,
+                organisationId: organisation1.id,
             });
 
             const personenKontext3: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person3.id,
                 rolleId: rolle2Result.id,
+                organisationId: organisation1.id,
             });
 
             await dbiamPersonenkontextRepoInternal.save(personenKontext1);
@@ -2261,10 +2275,12 @@ describe('PersonRepository Integration', () => {
             const personenKontext4: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person3.id,
                 rolleId: rolle2Result.id,
+                organisationId: organisation2.id,
             });
             const personenKontext5: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                 personId: person4.id,
                 rolleId: rolle2Result.id,
+                organisationId: organisation2.id,
             });
 
             await dbiamPersonenkontextRepoInternal.save(personenKontext4);
@@ -2310,9 +2326,14 @@ describe('PersonRepository Integration', () => {
                 const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
                 if (rolle1Result instanceof DomainError) throw Error();
 
+                const organisation1: Organisation<true> = await organisationRepository.save(
+                    DoFactory.createOrganisation(false),
+                );
+
                 const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                     personId: person3.id,
                     rolleId: rolle1Result.id,
+                    organisationId: organisation1.id,
                 });
                 await dbiamPersonenkontextRepoInternal.save(personenKontext1);
                 // person without personenkontext but within the time limit for org_unassignment_Date
@@ -2345,9 +2366,14 @@ describe('PersonRepository Integration', () => {
                 const rolle1Result: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
                 if (rolle1Result instanceof DomainError) throw Error();
 
+                const organisation1: Organisation<true> = await organisationRepository.save(
+                    DoFactory.createOrganisation(false),
+                );
+
                 const personenKontext1: Personenkontext<false> = DoFactory.createPersonenkontext(false, {
                     personId: person1.id,
                     rolleId: rolle1Result.id,
+                    organisationId: organisation1.id,
                 });
                 await dbiamPersonenkontextRepoInternal.save(personenKontext1);
                 //get admins
