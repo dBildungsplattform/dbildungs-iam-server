@@ -936,21 +936,17 @@ describe('Import API', () => {
                 importvorgandId: importVorgang.id,
                 rollenname: sus.name,
                 organisationsname: schule.name,
-                importedUsers: {
-                    offset: 0,
-                    limit: 1,
-                    pageTotal: 1,
-                    total: 2,
-                    items: [
-                        {
-                            klasse: importDataItem.klasse,
-                            vorname: importDataItem.vorname,
-                            nachname: importDataItem.nachname,
-                            benutzername: importDataItem.username,
-                            startpasswort: expect.any(String) as unknown as string,
-                        },
-                    ],
-                },
+                pageTotal: 1,
+                total: 2,
+                importedUsers: [
+                    {
+                        klasse: importDataItem.klasse,
+                        vorname: importDataItem.vorname,
+                        nachname: importDataItem.nachname,
+                        benutzername: importDataItem.username,
+                        startpasswort: expect.any(String) as unknown as string,
+                    },
+                ],
             } as ImportResultResponse);
         });
 
@@ -1012,28 +1008,24 @@ describe('Import API', () => {
                 importvorgandId: importVorgang.id,
                 rollenname: sus.name,
                 organisationsname: schule.name,
-                importedUsers: {
-                    offset: 0,
-                    limit: 2,
-                    pageTotal: 2,
-                    total: 2,
-                    items: [
-                        {
-                            klasse: importDataItem.klasse,
-                            vorname: importDataItem.vorname,
-                            nachname: importDataItem.nachname,
-                            benutzername: importDataItem.username,
-                            startpasswort: expect.any(String) as unknown as string,
-                        },
-                        {
-                            klasse: importDataItem2.klasse,
-                            vorname: importDataItem2.vorname,
-                            nachname: importDataItem2.nachname,
-                            benutzername: importDataItem2.username,
-                            startpasswort: expect.any(String) as unknown as string,
-                        },
-                    ],
-                },
+                pageTotal: 2,
+                total: 2,
+                importedUsers: [
+                    {
+                        klasse: importDataItem.klasse,
+                        vorname: importDataItem.vorname,
+                        nachname: importDataItem.nachname,
+                        benutzername: importDataItem.username,
+                        startpasswort: expect.any(String) as unknown as string,
+                    },
+                    {
+                        klasse: importDataItem2.klasse,
+                        vorname: importDataItem2.vorname,
+                        nachname: importDataItem2.nachname,
+                        benutzername: importDataItem2.username,
+                        startpasswort: expect.any(String) as unknown as string,
+                    },
+                ],
             } as ImportResultResponse);
         });
 
