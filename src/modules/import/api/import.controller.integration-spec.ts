@@ -945,6 +945,7 @@ describe('Import API', () => {
                         nachname: importDataItem.nachname,
                         benutzername: importDataItem.username,
                         startpasswort: expect.any(String) as unknown as string,
+                        status: ImportDataItemStatus.PENDING,
                     },
                 ],
             } as ImportResultResponse);
@@ -1017,6 +1018,7 @@ describe('Import API', () => {
                         nachname: importDataItem.nachname,
                         benutzername: importDataItem.username,
                         startpasswort: expect.any(String) as unknown as string,
+                        status: ImportDataItemStatus.PENDING,
                     },
                     {
                         klasse: importDataItem2.klasse,
@@ -1024,6 +1026,7 @@ describe('Import API', () => {
                         nachname: importDataItem2.nachname,
                         benutzername: importDataItem2.username,
                         startpasswort: expect.any(String) as unknown as string,
+                        status: ImportDataItemStatus.PENDING,
                     },
                 ],
             } as ImportResultResponse);
