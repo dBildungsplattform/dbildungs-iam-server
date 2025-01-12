@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ImportDataItemEntity } from './import-data-item.entity.js';
 import { ImportDataItemScope } from './import-data-item.scope.js';
 import { ImportDataItem } from '../domain/import-data-item.js';
+import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 
 export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): RequiredEntityData<ImportDataItemEntity> {
     return {
@@ -14,6 +15,7 @@ export function mapAggregateToData(importDataItem: ImportDataItem<boolean>): Req
         validationErrors: importDataItem.validationErrors,
         username: importDataItem.username,
         password: importDataItem.password,
+        status: importDataItem.status,
     };
 }
 
@@ -30,13 +32,13 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.validationErrors,
         entity.username,
         entity.password,
+        entity.status,
     );
 }
 @Injectable()
 export class ImportDataRepository {
     public constructor(private readonly em: EntityManager) {}
 
-    //Optimierung: alle 50 Datensätze mit einem Call persistieren
     public async save(importDataItem: ImportDataItem<boolean>): Promise<ImportDataItem<true>> {
         if (importDataItem.id) {
             return this.update(importDataItem);
@@ -66,6 +68,16 @@ export class ImportDataRepository {
         await this.em.nativeDelete(ImportDataItemEntity, { importvorgangId: importvorgangId });
     }
 
+    public async createAll(importDataItems: ImportDataItem<false>[]): Promise<string[]> {
+        const entities: ImportDataItemEntity[] = importDataItems.map((importDataItem: ImportDataItem<false>) => {
+            return this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
+        });
+
+        await this.em.persistAndFlush(entities);
+
+        return entities.map((entity: ImportDataItemEntity) => entity.id);
+    }
+
     private async create(importDataItem: ImportDataItem<false>): Promise<ImportDataItem<true>> {
         const entity: ImportDataItemEntity = this.em.create(ImportDataItemEntity, mapAggregateToData(importDataItem));
 
@@ -82,5 +94,12 @@ export class ImportDataRepository {
         this.em.assign(entity, mapAggregateToData(importDataItem));
         await this.em.persistAndFlush(entity);
         return mapEntityToAggregate(entity);
+    }
+
+    public async countProcessedItems(importvorgangId: string): Promise<number> {
+        return this.em.count(ImportDataItemEntity, {
+            importvorgangId,
+            status: { $in: [ImportDataItemStatus.SUCCESS, ImportDataItemStatus.FAILED] },
+        });
     }
 }
