@@ -225,6 +225,7 @@ export class ImportWorkflow {
                     savedImportvorgang.id,
                     value.nachname,
                     value.vorname,
+                    ImportDataItemStatus.PENDING,
                     value.klasse,
                     value.personalnummer,
                     importDataItemErrors,

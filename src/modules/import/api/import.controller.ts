@@ -338,11 +338,11 @@ export class ImportController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting list of imported users.' })
     public async getImportedUsers(
         @Query() queryParams: ImportResultQueryParams,
-        @Permissions() _permissions: PersonPermissions,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<ImportResultResponse> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
         const result: Result<ImportResult> = await importWorkflow.getImportedUsers(
-            _permissions,
+            permissions,
             queryParams.importvorgangId,
             queryParams.offset,
             queryParams.limit,

@@ -27,6 +27,6 @@ export class ImportedUserResponse {
         this.nachname = importedDataItem.nachname;
         this.benutzername = importedDataItem.username!;
         this.startpasswort = importedDataItem.password!;
-        this.status = importedDataItem.status!;
+        this.status = importedDataItem.status;
     }
 }

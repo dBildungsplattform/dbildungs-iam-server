@@ -1,9 +1,8 @@
 import { PagedQueryParams } from '../../../shared/paging/index.js';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ImportResultQueryParams extends PagedQueryParams {
-    @IsOptional()
     @IsUUID()
     @ApiProperty({
         required: true,
