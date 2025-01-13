@@ -177,7 +177,10 @@ describe('ImportDataRepository', () => {
                     }),
                 )
             ).id;
-            const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, { importvorgangId });
+            const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
+                importvorgangId,
+                status: ImportDataItemStatus.SUCCESS,
+            });
 
             const savedImportDataItem: ImportDataItem<true> = await sut.save(importDataItem);
 
