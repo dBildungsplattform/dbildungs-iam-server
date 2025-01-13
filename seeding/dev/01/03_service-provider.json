@@ -26,7 +26,7 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Kalender-service",
             "keycloakRole": "Kalender-user",
-            "requires2fa": false
+            "requires2fa": true
         },
         {
             "id": 2,
@@ -39,7 +39,7 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Adressbuch-service",
             "keycloakRole": "Adressbuch-user",
-            "requires2fa": false
+            "requires2fa": true
         },
         {
             "id": 3,
