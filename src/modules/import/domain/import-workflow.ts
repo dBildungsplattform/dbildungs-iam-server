@@ -302,6 +302,7 @@ export class ImportWorkflow {
             };
         }
 
+        // The type check for organisationId and rolleId is in a separate method checkPermissionsAndImportvorgangValidity() in the same file
         this.initialize(importVorgang.organisationId!, importVorgang.rolleId!);
 
         const [importDataItems, total]: Counted<ImportDataItem<true>> =
@@ -484,7 +485,8 @@ export class ImportWorkflow {
             return new ImportCSVFileEmptyError();
         }
 
-        const numberOfRows: number = Math.ceil((csvContent.match(/[\r\n]/g) || []).length / 2);
+        // This regex will matc the \n: Line ending for Unix-based systems and also the \r\n: Line ending for Windows systems.
+        const numberOfRows: number = (csvContent.match(/\r?\n/g) || []).length;
         if (numberOfRows > this.CSV_MAX_NUMBER_OF_USERS) {
             return new ImportCSVFileMaxUsersError();
         }
