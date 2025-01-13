@@ -5,7 +5,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { PersonTimeLimitInfo } from './person-time-limit-info.js';
 import { TimeLimitOccasion } from './time-limit-occasion.enums.js';
-import { KOPERS_DEADLINE_IN_DAYS } from './person-time-limit.js';
+import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from './person-time-limit.js';
 
 @Injectable()
 export default class PersonTimeLimitService {
@@ -34,6 +34,13 @@ export default class PersonTimeLimitService {
                 lockInfos.push(new PersonTimeLimitInfo(TimeLimitOccasion.KOPERS, kopersdeadline));
             }
         }
+
+        if (person.orgUnassignmentDate) {
+            const noKontexteDeadline: Date = new Date(person.orgUnassignmentDate);
+            noKontexteDeadline.setDate(noKontexteDeadline.getDate() + NO_KONTEXTE_DEADLINE_IN_DAYS);
+            lockInfos.push(new PersonTimeLimitInfo(TimeLimitOccasion.NO_KONTEXTE, noKontexteDeadline));
+        }
+
         return lockInfos;
     }
 }
