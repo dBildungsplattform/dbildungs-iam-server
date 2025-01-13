@@ -42,11 +42,8 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /health
-    # authentication type
     nginx.ingress.kubernetes.io/auth-type: basic
-    # name of the secret that contains the user/password definitions
     nginx.ingress.kubernetes.io/auth-secret: {{ .Values.auth.secretName }}
-    # message to display with an appropriate context why the authentication is required
     nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - user'    
     {{- with .Values.backend.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
