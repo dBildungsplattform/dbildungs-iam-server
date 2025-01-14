@@ -127,13 +127,9 @@ export class LdapClientService {
         );
     }
 
-    public async addPersonToGroup(
-        personUid: string,
-        schoolReferrer: string,
-        lehrerUid: string,
-    ): Promise<Result<boolean>> {
+    public async addPersonToGroup(personUid: string, orgaKennung: string, lehrerUid: string): Promise<Result<boolean>> {
         return this.executeWithRetry(
-            () => this.addPersonToGroupInternal(personUid, schoolReferrer, lehrerUid),
+            () => this.addPersonToGroupInternal(personUid, orgaKennung, lehrerUid),
             LdapClientService.DEFAULT_RETRIES,
         );
     }
@@ -151,13 +147,26 @@ export class LdapClientService {
 
     public async removePersonFromGroup(
         referrer: PersonReferrer,
-        schoolReferrer: string,
+        orgaKennung: string,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
-            () => this.removePersonFromGroupInternal(referrer, schoolReferrer, lehrerUid),
+            () => this.removePersonFromGroupInternal(referrer, orgaKennung, lehrerUid),
             LdapClientService.DEFAULT_RETRIES,
         );
+    }
+
+    public async removePersonFromGroupByUsernameAndKennung(
+        referrer: PersonReferrer,
+        orgaKennung: string,
+        domain: string,
+    ): Promise<Result<boolean>> {
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) return rootName;
+
+        const lehrerUid: string = this.getLehrerUid(referrer, rootName.value);
+
+        return this.removePersonFromGroup(referrer, orgaKennung, lehrerUid);
     }
 
     public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
@@ -658,25 +667,25 @@ export class LdapClientService {
 
     private async addPersonToGroupInternal(
         personUid: string,
-        schoolReferrer: string,
+        orgaKennung: string,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
-        const groupId: string = 'lehrer-' + schoolReferrer;
+        const groupId: string = 'lehrer-' + orgaKennung;
         this.logger.info(`LDAP: Adding person ${personUid} to group ${groupId}`);
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
 
-        const orgUnitDn: string = `ou=${schoolReferrer},${this.ldapInstanceConfig.BASE_DN}`;
+        const orgUnitDn: string = `ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`;
         const searchResultOrgUnit: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
-            filter: `(ou=${schoolReferrer})`,
+            filter: `(ou=${orgaKennung})`,
         });
 
         if (!searchResultOrgUnit.searchEntries[0]) {
-            this.logger.info(`LDAP: organizationalUnit ${schoolReferrer} not found, creating organizationalUnit`);
+            this.logger.info(`LDAP: organizationalUnit ${orgaKennung} not found, creating organizationalUnit`);
 
             const newOrgUnit: { ou: string; objectClass: string } = {
-                ou: schoolReferrer,
+                ou: orgaKennung,
                 objectClass: 'organizationalUnit',
             };
             await client.add(orgUnitDn, newOrgUnit);
@@ -740,16 +749,16 @@ export class LdapClientService {
 
     private async removePersonFromGroupInternal(
         referrer: PersonReferrer,
-        schoolReferrer: string,
+        orgaKennung: string,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
-        const groupId: string = 'lehrer-' + schoolReferrer;
+        const groupId: string = 'lehrer-' + orgaKennung;
         this.logger.info(`LDAP: Removing person ${referrer} from group ${groupId}`);
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
         const searchResultOrgUnit: SearchResult = await client.search(
-            `cn=${LdapClientService.GROUPS},ou=${schoolReferrer},${this.ldapInstanceConfig.BASE_DN}`,
+            `cn=${LdapClientService.GROUPS},ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`,
             {
                 filter: `(cn=${groupId})`,
             },
