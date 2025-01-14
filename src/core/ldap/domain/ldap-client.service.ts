@@ -7,7 +7,7 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { UsernameRequiredError } from '../../../modules/person/domain/username-required.error.js';
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap-person-entry-changed.event.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
@@ -120,14 +120,22 @@ export class LdapClientService {
         );
     }
 
-    public async deleteLehrer(person: PersonData, orgaKennung: string, domain: string): Promise<Result<PersonData>> {
+    public async deleteLehrer(
+        person: PersonData,
+        orgaKennung: OrganisationKennung,
+        domain: string,
+    ): Promise<Result<PersonData>> {
         return this.executeWithRetry(
             () => this.deleteLehrerInternal(person, orgaKennung, domain),
             LdapClientService.DEFAULT_RETRIES,
         );
     }
 
-    public async addPersonToGroup(personUid: string, orgaKennung: string, lehrerUid: string): Promise<Result<boolean>> {
+    public async addPersonToGroup(
+        personUid: string,
+        orgaKennung: OrganisationKennung,
+        lehrerUid: string,
+    ): Promise<Result<boolean>> {
         return this.executeWithRetry(
             () => this.addPersonToGroupInternal(personUid, orgaKennung, lehrerUid),
             LdapClientService.DEFAULT_RETRIES,
@@ -147,7 +155,7 @@ export class LdapClientService {
 
     public async removePersonFromGroup(
         referrer: PersonReferrer,
-        orgaKennung: string,
+        orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
@@ -158,7 +166,7 @@ export class LdapClientService {
 
     public async removePersonFromGroupByUsernameAndKennung(
         referrer: PersonReferrer,
-        orgaKennung: string,
+        orgaKennung: OrganisationKennung,
         domain: string,
     ): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
@@ -531,7 +539,7 @@ export class LdapClientService {
 
     private async deleteLehrerInternal(
         person: PersonData,
-        orgaKennung: string,
+        orgaKennung: OrganisationKennung,
         domain: string,
     ): Promise<Result<PersonData>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
@@ -667,7 +675,7 @@ export class LdapClientService {
 
     private async addPersonToGroupInternal(
         personUid: string,
-        orgaKennung: string,
+        orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
         const groupId: string = 'lehrer-' + orgaKennung;
@@ -749,7 +757,7 @@ export class LdapClientService {
 
     private async removePersonFromGroupInternal(
         referrer: PersonReferrer,
-        orgaKennung: string,
+        orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
         const groupId: string = 'lehrer-' + orgaKennung;
