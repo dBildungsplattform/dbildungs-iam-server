@@ -77,6 +77,50 @@ describe('Person', () => {
             expect(person.userLock).toEqual([]);
             expect(person.istTechnisch).toEqual(false);
         });
+
+        it.each([
+            [true, true],
+            [false, false],
+            [undefined, false],
+        ])('when input is %s, it should set istTechnisch to %s', (input: boolean | undefined, expected: boolean) => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '5',
+                faker.lorem.word(),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                input,
+            );
+
+            expect(person).toBeDefined();
+            expect(person).toBeInstanceOf(Person<true>);
+            expect(person.istTechnisch).toEqual(expected);
+        });
     });
 
     describe('createNew', () => {

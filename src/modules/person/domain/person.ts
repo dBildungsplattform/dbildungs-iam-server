@@ -83,7 +83,7 @@ export class Person<WasPersisted extends boolean> {
         public istTechnisch: boolean,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
-        this.istTechnisch = istTechnisch ?? false;
+        this.istTechnisch = istTechnisch;
     }
 
     public get newPassword(): string | undefined {
