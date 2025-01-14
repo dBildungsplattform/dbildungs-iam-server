@@ -314,6 +314,7 @@ export class DbSeedService {
                 vorname: file.vorname,
                 username: file.username,
                 password: file.password,
+                istTechnisch: true,
             };
 
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);

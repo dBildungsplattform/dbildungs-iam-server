@@ -175,4 +175,8 @@ export class PersonEntity extends TimestampedEntity {
         orphanRemoval: true,
     })
     public userLocks: Collection<UserLockEntity> = new Collection<UserLockEntity>(this);
+
+    @AutoMap()
+    @Property({ default: false })
+    public istTechnisch!: boolean;
 }

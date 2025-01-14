@@ -54,4 +54,6 @@ export class PersonFile {
     public revision!: string;
 
     public personalnummer?: string;
+
+    public istTechnisch?: string;
 }
