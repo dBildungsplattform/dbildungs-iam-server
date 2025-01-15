@@ -54,8 +54,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 faker.string.uuid(),
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 faker.lorem.word(),
                 undefined,
             );
@@ -115,8 +115,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 importvorgangId,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '1A',
                 undefined,
             );
@@ -125,8 +125,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 importvorgangId,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '1B',
                 undefined,
             );
@@ -135,8 +135,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 importvorgang2.id,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '1C',
                 undefined,
             );
@@ -196,8 +196,8 @@ describe('ImportDataRepository', () => {
             createdImportDataItem.status = ImportDataItemStatus.SUCCESS;
             const savedImportDataItem: ImportDataItem<true> = await sut.save(createdImportDataItem);
 
-            savedImportDataItem.nachname = faker.name.lastName();
-            savedImportDataItem.vorname = faker.name.firstName();
+            savedImportDataItem.nachname = faker.person.lastName();
+            savedImportDataItem.vorname = faker.person.firstName();
             savedImportDataItem.klasse = '1A';
             savedImportDataItem.status = ImportDataItemStatus.SUCCESS;
 
@@ -237,8 +237,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 importvorgangId,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '1A',
                 undefined,
             );
@@ -247,8 +247,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 importvorgangId,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '1B',
                 undefined,
             );
@@ -319,8 +319,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 importvorgangId,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '1A',
                 undefined,
             );
@@ -329,8 +329,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 importvorgangId,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '1B',
                 undefined,
             );
@@ -339,8 +339,8 @@ describe('ImportDataRepository', () => {
                 faker.date.past(),
                 faker.date.recent(),
                 importvorgangId,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '1C',
                 undefined,
             );
