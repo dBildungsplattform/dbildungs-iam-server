@@ -189,7 +189,7 @@ export class EmailEventHandler {
     // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}`,
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
         await this.handlePerson(event.person.id, event.person.referrer, event.removedKontexte);
