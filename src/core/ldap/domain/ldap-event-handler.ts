@@ -36,7 +36,9 @@ export class LdapEventHandler {
 
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
-        this.logger.info(`Received PersonenkontextDeletedEvent, personId:${event.personId}`);
+        this.logger.info(
+            `Received PersonenkontextDeletedEvent, personId:${event.personId}, referrer:${event.referrer}`,
+        );
         const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.referrer);
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
@@ -133,7 +135,9 @@ export class LdapEventHandler {
 
     @EventHandler(PersonRenamedEvent)
     public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
-        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
+        this.logger.info(
+            `Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
+        );
         const modifyResult: Result<PersonID> = await this.ldapClientService.modifyPersonAttributes(
             event.oldReferrer,
             event.vorname,
@@ -150,7 +154,7 @@ export class LdapEventHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, new personenkontexte: ${event.newKontexte.length}, deleted personenkontexte: ${event.removedKontexte.length}`,
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
         await Promise.allSettled(
@@ -235,7 +239,7 @@ export class LdapEventHandler {
     @EventHandler(EmailAddressGeneratedEvent)
     public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
+            `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddress:${event.address}`,
         );
 
         await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.referrer, event.address);
@@ -244,7 +248,7 @@ export class LdapEventHandler {
     @EventHandler(EmailAddressChangedEvent)
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}`,
+            `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, newEmailAddress:${event.newAddress}`,
         );
 
         await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.referrer, event.newAddress);
