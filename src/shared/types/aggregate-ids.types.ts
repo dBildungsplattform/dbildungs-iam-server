@@ -9,6 +9,9 @@ export type PersonReferrer = Flavor<string, typeof personReferrerSymbol>;
 declare const organisationSymbol: unique symbol;
 export type OrganisationID = Flavor<string, typeof organisationSymbol>;
 
+declare const organisationKennungSymbol: unique symbol;
+export type OrganisationKennung = Flavor<string, typeof organisationKennungSymbol>;
+
 declare const rolleSymbol: unique symbol;
 export type RolleID = Flavor<string, typeof rolleSymbol>;
 
