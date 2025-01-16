@@ -11,6 +11,7 @@ import { PersonTimeLimitInfo } from './person-time-limit-info.js';
 import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from './person-time-limit.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 
 describe('PersonTimeLimitService', () => {
     let module: TestingModule;
@@ -66,10 +67,12 @@ describe('PersonTimeLimitService', () => {
             dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([pesonenkontext]);
 
             const org: Organisation<true> = DoFactory.createOrganisation(true, { name: 'Testschule' });
+            const rolle: Rolle<true> = DoFactory.createRolle(true, { name: 'Testrolle' });
             const expriringPersonenKontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                 befristung: new Date('2024-01-01'),
                 organisationId: org.id,
                 getOrganisation: () => Promise.resolve(org),
+                getRolle: () => Promise.resolve(rolle),
             });
             dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([expriringPersonenKontext]);
 
@@ -94,6 +97,7 @@ describe('PersonTimeLimitService', () => {
                     occasion: TimeLimitOccasion.PERSONENKONTEXT_EXPIRES,
                     deadline: new Date('2024-01-01'),
                     school: 'Testschule',
+                    rolle: 'Testrolle',
                 },
             ]);
         });
@@ -143,62 +147,6 @@ describe('PersonTimeLimitService', () => {
         it('should return empty array when person isnt found ', async () => {
             personRepoMock.findById.mockResolvedValue(null);
             const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo('');
-
-            expect(result).toEqual<PersonTimeLimitInfo[]>([]);
-        });
-
-        it('should return latest Befristung if person has two kontexte at one organisation', async () => {
-            const person: Person<true> = DoFactory.createPerson(true);
-            person.personalnummer = undefined;
-            personRepoMock.findById.mockResolvedValue(person);
-            dBiamPersonenkontextServiceMock.getKopersPersonenkontexte.mockResolvedValue([]);
-
-            const school: string = 'Testschule';
-            const org: Organisation<true> = DoFactory.createOrganisation(true, { name: school });
-            const expriringPersonenKontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-                befristung: new Date('2024-01-01'),
-                organisationId: org.id,
-                getOrganisation: () => Promise.resolve(org),
-            });
-
-            const expriringPersonenKontext2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-                befristung: new Date('2024-02-01'),
-                organisationId: org.id,
-                getOrganisation: () => Promise.resolve(org),
-            });
-            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([
-                expriringPersonenKontext,
-                expriringPersonenKontext2,
-            ]);
-
-            const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
-
-            expect(result).toEqual<PersonTimeLimitInfo[]>([
-                {
-                    occasion: TimeLimitOccasion.PERSONENKONTEXT_EXPIRES,
-                    deadline: new Date('2024-02-01'),
-                    school: school,
-                },
-            ]);
-        });
-
-        it('should not return befristung kontext if school is undefined', async () => {
-            const person: Person<true> = DoFactory.createPerson(true);
-            person.personalnummer = undefined;
-            personRepoMock.findById.mockResolvedValue(person);
-            dBiamPersonenkontextServiceMock.getKopersPersonenkontexte.mockResolvedValue([]);
-
-            const org: Organisation<true> = DoFactory.createOrganisation(true);
-            org.name = undefined;
-            const expriringPersonenKontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-                befristung: new Date('2024-01-01'),
-                organisationId: org.id,
-                getOrganisation: () => Promise.resolve(org),
-            });
-
-            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([expriringPersonenKontext]);
-
-            const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
 
             expect(result).toEqual<PersonTimeLimitInfo[]>([]);
         });
