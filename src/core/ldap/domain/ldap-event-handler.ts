@@ -169,27 +169,31 @@ export class LdapEventHandler {
                     }
                     return this.getEmailDomainForOrganisationId(pk.orgaId)
                         .catch((error: Error) => {
-                            this.logger.error(`Error while getEmailDomainForOrganisationId: ${error.message}`);
+                            this.logger.error(`Error in getEmailDomainForOrganisationId: ${error.message}`);
                             return Promise.reject(error);
                         })
                         .then((emailDomain: Result<string>) => {
                             if (emailDomain.ok) {
                                 this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
                                 return this.ldapClientService
-                                    .deleteLehrer(event.person, pk.orgaKennung!, emailDomain.value)
-                                    .then((deletionResult: Result<PersonData>) => {
-                                        if (!deletionResult.ok) {
-                                            this.logger.error(deletionResult.error.message);
+                                    .removePersonFromGroupByUsernameAndKennung(
+                                        event.person.referrer!,
+                                        pk.orgaKennung!,
+                                        emailDomain.value,
+                                    )
+                                    .then((removeFromGroupResult: Result<boolean>) => {
+                                        if (!removeFromGroupResult.ok) {
+                                            this.logger.error(removeFromGroupResult.error.message);
                                         }
-                                        return deletionResult;
+                                        return removeFromGroupResult;
                                     })
                                     .catch((error: Error) => {
-                                        this.logger.error(`Error while deleteLehrer: ${error.message}`);
+                                        this.logger.error(`Error in removePersonFromGroup: ${error.message}`);
                                         return Promise.reject(error);
                                     });
                             } else {
                                 this.logger.error(
-                                    `LdapClientService deleteLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
+                                    `LdapClientService removePersonFromGroup NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
                                 );
                                 return Promise.reject(new Error('Invalid email domain'));
                             }
@@ -208,7 +212,7 @@ export class LdapEventHandler {
                     }
                     return this.getEmailDomainForOrganisationId(pk.orgaId)
                         .catch((error: Error) => {
-                            this.logger.error(`Error while getEmailDomainForOrganisationId: ${error.message}`);
+                            this.logger.error(`Error in getEmailDomainForOrganisationId: ${error.message}`);
                             return Promise.reject(error);
                         })
                         .then((emailDomain: Result<string>) => {
@@ -222,7 +226,7 @@ export class LdapEventHandler {
                                         return creationResult;
                                     })
                                     .catch((error: Error) => {
-                                        this.logger.error(`Error while createLehrer: ${error.message}`);
+                                        this.logger.error(`Error in createLehrer: ${error.message}`);
                                         return Promise.reject(error);
                                     });
                             } else {
@@ -248,7 +252,7 @@ export class LdapEventHandler {
     @EventHandler(EmailAddressChangedEvent)
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, newEmailAddress:${event.newAddress}`,
+            `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
         );
 
         await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.referrer, event.newAddress);

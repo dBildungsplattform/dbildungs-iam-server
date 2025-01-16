@@ -509,7 +509,7 @@ describe('LDAP Event Handler', () => {
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.removePersonFromGroupByUsernameAndKennung).toHaveBeenCalledTimes(1);
         });
 
         it('should NOT call ldap client for deleting person in LDAP when person still has at least one PK with rollenArt LEHR left', async () => {
@@ -589,7 +589,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `LdapClientService deleteLehrer NOT called, because organisation:${removedOrgaId} has no valid emailDomain`,
+                `LdapClientService removePersonFromGroup NOT called, because organisation:${removedOrgaId} has no valid emailDomain`,
             );
             expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(0);
         });
@@ -627,7 +627,7 @@ describe('LDAP Event Handler', () => {
             });
         });
 
-        it('should execute without errors, if deletion of lehrer fails', async () => {
+        it('should execute without errors, if removePersonFromGroup fails', async () => {
             const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
                 {
                     id: faker.string.uuid(),
@@ -649,7 +649,7 @@ describe('LDAP Event Handler', () => {
                 ],
                 [],
             );
-            ldapClientServiceMock.deleteLehrer.mockResolvedValueOnce({
+            ldapClientServiceMock.removePersonFromGroupByUsernameAndKennung.mockResolvedValueOnce({
                 ok: false,
                 error: new Error('Error'),
             });
@@ -658,7 +658,7 @@ describe('LDAP Event Handler', () => {
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-            expect(ldapClientServiceMock.deleteLehrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.removePersonFromGroupByUsernameAndKennung).toHaveBeenCalledTimes(1);
         });
 
         it('should log an error when a removed personenkontext has no orgaKennung', async () => {
@@ -718,7 +718,7 @@ describe('LDAP Event Handler', () => {
             expect(ldapClientServiceMock.createLehrer).toHaveBeenCalledTimes(0);
         });
 
-        it('should log error when error occurs while delete Lehrer', async () => {
+        it('should log error when error occurs in removePersonFromGroupByUsernameAndKennung', async () => {
             const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
                 {
                     id: faker.string.uuid(),
@@ -751,12 +751,14 @@ describe('LDAP Event Handler', () => {
             );
 
             organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
-            ldapClientServiceMock.deleteLehrer.mockRejectedValueOnce(new Error('deleteLehrer error'));
+            ldapClientServiceMock.removePersonFromGroupByUsernameAndKennung.mockRejectedValueOnce(
+                new Error('removePersonFromGroup error'),
+            );
 
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
             expect(loggerMock.error).toHaveBeenCalledTimes(1);
-            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Error while deleteLehrer:'));
+            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Error in removePersonFromGroup:'));
         });
 
         it('should log error when error occurs while getEmailDomainForOrganisationId deleting person', async () => {
@@ -797,7 +799,7 @@ describe('LDAP Event Handler', () => {
 
             expect(loggerMock.error).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenCalledWith(
-                expect.stringContaining('Error while getEmailDomainForOrganisationId:'),
+                expect.stringContaining('Error in getEmailDomainForOrganisationId:'),
             );
         });
 
@@ -839,7 +841,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
 
             expect(loggerMock.error).toHaveBeenCalledTimes(1);
-            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Error while createLehrer:'));
+            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Error in createLehrer:'));
         });
 
         it('should log error when error occurs while getEmailDomainForOrganisationId adding person', async () => {
@@ -880,7 +882,7 @@ describe('LDAP Event Handler', () => {
 
             expect(loggerMock.error).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenCalledWith(
-                expect.stringContaining('Error while getEmailDomainForOrganisationId:'),
+                expect.stringContaining('Error in getEmailDomainForOrganisationId:'),
             );
         });
     });
@@ -920,7 +922,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handleEmailAddressChangedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, newEmailAddress:${event.newAddress}`,
+                `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });
