@@ -86,4 +86,9 @@
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: vidis-password
+- name: METRICS_BASIC_AUTH
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: auth
 {{- end}}

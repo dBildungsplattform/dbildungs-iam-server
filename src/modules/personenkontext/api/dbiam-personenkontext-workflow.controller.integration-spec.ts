@@ -496,10 +496,14 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 if (rolle instanceof DomainError) {
                     throw rolle;
                 }
+                const organisation: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
                 const savedPK: Personenkontext<true> = await personenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
                         personId: person.id,
                         rolleId: rolle.id,
+                        organisationId: organisation.id,
                         updatedAt: new Date(),
                     }),
                 );

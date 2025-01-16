@@ -115,7 +115,9 @@ export class ItsLearningPersonsEventHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteEventHandler(event: PersonenkontextUpdatedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
-            this.logger.info(`[EventID: ${event.eventID}] Received PersonenkontextUpdatedEvent, ${event.person.id}`);
+            this.logger.info(
+                `[EventID: ${event.eventID}] Received PersonenkontextUpdatedEvent, ${event.person.id}, ${event.person.referrer}`,
+            );
 
             if (!this.ENABLED) {
                 return this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
@@ -209,7 +211,7 @@ export class ItsLearningPersonsEventHandler {
      * Delete this person in itslearning
      */
     public async deletePerson(personID: PersonID, eventID: string): Promise<void> {
-        const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(personID);
+        const deleteError: Option<DomainError> = await this.itslearningPersonRepo.deletePerson(personID, eventID);
 
         if (!deleteError) {
             this.logger.info(`[EventID: ${eventID}] Person with ID ${personID} deleted.`);
