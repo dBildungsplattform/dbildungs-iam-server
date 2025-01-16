@@ -25,6 +25,6 @@ import { ImportPasswordEncryptor } from './domain/import-password-encryptor.js';
         ImportEventHandler,
         ImportPasswordEncryptor,
     ],
-    exports: [ImportWorkflowFactory, ImportVorgangRepository],
+    exports: [ImportWorkflowFactory, ImportVorgangRepository, ImportDataRepository],
 })
 export class ImportModule {}

@@ -3,7 +3,7 @@ fullnameOverride: ''
 namespaceOverride: ''
 
 backendHostname: ''
-keycloakHostname: ''
+keycloakHostname: 'http://dbildungs-iam-keycloak'
 keycloak2ndHostname: ""
 backend2ndHostname: ""
 
@@ -68,6 +68,7 @@ auth:
   import_passphrase_secret: ''
   import_passphrase_salt: ''
   ox_password: ''
+  basic_auth_password: ''
 
 ox:
   enabled: false
@@ -121,6 +122,7 @@ backend:
     # Only enable if 2nd host name is defined
     enabled2nd: false
     enabled: true
+    healthenabled: true
     ingressClassName: nginx
     pathType: Prefix
     portnumber: 80

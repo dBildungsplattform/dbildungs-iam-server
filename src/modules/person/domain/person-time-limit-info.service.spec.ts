@@ -59,6 +59,7 @@ describe('PersonTimeLimitService', () => {
     describe('getPersonTimeLimitInfo', () => {
         it('should return PersonTimeLimitInfo array', async () => {
             const person: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: new Date('2024-01-01') });
+            const person: Person<true> = DoFactory.createPerson(true, { orgUnassignmentDate: new Date('2024-01-01') });
             person.personalnummer = undefined;
             personRepoMock.findById.mockResolvedValue(person);
 
@@ -78,6 +79,11 @@ describe('PersonTimeLimitService', () => {
 
             const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
 
+            const expectedKopersDeadline: Date = new Date(pesonenkontext.createdAt);
+            expectedKopersDeadline.setDate(expectedKopersDeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
+
+            const expectedNoKontexteDeadline: Date = new Date(person.orgUnassignmentDate!);
+            expectedNoKontexteDeadline.setDate(expectedNoKontexteDeadline.getDate() + NO_KONTEXTE_DEADLINE_IN_DAYS);
             const expectedKopersDeadline: Date = new Date(pesonenkontext.createdAt);
             expectedKopersDeadline.setDate(expectedKopersDeadline.getDate() + KOPERS_DEADLINE_IN_DAYS);
 
