@@ -38,7 +38,6 @@ export class ImportDataItemEntity extends TimestampedEntity {
     @Enum({
         items: () => ImportDataItemStatus,
         nativeEnumName: 'import_data_item_status_enum',
-        onCreate: () => ImportDataItemStatus.PENDING,
     })
-    public status?: ImportDataItemStatus;
+    public status?: ImportDataItemStatus = ImportDataItemStatus.PENDING;
 }
