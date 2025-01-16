@@ -4,12 +4,12 @@ export class Migration20250104001708 extends Migration {
     public async up(): Promise<void> {
         // Update the status for existing records based on `importvorgang`
         this.addSql(`
-            UPDATE "importdataitem" di
-            SET di."status" = 'SUCCESS'
-            WHERE di."importvorgang_id" IN (
-                SELECT iv.id
-                FROM "importvorgang" iv
-                WHERE iv."status" = 'FINISHED'
+            UPDATE "importdataitem" 
+            SET "status" = 'SUCCESS'
+            WHERE "importvorgang_id" IN (
+                SELECT "id"
+                FROM "importvorgang"
+                WHERE "status" = 'FINISHED'
             );
         `);
 
