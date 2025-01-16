@@ -12,9 +12,13 @@ export class PersonTimeLimitInfoResponse {
     @ApiProperty({ nullable: true })
     public school?: string;
 
+    @ApiProperty({ nullable: true })
+    public rolle?: string;
+
     public constructor(personTimeLimitInfo: PersonTimeLimitInfo) {
         this.occasion = personTimeLimitInfo.occasion;
         this.deadline = personTimeLimitInfo.deadline.toISOString();
         this.school = personTimeLimitInfo.school;
+        this.rolle = personTimeLimitInfo.rolle;
     }
 }

@@ -8,6 +8,7 @@ import { TimeLimitOccasion } from './time-limit-occasion.enums.js';
 import { KONTEXT_EXPIRES_IN_DAYS, KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from './person-time-limit.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 
 @Injectable()
 export default class PersonTimeLimitService {
@@ -46,7 +47,7 @@ export default class PersonTimeLimitService {
 
         const personenKontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(personId);
 
-        const organisationPromises: Promise<PersonTimeLimitInfo | null>[] = personenKontexte.map(
+        const timeLimitInfosPromises: Promise<PersonTimeLimitInfo | null>[] = personenKontexte.map(
             async (personenKontext: Personenkontext<true>) => {
                 if (personenKontext.befristung != null) {
                     const personenKontextExpires: Date = new Date(personenKontext.befristung);
@@ -56,10 +57,13 @@ export default class PersonTimeLimitService {
                     const timeDiffDays: number = Math.floor(timeDiffMs / (1000 * 3600 * 24));
                     if (timeDiffDays <= KONTEXT_EXPIRES_IN_DAYS) {
                         const organisation: Option<Organisation<true>> = await personenKontext.getOrganisation();
+                        const rolle: Option<Rolle<true>> = await personenKontext.getRolle();
+
                         return new PersonTimeLimitInfo(
                             TimeLimitOccasion.PERSONENKONTEXT_EXPIRES,
                             personenKontextExpires,
                             organisation?.name,
+                            rolle?.name,
                         );
                     }
                 }
@@ -67,26 +71,10 @@ export default class PersonTimeLimitService {
             },
         );
 
-        const organisationInfos: (PersonTimeLimitInfo | null)[] = await Promise.all(organisationPromises);
-        const validInfos: PersonTimeLimitInfo[] = organisationInfos.filter(
+        const timeLimitInfos: (PersonTimeLimitInfo | null)[] = await Promise.all(timeLimitInfosPromises);
+        const validTimeLimitInfos: PersonTimeLimitInfo[] = timeLimitInfos.filter(
             (info: PersonTimeLimitInfo | null): info is PersonTimeLimitInfo => info !== null,
         );
-
-        const latestInfosMap: Map<string, PersonTimeLimitInfo> = new Map();
-
-        validInfos.forEach((info: PersonTimeLimitInfo) => {
-            const orgName: string | undefined = info.school;
-            if (!orgName) {
-                return;
-            }
-            const existingInfo: PersonTimeLimitInfo | undefined = latestInfosMap.get(orgName);
-
-            if (!existingInfo || existingInfo.deadline < info.deadline) {
-                latestInfosMap.set(orgName, info);
-            }
-        });
-
-        lockInfos.push(...latestInfosMap.values());
-        return lockInfos;
+        return lockInfos.concat(validTimeLimitInfos);
     }
 }
