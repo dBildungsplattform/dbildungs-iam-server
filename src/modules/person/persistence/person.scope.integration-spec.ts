@@ -24,6 +24,7 @@ import { PersonenKontextModule } from '../../personenkontext/personenkontext.mod
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { mapAggregateToData } from './person.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -32,6 +33,7 @@ describe('PersonScope', () => {
     let kontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let rolleRepo: RolleRepo;
     let personenkontextFactory: PersonenkontextFactory;
+    let organisationRepository: OrganisationRepository;
 
     const createPersonEntity = (): PersonEntity => {
         const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
@@ -70,6 +72,7 @@ describe('PersonScope', () => {
         kontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         rolleRepo = module.get(RolleRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
+        organisationRepository = module.get(OrganisationRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -180,21 +183,22 @@ describe('PersonScope', () => {
         });
 
         describe('when filtering for organisation ID', () => {
-            const orgnisationID: string = faker.string.uuid();
+            let organisation: Organisation<true>;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
                 if (rolle instanceof DomainError) throw Error();
+                organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 await em.persistAndFlush([person1, person2]);
-                await createPersonenkontext(person1.id, orgnisationID, rolle.id);
+                await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findBy({ organisationen: [orgnisationID] })
+                    .findBy({ organisationen: [organisation.id] })
                     .sortBy('vorname', ScopeOrder.ASC);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
@@ -204,7 +208,7 @@ describe('PersonScope', () => {
         });
 
         describe('when filtering for organisation ID & Rollen ID', () => {
-            const orgnisationID: string = faker.string.uuid();
+            let organisation: Organisation<true>;
             let rolleID: string;
 
             beforeEach(async () => {
@@ -212,15 +216,15 @@ describe('PersonScope', () => {
                 const person2: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
                 if (rolle instanceof DomainError) throw Error();
-
+                organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
                 rolleID = rolle.id;
                 await em.persistAndFlush([person1, person2]);
-                await createPersonenkontext(person1.id, orgnisationID, rolle.id);
+                await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findByPersonenKontext([orgnisationID], [rolleID])
+                    .findByPersonenKontext([organisation.id], [rolleID])
                     .sortBy('vorname', ScopeOrder.ASC);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
@@ -230,20 +234,21 @@ describe('PersonScope', () => {
         });
 
         describe('when filtering for organisation ID only', () => {
-            const organisationID: string = faker.string.uuid();
+            let organisation: Organisation<true>;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
                 if (rolle instanceof DomainError) throw Error();
+                organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 await em.persistAndFlush([person1]);
-                await createPersonenkontext(person1.id, organisationID, rolle.id);
+                await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findByPersonenKontext([organisationID])
+                    .findByPersonenKontext([organisation.id])
                     .sortBy('vorname', ScopeOrder.ASC);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
@@ -254,15 +259,17 @@ describe('PersonScope', () => {
 
         describe('when filtering for Rolle ID only', () => {
             let rolleID: string;
+            let organisation: Organisation<true>;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
                 if (rolle instanceof DomainError) throw Error();
+                organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 rolleID = rolle.id;
                 await em.persistAndFlush([person1]);
-                await createPersonenkontext(person1.id, faker.string.uuid(), rolleID);
+                await createPersonenkontext(person1.id, organisation.id, rolleID);
             });
 
             it('should return found persons', async () => {

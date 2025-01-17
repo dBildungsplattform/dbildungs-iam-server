@@ -149,23 +149,29 @@ describe('dbiam Personenkontext API', () => {
             if (personB instanceof DomainError) {
                 throw personB;
             }
+
+            const organisation: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+
             await Promise.all([
                 personenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
                         personId: personA.id,
                         rolleId: rolleA.id,
+                        organisationId: organisation.id,
                     }),
                 ),
                 personenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
                         personId: personA.id,
                         rolleId: rolleB.id,
+                        organisationId: organisation.id,
                     }),
                 ),
                 personenkontextRepoInternal.save(
                     DoFactory.createPersonenkontext(false, {
                         personId: personB.id,
                         rolleId: rolleC.id,
+                        organisationId: organisation.id,
                     }),
                 ),
             ]);
