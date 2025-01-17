@@ -189,7 +189,8 @@ describe('EmailEventHandler', () => {
             fakeEmailAddress = faker.internet.email();
             event = createMock<PersonenkontextUpdatedEvent>({
                 person: { id: fakePersonId },
-                removedKontexte: undefined,
+                removedKontexte: [],
+                newKontexte: [],
             });
             personRenamedEvent = new PersonRenamedEvent(
                 fakePersonId,
@@ -347,7 +348,8 @@ describe('EmailEventHandler', () => {
 
             event = createMock<PersonenkontextUpdatedEvent>({
                 person: { id: fakePersonId, referrer: fakeReferrer },
-                removedKontexte: undefined,
+                removedKontexte: [],
+                newKontexte: [],
             });
             personenkontexte = [createMock<Personenkontext<true>>({ rolleId: fakeRolleId })];
 
