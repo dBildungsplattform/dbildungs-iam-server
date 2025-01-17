@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiExcludeController, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -25,16 +25,23 @@ export class KeycloakInternalController {
         private readonly personRepository: PersonRepository,
     ) {}
 
-    @Get('externaldata/:sub')
+    /*
+    Dieser Endpunkt fragt lediglich Daten ab ist allerdigs trotzdem als POST definiert, da:
+    Die Url sollte keine Path oder Query Paremeters haben da Sie statisch in der Keycloak UI hinterlegt werden muss
+    Trotzdem muss die Keycloak Sub übermittelt werden (Deshalb POST mit Body)
+    */
+
+    @Post('externaldata')
+    @HttpCode(200)
     @Public()
     @ApiOperation({ summary: 'External Data about requested in user.' })
     @ApiOkResponse({ description: 'Returns external Data about the requested user.', type: UserExeternalDataResponse })
-    public async getExternalData(@Param('sub') keycloakSub: string): Promise<UserExeternalDataResponse> {
-        const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(keycloakSub);
+    public async getExternalData(@Body() params: { sub: string }): Promise<UserExeternalDataResponse> {
+        const person: Option<Person<true>> = await this.personRepository.findByKeycloakUserId(params.sub);
         if (!person) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new EntityNotFoundError('Person with keycloak sub', keycloakSub),
+                    new EntityNotFoundError('Person with keycloak sub', params.sub),
                 ),
             );
         }
