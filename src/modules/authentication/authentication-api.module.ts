@@ -14,6 +14,7 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.factory.js';
+import { KeycloakInternalController } from './api/keycloakinternal.controller.js';
 
 @Module({
     imports: [
@@ -34,7 +35,7 @@ import { UserExternaldataWorkflowFactory } from './domain/user-extenaldata.facto
         SessionAccessTokenMiddleware,
         UserExternaldataWorkflowFactory,
     ],
-    controllers: [AuthenticationController],
+    controllers: [AuthenticationController, KeycloakInternalController],
     exports: [OIDCClientProvider, PersonPermissionsRepo],
 })
 export class AuthenticationApiModule {}
