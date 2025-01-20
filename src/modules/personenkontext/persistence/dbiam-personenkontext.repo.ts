@@ -8,11 +8,22 @@ import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-
 export type RollenCount = { rollenart: string; count: string };
+
+export type ExternalPkData = {
+    rollenart?: RollenArt;
+    kennung?: string;
+};
+
+export type ExternalPkDataLoaded = Loaded<
+    PersonenkontextEntity,
+    'organisationId' | 'rolleId',
+    'organisationId.kennung' | 'rolleId.rollenart',
+    never
+>;
 
 function mapEntityToAggregate(
     entity: PersonenkontextEntity,
@@ -24,7 +35,7 @@ function mapEntityToAggregate(
         entity.updatedAt,
         entity.revision,
         entity.personId.id,
-        entity.organisationId,
+        entity.organisationId.id,
         entity.rolleId.id,
         entity.referrer,
         entity.mandant,
@@ -68,7 +79,7 @@ export class DBiamPersonenkontextRepo {
 
         if (
             !(await permissions.hasSystemrechtAtOrganisation(
-                personenkontext.organisationId,
+                personenkontext.organisationId.id,
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             ))
         ) {
@@ -188,6 +199,21 @@ export class DBiamPersonenkontextRepo {
         );
 
         return !!personenKontext;
+    }
+
+    public async findExternalPkData(personId: PersonID): Promise<ExternalPkData[]> {
+        const personenkontextEntities: ExternalPkDataLoaded[] = await this.em.find(
+            PersonenkontextEntity,
+            { personId },
+            {
+                populate: ['rolleId', 'organisationId'],
+                fields: ['rolleId.rollenart', 'organisationId.kennung'],
+            },
+        );
+        return personenkontextEntities.map((pk: ExternalPkDataLoaded) => ({
+            rollenart: pk.rolleId.unwrap().rollenart,
+            kennung: pk.organisationId.unwrap().kennung,
+        }));
     }
 
     public async hasSystemrechtAtOrganisation(

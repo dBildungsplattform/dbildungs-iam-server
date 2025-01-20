@@ -347,7 +347,7 @@ export class LdapClientService {
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(`Modification FAILED, no entry for person:${oldReferrer}`);
+                this.logger.error(`Modifying person-attributes FAILED, no entry for person:${oldReferrer}`);
                 return {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
@@ -834,7 +834,7 @@ export class LdapClientService {
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(`Modification FAILED, no entry for person:${referrer}`);
+                this.logger.error(`Modifying user-password FAILED, no entry for person:${referrer}`);
                 return {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),

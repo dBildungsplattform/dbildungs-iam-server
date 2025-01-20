@@ -8,7 +8,6 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
-    DoFactory,
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../../test/utils/index.js';
@@ -27,7 +26,6 @@ import { RolleFactory } from '../../../rolle/domain/rolle.factory.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { OrganisationDo } from '../../../organisation/domain/organisation.do.js';
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { DBiamPersonenzuordnungResponse } from './dbiam-personenzuordnung.response.js';
@@ -345,87 +343,6 @@ describe('Personenuebersicht API', () => {
 
                     const response: Response = await request(app.getHttpServer() as App)
                         .get(`/dbiam/personenuebersicht/${unsavedPerson.id}`)
-                        .send();
-
-                    expect(response.status).toBe(404);
-                });
-            });
-
-            describe('when one or more organisations does not exist', () => {
-                it('should return Error', async () => {
-                    const creationParams: PersonCreationParams = {
-                        familienname: faker.person.lastName(),
-                        vorname: faker.person.firstName(),
-                    };
-
-                    const person: Person<false> | DomainError = await Person.createNew(
-                        usernameGeneratorService,
-                        creationParams,
-                    );
-                    expect(person).not.toBeInstanceOf(DomainError);
-                    if (person instanceof DomainError) {
-                        return;
-                    }
-                    const savedPerson: Person<true> | DomainError = await personRepository.create(person);
-                    expect(savedPerson).not.toBeInstanceOf(DomainError);
-                    if (savedPerson instanceof DomainError) {
-                        return;
-                    }
-
-                    const rolle1: Rolle<false> | DomainError = rolleFactory.createNew(
-                        faker.string.alpha(5),
-                        faker.string.uuid(),
-                        RollenArt.LEHR,
-                        [],
-                        [],
-                        [],
-                        [],
-                        false,
-                    );
-
-                    if (rolle1 instanceof DomainError) {
-                        return;
-                    }
-                    const savedRolle1: Rolle<true> | DomainError = await rolleRepo.save(rolle1);
-                    if (savedRolle1 instanceof DomainError) throw Error();
-
-                    const rolle2: Rolle<false> | DomainError = rolleFactory.createNew(
-                        faker.string.alpha(5),
-                        faker.string.uuid(),
-                        RollenArt.LERN,
-                        [],
-                        [],
-                        [],
-                        [],
-                        false,
-                    );
-
-                    if (rolle2 instanceof DomainError) {
-                        return;
-                    }
-                    const savedRolle2: Rolle<true> | DomainError = await rolleRepo.save(rolle2);
-                    if (savedRolle2 instanceof DomainError) throw Error();
-
-                    const unsavedOrganisation1: OrganisationDo<true> = DoFactory.createOrganisation(true);
-                    const savedOrganisation2: OrganisationEntity = await createAndPersistOrganisation(
-                        em,
-                        undefined,
-                        OrganisationsTyp.SONSTIGE,
-                        true,
-                    );
-
-                    await dBiamPersonenkontextRepoInternal.save(
-                        personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle1.id),
-                    );
-                    await dBiamPersonenkontextRepoInternal.save(
-                        personenkontextFactory.createNew(savedPerson.id, unsavedOrganisation1.id, savedRolle2.id),
-                    );
-                    await dBiamPersonenkontextRepoInternal.save(
-                        personenkontextFactory.createNew(savedPerson.id, savedOrganisation2.id, savedRolle2.id),
-                    );
-
-                    const response: Response = await request(app.getHttpServer() as App)
-                        .get(`/dbiam/personenuebersicht/${savedPerson.id}`)
                         .send();
 
                     expect(response.status).toBe(404);

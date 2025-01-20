@@ -32,7 +32,7 @@ function mapEntityToAggregate(
         entity.updatedAt,
         entity.revision,
         entity.personId.id,
-        entity.organisationId,
+        entity.organisationId.id,
         entity.rolleId.id,
         entity.referrer,
         entity.mandant,
