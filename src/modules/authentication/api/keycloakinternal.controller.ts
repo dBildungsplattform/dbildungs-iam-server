@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
@@ -9,7 +9,7 @@ import { UserExternalDataWorkflowError } from '../../../shared/error/user-extern
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { EntityNotFoundError } from '../../../shared/error/index.js';
-import { Public } from './public.decorator.js';
+import { AuthGuard } from '@nestjs/passport';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -33,7 +33,7 @@ export class KeycloakInternalController {
 
     @Post('externaldata')
     @HttpCode(200)
-    @Public()
+    @UseGuards(AuthGuard('api-key'))
     @ApiOperation({ summary: 'External Data about requested in user.' })
     @ApiOkResponse({ description: 'Returns external Data about the requested user.', type: UserExeternalDataResponse })
     public async getExternalData(@Body() params: { sub: string }): Promise<UserExeternalDataResponse> {

@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { LoggerModule } from '../../core/logging/logger.module.js';
 import { AuthenticationController } from './api/authentication.controller.js';
 import { OpenIdConnectStrategy } from './passport/oidc.strategy.js';
+import { InternalCommunicationApiKeyStrategy } from './passport/internalcommunicationapikey.strategy.js';
 import { SessionSerializer } from './passport/session.serializer.js';
 import { OIDCClientProvider } from './services/oidc-client.service.js';
 import { PersonPermissionsRepo } from './domain/person-permission.repo.js';
@@ -29,6 +30,7 @@ import { KeycloakInternalController } from './api/keycloakinternal.controller.js
     providers: [
         OpenIdConnectStrategy,
         JwtStrategy,
+        InternalCommunicationApiKeyStrategy,
         SessionSerializer,
         OIDCClientProvider,
         PersonPermissionsRepo,
