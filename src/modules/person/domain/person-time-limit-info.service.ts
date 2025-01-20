@@ -73,7 +73,7 @@ export default class PersonTimeLimitService {
 
         const timeLimitInfos: (PersonTimeLimitInfo | null)[] = await Promise.all(timeLimitInfosPromises);
         const validTimeLimitInfos: PersonTimeLimitInfo[] = timeLimitInfos.filter(
-            (info: PersonTimeLimitInfo | null): info is PersonTimeLimitInfo => info !== null,
+            (info: PersonTimeLimitInfo | null): info is PersonTimeLimitInfo => !!info,
         );
         return lockInfos.concat(validTimeLimitInfos);
     }
