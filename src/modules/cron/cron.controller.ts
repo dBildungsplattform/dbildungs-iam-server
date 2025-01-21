@@ -193,11 +193,11 @@ export class CronController {
                                     .commit(personId, new Date(), count, personenKontexteToKeep, permissions);
                             if (result instanceof PersonenkontexteUpdateError) {
                                 this.logger.error(
-                                    `System konnte die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Kontexte: [${pkToDeleteMessage}]. Fehler: ${result.message}`,
+                                    `System konnte die befristete(n) Schulzuordnung(en) des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Abgelaufende Schulzuordnung(en): [${pkToDeleteMessage}]. Fehler: ${result.message}`,
                                 );
                             } else {
                                 this.logger.info(
-                                    `System hat die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) aufgehoben. Kontexte: [${pkToDeleteMessage}].`,
+                                    `System hat die befristete(n) Schulzuordnung(en) des Benutzers ${person?.referrer} (${person?.id}) aufgehoben. Abgelaufende Schulzuordnung(en): [${pkToDeleteMessage}].`,
                                 );
                             }
                             return result;
