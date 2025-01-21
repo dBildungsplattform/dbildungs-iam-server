@@ -1,31 +1,36 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy as CustomStrategy } from 'passport-custom';
-import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { InternalCommunicationApiKeyConfig } from '../../../shared/config/index.js';
+import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 
 const INTERNAL_COMMUNICATION_API_KEY_CONFIG_KEY: string = 'INTERNAL_COMMUNICATION_API_KEY';
 
 @Injectable()
-export class InternalCommunicationApiKeyStrategy extends PassportStrategy(CustomStrategy, 'api-key') {
+export class InternalCommunicationApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, 'api-key') {
     public constructor(private readonly configService: ConfigService) {
-        super();
+        console.log("CONSTRUCTOR")
+        super(
+            { header: 'api-key', prefix: '' },
+            true,
+            (apiKey: string, done: (error: Error | null, valid: boolean | null) => void) => {
+                this.validate(apiKey, done);
+            },
+        );
     }
 
-    public validate(req: Request): boolean {
+    private validate(apiKey: string, done: (error: Error | null, valid: boolean | null) => void): void {
+        console.log("FUNTION")
         const internalCommunicationApiKeyConfig: InternalCommunicationApiKeyConfig =
             this.configService.getOrThrow<InternalCommunicationApiKeyConfig>(INTERNAL_COMMUNICATION_API_KEY_CONFIG_KEY);
-        const requestApiKey: string | undefined = req.headers['api-key'] as string | undefined;
 
         if (
             !internalCommunicationApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY ||
-            !requestApiKey ||
-            internalCommunicationApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY !== requestApiKey
+            apiKey !== internalCommunicationApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY
         ) {
-            throw new UnauthorizedException('Invalid API key');
+            return done(new UnauthorizedException('Invalid API key'), null);
         }
 
-        return true;
+        return done(null, true); // Validation succeeded
     }
 }
