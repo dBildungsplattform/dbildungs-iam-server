@@ -38,6 +38,7 @@ describe('configloader', () => {
                 },
                 KEYCLOAK: {
                     BASE_URL: 'localhost:8080',
+                    EXTERNAL_BASE_URL: 'localhost:8080',
                     ADMIN_CLIENT_ID: 'admin-cli',
                     ADMIN_REALM_NAME: 'master',
                     REALM_NAME: 'schulportal',
@@ -173,6 +174,7 @@ describe('configloader', () => {
                 },
                 KEYCLOAK: {
                     BASE_URL: 'localhost:8080',
+                    EXTERNAL_BASE_URL: 'localhost:8080',
                     ADMIN_CLIENT_ID: 'admin-cli',
                     ADMIN_REALM_NAME: 'master',
                     REALM_NAME: 'schulportal',
