@@ -9,18 +9,12 @@ const INTERNAL_COMMUNICATION_API_KEY_CONFIG_KEY: string = 'INTERNAL_COMMUNICATIO
 @Injectable()
 export class InternalCommunicationApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, 'api-key') {
     public constructor(private readonly configService: ConfigService) {
-        console.log("CONSTRUCTOR")
-        super(
-            { header: 'api-key', prefix: '' },
-            true,
-            (apiKey: string, done: (error: Error | null, valid: boolean | null) => void) => {
-                this.validate(apiKey, done);
-            },
-        );
+        console.log('CONSTRUCTOR');
+        super({ header: 'api-key', prefix: '' }, true);
     }
 
-    private validate(apiKey: string, done: (error: Error | null, valid: boolean | null) => void): void {
-        console.log("FUNTION")
+    public validate(apiKey: string, done: (error: Error | null, valid: boolean | null) => void): void {
+        console.log('FUNTION');
         const internalCommunicationApiKeyConfig: InternalCommunicationApiKeyConfig =
             this.configService.getOrThrow<InternalCommunicationApiKeyConfig>(INTERNAL_COMMUNICATION_API_KEY_CONFIG_KEY);
 

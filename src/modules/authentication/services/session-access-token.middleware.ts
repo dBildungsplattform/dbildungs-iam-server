@@ -65,6 +65,7 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                 }
         }
 
+        console.log("Next in Middleware")
         next();
     }
 }
