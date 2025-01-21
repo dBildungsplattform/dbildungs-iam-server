@@ -170,8 +170,17 @@ export class CronController {
                     const count: number = personenKontexte.length;
 
                     // Filter PersonenKontexte
-                    const personenKontexteToKeep: DbiamPersonenkontextBodyParams[] =
-                        this.filterPersonenKontexte(personenKontexte);
+                    const [personenKontexteToKeep, personenkontexteToDelete]: [
+                        DbiamPersonenkontextBodyParams[],
+                        DbiamPersonenkontextBodyParams[],
+                    ] = this.filterPersonenKontexte(personenKontexte);
+
+                    const pkToDeleteMessage: string = personenkontexteToDelete
+                        .map(
+                            (pk: DbiamPersonenkontextBodyParams) =>
+                                `(orgaId:${pk.organisationId}, rolleId:${pk.rolleId}, befristung:${pk.befristung?.toISOString()})`,
+                        )
+                        .join(', ');
 
                     // Validate PersonenKontexte to keep
                     promises.push(
@@ -184,11 +193,11 @@ export class CronController {
                                     .commit(personId, new Date(), count, personenKontexteToKeep, permissions);
                             if (result instanceof PersonenkontexteUpdateError) {
                                 this.logger.error(
-                                    `System konnte die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Fehler: ${result.message}`,
+                                    `System konnte die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) nicht aufheben. Kontexte: [${pkToDeleteMessage}]. Fehler: ${result.message}`,
                                 );
                             } else {
                                 this.logger.info(
-                                    `System hat die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) aufgehoben.`,
+                                    `System hat die befristete Schulzuordnung des Benutzers ${person?.referrer} (${person?.id}) aufgehoben. Kontexte: [${pkToDeleteMessage}].`,
                                 );
                             }
                             return result;
@@ -218,10 +227,13 @@ export class CronController {
         }
     }
 
-    private filterPersonenKontexte(personenKontexte: Personenkontext<true>[]): DbiamPersonenkontextBodyParams[] {
+    private filterPersonenKontexte(
+        personenKontexte: Personenkontext<true>[],
+    ): [toKeep: DbiamPersonenkontextBodyParams[], toDelete: DbiamPersonenkontextBodyParams[]] {
         const today: Date = new Date();
         today.setHours(0, 0, 0, 0);
         const personenKontexteToKeep: DbiamPersonenkontextBodyParams[] = [];
+        const personenKontexteToDelete: DbiamPersonenkontextBodyParams[] = [];
         personenKontexte.forEach((personenKontext: Personenkontext<true>) => {
             if (!personenKontext.befristung || personenKontext.befristung >= today) {
                 personenKontexteToKeep.push({
@@ -230,9 +242,16 @@ export class CronController {
                     rolleId: personenKontext.rolleId,
                     befristung: personenKontext.befristung,
                 });
+            } else {
+                personenKontexteToDelete.push({
+                    personId: personenKontext.personId,
+                    organisationId: personenKontext.organisationId,
+                    rolleId: personenKontext.rolleId,
+                    befristung: personenKontext.befristung,
+                });
             }
         });
-        return personenKontexteToKeep;
+        return [personenKontexteToKeep, personenKontexteToDelete];
     }
 
     @Put('person-without-org')
