@@ -392,7 +392,7 @@ export class ImportWorkflow {
             return importVorgangResult;
         }
 
-        if (limit && limit > 100) {
+        if (limit && limit > 1000) {
             return {
                 ok: false,
                 error: new ImportResultMaxUsersError(),
