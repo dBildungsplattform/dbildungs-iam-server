@@ -84,7 +84,7 @@
       "KEYCLOAK_GROUP": "VIDIS-service",
       "KEYCLOAK_ROLE": "VIDIS-user"
   },
-  "INTERNAL_COMMUNICATION_API_KEY": {
+  "HEADER_API_KEY": {
     "INTERNAL_COMMUNICATION_API_KEY": "api-key"
   }
 }

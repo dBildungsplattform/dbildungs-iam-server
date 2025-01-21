@@ -12,7 +12,7 @@ import { FeatureFlagConfig } from './featureflag.config.js';
 import { envToOptionalBoolean } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
 import { ImportConfig } from './import.config.js';
-import { InternalCommunicationApiKeyConfig } from './internalcommunicationapikey.config.js';
+import { HeaderApiKeyConfig } from './headerapikey.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -28,7 +28,7 @@ export type Config = {
     SYSTEM: Partial<SystemConfig>;
     VIDIS: Partial<VidisConfig>;
     IMPORT: Partial<ImportConfig>;
-    INTERNAL_COMMUNICATION_API_KEY: Partial<InternalCommunicationApiKeyConfig>;
+    HEADER_API_KEY: Partial<HeaderApiKeyConfig>;
 };
 
 export default (): Config => ({
@@ -122,7 +122,7 @@ export default (): Config => ({
             ? undefined
             : Number(process.env['CSV_MAX_NUMBER_OF_USERS']),
     },
-    INTERNAL_COMMUNICATION_API_KEY: {
+    HEADER_API_KEY: {
         INTERNAL_COMMUNICATION_API_KEY: process.env['INTERNAL_COMMUNICATION_API_KEY'],
     },
 });

@@ -10,7 +10,6 @@ export class PermissionsInterceptor implements NestInterceptor {
     public constructor(private personPermissionsRepo: PersonPermissionsRepo) {}
 
     public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-        console.log("Permission Interceptor")
         const req: Request = context.switchToHttp().getRequest();
 
         if (req.passportUser?.access_token) {

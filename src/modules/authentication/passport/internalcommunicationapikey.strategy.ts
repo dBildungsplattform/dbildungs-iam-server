@@ -1,22 +1,26 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
-import { InternalCommunicationApiKeyConfig } from '../../../shared/config/index.js';
+import { HeaderApiKeyConfig } from '../../../shared/config/index.js';
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 
-const INTERNAL_COMMUNICATION_API_KEY_CONFIG_KEY: string = 'INTERNAL_COMMUNICATION_API_KEY';
+const HEADER_API_KEY: string = 'HEADER_API_KEY';
 
 @Injectable()
 export class InternalCommunicationApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, 'api-key') {
     public constructor(private readonly configService: ConfigService) {
-        console.log('CONSTRUCTOR');
-        super({ header: 'api-key', prefix: '' }, true);
+        super(
+            { header: 'api-key', prefix: '' }, // Configuration for the API key header
+            true, // Auto-validate
+            (apiKey: string, done: (error: Error | null, valid: boolean | null) => void) => {
+                this.validate(apiKey, done);
+            },
+        );
     }
 
-    public validate(apiKey: string, done: (error: Error | null, valid: boolean | null) => void): void {
-        console.log('FUNTION');
-        const internalCommunicationApiKeyConfig: InternalCommunicationApiKeyConfig =
-            this.configService.getOrThrow<InternalCommunicationApiKeyConfig>(INTERNAL_COMMUNICATION_API_KEY_CONFIG_KEY);
+    private validate(apiKey: string, done: (error: Error | null, valid: boolean | null) => void): void {
+        const internalCommunicationApiKeyConfig: HeaderApiKeyConfig =
+            this.configService.getOrThrow<HeaderApiKeyConfig>(HEADER_API_KEY);
 
         if (
             !internalCommunicationApiKeyConfig.INTERNAL_COMMUNICATION_API_KEY ||
@@ -24,7 +28,6 @@ export class InternalCommunicationApiKeyStrategy extends PassportStrategy(Header
         ) {
             return done(new UnauthorizedException('Invalid API key'), null);
         }
-
         return done(null, true); // Validation succeeded
     }
 }
