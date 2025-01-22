@@ -24,6 +24,7 @@ describe('HealthController', () => {
         ADMIN_SECRET: '',
         ADMIN_REALM_NAME: '',
         BASE_URL: 'http://keycloak.test',
+        EXTERNAL_BASE_URL: 'http://keycloak.test',
         REALM_NAME: '',
         CLIENT_ID: '',
         CLIENT_SECRET: '',

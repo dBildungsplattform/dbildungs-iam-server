@@ -40,6 +40,7 @@ export class KeycloakConfigTestModule implements OnModuleDestroy {
 
                         return new KeycloakInstanceConfig(
                             baseUrl,
+                            keycloakConfig.EXTERNAL_BASE_URL,
                             keycloakConfig.ADMIN_REALM_NAME,
                             keycloakConfig.ADMIN_CLIENT_ID,
                             keycloakConfig.ADMIN_SECRET,

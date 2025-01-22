@@ -175,7 +175,7 @@ export class AuthenticationController {
             permissions.personFields.id,
         );
         const timeLimitInfosResponse: PersonTimeLimitInfoResponse[] = timeLimitInfos.map(
-            (info: PersonTimeLimitInfo) => new PersonTimeLimitInfoResponse(info.occasion, info.deadline),
+            (info: PersonTimeLimitInfo) => new PersonTimeLimitInfoResponse(info),
         );
 
         return new UserinfoResponse(
