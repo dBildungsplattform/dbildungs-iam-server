@@ -18,7 +18,7 @@ export class InternalCommunicationApiKeyStrategy extends PassportStrategy(Header
         );
     }
 
-    private validate(apiKey: string, done: (error: Error | null, valid: boolean | null) => void): void {
+    public validate(apiKey: string, done: (error: Error | null, valid: boolean | null) => void): void {
         const internalCommunicationApiKeyConfig: HeaderApiKeyConfig =
             this.configService.getOrThrow<HeaderApiKeyConfig>(HEADER_API_KEY);
 
