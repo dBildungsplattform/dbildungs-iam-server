@@ -12,6 +12,7 @@ data:
   DEPLOY_STAGE: {{ .Values.environment | quote }}
   DB_NAME: {{ .Values.database.name | quote }}
   KC_BASE_URL: "http://{{ .Values.keycloakHostname }}"
+  KC_EXTERNAL_BASE_URL: 'https://{{ .Values.keycloakExternalHostname | replace "spsh-xxx" .Release.Namespace }}'
   FRONTEND_OIDC_CALLBACK_URL: "https://{{ .Values.backendHostname }}/api/auth/login"
   FRONTEND_DEFAULT_LOGIN_REDIRECT: "https://{{ .Values.backendHostname }}/"
   FRONTEND_LOGOUT_REDIRECT: "https://{{ .Values.backendHostname }}/"

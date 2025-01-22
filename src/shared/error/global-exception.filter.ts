@@ -36,6 +36,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
         if (exception instanceof Error) {
             if (exception instanceof HttpException) {
+                if (exception.getStatus() === 503) {
+                    const url: string = (ctx.getRequest() satisfies Request)?.url;
+                    this.logger.crit(`503 Service Unavailable for URL: ${url}`);
+                }
                 httpAdapter.reply(ctx.getResponse(), exception.getResponse(), exception.getStatus());
             } else if (exception instanceof DriverException) {
                 this.logger.crit(exception.message, exception.stack);

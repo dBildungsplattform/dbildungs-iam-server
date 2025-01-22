@@ -9,12 +9,16 @@ import { TimeLimitOccasion } from '../domain/time-limit-occasion.enums.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonTimeLimitInfo } from './person-time-limit-info.js';
 import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from './person-time-limit.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
 
 describe('PersonTimeLimitService', () => {
     let module: TestingModule;
     let sut: PersonTimeLimitService;
     let personRepoMock: DeepMocked<PersonRepository>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
+    let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -28,11 +32,16 @@ describe('PersonTimeLimitService', () => {
                     provide: DBiamPersonenkontextService,
                     useValue: createMock<DBiamPersonenkontextService>(),
                 },
+                {
+                    provide: DBiamPersonenkontextRepo,
+                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                },
             ],
         }).compile();
         sut = module.get(PersonTimeLimitService);
         personRepoMock = module.get(PersonRepository);
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
+        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
     });
 
     afterAll(async () => {
@@ -55,6 +64,17 @@ describe('PersonTimeLimitService', () => {
 
             const pesonenkontext: Personenkontext<true> = DoFactory.createPersonenkontext(true);
             dBiamPersonenkontextServiceMock.getKopersPersonenkontexte.mockResolvedValue([pesonenkontext]);
+            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([pesonenkontext]);
+
+            const org: Organisation<true> = DoFactory.createOrganisation(true, { name: 'Testschule' });
+            const rolle: Rolle<true> = DoFactory.createRolle(true, { name: 'Testrolle' });
+            const expriringPersonenKontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                befristung: new Date('2024-01-01'),
+                organisationId: org.id,
+                getOrganisation: () => Promise.resolve(org),
+                getRolle: () => Promise.resolve(rolle),
+            });
+            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([expriringPersonenKontext]);
 
             const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
 
@@ -72,6 +92,12 @@ describe('PersonTimeLimitService', () => {
                 {
                     occasion: TimeLimitOccasion.NO_KONTEXTE,
                     deadline: expectedNoKontexteDeadline,
+                },
+                {
+                    occasion: TimeLimitOccasion.PERSONENKONTEXT_EXPIRES,
+                    deadline: new Date('2024-01-01'),
+                    school: 'Testschule',
+                    rolle: 'Testrolle',
                 },
             ]);
         });
@@ -99,9 +125,10 @@ describe('PersonTimeLimitService', () => {
                 personRepoMock.findById.mockResolvedValue(person);
 
                 const personenkontexte: Personenkontext<true>[] = personenkontextDates.map((date: string) =>
-                    DoFactory.createPersonenkontext(true, { createdAt: new Date(date) }),
+                    DoFactory.createPersonenkontext(true, { createdAt: new Date(date), befristung: undefined }),
                 );
                 dBiamPersonenkontextServiceMock.getKopersPersonenkontexte.mockResolvedValue(personenkontexte);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue(personenkontexte);
 
                 const result: PersonTimeLimitInfo[] = await sut.getPersonTimeLimitInfo(person.id);
 
