@@ -111,8 +111,8 @@ export default (): Config => ({
         KEYCLOAK_ROLE: process.env['VIDIS_KEYCLOAK_ROLE'],
     },
     IMPORT: {
-        PASSPHRASE_SECRET: process.env['PASSPHRASE_SECRET'],
-        PASSPHRASE_SALT: process.env['PASSPHRASE_SALT'],
+        PASSPHRASE_SECRET: process.env['IMPORT_PASSPHRASE_SECRET'],
+        PASSPHRASE_SALT: process.env['IMPORT_PASSPHRASE_SALT'],
         CSV_FILE_MAX_SIZE_IN_MB: isNaN(Number(process.env['CSV_FILE_MAX_SIZE_IN_MB']))
             ? undefined
             : Number(process.env['IMPORT_CSV_FILE_MAX_SIZE_IN_MB']),
