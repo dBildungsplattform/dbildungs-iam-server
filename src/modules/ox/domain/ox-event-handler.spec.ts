@@ -651,7 +651,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, personId:${personId}, referrer:${referrer}, error: Unknown OX-error`,
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, personId:${personId}, referrer:${referrer}, error:Unknown OX-error`,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
@@ -737,7 +737,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could not create user in OX, personId:${personId}, referrer:${referrer}, error: Request failed`,
+                `Could not create user in OX, personId:${personId}, referrer:${referrer}, error:Request failed`,
             );
         });
     });
@@ -842,7 +842,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Cannot get data for username:${person.referrer} from OX, Aborting Email-Address Change, personId:${personId}, referrer:${referrer}`,
+                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personId}, referrer:${referrer}`,
             );
         });
 
@@ -868,7 +868,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(2);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could not change email-address for oxUserId:${person.oxUserId}, personId:${personId}, referrer:${referrer}, error: Request failed`,
+                `Could not change email-address for oxUserId:${person.oxUserId}, personId:${personId}, referrer:${referrer}, error:Request failed`,
             );
         });
 
@@ -906,7 +906,7 @@ describe('OxEventHandler', () => {
                 `Added New alias:${email}, personId:${personId}, referrer:${referrer}`,
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Changed primary email-address in OX for user, username:${person.referrer}, new email-address:${email}, personId:${personId}, referrer:${referrer}`,
+                `Changed primary email-address in OX for user, personId:${personId}, referrer:${referrer}, oxUserId:${oxUserId}, oxUsername:${referrer}, new email-address:${email}`,
             );
             expect(eventServiceMock.publish).toHaveBeenLastCalledWith(
                 expect.objectContaining({
@@ -1159,7 +1159,7 @@ describe('OxEventHandler', () => {
                 await sut.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Change OxUsername For oxUserId:${oxUserId} After PersonDeletedEvent, error: Unknown OX-error`,
+                    `Could Not Change OxUsername For oxUserId:${oxUserId} After PersonDeletedEvent, error:Unknown OX-error`,
                 );
             });
         });

@@ -143,6 +143,9 @@ describe('ItsLearning Persons Event Handler', () => {
     });
 
     describe('personRenamedEventHandler', () => {
+        const oldFirstname: string = faker.person.firstName();
+        const oldLastname: string = faker.person.lastName();
+
         function createPersonAndResponse(params: Partial<Person<true>> = {}): [Person<true>, PersonResponse] {
             if (!('referrer' in params)) {
                 params.referrer = faker.internet.userName();
@@ -165,7 +168,7 @@ describe('ItsLearning Persons Event Handler', () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
             itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
             itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(undefined); // Create person
-            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
+            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName(), oldFirstname, oldLastname);
 
             await sut.personRenamedEventHandler(event);
 
@@ -188,7 +191,7 @@ describe('ItsLearning Persons Event Handler', () => {
             const [person, personResponse]: [Person<true>, PersonResponse] = createPersonAndResponse();
             itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(personResponse); // Read person
             itslearningPersonRepoMock.createOrUpdatePerson.mockResolvedValueOnce(new ItsLearningError('Test Error')); // Create person
-            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
+            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName(), oldFirstname, oldLastname);
 
             await sut.personRenamedEventHandler(event);
 
@@ -200,7 +203,7 @@ describe('ItsLearning Persons Event Handler', () => {
         describe('when person is invalid', () => {
             it('should log error, if person has no referrer', async () => {
                 const [person]: [Person<true>, PersonResponse] = createPersonAndResponse({ referrer: undefined });
-                const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
+                const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName(), oldFirstname, oldLastname);
 
                 await sut.personRenamedEventHandler(event);
 
@@ -214,7 +217,7 @@ describe('ItsLearning Persons Event Handler', () => {
             it('should log info', async () => {
                 const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
                 itslearningPersonRepoMock.readPerson.mockResolvedValueOnce(undefined); // Read person
-                const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
+                const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName(), oldFirstname, oldLastname);
 
                 await sut.personRenamedEventHandler(event);
 
@@ -227,7 +230,7 @@ describe('ItsLearning Persons Event Handler', () => {
         it('should skip event, if not enabled', async () => {
             sut.ENABLED = false;
             const [person]: [Person<true>, PersonResponse] = createPersonAndResponse();
-            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName());
+            const event: PersonRenamedEvent = PersonRenamedEvent.fromPerson(person, faker.internet.userName(), oldFirstname, oldLastname);
 
             await sut.personRenamedEventHandler(event);
 

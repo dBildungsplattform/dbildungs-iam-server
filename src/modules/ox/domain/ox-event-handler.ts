@@ -60,8 +60,8 @@ import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-u
 type OxUserChangedEventCreator = (
     personId: PersonID,
     referrer: PersonReferrer,
-    oxUserName: OXUserName,
     oxUserId: OXUserID,
+    oxUserName: OXUserName,
     oxContextId: OXContextID,
     oxContextName: OXContextName,
     emailAddress: string,
@@ -70,8 +70,8 @@ type OxUserChangedEventCreator = (
 function generateOxUserChangedEvent(
     personId: PersonID,
     referrer: PersonReferrer,
-    oxUserName: OXUserName,
     oxUserId: OXUserID,
+    oxUserName: OXUserName,
     oxContextId: OXContextID,
     oxContextName: OXContextName,
     emailAddress: string,
@@ -89,8 +89,8 @@ function generateOxUserChangedEvent(
 function generateDisabledOxUserChangedEvent(
     personId: PersonID,
     referrer: PersonReferrer,
-    oxUserName: OXUserName,
     oxUserId: OXUserID,
+    oxUserName: OXUserName,
     oxContextId: OXContextID,
     oxContextName: OXContextName,
     emailAddress: string,

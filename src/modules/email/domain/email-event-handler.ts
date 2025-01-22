@@ -100,7 +100,6 @@ export class EmailEventHandler {
                 }
             }
         } else {
-            //const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByVornameAndFamilienname(event.oldVorname, event.oldFamilienname);
             const existingDisabledEmails: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(
                 event.personId,
                 EmailAddressStatus.DISABLED,
@@ -658,7 +657,7 @@ export class EmailEventHandler {
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
         if (persistenceResult instanceof EmailAddress) {
             this.logger.info(
-                `Successfully persisted email with DISABLED status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
+                `Successfully persisted new email with DISABLED status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
             this.eventService.publish(
                 new DisabledEmailAddressGeneratedEvent(
