@@ -258,6 +258,7 @@ export class DbSeedService {
                 username: file.username,
                 password: file.password,
                 personalnummer: file.personalnummer,
+                istTechnisch: file.istTechnisch,
             };
             /* eslint-disable no-await-in-loop */
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
