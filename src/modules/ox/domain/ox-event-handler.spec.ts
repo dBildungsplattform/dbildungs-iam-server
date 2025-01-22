@@ -999,7 +999,7 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressAlreadyExistsEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
-                    `Successfully added user with personId:${event.personId} to OX group with id:${fakeOXGroupId}`,
+                    `Successfully added user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${fakeOXGroupId}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
             });
@@ -1018,7 +1018,9 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressAlreadyExistsEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining(`Failed to get or create OX group for orgaKennung:${event.orgaKennung}`),
+                    expect.stringContaining(
+                        `Get or create OX group failed, personId:${event.personId}, oxUserId:${person.oxUserId}, orgaKennung:${event.orgaKennung}`,
+                    ),
                 );
             });
 
@@ -1051,7 +1053,7 @@ describe('OxEventHandler', () => {
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     expect.stringContaining(
-                        `Failed to add user with personId:${event.personId} to OX group with id:${fakeOXGroupId}`,
+                        `Failed to add user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${fakeOXGroupId}`,
                     ),
                 );
             });

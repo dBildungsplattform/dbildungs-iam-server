@@ -41,6 +41,7 @@ export default (): Config => ({
         CLIENT_SECRET: process.env['KC_CLIENT_SECRET'],
         SERVICE_CLIENT_PRIVATE_JWKS: process.env['KC_SERVICE_CLIENT_PRIVATE_JWKS'],
         BASE_URL: process.env['KC_BASE_URL'],
+        EXTERNAL_BASE_URL: process.env['KC_EXTERNAL_BASE_URL'],
     },
     LDAP: {
         URL: process.env['LDAP_URL'],

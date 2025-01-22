@@ -137,7 +137,9 @@ export class OxEventHandler {
         );
 
         if (!oxGroupIdResult.ok) {
-            return this.logger.error(`Failed to get or create OX group for orgaKennung:${event.orgaKennung}`);
+            return this.logger.error(
+                `Get or create OX group failed, personId:${event.personId}, oxUserId:${person.oxUserId}, orgaKennung:${event.orgaKennung}`,
+            );
         }
 
         // Add the user to the OX group
@@ -148,13 +150,13 @@ export class OxEventHandler {
 
         if (!addUserToGroupResult.ok) {
             return this.logger.error(
-                `Failed to add user with personId:${event.personId} to OX group with id:${oxGroupIdResult.value}`,
+                `Failed to add user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${oxGroupIdResult.value}`,
             );
         }
 
         // Log the successful addition of the user to the group
         this.logger.info(
-            `Successfully added user with personId:${event.personId} to OX group with id:${oxGroupIdResult.value}`,
+            `Successfully added user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${oxGroupIdResult.value}`,
         );
 
         // Should always be true
@@ -196,7 +198,7 @@ export class OxEventHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, deleted personenkontexte: ${event.removedKontexte.length}`,
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
