@@ -13,6 +13,7 @@ import { InvalidCharacterSetError } from './invalid-character-set.error.js';
 import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
 import { InvalidNameError } from './invalid-name.error.js';
 import { MissingPermissionsError } from './missing-permissions.error.js';
+import { UserExternalDataWorkflowError } from './user-externaldata-workflow.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -123,6 +124,16 @@ export class SchulConnexErrorMapper {
                 subcode: '01',
                 titel: 'Angefragte Entität existiert nicht',
                 beschreibung: 'Die angeforderte Entität existiert nicht',
+            }),
+        ],
+        [
+            UserExternalDataWorkflowError.name,
+            new SchulConnexError({
+                code: 500,
+                subcode: '01',
+                titel: 'Interner Serverfehler',
+                beschreibung:
+                    'Es ist ein interner Fehler aufgetreten. Externe Userdaten können nicht bereitgestellt werden.',
             }),
         ],
     ]);

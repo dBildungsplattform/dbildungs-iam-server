@@ -899,7 +899,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handleEmailAddressGeneratedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressGeneratedEvent, personId:${event.personId}, emailAddress: ${event.address}`,
+                `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddress:${event.address}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });
@@ -920,7 +920,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handleEmailAddressChangedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}`,
+                `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, newEmailAddress:${event.newAddress}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });

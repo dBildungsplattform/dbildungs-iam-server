@@ -21,12 +21,12 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { faker } from '@faker-js/faker';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
@@ -34,6 +34,7 @@ describe('PersonenkontextScope', () => {
     let em: EntityManager;
     let mapper: Mapper;
     let rolleRepo: RolleRepo;
+    let organisationRepo: OrganisationRepository;
 
     const createPersonEntity = (): PersonEntity => {
         const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
@@ -62,6 +63,7 @@ describe('PersonenkontextScope', () => {
         em = module.get(EntityManager);
         mapper = module.get(getMapperToken());
         rolleRepo = module.get(RolleRepo);
+        organisationRepo = module.get(OrganisationRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -79,6 +81,9 @@ describe('PersonenkontextScope', () => {
         describe('when filtering for personenkontexte', () => {
             beforeEach(async () => {
                 const person: PersonEntity = createPersonEntity();
+                const organisation1: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
 
                 await em.persistAndFlush(person);
 
@@ -86,7 +91,7 @@ describe('PersonenkontextScope', () => {
                     30,
                     false,
                     DoFactory.createPersonenkontextDo,
-                    { personId: person.id },
+                    { personId: person.id, organisationId: organisation1.id },
                 );
                 /* eslint-disable no-await-in-loop */
                 for (const doObj of dos) {
@@ -120,12 +125,15 @@ describe('PersonenkontextScope', () => {
 
     describe('byOrganisations', () => {
         describe('when filtering for personenkontexte', () => {
-            const orgaId: string = faker.string.uuid();
+            let orgaId: string;
 
             beforeEach(async () => {
                 const person: PersonEntity = createPersonEntity();
-
                 await em.persistAndFlush(person);
+                const organisation1: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
+                orgaId = organisation1.id;
 
                 const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
                     30,
@@ -166,16 +174,19 @@ describe('PersonenkontextScope', () => {
             beforeEach(async () => {
                 const rolleArten: RollenArt[] = [RollenArt.LEIT, RollenArt.LEHR, RollenArt.LERN];
 
+                const organisation1: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
+
                 for (const rolleArt of rolleArten) {
                     const person: PersonEntity = createPersonEntity();
-
                     await em.persistAndFlush(person);
 
                     const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
                         10,
                         false,
                         DoFactory.createPersonenkontextDo,
-                        { personId: person.id },
+                        { personId: person.id, organisationId: organisation1.id },
                     );
                     for (const doObj of dos) {
                         const rolle: Rolle<true> | DomainError = await rolleRepo.save(
