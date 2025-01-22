@@ -55,5 +55,5 @@ export class PersonFile {
 
     public personalnummer?: string;
 
-    public istTechnisch?: string;
+    public istTechnisch?: boolean;
 }

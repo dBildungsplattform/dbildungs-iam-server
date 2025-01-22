@@ -177,6 +177,6 @@ export class PersonEntity extends TimestampedEntity {
     public userLocks: Collection<UserLockEntity> = new Collection<UserLockEntity>(this);
 
     @AutoMap()
-    @Property({ default: false })
+    @Property({ nullable: false, default: false })
     public istTechnisch!: boolean;
 }
