@@ -164,7 +164,7 @@ export class OxEventHandler {
     }
 
     @EventHandler(DisabledEmailAddressGeneratedEvent)
-    public async handleEmailAddressGeneratedAndDisabledEvent(event: DisabledEmailAddressGeneratedEvent): Promise<void> {
+    public async handleDisabledEmailAddressGeneratedEvent(event: DisabledEmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressGeneratedAndDisabledEvent, personId:${event.personId}, referrer:${event.referrer}, address:${event.address}, domain:${event.domain}`,
         );

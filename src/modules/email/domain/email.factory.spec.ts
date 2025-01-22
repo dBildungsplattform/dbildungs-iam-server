@@ -215,7 +215,10 @@ describe('EmailFactory', () => {
                     },
                 );
 
-                const creationResult: Result<EmailAddress<false>> = await sut.createNewFromPersonIdAndDomain(person.id, domain);
+                const creationResult: Result<EmailAddress<false>> = await sut.createNewFromPersonIdAndDomain(
+                    person.id,
+                    domain,
+                );
 
                 if (!creationResult.ok) throw new Error();
                 expect(creationResult.value.personId).toStrictEqual(person.id);

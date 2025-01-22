@@ -1536,5 +1536,25 @@ describe('EmailEventHandler', () => {
                 );
             });
         });
+
+        describe('when creation and persisting succeeds', () => {
+            it('should log info', async () => {
+                emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(
+                    createMock<EmailAddress<true>>({
+                        get address(): string {
+                            return fakeEmail;
+                        },
+                    }),
+                );
+
+                emailRepoMock.save.mockResolvedValueOnce(getEmail(fakeEmail, EmailAddressStatus.DISABLED));
+
+                await emailEventHandler.handleDisabledOxUserChangedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `Changed email-address:${fakeEmail} from REQUESTED to DISABLED, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+                );
+            });
+        });
     });
 });
