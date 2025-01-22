@@ -34,6 +34,8 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { PersonDomainError } from '../../person/domain/person-domain.error.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -56,7 +58,9 @@ export class EmailEventHandler {
 
     @EventHandler(PersonRenamedEvent)
     public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
-        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}`);
+        this.logger.info(
+            `Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
+        );
         const rollenWithPK: Map<string, RolleWithPK> = await this.getRollenWithPKForPerson(event.personId);
         const rollen: Rolle<true>[] = Array.from(rollenWithPK.values(), (value: RolleWithPK) => {
             return value.rolle;
@@ -78,7 +82,7 @@ export class EmailEventHandler {
                         );
                     } else {
                         this.logger.error(
-                            `Could not DISABLE email, error is ${persistenceResult.message}, personId:${event.personId}, referrer:${event.referrer}`,
+                            `Could not DISABLE email, personId:${event.personId}, referrer:${event.referrer}, error:${persistenceResult.message}`,
                         );
                     }
                 }
@@ -96,9 +100,24 @@ export class EmailEventHandler {
                 }
             }
         } else {
-            this.logger.info(
-                `Renamed person with personId:${event.personId}, referrer:${event.referrer} has no SP with Email, nothing to do`,
+            //const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findByVornameAndFamilienname(event.oldVorname, event.oldFamilienname);
+            const existingDisabledEmails: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(
+                event.personId,
+                EmailAddressStatus.DISABLED,
             );
+            if (existingDisabledEmails.length === 0 || !existingDisabledEmails[0]) {
+                return this.logger.info(
+                    `Renamed person with personId:${event.personId}, referrer:${event.referrer} has no SP with Email and no existing DISABLED addresses, nothing to do`,
+                );
+            }
+            const mostRecentDisabledEmail: EmailAddress<true> = existingDisabledEmails[0];
+            const splitted: string[] = mostRecentDisabledEmail.address.split('@');
+            if (!splitted[1]) {
+                return this.logger.error(
+                    `Could not extract domain from existing DISABLED email-address, personId:${event.personId}, referrer:${event.referrer}`,
+                );
+            }
+            await this.createNewDisabledEmail(event.personId, splitted[1]);
         }
     }
 
@@ -157,7 +176,7 @@ export class EmailEventHandler {
 
                 if (persistenceResult instanceof DomainError) {
                     return this.logger.error(
-                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Could not persist existing email, error is ${persistenceResult.message}`,
+                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Could not persist existing email, error:${persistenceResult.message}`,
                     );
                 } else {
                     return this.logger.info(
@@ -266,22 +285,22 @@ export class EmailEventHandler {
     @EventHandler(OxMetadataInKeycloakChangedEvent)
     public async handleOxMetadataInKeycloakChangedEvent(event: OxMetadataInKeycloakChangedEvent): Promise<void> {
         this.logger.info(
-            `Received OxMetadataInKeycloakChangedEvent personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.emailAddress}`,
+            `Received OxMetadataInKeycloakChangedEvent personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.emailAddress}`,
         );
         const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
 
         if (!email) {
             return this.logger.info(
-                `Cannot find REQUESTED email-address for person with personId:${event.personId}, referrer:${event.keycloakUsername}, enabling not necessary`,
+                `Cannot find REQUESTED email-address for person with personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, enabling not necessary`,
             );
         }
 
         if (email.address !== event.emailAddress) {
             this.logger.warning(
-                `Mismatch between REQUESTED(${email.address}) and received(${event.emailAddress}) address from OX, personId:${event.personId}, referrer:${event.keycloakUsername}`,
+                `Mismatch between REQUESTED(${email.address}) and received(${event.emailAddress}) address from OX, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
             );
             this.logger.warning(
-                `Overriding ${email.address} with ${event.emailAddress}) from OX, personId:${event.personId}, referrer:${event.keycloakUsername}`,
+                `Overriding ${email.address} with ${event.emailAddress}) from OX, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
             );
             email.setAddress(event.emailAddress);
         }
@@ -292,11 +311,39 @@ export class EmailEventHandler {
 
         if (persistenceResult instanceof DomainError) {
             return this.logger.error(
-                `Could not ENABLE email for personId:${event.personId}, referrer:${event.keycloakUsername}, error is ${persistenceResult.message}`,
+                `Could not ENABLE email for personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, error:${persistenceResult.message}`,
             );
         } else {
             return this.logger.info(
-                `Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED, personId:${event.personId}, referrer:${event.keycloakUsername}`,
+                `Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+        }
+    }
+
+    @EventHandler(DisabledOxUserChangedEvent)
+    public async handleDisabledOxUserChangedEvent(event: DisabledOxUserChangedEvent): Promise<void> {
+        this.logger.info(
+            `Received DisabledOxUserChangedEvent personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.primaryEmail}`,
+        );
+        const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
+
+        if (!email) {
+            return this.logger.error(
+                `Cannot find REQUESTED email-address for person with personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, DISABLING not possible`,
+            );
+        }
+
+        email.disable();
+        email.oxUserID = event.oxUserId;
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
+
+        if (persistenceResult instanceof DomainError) {
+            return this.logger.error(
+                `Could not DISABLE email for personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, error:${persistenceResult.message}`,
+            );
+        } else {
+            return this.logger.info(
+                `Changed email-address:${persistenceResult.address} from REQUESTED to DISABLED, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
             );
         }
     }
@@ -441,7 +488,7 @@ export class EmailEventHandler {
                             );
                         } else {
                             this.logger.error(
-                                `Could not DISABLE email, error is ${persistenceResult.message}, personId:${personId}, referrer:${referrer}`,
+                                `Could not DISABLE email, personId:${personId}, referrer:${referrer}, error:${persistenceResult.message}`,
                             );
                         }
                     }),
@@ -519,7 +566,7 @@ export class EmailEventHandler {
                     );
                 } else {
                     this.logger.error(
-                        `Could not ENABLE email for personId:${personId}, referrer:${personReferrer.value}, error is ${persistenceResult.message}`,
+                        `Could not ENABLE email for personId:${personId}, referrer:${personReferrer.value}, error:${persistenceResult.message}`,
                     );
                 }
 
@@ -550,7 +597,7 @@ export class EmailEventHandler {
             );
         } else {
             this.logger.error(
-                `Could not persist email for personId:${personId}, referrer:${referrer}, error is ${persistenceResult.message}`,
+                `Could not persist email for personId:${personId}, referrer:${referrer}, error:${persistenceResult.message}`,
             );
         }
     }
@@ -566,7 +613,7 @@ export class EmailEventHandler {
         if (!email.ok) {
             await this.createAndPersistFailedEmailAddress(personId, personReferrer.value);
             return this.logger.error(
-                `Could not create email for personId:${personId}, referrer:${personReferrer.value}, error is: ${email.error.message}`,
+                `Could not create new email for personId:${personId}, referrer:${personReferrer.value}, error:${email.error.message}`,
             );
         }
         email.value.request();
@@ -587,7 +634,44 @@ export class EmailEventHandler {
             );
         } else {
             this.logger.error(
-                `Could not persist email for personId:${personId}, referrer:${personReferrer.value}, error is ${persistenceResult.message}`,
+                `Could not persist email for personId:${personId}, referrer:${personReferrer.value}, error:${persistenceResult.message}`,
+            );
+        }
+    }
+
+    private async createNewDisabledEmail(personId: PersonID, emailDomain: string): Promise<void> {
+        const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
+        if (!personReferrer.ok) {
+            return; //error logging is done in getPersonReferrerOrError
+        }
+        const email: Result<EmailAddress<false>> = await this.emailFactory.createNewFromPersonIdAndDomain(
+            personId,
+            emailDomain,
+        );
+        if (!email.ok) {
+            await this.createAndPersistFailedEmailAddress(personId, personReferrer.value);
+            return this.logger.error(
+                `Could not create new and DISABLED email for personId:${personId}, referrer:${personReferrer.value}, error:${email.error.message}`,
+            );
+        }
+        email.value.request();
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email.value);
+        if (persistenceResult instanceof EmailAddress) {
+            this.logger.info(
+                `Successfully persisted email with DISABLED status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
+            );
+            this.eventService.publish(
+                new DisabledEmailAddressGeneratedEvent(
+                    personId,
+                    personReferrer.value,
+                    persistenceResult.id,
+                    persistenceResult.address,
+                    emailDomain,
+                ),
+            );
+        } else {
+            this.logger.error(
+                `Could not persist email for personId:${personId}, referrer:${personReferrer.value}, error:${persistenceResult.message}`,
             );
         }
     }
@@ -608,7 +692,7 @@ export class EmailEventHandler {
             await this.createAndPersistFailedEmailAddress(personId, personReferrer.value);
 
             return this.logger.error(
-                `Could not create change-email for personId:${personId}, referrer:${personReferrer.value}, error is ${email.error.message}`,
+                `Could not create change-email for personId:${personId}, referrer:${personReferrer.value}, error:${email.error.message}`,
             );
         }
         email.value.request();
@@ -630,7 +714,7 @@ export class EmailEventHandler {
             );
         } else {
             this.logger.error(
-                `Could not persist change-email for personId:${personId}, referrer:${personReferrer.value}, error is ${persistenceResult.message}`,
+                `Could not persist change-email for personId:${personId}, referrer:${personReferrer.value}, error:${persistenceResult.message}`,
             );
         }
     }

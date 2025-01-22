@@ -77,6 +77,12 @@ export class EmailRepo {
         return emailAddresses[0];
     }
 
+    /**
+     * Filtering result-set by status is done after execution of DB-query,
+     * therefore if status is not defined, no filtering is applied.
+     * @param personId
+     * @param status
+     */
     public async findByPersonSortedByUpdatedAtDesc(
         personId: PersonID,
         status?: EmailAddressStatus,
@@ -111,6 +117,21 @@ export class EmailRepo {
 
         return mapEntityToAggregate(emailAddressEntity);
     }
+
+    /* public async findByVornameAndFamilienname(vorname: string, familienname: string): Promise<Option<EmailAddress<true>>> {
+        const namesInAddress: string = vorname + '.' + familienname;
+        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
+            EmailAddressEntity,
+            {
+                address: { $ilike: namesInAddress },
+            },
+            { orderBy: { updatedAt: QueryOrder.DESC } },
+        );
+
+        if (!emailAddressEntity) return undefined;
+
+        return mapEntityToAggregate(emailAddressEntity);
+    }*/
 
     public async existsEmailAddress(address: string): Promise<boolean> {
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
