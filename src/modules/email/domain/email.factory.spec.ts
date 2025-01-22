@@ -196,4 +196,69 @@ describe('EmailFactory', () => {
             });
         });
     });
+
+    describe('createNewFromPersonIdAndDomain', () => {
+        const domain: string = 'schule-sh.de';
+
+        describe('when person is found and address generation succeeds', () => {
+            it('should return new Email', async () => {
+                const person: Person<true> = getPerson();
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
+                    // eslint-disable-next-line @typescript-eslint/require-await
+                    async (vorname: string, familienname: string) => {
+                        return {
+                            ok: true,
+                            value: vorname + '.' + familienname + '@schule-sh.de',
+                        };
+                    },
+                );
+
+                const creationResult: Result<EmailAddress<false>> = await sut.createNewFromPersonIdAndDomain(person.id, domain);
+
+                if (!creationResult.ok) throw new Error();
+                expect(creationResult.value.personId).toStrictEqual(person.id);
+                expect(creationResult.value.address).toStrictEqual(
+                    `${person.vorname}.${person.familienname}@schule-sh.de`,
+                );
+            });
+        });
+
+        describe('when person CANNOT be found', () => {
+            it('should return error', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+                const creationResult: Result<EmailAddress<false>> = await sut.createNewFromPersonIdAndDomain(
+                    faker.string.uuid(),
+                    domain,
+                );
+
+                expect(creationResult.ok).toBeFalsy();
+            });
+        });
+
+        describe('when address generation fails', () => {
+            it('should return error', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
+
+                jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
+                    // eslint-disable-next-line @typescript-eslint/require-await
+                    async (vorname: string, familienname: string) => {
+                        return {
+                            ok: false,
+                            error: new InvalidNameError(vorname + '.' + familienname),
+                        };
+                    },
+                );
+
+                const creationResult: Result<EmailAddress<false>> = await sut.createNewFromPersonIdAndDomain(
+                    faker.string.uuid(),
+                    domain,
+                );
+
+                expect(creationResult.ok).toBeFalsy();
+            });
+        });
+    });
 });
