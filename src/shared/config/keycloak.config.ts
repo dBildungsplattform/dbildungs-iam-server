@@ -7,6 +7,10 @@ export class KeycloakConfig {
 
     @IsString()
     @IsNotEmpty()
+    public readonly EXTERNAL_BASE_URL!: string;
+
+    @IsString()
+    @IsNotEmpty()
     public readonly ADMIN_REALM_NAME!: string;
 
     @IsString()
