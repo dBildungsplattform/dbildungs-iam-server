@@ -88,6 +88,7 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         revision: person.revision,
         personalnummer: person.personalnummer,
         orgUnassignmentDate: person.orgUnassignmentDate,
+        istTechnisch: person.istTechnisch,
     };
 }
 
@@ -123,6 +124,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         undefined,
         getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
+        entity.istTechnisch,
     );
 }
 
