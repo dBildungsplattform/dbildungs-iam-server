@@ -24,9 +24,9 @@ async function bootstrap(): Promise<void> {
             type: 'oauth2',
             flows: {
                 authorizationCode: {
-                    authorizationUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/auth`,
-                    tokenUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
-                    refreshUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
+                    authorizationUrl: `${keycloakConfig.EXTERNAL_BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/auth`,
+                    tokenUrl: `${keycloakConfig.EXTERNAL_BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
+                    refreshUrl: `${keycloakConfig.EXTERNAL_BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
                     scopes: {},
                 },
             },
