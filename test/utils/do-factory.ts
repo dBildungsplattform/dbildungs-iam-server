@@ -51,6 +51,7 @@ export class DoFactory {
             personalnummer: faker.string.numeric({ length: 7 }),
             revision: '1',
         };
+        person.istTechnisch = false;
         return Object.assign(Object.create(Person.prototype) as Person<boolean>, person, props);
     }
 
