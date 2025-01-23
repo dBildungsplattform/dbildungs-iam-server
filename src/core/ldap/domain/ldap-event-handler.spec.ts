@@ -34,7 +34,7 @@ import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/per
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonRenamedEvent} from '../../../shared/events/person-renamed-event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 
 describe('LDAP Event Handler', () => {

@@ -12,8 +12,10 @@ import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/per
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { EventService } from '../../eventbus/services/event.service.js';
+import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
+import {PersonRenamedEvent} from "../../../shared/events/person-renamed-event.js";
 
 @Injectable()
 export class LdapEventHandler {
@@ -21,6 +23,7 @@ export class LdapEventHandler {
         private readonly logger: ClassLogger,
         private readonly ldapClientService: LdapClientService,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly eventService: EventService,
     ) {}
 
     private async getEmailDomainForOrganisationId(organisationId: OrganisationID): Promise<Result<string>> {
@@ -148,7 +151,9 @@ export class LdapEventHandler {
             this.logger.error(modifyResult.error.message);
             return;
         }
-        this.logger.info(`Successfully modified person attributes for personId:${event.personId}`);
+
+        this.logger.info(`Successfully modified person attributes in LDAP for personId:${event.personId}`);
+        this.eventService.publish(LdapPersonEntryRenamedEvent.fromPersonRenamedEvent(event));
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
