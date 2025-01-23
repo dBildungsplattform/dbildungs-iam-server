@@ -15,7 +15,7 @@ import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
-import {PersonRenamedEvent} from "../../../shared/events/person-renamed-event.js";
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 
 @Injectable()
 export class LdapEventHandler {

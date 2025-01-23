@@ -41,7 +41,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import {LdapPersonEntryRenamedEvent} from "../../../shared/events/ldap-person-entry-renamed.event.js";
+import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
 
 function getEmail(): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
