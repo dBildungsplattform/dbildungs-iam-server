@@ -118,21 +118,6 @@ export class EmailRepo {
         return mapEntityToAggregate(emailAddressEntity);
     }
 
-    /* public async findByVornameAndFamilienname(vorname: string, familienname: string): Promise<Option<EmailAddress<true>>> {
-        const namesInAddress: string = vorname + '.' + familienname;
-        const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
-            EmailAddressEntity,
-            {
-                address: { $ilike: namesInAddress },
-            },
-            { orderBy: { updatedAt: QueryOrder.DESC } },
-        );
-
-        if (!emailAddressEntity) return undefined;
-
-        return mapEntityToAggregate(emailAddressEntity);
-    }*/
-
     public async existsEmailAddress(address: string): Promise<boolean> {
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
             EmailAddressEntity,
