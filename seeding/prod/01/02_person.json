@@ -11,7 +11,8 @@
             "id": 2,
             "username": "migration",
             "vorname": "migration",
-            "familienname": "migration"
+            "familienname": "migration",
+            "istTechnisch": true
         }
     ]
 }
