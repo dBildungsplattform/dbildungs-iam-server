@@ -310,16 +310,9 @@ describe('PersonScope', () => {
         it('should not return technical users', async () => {
             const person1: PersonEntity = createPersonEntity();
             const person2: PersonEntity = createPersonEntity();
-            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                DoFactory.createRolle(false, { istTechnisch: true }),
-            );
-            if (rolle instanceof DomainError) throw Error();
-            const organisation: Organisation<true> = await organisationRepository.save(
-                DoFactory.createOrganisation(false),
-            );
+            person2.istTechnisch = true;
 
             await em.persistAndFlush([person1, person2]);
-            await createPersonenkontext(person1.id, organisation.id, rolle.id);
 
             const scope: PersonScope = new PersonScope()
                 .findBy({ ids: [person1.id, person2.id] })
