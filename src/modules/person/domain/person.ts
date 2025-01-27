@@ -36,6 +36,7 @@ export type PersonCreationParams = {
     userLock?: UserLock[];
     isLocked?: boolean;
     orgUnassignmentDate?: Date;
+    istTechnisch?: boolean;
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -79,6 +80,7 @@ export class Person<WasPersisted extends boolean> {
         public isLocked: boolean | undefined,
         public email: string | undefined,
         public oxUserId: string | undefined,
+        public istTechnisch: boolean,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
@@ -122,6 +124,7 @@ export class Person<WasPersisted extends boolean> {
         isLocked?: boolean,
         email?: string,
         oxUserId?: string,
+        istTechnisch?: boolean,
     ): Person<WasPersisted> {
         return new Person(
             id,
@@ -154,6 +157,7 @@ export class Person<WasPersisted extends boolean> {
             isLocked,
             email,
             oxUserId,
+            istTechnisch ?? false,
         );
     }
 
@@ -202,6 +206,7 @@ export class Person<WasPersisted extends boolean> {
             undefined,
             undefined,
             undefined,
+            creationParams.istTechnisch ?? false,
         );
 
         if (creationParams.password) {
@@ -252,6 +257,7 @@ export class Person<WasPersisted extends boolean> {
         orgUnassignmentDate?: Date,
         isLocked?: boolean,
         email?: string,
+        istTechnisch?: boolean,
     ): void | DomainError {
         if (this.revision !== revision) {
             return new MismatchedRevisionError(
@@ -295,6 +301,7 @@ export class Person<WasPersisted extends boolean> {
         this.isLocked = isLocked;
         this.email = email;
         this.userLock = userLock ?? [];
+        if (istTechnisch !== undefined) this.istTechnisch = istTechnisch;
     }
 
     public resetPassword(): void {
