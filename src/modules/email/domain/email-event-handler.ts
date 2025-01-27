@@ -54,17 +54,10 @@ export class EmailEventHandler {
         private readonly eventService: EventService,
     ) {}
 
-    /**
-     * This method is replaced by handleLdapPersonEntryRenamedEvent to handle the operations regarding person-renaming synchronously after each other,
+    /*
+     * Method 'handlePersonRenamedEvent' is replaced by 'handleLdapPersonEntryRenamedEvent' to handle the operations regarding person-renaming synchronously after each other,
      * first in LdapEventHandler then here in EmailEventHandler.
      */
-    /* @EventHandler(PersonRenamedEvent)
-    public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
-        this.logger.error(`Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}`);
-        this.logger.error(
-            `Email-address changes should be handled via LdapPersonEntryRenamedEvent personId:${event.personId}, referrer:${event.referrer}`,
-        );
-    }*/
 
     @EventHandler(LdapPersonEntryRenamedEvent)
     public async handleLdapPersonEntryRenamedEvent(event: LdapPersonEntryRenamedEvent): Promise<void> {
