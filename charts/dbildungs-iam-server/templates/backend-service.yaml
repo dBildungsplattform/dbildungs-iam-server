@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/component: server-backend
 spec:
   selector:
-    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ template "common.names.name" . }}
     app.kubernetes.io/component: server-backend
   type: {{ .Values.backend.service.type }}
   ports: 
