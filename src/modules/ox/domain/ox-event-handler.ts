@@ -67,7 +67,7 @@ type OxUserChangedEventCreator = (
     emailAddress: string,
 ) => OxUserChangedEvent;
 
-function generateOxUserChangedEvent(
+const generateOxUserChangedEvent: OxUserChangedEventCreator = (
     personId: PersonID,
     referrer: PersonReferrer,
     oxUserId: OXUserID,
@@ -75,7 +75,7 @@ function generateOxUserChangedEvent(
     oxContextId: OXContextID,
     oxContextName: OXContextName,
     emailAddress: string,
-): OxUserChangedEvent {
+) => {
     return new OxUserChangedEvent(
         personId,
         referrer,
@@ -85,8 +85,9 @@ function generateOxUserChangedEvent(
         oxContextName,
         emailAddress,
     );
-}
-function generateDisabledOxUserChangedEvent(
+};
+
+const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
     personId: PersonID,
     referrer: PersonReferrer,
     oxUserId: OXUserID,
@@ -94,7 +95,7 @@ function generateDisabledOxUserChangedEvent(
     oxContextId: OXContextID,
     oxContextName: OXContextName,
     emailAddress: string,
-): DisabledOxUserChangedEvent {
+) => {
     return new DisabledOxUserChangedEvent(
         personId,
         referrer,
@@ -104,7 +105,8 @@ function generateDisabledOxUserChangedEvent(
         oxContextName,
         emailAddress,
     );
-}
+};
+
 @Injectable()
 export class OxEventHandler {
     public ENABLED: boolean;

@@ -12,6 +12,7 @@ import { EmailGenerator } from './email-generator.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { EmailDomainNotFoundError } from '../error/email-domain-not-found.error.js';
+import assert from 'assert';
 
 describe('EmailFactory', () => {
     let module: TestingModule;
@@ -94,12 +95,11 @@ describe('EmailFactory', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
                 jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
-                    // eslint-disable-next-line @typescript-eslint/require-await
                     async (vorname: string, familienname: string) => {
-                        return {
+                        return Promise.resolve({
                             ok: true,
                             value: vorname + '.' + familienname + '@schule-sh.de',
-                        };
+                        });
                     },
                 );
 
@@ -111,7 +111,7 @@ describe('EmailFactory', () => {
 
                 const creationResult: Result<EmailAddress<false>> = await sut.createNew(person.id, faker.string.uuid());
 
-                if (!creationResult.ok) throw new Error();
+                assert(creationResult.ok);
                 expect(creationResult.value.personId).toStrictEqual(person.id);
                 expect(creationResult.value.address).toStrictEqual(
                     `${person.vorname}.${person.familienname}@schule-sh.de`,
@@ -143,7 +143,7 @@ describe('EmailFactory', () => {
                 );
 
                 expect(creationResult.ok).toBeFalsy();
-                if (creationResult.ok) throw Error();
+                assert(!creationResult.ok);
                 expect(creationResult.error).toBeInstanceOf(EntityNotFoundError);
             });
         });
@@ -163,8 +163,7 @@ describe('EmailFactory', () => {
                     faker.string.uuid(),
                 );
 
-                expect(creationResult.ok).toBeFalsy();
-                if (creationResult.ok) throw Error();
+                assert(!creationResult.ok);
                 expect(creationResult.error).toBeInstanceOf(EmailDomainNotFoundError);
             });
         });
@@ -178,12 +177,11 @@ describe('EmailFactory', () => {
                 organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(faker.internet.email());
 
                 jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
-                    // eslint-disable-next-line @typescript-eslint/require-await
                     async (vorname: string, familienname: string) => {
-                        return {
+                        return Promise.resolve({
                             ok: false,
                             error: new InvalidNameError(vorname + '.' + familienname),
-                        };
+                        });
                     },
                 );
 
@@ -206,12 +204,11 @@ describe('EmailFactory', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
 
                 jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
-                    // eslint-disable-next-line @typescript-eslint/require-await
                     async (vorname: string, familienname: string) => {
-                        return {
+                        return Promise.resolve({
                             ok: true,
                             value: vorname + '.' + familienname + '@schule-sh.de',
-                        };
+                        });
                     },
                 );
 
@@ -220,7 +217,7 @@ describe('EmailFactory', () => {
                     domain,
                 );
 
-                if (!creationResult.ok) throw new Error();
+                assert(creationResult.ok);
                 expect(creationResult.value.personId).toStrictEqual(person.id);
                 expect(creationResult.value.address).toStrictEqual(
                     `${person.vorname}.${person.familienname}@schule-sh.de`,
@@ -246,12 +243,11 @@ describe('EmailFactory', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(getPerson());
 
                 jest.spyOn(EmailGenerator.prototype, 'generateAvailableAddress').mockImplementationOnce(
-                    // eslint-disable-next-line @typescript-eslint/require-await
                     async (vorname: string, familienname: string) => {
-                        return {
+                        return Promise.resolve({
                             ok: false,
                             error: new InvalidNameError(vorname + '.' + familienname),
-                        };
+                        });
                     },
                 );
 
