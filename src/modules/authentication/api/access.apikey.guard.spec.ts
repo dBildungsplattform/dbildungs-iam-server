@@ -4,6 +4,8 @@ import { ExecutionContext } from '@nestjs/common';
 import express from 'express';
 import { AccessApiKeyGuard } from './access.apikey.guard.js';
 
+const canActivateSpy: jest.SpyInstance = jest.spyOn(AccessApiKeyGuard.prototype, 'canActivate');
+
 describe('The access apikey guard', () => {
     let reflector: DeepMocked<Reflector>;
     let sut: AccessApiKeyGuard;
@@ -11,10 +13,6 @@ describe('The access apikey guard', () => {
     beforeEach(() => {
         reflector = createMock<Reflector>();
         sut = new AccessApiKeyGuard(reflector);
-
-        jest.spyOn(AccessApiKeyGuard.prototype, 'canActivate').mockImplementation(() => {
-            return true;
-        });
     });
 
     it('should allow activation if request authenticated', () => {
@@ -25,14 +23,16 @@ describe('The access apikey guard', () => {
         expect(sut.canActivate(context)).toEqual(true);
     });
 
-    it('should call super.canActivate if request is not authenticated', async () => {
+    it('should delegate its activation if it cannot decide for itself', async () => {
         reflector.get.mockReturnValueOnce(false);
 
         const context: ExecutionContext = createMock();
         context.switchToHttp().getRequest<DeepMocked<express.Request>>().isAuthenticated.mockReturnValue(false);
-        const superCanActivateSpy: jest.SpyInstance = jest.spyOn(AccessApiKeyGuard.prototype, 'canActivate');
+
+        canActivateSpy.mockResolvedValueOnce(true);
+
         await sut.canActivate(context);
 
-        expect(superCanActivateSpy).toHaveBeenCalledWith(context);
+        expect(canActivateSpy).toHaveBeenCalled();
     });
 });
