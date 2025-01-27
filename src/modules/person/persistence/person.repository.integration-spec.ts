@@ -1112,6 +1112,7 @@ describe('PersonRepository Integration', () => {
                 'auskunftssperre',
                 'dataProvider',
                 'revision',
+                'istTechnisch',
             ];
 
             const result: RequiredEntityData<PersonEntity> = mapAggregateToData(person);
@@ -1274,6 +1275,7 @@ describe('PersonRepository Integration', () => {
 
         it('should return DomainError when user is technical', async () => {
             const person1: Person<true> = DoFactory.createPerson(true);
+            person1.istTechnisch = true;
             const personEntity: PersonEntity = new PersonEntity();
             await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
             person1.id = personEntity.id;

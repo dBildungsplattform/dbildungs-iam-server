@@ -75,6 +75,51 @@ describe('Person', () => {
             expect(person).toBeInstanceOf(Person<true>);
             expect(person.revision).toEqual('5');
             expect(person.userLock).toEqual([]);
+            expect(person.istTechnisch).toEqual(false);
+        });
+
+        it.each([
+            [true, true],
+            [false, false],
+            [undefined, false],
+        ])('when input is %s, it should set istTechnisch to %s', (input: boolean | undefined, expected: boolean) => {
+            const person: Person<true> = Person.construct(
+                faker.string.uuid(),
+                faker.date.past(),
+                faker.date.recent(),
+                faker.person.lastName(),
+                faker.person.firstName(),
+                '5',
+                faker.lorem.word(),
+                faker.lorem.word(),
+                faker.string.uuid(),
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                input,
+            );
+
+            expect(person).toBeDefined();
+            expect(person).toBeInstanceOf(Person<true>);
+            expect(person.istTechnisch).toEqual(expected);
         });
     });
 
@@ -296,12 +341,88 @@ describe('Person', () => {
                     faker.lorem.word(),
                     faker.string.uuid(),
                 );
+                const initialIstTechnisch: boolean = person.istTechnisch;
                 const result: void | DomainError = person.update('5', undefined, undefined, 'abc');
 
                 expect(result).not.toBeInstanceOf(DomainError);
                 expect(person.vorname).toEqual('Max');
                 expect(person.familienname).toEqual('Mustermann');
                 expect(person.referrer).toEqual('abc');
+                expect(person.istTechnisch).toEqual(initialIstTechnisch);
+            });
+        });
+        describe('revision does match and istTechnisch is updated', () => {
+            it('should update istTechnisch in the person', () => {
+                const person: Person<true> = Person.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    'Mustermann',
+                    'Max',
+                    '5',
+                    faker.lorem.word(),
+                    faker.lorem.word(),
+                    faker.string.uuid(),
+                );
+                let result: void | DomainError = person.update(
+                    '5',
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    '',
+                    true,
+                );
+                expect(result).not.toBeInstanceOf(DomainError);
+                expect(person.istTechnisch).toEqual(true);
+
+                result = person.update(
+                    '6',
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    '',
+                    false,
+                );
+                expect(result).not.toBeInstanceOf(DomainError);
+                expect(person.istTechnisch).toEqual(false);
             });
         });
         describe('revision does not match', () => {
