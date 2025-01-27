@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
-import { ApiExcludeController, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserExeternalDataResponse } from './externaldata/user-externaldata.response.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
@@ -18,8 +18,8 @@ type WithoutOptional<T> = {
 
 export type RequiredExternalPkData = WithoutOptional<ExternalPkData>;
 
+@ApiTags('Keycloakinternal')
 @Controller({ path: 'keycloakinternal' })
-@ApiExcludeController()
 export class KeycloakInternalController {
     public constructor(
         private readonly userExternaldataWorkflowFactory: UserExternaldataWorkflowFactory,

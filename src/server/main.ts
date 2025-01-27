@@ -42,7 +42,7 @@ async function bootstrap(): Promise<void> {
     app.useGlobalInterceptors(new GlobalPagingHeadersInterceptor());
     app.useGlobalPipes(new GlobalValidationPipe());
     app.setGlobalPrefix('api', {
-        exclude: ['health', 'metrics', 'keycloakinternal'],
+        exclude: ['health', 'metrics', 'keycloakinternal/externaldata'],
     });
 
     let redirectUrl: string;

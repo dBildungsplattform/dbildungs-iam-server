@@ -10,8 +10,8 @@ const HEADER_API_KEY: string = 'HEADER_API_KEY';
 export class InternalCommunicationApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, 'api-key') {
     public constructor(private readonly configService: ConfigService) {
         super(
-            { header: 'api-key', prefix: '' }, // Configuration for the API key header
-            true, // Auto-validate
+            { header: 'api-key', prefix: '' },
+            true,
             (apiKey: string, done: (error: Error | null, valid: boolean | null) => void) => {
                 this.validate(apiKey, done);
             },
@@ -28,6 +28,6 @@ export class InternalCommunicationApiKeyStrategy extends PassportStrategy(Header
         ) {
             return done(new UnauthorizedException('Invalid API key'), null);
         }
-        return done(null, true); // Validation succeeded
+        return done(null, true);
     }
 }

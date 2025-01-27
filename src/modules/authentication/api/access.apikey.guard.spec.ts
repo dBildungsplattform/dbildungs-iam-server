@@ -11,6 +11,10 @@ describe('The access apikey guard', () => {
     beforeEach(() => {
         reflector = createMock<Reflector>();
         sut = new AccessApiKeyGuard(reflector);
+
+        jest.spyOn(AccessApiKeyGuard.prototype, 'canActivate').mockImplementation(() => {
+            return true;
+        });
     });
 
     it('should allow activation if request authenticated', () => {
@@ -21,4 +25,14 @@ describe('The access apikey guard', () => {
         expect(sut.canActivate(context)).toEqual(true);
     });
 
+    it('should call super.canActivate if request is not authenticated', async () => {
+        reflector.get.mockReturnValueOnce(false);
+
+        const context: ExecutionContext = createMock();
+        context.switchToHttp().getRequest<DeepMocked<express.Request>>().isAuthenticated.mockReturnValue(false);
+        const superCanActivateSpy: jest.SpyInstance = jest.spyOn(AccessApiKeyGuard.prototype, 'canActivate');
+        await sut.canActivate(context);
+
+        expect(superCanActivateSpy).toHaveBeenCalledWith(context);
+    });
 });
