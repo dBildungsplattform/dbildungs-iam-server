@@ -43,7 +43,7 @@ import { OrganisationResponse } from './organisation.response.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { DbiamOrganisationError } from './dbiam-organisation.error.js';
 import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
@@ -60,6 +60,8 @@ import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationsTyp } from '../domain/organisation.enums.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -78,6 +80,39 @@ export class OrganisationController {
         private readonly organisationService: OrganisationService,
     ) {}
 
+    private async checkVerwaltenPermissions(
+        permissions: PersonPermissions,
+        typ: OrganisationsTyp,
+        administriertVon?: string,
+    ): Promise<void> {
+        if (typ === OrganisationsTyp.KLASSE) {
+            const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+                await this.organisationRepository.findRootDirectChildren();
+            const canUpdateKlasse: boolean = await permissions.hasSystemrechtAtOrganisation(
+                administriertVon ?? oeffentlich?.id ?? this.organisationRepository.ROOT_ORGANISATION_ID,
+                RollenSystemRecht.KLASSEN_VERWALTEN,
+            );
+            if (!canUpdateKlasse) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                        new MissingPermissionsError('KLASSEN_VERWALTEN Required For This Endpoint'),
+                    ),
+                );
+            }
+        } else if (typ === OrganisationsTyp.SCHULE) {
+            const canUpdateOrgansation: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+                RollenSystemRecht.SCHULEN_VERWALTEN,
+            ]);
+            if (!canUpdateOrgansation) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                        new MissingPermissionsError('SCHULEN_VERWALTEN Required For This Endpoint'),
+                    ),
+                );
+            }
+        }
+    }
+
     @Post()
     @UseGuards(StepUpGuard)
     @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
@@ -89,6 +124,7 @@ export class OrganisationController {
         @Permissions() permissions: PersonPermissions,
         @Body() params: CreateOrganisationBodyParams,
     ): Promise<OrganisationResponse> {
+        await this.checkVerwaltenPermissions(permissions, params.typ, params.administriertVon);
         const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =
             await this.organisationRepository.findRootDirectChildren();
 
@@ -142,6 +178,8 @@ export class OrganisationController {
         const existingOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
             params.organisationId,
         );
+
+        await this.checkVerwaltenPermissions(permissions, body.typ, body.administriertVon);
 
         if (!existingOrganisation) {
             throw new NotFoundException(`Organisation with ID ${params.organisationId} not found`);

@@ -255,6 +255,84 @@ describe('OrganisationController', () => {
                 expect(organisationServiceMock.createOrganisation).toHaveBeenCalledTimes(1);
             });
         });
+
+        it('should throw HttpException if user lacks KLASSEN_VERWALTEN permission for KLASSE type', async () => {
+            const params: CreateOrganisationBodyParams = {
+                kennung: faker.lorem.word(),
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.KLASSE,
+                traegerschaft: Traegerschaft.SONSTIGE,
+                administriertVon: faker.string.uuid(),
+            };
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true);
+
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, undefined]);
+            (permissionsMock.hasSystemrechtAtOrganisation as jest.Mock).mockResolvedValueOnce(false);
+
+            await expect(organisationController.createOrganisation(permissionsMock, params)).rejects.toThrow(
+                HttpException,
+            );
+        });
+
+        it('should not throw error if user has KLASSEN_VERWALTEN permission for KLASSE type', async () => {
+            const params: CreateOrganisationBodyParams = {
+                kennung: faker.lorem.word(),
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.KLASSE,
+                traegerschaft: Traegerschaft.SONSTIGE,
+                administriertVon: faker.string.uuid(),
+            };
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true);
+
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValue([oeffentlich, undefined]);
+            (permissionsMock.hasSystemrechtAtOrganisation as jest.Mock).mockResolvedValueOnce(true);
+            organisationServiceMock.createOrganisation.mockResolvedValueOnce({
+                ok: true,
+                value: DoFactory.createOrganisation(true),
+            });
+
+            await expect(organisationController.createOrganisation(permissionsMock, params)).resolves.not.toThrow();
+        });
+
+        it('should throw HttpException if user lacks SCHULEN_VERWALTEN permission for SCHULE type', async () => {
+            const params: CreateOrganisationBodyParams = {
+                kennung: faker.lorem.word(),
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.SCHULE,
+                traegerschaft: Traegerschaft.SONSTIGE,
+            };
+            (permissionsMock.hasSystemrechteAtRootOrganisation as jest.Mock).mockResolvedValueOnce(false);
+            await expect(organisationController.createOrganisation(permissionsMock, params)).rejects.toThrow(
+                HttpException,
+            );
+        });
+
+        it('should not throw error if user has SCHULEN_VERWALTEN permission for SCHULE type', async () => {
+            const params: CreateOrganisationBodyParams = {
+                kennung: faker.lorem.word(),
+                name: faker.lorem.word(),
+                namensergaenzung: faker.lorem.word(),
+                kuerzel: faker.lorem.word(),
+                typ: OrganisationsTyp.SCHULE,
+                traegerschaft: Traegerschaft.SONSTIGE,
+            };
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true);
+
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValue([oeffentlich, undefined]);
+            (permissionsMock.hasSystemrechteAtRootOrganisation as jest.Mock).mockResolvedValueOnce(true);
+            organisationServiceMock.createOrganisation.mockResolvedValueOnce({
+                ok: true,
+                value: DoFactory.createOrganisation(true),
+            });
+
+            await expect(organisationController.createOrganisation(permissionsMock, params)).resolves.not.toThrow();
+        });
     });
 
     describe('updateOrganisation', () => {
