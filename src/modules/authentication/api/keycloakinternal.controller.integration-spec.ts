@@ -96,8 +96,9 @@ describe('KeycloakInternalController', () => {
                 },
             ];
 
-            personRepoMock.findById.mockResolvedValue(person);
-            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(pkExternalData);
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(person);
+            personRepoMock.findById.mockResolvedValueOnce(person);
+            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
 
             const result: UserExeternalDataResponse = await keycloakinternalController.getExternalData({
                 sub: keycloakSub,
@@ -126,8 +127,18 @@ describe('KeycloakInternalController', () => {
                 },
             ];
 
-            personRepoMock.findById.mockResolvedValue(undefined);
-            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValue(pkExternalData);
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(createMock<Person<true>>());
+            personRepoMock.findById.mockResolvedValueOnce(undefined);
+            dbiamPersonenkontextRepoMock.findExternalPkData.mockResolvedValueOnce(pkExternalData);
+
+            await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toThrow(
+                HttpException,
+            );
+        });
+
+        it('should throw error if aggregate doesnt initialize fields field correctly', async () => {
+            const keycloakSub: string = faker.string.uuid();
+            personRepoMock.findByKeycloakUserId.mockResolvedValueOnce(undefined);
 
             await expect(keycloakinternalController.getExternalData({ sub: keycloakSub })).rejects.toThrow(
                 HttpException,

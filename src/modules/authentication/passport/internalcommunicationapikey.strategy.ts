@@ -9,13 +9,7 @@ const HEADER_API_KEY: string = 'HEADER_API_KEY';
 @Injectable()
 export class InternalCommunicationApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy, 'api-key') {
     public constructor(private readonly configService: ConfigService) {
-        super(
-            { header: 'api-key', prefix: '' },
-            true,
-            (apiKey: string, done: (error: Error | null, valid: boolean | null) => void) => {
-                this.validate(apiKey, done);
-            },
-        );
+        super({ header: 'api-key', prefix: '' }, true);
     }
 
     public validate(apiKey: string, done: (error: Error | null, valid: boolean | null) => void): void {

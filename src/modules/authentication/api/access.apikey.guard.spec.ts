@@ -28,11 +28,7 @@ describe('The access apikey guard', () => {
 
         const context: ExecutionContext = createMock();
         context.switchToHttp().getRequest<DeepMocked<express.Request>>().isAuthenticated.mockReturnValue(false);
-
-        canActivateSpy.mockResolvedValueOnce(true);
-
-        await sut.canActivate(context);
-
+        await expect(sut.canActivate(context)).rejects.toThrow('Unknown authentication strategy "api-key"');
         expect(canActivateSpy).toHaveBeenCalled();
     });
 });
