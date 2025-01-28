@@ -2184,6 +2184,16 @@
           "nullable": true,
           "length": 6,
           "mappedType": "datetime"
+        },
+        "ist_technisch": {
+          "name": "ist_technisch",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
         }
       },
       "name": "person",

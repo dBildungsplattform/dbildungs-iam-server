@@ -16,7 +16,7 @@ export class CSVImportDataItemDTO {
     public readonly vorname!: string;
 
     @IsOptional()
-    @MinLength(2, { message: ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_KLASSE_IS_TOO_SHORT })
+    @MinLength(1, { message: ImportDomainErrorI18nTypes.IMPORT_DATA_ITEM_KLASSE_IS_TOO_SHORT })
     @ApiProperty({ nullable: true })
     public readonly klasse?: string;
 

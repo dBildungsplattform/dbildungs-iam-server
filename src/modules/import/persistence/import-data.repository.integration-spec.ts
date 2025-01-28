@@ -56,6 +56,7 @@ describe('ImportDataRepository', () => {
                 faker.string.uuid(),
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 faker.lorem.word(),
                 undefined,
             );
@@ -117,6 +118,7 @@ describe('ImportDataRepository', () => {
                 importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 '1A',
                 undefined,
             );
@@ -127,6 +129,7 @@ describe('ImportDataRepository', () => {
                 importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 '1B',
                 undefined,
             );
@@ -137,6 +140,7 @@ describe('ImportDataRepository', () => {
                 importvorgang2.id,
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 '1C',
                 undefined,
             );
@@ -173,7 +177,10 @@ describe('ImportDataRepository', () => {
                     }),
                 )
             ).id;
-            const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, { importvorgangId });
+            const importDataItem: ImportDataItem<false> = DoFactory.createImportDataItem(false, {
+                importvorgangId,
+                status: ImportDataItemStatus.SUCCESS,
+            });
 
             const savedImportDataItem: ImportDataItem<true> = await sut.save(importDataItem);
 
@@ -239,6 +246,7 @@ describe('ImportDataRepository', () => {
                 importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 '1A',
                 undefined,
             );
@@ -249,6 +257,7 @@ describe('ImportDataRepository', () => {
                 importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 '1B',
                 undefined,
             );
@@ -321,6 +330,7 @@ describe('ImportDataRepository', () => {
                 importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 '1A',
                 undefined,
             );
@@ -331,6 +341,7 @@ describe('ImportDataRepository', () => {
                 importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 '1B',
                 undefined,
             );
@@ -341,6 +352,7 @@ describe('ImportDataRepository', () => {
                 importvorgangId,
                 faker.name.lastName(),
                 faker.name.firstName(),
+                ImportDataItemStatus.PENDING,
                 '1C',
                 undefined,
             );
