@@ -381,6 +381,7 @@ describe('OrganisationController', () => {
                 administriertVon: faker.lorem.word(),
                 zugehoerigZu: faker.lorem.word(),
             };
+            organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
 
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
 
@@ -404,6 +405,8 @@ describe('OrganisationController', () => {
                 administriertVon: faker.lorem.word(),
                 zugehoerigZu: faker.lorem.word(),
             };
+            organisationRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createOrganisation(true));
+
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
 
             await expect(organisationController.updateOrganisation(params, body, permissionsMock)).rejects.toThrow(
