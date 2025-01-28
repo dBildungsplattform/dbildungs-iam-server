@@ -1143,6 +1143,7 @@ describe('EmailEventHandler', () => {
 
         beforeEach(() => {
             fakeRolleId = faker.string.uuid();
+            fakePersonId = faker.string.uuid();
             personenkontexte = [
                 createMock<Personenkontext<true>>({ personId: fakePersonId }),
                 createMock<Personenkontext<true>>({ personId: fakePersonId }),
