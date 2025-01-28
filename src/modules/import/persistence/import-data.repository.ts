@@ -27,12 +27,12 @@ export function mapEntityToAggregate(entity: ImportDataItemEntity): ImportDataIt
         entity.importvorgangId.id,
         entity.nachname,
         entity.vorname,
+        entity.status,
         entity.klasse,
         entity.personalnummer,
         entity.validationErrors,
         entity.username,
         entity.password,
-        entity.status,
     );
 }
 @Injectable()
