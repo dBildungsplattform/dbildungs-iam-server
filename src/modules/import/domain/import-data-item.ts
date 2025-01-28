@@ -8,12 +8,12 @@ export class ImportDataItem<WasPersisted extends boolean> {
         public importvorgangId: string,
         public nachname: string,
         public vorname: string,
+        public status: ImportDataItemStatus,
         public klasse?: string,
         public personalnummer?: string,
         public validationErrors?: string[],
         public username?: string,
         public password?: string,
-        public status?: ImportDataItemStatus,
     ) {}
 
     public static construct<WasPersisted extends boolean = false>(
@@ -23,12 +23,12 @@ export class ImportDataItem<WasPersisted extends boolean> {
         importvorgangId: string,
         nachname: string,
         vorname: string,
+        status: ImportDataItemStatus,
         klasse?: string,
         personalnummer?: string,
         validationErrors?: string[],
         username?: string,
         password?: string,
-        status?: ImportDataItemStatus,
     ): ImportDataItem<WasPersisted> {
         return new ImportDataItem(
             id,
@@ -37,12 +37,12 @@ export class ImportDataItem<WasPersisted extends boolean> {
             importvorgangId,
             nachname,
             vorname,
+            status,
             klasse,
             personalnummer,
             validationErrors,
             username,
             password,
-            status,
         );
     }
 
@@ -50,6 +50,7 @@ export class ImportDataItem<WasPersisted extends boolean> {
         importvorgangId: string,
         nachname: string,
         vorname: string,
+        status: ImportDataItemStatus,
         klasse?: string,
         personalnummer?: string,
         validationErrors?: string[],
@@ -61,9 +62,14 @@ export class ImportDataItem<WasPersisted extends boolean> {
             importvorgangId,
             nachname,
             vorname,
+            status,
             klasse,
             personalnummer,
             validationErrors,
         );
+    }
+
+    public setPassword(password: string): void {
+        this.password = password;
     }
 }
