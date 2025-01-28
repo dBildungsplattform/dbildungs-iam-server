@@ -600,7 +600,9 @@ export class LdapClientService {
                 },
             );
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(`Changing email-address in LDAP FAILED, no entry for personId:${personId}`);
+                this.logger.error(
+                    `Changing email-address in LDAP FAILED, no entry for personId:${personId}, referrer:${referrer}`,
+                );
                 return {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
@@ -638,7 +640,7 @@ export class LdapClientService {
                     }),
                 ]);
                 this.logger.info(
-                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}`,
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
                 );
                 this.eventService.publish(
                     new LdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
@@ -834,7 +836,9 @@ export class LdapClientService {
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(`Modifying user-password FAILED, no entry for person:${referrer}`);
+                this.logger.error(
+                    `Modifying user-password FAILED, no entry for personId:${personId}, referrer:${referrer}`,
+                );
                 return {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
@@ -851,13 +855,17 @@ export class LdapClientService {
                         }),
                     }),
                 ]);
-                this.logger.info(`LDAP: Successfully modified userPassword (UEM) for personId:${personId}`);
+                this.logger.info(
+                    `LDAP: Successfully modified userPassword (UEM) for personId:${personId}, referrer:${referrer}`,
+                );
                 this.eventService.publish(new LdapPersonEntryChangedEvent(personId, undefined, undefined, true));
 
                 return { ok: true, value: userPassword };
             } catch (err) {
                 const errMsg: string = JSON.stringify(err);
-                this.logger.error(`LDAP: Modifying userPassword (UEM) FAILED, errMsg:${errMsg}`);
+                this.logger.error(
+                    `LDAP: Modifying userPassword (UEM) FAILED for personId:${personId}, referrer:${referrer}, errMsg:${errMsg}`,
+                );
 
                 return { ok: false, error: new LdapModifyUserPasswordError() };
             }

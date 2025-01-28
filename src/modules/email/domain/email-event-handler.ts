@@ -14,7 +14,6 @@ import { EmailAddressNotFoundError } from '../error/email-address-not-found.erro
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailFactory } from './email.factory.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -34,6 +33,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { PersonDomainError } from '../../person/domain/person-domain.error.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -54,9 +54,16 @@ export class EmailEventHandler {
         private readonly eventService: EventService,
     ) {}
 
-    @EventHandler(PersonRenamedEvent)
-    public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
-        this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}`);
+    /*
+     * Method 'handlePersonRenamedEvent' is replaced by 'handleLdapPersonEntryRenamedEvent' to handle the operations regarding person-renaming synchronously after each other,
+     * first in LdapEventHandler then here in EmailEventHandler.
+     */
+
+    @EventHandler(LdapPersonEntryRenamedEvent)
+    public async handleLdapPersonEntryRenamedEvent(event: LdapPersonEntryRenamedEvent): Promise<void> {
+        this.logger.info(
+            `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}`,
+        );
         const rollenWithPK: Map<string, RolleWithPK> = await this.getRollenWithPKForPerson(event.personId);
         const rollen: Rolle<true>[] = Array.from(rollenWithPK.values(), (value: RolleWithPK) => {
             return value.rolle;
