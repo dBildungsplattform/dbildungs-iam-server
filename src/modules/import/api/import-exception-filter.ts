@@ -10,6 +10,7 @@ import { ImportNurLernAnSchuleUndKlasseError } from '../domain/import-nur-lern-a
 import { ImportCSVFileInvalidHeaderError } from '../domain/import-csv-file-invalid-header.error.js';
 import { ImportCSVFileMaxUsersError } from '../domain/import-csv-file-max-users.error.js';
 import { ImportCSVFileContainsNoUsersError } from '../domain/import-csv-file-contains-no-users.error.js';
+import { ImportResultMaxUsersError } from '../domain/import-result-max-users.error.js';
 
 @Catch(ImportDomainError)
 export class ImportExceptionFilter implements ExceptionFilter<ImportDomainError> {
@@ -61,6 +62,13 @@ export class ImportExceptionFilter implements ExceptionFilter<ImportDomainError>
             new DbiamImportError({
                 code: 400,
                 i18nKey: ImportErrorI18nTypes.CSV_FILE_NO_USERS_ERROR,
+            }),
+        ],
+        [
+            ImportResultMaxUsersError.name,
+            new DbiamImportError({
+                code: 400,
+                i18nKey: ImportErrorI18nTypes.IMPORT_RESULT_QUERY_LIMIT_ERROR,
             }),
         ],
     ]);

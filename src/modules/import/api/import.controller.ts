@@ -40,7 +40,7 @@ import { ImportWorkflowFactory } from '../domain/import-workflow.factory.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { ImportUploadResultFields, ImportWorkflow } from '../domain/import-workflow.js';
+import { ImportResult, ImportUploadResultFields, ImportWorkflow } from '../domain/import-workflow.js';
 import { DbiamImportError } from './dbiam-import.error.js';
 import { ImportvorgangByIdBodyParams } from './importvorgang-by-id.body.params.js';
 import { Response } from 'express';
@@ -50,7 +50,7 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { ImportExceptionFilter } from './import-exception-filter.js';
 import { ImportvorgangByIdParams } from './importvorgang-by-id.params.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { ImportvorgangQueryParams } from './importvorgang-query.param.js';
+import { ImportvorgangQueryParams } from './importvorgang-query.params.js';
 import { PagingHeadersObject } from '../../../shared/paging/paging.enums.js';
 import { ImportVorgangResponse } from './importvorgang.response.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
@@ -61,6 +61,8 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { ContentDisposition, ContentType } from '../../../shared/http/http.headers.js';
 import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
+import { ImportResultResponse } from './import-result.response.js';
+import { ImportResultQueryParams } from './import-result-query.params.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new ImportExceptionFilter())
@@ -188,7 +190,7 @@ export class ImportController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
-        const result: Result<void> = await importWorkflow.cancelImport(params.importvorgangId, permissions);
+        const result: Result<void> = await importWorkflow.cancelOrCompleteImport(params.importvorgangId, permissions);
         if (!result.ok) {
             if (result.error instanceof DomainError) {
                 throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -198,6 +200,7 @@ export class ImportController {
         }
     }
 
+    @UseGuards(StepUpGuard)
     @Get('history')
     @ApiOperation({ description: 'Get the history of import.' })
     @ApiOkResponse({
@@ -234,6 +237,12 @@ export class ImportController {
         return new PagedResponse(pagedImportVorgangResponse);
     }
 
+    @UseGuards(StepUpGuard)
+    @ApiOperation({
+        deprecated: true,
+        description:
+            'Download the import result file by importvorgangId as text file is deprecated, please use the  GET/api/import/importedUsers.',
+    })
     @ApiProduces('text/plain')
     @Get(':importvorgangId/download')
     @HttpCode(HttpStatus.OK)
@@ -283,6 +292,7 @@ export class ImportController {
         }
     }
 
+    @UseGuards(StepUpGuard)
     @Get(':importvorgangId/status')
     @ApiOperation({ description: 'Get status for the import transaction by id.' })
     @ApiOkResponse({
@@ -310,5 +320,44 @@ export class ImportController {
         const processedItemCount: number = await this.importDataRepository.countProcessedItems(params.importvorgangId);
 
         return new ImportVorgangStatusResponse(importVorgang, processedItemCount);
+    }
+
+    @UseGuards(StepUpGuard)
+    @Get('importedUsers')
+    @ApiOperation({
+        description:
+            'Get the list of imported users. The maximum limit is 100. After receiving all the imported users, please use the DELETE endpoint to remove imported data.',
+    })
+    @ApiOkResponse({
+        description: 'The list of imported users was successfully returned.',
+        type: ImportResultResponse,
+        headers: PagingHeadersObject,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the list of imported users.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get list of imported users.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting list of imported users.' })
+    public async getImportedUsers(
+        @Query() queryParams: ImportResultQueryParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<ImportResultResponse> {
+        const importWorkflow: ImportWorkflow = this.importWorkflowFactory.createNew();
+        const result: Result<ImportResult> = await importWorkflow.getImportedUsers(
+            permissions,
+            queryParams.importvorgangId,
+            queryParams.offset,
+            queryParams.limit,
+        );
+
+        if (!result.ok) {
+            if (result.error instanceof ImportDomainError) {
+                throw result.error;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error as DomainError),
+            );
+        }
+
+        return new ImportResultResponse(result.value);
     }
 }

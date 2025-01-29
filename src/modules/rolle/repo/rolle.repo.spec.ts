@@ -80,7 +80,7 @@ describe('RolleRepo', () => {
         it('should update an existing rolle', async () => {
             const existingRolle: Rolle<true> | DomainError = await sut.save(DoFactory.createRolle(false));
             if (existingRolle instanceof DomainError) throw Error();
-            existingRolle.name = faker.name.firstName();
+            existingRolle.name = faker.person.firstName();
 
             const savedRolle: Rolle<true> | DomainError = await sut.save(existingRolle);
             if (savedRolle instanceof DomainError) throw Error();
