@@ -114,10 +114,10 @@ export default (): Config => ({
     IMPORT: {
         PASSPHRASE_SECRET: process.env['IMPORT_PASSPHRASE_SECRET'],
         PASSPHRASE_SALT: process.env['IMPORT_PASSPHRASE_SALT'],
-        CSV_FILE_MAX_SIZE_IN_MB: isNaN(Number(process.env['CSV_FILE_MAX_SIZE_IN_MB']))
+        CSV_FILE_MAX_SIZE_IN_MB: isNaN(Number(process.env['IMPORT_CSV_FILE_MAX_SIZE_IN_MB']))
             ? undefined
             : Number(process.env['IMPORT_CSV_FILE_MAX_SIZE_IN_MB']),
-        CSV_MAX_NUMBER_OF_USERS: isNaN(Number(process.env['CSV_MAX_NUMBER_OF_USERS']))
+        CSV_MAX_NUMBER_OF_USERS: isNaN(Number(process.env['IMPORT_CSV_MAX_NUMBER_OF_USERS']))
             ? undefined
             : Number(process.env['IMPORT_CSV_MAX_NUMBER_OF_USERS']),
     },
