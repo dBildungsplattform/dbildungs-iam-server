@@ -91,6 +91,11 @@
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: auth
+- name: INTERNAL_COMMUNICATION_API_KEY
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: internal-communication-api-key
 - name: IMPORT_PASSPHRASE_SALT
   valueFrom:
     secretKeyRef:
