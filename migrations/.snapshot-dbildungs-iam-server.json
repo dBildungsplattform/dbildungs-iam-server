@@ -3991,6 +3991,7 @@
           "primary": false,
           "nullable": false,
           "nativeEnumName": "import_data_item_status_enum",
+          "default": "'PENDING'",
           "enumItems": [
             "FAILED",
             "SUCCESS",

@@ -8,7 +8,7 @@ import { DomainError } from '../../../shared/error/index.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { OxService } from './ox.service.js';
 import { CreateUserAction, CreateUserParams, CreateUserResponse } from '../actions/user/create-user.action.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
@@ -457,7 +457,11 @@ export class OxEventHandler {
         return result;
     }
 
-    private async createOxUser(personId: PersonID, referrer: PersonReferrer, orgaKennung: string): Promise<void> {
+    private async createOxUser(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        orgaKennung: OrganisationKennung,
+    ): Promise<void> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {

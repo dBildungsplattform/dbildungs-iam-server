@@ -8,7 +8,7 @@ import { ServiceProvider } from '../../service-provider/domain/service-provider.
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { OrganisationID, PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import { OrganisationID, OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailRepo } from '../persistence/email.repo.js';
@@ -467,7 +467,7 @@ export class EmailEventHandler {
         }
     }
 
-    private async getOrganisationKennung(organisationId: OrganisationID): Promise<Result<string>> {
+    private async getOrganisationKennung(organisationId: OrganisationID): Promise<Result<OrganisationKennung>> {
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(organisationId);
         if (!organisation || !organisation.kennung) {
             this.logger.error(`Could not retrieve orgaKennung, orgaId:${organisationId}`);
@@ -483,7 +483,7 @@ export class EmailEventHandler {
     }
 
     private async createOrEnableEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
-        const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
+        const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
 
         const existingEmails: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
@@ -563,7 +563,7 @@ export class EmailEventHandler {
     }
 
     private async createNewEmail(personId: PersonID, organisationId: OrganisationID): Promise<void> {
-        const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
+        const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
         const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
         if (!personReferrer.ok) {
@@ -604,7 +604,7 @@ export class EmailEventHandler {
         organisationId: OrganisationID,
         oldEmail: EmailAddress<true>,
     ): Promise<void> {
-        const organisationKennung: Result<string> = await this.getOrganisationKennung(organisationId);
+        const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
         if (!organisationKennung.ok) return;
         const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
         if (!personReferrer.ok) {
