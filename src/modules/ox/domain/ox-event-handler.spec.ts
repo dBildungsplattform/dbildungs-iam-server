@@ -3,7 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
 import { OxEventHandler } from './ox-event-handler.js';
 import { OxService } from './ox.service.js';
 import { CreateUserAction } from '../actions/user/create-user.action.js';
@@ -1395,7 +1395,7 @@ describe('OxEventHandler', () => {
         let username: string;
         let oxUserId: OXUserID;
         let oxGroupId: OXGroupID;
-        let rollenArtLehrPKOrgaKennung: string;
+        let rollenArtLehrPKOrgaKennung: OrganisationKennung;
         let event: PersonenkontextUpdatedEvent;
         let person: Person<true>;
         beforeEach(() => {
