@@ -1112,6 +1112,7 @@ describe('PersonRepository Integration', () => {
                 'auskunftssperre',
                 'dataProvider',
                 'revision',
+                'istTechnisch',
             ];
 
             const result: RequiredEntityData<PersonEntity> = mapAggregateToData(person);
@@ -1274,6 +1275,7 @@ describe('PersonRepository Integration', () => {
 
         it('should return DomainError when user is technical', async () => {
             const person1: Person<true> = DoFactory.createPerson(true);
+            person1.istTechnisch = true;
             const personEntity: PersonEntity = new PersonEntity();
             await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
             person1.id = personEntity.id;
@@ -1935,8 +1937,8 @@ describe('PersonRepository Integration', () => {
     describe('updatePersonMetadata', () => {
         it('should return the updated person', async () => {
             const person: Person<true> = await savePerson(true);
-            const newFamilienname: string = faker.name.lastName();
-            const newVorname: string = faker.name.firstName();
+            const newFamilienname: string = faker.person.lastName();
+            const newVorname: string = faker.person.firstName();
             const newPersonalnummer: string = faker.finance.pin(7);
             const kopersLock: UserLock = {
                 person: person.id,
@@ -1975,8 +1977,8 @@ describe('PersonRepository Integration', () => {
         });
         it('should return an error when keyCloakUpdate failed', async () => {
             const person: Person<true> = await savePerson(true);
-            const newFamilienname: string = faker.name.lastName();
-            const newVorname: string = faker.name.firstName();
+            const newFamilienname: string = faker.person.lastName();
+            const newVorname: string = faker.person.firstName();
             const newPersonalnummer: string = faker.finance.pin(7);
             const kopersLock: UserLock = {
                 person: person.id,
@@ -2007,8 +2009,8 @@ describe('PersonRepository Integration', () => {
         it('should return EntityNotFound when person does not exit', async () => {
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 faker.string.uuid(),
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 faker.finance.pin(7),
                 faker.date.anytime(),
                 '1',
@@ -2024,8 +2026,8 @@ describe('PersonRepository Integration', () => {
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 faker.finance.pin(7),
                 person.updatedAt,
                 person.revision,
@@ -2063,8 +2065,8 @@ describe('PersonRepository Integration', () => {
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 person2.personalnummer,
                 person.updatedAt,
                 person.revision,
@@ -2080,8 +2082,8 @@ describe('PersonRepository Integration', () => {
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 faker.finance.pin(7),
                 faker.date.past(),
                 person.revision,
@@ -2121,8 +2123,8 @@ describe('PersonRepository Integration', () => {
             });
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '',
                 person.updatedAt,
                 person.revision,
@@ -2142,8 +2144,8 @@ describe('PersonRepository Integration', () => {
             });
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 '',
                 person.updatedAt,
                 person.revision,
@@ -2160,7 +2162,7 @@ describe('PersonRepository Integration', () => {
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                faker.name.lastName(),
+                faker.person.lastName(),
                 invalidVorname,
                 faker.finance.pin(7),
                 person.updatedAt,
@@ -2180,7 +2182,7 @@ describe('PersonRepository Integration', () => {
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
                 invalidFamilienname, // Pass invalid familienname
-                faker.name.firstName(),
+                faker.person.firstName(),
                 faker.finance.pin(7),
                 person.updatedAt,
                 person.revision,
@@ -2198,8 +2200,8 @@ describe('PersonRepository Integration', () => {
 
             const result: Person<true> | DomainError = await sut.updatePersonMetadata(
                 person.id,
-                faker.name.lastName(),
-                faker.name.firstName(),
+                faker.person.lastName(),
+                faker.person.firstName(),
                 invalidPersonalnummer,
                 person.updatedAt,
                 person.revision,

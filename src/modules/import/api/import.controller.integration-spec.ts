@@ -45,6 +45,7 @@ import { KeycloakAdministrationService } from '../../keycloak-administration/dom
 import { ImportVorgangStatusResponse } from './importvorgang-status.response.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { ImportResultResponse } from './import-result.response.js';
 import { ImportDataItemStatus } from '../domain/importDataItem.enum.js';
 
 describe('Import API', () => {
@@ -873,6 +874,209 @@ describe('Import API', () => {
                 .send();
 
             expect(response.status).toBe(404);
+        });
+    });
+
+    describe('/GET import result', () => {
+        it('should return 200 OK with import result with provided limit', async () => {
+            const schule: OrganisationEntity = new OrganisationEntity();
+            schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
+            await em.persistAndFlush(schule);
+            await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
+
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, {
+                    status: ImportStatus.COMPLETED,
+                    importByPersonId: undefined,
+                    rolleId: sus.id,
+                    organisationId: schule.id,
+                    organisationsname: schule.name,
+                    rollename: sus.name,
+                }),
+            );
+
+            const importDataItem: ImportDataItem<true> = await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importVorgang.id,
+                    klasse: '1a',
+                    personalnummer: undefined,
+                    username: faker.internet.userName(),
+                    password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                }),
+            );
+
+            await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importVorgang.id,
+                    klasse: '1a',
+                    personalnummer: undefined,
+                    username: faker.internet.userName(),
+                    password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/import/importedUsers`)
+                .query({ importvorgangId: importVorgang.id, offsett: 0, limit: 1 })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body).toEqual({
+                importvorgandId: importVorgang.id,
+                rollenname: sus.name,
+                organisationsname: schule.name,
+                pageTotal: 1,
+                total: 2,
+                importedUsers: [
+                    {
+                        klasse: importDataItem.klasse,
+                        vorname: importDataItem.vorname,
+                        nachname: importDataItem.nachname,
+                        benutzername: importDataItem.username,
+                        startpasswort: expect.any(String) as unknown as string,
+                        status: ImportDataItemStatus.PENDING,
+                    },
+                ],
+            } as ImportResultResponse);
+        });
+
+        it('should return 200 OK with import result when limit not provided', async () => {
+            const schule: OrganisationEntity = new OrganisationEntity();
+            schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
+            await em.persistAndFlush(schule);
+            await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
+
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, {
+                    status: ImportStatus.COMPLETED,
+                    importByPersonId: undefined,
+                    rolleId: sus.id,
+                    organisationId: schule.id,
+                    organisationsname: schule.name,
+                    rollename: sus.name,
+                }),
+            );
+
+            const importDataItem: ImportDataItem<true> = await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importVorgang.id,
+                    klasse: '1a',
+                    personalnummer: undefined,
+                    username: faker.internet.userName(),
+                    password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                }),
+            );
+
+            const importDataItem2: ImportDataItem<true> = await importDataRepository.save(
+                DoFactory.createImportDataItem(false, {
+                    importvorgangId: importVorgang.id,
+                    klasse: '1a',
+                    personalnummer: undefined,
+                    username: faker.internet.userName(),
+                    password: '5ba56bceb34c5b84|6ad72f7a8fa8d98daa7e3f0dc6aa2a82',
+                }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/import/importedUsers`)
+                .query({ importvorgangId: importVorgang.id, offsett: 0, limit: undefined })
+                .send();
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeInstanceOf(Object);
+            expect(response.body).toEqual({
+                importvorgandId: importVorgang.id,
+                rollenname: sus.name,
+                organisationsname: schule.name,
+                pageTotal: 2,
+                total: 2,
+                importedUsers: [
+                    {
+                        klasse: importDataItem.klasse,
+                        vorname: importDataItem.vorname,
+                        nachname: importDataItem.nachname,
+                        benutzername: importDataItem.username,
+                        startpasswort: expect.any(String) as unknown as string,
+                        status: ImportDataItemStatus.PENDING,
+                    },
+                    {
+                        klasse: importDataItem2.klasse,
+                        vorname: importDataItem2.vorname,
+                        nachname: importDataItem2.nachname,
+                        benutzername: importDataItem2.username,
+                        startpasswort: expect.any(String) as unknown as string,
+                        status: ImportDataItemStatus.PENDING,
+                    },
+                ],
+            } as ImportResultResponse);
+        });
+
+        it('should return 404 if importvorgang does not exist', async () => {
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/import/importedUsers`)
+                .query({ importvorgangId: faker.string.uuid(), offsett: 0, limit: 10 })
+                .send();
+
+            expect(response.status).toBe(404);
+        });
+
+        it('should return 400 if request limit exceeds 100', async () => {
+            const schule: OrganisationEntity = new OrganisationEntity();
+            schule.typ = OrganisationsTyp.SCHULE;
+            schule.name = 'Import Schule';
+            await em.persistAndFlush(schule);
+            await em.findOneOrFail(OrganisationEntity, { id: schule.id });
+
+            const sus: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, {
+                    rollenart: RollenArt.LERN,
+                    administeredBySchulstrukturknoten: schule.id,
+                    merkmale: [],
+                }),
+            );
+            if (sus instanceof DomainError) throw sus;
+
+            const importVorgang: ImportVorgang<true> = await importVorgangRepository.save(
+                DoFactory.createImportVorgang(false, {
+                    status: ImportStatus.COMPLETED,
+                    importByPersonId: undefined,
+                    rolleId: sus.id,
+                    organisationId: schule.id,
+                    organisationsname: schule.name,
+                }),
+            );
+
+            const response: Response = await request(app.getHttpServer() as App)
+                .get(`/import/importedUsers`)
+                .query({ importvorgangId: importVorgang.id, offsett: 0, limit: 101 })
+                .send();
+
+            expect(response.status).toBe(400);
+            expect(response.body).toEqual({
+                code: 400,
+                i18nKey: 'IMPORT_RESULT_QUERY_LIMIT_ERROR',
+            });
         });
     });
 });

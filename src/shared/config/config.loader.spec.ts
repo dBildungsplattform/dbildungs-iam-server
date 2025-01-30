@@ -92,7 +92,7 @@ describe('configloader', () => {
                 },
                 IMPORT: {
                     CSV_FILE_MAX_SIZE_IN_MB: 10,
-                    CSV_MAX_NUMBER_OF_USERS: 2000,
+                    CSV_MAX_NUMBER_OF_USERS: 2001,
                     PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
                     PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
                 },
@@ -100,6 +100,9 @@ describe('configloader', () => {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
                     STEP_UP_TIMEOUT_ENABLED: 'true',
                     STEP_UP_TIMEOUT_IN_SECONDS: 10,
+                },
+                HEADER_API_KEY: {
+                    INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
             };
 
@@ -235,7 +238,7 @@ describe('configloader', () => {
                 },
                 IMPORT: {
                     CSV_FILE_MAX_SIZE_IN_MB: 10,
-                    CSV_MAX_NUMBER_OF_USERS: 2000,
+                    CSV_MAX_NUMBER_OF_USERS: 2001,
                     PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
                     PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
                 },
@@ -243,6 +246,9 @@ describe('configloader', () => {
                     RENAME_WAITING_TIME_IN_SECONDS: 2,
                     STEP_UP_TIMEOUT_ENABLED: 'true',
                     STEP_UP_TIMEOUT_IN_SECONDS: 10,
+                },
+                HEADER_API_KEY: {
+                    INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
             };
 

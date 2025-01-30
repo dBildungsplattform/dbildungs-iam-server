@@ -88,6 +88,7 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         revision: person.revision,
         personalnummer: person.personalnummer,
         orgUnassignmentDate: person.orgUnassignmentDate,
+        istTechnisch: person.istTechnisch,
     };
 }
 
@@ -123,6 +124,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         undefined,
         getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
+        entity.istTechnisch,
     );
 }
 
@@ -440,7 +442,7 @@ export class PersonRepository {
         }
     }
 
-    public getReferrer(personEntity: Loaded<PersonEntity>): string | undefined {
+    public getReferrer(personEntity: Loaded<PersonEntity>): PersonReferrer | undefined {
         return personEntity.referrer;
     }
 
@@ -478,7 +480,9 @@ export class PersonRepository {
         await this.em.persistAndFlush(personEntity);
 
         if (isPersonRenamedEventNecessary) {
-            this.eventService.publish(PersonRenamedEvent.fromPerson(person, oldReferrer));
+            this.eventService.publish(
+                PersonRenamedEvent.fromPerson(person, oldReferrer, personEntity.vorname, personEntity.familienname),
+            );
             // wait for privacyIDEA to update the username
             await new Promise<void>((resolve: () => void) =>
                 setTimeout(resolve, this.RENAME_WAITING_TIME_IN_SECONDS * 1000),

@@ -85,7 +85,7 @@ ox:
   contextId: '10'
   contextName: '10'
 
-vidis: 
+vidis:
   url: 'https://service-stage.vidis.schule'
   regionName: 'test-region'
   keycloakGroup: 'VIDIS-service'
@@ -93,6 +93,8 @@ vidis:
 
 backend:
   replicaCount: 1
+  maxUnavailable: '50%'
+  maxSurge: '50%'
   image:
     repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
     tag: ''
@@ -135,7 +137,7 @@ backend:
   dbmigration:
     enabled: true
     command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
-  keycloakdatamigration: 
+  keycloakdatamigration:
     enabled: true
     command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
   ingress:
@@ -188,7 +190,7 @@ autoscaling:
 
 podDisruptionBudget:
   enabled: true
-  minAvailable: "80%"
+  minAvailable: "60%"
 
 status:
   url: 'https://status.dev.spsh.dbildungsplattform.de/'
@@ -234,7 +236,7 @@ cronjobs:
 
 import:
   csvFileMaxSizeInMB: 10
-  csvMaxNumberOfUsers: 2000
+  csvMaxNumberOfUsers: 2001
 
 featureFlags:
   befristungBearbeiten: true
