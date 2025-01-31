@@ -12,6 +12,7 @@ import { FeatureFlagConfig } from './featureflag.config.js';
 import { envToOptionalBoolean } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
 import { ImportConfig } from './import.config.js';
+import { HeaderApiKeyConfig } from './headerapikey.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -27,6 +28,7 @@ export type Config = {
     SYSTEM: Partial<SystemConfig>;
     VIDIS: Partial<VidisConfig>;
     IMPORT: Partial<ImportConfig>;
+    HEADER_API_KEY: Partial<HeaderApiKeyConfig>;
 };
 
 export default (): Config => ({
@@ -112,13 +114,16 @@ export default (): Config => ({
         KEYCLOAK_ROLE: process.env['VIDIS_KEYCLOAK_ROLE'],
     },
     IMPORT: {
-        PASSPHRASE_SECRET: process.env['PASSPHRASE_SECRET'],
-        PASSPHRASE_SALT: process.env['PASSPHRASE_SALT'],
-        CSV_FILE_MAX_SIZE_IN_MB: isNaN(Number(process.env['CSV_FILE_MAX_SIZE_IN_MB']))
+        PASSPHRASE_SECRET: process.env['IMPORT_PASSPHRASE_SECRET'],
+        PASSPHRASE_SALT: process.env['IMPORT_PASSPHRASE_SALT'],
+        CSV_FILE_MAX_SIZE_IN_MB: isNaN(Number(process.env['IMPORT_CSV_FILE_MAX_SIZE_IN_MB']))
             ? undefined
-            : Number(process.env['CSV_FILE_MAX_SIZE_IN_MB']),
-        CSV_MAX_NUMBER_OF_USERS: isNaN(Number(process.env['CSV_MAX_NUMBER_OF_USERS']))
+            : Number(process.env['IMPORT_CSV_FILE_MAX_SIZE_IN_MB']),
+        CSV_MAX_NUMBER_OF_USERS: isNaN(Number(process.env['IMPORT_CSV_MAX_NUMBER_OF_USERS']))
             ? undefined
-            : Number(process.env['CSV_MAX_NUMBER_OF_USERS']),
+            : Number(process.env['IMPORT_CSV_MAX_NUMBER_OF_USERS']),
+    },
+    HEADER_API_KEY: {
+        INTERNAL_COMMUNICATION_API_KEY: process.env['INTERNAL_COMMUNICATION_API_KEY'],
     },
 });
