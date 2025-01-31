@@ -46,3 +46,4 @@ data:
   NODE_OPTIONS: "--max-old-space-size={{ .Values.backend.env.maxOldSpaceSize }}"
   IMPORT_CSV_FILE_MAX_SIZE_IN_MB: '{{ .Values.import.csvFileMaxSizeInMB }}'
   IMPORT_CSV_MAX_NUMBER_OF_USERS: '{{ .Values.import.csvMaxNumberOfUsers }}'
+  FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: '{{ .Values.featureFlags.befristungBearbeiten }}'
