@@ -91,7 +91,7 @@ export type PrivacyIdeaResponseTokens = {
     signature: string;
 };
 
-export type AuthenticaitonResponse = {
+export type AuthenticationResponse = {
     id: number;
     jsonrpc: string;
     result: {

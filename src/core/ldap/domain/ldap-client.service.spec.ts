@@ -1433,12 +1433,14 @@ describe('LDAP Client Service', () => {
 
         describe('when person can be found and modified', () => {
             let fakePersonID: string;
+            let fakeReferrer: PersonReferrer;
             let fakeDN: string;
             let newEmailAddress: string;
             let currentEmailAddress: string;
 
             beforeEach(() => {
                 fakePersonID = faker.string.uuid();
+                fakeReferrer = faker.internet.userName();
                 fakeDN = faker.string.alpha();
                 newEmailAddress = 'new-address@schule-sh.de';
                 currentEmailAddress = 'current-address@schule-sh.de';
@@ -1465,13 +1467,13 @@ describe('LDAP Client Service', () => {
 
                     const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                         fakePersonID,
-                        faker.internet.userName(),
+                        fakeReferrer,
                         newEmailAddress,
                     );
 
                     expect(result.ok).toBeTruthy();
                     expect(loggerMock.info).toHaveBeenLastCalledWith(
-                        `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${fakePersonID}`,
+                        `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${fakePersonID}, referrer:${fakeReferrer}`,
                     );
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.objectContaining({
@@ -1512,13 +1514,13 @@ describe('LDAP Client Service', () => {
 
                         const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                             fakePersonID,
-                            faker.internet.userName(),
+                            fakeReferrer,
                             newEmailAddress,
                         );
 
                         expect(result.ok).toBeTruthy();
                         expect(loggerMock.info).toHaveBeenLastCalledWith(
-                            `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${fakePersonID}`,
+                            `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${fakePersonID}, referrer:${fakeReferrer}`,
                         );
                         expect(eventServiceMock.publish).toHaveBeenCalledWith(
                             expect.objectContaining({
@@ -1552,13 +1554,13 @@ describe('LDAP Client Service', () => {
 
                     const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
                         fakePersonID,
-                        faker.internet.userName(),
+                        fakeReferrer,
                         newEmailAddress,
                     );
 
                     expect(result.ok).toBeTruthy();
                     expect(loggerMock.info).toHaveBeenLastCalledWith(
-                        `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${fakePersonID}`,
+                        `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${fakePersonID}, referrer:${fakeReferrer}`,
                     );
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.objectContaining({
@@ -1846,6 +1848,93 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    // hence removePersonFromGroupByUsernameAndKennung uses removePersonFromGroup, test is very basic
+    describe('removePersonFromGroupByUsernameAndKennung', () => {
+        const fakeGroupId: string = 'lehrer-123';
+        const fakePersonUid: string = 'user123';
+        const fakeGroupDn: string = `cn=${fakeGroupId},${mockLdapInstanceConfig.BASE_DN}`;
+        const fakeLehrerUid: string = `uid=${fakePersonUid},ou=oeffentlicheSchulen,${mockLdapInstanceConfig.BASE_DN}`;
+        const fakeDienstStellenNummer: string = '123';
+        const fakeValidDomain: string = 'schule-sh.de';
+        const fakeInvalidDomain: string = 'not-a-valid-domain-sh.de';
+
+        it('should successfully remove person from group with multiple members', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                                member: [
+                                    `${fakeLehrerUid}`,
+                                    'uid=otherUser,ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN,
+                                ],
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.modify.mockResolvedValueOnce();
+
+                return clientMock;
+            });
+
+            const result: Result<boolean> = await ldapClientService.removePersonFromGroupByUsernameAndKennung(
+                fakePersonUid,
+                fakeDienstStellenNummer,
+                fakeValidDomain,
+            );
+
+            expect(result.ok).toBeTruthy();
+            expect(clientMock.modify).toHaveBeenCalledWith(fakeGroupDn, [
+                new Change({
+                    operation: 'delete',
+                    modification: new Attribute({
+                        type: 'member',
+                        values: [fakeLehrerUid],
+                    }),
+                }),
+            ]);
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `LDAP: Successfully removed person ${fakePersonUid} from group ${fakeGroupId}`,
+            );
+        });
+
+        it('should return error when getting root-name fails', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [
+                            createMock<Entry>({
+                                dn: fakeGroupDn,
+                                member: [
+                                    `${fakeLehrerUid}`,
+                                    'uid=otherUser,ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN,
+                                ],
+                            }),
+                        ],
+                    }),
+                );
+                clientMock.modify.mockResolvedValueOnce();
+
+                return clientMock;
+            });
+
+            const result: Result<boolean> = await ldapClientService.removePersonFromGroupByUsernameAndKennung(
+                fakePersonUid,
+                fakeDienstStellenNummer,
+                fakeInvalidDomain,
+            );
+
+            expect(result.ok).toBeFalsy();
+            expect(clientMock.modify).toHaveBeenCalledTimes(0);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `Could not get root-name because email-domain is invalid, domain:${fakeInvalidDomain}`,
+            );
+        });
+    });
+
     describe('changeUserPasswordByPersonId', () => {
         describe('when bind returns error', () => {
             it('should return falsy result', async () => {
@@ -1889,6 +1978,7 @@ describe('LDAP Client Service', () => {
 
         describe('when person can be found but modification fails', () => {
             const fakePersonID: string = faker.string.uuid();
+            const fakeReferrer: PersonReferrer = faker.internet.userName();
             const fakeDN: string = faker.string.alpha();
 
             it('should NOT publish event and throw LdapPersonEntryChangedEvent', async () => {
@@ -1910,22 +2000,26 @@ describe('LDAP Client Service', () => {
 
                 const result: Result<PersonID> = await ldapClientService.changeUserPasswordByPersonId(
                     fakePersonID,
-                    faker.internet.userName(),
+                    fakeReferrer,
                 );
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyUserPasswordError());
-                expect(loggerMock.error).toHaveBeenCalledWith(`LDAP: Modifying userPassword (UEM) FAILED, errMsg:{}`);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `LDAP: Modifying userPassword (UEM) FAILED for personId:${fakePersonID}, referrer:${fakeReferrer}, errMsg:{}`,
+                );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
         });
 
         describe('when person can be found and userPassword can be modified', () => {
             let fakePersonID: string;
+            let fakeReferrer: PersonReferrer;
             let fakeDN: string;
 
             beforeEach(() => {
                 fakePersonID = faker.string.uuid();
+                fakeReferrer = faker.internet.userName();
                 fakeDN = faker.string.alpha();
             });
 
@@ -1949,13 +2043,13 @@ describe('LDAP Client Service', () => {
 
                     const result: Result<PersonID> = await ldapClientService.changeUserPasswordByPersonId(
                         fakePersonID,
-                        faker.internet.userName(),
+                        fakeReferrer,
                     );
 
                     if (!result.ok) throw Error();
                     expect(result.value).toHaveLength(8);
                     expect(loggerMock.info).toHaveBeenLastCalledWith(
-                        `LDAP: Successfully modified userPassword (UEM) for personId:${fakePersonID}`,
+                        `LDAP: Successfully modified userPassword (UEM) for personId:${fakePersonID}, referrer:${fakeReferrer}`,
                     );
                     expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
                 });

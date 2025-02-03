@@ -594,8 +594,8 @@ describe('Rolle Aggregate', () => {
             serviceProviderRepoMock.findById.mockResolvedValue(undefined);
             const result: Rolle<true> | DomainError = await rolleFactory.update(
                 faker.string.uuid(),
-                faker.datatype.datetime(),
-                faker.datatype.datetime(),
+                faker.date.past(),
+                faker.date.recent(),
                 1,
                 'newName',
                 faker.string.uuid(),
@@ -611,8 +611,8 @@ describe('Rolle Aggregate', () => {
             serviceProviderRepoMock.findById.mockResolvedValue(undefined);
             const result: Rolle<true> | DomainError = await rolleFactory.update(
                 faker.string.uuid(),
-                faker.datatype.datetime(),
-                faker.datatype.datetime(),
+                faker.date.past(),
+                faker.date.recent(),
                 1,
                 ' newName',
                 faker.string.uuid(),
