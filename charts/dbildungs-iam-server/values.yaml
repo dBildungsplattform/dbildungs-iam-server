@@ -237,3 +237,6 @@ cronjobs:
 import:
   csvFileMaxSizeInMB: 10
   csvMaxNumberOfUsers: 2001
+
+featureFlags:
+  befristungBearbeiten: true
