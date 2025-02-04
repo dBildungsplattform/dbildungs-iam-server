@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ArrayUnique, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
 
 export class FindDbiamPersonenkontextWorkflowBodyParams {
     @IsUUID()
@@ -11,14 +12,17 @@ export class FindDbiamPersonenkontextWorkflowBodyParams {
     })
     public readonly organisationId?: string;
 
-    @IsUUID()
+    @ArrayUnique()
+    @IsUUID(undefined, { each: true })
     @IsOptional()
+    @TransformToArray()
     @ApiProperty({
-        description: 'ID of the rolle.',
+        description: 'IDs of the rollen.',
         required: false,
         nullable: true,
+        isArray: true,
     })
-    public readonly rolleId?: string;
+    public readonly rolleIds?: string[];
 
     @IsString()
     @IsOptional()

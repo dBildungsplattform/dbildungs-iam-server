@@ -28,7 +28,7 @@ export class PersonenkontextWorkflowResponse {
         type: String,
         nullable: true,
     })
-    public readonly selectedRolle?: string;
+    public readonly selectedRollen?: string[];
 
     @ApiProperty({
         description: 'Indicates whether the commit action can be performed.',
@@ -41,12 +41,12 @@ export class PersonenkontextWorkflowResponse {
         rollen: Rolle<true>[],
         canCommit: boolean,
         selectedOrganisation?: string,
-        selectedRole?: string,
+        selectedRollen?: string[],
     ) {
         this.organisations = organisations;
         this.rollen = rollen.map((rolle: Rolle<true>) => this.createRolleResponse(rolle));
         this.selectedOrganisation = selectedOrganisation;
-        this.selectedRolle = selectedRole;
+        this.selectedRollen = selectedRollen;
         this.canCommit = canCommit;
     }
 
