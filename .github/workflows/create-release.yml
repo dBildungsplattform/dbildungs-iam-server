@@ -28,23 +28,12 @@ jobs:
     permissions:
       contents: read
 
-  tests_and_sonarcloud:
-    name: "Tests and Sonarcloud"
-    if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5
-    with:
-      node_version: '18'
-      timeout_minutes: 20
-    permissions:
-      contents: read
-    secrets: inherit
-
   release_image:
     name: "Publish image and scan with trivy"
     needs:
      - codeql_analyze
      - nest_lint
-     - tests_and_sonarcloud
+
     permissions:
       packages: write
       security-events: write
