@@ -179,7 +179,6 @@ export class PersonenkontextWorkflowAggregate {
     // Also verifies again if the organisationId is allowed to be assigned by the admin
     public async canCommit(permissions: PersonPermissions): Promise<DomainError | boolean> {
         if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
-            console.log("XXD: ", this.selectedRolleIds.length)
             // Check references for all selected roles
             for (const rolleId of this.selectedRolleIds) {
                 // eslint-disable-next-line no-await-in-loop
