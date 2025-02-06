@@ -2,6 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationResponseLegacy } from '../../../organisation/api/organisation.response.legacy.js';
 import { RolleResponse } from '../../../rolle/api/rolle.response.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
+import { ArrayUnique, IsUUID } from 'class-validator';
+import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
 
 export class PersonenkontextWorkflowResponse {
     @ApiProperty({
@@ -23,9 +25,12 @@ export class PersonenkontextWorkflowResponse {
     })
     public readonly selectedOrganisation?: string;
 
+    @ArrayUnique()
+    @IsUUID(undefined, { each: true })
+    @TransformToArray()
     @ApiProperty({
-        description: 'Selected rolle.',
-        type: String,
+        description: 'Selected rollen.',
+        type: [String],
         nullable: true,
     })
     public readonly selectedRollen?: string[];
