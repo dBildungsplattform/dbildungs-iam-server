@@ -101,13 +101,9 @@ export class OrganisationController {
                 ),
             );
         }
-
-        const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =
-            await this.organisationRepository.findRootDirectChildren();
-
         const organisation: Organisation<false> | DomainError = Organisation.createNew(
-            params.administriertVon ?? oeffentlich?.id,
-            params.zugehoerigZu ?? oeffentlich?.id,
+            params.administriertVon,
+            params.zugehoerigZu,
             params.kennung,
             params.name,
             params.namensergaenzung,
