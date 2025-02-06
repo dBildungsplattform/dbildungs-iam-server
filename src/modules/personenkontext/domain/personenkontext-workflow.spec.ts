@@ -84,7 +84,7 @@ describe('PersonenkontextWorkflow', () => {
         it('should initialize the aggregate with the selected Organisation and Rolle', () => {
             anlage.initialize('org-id', ['role-id']);
             expect(anlage.selectedOrganisationId).toBe('org-id');
-            expect(anlage.selectedRolleIds).toBe(['role-id']);
+            expect(anlage.selectedRolleIds).toStrictEqual(['role-id']);
         });
     });
 
