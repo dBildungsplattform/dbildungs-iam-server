@@ -219,5 +219,5 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
     with:
       image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
-      fail_on_vulnerabilites: false
+      fail_on_vulnerabilites: true
       report_location: "Dockerfile"
