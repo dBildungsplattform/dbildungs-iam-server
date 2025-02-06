@@ -58,6 +58,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
@@ -101,6 +103,24 @@ services:
       interval: 5s
     volumes:
       - kafka:/bitnami/kafka
+
+  kafka-init:
+    image: bitnami/kafka:3.9.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: /init/scripts/create_topics.sh /init-data/kafka-topics.txt
+    environment:
+      - KAFKA_URL=kafka:9092
+      - KAFKA_TOPIC_PREFIX=local.
+      - KAFKA_TOPIC_PARTITIONS=1
+      - KAFKA_REPLICATION_FACTOR=1
+    volumes:
+      - ./charts/dbildungs-iam-server/kafka/scripts:/init/scripts:ro
+      - type: bind
+        source: ./config/kafka-topics.txt
+        target: /init-data/kafka-topics.txt
+        read_only: true
 
   openldap:
     image: osixia/openldap:1.5.0
