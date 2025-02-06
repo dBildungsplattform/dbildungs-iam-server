@@ -8,9 +8,11 @@ describe('passwordGenerator', () => {
     });
 
     test('should match the structure: [Word][Number][SpecialChar]', () => {
-        const password: string = generatePassword();
-        const regex: RegExp = /^[A-Za-z]{6,}\d{1,2}[!@#$%]$/;
-        expect(password).toMatch(regex);
+        for (let i: number = 0; i < 100; i++) {
+            const password: string = generatePassword();
+            const regex: RegExp = /^[A-Za-z]{6,}\d[+\-*\/%&!?@$#]$/;
+            expect(password).toMatch(regex);
+        }
     });
 
     test('should include a word with at least 6 characters', () => {
@@ -30,7 +32,6 @@ describe('passwordGenerator', () => {
         { name: 'numbers', regex: /[0123456789]/ },
         { name: 'symbols', regex: /[+\-*/%&!?@$#]/ },
     ])('Should contain $name', ({ regex }: { regex: RegExp }) => {
-        // Repeat the test 100 times
         const password: string = generatePassword();
 
         expect(password).toEqual(expect.stringMatching(regex));

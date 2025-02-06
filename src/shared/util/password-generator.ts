@@ -10,7 +10,7 @@ const stamm: string[] = [
     'Blumen',
     'Wolken',
     'Himmel',
-    'Sonne',
+    'Planet',
     'Freunde',
     'Familie',
     'Brunnen',

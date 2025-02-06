@@ -2047,7 +2047,7 @@ describe('LDAP Client Service', () => {
                     );
 
                     if (!result.ok) throw Error();
-                    expect(result.value).toHaveLength(8);
+                    expect(result.value.length).toBeGreaterThanOrEqual(8);
                     expect(loggerMock.info).toHaveBeenLastCalledWith(
                         `LDAP: Successfully modified userPassword (UEM) for personId:${fakePersonID}, referrer:${fakeReferrer}`,
                     );
