@@ -10,14 +10,14 @@ describe('passwordGenerator', () => {
     test('should match the structure: [Word][Number][SpecialChar]', () => {
         for (let i: number = 0; i < 100; i++) {
             const password: string = generatePassword();
-            const regex: RegExp = /^[A-Za-z]{6,}\d[+\-*\/%&!?@$#]$/;
+            const regex: RegExp = /^[A-Za-zäöüÄÖÜ]{6,}\d[+\-*\/%&!?@$#]$/;
             expect(password).toMatch(regex);
         }
     });
 
     test('should include a word with at least 6 characters', () => {
         const password: string = generatePassword();
-        const wordMatch: RegExpMatchArray | null = password.match(/^([A-Za-z]{6,})/);
+        const wordMatch: RegExpMatchArray | null = password.match(/^([A-Za-zäöüÄÖÜ]{6,})/);
         expect(wordMatch).not.toBeNull();
         expect(wordMatch![0].length).toBeGreaterThanOrEqual(6);
     });
