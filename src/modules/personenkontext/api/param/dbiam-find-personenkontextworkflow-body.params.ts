@@ -22,7 +22,7 @@ export class FindDbiamPersonenkontextWorkflowBodyParams {
         nullable: true,
         isArray: true,
     })
-    public readonly rolleIds?: string[];
+    public readonly rollenIds?: string[];
 
     @IsString()
     @IsOptional()
