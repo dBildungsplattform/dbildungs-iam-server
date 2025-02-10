@@ -4,6 +4,8 @@ The Kafka image used in the project is `bitnami/kafka`.
 
 The container exposes an external client on port 9094.
 
+Running the `kafka-init` using `docker compose` will create a topic for every line in `config/kafka-topics.txt` (if it doesn't already exist)
+
 ## Using a Kafka-client using docker
 
 You can use the same image to create a container with an interactive shell:
