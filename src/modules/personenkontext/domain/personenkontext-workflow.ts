@@ -179,16 +179,17 @@ export class PersonenkontextWorkflowAggregate {
     // Also verifies again if the organisationId is allowed to be assigned by the admin
     public async canCommit(permissions: PersonPermissions): Promise<DomainError | boolean> {
         if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
-            // Check references for all selected roles
-            for (const rolleId of this.selectedRolleIds) {
-                // eslint-disable-next-line no-await-in-loop
-                const referenceCheckError: Option<DomainError> = await this.checkReferences(
-                    this.selectedOrganisationId,
-                    rolleId,
-                );
-                if (referenceCheckError) {
-                    return referenceCheckError;
-                }
+            // Check references for all selected roles concurrently
+            const referenceCheckErrors: Option<DomainError>[] = await Promise.all(
+                this.selectedRolleIds.map((rolleId: string) =>
+                    this.checkReferences(this.selectedOrganisationId!, rolleId),
+                ),
+            );
+
+            // Find the first error if any
+            const firstError: Option<DomainError> = referenceCheckErrors.find((error: Option<DomainError>) => error);
+            if (firstError) {
+                return firstError;
             }
 
             // Check permissions after verifying references
