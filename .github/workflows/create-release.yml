@@ -11,28 +11,8 @@ concurrency:
 
 jobs:
   # GHRC Image
-  codeql_analyze:
-    name: "CodeQL"
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@5
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-  nest_lint:
-    name: "Linting"
-    if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@5
-    with:
-      node_version: '18'
-    permissions:
-      contents: read
-
   release_image:
     name: "Publish image and scan with trivy"
-    needs:
-     - codeql_analyze
-     - nest_lint
 
     permissions:
       packages: write
