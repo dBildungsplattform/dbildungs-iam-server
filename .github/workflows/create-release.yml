@@ -13,7 +13,6 @@ jobs:
   # GHRC Image
   release_image:
     name: "Publish image and scan with trivy"
-
     permissions:
       packages: write
       security-events: write
