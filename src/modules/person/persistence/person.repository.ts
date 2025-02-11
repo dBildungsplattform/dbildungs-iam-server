@@ -597,8 +597,9 @@ export class PersonRepository {
 
     private getThirdSortCriteria(sortField: SortFieldPersonFrontend): SortFieldPersonFrontend | undefined {
         switch (sortField) {
-            case SortFieldPersonFrontend.VORNAME || SortFieldPersonFrontend.FAMILIENNAME:
-                return SortFieldPersonFrontend.FAMILIENNAME;
+            case SortFieldPersonFrontend.VORNAME:
+            case SortFieldPersonFrontend.FAMILIENNAME:
+                return SortFieldPersonFrontend.REFERRER;
             default:
                 return undefined;
         }
