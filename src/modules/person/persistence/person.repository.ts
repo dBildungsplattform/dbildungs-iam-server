@@ -582,6 +582,28 @@ export class PersonRepository {
         return [persons, total];
     }
 
+    private getSecondSortCriteria(sortField: SortFieldPersonFrontend): SortFieldPersonFrontend | undefined {
+        switch (sortField) {
+            case SortFieldPersonFrontend.VORNAME:
+                return SortFieldPersonFrontend.FAMILIENNAME;
+            case SortFieldPersonFrontend.FAMILIENNAME:
+                return SortFieldPersonFrontend.VORNAME;
+            case SortFieldPersonFrontend.PERSONALNUMMER:
+                return SortFieldPersonFrontend.REFERRER;
+            default:
+                return undefined;
+        }
+    }
+
+    private getThirdSortCriteria(sortField: SortFieldPersonFrontend): SortFieldPersonFrontend | undefined {
+        switch (sortField) {
+            case SortFieldPersonFrontend.VORNAME || SortFieldPersonFrontend.FAMILIENNAME:
+                return SortFieldPersonFrontend.FAMILIENNAME;
+            default:
+                return undefined;
+        }
+    }
+
     public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
         const scope: PersonScope = new PersonScope()
             .setScopeWhereOperator(ScopeOperator.AND)
@@ -597,6 +619,16 @@ export class PersonRepository {
         const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
         scope.sortBy(raw(`lower(${sortField})`), sortOrder);
+
+        const secondSortCriteria: SortFieldPersonFrontend | undefined = this.getSecondSortCriteria(sortField);
+
+        if (secondSortCriteria) {
+            scope.sortBy(raw(`lower(${secondSortCriteria})`), ScopeOrder.ASC);
+            const thirdSortCriteria: SortFieldPersonFrontend | undefined = this.getThirdSortCriteria(sortField);
+            if (thirdSortCriteria) {
+                scope.sortBy(raw(`lower(${thirdSortCriteria})`), ScopeOrder.ASC);
+            }
+        }
 
         if (queryParams.suchFilter) {
             scope.findBySearchString(queryParams.suchFilter);
