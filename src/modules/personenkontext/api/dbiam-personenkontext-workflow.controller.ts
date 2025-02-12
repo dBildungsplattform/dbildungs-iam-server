@@ -24,8 +24,6 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { FindPersonenkontextSchulstrukturknotenBodyParams } from './param/find-personenkontext-schulstrukturknoten.body.params.js';
-import { FindSchulstrukturknotenResponse } from './response/find-schulstrukturknoten.response.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
@@ -97,7 +95,7 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Initializes the aggregate with the values of the selected organisation and rolle through the UI
         // (Both values could be undefined when nothing was done yet)
-        anlage.initialize(params.organisationId, params.rolleId);
+        anlage.initialize(params.organisationId, params.rollenIds);
 
         // Find all possible SSKs (Possibly through name if the name was given)
         const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -118,7 +116,7 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
         let canCommit: boolean = false;
-        if (params.organisationId && params.rolleId) {
+        if (params.organisationId && params.rollenIds) {
             const commitResult: DomainError | boolean = await anlage.canCommit(permissions);
             if (commitResult === true) {
                 canCommit = true;
@@ -130,7 +128,7 @@ export class DbiamPersonenkontextWorkflowController {
             rollen,
             canCommit,
             params.organisationId,
-            params.rolleId,
+            params.rollenIds,
         );
 
         return response;
@@ -174,41 +172,6 @@ export class DbiamPersonenkontextWorkflowController {
             throw updateResult;
         }
         return new PersonenkontexteUpdateResponse(updateResult);
-    }
-
-    @Get('schulstrukturknoten')
-    @ApiOkResponse({
-        description: 'The schulstrukturknoten for a personenkontext were successfully returned.',
-        type: FindSchulstrukturknotenResponse,
-    })
-    @ApiUnauthorizedResponse({
-        description: 'Not authorized to get available schulstrukturknoten for personenkontexte.',
-    })
-    @ApiForbiddenResponse({ description: 'Insufficient permission to get schulstrukturknoten for personenkontext.' })
-    @ApiInternalServerErrorResponse({
-        description: 'Internal server error while getting schulstrukturknoten for personenkontexte.',
-    })
-    public async findSchulstrukturknoten(
-        @Query() params: FindPersonenkontextSchulstrukturknotenBodyParams,
-    ): Promise<FindSchulstrukturknotenResponse> {
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
-        const sskName: string = params.sskName ?? '';
-        const ssks: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-            params.rolleId,
-            sskName,
-            params.limit,
-            true,
-        );
-
-        const sskResponses: OrganisationResponseLegacy[] = ssks.map(
-            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
-        );
-        const response: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(
-            sskResponses,
-            ssks.length,
-        );
-
-        return response;
     }
 
     @Post()
