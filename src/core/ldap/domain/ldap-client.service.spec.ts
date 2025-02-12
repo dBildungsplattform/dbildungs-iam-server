@@ -50,6 +50,7 @@ describe('LDAP Client Service', () => {
         BASE_DN: 'dc=example,dc=com',
         OEFFENTLICHE_SCHULEN_DOMAIN: 'schule-sh.de',
         ERSATZSCHULEN_DOMAIN: 'ersatzschule-sh.de',
+        RETRY_WRAPPER_DEFAULT_RETRIES: 3,
         URL: '',
         BIND_DN: '',
         ADMIN_PASSWORD: '',
