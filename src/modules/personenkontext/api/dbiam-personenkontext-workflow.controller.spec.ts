@@ -156,13 +156,13 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: RollenArt.LERN,
             });
-            const rolleId: string = rolle.id;
+            const rollenIds: string[] = [rolle.id];
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
 
             const params: FindDbiamPersonenkontextWorkflowBodyParams = {
                 organisationId,
-                rolleId,
+                rollenIds,
                 organisationName: undefined,
                 rolleName: undefined,
                 limit: undefined,
