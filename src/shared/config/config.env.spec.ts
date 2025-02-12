@@ -50,15 +50,11 @@ describe('Config Loader', () => {
             });
         });
 
-        it('should load import configuration with parsed not integer values', () => {
+        it('should throw error when integers could not be parsed', () => {
             process.env['IMPORT_CSV_FILE_MAX_SIZE_IN_MB'] = 'string';
             process.env['IMPORT_CSV_MAX_NUMBER_OF_USERS'] = 'string';
 
-            const config: Config = configEnv();
-            expect(config.IMPORT).toEqual({
-                CSV_FILE_MAX_SIZE_IN_MB: undefined,
-                CSV_MAX_NUMBER_OF_USERS: undefined,
-            });
+            expect(() => configEnv()).toThrow();
         });
     });
 });

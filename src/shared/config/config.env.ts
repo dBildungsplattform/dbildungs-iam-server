@@ -9,7 +9,7 @@ import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
 import { FeatureFlagConfig } from './featureflag.config.js';
-import { envToOptionalBoolean } from './utils.js';
+import { envToOptionalBoolean, envToOptionalInteger } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
 import { ImportConfig } from './import.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
@@ -95,12 +95,8 @@ export default (): Config => ({
         CONTEXT_NAME: process.env['OX_CONTEXT_NAME'],
     },
     SYSTEM: {
-        RENAME_WAITING_TIME_IN_SECONDS: process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS']
-            ? parseInt(process.env['SYSTEM_RENAME_WAITING_TIME_IN_SECONDS'])
-            : undefined,
-        STEP_UP_TIMEOUT_IN_SECONDS: process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS']
-            ? parseInt(process.env['SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS'])
-            : undefined,
+        RENAME_WAITING_TIME_IN_SECONDS: envToOptionalInteger('SYSTEM_RENAME_WAITING_TIME_IN_SECONDS'),
+        STEP_UP_TIMEOUT_IN_SECONDS: envToOptionalInteger('SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS'),
         STEP_UP_TIMEOUT_ENABLED: process.env['SYSTEM_STEP_UP_TIMEOUT_ENABLED']?.toLowerCase() as 'true' | 'false',
     },
     VIDIS: {
@@ -114,12 +110,8 @@ export default (): Config => ({
     IMPORT: {
         PASSPHRASE_SECRET: process.env['IMPORT_PASSPHRASE_SECRET'],
         PASSPHRASE_SALT: process.env['IMPORT_PASSPHRASE_SALT'],
-        CSV_FILE_MAX_SIZE_IN_MB: isNaN(Number(process.env['IMPORT_CSV_FILE_MAX_SIZE_IN_MB']))
-            ? undefined
-            : Number(process.env['IMPORT_CSV_FILE_MAX_SIZE_IN_MB']),
-        CSV_MAX_NUMBER_OF_USERS: isNaN(Number(process.env['IMPORT_CSV_MAX_NUMBER_OF_USERS']))
-            ? undefined
-            : Number(process.env['IMPORT_CSV_MAX_NUMBER_OF_USERS']),
+        CSV_FILE_MAX_SIZE_IN_MB: envToOptionalInteger('IMPORT_CSV_FILE_MAX_SIZE_IN_MB'),
+        CSV_MAX_NUMBER_OF_USERS: envToOptionalInteger('IMPORT_CSV_MAX_NUMBER_OF_USERS'),
     },
     HEADER_API_KEY: {
         INTERNAL_COMMUNICATION_API_KEY: process.env['INTERNAL_COMMUNICATION_API_KEY'],
