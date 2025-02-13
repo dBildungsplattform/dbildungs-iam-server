@@ -18,6 +18,25 @@ import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
+import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
+
+type WithoutOptional<T> = {
+    [K in keyof T]-?: T[K];
+};
+
+export type LdapPersonAttributes = {
+    givenName: string;
+    surName: string;
+    cn: string;
+    mailPrimaryAddress?: string;
+    mailAlternativeAddress?: string;
+};
+
+export type LdapSyncData = WithoutOptional<LdapPersonAttributes> & {
+    personId: PersonID;
+    referrer: string;
+    //groupOuList: string[];
+};
 
 export type PersonData = {
     vorname: string;
@@ -29,7 +48,7 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
-    public static readonly DEFAULT_RETRIES: number = 3; // e.g. DEFAULT_RETRIES = 3 will produce retry sequence: 1sek, 8sek, 27sek (1000ms * retrycounter^3)
+    public static readonly DEFAULT_RETRIES: number = 1; // e.g. DEFAULT_RETRIES = 3 will produce retry sequence: 1sek, 8sek, 27sek (1000ms * retrycounter^3)
 
     public static readonly OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT: string = 'schule-sh.de';
 
@@ -38,6 +57,12 @@ export class LdapClientService {
     public static readonly OEFFENTLICHE_SCHULEN_OU: string = 'oeffentlicheSchulen';
 
     public static readonly ERSATZ_SCHULEN_OU: string = 'ersatzSchulen';
+
+    public static readonly GIVEN_NAME: string = 'givenName';
+
+    public static readonly SUR_NAME: string = 'sn';
+
+    public static readonly COMMON_NAME: string = 'cn';
 
     public static readonly MAIL_PRIMARY_ADDRESS: string = 'mailPrimaryAddress';
 
@@ -97,6 +122,16 @@ export class LdapClientService {
     ): Promise<Result<string>> {
         return this.executeWithRetry(
             () => this.modifyPersonAttributesInternal(oldReferrer, newGivenName, newSn, newReferrer),
+            LdapClientService.DEFAULT_RETRIES,
+        );
+    }
+
+    public async getPersonAttributes(
+        personId: PersonID,
+        referrer: PersonReferrer,
+    ): Promise<Result<LdapPersonAttributes>> {
+        return this.executeWithRetry(
+            () => this.getPersonAttributesInternal(personId, referrer),
             LdapClientService.DEFAULT_RETRIES,
         );
     }
@@ -435,6 +470,114 @@ export class LdapClientService {
 
             return { ok: true, value: oldReferrer };
         });
+    }
+
+    private async getPersonAttributesInternal(
+        personId: PersonID,
+        referrer: PersonReferrer,
+    ): Promise<Result<LdapPersonAttributes>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: getPersonAttributes');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+                scope: 'sub',
+                filter: `(uid=${referrer})`,
+                attributes: [
+                    'uid',
+                    'dn',
+                    LdapClientService.GIVEN_NAME,
+                    LdapClientService.SUR_NAME,
+                    LdapClientService.COMMON_NAME,
+                    LdapClientService.MAIL_PRIMARY_ADDRESS,
+                    LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                ],
+                returnAttributeValues: true,
+            });
+            if (!searchResult.searchEntries[0]) {
+                this.logger.error(
+                    `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                );
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
+
+            const givenName: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.GIVEN_NAME,
+                referrer,
+                personId,
+            );
+            if (!givenName.ok) {
+                return givenName;
+            }
+            const surName: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.SUR_NAME,
+                referrer,
+                personId,
+            );
+            if (!surName.ok) {
+                return surName;
+            }
+            const cn: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.COMMON_NAME,
+                referrer,
+                personId,
+            );
+            if (!cn.ok) {
+                return cn;
+            }
+            const mailPrimaryAddress: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.MAIL_PRIMARY_ADDRESS,
+                referrer,
+                personId,
+            );
+            if (!mailPrimaryAddress.ok) {
+                return mailPrimaryAddress;
+            }
+            const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                referrer,
+                personId,
+            );
+
+            const personAttributes: LdapPersonAttributes = {
+                givenName: givenName.value,
+                cn: cn.value,
+                surName: surName.value,
+                mailPrimaryAddress: mailPrimaryAddress.value,
+                mailAlternativeAddress: mailAlternativeAddress.ok ? mailAlternativeAddress.value : undefined,
+            };
+
+            return { ok: true, value: personAttributes };
+        });
+    }
+
+    private getAttributeAsStringOrError(
+        entry: Entry,
+        attributeName: string,
+        referrer: PersonReferrer,
+        personId: PersonID,
+    ): Result<string> {
+        const attributeValue: unknown = entry[attributeName];
+        if (typeof attributeValue === 'string') {
+            return {
+                ok: true,
+                value: attributeValue,
+            };
+        }
+        return {
+            ok: false,
+            error: new LdapFetchAttributeError(attributeName, referrer, personId),
+        };
     }
 
     private async updateMemberDnInGroupsInternal(
