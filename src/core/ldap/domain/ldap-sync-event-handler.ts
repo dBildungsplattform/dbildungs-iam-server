@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LdapClientService, LdapPersonAttributes, LdapSyncData } from './ldap-client.service.js';
+import { LdapClientService, LdapPersonAttributes } from './ldap-client.service.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 //import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { EventHandler } from '../../eventbus/decorators/event-handler.decorator.js';
@@ -8,6 +8,20 @@ import { Person } from '../../../modules/person/domain/person.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { EmailRepo } from '../../../modules/email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+
+export type LdapSyncData = {
+    givenName: string;
+    surName: string;
+    cn: string;
+    enabledEmailAddress: string;
+    disabledEmailAddresses?: string[];
+
+    personId: PersonID;
+    referrer: string;
+    //groupOuList: string[];
+};
 
 /**
  * Handling of PersonExternalSystemsSyncEvent is done here, an additional class next to LdapEventHandler
@@ -78,7 +92,9 @@ export class LdapSyncEventHandler {
         const surName: string = person.familienname;
         const cn: string = person.referrer;
         const mailPrimaryAddress: string = enabledEmailAddress.address;
-        const mailAlternativeAddress: string = disabledEmailAddressesSorted[0]?.address ?? '';
+        const mailAlternativeAddresses: string[] = disabledEmailAddressesSorted.map(
+            (ea: EmailAddress<true>) => ea.address,
+        );
 
         const syncData: LdapSyncData = {
             personId: person.id,
@@ -86,8 +102,8 @@ export class LdapSyncEventHandler {
             givenName: givenName,
             surName: surName,
             cn: cn,
-            mailPrimaryAddress: mailPrimaryAddress,
-            mailAlternativeAddress: mailAlternativeAddress,
+            enabledEmailAddress: mailPrimaryAddress,
+            disabledEmailAddresses: mailAlternativeAddresses,
         };
 
         await this.syncDataToLdap(syncData, personAttributes.value);
@@ -96,48 +112,100 @@ export class LdapSyncEventHandler {
     private async syncDataToLdap(ldapSyncData: LdapSyncData, personAttributes: LdapPersonAttributes): Promise<void> {
         // Check and sync EmailAddress
         const currentMailPrimaryAddress: string | undefined = personAttributes.mailPrimaryAddress;
-        if (ldapSyncData.mailPrimaryAddress !== currentMailPrimaryAddress) {
-            this.logger.info(
-                `Overwriting mailPrimaryAddress:${currentMailPrimaryAddress} in LDAP with ${ldapSyncData.mailPrimaryAddress}`,
+        if (ldapSyncData.enabledEmailAddress !== currentMailPrimaryAddress) {
+            this.logger.warning(
+                `Mismatch mailPrimaryAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailPrimaryAddress}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
             );
-            await this.ldapClientService.changeEmailAddressByPersonId(
-                ldapSyncData.personId,
-                ldapSyncData.referrer,
-                ldapSyncData.mailPrimaryAddress,
-            );
+            if (!currentMailPrimaryAddress) {
+                this.logger.warning(
+                    `MailPrimaryAddress undefined for personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                );
+                await this.ldapClientService.changeEmailAddressByPersonId(
+                    ldapSyncData.personId,
+                    ldapSyncData.referrer,
+                    ldapSyncData.enabledEmailAddress,
+                );
+            } else {
+                if (this.isAddressInDisabledAddresses(currentMailPrimaryAddress, ldapSyncData.disabledEmailAddresses)) {
+                    this.logger.info(
+                        `Found ${currentMailPrimaryAddress} in DISABLED addresses, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                    );
+                    this.logger.info(
+                        `Overwriting LDAP:${currentMailPrimaryAddress} with person:${ldapSyncData.enabledEmailAddress}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                    );
+                    await this.ldapClientService.changeEmailAddressByPersonId(
+                        ldapSyncData.personId,
+                        ldapSyncData.referrer,
+                        ldapSyncData.enabledEmailAddress,
+                    );
+                    if (personAttributes.mailAlternativeAddress) {
+                        await this.createDisabledEmailAddress(
+                            ldapSyncData.personId,
+                            ldapSyncData.referrer,
+                            personAttributes.mailAlternativeAddress,
+                        );
+                    }
+                } else {
+                    return this.logger.crit(
+                        `COULD NOT find ${currentMailPrimaryAddress} in DISABLED addresses, Overwriting ABORTED, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                    );
+                }
+            }
         }
 
         // Check and sync PersonAttributes
         if (ldapSyncData.givenName !== personAttributes.givenName) {
-            this.logger.error(
-                `Mismatch for givenName, person:${ldapSyncData.givenName}, LDAP:${personAttributes.givenName}`,
+            this.logger.warning(
+                `Mismatch for givenName, person:${ldapSyncData.givenName}, LDAP:${personAttributes.givenName}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
             );
         }
         if (ldapSyncData.surName !== personAttributes.surName) {
-            this.logger.error(`Mismatch for surName, person:${ldapSyncData.surName}, LDAP:${personAttributes.surName}`);
-        }
-        if (ldapSyncData.cn !== personAttributes.cn) {
-            this.logger.error(`Mismatch for cn, person:${ldapSyncData.cn}, LDAP:${personAttributes.cn}`);
-        }
-        if (ldapSyncData.mailPrimaryAddress !== personAttributes.mailPrimaryAddress) {
-            this.logger.error(
-                `Mismatch for mailPrimaryAddress, person:${ldapSyncData.mailPrimaryAddress}, LDAP:${personAttributes.mailPrimaryAddress}`,
+            this.logger.warning(
+                `Mismatch for surName, person:${ldapSyncData.surName}, LDAP:${personAttributes.surName}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
             );
         }
-        if (ldapSyncData.mailAlternativeAddress !== personAttributes.mailAlternativeAddress) {
-            this.logger.error(
-                `Mismatch for mailAlternativeAddress, person:${ldapSyncData.mailAlternativeAddress}, LDAP:${personAttributes.mailAlternativeAddress}`,
+        if (ldapSyncData.cn !== personAttributes.cn) {
+            this.logger.warning(
+                `Mismatch for cn, person:${ldapSyncData.cn}, LDAP:${personAttributes.cn}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
             );
         }
 
-        this.logger.info(
-            `Overwriting mailPrimaryAddress:${currentMailPrimaryAddress} in LDAP with ${ldapSyncData.mailPrimaryAddress}`,
-        );
         await this.ldapClientService.modifyPersonAttributes(
             ldapSyncData.referrer,
             ldapSyncData.givenName,
             ldapSyncData.surName,
             ldapSyncData.cn,
         );
+    }
+
+    private isAddressInDisabledAddresses(email: string, disabledEmailAddresses?: string[]): boolean {
+        if (!disabledEmailAddresses) return false;
+
+        return disabledEmailAddresses.some((disabledAddress: string) => disabledAddress === email);
+    }
+
+    private async createDisabledEmailAddress(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        address: string,
+    ): Promise<void> {
+        const email: EmailAddress<false> = EmailAddress.createNew(
+            personId,
+            address,
+            EmailAddressStatus.DISABLED,
+            undefined,
+        );
+
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
+        if (persistenceResult instanceof EmailAddress) {
+            this.logger.info(
+                `Successfully persisted new DISABLED EmailAddress for address:${persistenceResult.address}, personId:${personId}, referrer:${referrer}`,
+            );
+            //* NO EVENT IS PUBLISHED HERE -> NO COMMUNICATION TO OX */
+        } else {
+            this.logger.error(
+                `Could not persist email for personId:${personId}, referrer:${referrer}, error:${persistenceResult.message}`,
+            );
+        }
     }
 }
