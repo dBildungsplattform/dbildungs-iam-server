@@ -619,15 +619,17 @@ export class PersonRepository {
 
         const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
-        scope.sortBy(raw(`lower(${sortField})`), sortOrder);
+
+        this.addSortCriteria(scope, sortField, sortOrder);
 
         const secondSortCriteria: SortFieldPersonFrontend | undefined = this.getSecondSortCriteria(sortField);
-
         if (secondSortCriteria) {
-            scope.sortBy(raw(`lower(${secondSortCriteria})`), ScopeOrder.ASC);
-            const thirdSortCriteria: SortFieldPersonFrontend | undefined = this.getThirdSortCriteria(sortField);
+            this.addSortCriteria(scope, secondSortCriteria);
+
+            const thirdSortCriteria: SortFieldPersonFrontend | undefined =
+                this.getThirdSortCriteria(secondSortCriteria);
             if (thirdSortCriteria) {
-                scope.sortBy(raw(`lower(${thirdSortCriteria})`), ScopeOrder.ASC);
+                this.addSortCriteria(scope, thirdSortCriteria);
             }
         }
 
@@ -636,6 +638,18 @@ export class PersonRepository {
         }
 
         return scope;
+    }
+
+    private addSortCriteria(
+        scope: PersonScope,
+        criteria: SortFieldPersonFrontend,
+        order: ScopeOrder = ScopeOrder.ASC,
+    ): void {
+        if (criteria === SortFieldPersonFrontend.REFERRER) {
+            scope.sortBy(criteria, order);
+        } else {
+            scope.sortBy(raw(`lower(${criteria})`), order);
+        }
     }
 
     public async isPersonalnummerAlreadayAssigned(personalnummer: string): Promise<boolean> {
