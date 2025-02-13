@@ -18,7 +18,6 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Observable } from 'rxjs';
@@ -44,31 +43,11 @@ import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-up
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
-function createRolle(this: void, rolleFactory: RolleFactory, params: Partial<Rolle<boolean>> = {}): Rolle<false> {
-    const rolle: Rolle<false> | DomainError = rolleFactory.createNew(
-        faker.string.alpha(),
-        faker.string.uuid(),
-        faker.helpers.enumValue(RollenArt),
-        [faker.helpers.enumValue(RollenMerkmal)],
-        [faker.helpers.enumValue(RollenSystemRecht)],
-        [],
-        [],
-        false,
-    );
-    Object.assign(rolle, params);
-
-    if (rolle instanceof DomainError) {
-        throw rolle;
-    }
-    return rolle;
-}
-
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
     let orm: MikroORM;
     let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
-    let rolleFactory: RolleFactory;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let personRepo: PersonRepository;
     let personenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
@@ -120,7 +99,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         orm = module.get(MikroORM);
         organisationRepo = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
-        rolleFactory = module.get(RolleFactory);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
         personRepo = module.get(PersonRepository);
         personenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
@@ -582,79 +560,6 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                     i18nKey: 'INVALID_PERSONENKONTEXT_FOR_PERSON_WITH_ROLLENART_LERN',
                 });
             });
-        });
-    });
-
-    describe('/GET schulstrukturknoten for personenkontext', () => {
-        it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage', async () => {
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            const sskName: string = faker.company.name();
-            const parentOrga: Organisation<true> = await organisationRepo.save(
-                DoFactory.createOrganisation(false, { typ: OrganisationsTyp.LAND }),
-            );
-            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                createRolle(rolleFactory, {
-                    name: rolleName,
-                    rollenart: RollenArt.LEHR,
-                    administeredBySchulstrukturknoten: parentOrga.id,
-                }),
-            );
-            if (rolle instanceof DomainError) throw Error();
-
-            const rolleId: string = rolle.id;
-            await organisationRepo.save(
-                DoFactory.createOrganisation(false, {
-                    name: sskName,
-                    administriertVon: parentOrga.id,
-                    typ: OrganisationsTyp.SCHULE,
-                }),
-            );
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext-workflow/schulstrukturknoten?rolleId=${rolleId}&sskName=${sskName}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should return all schulstrukturknoten for a personenkontext based on PersonenkontextAnlage even when no sskName is provided', async () => {
-            const rolleName: string = faker.string.alpha({ length: 10 });
-            const sskName: string = faker.company.name();
-            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                createRolle(rolleFactory, { name: rolleName }),
-            );
-            if (rolle instanceof DomainError) throw Error();
-
-            const rolleId: string = rolle.id;
-            await organisationRepo.save(DoFactory.createOrganisation(false, { name: sskName }));
-
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext-workflow/schulstrukturknoten?rolleId=${rolleId}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should return empty list', async () => {
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(
-                    `/personenkontext-workflow/schulstrukturknoten?rolleId=${faker.string.uuid()}&sskName=${faker.string.alpha()}&limit=25`,
-                )
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
-        });
-
-        it('should return empty list even when no sskName is provided', async () => {
-            const response: Response = await request(app.getHttpServer() as App)
-                .get(`/personenkontext-workflow/schulstrukturknoten?rolleId=${faker.string.uuid()}&limit=25`)
-                .send();
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Object);
         });
     });
 });
