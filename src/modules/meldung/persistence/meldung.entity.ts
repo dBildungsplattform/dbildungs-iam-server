@@ -19,5 +19,5 @@ export class MeldungEntity extends TimestampedEntity {
     public status!: MeldungStatus;
 
     @Property({ default: 1 })
-    public version!: number;
+    public revision!: number;
 }

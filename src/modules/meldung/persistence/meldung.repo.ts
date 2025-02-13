@@ -9,7 +9,7 @@ export function mapAggregateToData(meldung: Meldung<boolean>): RequiredEntityDat
         id: meldung.id,
         inhalt: meldung.inhalt,
         status: meldung.status,
-        version: meldung.version,
+        revision: meldung.revision,
     };
 }
 
@@ -20,7 +20,7 @@ function mapEntityToAggregate(entity: MeldungEntity): Meldung<boolean> {
         entity.updatedAt,
         entity.inhalt,
         entity.status,
-        entity.version,
+        entity.revision,
     );
 }
 
