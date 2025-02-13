@@ -761,7 +761,6 @@ describe('LDAP Client Service', () => {
             instanceConfig.RETRY_WRAPPER_DEFAULT_RETRIES = 2;
         });
 
-
         it('when operation fails and throws Error it should automatically retry the operation with nr of retries set via env', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
