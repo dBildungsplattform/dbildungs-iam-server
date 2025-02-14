@@ -376,7 +376,7 @@ describe('LDAP Event Handler', () => {
                 expect(loggerMock.error).toHaveBeenCalledTimes(0);
             });
         });
-        describe('when calling LdapClientService.modifyPersonAttributes is not successfull', () => {
+        describe('when calling LdapClientService.modifyPersonAttributes is not successful', () => {
             it('should log errors', async () => {
                 const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
                 const modifyResult: Result<PersonID> = {

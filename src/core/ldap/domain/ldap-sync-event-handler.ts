@@ -16,7 +16,7 @@ export type LdapSyncData = {
     surName: string;
     cn: string;
     enabledEmailAddress: string;
-    disabledEmailAddresses?: string[];
+    disabledEmailAddresses: string[];
 
     personId: PersonID;
     referrer: string;
@@ -73,7 +73,7 @@ export class LdapSyncEventHandler {
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(event.personId, EmailAddressStatus.DISABLED);
         if (disabledEmailAddressesSorted.length === 0) {
             this.logger.info(
-                `[EventID: ${event.eventID}] No disabled EmailAddress(es) for Person with ID ${event.personId}.`,
+                `[EventID: ${event.eventID}] No DISABLED EmailAddress(es) for Person with ID ${event.personId}`,
             );
         }
 
@@ -110,6 +110,9 @@ export class LdapSyncEventHandler {
     }
 
     private async syncDataToLdap(ldapSyncData: LdapSyncData, personAttributes: LdapPersonAttributes): Promise<void> {
+        this.logger.info(
+            `Syncing data to LDAP for personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+        );
         // Check and sync EmailAddress
         const currentMailPrimaryAddress: string | undefined = personAttributes.mailPrimaryAddress;
         if (ldapSyncData.enabledEmailAddress !== currentMailPrimaryAddress) {
@@ -178,9 +181,7 @@ export class LdapSyncEventHandler {
         );
     }
 
-    private isAddressInDisabledAddresses(email: string, disabledEmailAddresses?: string[]): boolean {
-        if (!disabledEmailAddresses) return false;
-
+    private isAddressInDisabledAddresses(email: string, disabledEmailAddresses: string[]): boolean {
         return disabledEmailAddresses.some((disabledAddress: string) => disabledAddress === email);
     }
 

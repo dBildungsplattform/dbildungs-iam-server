@@ -148,8 +148,7 @@ export class LdapEventHandler {
             event.referrer,
         );
         if (!modifyResult.ok) {
-            this.logger.error(modifyResult.error.message);
-            return;
+            return this.logger.error(modifyResult.error.message);
         }
 
         this.logger.info(`Successfully modified person attributes in LDAP for personId:${event.personId}`);
