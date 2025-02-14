@@ -1,15 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { LdapClientService, LdapPersonAttributes } from './ldap-client.service.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-//import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { EventHandler } from '../../eventbus/decorators/event-handler.decorator.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { EmailRepo } from '../../../modules/email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
+import { uniq } from 'lodash-es';
+import { Rolle } from '../../../modules/rolle/domain/rolle.js';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
+import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
+import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -35,7 +42,9 @@ export class LdapSyncEventHandler {
         private readonly logger: ClassLogger,
         private readonly ldapClientService: LdapClientService,
         private readonly personRepository: PersonRepository,
-        //private readonly organisationRepository: OrganisationRepository,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly rolleRepo: RolleRepo,
+        private readonly organisationRepository: OrganisationRepository,
         private readonly emailRepo: EmailRepo,
     ) {}
 
@@ -77,6 +86,48 @@ export class LdapSyncEventHandler {
             );
         }
 
+        // Get all PKs
+        const kontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(event.personId);
+
+        // Find all rollen and organisations
+        const rollenIDs: RolleID[] = uniq(kontexte.map((pk: Personenkontext<true>) => pk.rolleId));
+        const organisationIDs: OrganisationID[] = uniq(kontexte.map((pk: Personenkontext<true>) => pk.organisationId));
+        const [rollen, organisations]: [Map<RolleID, Rolle<true>>, Map<OrganisationID, Organisation<true>>] =
+            await Promise.all([
+                this.rolleRepo.findByIds(rollenIDs),
+                this.organisationRepository.findByIds(organisationIDs),
+            ]);
+
+        // Delete all rollen from map which are NOT LEHR
+        for (const [rolleId, rolle] of rollen.entries()) {
+            if (rolle.rollenart !== RollenArt.LEHR) {
+                rollen.delete(rolleId);
+            }
+        }
+
+        // Filter PKs for the remaining rollen with rollenArt LEHR
+        const pksWithRollenArtLehr: Personenkontext<true>[] = kontexte.filter((pk: Personenkontext<true>) =>
+            rollen.has(pk.rolleId),
+        );
+
+        const schulenDstNrList: string[] = [];
+        let schule: Organisation<true> | undefined;
+        for (const pk of pksWithRollenArtLehr) {
+            schule = organisations.get(pk.organisationId);
+            if (!schule) {
+                return this.logger.error(`Could not find organisation, orgaId:${pk.organisationId}, pkId:${pk.id}`);
+            }
+            if (!schule.kennung) {
+                return this.logger.error(
+                    `Required kennung is missing on organisation, orgaId:${pk.organisationId}, pkId:${pk.id}`,
+                );
+            }
+            schulenDstNrList.push(schule.kennung);
+        }
+        this.logger.info(
+            `Found orgaKennungen:${JSON.stringify(schulenDstNrList)}, for personId:${event.personId}, referrer:${person.referrer}`,
+        );
+
         // Get current attributes for person from LDAP
         const personAttributes: Result<LdapPersonAttributes> = await this.ldapClientService.getPersonAttributes(
             event.personId,
@@ -94,6 +145,20 @@ export class LdapSyncEventHandler {
         const mailPrimaryAddress: string = enabledEmailAddress.address;
         const mailAlternativeAddresses: string[] = disabledEmailAddressesSorted.map(
             (ea: EmailAddress<true>) => ea.address,
+        );
+
+        // Get current groups for person from LDAP
+        const groups: Result<string[]> = await this.ldapClientService.getGroupsForPerson(
+            event.personId,
+            person.referrer,
+        );
+        if (!groups.ok) {
+            return this.logger.error(
+                `[EventID: ${event.eventID}] Error while fetching groups for person in LDAP, msg:${groups.error.message}`,
+            );
+        }
+        this.logger.info(
+            `Found groups in LDAP:${JSON.stringify(groups.value)}, for personId:${event.personId}, referrer:${person.referrer}`,
         );
 
         const syncData: LdapSyncData = {

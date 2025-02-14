@@ -9,6 +9,7 @@ import { LdapClient } from './domain/ldap-client.js';
 import { LdapSyncEventHandler } from './domain/ldap-sync-event-handler.js';
 import { PersonModule } from '../../modules/person/person.module.js';
 import { EmailModule } from '../../modules/email/email.module.js';
+import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { EmailModule } from '../../modules/email/email.module.js';
         RolleModule,
         OrganisationModule,
         PersonModule,
+        PersonenKontextModule,
         EmailModule,
     ],
     providers: [LdapEventHandler, LdapSyncEventHandler, LdapClientService, LdapClient],

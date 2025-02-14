@@ -25,6 +25,12 @@ import { EmailAddress, EmailAddressStatus } from '../../../modules/email/domain/
 import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { faker } from '@faker-js/faker';
+import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
+/*import { Rolle } from '../../../modules/rolle/domain/rolle.js';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
+import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';*/
 
 describe('LdapSyncEventHandler', () => {
     let app: INestApplication;
@@ -33,6 +39,9 @@ describe('LdapSyncEventHandler', () => {
     let sut: LdapSyncEventHandler;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    /* let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let rolleRepoMock: DeepMocked<RolleRepo>;
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;*/
     let emailRepoMock: DeepMocked<EmailRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
 
@@ -72,6 +81,10 @@ describe('LdapSyncEventHandler', () => {
             .useValue(createMock<LdapClientService>())
             .overrideProvider(PersonRepository)
             .useValue(createMock<PersonRepository>())
+            .overrideProvider(RolleRepo)
+            .useValue(createMock<RolleRepo>())
+            .overrideProvider(DBiamPersonenkontextRepo)
+            .useValue(createMock<DBiamPersonenkontextRepo>())
             .overrideProvider(OrganisationRepository)
             .useValue(createMock<OrganisationRepository>())
             .overrideProvider(EmailRepo)
@@ -87,6 +100,9 @@ describe('LdapSyncEventHandler', () => {
         sut = module.get(LdapSyncEventHandler);
         ldapClientServiceMock = module.get(LdapClientService);
         personRepositoryMock = module.get(PersonRepository);
+        /*dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        rolleRepoMock = module.get(RolleRepo);
+        organisationRepositoryMock = module.get(OrganisationRepository);*/
         emailRepoMock = module.get(EmailRepo);
         loggerMock = module.get(ClassLogger);
 
@@ -185,7 +201,7 @@ describe('LdapSyncEventHandler', () => {
             });
         });
 
-        describe('when no fetching person-attributes in LDAP fails', () => {
+        describe('when fetching person-attributes in LDAP fails', () => {
             it('should log error and return', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
@@ -206,6 +222,55 @@ describe('LdapSyncEventHandler', () => {
                 );
             });
         });
+
+        /* describe('when finding PKs with another rollenArt than LEHR', () => {
+            function mockPkRelatedRepoCalls(): void {
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(pks);
+                organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
+                rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
+            }
+
+            let pks: Personenkontext<true>[];
+            let rolleMap: Map<RolleID, Rolle<true>>;
+            let orgaMap: Map<OrganisationID, Organisation<true>>;
+
+            pks = [];
+            rolleMap = new Map<RolleID, Rolle<true>>();
+            orgaMap = new Map<OrganisationID, Organisation<true>>();
+
+
+            it('should remove that PK from relevant PKs', async () => {
+                rolleMap.set(faker.string.uuid(), createMock<Rolle<true>>({rollenart: RollenArt.LERN}));
+                mockPkRelatedRepoCalls();
+
+                //
+                //mock: email-addresses are equal -> no processing for mismatching emails necessary
+                enabledEmailAddress = createMock<EmailAddress<true>>({
+                    get address(): string {
+                        return mailPrimaryAddress;
+                    },
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+                ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
+                    ok: true,
+                    value: personAttributes,
+                });
+
+                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: [],
+                });
+                //
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Found orgaKennungen:[], for personId:${event.personId}, referrer:${person.referrer}`,
+                );
+            });
+        });*/
     });
 
     //* syncDataToLdap is tested via calling personExternalSystemSyncEventHandler */
@@ -258,6 +323,11 @@ describe('LdapSyncEventHandler', () => {
                     value: personAttributes,
                 });
 
+                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: [],
+                });
+
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
@@ -287,6 +357,10 @@ describe('LdapSyncEventHandler', () => {
                         ok: true,
                         value: personAttributes,
                     });
+                    ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                        ok: true,
+                        value: [],
+                    });
 
                     await sut.personExternalSystemSyncEventHandler(event);
 
@@ -315,6 +389,10 @@ describe('LdapSyncEventHandler', () => {
                     ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                         ok: true,
                         value: personAttributes,
+                    });
+                    ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                        ok: true,
+                        value: [],
                     });
 
                     await sut.personExternalSystemSyncEventHandler(event);
@@ -349,6 +427,10 @@ describe('LdapSyncEventHandler', () => {
                     ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                         ok: true,
                         value: personAttributes,
+                    });
+                    ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                        ok: true,
+                        value: [],
                     });
 
                     await sut.personExternalSystemSyncEventHandler(event);
@@ -427,6 +509,11 @@ describe('LdapSyncEventHandler', () => {
                     ok: true,
                     value: personAttributes,
                 });
+                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: [],
+                });
+
                 emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeCreated('EmailAddress'));
 
                 await sut.personExternalSystemSyncEventHandler(event);
@@ -454,6 +541,10 @@ describe('LdapSyncEventHandler', () => {
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: personAttributes,
+                });
+                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: [],
                 });
                 emailRepoMock.save.mockResolvedValueOnce(
                     getEmailAddress(personId, mailAlternativeAddress, EmailAddressStatus.DISABLED),
