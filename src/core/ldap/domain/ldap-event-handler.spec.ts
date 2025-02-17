@@ -75,13 +75,9 @@ describe('LDAP Event Handler', () => {
             .useValue(createMock<DBiamPersonenkontextRepo>())
             .overrideProvider(OrganisationRepository)
             .useValue(createMock<OrganisationRepository>())
-            .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
             .compile();
 
         orm = module.get(MikroORM);
-
-        loggerMock = module.get(ClassLogger);
 
         ldapEventHandler = module.get(LdapEventHandler);
         ldapClientServiceMock = module.get(LdapClientService);
@@ -385,7 +381,7 @@ describe('LDAP Event Handler', () => {
                 };
                 ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
                 await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());
-                expect(loggerMock.error).toHaveBeenCalledTimes(1);
+                expect(loggerMock.error).toHaveBeenCalledWith(error.message);
             });
         });
     });

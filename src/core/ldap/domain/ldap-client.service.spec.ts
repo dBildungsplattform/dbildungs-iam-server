@@ -1311,7 +1311,7 @@ describe('LDAP Client Service', () => {
     describe('getPersonAttributes', () => {
         const referrer: PersonReferrer = faker.internet.userName();
         const personId: PersonID = faker.string.uuid();
-        let dn: string;
+        const dn: string = 'dn';
         const givenName: string = faker.person.firstName();
         const sn: string = faker.person.lastName();
         const cn: string = referrer;
@@ -1331,7 +1331,6 @@ describe('LDAP Client Service', () => {
             });
         }
         beforeEach(() => {
-            dn = '';
             entry = createMock<Entry>({
                 dn: dn,
                 givenName: givenName,
@@ -1542,6 +1541,155 @@ describe('LDAP Client Service', () => {
                             mailAlternativeAddress: undefined,
                         },
                     });
+                });
+            });
+        });
+    });
+
+    describe('getGroupsForPerson', () => {
+        const referrer: PersonReferrer = faker.internet.userName();
+        const personId: PersonID = faker.string.uuid();
+        const dn: string = 'dn';
+        const givenName: string = faker.person.firstName();
+        const sn: string = faker.person.lastName();
+        const cn: string = referrer;
+        const mailPrimaryAddress: string = faker.internet.email();
+        const mailAlternativeAddress: string = faker.internet.email();
+        let entry: Entry;
+
+        beforeEach(() => {
+            entry = createMock<Entry>({
+                dn: dn,
+                givenName: givenName,
+                sn: sn,
+                cn: cn,
+                mailPrimaryAddress: mailPrimaryAddress,
+                mailAlternativeAddress: mailAlternativeAddress,
+            });
+        });
+
+        describe('when bind returns error', () => {
+            it('should return falsy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+                    return clientMock;
+                });
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when user CANNOT be found', () => {
+            it('should return LdapSearchError', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                });
+            });
+        });
+
+        describe('when fetching groups fails', () => {
+            it('should return error', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: undefined,
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                const errMsg: string = `LDAP: Fetching groups failed, personId:${personId}, referrer:${referrer}`;
+                expect(loggerMock.error).toHaveBeenCalledWith(errMsg);
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new Error(errMsg),
+                });
+            });
+        });
+
+        describe('when no groups were found', () => {
+            it('should return empty list', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `LDAP: No groups found for person, personId:${personId}, referrer:${referrer}`,
+                );
+                expect(result.ok).toBeTruthy();
+                expect(result).toEqual({
+                    ok: true,
+                    value: [],
+                });
+            });
+        });
+
+        describe('when groups were found', () => {
+            const groupEntry1: Entry = createMock<Entry>({
+                dn: 'group1',
+            });
+            const groupEntry2: Entry = createMock<Entry>({
+                dn: 'group2',
+            });
+            it('should return group-names as list', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [groupEntry1, groupEntry2],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                expect(result.ok).toBeTruthy();
+                expect(result).toEqual({
+                    ok: true,
+                    value: ['group1', 'group2'],
                 });
             });
         });

@@ -15,7 +15,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClientService, LdapPersonAttributes } from './ldap-client.service.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
@@ -27,6 +27,13 @@ import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-
 import { faker } from '@faker-js/faker';
 import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
+import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
+import { Rolle } from '../../../modules/rolle/domain/rolle.js';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
+import { LdapSearchError } from '../error/ldap-search.error.js';
+import { LdapEntityType } from './ldap.types.js';
+import assert from 'assert';
 /*import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
@@ -39,9 +46,9 @@ describe('LdapSyncEventHandler', () => {
     let sut: LdapSyncEventHandler;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
-    /* let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
-    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;*/
+    let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
 
@@ -100,9 +107,9 @@ describe('LdapSyncEventHandler', () => {
         sut = module.get(LdapSyncEventHandler);
         ldapClientServiceMock = module.get(LdapClientService);
         personRepositoryMock = module.get(PersonRepository);
-        /*dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         rolleRepoMock = module.get(RolleRepo);
-        organisationRepositoryMock = module.get(OrganisationRepository);*/
+        organisationRepositoryMock = module.get(OrganisationRepository);
         emailRepoMock = module.get(EmailRepo);
         loggerMock = module.get(ClassLogger);
 
@@ -121,6 +128,78 @@ describe('LdapSyncEventHandler', () => {
             status,
             undefined,
         );
+    }
+
+    function getOrga(kennung: string = faker.string.numeric({ length: 7 })): Organisation<true> {
+        return createMock<Organisation<true>>({ id: faker.string.uuid(), kennung: kennung });
+    }
+
+    function getRolle(rollenart: RollenArt = RollenArt.LEHR): Rolle<true> {
+        return createMock<Rolle<true>>({ id: faker.string.uuid(), rollenart: rollenart });
+    }
+
+    function getOrgaMap(...orgas: Organisation<true>[]): Map<OrganisationID, Organisation<true>> {
+        const map: Map<OrganisationID, Organisation<true>> = new Map<OrganisationID, Organisation<true>>();
+        orgas.map((orga: Organisation<true>) => map.set(orga.id, orga));
+        return map;
+    }
+
+    function getRolleMap(...rollen: Rolle<true>[]): Map<RolleID, Rolle<true>> {
+        const map: Map<RolleID, Rolle<true>> = new Map<RolleID, Rolle<true>>();
+        rollen.map((rolle: Rolle<true>) => map.set(rolle.id, rolle));
+        return map;
+    }
+
+    /**
+     * Creates three PKs for given person, two with rollenArt LEHR and one with rollenArt LERN, every PK targets another fresh created organisation.
+     * The returned result is 1. list of the PKs followed by orgaMap and then rolleMap.
+     * All three different result values are used as result in mocked method calls (DbiamPersonenkontextRepo, OrganisationRepository and RolleRepo).
+     * @param pkPerson
+     */
+    function getPkArrayOrgaMapAndRolleMap(
+        pkPerson: Person<true>,
+    ): [Personenkontext<true>[], Map<OrganisationID, Organisation<true>>, Map<RolleID, Rolle<true>>] {
+        const lehrRolle1: Rolle<true> = getRolle();
+        const lehrOrga1: Organisation<true> = getOrga();
+        const lehrPk1: Personenkontext<true> = createMock<Personenkontext<true>>({
+            id: faker.string.uuid(),
+            organisationId: lehrOrga1.id,
+            rolleId: lehrRolle1.id,
+            personId: pkPerson.id,
+        });
+        const lehrRolle2: Rolle<true> = getRolle();
+        const lehrOrga2: Organisation<true> = getOrga();
+        const lehrPk2: Personenkontext<true> = createMock<Personenkontext<true>>({
+            id: faker.string.uuid(),
+            organisationId: lehrOrga2.id,
+            rolleId: lehrRolle2.id,
+            personId: pkPerson.id,
+        });
+
+        const lernRolle1: Rolle<true> = getRolle(RollenArt.LERN);
+        const lernOrga1: Organisation<true> = getOrga();
+        const lernPk1: Personenkontext<true> = createMock<Personenkontext<true>>({
+            id: faker.string.uuid(),
+            organisationId: lernOrga1.id,
+            rolleId: lernRolle1.id,
+            personId: pkPerson.id,
+        });
+
+        const pk: Personenkontext<true>[] = [lehrPk1, lehrPk2, lernPk1];
+        const orgaMap: Map<OrganisationID, Organisation<true>> = getOrgaMap(lehrOrga1, lehrOrga2, lernOrga1);
+        const rolleMap: Map<RolleID, Rolle<true>> = getRolleMap(lehrRolle1, lehrRolle2, lernRolle1);
+
+        return [pk, orgaMap, rolleMap];
+    }
+
+    function mockPersonenKontextRelatedRepositoryCalls(
+        kontexte: Personenkontext<true>[],
+        orgaMap: Map<OrganisationID, Organisation<true>>,
+        rolleMap: Map<RolleID, Rolle<true>>,
+    ): void {
+        dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(kontexte);
+        organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
+        rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
     }
 
     afterAll(async () => {
@@ -206,6 +285,15 @@ describe('LdapSyncEventHandler', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
                 const error: LdapFetchAttributeError = new LdapFetchAttributeError(personId, referrer, 'attribute');
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: false,
@@ -223,54 +311,96 @@ describe('LdapSyncEventHandler', () => {
             });
         });
 
-        /* describe('when finding PKs with another rollenArt than LEHR', () => {
-            function mockPkRelatedRepoCalls(): void {
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(pks);
-                organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
-            }
-
-            let pks: Personenkontext<true>[];
-            let rolleMap: Map<RolleID, Rolle<true>>;
-            let orgaMap: Map<OrganisationID, Organisation<true>>;
-
-            pks = [];
-            rolleMap = new Map<RolleID, Rolle<true>>();
-            orgaMap = new Map<OrganisationID, Organisation<true>>();
-
-
-            it('should remove that PK from relevant PKs', async () => {
-                rolleMap.set(faker.string.uuid(), createMock<Rolle<true>>({rollenart: RollenArt.LERN}));
-                mockPkRelatedRepoCalls();
-
-                //
-                //mock: email-addresses are equal -> no processing for mismatching emails necessary
-                enabledEmailAddress = createMock<EmailAddress<true>>({
-                    get address(): string {
-                        return mailPrimaryAddress;
-                    },
-                });
+        describe('when fetching groups in LDAP for person fails', () => {
+            it('should log error and return', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: personAttributes,
                 });
 
                 ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
-                    ok: true,
-                    value: [],
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
                 });
-                //
 
                 await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Found orgaKennungen:[], for personId:${event.personId}, referrer:${person.referrer}`,
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining('Error while fetching groups for person in LDAP'),
+                );
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,
                 );
             });
-        });*/
+        });
+
+        describe('when at least one organisation CANNOT be found in orgaMap', () => {
+            it('should log error and return', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                // remove an organisation from orgaMap to force 'Could not find organisation'
+                assert(kontexte[0]);
+                orgaMap.delete(kontexte[0].organisationId);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining(`Could not find organisation`));
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,
+                );
+            });
+        });
+
+        describe('when at least one organisation does NOT have a kennung', () => {
+            it('should log error and return', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                // set kennung for an organisation undefined to force 'Required kennung is missing on organisation'
+                assert(kontexte[0]);
+                const orgaWithoutKennung: Organisation<true> | undefined = orgaMap.get(kontexte[0].organisationId);
+                if (!orgaWithoutKennung) throw Error();
+                orgaWithoutKennung.kennung = undefined;
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining(`Required kennung is missing on organisation`),
+                );
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,
+                );
+            });
+        });
     });
 
     //* syncDataToLdap is tested via calling personExternalSystemSyncEventHandler */
@@ -318,6 +448,15 @@ describe('LdapSyncEventHandler', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: personAttributes,
@@ -353,6 +492,15 @@ describe('LdapSyncEventHandler', () => {
                     personRepositoryMock.findById.mockResolvedValueOnce(person);
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                    // create PKs, orgaMap and rolleMap
+                    const [kontexte, orgaMap, rolleMap]: [
+                        Personenkontext<true>[],
+                        Map<OrganisationID, Organisation<true>>,
+                        Map<RolleID, Rolle<true>>,
+                    ] = getPkArrayOrgaMapAndRolleMap(person);
+                    mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
                     ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                         ok: true,
                         value: personAttributes,
@@ -386,6 +534,15 @@ describe('LdapSyncEventHandler', () => {
                     personRepositoryMock.findById.mockResolvedValueOnce(person);
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                    // create PKs, orgaMap and rolleMap
+                    const [kontexte, orgaMap, rolleMap]: [
+                        Personenkontext<true>[],
+                        Map<OrganisationID, Organisation<true>>,
+                        Map<RolleID, Rolle<true>>,
+                    ] = getPkArrayOrgaMapAndRolleMap(person);
+                    mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
                     ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                         ok: true,
                         value: personAttributes,
@@ -424,6 +581,15 @@ describe('LdapSyncEventHandler', () => {
                             },
                         }),
                     ]);
+
+                    // create PKs, orgaMap and rolleMap
+                    const [kontexte, orgaMap, rolleMap]: [
+                        Personenkontext<true>[],
+                        Map<OrganisationID, Organisation<true>>,
+                        Map<RolleID, Rolle<true>>,
+                    ] = getPkArrayOrgaMapAndRolleMap(person);
+                    mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
                     ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                         ok: true,
                         value: personAttributes,
@@ -505,6 +671,15 @@ describe('LdapSyncEventHandler', () => {
                         },
                     }),
                 ]);
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: personAttributes,
@@ -538,6 +713,15 @@ describe('LdapSyncEventHandler', () => {
                         },
                     }),
                 ]);
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: personAttributes,
