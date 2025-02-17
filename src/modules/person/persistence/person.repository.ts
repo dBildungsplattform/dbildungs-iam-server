@@ -582,28 +582,11 @@ export class PersonRepository {
         return [persons, total];
     }
 
-    private getSecondSortCriteria(sortField: SortFieldPersonFrontend): SortFieldPersonFrontend | undefined {
-        switch (sortField) {
-            case SortFieldPersonFrontend.VORNAME:
-                return SortFieldPersonFrontend.FAMILIENNAME;
-            case SortFieldPersonFrontend.FAMILIENNAME:
-                return SortFieldPersonFrontend.VORNAME;
-            case SortFieldPersonFrontend.PERSONALNUMMER:
-                return SortFieldPersonFrontend.REFERRER;
-            default:
-                return undefined;
-        }
-    }
-
-    private getThirdSortCriteria(sortField: SortFieldPersonFrontend): SortFieldPersonFrontend | undefined {
-        switch (sortField) {
-            case SortFieldPersonFrontend.VORNAME:
-            case SortFieldPersonFrontend.FAMILIENNAME:
-                return SortFieldPersonFrontend.REFERRER;
-            default:
-                return undefined;
-        }
-    }
+    private readonly SORT_CRITERIA: Partial<Record<SortFieldPersonFrontend, SortFieldPersonFrontend[]>> = {
+        [SortFieldPersonFrontend.VORNAME]: [SortFieldPersonFrontend.FAMILIENNAME, SortFieldPersonFrontend.REFERRER],
+        [SortFieldPersonFrontend.FAMILIENNAME]: [SortFieldPersonFrontend.VORNAME, SortFieldPersonFrontend.REFERRER],
+        [SortFieldPersonFrontend.PERSONALNUMMER]: [SortFieldPersonFrontend.REFERRER],
+    };
 
     public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
         const scope: PersonScope = new PersonScope()
@@ -621,16 +604,8 @@ export class PersonRepository {
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
 
         this.addSortCriteria(scope, sortField, sortOrder);
-
-        const secondSortCriteria: SortFieldPersonFrontend | undefined = this.getSecondSortCriteria(sortField);
-        if (secondSortCriteria) {
-            this.addSortCriteria(scope, secondSortCriteria);
-
-            const thirdSortCriteria: SortFieldPersonFrontend | undefined =
-                this.getThirdSortCriteria(secondSortCriteria);
-            if (thirdSortCriteria) {
-                this.addSortCriteria(scope, thirdSortCriteria);
-            }
+        for (const c of this.SORT_CRITERIA[sortField] ?? []) {
+            this.addSortCriteria(scope, c);
         }
 
         if (queryParams.suchFilter) {
