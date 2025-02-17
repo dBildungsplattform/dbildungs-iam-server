@@ -7,17 +7,17 @@ describe('passwordGenerator', () => {
         expect(password.length).toBeGreaterThan(0);
     });
 
-    test('should match the structure: [Word][Number][SpecialChar]', () => {
+    test('should match the structure: [Word][Number][Number][SpecialChar]', () => {
         for (let i: number = 0; i < 100; i++) {
             const password: string = generatePassword();
-            const regex: RegExp = /^[A-Za-zäöüÄÖÜ]{6,}\d[+\-*\/%&!?@$#]$/;
+            const regex: RegExp = /^[A-Za-zäöüÄÖÜß]{6,}\d{2}[+\-*\/%&!?@$#]$/;
             expect(password).toMatch(regex);
         }
     });
 
     test('should include a word with at least 6 characters', () => {
         const password: string = generatePassword();
-        const wordMatch: RegExpMatchArray | null = password.match(/^([A-Za-zäöüÄÖÜ]{6,})/);
+        const wordMatch: RegExpMatchArray | null = password.match(/^([A-Za-zäöüÄÖÜß]{6,})/);
         expect(wordMatch).not.toBeNull();
         expect(wordMatch![0].length).toBeGreaterThanOrEqual(6);
     });

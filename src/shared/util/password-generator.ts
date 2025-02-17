@@ -464,6 +464,7 @@ export function generatePassword(): string {
     let password: string = '';
     password += stamm[randomInt(stamm.length)]; // Start with a random word
     password += randomChar(NUMBERS); // One number
+    password += randomChar(NUMBERS); // One number
     password += randomChar(SYMBOLS); // One symbol
 
     return password;
