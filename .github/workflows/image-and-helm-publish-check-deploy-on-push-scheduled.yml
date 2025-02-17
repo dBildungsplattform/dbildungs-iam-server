@@ -97,7 +97,7 @@ jobs:
       contents: read
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
     with:
-      image_name: "dbildungs-iam-server"
+      image_name: "dbildungs-iam-server" 
       run_trivy_scan: true
       image_tag_generation: ${{ github.ref_name == 'main' && 'commit_hash' || 'specified' }}
       image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
