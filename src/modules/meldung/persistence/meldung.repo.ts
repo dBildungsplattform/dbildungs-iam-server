@@ -36,6 +36,11 @@ export class MeldungRepo {
         return meldung && mapEntityToAggregate(meldung);
     }
 
+    public async findAll(): Promise<Meldung<true>[]> {
+        const meldungen: MeldungEntity[] = await this.em.findAll(MeldungEntity, {});
+        return meldungen.map((meldung: MeldungEntity) => mapEntityToAggregate(meldung));
+    }
+
     public async save(meldung: Meldung<boolean>): Promise<Meldung<true>> {
         if (meldung.id) {
             return this.update(meldung);
