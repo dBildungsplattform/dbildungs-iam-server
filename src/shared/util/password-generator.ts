@@ -454,7 +454,7 @@ function randomChar(str: string): string {
 
 /**
  * Generates a random password with the following rules:
- * - At least one number
+ * - At least two numbers
  * - At least one symbol
  *
  * Passwords will always be at least 8 characters long, to fulfill these rules
