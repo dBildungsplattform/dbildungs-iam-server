@@ -139,7 +139,7 @@ describe('LDAP Client Service', () => {
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         jest.spyOn(ldapClientService as any, 'executeWithRetry').mockImplementation((...args: unknown[]) => {
-            //Needed To globally mock the private executeWithRetry function (otherwise test run to long)
+            //Needed To globally mock the private executeWithRetry function (otherwise test run too long)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const func: () => Promise<Result<any>> = args[0] as () => Promise<Result<any>>;
             return func();
@@ -1402,6 +1402,7 @@ describe('LDAP Client Service', () => {
                 expect(result).toEqual({
                     ok: true,
                     value: {
+                        dn: dn,
                         givenName: givenName,
                         cn: cn,
                         surName: sn,
@@ -1534,6 +1535,7 @@ describe('LDAP Client Service', () => {
                     expect(result).toEqual({
                         ok: true,
                         value: {
+                            dn: dn,
                             givenName: givenName,
                             cn: cn,
                             surName: sn,

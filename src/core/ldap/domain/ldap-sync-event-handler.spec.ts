@@ -34,10 +34,6 @@ import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import assert from 'assert';
-/*import { Rolle } from '../../../modules/rolle/domain/rolle.js';
-import { Organisation } from '../../../modules/organisation/domain/organisation.js';
-import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
-import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';*/
 
 describe('LdapSyncEventHandler', () => {
     let app: INestApplication;
@@ -272,6 +268,24 @@ describe('LdapSyncEventHandler', () => {
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
 
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
+                ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
+                    ok: true,
+                    value: createMock<LdapPersonAttributes>(),
+                });
+
+                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: [],
+                });
+
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
@@ -429,6 +443,7 @@ describe('LdapSyncEventHandler', () => {
             mailPrimaryAddress = faker.internet.email();
             mailAlternativeAddress = faker.internet.email();
             personAttributes = {
+                dn: 'dn',
                 givenName: givenName,
                 surName: surName,
                 cn: cn,
@@ -621,6 +636,64 @@ describe('LdapSyncEventHandler', () => {
                 });
             });
         });
+
+        describe('when a member-relation is missing, an orphan member-relation exists and a corrupt group-dn exists', () => {
+            const rolle1: Rolle<true> = getRolle();
+            const orga1Kennung: string = faker.string.numeric({ length: 7 });
+            const orga1: Organisation<true> = getOrga(orga1Kennung);
+            const pk1: Personenkontext<true> = createMock<Personenkontext<true>>({
+                id: faker.string.uuid(),
+                organisationId: orga1.id,
+                rolleId: rolle1.id,
+                personId: personId,
+            });
+
+            const pks: Personenkontext<true>[] = [pk1];
+            const orgaMap: Map<OrganisationID, Organisation<true>> = getOrgaMap(orga1);
+            const rolleMap: Map<RolleID, Rolle<true>> = getRolleMap(rolle1);
+
+            it('should log warnings regarding LDAP-groups, corrupt group-dn, add missing member-relationship and remove orphan member-relationship', async () => {
+                //mock: email-addresses are equal -> no processing for mismatching emails necessary
+                enabledEmailAddress = createMock<EmailAddress<true>>({
+                    get address(): string {
+                        return mailPrimaryAddress;
+                    },
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+                emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(enabledEmailAddress);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                mockPersonenKontextRelatedRepositoryCalls(pks, orgaMap, rolleMap);
+
+                ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
+                    ok: true,
+                    value: personAttributes,
+                });
+
+                const groupWithoutPkKennung: string = faker.string.numeric({ length: 7 });
+                const groupWithoutPkDn: string = `cn=lehrer-${groupWithoutPkKennung},cn=groups,ou=${groupWithoutPkKennung},dc=schule-sh,dc=de`;
+                const corruptGroupDn1: string = `cn=topanga-${groupWithoutPkKennung},cn=is,ou=${groupWithoutPkKennung},dc=hot,dc=tonight`;
+                const corruptGroupDn2: string = `cn=these-${groupWithoutPkKennung},cn=groups,ou=${groupWithoutPkKennung},dc=are,dc=crazy`;
+                //mock: LDAP-group for existing PK (orga1Kennung) is NOT found, but an LDAP-group for non-existing PK and a corrupt group-dn are found
+                ldapClientServiceMock.getGroupsForPerson.mockResolvedValueOnce({
+                    ok: true,
+                    value: [groupWithoutPkDn, corruptGroupDn1, corruptGroupDn2],
+                });
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,
+                );
+                expect(loggerMock.warning).toHaveBeenCalledWith(
+                    `Added missing groupMembership for kennung:${orga1Kennung}`,
+                );
+                expect(loggerMock.warning).toHaveBeenCalledWith(
+                    `Orphan group detected, no existing PK for groupDN:${groupWithoutPkDn}`,
+                );
+                expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining('Split on ,cn=groups, failed'));
+            });
+        });
     });
 
     //* createDisabledEmailAddress is tested via calling personExternalSystemSyncEventHandler and syncDataToLdap */
@@ -649,6 +722,7 @@ describe('LdapSyncEventHandler', () => {
             mailPrimaryAddress = faker.internet.email();
             mailAlternativeAddress = faker.internet.email();
             personAttributes = {
+                dn: 'dn',
                 givenName: givenName,
                 surName: surName,
                 cn: cn,

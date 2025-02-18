@@ -21,6 +21,7 @@ import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from
 import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 
 export type LdapPersonAttributes = {
+    dn: string;
     givenName: string;
     surName: string;
     cn: string;
@@ -547,6 +548,7 @@ export class LdapClientService {
             );
 
             const personAttributes: LdapPersonAttributes = {
+                dn: searchResult.searchEntries[0].dn,
                 givenName: givenName.value,
                 cn: cn.value,
                 surName: surName.value,

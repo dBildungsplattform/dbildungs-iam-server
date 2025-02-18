@@ -17,6 +17,7 @@ import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persi
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
+import { LdapGroupKennungExtractionError } from '../error/ldap-group-kennung-extraction.error.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -27,7 +28,8 @@ export type LdapSyncData = {
 
     personId: PersonID;
     referrer: string;
-    //groupOuList: string[];
+    groupsToAdd: string[];
+    groupsToRemove: string[];
 };
 
 /**
@@ -38,6 +40,10 @@ export type LdapSyncData = {
  */
 @Injectable()
 export class LdapSyncEventHandler {
+    public static readonly GROUP_DN_REGEX_STR: string = `cn=lehrer-KENNUNG,cn=groups,ou=KENNUNG,dc=schule-sh,dc=de`;
+
+    public static readonly GROUP_DN_REGEX: RegExp = /cn=lehrer-\d+,cn=groups,ou=\d+,dc=schule-sh,dc=de/;
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly ldapClientService: LdapClientService,
@@ -161,6 +167,9 @@ export class LdapSyncEventHandler {
             `Found groups in LDAP:${JSON.stringify(groups.value)}, for personId:${event.personId}, referrer:${person.referrer}`,
         );
 
+        const groupsToAdd: string[] = this.createGroupAdditionList(schulenDstNrList, groups.value);
+        const groupsToRemove: string[] = this.createGroupRemovalList(schulenDstNrList, groups.value);
+
         const syncData: LdapSyncData = {
             personId: person.id,
             referrer: person.referrer,
@@ -169,6 +178,8 @@ export class LdapSyncEventHandler {
             cn: cn,
             enabledEmailAddress: mailPrimaryAddress,
             disabledEmailAddresses: mailAlternativeAddresses,
+            groupsToAdd: groupsToAdd,
+            groupsToRemove: groupsToRemove,
         };
 
         await this.syncDataToLdap(syncData, personAttributes.value);
@@ -244,10 +255,68 @@ export class LdapSyncEventHandler {
             ldapSyncData.surName,
             ldapSyncData.cn,
         );
+
+        await Promise.all([
+            ldapSyncData.groupsToAdd.map((kennung: string) =>
+                this.ldapClientService.addPersonToGroup(ldapSyncData.referrer, kennung, personAttributes.dn),
+            ),
+            ldapSyncData.groupsToRemove.map((kennung: string) =>
+                this.ldapClientService.removePersonFromGroup(ldapSyncData.referrer, kennung, personAttributes.dn),
+            ),
+        ]);
     }
 
     private isAddressInDisabledAddresses(email: string, disabledEmailAddresses: string[]): boolean {
         return disabledEmailAddresses.some((disabledAddress: string) => disabledAddress === email);
+    }
+
+    private createGroupAdditionList(schulenDstNrList: string[], groupDns: string[]): string[] {
+        const groupsToAdd: string[] = [];
+        for (const schulenDstNr of schulenDstNrList) {
+            if (!groupDns.some((groupDn: string) => groupDn.includes(schulenDstNr))) {
+                this.logger.warning(`Added missing groupMembership for kennung:${schulenDstNr}`);
+                groupsToAdd.push(schulenDstNr);
+            }
+        }
+        return groupsToAdd;
+    }
+
+    private createGroupRemovalList(schulenDstNrList: string[], groupDns: string[]): string[] {
+        const groupsToRemove: string[] = [];
+        for (const groupDn of groupDns) {
+            if (!schulenDstNrList.some((schulenDstNr: string) => this.isGroupDnForKennung(groupDn, schulenDstNr))) {
+                this.logger.warning(`Orphan group detected, no existing PK for groupDN:${groupDn}`);
+                const kennungFromGroupDn: Result<string> = this.getKennungFromGroupDn(groupDn);
+                if (!kennungFromGroupDn.ok) {
+                    this.logger.error(
+                        `Could NOT extract kennung from groupDN:${groupDn}, CANNOT add group to list of groups for removal, err:${kennungFromGroupDn.error.message}`,
+                    );
+                } else {
+                    groupsToRemove.push(kennungFromGroupDn.value);
+                }
+            }
+        }
+        return groupsToRemove;
+    }
+
+    private isGroupDnForKennung(groupDn: string, kennung: string): boolean {
+        return groupDn === LdapSyncEventHandler.GROUP_DN_REGEX_STR.replace('KENNUNG', kennung);
+    }
+
+    private getKennungFromGroupDn(groupDn: string): Result<string> {
+        const split: string[] = groupDn.split(',cn=groups,');
+
+        if (!split[0] || !split[0].match(/cn=lehrer-\d+/)) {
+            return {
+                ok: false,
+                error: new LdapGroupKennungExtractionError('Split on ,cn=groups, failed'),
+            };
+        }
+
+        return {
+            ok: true,
+            value: split[0].replace('cn=lehrer-', ''),
+        };
     }
 
     private async createDisabledEmailAddress(
