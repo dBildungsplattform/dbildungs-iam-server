@@ -8,14 +8,9 @@ import {
 } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
-import { RootOrganisationImmutableError } from '../specification/error/root-organisation-immutable.error.js';
 import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
-import { NurKlasseKursUnterSchule } from '../specification/nur-klasse-kurs-unter-schule.js';
-import { NurKlasseKursUnterSchuleError } from '../specification/error/nur-klasse-kurs-unter-schule.error.js';
 import { SchuleUnterTraeger } from '../specification/schule-unter-traeger.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
-import { TraegerInTraeger } from '../specification/traeger-in-traeger.js';
-import { TraegerInTraegerError } from '../specification/error/traeger-in-traeger.error.js';
 import { ZyklusInOrganisationen } from '../specification/zyklus-in-organisationen.js';
 import { KennungRequiredForSchule } from '../specification/kennung-required-for-schule.js';
 import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
@@ -408,8 +403,6 @@ export class OrganisationService {
         parentOrganisation: Organisation<true>,
     ): Promise<Result<boolean, OrganisationSpecificationError>> {
         //check version from DB before zugehoerigZu is altered
-        if (!childOrganisation.zugehoerigZu) return { ok: false, error: new RootOrganisationImmutableError() };
-
         const organisationsOnSameSubtree: boolean = await new OrganisationsOnSameSubtree(
             this.organisationRepo,
         ).isSatisfiedBy([childOrganisation, parentOrganisation]);
@@ -453,14 +446,6 @@ export class OrganisationService {
         const schuleUnterTraeger: SchuleUnterTraeger = new SchuleUnterTraeger(this.organisationRepo);
         if (!(await schuleUnterTraeger.isSatisfiedBy(childOrganisation))) {
             return { ok: false, error: new SchuleUnterTraegerError(childOrganisation.id) };
-        }
-        const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(this.organisationRepo);
-        if (!(await traegerInTraeger.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new TraegerInTraegerError(childOrganisation.id) };
-        }
-        const nurKlasseKursUnterSchule: NurKlasseKursUnterSchule = new NurKlasseKursUnterSchule(this.organisationRepo);
-        if (!(await nurKlasseKursUnterSchule.isSatisfiedBy(childOrganisation))) {
-            return { ok: false, error: new NurKlasseKursUnterSchuleError(childOrganisation.id) };
         }
         const zyklusInOrganisationen: ZyklusInOrganisationen = new ZyklusInOrganisationen(this.organisationRepo);
         if (await zyklusInOrganisationen.isSatisfiedBy(childOrganisation)) {
