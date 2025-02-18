@@ -49,7 +49,7 @@ export class MeldungRepo {
         }
     }
 
-    public async create(meldung: Meldung<false>): Promise<Meldung<true>> {
+    private async create(meldung: Meldung<false>): Promise<Meldung<true>> {
         const meldungEntity: MeldungEntity = this.em.create(MeldungEntity, mapAggregateToData(meldung));
 
         await this.em.persistAndFlush(meldungEntity);

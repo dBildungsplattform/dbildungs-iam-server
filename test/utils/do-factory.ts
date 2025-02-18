@@ -23,6 +23,7 @@ import { ImportDataItem } from '../../src/modules/import/domain/import-data-item
 import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js';
 import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
 import { ImportDataItemStatus } from '../../src/modules/import/domain/importDataItem.enum.js';
+import { Meldung } from '../../src/modules/meldung/domain/meldung.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -166,6 +167,21 @@ export class DoFactory {
             serviceProvider,
             props,
         );
+    }
+
+    public static createMeldung<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        props?: Partial<Meldung<WasPersisted>>,
+    ): Meldung<WasPersisted> {
+        const meldung: Partial<Meldung<WasPersisted>> = {
+            id: withId ? faker.string.uuid() : undefined,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+            inhalt: faker.word.noun(),
+            revision: 1,
+        };
+        return Object.assign(Object.create(Meldung.prototype) as Meldung<boolean>, meldung, props);
     }
 
     /**

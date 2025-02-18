@@ -130,7 +130,12 @@ export class MeldungController {
                     ),
                 );
             }
-            existingMeldung.update(body.revision, body.inhalt, body.status);
+            const updateResult: void | DomainError = existingMeldung.update(body.revision, body.inhalt, body.status);
+            if (updateResult instanceof DomainError) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
+                );
+            }
             const updatedMeldung: Meldung<true> = await this.meldungRepo.save(existingMeldung);
             return new MeldungResponse(updatedMeldung);
         }

@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { MeldungStatus } from '../persistence/meldung.entity.js';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -12,6 +12,7 @@ export class CreateOrUpdateMeldungBodyParams {
     @ApiProperty({ required: true })
     public inhalt!: string;
 
+    @IsEnum(MeldungStatus)
     @ApiProperty({ enum: MeldungStatus, required: true })
     public status!: MeldungStatus;
 

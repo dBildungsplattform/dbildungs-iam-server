@@ -42,5 +42,6 @@ export class Meldung<WasPersisted extends boolean> {
         }
         this.inhalt = inhalt;
         this.status = status;
+        this.revision = this.revision + 1;
     }
 }
