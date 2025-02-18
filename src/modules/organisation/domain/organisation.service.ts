@@ -4,6 +4,7 @@ import {
     EntityCouldNotBeCreated,
     EntityCouldNotBeUpdated,
     EntityNotFoundError,
+    MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
@@ -39,6 +40,12 @@ import { OrganisationsTyp } from './organisation.enums.js';
 import { KlasseWithoutNumberOrLetterError } from '../specification/error/klasse-without-number-or-letter.error.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationsOnSameSubtree } from '../specification/organisations-on-same-subtree.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
+import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 @Injectable()
 export class OrganisationService {
@@ -329,93 +336,67 @@ export class OrganisationService {
         };
     }
 
-    public async setAdministriertVon(
+    public async setZugehoerigZu(
         parentId: string,
         childId: string,
-    ): Promise<Result<void, OrganisationSpecificationError | DomainError>> {
-        const parentExists: boolean = await this.organisationRepo.exists(parentId);
-        if (!parentExists) {
-            return {
-                ok: false,
-                error: new EntityNotFoundError('Organisation', parentId),
-            };
-        }
-
-        const childOrganisation: Option<Organisation<true>> = await this.organisationRepo.findById(childId);
-        if (!childOrganisation) {
-            return {
-                ok: false,
-                error: new EntityNotFoundError('Organisation', childId),
-            };
-        }
-        // MUST be called before administriertVon is altered
-        const validationResult: Result<boolean, DomainError> = await this.validateAdministriertVon(
-            childOrganisation,
+        permissions: IPersonPermissions,
+    ): Promise<Result<void, DomainError>> {
+        const orgas: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds([
+            childId,
             parentId,
-        );
+        ]);
 
-        if (!validationResult.ok) {
-            return { ok: false, error: validationResult.error };
+        const childOrga: Option<Organisation<true>> = orgas.get(childId);
+        const newParentOrga: Option<Organisation<true>> = orgas.get(parentId);
+
+        if (!childOrga || !childOrga.zugehoerigZu) {
+            return {
+                ok: false,
+                error: new EntityNotFoundError('Organisation', childId),
+            };
         }
-        childOrganisation.administriertVon = parentId;
 
-        try {
-            await this.organisationRepo.save(childOrganisation);
-            return { ok: true, value: undefined };
-        } catch (e) {
-            return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
-        }
-    }
-
-    private async validateAdministriertVon(
-        childOrganisation: Organisation<true>,
-        parentId: string,
-    ): Promise<Result<boolean, OrganisationSpecificationError>> {
-        //check version from DB before administriertVon is altered
-        if (!childOrganisation.administriertVon) return { ok: false, error: new RootOrganisationImmutableError() };
-        childOrganisation.administriertVon = parentId;
-
-        const validateStructureSpecifications: Result<boolean, OrganisationSpecificationError> =
-            await this.validateStructureSpecifications(childOrganisation);
-        if (!validateStructureSpecifications.ok) return { ok: false, error: validateStructureSpecifications.error };
-
-        const validateKlassenSpecifications: Result<boolean, OrganisationSpecificationError> =
-            await this.validateKlassenSpecifications(childOrganisation);
-        if (!validateKlassenSpecifications.ok) return { ok: false, error: validateKlassenSpecifications.error };
-
-        return { ok: true, value: true };
-    }
-
-    public async setZugehoerigZu(parentId: string, childId: string): Promise<Result<void, DomainError>> {
-        const parentExists: boolean = await this.organisationRepo.exists(parentId);
-        if (!parentExists) {
+        if (!newParentOrga) {
             return {
                 ok: false,
                 error: new EntityNotFoundError('Organisation', parentId),
             };
         }
 
-        const childOrganisation: Option<Organisation<true>> = await this.organisationRepo.findById(childId);
-        if (!childOrganisation) {
+        // Check Systemrechte
+        const hasSystemrechteAtParentOrgas: boolean = await Promise.all([
+            permissions.hasSystemrechtAtOrganisation(childOrga.zugehoerigZu, RollenSystemRecht.SCHULTRAEGER_VERWALTEN), // Check at old parent
+            permissions.hasSystemrechtAtOrganisation(parentId, RollenSystemRecht.SCHULTRAEGER_VERWALTEN), // Check at new parent
+        ]).then((v: boolean[]) => v.every(Boolean));
+
+        if (!hasSystemrechteAtParentOrgas) {
             return {
                 ok: false,
-                error: new EntityNotFoundError('Organisation', childId),
+                error: new MissingPermissionsError('Not allowed to edit organisations'),
+            };
+        }
+
+        // Check child orga type
+        if (childOrga.typ !== OrganisationsTyp.SCHULE) {
+            return {
+                ok: false,
+                error: new OrganisationZuordnungVerschiebenError(childId, childOrga.typ),
             };
         }
 
         // MUST be called before zugehoerigZu is altered
         const validationResult: Result<boolean, DomainError> = await this.validateZugehoerigZu(
-            childOrganisation,
-            parentId,
+            childOrga,
+            newParentOrga,
         );
         if (!validationResult.ok) {
             return { ok: false, error: validationResult.error };
         }
 
-        childOrganisation.zugehoerigZu = parentId;
+        childOrga.zugehoerigZu = parentId;
 
         try {
-            await this.organisationRepo.save(childOrganisation);
+            await this.organisationRepo.save(childOrga);
             return { ok: true, value: undefined };
         } catch (e) {
             return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
@@ -424,19 +405,26 @@ export class OrganisationService {
 
     private async validateZugehoerigZu(
         childOrganisation: Organisation<true>,
-        parentId: string,
+        parentOrganisation: Organisation<true>,
     ): Promise<Result<boolean, OrganisationSpecificationError>> {
         //check version from DB before zugehoerigZu is altered
         if (!childOrganisation.zugehoerigZu) return { ok: false, error: new RootOrganisationImmutableError() };
-        childOrganisation.zugehoerigZu = parentId;
+
+        const organisationsOnSameSubtree: boolean = await new OrganisationsOnSameSubtree(
+            this.organisationRepo,
+        ).isSatisfiedBy([childOrganisation, parentOrganisation]);
+        if (!organisationsOnSameSubtree) {
+            return {
+                ok: false,
+                error: new OrganisationsOnDifferentSubtreesError(),
+            };
+        }
+
+        childOrganisation.zugehoerigZu = parentOrganisation.id;
 
         const validateStructureSpecifications: Result<boolean, OrganisationSpecificationError> =
             await this.validateStructureSpecifications(childOrganisation);
         if (!validateStructureSpecifications.ok) return { ok: false, error: validateStructureSpecifications.error };
-
-        const validateKlassenSpecifications: Result<boolean, OrganisationSpecificationError> =
-            await this.validateKlassenSpecifications(childOrganisation);
-        if (!validateKlassenSpecifications.ok) return { ok: false, error: validateKlassenSpecifications.error };
 
         return { ok: true, value: true };
     }

@@ -19,6 +19,8 @@ import { NameForOrganisationWithTrailingSpaceError } from '../specification/erro
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
+import { OrganisationZuordnungVerschiebenError } from '../domain/organisation-zuordnung-verschieben.error.js';
+import { OrganisationsOnSameSubtree } from '../specification/organisations-on-same-subtree.js';
 
 @Catch(OrganisationSpecificationError)
 export class OrganisationExceptionFilter implements ExceptionFilter<OrganisationSpecificationError> {
@@ -133,6 +135,20 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.NEWER_VERSION_ORGANISATION,
+            }),
+        ],
+        [
+            OrganisationZuordnungVerschiebenError.name,
+            new DbiamOrganisationError({
+                code: 400,
+                i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_ZUWEISUNG_FEHLER,
+            }),
+        ],
+        [
+            OrganisationsOnSameSubtree.name,
+            new DbiamOrganisationError({
+                code: 400,
+                i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_WECHSELT_TEILBAUM,
             }),
         ],
     ]);
