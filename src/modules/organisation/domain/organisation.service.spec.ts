@@ -857,6 +857,49 @@ describe('OrganisationService', () => {
                 error: new SchuleUnterTraegerError(school.id),
             });
         });
+
+        it('should return a domain error if the organisation could not be saved', async () => {
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const school: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.SCHULE,
+                administriertVon: faker.string.uuid(),
+                zugehoerigZu: faker.string.uuid(),
+            });
+            const traeger: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                zugehoerigZu: faker.string.uuid(),
+            });
+
+            const permissions: IPersonPermissions = new PersonPermissionsMock();
+            organisationRepositoryMock.findByIds.mockResolvedValueOnce(
+                new Map([
+                    [school.id, school],
+                    [traeger.id, traeger],
+                ]),
+            );
+
+            organisationRepositoryMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
+                RootDirectChildrenType.OEFFENTLICH,
+            ); // OrganisationOnSameSubtree
+            organisationRepositoryMock.findOrganisationZuordnungErsatzOderOeffentlich.mockResolvedValueOnce(
+                RootDirectChildrenType.OEFFENTLICH,
+            ); // OrganisationOnSameSubtree
+            organisationRepositoryMock.findById.mockResolvedValueOnce(oeffentlich); // SchuleUnterTraeger
+            organisationRepositoryMock.findById.mockResolvedValueOnce(oeffentlich); // SchuleUnterTraeger
+            organisationRepositoryMock.findById.mockResolvedValueOnce(undefined); // ZyklusInOrganisationen
+            organisationRepositoryMock.findById.mockResolvedValueOnce(undefined); // ZyklusInOrganisationen
+
+            organisationRepositoryMock.save.mockRejectedValueOnce(new Error());
+
+            const result: Result<void> = await organisationService.setZugehoerigZu(traeger.id, school.id, permissions);
+
+            expect(result).toEqual<Result<void>>({
+                ok: false,
+                error: new EntityCouldNotBeUpdated('Organisation', school.id),
+            });
+        });
     });
 
     describe('findAllAdministriertVon', () => {
