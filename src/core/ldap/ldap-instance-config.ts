@@ -12,6 +12,7 @@ export class LdapInstanceConfig implements LdapConfig {
         public BASE_DN: string,
         public OEFFENTLICHE_SCHULEN_DOMAIN?: string,
         public ERSATZSCHULEN_DOMAIN?: string,
+        public RETRY_WRAPPER_DEFAULT_RETRIES?: number,
     ) {}
 
     public static fromConfigService(): Provider {
@@ -27,6 +28,7 @@ export class LdapInstanceConfig implements LdapConfig {
                     ldapConfig.BASE_DN,
                     ldapConfig.OEFFENTLICHE_SCHULEN_DOMAIN,
                     ldapConfig.ERSATZSCHULEN_DOMAIN,
+                    ldapConfig.RETRY_WRAPPER_DEFAULT_RETRIES,
                 );
             },
             inject: [ConfigService],
