@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Put, UseFilters, UseGuards } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -20,6 +20,7 @@ import { MeldungRepo } from '../persistence/meldung.repo.js';
 import { Meldung } from '../domain/meldung.js';
 import { MeldungStatus } from '../persistence/meldung.entity.js';
 import { CreateOrUpdateMeldungBodyParams } from './create-or-update-meldung.body.params.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiOAuth2(['openid'])
@@ -74,7 +75,10 @@ export class MeldungController {
         const meldungen: Meldung<true>[] = await this.meldungRepo.findAll();
         const currentVeroeffentlichtMeldung: Meldung<true> | undefined = meldungen
             .filter((meldung: Meldung<true>) => meldung.status === MeldungStatus.VEROEFFENTLICHT)
-            .sort((a: Meldung<true>, b: Meldung<true>) => b.revision - a.revision)
+            .sort(
+                (a: Meldung<true>, b: Meldung<true>) =>
+                    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+            )
             .at(0);
         if (!currentVeroeffentlichtMeldung) {
             return null;
@@ -85,7 +89,7 @@ export class MeldungController {
 
     //Kann keine ID in der URL haben, da die Anforderung ist, dass dieser Endpunkt auch Resourcen erstellen kann
     @Put()
-    //@UseGuards(StepUpGuard)
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The meldung was successfully edited.',
     })
