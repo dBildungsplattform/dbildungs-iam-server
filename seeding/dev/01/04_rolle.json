@@ -19,7 +19,7 @@
                 "PERSONEN_ANLEGEN",
                 "BULK_VERWALTEN"
             ],
-            "serviceProviderIds": [5, 8, 9, 10, 11]
+            "serviceProviderIds": [5, 8, 9, 10, 11, 13]
         },
         {
             "id": 1,
@@ -37,7 +37,7 @@
             "rollenart": "LEHR",
             "merkmale": ["KOPERS_PFLICHT"],
             "systemrechte": [],
-            "serviceProviderIds": [0, 1, 2, 4, 6, 7, 8, 9, 10, 11]
+            "serviceProviderIds": [0, 1, 2, 4, 6, 7, 8, 9, 10, 11, 13]
         },
         {
             "id": 3,
@@ -46,7 +46,7 @@
             "rollenart": "LEHR",
             "merkmale": ["BEFRISTUNG_PFLICHT", "KOPERS_PFLICHT"],
             "systemrechte": [],
-            "serviceProviderIds": [0, 1, 2, 4, 6, 7, 8, 9, 10, 11]
+            "serviceProviderIds": [0, 1, 2, 4, 6, 7, 8, 9, 10, 11, 13]
         },
         {
             "id": 4,
