@@ -20,7 +20,7 @@ import { IPersonPermissions } from '../../../shared/permissions/person-permissio
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
 
-    public selectedRolleId?: string;
+    public selectedRolleIds?: string[];
 
     private constructor(
         private readonly rolleRepo: RolleRepo,
@@ -37,9 +37,9 @@ export class PersonenkontextWorkflowAggregate {
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
-    public initialize(organisationId?: string, rolleId?: string): void {
+    public initialize(organisationId?: string, rolleIds?: string[]): void {
         this.selectedOrganisationId = organisationId;
-        this.selectedRolleId = rolleId;
+        this.selectedRolleIds = rolleIds;
     }
 
     // Finds all SSKs that the admin can see
@@ -178,15 +178,21 @@ export class PersonenkontextWorkflowAggregate {
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
     // Also verifies again if the organisationId is allowed to be assigned by the admin
     public async canCommit(permissions: PersonPermissions): Promise<DomainError | boolean> {
-        if (this.selectedOrganisationId && this.selectedRolleId) {
-            const referenceCheckError: Option<DomainError> = await this.checkReferences(
-                this.selectedOrganisationId,
-                this.selectedRolleId,
+        if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
+            // Check references for all selected roles concurrently
+            const referenceCheckErrors: Option<DomainError>[] = await Promise.all(
+                this.selectedRolleIds.map((rolleId: string) =>
+                    this.checkReferences(this.selectedOrganisationId!, rolleId),
+                ),
             );
-            if (referenceCheckError) {
-                return referenceCheckError;
+
+            // Find the first error if any
+            const firstError: Option<DomainError> = referenceCheckErrors.find((error: Option<DomainError>) => error);
+            if (firstError) {
+                return firstError;
             }
 
+            // Check permissions after verifying references
             const permissionCheckError: Option<DomainError> = await this.checkPermissions(
                 permissions,
                 this.selectedOrganisationId,
@@ -231,7 +237,6 @@ export class PersonenkontextWorkflowAggregate {
             this.organisationRepository.findById(organisationId),
             this.rolleRepo.findById(rolleId),
         ]);
-
         if (!orga) {
             return new EntityNotFoundError('Organisation', organisationId);
         }
@@ -269,55 +274,5 @@ export class PersonenkontextWorkflowAggregate {
         }
 
         return undefined;
-    }
-
-    public async findSchulstrukturknoten(
-        rolleId: string,
-        sskName: string,
-        limit?: number,
-        excludeKlassen: boolean = false,
-    ): Promise<Organisation<true>[]> {
-        this.selectedRolleId = rolleId;
-
-        let organisationsFoundByName: Organisation<boolean>[] = [];
-
-        if (excludeKlassen) {
-            organisationsFoundByName =
-                await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
-                    OrganisationsTyp.KLASSE,
-                    sskName,
-                );
-        } else {
-            organisationsFoundByName = await this.organisationRepository.findByNameOrKennung(sskName);
-        }
-
-        if (organisationsFoundByName.length === 0) return [];
-
-        const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
-        if (!rolleResult) return [];
-
-        const organisationsRoleIsAvalableIn: Organisation<true>[] = [];
-
-        const parentOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
-            rolleResult.administeredBySchulstrukturknoten,
-        );
-        if (!parentOrganisation) return [];
-        organisationsRoleIsAvalableIn.push(parentOrganisation);
-
-        const childOrganisations: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
-            rolleResult.administeredBySchulstrukturknoten,
-        ]);
-        organisationsRoleIsAvalableIn.push(...childOrganisations);
-
-        let orgas: Organisation<true>[] = organisationsFoundByName.filter((ssk: Organisation<true>) =>
-            organisationsRoleIsAvalableIn.some((organisation: Organisation<true>) => ssk.id === organisation.id),
-        );
-
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        orgas = orgas.filter((orga: Organisation<true>) =>
-            organisationMatchesRollenart.isSatisfiedBy(orga, rolleResult),
-        );
-
-        return orgas.slice(0, limit);
     }
 }

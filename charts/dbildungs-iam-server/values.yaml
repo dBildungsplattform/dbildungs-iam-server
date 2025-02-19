@@ -34,6 +34,7 @@ ldap:
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
   base_dn: dc=schule-sh,dc=de
+  retryWrapperDefaultRetries: 3
 
 itslearning:
   enabled: false
@@ -85,7 +86,7 @@ ox:
   contextId: '10'
   contextName: '10'
 
-vidis: 
+vidis:
   url: 'https://service-stage.vidis.schule'
   regionName: 'test-region'
   keycloakGroup: 'VIDIS-service'
@@ -137,7 +138,7 @@ backend:
   dbmigration:
     enabled: true
     command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
-  keycloakdatamigration: 
+  keycloakdatamigration:
     enabled: true
     command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
   ingress:
