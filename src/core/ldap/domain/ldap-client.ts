@@ -13,7 +13,7 @@ export class LdapClient implements OnModuleDestroy {
             // configure LDAP connection
             const client: Client = new Client({
                 url: this.ldapInstanceConfig.URL,
-                timeout: 3000,
+                timeout: 10000,
             });
             this.client = client;
         }

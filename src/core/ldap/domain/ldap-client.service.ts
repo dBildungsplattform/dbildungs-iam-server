@@ -29,7 +29,7 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
-    public static readonly DEFAULT_RETRIES: number = 3; // e.g. DEFAULT_RETRIES = 3 will produce retry sequence: 1sek, 8sek, 27sek (1000ms * retrycounter^3)
+    public static readonly FALLBACK_RETRIES: number = 3; // e.g. FALLBACK_RETRIES = 3 will produce retry sequence: 1sek, 8sek, 27sek (1000ms * retrycounter^3)
 
     public static readonly OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT: string = 'schule-sh.de';
 
@@ -78,15 +78,12 @@ export class LdapClientService {
     ): Promise<Result<PersonData>> {
         return this.executeWithRetry(
             () => this.createLehrerInternal(person, domain, schulId, mail),
-            LdapClientService.DEFAULT_RETRIES,
+            this.getNrOfRetries(),
         );
     }
 
     public async isLehrerExisting(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
-        return this.executeWithRetry(
-            () => this.isLehrerExistingInternal(referrer, domain),
-            LdapClientService.DEFAULT_RETRIES,
-        );
+        return this.executeWithRetry(() => this.isLehrerExistingInternal(referrer, domain), this.getNrOfRetries());
     }
 
     public async modifyPersonAttributes(
@@ -97,7 +94,7 @@ export class LdapClientService {
     ): Promise<Result<string>> {
         return this.executeWithRetry(
             () => this.modifyPersonAttributesInternal(oldReferrer, newGivenName, newSn, newReferrer),
-            LdapClientService.DEFAULT_RETRIES,
+            this.getNrOfRetries(),
         );
     }
 
@@ -109,15 +106,12 @@ export class LdapClientService {
     ): Promise<Result<string>> {
         return this.executeWithRetry(
             () => this.updateMemberDnInGroupsInternal(oldReferrer, newReferrer, oldUid, client),
-            LdapClientService.DEFAULT_RETRIES,
+            this.getNrOfRetries(),
         );
     }
 
     public async deleteLehrerByReferrer(referrer: PersonReferrer): Promise<Result<string>> {
-        return this.executeWithRetry(
-            () => this.deleteLehrerByReferrerInternal(referrer),
-            LdapClientService.DEFAULT_RETRIES,
-        );
+        return this.executeWithRetry(() => this.deleteLehrerByReferrerInternal(referrer), this.getNrOfRetries());
     }
 
     public async deleteLehrer(
@@ -127,7 +121,7 @@ export class LdapClientService {
     ): Promise<Result<PersonData>> {
         return this.executeWithRetry(
             () => this.deleteLehrerInternal(person, orgaKennung, domain),
-            LdapClientService.DEFAULT_RETRIES,
+            this.getNrOfRetries(),
         );
     }
 
@@ -138,7 +132,7 @@ export class LdapClientService {
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
             () => this.addPersonToGroupInternal(personUid, orgaKennung, lehrerUid),
-            LdapClientService.DEFAULT_RETRIES,
+            this.getNrOfRetries(),
         );
     }
 
@@ -149,7 +143,7 @@ export class LdapClientService {
     ): Promise<Result<PersonID>> {
         return this.executeWithRetry(
             () => this.changeEmailAddressByPersonIdInternal(personId, referrer, newEmailAddress),
-            LdapClientService.DEFAULT_RETRIES,
+            this.getNrOfRetries(),
         );
     }
 
@@ -160,7 +154,7 @@ export class LdapClientService {
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
             () => this.removePersonFromGroupInternal(referrer, orgaKennung, lehrerUid),
-            LdapClientService.DEFAULT_RETRIES,
+            this.getNrOfRetries(),
         );
     }
 
@@ -180,7 +174,7 @@ export class LdapClientService {
     public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
         return this.executeWithRetry(
             () => this.changeUserPasswordByPersonIdInternal(personId, referrer),
-            LdapClientService.DEFAULT_RETRIES,
+            this.getNrOfRetries(),
         );
     }
 
@@ -190,6 +184,14 @@ export class LdapClientService {
         const splitted: string[] = oldUid.split(',');
         splitted[0] = `uid=${newReferrer}`;
         return splitted.join(',');
+    }
+
+    //** BELOW ONLY PRIVATE HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
+
+    private getNrOfRetries(): number {
+        return this.ldapInstanceConfig.RETRY_WRAPPER_DEFAULT_RETRIES != null
+            ? this.ldapInstanceConfig.RETRY_WRAPPER_DEFAULT_RETRIES
+            : LdapClientService.FALLBACK_RETRIES;
     }
 
     //** BELOW ONLY PRIVATE FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
