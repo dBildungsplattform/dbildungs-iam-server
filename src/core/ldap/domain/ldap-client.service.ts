@@ -118,17 +118,11 @@ export class LdapClientService {
         personId: PersonID,
         referrer: PersonReferrer,
     ): Promise<Result<LdapPersonAttributes>> {
-        return this.executeWithRetry(
-            () => this.getPersonAttributesInternal(personId, referrer),
-            LdapClientService.DEFAULT_RETRIES,
-        );
+        return this.executeWithRetry(() => this.getPersonAttributesInternal(personId, referrer), this.getNrOfRetries());
     }
 
     public async getGroupsForPerson(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
-        return this.executeWithRetry(
-            () => this.getGroupsForPersonInternal(personId, referrer),
-            LdapClientService.DEFAULT_RETRIES,
-        );
+        return this.executeWithRetry(() => this.getGroupsForPersonInternal(personId, referrer), this.getNrOfRetries());
     }
 
     public async updateMemberDnInGroups(
