@@ -589,6 +589,27 @@ describe('PersonPermissions', () => {
             );
         });
 
+        it('should return true if person has SCHULTRAEGER_VERWALTEN Recht at the root organisation', async () => {
+            const person: Person<true> = createPerson();
+            dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+
+            const result: boolean = await personPermissions.hasOrgVerwaltenRechtAtOrga(OrganisationsTyp.TRAEGER);
+
+            expect(result).toBe(true);
+            expect(dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(
+                person.id,
+                organisationRepoMock.ROOT_ORGANISATION_ID,
+                RollenSystemRecht.SCHULTRAEGER_VERWALTEN,
+            );
+        });
+
         it('should return false if organisation type is not KLASSE or SCHULE', async () => {
             const person: Person<true> = createPerson();
 
