@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class LdapConfig {
     @IsString()
@@ -24,4 +24,9 @@ export class LdapConfig {
     @IsString()
     @IsNotEmpty()
     public readonly BASE_DN!: string;
+
+    @Min(0)
+    @IsInt()
+    @IsOptional()
+    public readonly RETRY_WRAPPER_DEFAULT_RETRIES?: number;
 }
