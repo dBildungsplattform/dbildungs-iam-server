@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, Put, UseFilters, UseGuards } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -107,41 +107,52 @@ export class MeldungController {
         const hasRequiredSystemrechte: boolean =
             await permissions.hasSystemrechteAtRootOrganisation(requiredSytsmrechte);
         if (!hasRequiredSystemrechte) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError(
-                        'Schulportal Bearbeiten & Hinweise Bearbeiten Systemrecht Required For This Endpoint',
-                    ),
+            throw this.mapError(
+                new MissingPermissionsError(
+                    'Schulportal Bearbeiten & Hinweise Bearbeiten Systemrecht Required For This Endpoint',
                 ),
             );
         }
 
-        if (!body.id) {
-            const newMeldung: Meldung<false> | DomainError = Meldung.createNew(body.inhalt, body.status);
-            if (newMeldung instanceof DomainError) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(newMeldung),
-                );
-            }
-            const createdMeldung: Meldung<true> = await this.meldungRepo.save(newMeldung);
-            return new MeldungResponse(createdMeldung);
-        } else {
-            const existingMeldung: Option<Meldung<true>> = await this.meldungRepo.findById(body.id);
-            if (!existingMeldung) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                        new EntityNotFoundError('Meldung', body.id),
-                    ),
-                );
-            }
-            const updateResult: void | DomainError = existingMeldung.update(body.revision, body.inhalt, body.status);
-            if (updateResult instanceof DomainError) {
-                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(updateResult),
-                );
-            }
-            const updatedMeldung: Meldung<true> = await this.meldungRepo.save(existingMeldung);
-            return new MeldungResponse(updatedMeldung);
+        if (this.isUpdateRequest(body)) {
+            return this.handleUpdateMeldung(body);
         }
+        return this.handleCreateMeldung(body);
+    }
+
+    //Private Helpers Below
+
+    private async handleCreateMeldung(body: CreateOrUpdateMeldungBodyParams): Promise<MeldungResponse> {
+        const newMeldung: Meldung<false> | DomainError = Meldung.createNew(body.inhalt, body.status);
+        if (newMeldung instanceof DomainError) {
+            throw this.mapError(newMeldung);
+        }
+        return new MeldungResponse(await this.meldungRepo.save(newMeldung));
+    }
+
+    private async handleUpdateMeldung<T extends { id: string }>(
+        body: CreateOrUpdateMeldungBodyParams & T,
+    ): Promise<MeldungResponse> {
+        const existingMeldung: Option<Meldung<true>> = await this.meldungRepo.findById(body.id);
+        if (!existingMeldung) {
+            throw this.mapError(new EntityNotFoundError('Meldung', body.id));
+        }
+        const updateResult: void | DomainError = existingMeldung.update(body.revision, body.inhalt, body.status);
+        if (updateResult instanceof DomainError) {
+            throw this.mapError(updateResult);
+        }
+        return new MeldungResponse(await this.meldungRepo.save(existingMeldung));
+    }
+
+    private mapError(error: DomainError): HttpException {
+        return SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(error),
+        );
+    }
+
+    private isUpdateRequest(
+        body: CreateOrUpdateMeldungBodyParams,
+    ): body is CreateOrUpdateMeldungBodyParams & { id: string } {
+        return typeof body.id === 'string';
     }
 }

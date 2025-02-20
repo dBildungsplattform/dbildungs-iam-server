@@ -153,6 +153,20 @@ describe('Meldung Controller', () => {
                     HttpException,
                 );
             });
+
+            it('should fail if systemrechte are missing', async () => {
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+                const body: CreateOrUpdateMeldungBodyParams = {
+                    inhalt: faker.string.alphanumeric(100),
+                    status: MeldungStatus.VEROEFFENTLICHT,
+                    revision: 1,
+                };
+
+                await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toThrow(
+                    HttpException,
+                );
+            });
         });
         describe('update', () => {
             it('should update meldung of id is provided', async () => {
