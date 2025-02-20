@@ -1,29 +1,39 @@
 import { generatePassword } from './password-generator.js';
 
 describe('passwordGenerator', () => {
-    it('should return passwords with the correct length', () => {
-        for (let i: number = 4; i < 50; i++) {
-            expect(generatePassword(i)).toHaveLength(i);
+    test('should generate a non-empty password', () => {
+        const password: string = generatePassword();
+        expect(password).toBeTruthy();
+        expect(password.length).toBeGreaterThan(0);
+    });
+
+    test('should match the structure: [Word][Number][Number][SpecialChar]', () => {
+        for (let i: number = 0; i < 100; i++) {
+            const password: string = generatePassword();
+            const regex: RegExp = /^[A-Za-zäöüÄÖÜß]{6,}\d{2}[+\-*\/%&!?@$#]$/;
+            expect(password).toMatch(regex);
         }
     });
 
-    it('should always return passwords with at least 4 characters', () => {
-        for (let i: number = 0; i < 4; i++) {
-            expect(generatePassword(i)).toHaveLength(4);
-        }
+    test('should include a word with at least 6 characters', () => {
+        const password: string = generatePassword();
+        const wordMatch: RegExpMatchArray | null = password.match(/^([A-Za-zäöüÄÖÜß]{6,})/);
+        expect(wordMatch).not.toBeNull();
+        expect(wordMatch![0].length).toBeGreaterThanOrEqual(6);
+    });
+
+    it('should generate a password that has at least 8 characters', () => {
+        const password: string = generatePassword();
+
+        expect(password.length).toBeGreaterThanOrEqual(8);
     });
 
     it.each([
-        { name: 'lowercase', regex: /[abcdefghijklmnopqrstuvwxyz]/ },
-        { name: 'uppercase', regex: /[ABCDEFGHIJKLMNOPQRSTUVWXYZ]/ },
         { name: 'numbers', regex: /[0123456789]/ },
         { name: 'symbols', regex: /[+\-*/%&!?@$#]/ },
     ])('Should contain $name', ({ regex }: { regex: RegExp }) => {
-        // Repeat the test 100 times
-        for (let i: number = 0; i < 100; i++) {
-            const password: string = generatePassword(4);
+        const password: string = generatePassword();
 
-            expect(password).toEqual(expect.stringMatching(regex));
-        }
+        expect(password).toEqual(expect.stringMatching(regex));
     });
 });
