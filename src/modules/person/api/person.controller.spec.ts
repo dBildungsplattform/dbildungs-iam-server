@@ -47,6 +47,7 @@ import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -125,6 +126,10 @@ describe('PersonController', () => {
                 {
                     provide: LdapClientService,
                     useValue: createMock<LdapClientService>(),
+                },
+                {
+                    provide: LdapSyncEventHandler,
+                    useValue: createMock<LdapSyncEventHandler>(),
                 },
             ],
         }).compile();

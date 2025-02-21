@@ -258,6 +258,35 @@ describe('LdapSyncEventHandler', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
+    //* This test case is just for coverage, all real test cases for syncing are handled in test for 'personExternalSystemSyncEventHandler */
+    describe('triggerLdapSync', () => {
+        beforeEach(() => {
+            personId = faker.string.uuid();
+            referrer = faker.internet.userName();
+            event = new PersonExternalSystemsSyncEvent(personId);
+            person = createMock<Person<true>>();
+            email = faker.internet.email();
+            enabledEmailAddress = createMock<EmailAddress<true>>({
+                get address(): string {
+                    return email;
+                },
+            });
+        });
+
+        describe('when person CANNOT be found by events personID', () => {
+            it('should log error and return without proceeding', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+                await sut.triggerLdapSync(personId);
+
+                expect(emailRepoMock.findEnabledByPerson).toHaveBeenCalledTimes(0);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Person with personId:${event.personId} could not be found!`,
+                );
+            });
+        });
+    });
+
     describe('personExternalSystemSyncEventHandler', () => {
         beforeEach(() => {
             personId = faker.string.uuid();
@@ -280,7 +309,7 @@ describe('LdapSyncEventHandler', () => {
 
                 expect(emailRepoMock.findEnabledByPerson).toHaveBeenCalledTimes(0);
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Person with ID ${event.personId} could not be found!`,
+                    `Person with personId:${event.personId} could not be found!`,
                 );
             });
         });
@@ -293,7 +322,7 @@ describe('LdapSyncEventHandler', () => {
 
                 expect(emailRepoMock.findEnabledByPerson).toHaveBeenCalledTimes(0);
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Person with ID ${event.personId} has no username!`,
+                    `Person with personId:${event.personId} has no username!`,
                 );
             });
         });
@@ -307,7 +336,7 @@ describe('LdapSyncEventHandler', () => {
 
                 expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(0);
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Person with ID ${event.personId} has no enabled EmailAddress!`,
+                    `Person with personId:${event.personId} has no enabled EmailAddress!`,
                 );
             });
         });
@@ -339,7 +368,7 @@ describe('LdapSyncEventHandler', () => {
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] No DISABLED EmailAddress(es) for Person with ID ${event.personId}`,
+                    `No DISABLED EmailAddress(es) for Person with ID ${event.personId}`,
                 );
             });
         });
@@ -365,7 +394,7 @@ describe('LdapSyncEventHandler', () => {
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `[EventID: ${event.eventID}] Error while fetching attributes for person in LDAP, msg:${error.message}`,
+                    `Error while fetching attributes for personId:${personId} in LDAP, msg:${error.message}`,
                 );
                 expect(loggerMock.info).not.toHaveBeenCalledWith(
                     `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,
@@ -398,7 +427,7 @@ describe('LdapSyncEventHandler', () => {
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining('Error while fetching groups for person in LDAP'),
+                    expect.stringContaining('Error while fetching groups for personId'),
                 );
                 expect(loggerMock.info).not.toHaveBeenCalledWith(
                     `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,

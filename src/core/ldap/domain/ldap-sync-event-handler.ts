@@ -60,40 +60,40 @@ export class LdapSyncEventHandler {
             `[EventID: ${event.eventID}] Received PersonExternalSystemsSyncEvent, personId:${event.personId}`,
         );
 
+        await this.fetchDataAndSync(event.personId);
+    }
+
+    public async triggerLdapSync(personId: PersonID): Promise<void> {
+        await this.fetchDataAndSync(personId);
+    }
+
+    private async fetchDataAndSync(personId: PersonID): Promise<void> {
         // Retrieve the person from the DB
-        const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
+        const person: Option<Person<true>> = await this.personRepository.findById(personId);
         if (!person) {
-            return this.logger.error(
-                `[EventID: ${event.eventID}] Person with ID ${event.personId} could not be found!`,
-            );
+            return this.logger.error(`Person with personId:${personId} could not be found!`);
         }
 
         // Check if person has a username
         if (!person.referrer) {
-            return this.logger.error(`[EventID: ${event.eventID}] Person with ID ${event.personId} has no username!`);
+            return this.logger.error(`Person with personId:${personId} has no username!`);
         }
 
         // Check person has active, primary EmailAddress
-        const enabledEmailAddress: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(
-            event.personId,
-        );
+        const enabledEmailAddress: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
         if (!enabledEmailAddress) {
-            return this.logger.error(
-                `[EventID: ${event.eventID}] Person with ID ${event.personId} has no enabled EmailAddress!`,
-            );
+            return this.logger.error(`Person with personId:${personId} has no enabled EmailAddress!`);
         }
 
         // Search for most recent deactivated EmailAddress
         const disabledEmailAddressesSorted: EmailAddress<true>[] =
-            await this.emailRepo.findByPersonSortedByUpdatedAtDesc(event.personId, EmailAddressStatus.DISABLED);
+            await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId, EmailAddressStatus.DISABLED);
         if (disabledEmailAddressesSorted.length === 0) {
-            this.logger.info(
-                `[EventID: ${event.eventID}] No DISABLED EmailAddress(es) for Person with ID ${event.personId}`,
-            );
+            this.logger.info(`No DISABLED EmailAddress(es) for Person with ID ${personId}`);
         }
 
         // Get all PKs
-        const kontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(event.personId);
+        const kontexte: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(personId);
 
         // Find all rollen and organisations
         const rollenIDs: RolleID[] = uniq(kontexte.map((pk: Personenkontext<true>) => pk.rolleId));
@@ -131,17 +131,17 @@ export class LdapSyncEventHandler {
             schulenDstNrList.push(schule.kennung);
         }
         this.logger.info(
-            `Found orgaKennungen:${JSON.stringify(schulenDstNrList)}, for personId:${event.personId}, referrer:${person.referrer}`,
+            `Found orgaKennungen:${JSON.stringify(schulenDstNrList)}, for personId:${personId}, referrer:${person.referrer}`,
         );
 
         // Get current attributes for person from LDAP
         const personAttributes: Result<LdapPersonAttributes> = await this.ldapClientService.getPersonAttributes(
-            event.personId,
+            personId,
             person.referrer,
         );
         if (!personAttributes.ok) {
             return this.logger.error(
-                `[EventID: ${event.eventID}] Error while fetching attributes for person in LDAP, msg:${personAttributes.error.message}`,
+                `Error while fetching attributes for personId:${personId} in LDAP, msg:${personAttributes.error.message}`,
             );
         }
 
@@ -154,17 +154,14 @@ export class LdapSyncEventHandler {
         );
 
         // Get current groups for person from LDAP
-        const groups: Result<string[]> = await this.ldapClientService.getGroupsForPerson(
-            event.personId,
-            person.referrer,
-        );
+        const groups: Result<string[]> = await this.ldapClientService.getGroupsForPerson(personId, person.referrer);
         if (!groups.ok) {
             return this.logger.error(
-                `[EventID: ${event.eventID}] Error while fetching groups for person in LDAP, msg:${groups.error.message}`,
+                `Error while fetching groups for personId:${personId} in LDAP, msg:${groups.error.message}`,
             );
         }
         this.logger.info(
-            `Found groups in LDAP:${JSON.stringify(groups.value)}, for personId:${event.personId}, referrer:${person.referrer}`,
+            `Found groups in LDAP:${JSON.stringify(groups.value)}, for personId:${personId}, referrer:${person.referrer}`,
         );
 
         const groupsToAdd: string[] = this.createGroupAdditionList(schulenDstNrList, groups.value);

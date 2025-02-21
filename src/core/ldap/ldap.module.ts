@@ -22,6 +22,6 @@ import { PersonenKontextModule } from '../../modules/personenkontext/personenkon
         EmailModule,
     ],
     providers: [LdapEventHandler, LdapSyncEventHandler, LdapClientService, LdapClient],
-    exports: [LdapEventHandler, LdapClientService, LdapClient],
+    exports: [LdapEventHandler, LdapSyncEventHandler, LdapClientService, LdapClient],
 })
 export class LdapModule {}
