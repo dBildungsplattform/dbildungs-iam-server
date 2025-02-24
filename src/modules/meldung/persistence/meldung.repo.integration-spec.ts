@@ -64,7 +64,7 @@ describe('MeldungRepo', () => {
 
             expect(meldungResult).toBeDefined();
             expect(meldungResult).toBeInstanceOf(Meldung);
-            expect(meldungResult?.id).toEqual(savedMeldung2.id)
+            expect(meldungResult?.id).toEqual(savedMeldung2.id);
         });
 
         it('should return null if only nicht veroffentlicht exists', async () => {
