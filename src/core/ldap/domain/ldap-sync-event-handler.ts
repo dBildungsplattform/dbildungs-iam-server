@@ -40,7 +40,7 @@ export type LdapSyncData = {
  */
 @Injectable()
 export class LdapSyncEventHandler {
-    public static readonly GROUP_DN_REGEX_STR: string = `cn=lehrer-KENNUNG,cn=groups,ou=KENNUNG,dc=schule-sh,dc=de`;
+    public static readonly GROUP_DN_REGEX_STR: string = `cn=lehrer-KENNUNG1,cn=groups,ou=KENNUNG2,dc=schule-sh,dc=de`;
 
     public static readonly GROUP_DN_REGEX: RegExp = /cn=lehrer-\d+,cn=groups,ou=\d+,dc=schule-sh,dc=de/;
 
@@ -297,7 +297,11 @@ export class LdapSyncEventHandler {
     }
 
     private isGroupDnForKennung(groupDn: string, kennung: string): boolean {
-        return groupDn === LdapSyncEventHandler.GROUP_DN_REGEX_STR.replace('KENNUNG', kennung);
+        const rep: string = LdapSyncEventHandler.GROUP_DN_REGEX_STR.replace('KENNUNG1', kennung).replace(
+            'KENNUNG2',
+            kennung,
+        );
+        return groupDn === rep;
     }
 
     private getKennungFromGroupDn(groupDn: string): Result<string> {

@@ -657,6 +657,7 @@ export class PersonController {
                 ),
             );
         }
+        await this.ldapSyncEventHandler.triggerLdapSync(personResult.value.id);
         const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
             personResult.value.id,
             personResult.value.referrer,
