@@ -223,7 +223,7 @@ jobs:
       fail_on_vulnerabilites: true
       report_location: "Dockerfile"
       trivyignores: '.trivyignore'
-      severity: HIGH
+      severity: Low
 
   trivy_scan_rocketchat_notification:
     if: always()
