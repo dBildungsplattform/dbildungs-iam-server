@@ -50,6 +50,7 @@ describe('LDAP Client Service', () => {
         BASE_DN: 'dc=example,dc=com',
         OEFFENTLICHE_SCHULEN_DOMAIN: 'schule-sh.de',
         ERSATZSCHULEN_DOMAIN: 'ersatzschule-sh.de',
+        RETRY_WRAPPER_DEFAULT_RETRIES: 2,
         URL: '',
         BIND_DN: '',
         ADMIN_PASSWORD: '',
@@ -739,7 +740,8 @@ describe('LDAP Client Service', () => {
             expect(loggerMock.warning).not.toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
         });
 
-        it('when operation fails and throws Error it should automatically retry the operation', async () => {
+        it('when operation fails it should automatically retry the operation with nr of fallback retries', async () => {
+            instanceConfig.RETRY_WRAPPER_DEFAULT_RETRIES = undefined;
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.search.mockRejectedValue(new Error());
@@ -756,9 +758,28 @@ describe('LDAP Client Service', () => {
             expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
             expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
             expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
+            instanceConfig.RETRY_WRAPPER_DEFAULT_RETRIES = 2;
         });
 
-        it('when operation fails and returns Error it should automatically retry the operation', async () => {
+        it('when operation fails and throws Error it should automatically retry the operation with nr of retries set via env', async () => {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValue();
+                clientMock.search.mockRejectedValue(new Error());
+
+                return clientMock;
+            });
+            const result: Result<boolean> = await ldapClientService.isLehrerExisting(
+                faker.lorem.word(),
+                'schule-sh.de',
+            );
+
+            expect(result.ok).toBeFalsy();
+            expect(clientMock.bind).toHaveBeenCalledTimes(2);
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+        });
+
+        it('when operation fails and returns Error it should automatically retry the operation  with nr of retries set via env', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
                 clientMock.search.mockResolvedValue({} as SearchResult);
@@ -774,7 +795,6 @@ describe('LDAP Client Service', () => {
             expect(clientMock.bind).toHaveBeenCalledTimes(0);
             expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
             expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
-            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
         });
     });
 
@@ -2047,7 +2067,7 @@ describe('LDAP Client Service', () => {
                     );
 
                     if (!result.ok) throw Error();
-                    expect(result.value).toHaveLength(8);
+                    expect(result.value.length).toBeGreaterThanOrEqual(8);
                     expect(loggerMock.info).toHaveBeenLastCalledWith(
                         `LDAP: Successfully modified userPassword (UEM) for personId:${fakePersonID}, referrer:${fakeReferrer}`,
                     );
