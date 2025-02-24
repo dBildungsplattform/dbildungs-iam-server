@@ -212,7 +212,8 @@ jobs:
   # Scheduled
   scheduled_trivy_scan:
     name: "Scheduled trivy scan of latest image"
-    if: ${{ github.event_name == 'schedule' }}
+    # if: ${{ github.event_name == 'schedule' }}
+    if: ${{ github.event_name == 'push' }}
     permissions:
       packages: read
       security-events: write
@@ -222,14 +223,17 @@ jobs:
       fail_on_vulnerabilites: true
       report_location: "Dockerfile"
       trivyignores: '.trivyignore'
+      trivy_severity: HIGH
 
   trivy_scan_rocketchat_notification:
-    if: ${{ github.event_name == 'schedule' }} && failure()
+    # if: ${{ github.event_name == 'schedule' }} && failure()
+    if: ${{ github.event_name == 'push' }} && always()
     needs:
     - scheduled_trivy_scan
     runs-on: 'ubuntu-latest'
     steps:
     - name: Send Notification to Rocket Chat
+      if: ${{ needs.scheduled_trivy_scan.result == 'failure' }}
       uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
       with:
         type: failure
