@@ -17,4 +17,8 @@ describe('HealthController', () => {
     it('should be defined', () => {
         expect(controller).toBeDefined();
     });
+
+    it('should return an object with status UP', () => {
+        expect(controller.check()).not.toBeNull();
+    });
 });
