@@ -30,6 +30,7 @@ export class MeldungController {
     public constructor(private readonly meldungRepo: MeldungRepo) {}
 
     @Get()
+    @UseGuards(StepUpGuard)
     @ApiOperation({ description: 'Get all meldungen.' })
     @ApiOkResponse({
         description: 'The meldungen were successfully returned.',
