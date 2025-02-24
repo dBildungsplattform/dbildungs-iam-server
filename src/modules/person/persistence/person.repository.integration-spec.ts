@@ -161,9 +161,12 @@ describe('PersonRepository Integration', () => {
     type SavedPersonProps = { keycloackID: string };
     async function savePerson(
         withPersonalnummer: boolean = false,
-        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string }> = {},
+        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string; referrer?: string }> = {},
     ): Promise<Person<true>> {
-        usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
+        usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+            ok: true,
+            value: props.referrer ?? 'testusername',
+        });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
         };
@@ -1869,6 +1872,97 @@ describe('PersonRepository Integration', () => {
             expect(persons[1]?.vorname).toBe('Bob');
             expect(persons[2]?.vorname).toBe('Charlie');
         });
+
+        it('should apply sort criteria correctly for VORNAME', async () => {
+            await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
+            await savePerson(false, { vorname: 'Anna', familienname: 'Johnson' });
+            const person1: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Brown' });
+            const person2: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Brown' });
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.VORNAME,
+                sortOrder: ScopeOrder.ASC,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+
+            expect(total).toBe(4);
+            expect(persons[0]?.familienname).toBe('Brown');
+            expect(persons[1]?.familienname).toBe('Brown');
+            expect(persons[0]?.referrer).toBe(person1.referrer);
+            expect(persons[1]?.referrer).toBe(person2.referrer);
+            expect(persons[2]?.familienname).toBe('Johnson');
+            expect(persons[3]?.familienname).toBe('Smith');
+        });
+
+        it('should apply sort criteria correctly for FAMILIENNAME', async () => {
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Smith' });
+            await savePerson(false, { vorname: 'Bob', familienname: 'Smith' });
+            const person1: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
+            const person2: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.FAMILIENNAME,
+                sortOrder: ScopeOrder.ASC,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+
+            expect(total).toBe(4);
+
+            expect(persons[0]?.vorname).toBe('Anna');
+            expect(persons[1]?.vorname).toBe('Anna');
+            expect(persons[0]?.referrer).toBe(person1.referrer);
+            expect(persons[1]?.referrer).toBe(person2.referrer);
+            expect(persons[2]?.vorname).toBe('Bob');
+            expect(persons[3]?.vorname).toBe('Charlie');
+        });
+
+        it.each([SortFieldPersonFrontend.PERSONALNUMMER, SortFieldPersonFrontend.REFERRER])(
+            'should apply sort criteria correctly for %s',
+            async (sortField: SortFieldPersonFrontend) => {
+                await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', referrer: 'csmith' });
+                await savePerson(false, { vorname: 'Bob', familienname: 'Smith', referrer: 'bsmith' });
+                await savePerson(false, { vorname: 'Anna', familienname: 'Smith', referrer: 'asmith' });
+
+                const permittedOrgas: PermittedOrgas = { all: true };
+
+                const queryParams: PersonenQueryParams = {
+                    offset: 0,
+                    limit: 10,
+                    sortField: sortField,
+                    sortOrder: ScopeOrder.ASC,
+                };
+
+                const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+                expect(result).toBeDefined();
+
+                const [persons, total]: [Person<true>[], number] = result;
+
+                expect(total).toBe(3);
+
+                expect(persons[0]?.referrer).toBe('asmith');
+                expect(persons[1]?.referrer).toBe('bsmith');
+                expect(persons[2]?.referrer).toBe('csmith');
+            },
+        );
     });
 
     describe('findByIds', () => {

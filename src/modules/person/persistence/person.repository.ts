@@ -582,6 +582,12 @@ export class PersonRepository {
         return [persons, total];
     }
 
+    private readonly SORT_CRITERIA: Partial<Record<SortFieldPersonFrontend, SortFieldPersonFrontend[]>> = {
+        [SortFieldPersonFrontend.VORNAME]: [SortFieldPersonFrontend.FAMILIENNAME, SortFieldPersonFrontend.REFERRER],
+        [SortFieldPersonFrontend.FAMILIENNAME]: [SortFieldPersonFrontend.VORNAME, SortFieldPersonFrontend.REFERRER],
+        [SortFieldPersonFrontend.PERSONALNUMMER]: [SortFieldPersonFrontend.REFERRER],
+    };
+
     public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
         const scope: PersonScope = new PersonScope()
             .setScopeWhereOperator(ScopeOperator.AND)
@@ -596,13 +602,29 @@ export class PersonRepository {
 
         const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
-        scope.sortBy(raw(`lower(${sortField})`), sortOrder);
+
+        this.addSortCriteria(scope, sortField, sortOrder);
+        for (const c of this.SORT_CRITERIA[sortField] ?? []) {
+            this.addSortCriteria(scope, c);
+        }
 
         if (queryParams.suchFilter) {
             scope.findBySearchString(queryParams.suchFilter);
         }
 
         return scope;
+    }
+
+    private addSortCriteria(
+        scope: PersonScope,
+        criteria: SortFieldPersonFrontend,
+        order: ScopeOrder = ScopeOrder.ASC,
+    ): void {
+        if (criteria === SortFieldPersonFrontend.REFERRER) {
+            scope.sortBy(criteria, order);
+        } else {
+            scope.sortBy(raw(`lower(${criteria})`), order);
+        }
     }
 
     public async isPersonalnummerAlreadayAssigned(personalnummer: string): Promise<boolean> {

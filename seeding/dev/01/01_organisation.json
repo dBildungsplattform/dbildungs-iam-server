@@ -461,6 +461,20 @@
             "typ": "KLASSE",
             "administriertVon": 665,
             "zugehoerigZu": 665
+        },
+        {
+            "id": 1000,
+            "name": "Träger Öffentlich",
+            "typ": "TRAEGER",
+            "administriertVon": 1,
+            "zugehoerigZu": 1
+        },
+        {
+            "id": 1001,
+            "name": "Träger Ersatz",
+            "typ": "TRAEGER",
+            "administriertVon": 2,
+            "zugehoerigZu": 2
         }
     ]
 }
