@@ -234,7 +234,7 @@ jobs:
     - id: test_if_condition
       if: ${{ needs.scheduled_trivy_scan.result == 'failure' }}
       shell: bash
-      run: |
+      run: echo "hello"
     # - name: Send Notification to Rocket Chat
     #   if: ${{ needs.scheduled_trivy_scan.result == 'failure' }}
     #   uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
