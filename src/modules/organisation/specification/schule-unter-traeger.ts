@@ -13,13 +13,15 @@ export class SchuleUnterTraeger extends CompositeSpecification<Organisation<true
         return (await this.validateAdministriertVon(t)) && (await this.validateZugehoerigZu(t));
     }
 
+    // Schools can only be administered by LAND
     private async validateAdministriertVon(t: Organisation<true>): Promise<boolean> {
         if (!t.administriertVon) return false;
         const parent: Option<Organisation<true>> = await this.organisationRepo.findById(t.administriertVon);
         if (!parent) return false;
-        return parent.typ === OrganisationsTyp.TRAEGER || parent.typ === OrganisationsTyp.LAND;
+        return parent.typ === OrganisationsTyp.LAND;
     }
 
+    // Schools can belong to LAND or TRAEGER
     private async validateZugehoerigZu(t: Organisation<true>): Promise<boolean> {
         if (!t.zugehoerigZu) return false;
         const parent: Option<Organisation<true>> = await this.organisationRepo.findById(t.zugehoerigZu);
