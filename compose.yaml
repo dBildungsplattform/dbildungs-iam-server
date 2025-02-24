@@ -34,7 +34,7 @@ services:
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
-  keycloak-db-service:
+  keycloak-db-microservice:
     image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
       context: .
