@@ -473,19 +473,20 @@ describe('LdapSyncEventHandler', () => {
                     Map<OrganisationID, Organisation<true>>,
                     Map<RolleID, Rolle<true>>,
                 ] = getPkArrayOrgaMapAndRolleMap(person);
-                // remove an organisation from orgaMap to force 'Could not find organisation'
-                /* const invalidPK: Personenkontext<true> = createMock<Personenkontext<true>>({
-                   organisationId: faker.string.uuid(),
-                   rolleId: faker.string.uuid(),
-                   personId: personId,
+                // hence kontexte are filtered by organisations.has, removing one organisation from map here, would not create a coverage case
+                // therefore a mocked map is used
+                const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> =
+                    createMock<Map<OrganisationID, Organisation<true>>>();
+                mockedMap.entries.mockImplementationOnce(() => {
+                    return orgaMap.entries();
                 });
-                kontexte.push(invalidPK);*/
-                /*assert(kontexte[0]);
-                orgaMap.delete(kontexte[0].organisationId);
-                orgaMap.clear();*/
-
-                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
-
+                mockedMap.has.mockImplementationOnce((id: string) => {
+                    return orgaMap.has(id);
+                });
+                mockedMap.get.mockImplementationOnce(() => {
+                    return undefined;
+                });
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, mockedMap, rolleMap);
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining(`Could not find organisation`));
