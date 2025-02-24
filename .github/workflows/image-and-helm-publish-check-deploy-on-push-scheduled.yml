@@ -212,8 +212,7 @@ jobs:
   # Scheduled
   scheduled_trivy_scan:
     name: "Scheduled trivy scan of latest image"
-    # if: ${{ github.event_name == 'schedule' }}
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' }}
     permissions:
       packages: read
       security-events: write
@@ -223,22 +222,16 @@ jobs:
       fail_on_vulnerabilites: true
       report_location: "Dockerfile"
       trivyignores: '.trivyignore'
-      severity: CRITICAL
 
   trivy_scan_rocketchat_notification:
-    if: github.event_name == 'push' && failure()
+    if: github.event_name == 'schedule' && failure()
     needs:
     - scheduled_trivy_scan
     runs-on: 'ubuntu-latest'
     steps:
-    - id: test_if_condition
-      if: ${{ needs.scheduled_trivy_scan.result == 'failure' }}
-      shell: bash
-      run: echo "hello"
-    # - name: Send Notification to Rocket Chat
-    #   if: ${{ needs.scheduled_trivy_scan.result == 'failure' }}
-    #   uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
-    #   with:
-    #     type: failure
-    #     job_name: 'Daily nightly image check failed - CVEs found so check'
-    #     url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
+    - name: Send Notification to Rocket Chat
+      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
+      with:
+        type: failure
+        job_name: 'Daily nightly image check failed - CVEs found so check'
+        url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
