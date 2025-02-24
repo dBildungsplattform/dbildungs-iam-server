@@ -1451,10 +1451,16 @@ describe('LDAP Client Service', () => {
                         referrer,
                     );
 
-                    expect(result.ok).toBeFalsy();
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `GivenName was undefined, referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(result.ok).toBeTruthy();
                     expect(result).toEqual({
-                        ok: false,
-                        error: new LdapFetchAttributeError('givenName', referrer, personId),
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            givenName: undefined,
+                        }),
                     });
                 });
             });
@@ -1476,10 +1482,16 @@ describe('LDAP Client Service', () => {
                         referrer,
                     );
 
-                    expect(result.ok).toBeFalsy();
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `Surname was undefined, referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(result.ok).toBeTruthy();
                     expect(result).toEqual({
-                        ok: false,
-                        error: new LdapFetchAttributeError('sn', referrer, personId),
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            surName: undefined,
+                        }),
                     });
                 });
             });
@@ -1501,10 +1513,16 @@ describe('LDAP Client Service', () => {
                         referrer,
                     );
 
-                    expect(result.ok).toBeFalsy();
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `CN was undefined, referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(result.ok).toBeTruthy();
                     expect(result).toEqual({
-                        ok: false,
-                        error: new LdapFetchAttributeError('cn', referrer, personId),
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            cn: undefined,
+                        }),
                     });
                 });
             });
@@ -1526,10 +1544,16 @@ describe('LDAP Client Service', () => {
                         referrer,
                     );
 
-                    expect(result.ok).toBeFalsy();
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `MailPrimaryAddress was undefined, referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(result.ok).toBeTruthy();
                     expect(result).toEqual({
-                        ok: false,
-                        error: new LdapFetchAttributeError('mailPrimaryAddress', referrer, personId),
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            mailPrimaryAddress: undefined,
+                        }),
                     });
                 });
             });
@@ -1554,14 +1578,10 @@ describe('LDAP Client Service', () => {
                     expect(result.ok).toBeTruthy();
                     expect(result).toEqual({
                         ok: true,
-                        value: {
-                            dn: dn,
-                            givenName: givenName,
-                            cn: cn,
-                            surName: sn,
-                            mailPrimaryAddress: mailPrimaryAddress,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
                             mailAlternativeAddress: undefined,
-                        },
+                        }),
                     });
                 });
             });

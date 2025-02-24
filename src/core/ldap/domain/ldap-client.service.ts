@@ -22,9 +22,9 @@ import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js'
 
 export type LdapPersonAttributes = {
     dn: string;
-    givenName: string;
-    surName: string;
-    cn: string;
+    givenName?: string;
+    surName?: string;
+    cn?: string;
     mailPrimaryAddress?: string;
     mailAlternativeAddress?: string;
 };
@@ -39,7 +39,7 @@ export type PersonData = {
 
 @Injectable()
 export class LdapClientService {
-    public static readonly FALLBACK_RETRIES: number = 3; // e.g. FALLBACK_RETRIES = 3 will produce retry sequence: 1sek, 8sek, 27sek (1000ms * retrycounter^3)
+    public static readonly FALLBACK_RETRIES: number = 1; // e.g. FALLBACK_RETRIES = 3 will produce retry sequence: 1sek, 8sek, 27sek (1000ms * retrycounter^3)
 
     public static readonly OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT: string = 'schule-sh.de';
 
@@ -507,7 +507,7 @@ export class LdapClientService {
                 personId,
             );
             if (!givenName.ok) {
-                return givenName;
+                this.logger.warning(`GivenName was undefined, referrer:${referrer}, personId:${personId}`);
             }
             const surName: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
@@ -516,7 +516,7 @@ export class LdapClientService {
                 personId,
             );
             if (!surName.ok) {
-                return surName;
+                this.logger.warning(`Surname was undefined, referrer:${referrer}, personId:${personId}`);
             }
             const cn: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
@@ -525,7 +525,7 @@ export class LdapClientService {
                 personId,
             );
             if (!cn.ok) {
-                return cn;
+                this.logger.warning(`CN was undefined, referrer:${referrer}, personId:${personId}`);
             }
             const mailPrimaryAddress: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
@@ -534,7 +534,7 @@ export class LdapClientService {
                 personId,
             );
             if (!mailPrimaryAddress.ok) {
-                return mailPrimaryAddress;
+                this.logger.warning(`MailPrimaryAddress was undefined, referrer:${referrer}, personId:${personId}`);
             }
             const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
@@ -545,10 +545,10 @@ export class LdapClientService {
 
             const personAttributes: LdapPersonAttributes = {
                 dn: searchResult.searchEntries[0].dn,
-                givenName: givenName.value,
-                cn: cn.value,
-                surName: surName.value,
-                mailPrimaryAddress: mailPrimaryAddress.value,
+                givenName: givenName.ok ? givenName.value : undefined,
+                cn: cn.ok ? cn.value : undefined,
+                surName: surName.ok ? surName.value : undefined,
+                mailPrimaryAddress: mailPrimaryAddress.ok ? mailPrimaryAddress.value : undefined,
                 mailAlternativeAddress: mailAlternativeAddress.ok ? mailAlternativeAddress.value : undefined,
             };
 

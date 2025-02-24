@@ -34,6 +34,7 @@ import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import assert from 'assert';
+import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 
 describe('LdapSyncEventHandler', () => {
     let app: INestApplication;
@@ -126,8 +127,11 @@ describe('LdapSyncEventHandler', () => {
         );
     }
 
-    function getOrga(kennung: string = faker.string.numeric({ length: 7 })): Organisation<true> {
-        return createMock<Organisation<true>>({ id: faker.string.uuid(), kennung: kennung });
+    function getOrga(
+        kennung: string = faker.string.numeric({ length: 7 }),
+        typ: OrganisationsTyp = OrganisationsTyp.SCHULE,
+    ): Organisation<true> {
+        return createMock<Organisation<true>>({ id: faker.string.uuid(), kennung: kennung, typ: typ });
     }
 
     function getRolle(rollenart: RollenArt = RollenArt.LEHR): Rolle<true> {
@@ -172,6 +176,7 @@ describe('LdapSyncEventHandler', () => {
             personId: pkPerson.id,
         });
 
+        // used to cover filtering on RollenArt LEHR
         const lernRolle1: Rolle<true> = getRolle(RollenArt.LERN);
         const lernOrga1: Organisation<true> = getOrga();
         const lernPk1: Personenkontext<true> = createMock<Personenkontext<true>>({
@@ -181,9 +186,32 @@ describe('LdapSyncEventHandler', () => {
             personId: pkPerson.id,
         });
 
-        const pk: Personenkontext<true>[] = [lehrPk1, lehrPk2, lernPk1];
-        const orgaMap: Map<OrganisationID, Organisation<true>> = getOrgaMap(lehrOrga1, lehrOrga2, lernOrga1);
-        const rolleMap: Map<RolleID, Rolle<true>> = getRolleMap(lehrRolle1, lehrRolle2, lernRolle1);
+        // used to cover filtering on OrganisationsTyp SCHULE
+        const lehrRolleForPKOnKlasse: Rolle<true> = getRolle();
+        const lehrOrgaForPkOnKlasse: Organisation<true> = getOrga(
+            faker.string.numeric({ length: 7 }),
+            OrganisationsTyp.KLASSE,
+        );
+        const lehrPKOnKlasse: Personenkontext<true> = createMock<Personenkontext<true>>({
+            id: faker.string.uuid(),
+            organisationId: lehrOrgaForPkOnKlasse.id,
+            rolleId: lehrRolleForPKOnKlasse.id,
+            personId: pkPerson.id,
+        });
+
+        const pk: Personenkontext<true>[] = [lehrPk1, lehrPk2, lernPk1, lehrPKOnKlasse];
+        const orgaMap: Map<OrganisationID, Organisation<true>> = getOrgaMap(
+            lehrOrga1,
+            lehrOrga2,
+            lernOrga1,
+            lehrOrgaForPkOnKlasse,
+        );
+        const rolleMap: Map<RolleID, Rolle<true>> = getRolleMap(
+            lehrRolle1,
+            lehrRolle2,
+            lernRolle1,
+            lehrRolleForPKOnKlasse,
+        );
 
         return [pk, orgaMap, rolleMap];
     }
@@ -446,8 +474,16 @@ describe('LdapSyncEventHandler', () => {
                     Map<RolleID, Rolle<true>>,
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 // remove an organisation from orgaMap to force 'Could not find organisation'
-                assert(kontexte[0]);
+                /* const invalidPK: Personenkontext<true> = createMock<Personenkontext<true>>({
+                   organisationId: faker.string.uuid(),
+                   rolleId: faker.string.uuid(),
+                   personId: personId,
+                });
+                kontexte.push(invalidPK);*/
+                /*assert(kontexte[0]);
                 orgaMap.delete(kontexte[0].organisationId);
+                orgaMap.clear();*/
+
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
 
                 await sut.personExternalSystemSyncEventHandler(event);

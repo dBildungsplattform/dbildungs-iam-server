@@ -18,6 +18,7 @@ import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { LdapGroupKennungExtractionError } from '../error/ldap-group-kennung-extraction.error.js';
+import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -111,14 +112,21 @@ export class LdapSyncEventHandler {
             }
         }
 
-        // Filter PKs for the remaining rollen with rollenArt LEHR
-        const pksWithRollenArtLehr: Personenkontext<true>[] = kontexte.filter((pk: Personenkontext<true>) =>
-            rollen.has(pk.rolleId),
+        // Delete all organisations from map which are NOT typ SCHULE
+        for (const [orgaId, orga] of organisations.entries()) {
+            if (orga.typ !== OrganisationsTyp.SCHULE) {
+                organisations.delete(orgaId);
+            }
+        }
+
+        // Filter PKs for the remaining rollen with rollenArt LEHR and the remaining organisations with typ SCHULE
+        const pksWithRollenArtLehrAndOrganisationSchule: Personenkontext<true>[] = kontexte.filter(
+            (pk: Personenkontext<true>) => rollen.has(pk.rolleId) && organisations.has(pk.organisationId),
         );
 
         const schulenDstNrList: string[] = [];
         let schule: Organisation<true> | undefined;
-        for (const pk of pksWithRollenArtLehr) {
+        for (const pk of pksWithRollenArtLehrAndOrganisationSchule) {
             schule = organisations.get(pk.organisationId);
             if (!schule) {
                 return this.logger.error(`Could not find organisation, orgaId:${pk.organisationId}, pkId:${pk.id}`);
