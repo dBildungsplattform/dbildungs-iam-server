@@ -226,7 +226,7 @@ jobs:
       severity: CRITICAL
 
   trivy_scan_rocketchat_notification:
-    if: always() && ${{ github.event_name == 'push' }}
+    if: always() && github.event_name == 'push'
     needs:
     - scheduled_trivy_scan
     runs-on: 'ubuntu-latest'
