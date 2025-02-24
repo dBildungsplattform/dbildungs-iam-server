@@ -351,30 +351,9 @@ export class OrganisationController {
         });
     }
 
-    @Post(':organisationId/administriert')
-    @UseGuards(StepUpGuard)
-    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
-    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
-    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
-    public async addAdministrierteOrganisation(
-        @Param() params: OrganisationByIdParams,
-        @Body() body: OrganisationByIdBodyParams,
-    ): Promise<void> {
-        const res: Result<void, OrganisationSpecificationError | DomainError> =
-            await this.organisationService.setAdministriertVon(params.organisationId, body.organisationId);
-
-        if (!res.ok) {
-            // Avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
-            if (res.error instanceof OrganisationSpecificationError) {
-                throw res.error;
-            }
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error),
-            );
-        }
-    }
+    // This endpoint will be added again in the future, but for now it is not needed and needs to be rewritten anyways
+    // @Post(':organisationId/administriert')
+    // public addAdministrierteOrganisation(): void
 
     @Get(':organisationId/zugehoerig')
     @ApiOkResponse({
@@ -426,10 +405,12 @@ export class OrganisationController {
     public async addZugehoerigeOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
             params.organisationId,
             body.organisationId,
+            permissions,
         );
 
         if (!res.ok) {
