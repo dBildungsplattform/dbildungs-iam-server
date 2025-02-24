@@ -8,15 +8,11 @@ import {
 } from '../domain/organisation.enums.js';
 
 export class CommonCreateUpdateOrganisationBodyParams {
-    @IsOptional()
     @IsUUID()
-    @ApiPropertyOptional()
-    public readonly administriertVon?: string;
+    public readonly administriertVon!: string;
 
-    @IsOptional()
     @IsUUID()
-    @ApiPropertyOptional()
-    public readonly zugehoerigZu?: string;
+    public readonly zugehoerigZu!: string;
 
     @IsOptional()
     @IsString()
