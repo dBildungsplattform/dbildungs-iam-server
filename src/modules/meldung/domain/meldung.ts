@@ -1,6 +1,6 @@
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { MeldungValidator } from '../../../shared/validation/meldung-validator.js';
-import { MeldungInhaltError } from '../../person/domain/meldung-inhalt.error.js';
+import { MeldungInhaltError } from './meldung-inhalt.error.js';
 import { MeldungStatus } from '../persistence/meldung.entity.js';
 
 export class Meldung<WasPersisted extends boolean> {
@@ -24,24 +24,28 @@ export class Meldung<WasPersisted extends boolean> {
         return new Meldung(id, createdAt, updatedAt, inhalt, status, revision);
     }
 
-    public static createNew(inhalt: string, status: MeldungStatus): Meldung<false> | DomainError {
+    public static createNew(inhalt: string, status: MeldungStatus): Result<Meldung<false>, DomainError> {
         if (!MeldungValidator.isMeldungValid(inhalt)) {
-            return new MeldungInhaltError();
+            return { ok: false, error: new MeldungInhaltError() };
         }
-        return new Meldung(undefined, undefined, undefined, inhalt, status, 1);
+        return { ok: true, value: new Meldung(undefined, undefined, undefined, inhalt, status, 1) };
     }
 
-    public update(revision: number, inhalt: string, status: MeldungStatus): void | DomainError {
+    public update(revision: number, inhalt: string, status: MeldungStatus): Result<void, DomainError> {
         if (this.revision !== revision) {
-            return new MismatchedRevisionError(
-                `Revision ${revision} does not match revision ${this.revision} of stored Meldung.`,
-            );
+            return {
+                ok: false,
+                error: new MismatchedRevisionError(
+                    `Revision ${revision} does not match revision ${this.revision} of stored Meldung.`,
+                ),
+            };
         }
         if (!MeldungValidator.isMeldungValid(inhalt)) {
-            return new MeldungInhaltError();
+            return { ok: false, error: new MeldungInhaltError() };
         }
         this.inhalt = inhalt;
         this.status = status;
         this.revision = this.revision + 1;
+        return { ok: true, value: undefined };
     }
 }

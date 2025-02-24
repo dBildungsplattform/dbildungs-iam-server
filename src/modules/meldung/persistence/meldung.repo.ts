@@ -1,7 +1,7 @@
 import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { Meldung } from '../domain/meldung.js';
-import { MeldungEntity } from './meldung.entity.js';
+import { MeldungEntity, MeldungStatus } from './meldung.entity.js';
 
 export function mapAggregateToData(meldung: Meldung<boolean>): RequiredEntityData<MeldungEntity> {
     return {
@@ -63,5 +63,14 @@ export class MeldungRepo {
         await this.em.persistAndFlush(meldungEntity);
 
         return mapEntityToAggregate(meldungEntity);
+    }
+
+    public async getRecentVeroeffentlichtMeldung(): Promise<Meldung<true> | null> {
+        const currentEntity: Option<MeldungEntity> = await this.em.findOne(
+            MeldungEntity,
+            { status: MeldungStatus.VEROEFFENTLICHT },
+            { orderBy: { updatedAt: 'DESC' } },
+        );
+        return currentEntity ? mapEntityToAggregate(currentEntity) : null;
     }
 }

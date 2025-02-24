@@ -1,4 +1,4 @@
-import { Entity, Enum, Property } from '@mikro-orm/core';
+import { Entity, Enum, Opt, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 
 export enum MeldungStatus {
@@ -20,8 +20,8 @@ export class MeldungEntity extends TimestampedEntity {
         default: MeldungStatus.NICHT_VEROEFFENTLICHT,
         nativeEnumName: 'meldung_status_enum',
     })
-    public status!: MeldungStatus;
+    public status!: MeldungStatus & Opt;
 
     @Property({ default: 1 })
-    public revision!: number;
+    public revision!: number & Opt;
 }

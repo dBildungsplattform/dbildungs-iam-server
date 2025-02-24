@@ -18,11 +18,11 @@ import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../..
 import { MeldungResponse } from './meldung.response.js';
 import { MeldungRepo } from '../persistence/meldung.repo.js';
 import { Meldung } from '../domain/meldung.js';
-import { MeldungStatus } from '../persistence/meldung.entity.js';
 import { CreateOrUpdateMeldungBodyParams } from './create-or-update-meldung.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { MeldungExceptionFilter } from './meldung.exception-filter.js';
 
-@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
+@UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new MeldungExceptionFilter())
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
 @Controller({ path: 'portal/meldung' })
@@ -71,20 +71,13 @@ export class MeldungController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while getting current veroeffentlicht meldung.',
     })
-    public async getCurrentMeldunge(): Promise<MeldungResponse | null> {
-        const meldungen: Meldung<true>[] = await this.meldungRepo.findAll();
-        const currentVeroeffentlichtMeldung: Meldung<true> | undefined = meldungen
-            .filter((meldung: Meldung<true>) => meldung.status === MeldungStatus.VEROEFFENTLICHT)
-            .sort(
-                (a: Meldung<true>, b: Meldung<true>) =>
-                    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-            )
-            .at(0);
-        if (!currentVeroeffentlichtMeldung) {
+    public async getCurrentMeldung(): Promise<MeldungResponse | null> {
+        const meldung: Option<Meldung<true>> = await this.meldungRepo.getRecentVeroeffentlichtMeldung();
+        if (!meldung) {
             return null;
         }
 
-        return new MeldungResponse(currentVeroeffentlichtMeldung);
+        return new MeldungResponse(meldung);
     }
 
     //Kann keine ID in der URL haben, da die Anforderung ist, dass dieser Endpunkt auch Resourcen erstellen kann
@@ -100,12 +93,12 @@ export class MeldungController {
         @Body() body: CreateOrUpdateMeldungBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<MeldungResponse> {
-        const requiredSytsmrechte: RollenSystemRecht[] = [
+        const requiredSystemrechte: RollenSystemRecht[] = [
             RollenSystemRecht.SCHULPORTAL_VERWALTEN,
             RollenSystemRecht.HINWEISE_BEARBEITEN,
         ];
         const hasRequiredSystemrechte: boolean =
-            await permissions.hasSystemrechteAtRootOrganisation(requiredSytsmrechte);
+            await permissions.hasSystemrechteAtRootOrganisation(requiredSystemrechte);
         if (!hasRequiredSystemrechte) {
             throw this.mapError(
                 new MissingPermissionsError(
@@ -123,11 +116,11 @@ export class MeldungController {
     //Private Helpers Below
 
     private async handleCreateMeldung(body: CreateOrUpdateMeldungBodyParams): Promise<MeldungResponse> {
-        const newMeldung: Meldung<false> | DomainError = Meldung.createNew(body.inhalt, body.status);
-        if (newMeldung instanceof DomainError) {
-            throw this.mapError(newMeldung);
+        const createResult: Result<Meldung<false>, DomainError> = Meldung.createNew(body.inhalt, body.status);
+        if (!createResult.ok) {
+            throw createResult.error;
         }
-        return new MeldungResponse(await this.meldungRepo.save(newMeldung));
+        return new MeldungResponse(await this.meldungRepo.save(createResult.value));
     }
 
     private async handleUpdateMeldung<T extends { id: string }>(
@@ -137,9 +130,9 @@ export class MeldungController {
         if (!existingMeldung) {
             throw this.mapError(new EntityNotFoundError('Meldung', body.id));
         }
-        const updateResult: void | DomainError = existingMeldung.update(body.revision, body.inhalt, body.status);
-        if (updateResult instanceof DomainError) {
-            throw this.mapError(updateResult);
+        const updateResult: Result<void, DomainError> = existingMeldung.update(body.revision, body.inhalt, body.status);
+        if (!updateResult.ok) {
+            throw updateResult.error;
         }
         return new MeldungResponse(await this.meldungRepo.save(existingMeldung));
     }

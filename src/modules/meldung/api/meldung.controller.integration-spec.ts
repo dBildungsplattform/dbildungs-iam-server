@@ -14,6 +14,8 @@ import { HttpException } from '@nestjs/common';
 import { MeldungStatus } from '../persistence/meldung.entity.js';
 import { CreateOrUpdateMeldungBodyParams } from './create-or-update-meldung.body.params.js';
 import { faker } from '@faker-js/faker';
+import { MeldungInhaltError } from '../domain/meldung-inhalt.error.js';
+import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 
 describe('Meldung Controller', () => {
     let module: TestingModule;
@@ -80,24 +82,9 @@ describe('Meldung Controller', () => {
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
             const meldung: Meldung<true> = DoFactory.createMeldung(true);
             meldung.status = MeldungStatus.VEROEFFENTLICHT;
-            meldungRepo.findAll.mockResolvedValueOnce([meldung]);
-            const response: MeldungResponse | null = await meldungController.getCurrentMeldunge();
+            meldungRepo.getRecentVeroeffentlichtMeldung.mockResolvedValueOnce(meldung);
+            const response: MeldungResponse | null = await meldungController.getCurrentMeldung();
             expect(response).toBeInstanceOf(MeldungResponse);
-        });
-
-        it('should return current veroffentlich meldung which was latest updated if multiple veroffentlicht meldungen exist', async () => {
-            const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-            const meldung1: Meldung<true> = DoFactory.createMeldung(true);
-            meldung1.status = MeldungStatus.VEROEFFENTLICHT;
-            meldung1.updatedAt = new Date(2050, 6, 6);
-            const meldung2: Meldung<true> = DoFactory.createMeldung(true);
-            meldung2.status = MeldungStatus.VEROEFFENTLICHT;
-            meldung2.updatedAt = new Date(2040, 6, 6);
-            meldungRepo.findAll.mockResolvedValueOnce([meldung2, meldung1]);
-            const response: MeldungResponse | null = await meldungController.getCurrentMeldunge();
-            expect(response).toBeInstanceOf(MeldungResponse);
-            expect(response?.updatedAt).toEqual(meldung1.updatedAt);
         });
 
         it('should return nothing if no current veroeffntlich meldung exists', async () => {
@@ -106,7 +93,7 @@ describe('Meldung Controller', () => {
             const meldung: Meldung<true> = DoFactory.createMeldung(true);
             meldung.status = MeldungStatus.NICHT_VEROEFFENTLICHT;
             meldungRepo.findAll.mockResolvedValueOnce([meldung]);
-            const response: MeldungResponse | null = await meldungController.getCurrentMeldunge();
+            const response: MeldungResponse | null = await meldungController.getCurrentMeldung();
             expect(response).toBeNull();
         });
     });
@@ -150,7 +137,7 @@ describe('Meldung Controller', () => {
                 };
 
                 await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toThrow(
-                    HttpException,
+                    MeldungInhaltError,
                 );
             });
 
@@ -222,7 +209,7 @@ describe('Meldung Controller', () => {
                 meldungRepo.findById.mockResolvedValueOnce(meldung);
 
                 await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toThrow(
-                    HttpException,
+                    MeldungInhaltError,
                 );
             });
 
@@ -247,7 +234,7 @@ describe('Meldung Controller', () => {
                 meldungRepo.findById.mockResolvedValueOnce(meldung);
 
                 await expect(meldungController.createOrUpdateMeldung(body, personpermissions)).rejects.toThrow(
-                    HttpException,
+                    MismatchedRevisionError,
                 );
             });
 

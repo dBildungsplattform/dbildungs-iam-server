@@ -10,6 +10,7 @@ import {
 import { MeldungRepo } from './meldung.repo.js';
 import { Meldung } from '../domain/meldung.js';
 import { faker } from '@faker-js/faker';
+import { MeldungStatus } from './meldung.entity.js';
 
 describe('MeldungRepo', () => {
     let module: TestingModule;
@@ -45,6 +46,42 @@ describe('MeldungRepo', () => {
         expect(em).toBeDefined();
     });
 
+    describe('getRecentVeroeffentlichtMeldung', () => {
+        it('should return the most recent veroffentlicht meldung meldung', async () => {
+            const meldung1: Meldung<false> = DoFactory.createMeldung(false);
+            const meldung2: Meldung<false> = DoFactory.createMeldung(false);
+            meldung1.updatedAt = new Date(2010, 12, 12);
+            meldung1.status = MeldungStatus.VEROEFFENTLICHT;
+            meldung2.updatedAt = new Date(2020, 12, 12);
+            meldung2.status = MeldungStatus.VEROEFFENTLICHT;
+
+            await sut.save(meldung1);
+            const savedMeldung2: Meldung<true> = await sut.save(meldung1);
+
+            em.clear();
+
+            const meldungResult: Option<Meldung<true>> = await sut.getRecentVeroeffentlichtMeldung();
+
+            expect(meldungResult).toBeDefined();
+            expect(meldungResult).toBeInstanceOf(Meldung);
+            expect(meldungResult?.id).toEqual(savedMeldung2.id)
+        });
+
+        it('should return null if only nicht veroffentlicht exists', async () => {
+            const meldung1: Meldung<false> = DoFactory.createMeldung(false);
+            meldung1.status = MeldungStatus.NICHT_VEROEFFENTLICHT;
+
+            await sut.save(meldung1);
+            const meldung: Option<Meldung<true>> = await sut.getRecentVeroeffentlichtMeldung();
+            expect(meldung).toBeNull();
+        });
+
+        it('should return null if nothing exists', async () => {
+            const meldung: Option<Meldung<true>> = await sut.getRecentVeroeffentlichtMeldung();
+            expect(meldung).toBeNull();
+        });
+    });
+
     describe('findById', () => {
         it('should return the meldung', async () => {
             const meldung: Meldung<true> = await sut.save(DoFactory.createMeldung(false));
@@ -56,10 +93,10 @@ describe('MeldungRepo', () => {
             expect(meldungResult).toBeInstanceOf(Meldung);
         });
 
-        it('should return undefined if the entity does not exist', async () => {
-            const serviceProvider: Option<Meldung<true>> = await sut.findById(faker.string.uuid());
+        it('should return null if the entity does not exist', async () => {
+            const meldung: Option<Meldung<true>> = await sut.findById(faker.string.uuid());
 
-            expect(serviceProvider).toBeNull();
+            expect(meldung).toBeNull();
         });
     });
 

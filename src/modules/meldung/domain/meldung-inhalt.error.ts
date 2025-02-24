@@ -1,6 +1,6 @@
-import { DomainError } from '../../../shared/error/domain.error.js';
+import { MeldungDomainError } from './meldung-domain.error.js';
 
-export class MeldungInhaltError extends DomainError {
+export class MeldungInhaltError extends MeldungDomainError {
     public constructor(details?: unknown[] | Record<string, undefined>) {
         super('Content of Meldung is Invalid', 'MELDUNG_INHALT_INVALID', details);
     }

@@ -7,7 +7,7 @@ import { MeldungRepo } from '../persistence/meldung.repo.js';
 import { Meldung } from './meldung.js';
 import { MeldungStatus } from '../persistence/meldung.entity.js';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
-import { MeldungInhaltError } from '../../person/domain/meldung-inhalt.error.js';
+import { MeldungInhaltError } from './meldung-inhalt.error.js';
 import { faker } from '@faker-js/faker';
 
 describe('Meldung Aggregate', () => {
@@ -42,73 +42,89 @@ describe('Meldung Aggregate', () => {
 
     describe('createNew', () => {
         it('should not allow to create meldung with no characeters', () => {
-            const result: Meldung<false> | DomainError = Meldung.createNew('', MeldungStatus.VEROEFFENTLICHT);
-            expect(result).toBeInstanceOf(MeldungInhaltError);
+            const result: Result<Meldung<false>, DomainError> = Meldung.createNew('', MeldungStatus.VEROEFFENTLICHT);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(MeldungInhaltError);
+            }
         });
 
         it('should not allow to create meldung with more then 2000 characeters', () => {
-            const result: Meldung<false> | DomainError = Meldung.createNew(
+            const result: Result<Meldung<false>, DomainError> = Meldung.createNew(
                 faker.string.alphanumeric(2001),
                 MeldungStatus.VEROEFFENTLICHT,
             );
-            expect(result).toBeInstanceOf(MeldungInhaltError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(MeldungInhaltError);
+            }
         });
 
         it('should be able to create meldung with valid length', () => {
-            const result: Meldung<false> | DomainError = Meldung.createNew(
+            const result: Result<Meldung<false>, DomainError> = Meldung.createNew(
                 faker.string.alphanumeric(1000),
                 MeldungStatus.VEROEFFENTLICHT,
             );
-            expect(result).toBeInstanceOf(Meldung);
+            expect(result.ok).toBeTruthy();
+            if (result.ok) {
+                expect(result.value).toBeInstanceOf(Meldung);
+            }
         });
     });
 
     describe('update', () => {
-        let meldung: Meldung<false> | DomainError;
+        let meldung: Meldung<false>;
 
         beforeEach(() => {
-            meldung = Meldung.createNew(faker.string.alphanumeric(1000), MeldungStatus.VEROEFFENTLICHT);
-            expect(meldung).toBeInstanceOf(Meldung);
+            const result: Result<Meldung<false>, DomainError> = Meldung.createNew(
+                faker.string.alphanumeric(1000),
+                MeldungStatus.VEROEFFENTLICHT,
+            );
+            expect(result.ok).toBeTruthy();
+            if (result.ok) {
+                meldung = result.value;
+            }
         });
 
         it('should not allow to update meldung with wrong revision', () => {
-            if (meldung instanceof DomainError) return;
-
-            const result: void | DomainError = meldung.update(
+            const result: Result<void, DomainError> = meldung.update(
                 5,
                 faker.string.alphanumeric(1500),
                 MeldungStatus.VEROEFFENTLICHT,
             );
-            expect(result).toBeInstanceOf(MismatchedRevisionError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(MismatchedRevisionError);
+            }
         });
 
         it('should not allow to update meldung with no characters', () => {
-            if (meldung instanceof DomainError) return;
-
-            const result: void | DomainError = meldung.update(1, '', MeldungStatus.VEROEFFENTLICHT);
-            expect(result).toBeInstanceOf(MeldungInhaltError);
+            const result: Result<void, DomainError> = meldung.update(1, '', MeldungStatus.VEROEFFENTLICHT);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(MeldungInhaltError);
+            }
         });
 
         it('should not allow to update meldung with more than 2000 characters', () => {
-            if (meldung instanceof DomainError) return;
-
-            const result: void | DomainError = meldung.update(
+            const result: Result<void, DomainError> = meldung.update(
                 1,
                 faker.string.alphanumeric(2001),
                 MeldungStatus.VEROEFFENTLICHT,
             );
-            expect(result).toBeInstanceOf(MeldungInhaltError);
+            expect(result.ok).toBeFalsy();
+            if (!result.ok) {
+                expect(result.error).toBeInstanceOf(MeldungInhaltError);
+            }
         });
 
         it('should be able to update meldung with valid length', () => {
-            if (meldung instanceof DomainError) return;
-
-            const result: void | DomainError = meldung.update(
+            const result: Result<void, DomainError> = meldung.update(
                 1,
                 faker.string.alphanumeric(1500),
                 MeldungStatus.VEROEFFENTLICHT,
             );
-            expect(result).not.toBeInstanceOf(MeldungInhaltError);
+            expect(result.ok).toBeTruthy();
         });
     });
 
