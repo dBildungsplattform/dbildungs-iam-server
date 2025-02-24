@@ -714,51 +714,6 @@ describe('OrganisationController', () => {
         });
     });
 
-    describe('addAdministrierteOrganisation', () => {
-        describe('when usecase succeeds', () => {
-            it('should not throw an error', async () => {
-                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
-
-                organisationServiceMock.setAdministriertVon.mockResolvedValue({ ok: true, value: undefined });
-
-                await expect(organisationController.addAdministrierteOrganisation(params, body)).resolves.not.toThrow();
-                expect(organisationServiceMock.setAdministriertVon).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when usecase returns a OrganisationSpecificationError', () => {
-            it('should throw a HttpException', async () => {
-                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
-
-                organisationServiceMock.setAdministriertVon.mockResolvedValue({
-                    ok: false,
-                    error: new OrganisationSpecificationError('error', undefined),
-                });
-                await expect(organisationController.addAdministrierteOrganisation(params, body)).rejects.toThrow(
-                    OrganisationSpecificationError,
-                );
-
-                expect(organisationServiceMock.setAdministriertVon).toHaveBeenCalledTimes(1);
-            });
-        });
-
-        describe('when usecase returns a SchulConnexError', () => {
-            it('should throw a HttpException', async () => {
-                const [params, body]: [OrganisationByIdParams, OrganisationByIdBodyParams] = getFakeParamsAndBody();
-
-                organisationServiceMock.setAdministriertVon.mockResolvedValue({
-                    ok: false,
-                    error: new EntityNotFoundError('Organisation', undefined),
-                });
-                await expect(organisationController.addAdministrierteOrganisation(params, body)).rejects.toThrow(
-                    HttpException,
-                );
-
-                expect(organisationServiceMock.setAdministriertVon).toHaveBeenCalledTimes(1);
-            });
-        });
-    });
-
     describe('addZugehoerigeOrganisation', () => {
         describe('when usecase succeeds', () => {
             it('should not throw an error', async () => {
@@ -766,7 +721,9 @@ describe('OrganisationController', () => {
 
                 organisationServiceMock.setZugehoerigZu.mockResolvedValue({ ok: true, value: undefined });
 
-                await expect(organisationController.addZugehoerigeOrganisation(params, body)).resolves.not.toThrow();
+                await expect(
+                    organisationController.addZugehoerigeOrganisation(params, body, permissionsMock),
+                ).resolves.not.toThrow();
                 expect(organisationServiceMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
             });
         });
@@ -779,9 +736,9 @@ describe('OrganisationController', () => {
                     ok: false,
                     error: new OrganisationSpecificationError('error', undefined),
                 });
-                await expect(organisationController.addZugehoerigeOrganisation(params, body)).rejects.toThrow(
-                    OrganisationSpecificationError,
-                );
+                await expect(
+                    organisationController.addZugehoerigeOrganisation(params, body, permissionsMock),
+                ).rejects.toThrow(OrganisationSpecificationError);
 
                 expect(organisationServiceMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
             });
@@ -795,9 +752,9 @@ describe('OrganisationController', () => {
                     ok: false,
                     error: new EntityNotFoundError('Organisation', undefined),
                 });
-                await expect(organisationController.addZugehoerigeOrganisation(params, body)).rejects.toThrow(
-                    HttpException,
-                );
+                await expect(
+                    organisationController.addZugehoerigeOrganisation(params, body, permissionsMock),
+                ).rejects.toThrow(HttpException);
 
                 expect(organisationServiceMock.setZugehoerigZu).toHaveBeenCalledTimes(1);
             });
