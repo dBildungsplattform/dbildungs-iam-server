@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { HealthCheckService, HealthCheck, HealthCheckResult } from '@nestjs/terminus';
-import { Public } from 'nest-keycloak-connect';
+import { Public } from '../authentication/api/public.decorator.js';
 
 @Controller('health')
 @ApiExcludeController()
