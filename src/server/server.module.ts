@@ -41,6 +41,7 @@ import { ReporterModule } from '../modules/metrics/reporter/reporter.module.js';
 import { StatusModule } from '../modules/status/status.module.js';
 import { SpshConfigModule } from '../modules/spshconfig/spshconfig.module.js';
 import { VidisModule } from '../modules/vidis/vidis.module.js';
+import { MeldungModule } from '../modules/meldung/meldung.module.js';
 
 @Module({
     imports: [
@@ -104,6 +105,7 @@ import { VidisModule } from '../modules/vidis/vidis.module.js';
         StatusModule,
         SpshConfigModule,
         VidisModule,
+        MeldungModule,
     ],
     providers: [
         {
