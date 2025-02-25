@@ -34,6 +34,22 @@ services:
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
+  keycloak-db-microservice:
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - keycloak
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/apps/kc-db-microservice/main.js']
+    ports:
+      - 3000:3000
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
 
   redis:
     image: redis:7.2.2

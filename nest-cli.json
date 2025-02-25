@@ -27,6 +27,15 @@
             "compilerOptions": {
                 "tsConfigPath": "tsconfig.build.json"
             }
+        },
+        "kc-db-microservice": {
+            "type": "application",
+            "root": "src",
+            "entryFile": "src/apps/kc-db-microservice/main",
+            "sourceRoot": "src",
+            "compilerOptions": {
+                "tsConfigPath": "tsconfig.build.json"
+            }
         }
     }
 }
