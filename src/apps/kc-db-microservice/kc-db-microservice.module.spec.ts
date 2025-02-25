@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
-import { HealthModule } from './health/health.module.js';
-import { AppModule } from './app.module.js';
+import { KcDbMicroserviceModule } from './kc-db-microservice.module.js';
+import { HealthModule } from '../../modules/kc-db-health/health.module.js';
 
 describe('AppModule', () => {
     let module: TestingModule;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [AppModule],
+            imports: [KcDbMicroserviceModule],
         }).compile();
     });
 

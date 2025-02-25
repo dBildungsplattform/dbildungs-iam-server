@@ -43,7 +43,7 @@ services:
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
-    command: ['node', 'dist/src/kc-db-microservice/main.js']
+    command: ['node', 'dist/src/apps/kc-db-microservice/main.js']
     ports:
       - 3000:3000
     volumes:

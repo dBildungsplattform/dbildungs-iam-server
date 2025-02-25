@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { HealthModule } from './health/health.module.js';
+import { HealthModule } from '../../modules/kc-db-health/health.module.js';
 
 @Module({
     imports: [
@@ -10,4 +10,4 @@ import { HealthModule } from './health/health.module.js';
         HealthModule,
     ],
 })
-export class AppModule {}
+export class KcDbMicroserviceModule {}
