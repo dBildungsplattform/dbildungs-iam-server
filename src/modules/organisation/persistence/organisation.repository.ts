@@ -635,25 +635,19 @@ export class OrganisationRepository {
     }
 
     public async findOrganisationZuordnungErsatzOderOeffentlich(
-        organisationId: OrganisationID | undefined,
+        organisationId: OrganisationID,
     ): Promise<RootDirectChildrenType> {
         const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
             await this.findRootDirectChildren();
 
-        let parentOrgaId: OrganisationID | undefined = organisationId;
-        /* eslint-disable no-await-in-loop */
-        while (parentOrgaId) {
-            const result: Option<Organisation<true>> = await this.findById(parentOrgaId);
-
-            if (result?.id === oeffentlich?.id) {
+        const parents: Organisation<true>[] = await this.findParentOrgasForIdSortedByDepthAsc(organisationId);
+        for (const parent of parents) {
+            if (parent.id === oeffentlich?.id) {
                 return RootDirectChildrenType.OEFFENTLICH;
-            } else if (result?.id === ersatz?.id) {
+            } else if (parent.id === ersatz?.id) {
                 return RootDirectChildrenType.ERSATZ;
             }
-
-            parentOrgaId = result?.administriertVon;
         }
-        /* eslint-disable no-await-in-loop */
 
         return RootDirectChildrenType.OEFFENTLICH;
     }

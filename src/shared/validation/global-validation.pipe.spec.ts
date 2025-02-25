@@ -5,6 +5,7 @@ import { DetailedValidationError } from './detailed-validation.error.js';
 import { CreatedOrganisationDto } from '../../modules/organisation/api/created-organisation.dto.js';
 import { CreateOrganisationBodyParams } from '../../modules/organisation/api/create-organisation.body.params.js';
 import { OrganisationsTyp } from '../../modules/organisation/domain/organisation.enums.js';
+import { faker } from '@faker-js/faker';
 
 describe('GlobalValidationPipe', () => {
     let module: TestingModule;
@@ -29,6 +30,8 @@ describe('GlobalValidationPipe', () => {
         const organisation: CreateOrganisationBodyParams = {
             name: '',
             typ: OrganisationsTyp.UNBEST,
+            administriertVon: faker.string.uuid(),
+            zugehoerigZu: faker.string.uuid(),
         };
 
         return validationPipe
