@@ -99,6 +99,8 @@ describe('OrganisationController', () => {
                     kuerzel: faker.lorem.word(),
                     typ: OrganisationsTyp.SONSTIGE,
                     traegerschaft: Traegerschaft.SONSTIGE,
+                    administriertVon: faker.string.uuid(),
+                    zugehoerigZu: faker.string.uuid(),
                 };
                 const returnedValue: Organisation<true> = DoFactory.createOrganisation(true);
 
@@ -266,6 +268,7 @@ describe('OrganisationController', () => {
                 typ: OrganisationsTyp.KLASSE,
                 traegerschaft: Traegerschaft.SONSTIGE,
                 administriertVon: faker.string.uuid(),
+                zugehoerigZu: faker.string.uuid(),
             };
 
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
@@ -283,6 +286,8 @@ describe('OrganisationController', () => {
                 kuerzel: faker.lorem.word(),
                 typ: OrganisationsTyp.SCHULE,
                 traegerschaft: Traegerschaft.SONSTIGE,
+                administriertVon: faker.string.uuid(),
+                zugehoerigZu: faker.string.uuid(),
             };
             permissionsMock.hasOrgVerwaltenRechtAtOrga.mockResolvedValueOnce(false);
 
