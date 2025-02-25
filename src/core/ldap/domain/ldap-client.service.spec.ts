@@ -13,7 +13,7 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 import { LdapConfigModule } from '../ldap-config.module.js';
 import { LdapModule } from '../ldap.module.js';
 import { faker } from '@faker-js/faker';
-import { LdapClientService, PersonData } from './ldap-client.service.js';
+import { LdapClientService, LdapPersonAttributes, PersonData } from './ldap-client.service.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { LdapClient } from './ldap-client.js';
@@ -31,6 +31,7 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
+import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -139,7 +140,7 @@ describe('LDAP Client Service', () => {
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         jest.spyOn(ldapClientService as any, 'executeWithRetry').mockImplementation((...args: unknown[]) => {
-            //Needed To globally mock the private executeWithRetry function (otherwise test run to long)
+            //Needed To globally mock the private executeWithRetry function (otherwise test run too long)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const func: () => Promise<Result<any>> = args[0] as () => Promise<Result<any>>;
             return func();
@@ -1322,6 +1323,415 @@ describe('LDAP Client Service', () => {
                     expect(loggerMock.error).toHaveBeenCalledWith(
                         `LDAP: Failed to update groups for person: ${oldReferrer}`,
                     );
+                });
+            });
+        });
+    });
+
+    describe('getPersonAttributes', () => {
+        const referrer: PersonReferrer = faker.internet.userName();
+        const personId: PersonID = faker.string.uuid();
+        const dn: string = 'dn';
+        const givenName: string = faker.person.firstName();
+        const sn: string = faker.person.lastName();
+        const cn: string = referrer;
+        const mailPrimaryAddress: string = faker.internet.email();
+        const mailAlternativeAddress: string = faker.internet.email();
+        let entry: Entry;
+
+        function mockEntryCanBeFound(): void {
+            ldapClientMock.getClient.mockImplementation(() => {
+                clientMock.bind.mockResolvedValueOnce();
+                clientMock.search.mockResolvedValueOnce(
+                    createMock<SearchResult>({
+                        searchEntries: [entry],
+                    }),
+                );
+                return clientMock;
+            });
+        }
+        beforeEach(() => {
+            entry = createMock<Entry>({
+                dn: dn,
+                givenName: givenName,
+                sn: sn,
+                cn: cn,
+                mailPrimaryAddress: mailPrimaryAddress,
+                mailAlternativeAddress: mailAlternativeAddress,
+            });
+        });
+
+        describe('when bind returns error', () => {
+            it('should return falsy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+                    return clientMock;
+                });
+                const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                    personId,
+                    referrer,
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when fetching person-attributes fails', () => {
+            it('should return LdapFetchAttributeError', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                    personId,
+                    referrer,
+                );
+
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapFetchAttributeError('*', referrer, personId),
+                });
+            });
+        });
+
+        describe('when fetching all attributes succeeds', () => {
+            it('should return person-attributes', async () => {
+                entry = createMock<Entry>({
+                    dn: dn,
+                    givenName: givenName,
+                    sn: sn,
+                    cn: cn,
+                    mailPrimaryAddress: mailPrimaryAddress,
+                    mailAlternativeAddress: mailAlternativeAddress,
+                });
+                mockEntryCanBeFound();
+
+                const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                    personId,
+                    referrer,
+                );
+
+                expect(result.ok).toBeTruthy();
+                expect(result).toEqual({
+                    ok: true,
+                    value: {
+                        dn: dn,
+                        givenName: givenName,
+                        cn: cn,
+                        surName: sn,
+                        mailPrimaryAddress: mailPrimaryAddress,
+                        mailAlternativeAddress: mailAlternativeAddress,
+                    },
+                });
+            });
+        });
+
+        describe('when fetching a certain attribute fails', () => {
+            describe('when fetching givenName fails', () => {
+                it('should log error and return LdapFetchAttributeError', async () => {
+                    entry = createMock<Entry>({
+                        dn: dn,
+                        givenName: undefined,
+                        sn: sn,
+                        cn: cn,
+                        mailPrimaryAddress: mailPrimaryAddress,
+                        mailAlternativeAddress: mailAlternativeAddress,
+                    });
+                    mockEntryCanBeFound();
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                    );
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `GivenName was undefined, referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(result.ok).toBeTruthy();
+                    expect(result).toEqual({
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            givenName: undefined,
+                        }),
+                    });
+                });
+            });
+
+            describe('when fetching surName fails', () => {
+                it('should log error and return LdapFetchAttributeError', async () => {
+                    entry = createMock<Entry>({
+                        dn: dn,
+                        givenName: givenName,
+                        sn: undefined,
+                        cn: cn,
+                        mailPrimaryAddress: mailPrimaryAddress,
+                        mailAlternativeAddress: mailAlternativeAddress,
+                    });
+                    mockEntryCanBeFound();
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                    );
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `Surname was undefined, referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(result.ok).toBeTruthy();
+                    expect(result).toEqual({
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            surName: undefined,
+                        }),
+                    });
+                });
+            });
+
+            describe('when fetching cn fails', () => {
+                it('should log error and return LdapFetchAttributeError', async () => {
+                    entry = createMock<Entry>({
+                        dn: dn,
+                        givenName: givenName,
+                        sn: sn,
+                        cn: undefined,
+                        mailPrimaryAddress: mailPrimaryAddress,
+                        mailAlternativeAddress: mailAlternativeAddress,
+                    });
+                    mockEntryCanBeFound();
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                    );
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `CN was undefined, referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(result.ok).toBeTruthy();
+                    expect(result).toEqual({
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            cn: undefined,
+                        }),
+                    });
+                });
+            });
+
+            describe('when fetching mailPrimaryAddress fails', () => {
+                it('should log error and return LdapFetchAttributeError', async () => {
+                    entry = createMock<Entry>({
+                        dn: dn,
+                        givenName: givenName,
+                        sn: sn,
+                        cn: cn,
+                        mailPrimaryAddress: undefined,
+                        mailAlternativeAddress: mailAlternativeAddress,
+                    });
+                    mockEntryCanBeFound();
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                    );
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `MailPrimaryAddress was undefined, referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(result.ok).toBeTruthy();
+                    expect(result).toEqual({
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            mailPrimaryAddress: undefined,
+                        }),
+                    });
+                });
+            });
+
+            describe('when fetching mailAlternativeAddress fails', () => {
+                it('should log error but return person-attributes', async () => {
+                    entry = createMock<Entry>({
+                        dn: dn,
+                        givenName: givenName,
+                        sn: sn,
+                        cn: cn,
+                        mailPrimaryAddress: mailPrimaryAddress,
+                        mailAlternativeAddress: undefined,
+                    });
+                    mockEntryCanBeFound();
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                    );
+
+                    expect(result.ok).toBeTruthy();
+                    expect(result).toEqual({
+                        ok: true,
+                        //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                        value: expect.objectContaining({
+                            mailAlternativeAddress: undefined,
+                        }),
+                    });
+                });
+            });
+        });
+    });
+
+    describe('getGroupsForPerson', () => {
+        const referrer: PersonReferrer = faker.internet.userName();
+        const personId: PersonID = faker.string.uuid();
+        const dn: string = 'dn';
+        const givenName: string = faker.person.firstName();
+        const sn: string = faker.person.lastName();
+        const cn: string = referrer;
+        const mailPrimaryAddress: string = faker.internet.email();
+        const mailAlternativeAddress: string = faker.internet.email();
+        let entry: Entry;
+
+        beforeEach(() => {
+            entry = createMock<Entry>({
+                dn: dn,
+                givenName: givenName,
+                sn: sn,
+                cn: cn,
+                mailPrimaryAddress: mailPrimaryAddress,
+                mailAlternativeAddress: mailAlternativeAddress,
+            });
+        });
+
+        describe('when bind returns error', () => {
+            it('should return falsy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+                    return clientMock;
+                });
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when user CANNOT be found', () => {
+            it('should return LdapSearchError', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                });
+            });
+        });
+
+        describe('when fetching groups fails', () => {
+            it('should return error', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: undefined,
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                const errMsg: string = `LDAP: Fetching groups failed, personId:${personId}, referrer:${referrer}`;
+                expect(loggerMock.error).toHaveBeenCalledWith(errMsg);
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new Error(errMsg),
+                });
+            });
+        });
+
+        describe('when no groups were found', () => {
+            it('should return empty list', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `LDAP: No groups found for person, personId:${personId}, referrer:${referrer}`,
+                );
+                expect(result.ok).toBeTruthy();
+                expect(result).toEqual({
+                    ok: true,
+                    value: [],
+                });
+            });
+        });
+
+        describe('when groups were found', () => {
+            const groupEntry1: Entry = createMock<Entry>({
+                dn: 'group1',
+            });
+            const groupEntry2: Entry = createMock<Entry>({
+                dn: 'group2',
+            });
+            it('should return group-names as list', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [groupEntry1, groupEntry2],
+                        }),
+                    );
+                    return clientMock;
+                });
+
+                const result: Result<string[]> = await ldapClientService.getGroupsForPerson(personId, referrer);
+
+                expect(result.ok).toBeTruthy();
+                expect(result).toEqual({
+                    ok: true,
+                    value: ['group1', 'group2'],
                 });
             });
         });
