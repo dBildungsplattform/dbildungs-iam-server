@@ -17,7 +17,9 @@
                 "PERSON_SYNCHRONISIEREN",
                 "IMPORT_DURCHFUEHREN",
                 "PERSONEN_ANLEGEN",
-                "BULK_VERWALTEN"
+                "BULK_VERWALTEN",
+                "SCHULPORTAL_VERWALTEN",
+                "HINWEISE_BEARBEITEN"
             ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
         },
