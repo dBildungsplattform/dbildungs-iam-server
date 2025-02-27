@@ -1,16 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationID } from '../../../shared/types/index.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from './rolle-systemrechte-serviceproviderid.response.js';
 
 export class PersonenkontextRolleFieldsResponse {
-    @ApiProperty({ type: String })
-    public organisationsId: OrganisationID;
+    @ApiProperty({ type: OrganisationResponse })
+    public organisation: OrganisationResponse;
 
     @ApiProperty({ type: RollenSystemRechtServiceProviderIDResponse })
     public rolle: RollenSystemRechtServiceProviderIDResponse;
 
-    public constructor(organisationsId: OrganisationID, rolle: RollenSystemRechtServiceProviderIDResponse) {
-        this.organisationsId = organisationsId;
+    public constructor(organisation: OrganisationResponse, rolle: RollenSystemRechtServiceProviderIDResponse) {
+        this.organisation = organisation;
         this.rolle = rolle;
     }
 }
