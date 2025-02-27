@@ -218,10 +218,10 @@
             ]
         },
         {
-            "id": 200,
+            "id": 201,
             "administeredBySchulstrukturknoten": 0,
             "name": "DaTuM - MBWFK-Admin",
-            "rollenart": "ORGADMIN",
+            "rollenart": "SYSADMIN",
             "merkmale": [],
             "systemrechte": [],
             "serviceProviderIds": [
