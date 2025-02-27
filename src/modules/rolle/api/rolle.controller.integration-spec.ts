@@ -153,7 +153,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -187,7 +187,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -219,7 +219,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -247,7 +247,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -278,7 +278,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -309,7 +309,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -798,7 +798,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -852,7 +852,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -880,7 +880,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -928,7 +928,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -978,7 +978,7 @@ describe('Rolle API', () => {
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
                 const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1048,7 +1048,7 @@ describe('Rolle API', () => {
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
             const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -1101,7 +1101,7 @@ describe('Rolle API', () => {
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
                 const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1121,7 +1121,7 @@ describe('Rolle API', () => {
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
                 const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1184,7 +1184,7 @@ describe('Rolle API', () => {
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
                 const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1227,7 +1227,7 @@ describe('Rolle API', () => {
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
                 const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1273,7 +1273,7 @@ describe('Rolle API', () => {
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
                 const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];

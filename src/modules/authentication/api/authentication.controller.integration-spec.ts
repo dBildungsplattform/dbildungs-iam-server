@@ -30,6 +30,7 @@ import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums
 import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
 import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -275,7 +276,7 @@ describe('AuthenticationController', () => {
                 getPersonenkontexteWithRolesAndOrgs: (): Promise<PersonenkontextRolleWithOrganisation[]> =>
                     Promise.resolve([
                         {
-                            organisationsId: '',
+                            organisation: createMock<Organisation<true>>(),
                             rolle: { systemrechte: [], serviceProviderIds: [] },
                         },
                     ]),
