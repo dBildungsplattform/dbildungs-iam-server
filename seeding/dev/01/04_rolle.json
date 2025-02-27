@@ -204,6 +204,30 @@
             "systemrechte": ["PERSONEN_LESEN"],
             "serviceProviderIds": [],
             "istTechnisch": true
+        },
+        {
+            "id": 200,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "Schulleitung",
+            "rollenart": "LEHR",
+            "merkmale": [],
+            "systemrechte": [],
+            "serviceProviderIds": [
+                13,
+                14
+            ]
+        },
+        {
+            "id": 200,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "DaTuM - MBWFK-Admin",
+            "rollenart": "ORGADMIN",
+            "merkmale": [],
+            "systemrechte": [],
+            "serviceProviderIds": [
+                13,
+                14
+            ]
         }
     ]
 }
