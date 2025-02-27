@@ -550,6 +550,21 @@
             "personId": 7777778,
             "organisationId": 0,
             "rolleId": 102
+        },
+        {
+            "personId": 63,
+            "organisationId": 3,
+            "rolleId": 2
+        },
+        {
+            "personId": 63,
+            "organisationId": 3,
+            "rolleId": 200
+        },
+        {
+            "personId": 64,
+            "organisationId": 0,
+            "rolleId": 201
         }
     ]
 }
