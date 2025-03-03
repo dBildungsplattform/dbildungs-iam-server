@@ -82,7 +82,7 @@ import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
+import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -102,7 +102,6 @@ export class PersonController {
         private keycloakUserService: KeycloakUserService,
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly ldapClientService: LdapClientService,
-        private readonly ldapSyncEventHandler: LdapSyncEventHandler,
         private readonly personApiMapper: PersonApiMapper,
         private readonly eventService: EventService,
         config: ConfigService<ServerConfig>,
@@ -657,11 +656,11 @@ export class PersonController {
                 ),
             );
         }
-        await this.ldapSyncEventHandler.triggerLdapSync(personResult.value.id);
         const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
             personResult.value.id,
             personResult.value.referrer,
         );
+        this.eventService.publish(new PersonLdapSyncEvent(personResult.value.id));
 
         if (!changeUserPasswordResult.ok) {
             throw new PersonUserPasswordModificationError(personResult.value.id);
@@ -690,11 +689,11 @@ export class PersonController {
                 ),
             );
         }
-        await this.ldapSyncEventHandler.triggerLdapSync(id);
         const changeUserPasswordResult: Result<PersonID> = await this.ldapClientService.changeUserPasswordByPersonId(
             id,
             username,
         );
+        this.eventService.publish(new PersonLdapSyncEvent(id));
 
         if (!changeUserPasswordResult.ok) {
             throw new PersonUserPasswordModificationError(id);

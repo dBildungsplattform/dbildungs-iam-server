@@ -35,6 +35,7 @@ import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import assert from 'assert';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
+import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 
 describe('LdapSyncEventHandler', () => {
     let app: INestApplication;
@@ -290,15 +291,7 @@ describe('LdapSyncEventHandler', () => {
     describe('triggerLdapSync', () => {
         beforeEach(() => {
             personId = faker.string.uuid();
-            referrer = faker.internet.userName();
-            event = new PersonExternalSystemsSyncEvent(personId);
             person = createMock<Person<true>>();
-            email = faker.internet.email();
-            enabledEmailAddress = createMock<EmailAddress<true>>({
-                get address(): string {
-                    return email;
-                },
-            });
         });
 
         describe('when person CANNOT be found by events personID', () => {
@@ -308,6 +301,29 @@ describe('LdapSyncEventHandler', () => {
                 await sut.triggerLdapSync(personId);
 
                 expect(emailRepoMock.findEnabledByPerson).toHaveBeenCalledTimes(0);
+                expect(loggerMock.error).toHaveBeenCalledWith(`Person with personId:${personId} could not be found!`);
+            });
+        });
+    });
+
+    //* This test case is just for coverage, all real test cases for syncing are handled in test for 'personExternalSystemSyncEventHandler */
+    describe('personLdapSyncEventHandler', () => {
+        beforeEach(() => {
+            personId = faker.string.uuid();
+            event = new PersonLdapSyncEvent(personId);
+            person = createMock<Person<true>>();
+        });
+
+        describe('when person CANNOT be found by events personID', () => {
+            it('should log error and return without proceeding', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+                await sut.personLdapSyncEventHandler(event);
+
+                expect(emailRepoMock.findEnabledByPerson).toHaveBeenCalledTimes(0);
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `[EventID: ${event.eventID}] Received PersonLdapSyncEvent, personId:${event.personId}`,
+                );
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Person with personId:${event.personId} could not be found!`,
                 );
