@@ -55,7 +55,8 @@ export default class PersonTimeLimitService {
                     const currentDate: Date = new Date();
                     const timeDiffMs: number = personenKontextExpires.getTime() - currentDate.getTime();
                     const timeDiffDays: number = Math.floor(timeDiffMs / (1000 * 3600 * 24));
-                    if (timeDiffDays <= KONTEXT_EXPIRES_IN_DAYS) {
+                    // less than because today is part of the time limit
+                    if (timeDiffDays < KONTEXT_EXPIRES_IN_DAYS) {
                         const organisation: Option<Organisation<true>> = await personenKontext.getOrganisation();
                         const rolle: Option<Rolle<true>> = await personenKontext.getRolle();
 
