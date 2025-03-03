@@ -19,6 +19,7 @@ import { OrganisationRepository } from '../../../modules/organisation/persistenc
 import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { LdapGroupKennungExtractionError } from '../error/ldap-group-kennung-extraction.error.js';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
+import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -60,6 +61,17 @@ export class LdapSyncEventHandler {
         this.logger.info(
             `[EventID: ${event.eventID}] Received PersonExternalSystemsSyncEvent, personId:${event.personId}`,
         );
+
+        await this.fetchDataAndSync(event.personId);
+    }
+
+    /**
+     * This event-handler-method is implemented to make fetchDataAndSync() callable indirectly and also avoid the usage without await.
+     * Otherwise method calls to fetchDataAndSync() had to be possible without await and would force usage floating-promises.
+     **/
+    @EventHandler(PersonLdapSyncEvent)
+    public async personLdapSyncEventHandler(event: PersonLdapSyncEvent): Promise<void> {
+        this.logger.info(`[EventID: ${event.eventID}] Received PersonLdapSyncEvent, personId:${event.personId}`);
 
         await this.fetchDataAndSync(event.personId);
     }
