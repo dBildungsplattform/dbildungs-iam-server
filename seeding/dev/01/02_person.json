@@ -459,6 +459,20 @@
             "password": "SPSHtest1!",
             "vorname": "Herold",
             "familienname": "Janssen"
+        },
+        {
+            "id": 63,
+            "username": "sschulleitung",
+            "password": "SPSHtest1!",
+            "vorname": "Sandra",
+            "familienname": "Schulleitung"
+        },
+        {
+            "id": 64,
+            "username": "aamtmann",
+            "password": "SPSHtest1!",
+            "vorname": "Achim",
+            "familienname": "Amtmann"
         }
     ]
 }
