@@ -9,6 +9,12 @@ services:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=dbildungs-iam-server
+    profiles:
+      - minimal
+      - backend-only
+      - fe-datum
+      - full
+
   keycloak:
     image: ghcr.io/dbildungsplattform/dbildungs-iam-keycloak:latest
     environment:
@@ -34,6 +40,12 @@ services:
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
+    profiles:
+      - minimal
+      - backend-only
+      - fe-datum
+      - full
+
   keycloak-db-microservice:
     image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
@@ -50,6 +62,11 @@ services:
       - source: 'config'
         target: '/app/config'
         type: bind
+    profiles:
+      - minimal
+      - backend-only
+      - fe-datum
+      - full
 
   redis:
     image: redis:7.2.2
@@ -58,24 +75,21 @@ services:
     ports:
       - 6379:6379
     command: redis-server --requirepass password
-
-  backend:
     profiles:
-      - full-backend
+      - minimal
+      - backend-only
+      - fe-datum
+      - full
+
+  # Default backend configuration (without Kafka)
+  backend:
     image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
       context: .
     depends_on:
-      keycloak:
-        condition: service_started
-      db:
-        condition: service_started
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      kafka-init:
-        condition: service_completed_successfully
+      - keycloak
+      - db
+      - redis
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
@@ -84,9 +98,34 @@ services:
       - source: 'config'
         target: '/app/config'
         type: bind
-  db-init:
     profiles:
-      - db-init
+      - backend-only
+      - fe-datum
+      - full
+
+  # Special backend configuration with Kafka dependencies
+  backend-with-kafka:
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - keycloak
+      - db
+      - redis
+      - kafka
+      - kafka-init
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    network_mode: host
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+    profiles:
+      - full-with-kafka
+
+  db-init:
     image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
       context: .
@@ -100,6 +139,13 @@ services:
       - source: 'config'
         target: '/app/config'
         type: bind
+    profiles:
+      - db-init
+      - minimal
+      - backend-only
+      - fe-datum
+      - full
+      - full-with-kafka
 
   kafka:
     image: bitnami/kafka:3.9.0
@@ -119,6 +165,9 @@ services:
       interval: 5s
     volumes:
       - kafka:/bitnami/kafka
+    profiles:
+      - kafka
+      - full-with-kafka
 
   kafka-init:
     image: bitnami/kafka:3.9.0
@@ -137,6 +186,9 @@ services:
         source: ./config/kafka-topics.txt
         target: /init-data/kafka-topics.txt
         read_only: true
+    profiles:
+      - kafka
+      - full-with-kafka
 
   openldap:
     image: osixia/openldap:1.5.0
@@ -156,6 +208,11 @@ services:
       - LDAP_RFC2307BIS_SCHEMA=true
       - LDAP_REMOVE_CONFIG_AFTER_SETUP=true
       - LDAP_TLS_VERIFY_CLIENT=never
+    profiles:
+      - third-party
+      - full
+      - full-with-kafka
+
   openldap-admin:
     image: osixia/phpldapadmin:0.9.0
     container_name: ldap-admin
@@ -168,6 +225,10 @@ services:
     ports:
       - 9007:80
       - 4443:443
+    profiles:
+      - third-party
+      - full
+      - full-with-kafka
 
   privacy-idea:
     image: khalibre/privacyidea:latest
@@ -196,6 +257,10 @@ services:
       - ./privacyidea/encfile:/data/privacyidea/keys/encfile
       - ./privacyidea/dummy_private.pem:/data/privacyidea/keys/private.pem
       - ./privacyidea/dummy_public.pem:/data/privacyidea/keys/public.pem
+    profiles:
+      - privacy-idea
+      - full
+      - full-with-kafka
 
   maria-db:
     image: mariadb:latest
@@ -216,6 +281,10 @@ services:
     volumes:
       - mariadb:/var/lib/mysql
       - ./privacyidea/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    profiles:
+      - privacy-idea
+      - full
+      - full-with-kafka
 
   cron-service:
     build: ./charts/dbildungs-iam-server/cron
@@ -230,6 +299,27 @@ services:
       - ./charts/dbildungs-iam-server/cron/keys/dummy_jwks.json:/keys/jwks.json:ro
     depends_on:
       - keycloak
+    profiles:
+      - backend-only
+      - fe-datum
+      - full
+      - full-with-kafka
+
+  frontend:
+    image: ghcr.io/dbildungsplattform/schulportal-client
+    ports:
+      - 8099:8099
+    environment:
+      - NODE_ENV=dev
+      - API_URL=http://localhost:9090
+    working_dir: /app
+    volumes:
+      - .:/app
+    profiles:
+      - frontend
+      - fe-datum
+      - full
+      - full-with-kafka
 
 volumes:
   db-data:
