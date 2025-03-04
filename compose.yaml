@@ -99,6 +99,7 @@ services:
         target: '/app/config'
         type: bind
     profiles:
+      - minimal
       - backend-only
       - fe-datum
       - full
@@ -258,6 +259,7 @@ services:
       - ./privacyidea/dummy_private.pem:/data/privacyidea/keys/private.pem
       - ./privacyidea/dummy_public.pem:/data/privacyidea/keys/public.pem
     profiles:
+      - third-party
       - privacy-idea
       - full
       - full-with-kafka
@@ -282,6 +284,7 @@ services:
       - mariadb:/var/lib/mysql
       - ./privacyidea/dump.sql:/docker-entrypoint-initdb.d/dump.sql
     profiles:
+      - third-party
       - privacy-idea
       - full
       - full-with-kafka
@@ -308,9 +311,9 @@ services:
   frontend:
     image: ghcr.io/dbildungsplattform/schulportal-client
     ports:
-      - 8099:8099
+      - 8099:8080
     environment:
-      - NODE_ENV=dev
+      - NODE_ENV=prod
       - API_URL=http://localhost:9090
     working_dir: /app
     volumes:

@@ -48,10 +48,43 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 
 ## Docker Compose
 
-If you only need to run the server, you can start it and all it's dependencies with docker compose.
-`docker compose --profile full-backend up` will start everything you need.
-You may need to initialize the database, use `docker compose up db-init` do so.
-You can also use another profile, if you want to initialize the db while starting the server `docker compose --profile full-backend --profile db-init up`
+# Profiles help control which services are started based on the deployment needs. Below are the defined profiles:
+
+* minimal (default): PostgreSQL, Keycloak, Keycloak DB microservice, Redis, and database initialization.
+
+* fe-datum: Minimal backend with frontend for DaTUM, including cron service.
+
+* third-party: OpenLDAP, PHP LDAP admin (GUI), PrivacyIDEA, and MariaDB for PrivacyIDEA.
+
+* backend-only: Full backend setup without frontend, including cron service.
+
+* full: Full backend with frontend, OpenLDAP, PrivacyIDEA, and MariaDB.
+
+* privacy-idea: Standalone PrivacyIDEA service with MariaDB.
+
+* kafka: Standalone Kafka service with topic initialization.
+
+* full-with-kafka: Full backend, frontend, Kafka, PrivacyIDEA, and MariaDB.
+
+* frontend: Only the frontend.
+
+# Running Specific Profiles
+
+To start services based on a profile, use:
+
+`docker compose --profile <profile-name> up -d`
+
+For example, to start only the backend services:
+
+`docker compose --profile backend-only up -d`
+
+To run the full system including frontend:
+
+`docker compose --profile full up -d`
+
+To add Kafka:
+
+`docker compose --profile kafka up -d`
 
 ## Developer Guides
 
