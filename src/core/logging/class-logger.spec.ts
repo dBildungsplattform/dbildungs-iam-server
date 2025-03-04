@@ -170,18 +170,36 @@ describe('ClassLogger', () => {
     describe('logUnknownAsError', () => {
         const errorMessage: string = 'error-message';
 
-        describe('when err type is NOT Error', () => {
-            const unknownError: unknown = 'I am a string, not an instance of Error';
+        describe('when error is UNDEFINED', () => {
+            const unknownError: unknown = undefined;
 
-            it('should call util.inspect(err) for serialization', () => {
+            it('should log warning when error CANNOT be serialized', () => {
                 sut.logUnknownAsError(errorMessage, unknownError);
 
                 expect(loggerMock.log).toHaveBeenCalledWith('error', errorMessage);
+                expect(loggerMock.log).toHaveBeenCalledWith(
+                    'warning',
+                    'Parameter "object" was UNDEFINED when calling instanceOfError',
+                );
+            });
+        });
+
+        describe('when error type is NOT Error', () => {
+            const unknownError: unknown = 'I am a string, not an instance of Error';
+
+            it('should call util.inspect(error) for serialization', () => {
+                sut.logUnknownAsError(errorMessage, unknownError);
+
+                expect(loggerMock.log).toHaveBeenCalledWith('error', errorMessage);
+                expect(loggerMock.log).toHaveBeenCalledWith(
+                    'warning',
+                    'Type of parameter "object" was String when calling instanceOfError, that may not have been intentional',
+                );
                 expect(loggerMock.log).toHaveBeenCalledWith('error', inspect(unknownError, false, 2, false));
             });
         });
 
-        describe('when err type is Error', () => {
+        describe('when error type is Error', () => {
             const entityNotFoundError: EntityNotFoundError = new EntityNotFoundError();
 
             it('should get message and stack from Error-instance', () => {

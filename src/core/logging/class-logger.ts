@@ -5,13 +5,6 @@ import { Logger } from './logger.js';
 import { INQUIRER } from '@nestjs/core';
 import { inspect } from 'util';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function instanceOfError(object: any): object is Error {
-    if (object === undefined) return false;
-    if (typeof object === 'string') return false;
-    return 'name' in object && 'message' in object; // no existence-check for stack, because it is optional in Error and therefore can be undefined
-}
-
 @Injectable({ scope: Scope.TRANSIENT })
 export class ClassLogger extends Logger {
     private logger: LoggerWinston;
@@ -68,11 +61,37 @@ export class ClassLogger extends Logger {
      */
     public logUnknownAsError(message: string, error: unknown): void {
         this.logger.log('error', message);
-        if (instanceOfError(error)) {
+        if (this.instanceOfError(error)) {
             this.logger.log('error', `ERROR: msg:${error.message}, stack:${error.stack}`);
         } else {
             this.logger.log('error', inspect(error, false, 2, false));
         }
+    }
+
+    /**
+     * Checks for any object, whether its type is Error based on existence of the attributes 'name' and 'message' from Error-interface.
+     * Note that 'stack' is an optional attribute in that interface and therefore can be UNDEFINED.
+     * Implemented as method, not a function, so two separate failures can be handled and logged internally accordingly.
+     * @param object
+     * @private only used in the ClassLogger
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private instanceOfError(object: any): object is Error {
+        if (object === undefined) {
+            this.logger.log('warning', 'Parameter "object" was UNDEFINED when calling instanceOfError');
+
+            return false;
+        }
+        if (typeof object === 'string') {
+            this.logger.log(
+                'warning',
+                'Type of parameter "object" was String when calling instanceOfError, that may not have been intentional',
+            );
+
+            return false;
+        }
+
+        return 'name' in object && 'message' in object; // no existence-check for stack, because it is optional in Error and therefore can be undefined
     }
 
     private createMessage(
