@@ -24,8 +24,8 @@ export type PersonFields = Pick<
 >;
 type PersonKontextFields = Pick<Personenkontext<true>, 'rolleId' | 'organisationId'>;
 type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
-export type PersonenkontextRolleFields = {
-    organisationsId: OrganisationID;
+export type PersonenkontextRolleWithOrganisation = {
+    organisation: Organisation<true>;
     rolle: RolleFields;
 };
 
@@ -36,7 +36,7 @@ export class PersonPermissions implements IPersonPermissions {
 
     private cachedPersonFields: PersonFields;
 
-    private cachedRollenFields?: PersonenkontextRolleFields[];
+    private cachedRollenFields?: PersonenkontextRolleWithOrganisation[];
 
     public constructor(
         private personenkontextRepo: DBiamPersonenkontextRepo,
@@ -170,20 +170,24 @@ export class PersonPermissions implements IPersonPermissions {
         return this.cachedPersonenkontextsFields;
     }
 
-    public async getPersonenkontextewithRoles(): Promise<PersonenkontextRolleFields[]> {
+    public async getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]> {
         if (!this.cachedRollenFields) {
             const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
             const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
                 personKontextFields.map((pk: PersonKontextFields) => pk.rolleId),
+            );
+            const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds(
+                personKontextFields.map((pk: PersonKontextFields) => pk.organisationId),
             );
 
             this.cachedRollenFields = [];
 
             for (const pk of personKontextFields) {
                 const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
-                if (rolle) {
+                const organisation: Organisation<true> | undefined = organisationen.get(pk.organisationId);
+                if (rolle && organisation) {
                     this.cachedRollenFields.push({
-                        organisationsId: pk.organisationId,
+                        organisation,
                         rolle: {
                             systemrechte: rolle.systemrechte,
                             serviceProviderIds: rolle.serviceProviderIds,
