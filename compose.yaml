@@ -87,9 +87,12 @@ services:
     build:
       context: .
     depends_on:
-      - keycloak
-      - db
-      - redis
+      keycloak:
+        condition: service_started
+      db:
+        condition: service_started
+      redis:
+        condition: service_healthy
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
@@ -110,11 +113,16 @@ services:
     build:
       context: .
     depends_on:
-      - keycloak
-      - db
-      - redis
-      - kafka
-      - kafka-init
+      keycloak:
+        condition: service_started
+      db:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
@@ -309,11 +317,11 @@ services:
       - full-with-kafka
 
   frontend:
-    image: ghcr.io/dbildungsplattform/schulportal-client
+    image: ghcr.io/dbildungsplattform/schulportal-client:latest
     ports:
       - 8099:8080
     environment:
-      - NODE_ENV=prod
+      - NODE_ENV=dev
       - API_URL=http://localhost:9090
     working_dir: /app
     volumes:

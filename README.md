@@ -72,19 +72,19 @@ We have the strategic goal SG-02 "stand-alone system". We want to succeed this g
 
 To start services based on a profile, use:
 
-`docker compose --profile <profile-name> up -d`
+`docker compose --profile <profile-name> up`
 
 For example, to start only the backend services:
 
-`docker compose --profile backend-only up -d`
+`docker compose --profile backend-only up`
 
 To run the full system including frontend:
 
-`docker compose --profile full up -d`
+`docker compose --profile full up`
 
 To add Kafka:
 
-`docker compose --profile kafka up -d`
+`docker compose --profile kafka up`
 
 ## Developer Guides
 
