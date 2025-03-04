@@ -3,6 +3,14 @@ import { ModuleLogger } from './module-logger.js';
 import { Logger as LoggerWinston } from 'winston';
 import { Logger } from './logger.js';
 import { INQUIRER } from '@nestjs/core';
+import { inspect } from 'util';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function instanceOfError(object: any): object is Error {
+    if (object === undefined) return false;
+    if (typeof object === 'string') return false;
+    return 'name' in object && 'message' in object; // no existence-check for stack, because it is optional in Error and therefore can be undefined
+}
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class ClassLogger extends Logger {
@@ -49,6 +57,22 @@ export class ClassLogger extends Logger {
 
     public debug(message: string, trace?: unknown): void {
         this.logger.log('debug', this.createMessage(message, trace));
+    }
+
+    /**
+     * Logs the message with log-level error, then either logs the content of the object 'error' by calling util.inspect on it, if
+     * its type is not the Error type, or
+     * logs the message and stack contained in the object 'error', if its type is Error type.
+     * @param message
+     * @param error
+     */
+    public logUnknownAsError(message: string, error: unknown): void {
+        this.logger.log('error', message);
+        if (instanceOfError(error)) {
+            this.logger.log('error', `ERROR: msg:${error.message}, stack:${error.stack}`);
+        } else {
+            this.logger.log('error', inspect(error, false, 2, false));
+        }
     }
 
     private createMessage(
