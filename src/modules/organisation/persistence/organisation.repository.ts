@@ -530,7 +530,6 @@ export class OrganisationRepository {
                 );
                 return error;
             }
-            parentName = organisationFound.administriertVon === oeffentlich?.id ? 'Öffentliche' : 'Ersatz';
         } else {
             const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
                 'Only the name of Klassen or Schulträger can be updated.',
