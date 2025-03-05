@@ -60,11 +60,10 @@ export class ClassLogger extends Logger {
      * @param error should implement Error interface
      */
     public logUnknownAsError(message: string, error: unknown): void {
-        this.logger.log('error', message);
         if (this.instanceOfError(error)) {
-            this.logger.log('error', `ERROR: msg:${error.message}, stack:${error.stack}`);
+            this.error(message + ' - ' + error.message, error.stack);
         } else {
-            this.logger.log('error', inspect(error, false, 2, false));
+            this.error(message + ' - ' + inspect(error, false, 2, false), undefined);
         }
     }
 
@@ -78,20 +77,21 @@ export class ClassLogger extends Logger {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private instanceOfError(object: any): object is Error {
         if (object === undefined) {
-            this.logger.log('warning', 'Parameter "object" was UNDEFINED when calling instanceOfError');
+            const error: Error = new Error('Parameter was UNDEFINED when calling instanceOfError');
+            this.warning(error.message, error.stack);
 
             return false;
         }
         if (typeof object === 'string') {
-            this.logger.log(
-                'warning',
-                'Type of parameter "object" was String when calling instanceOfError, that may not have been intentional',
+            const error: Error = new Error(
+                'Type of parameter was String when calling instanceOfError, that may not have been intentional',
             );
+            this.warning(error.message, error.stack);
 
             return false;
         }
 
-        return 'name' in object && 'message' in object; // no existence-check for stack, because it is optional in Error and therefore can be undefined
+        return object instanceof Error; //instanceof-check for Error succeeds because its object as well as interface
     }
 
     private createMessage(
