@@ -82,6 +82,18 @@ export class OrganisationService {
                 );
             }
         }
+
+        if (organisation.typ === OrganisationsTyp.TRAEGER) {
+            if (error) {
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht einen neuen Schulträger ${organisation.name} anzulegen. Fehler: ${error.message}`,
+                );
+            } else {
+                this.logger.info(
+                    `Admin: ${permissions.personFields.id}) hat eine neuen Schulträger angelegt: ${organisation.name}.`,
+                );
+            }
+        }
     }
 
     private async logUpdate(

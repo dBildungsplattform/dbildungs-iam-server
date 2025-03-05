@@ -791,7 +791,7 @@ describe('OrganisationController', () => {
                     version: faker.number.int(),
                 };
 
-                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(oeffentlich);
+                organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(oeffentlich);
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
@@ -808,7 +808,9 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                     version: faker.number.int(),
                 };
-                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new NameRequiredForKlasseError());
+                organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(
+                    new NameRequiredForKlasseError(),
+                );
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
@@ -826,7 +828,7 @@ describe('OrganisationController', () => {
                     version: faker.number.int(),
                 };
 
-                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new EntityNotFoundError());
+                organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(new EntityNotFoundError());
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
@@ -860,7 +862,7 @@ describe('OrganisationController', () => {
                     version: faker.number.int(),
                 };
 
-                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(oeffentlich);
+                organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(oeffentlich);
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
@@ -877,7 +879,9 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                     version: faker.number.int(),
                 };
-                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new NameRequiredForKlasseError());
+                organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(
+                    new NameRequiredForKlasseError(),
+                );
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
@@ -895,7 +899,7 @@ describe('OrganisationController', () => {
                     version: faker.number.int(),
                 };
 
-                organisationRepositoryMock.updateKlassenname.mockResolvedValueOnce(new EntityNotFoundError());
+                organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(new EntityNotFoundError());
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),

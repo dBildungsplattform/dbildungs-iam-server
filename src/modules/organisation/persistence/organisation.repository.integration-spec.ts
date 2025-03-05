@@ -871,7 +871,7 @@ describe('OrganisationRepository', () => {
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
                 const id: string = faker.string.uuid();
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     id,
                     faker.company.name(),
                     faker.number.int(),
@@ -892,7 +892,7 @@ describe('OrganisationRepository', () => {
                 });
                 const savedOrganisation: Organisation<true> = await sut.save(organisation);
 
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     savedOrganisation.id,
                     'newName',
                     1,
@@ -913,7 +913,7 @@ describe('OrganisationRepository', () => {
                 });
                 const savedOrganisation: Organisation<true> = await sut.save(organisation);
 
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     savedOrganisation.id,
                     'newName',
                     1,
@@ -934,7 +934,7 @@ describe('OrganisationRepository', () => {
                     administriertVon: savedParentOrganisation.id,
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     savedOrganisaiton.id,
                     faker.company.name(),
                     faker.number.int(),
@@ -955,7 +955,7 @@ describe('OrganisationRepository', () => {
                     administriertVon: savedParentOrganisation.id,
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     savedOrganisaiton.id,
                     '',
                     faker.number.int(),
@@ -999,7 +999,7 @@ describe('OrganisationRepository', () => {
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
                 em.clear();
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     organisationEntity2.id,
                     'newName',
                     1,
@@ -1039,11 +1039,11 @@ describe('OrganisationRepository', () => {
 
                 // Simulate concurrent updates:
                 // 1. First update
-                await sut.updateKlassenname(organisationEntity2.id, 'newName1', 1, permissionsMock);
+                await sut.updateOrganisationName(organisationEntity2.id, 'newName1', 1, permissionsMock);
 
                 // 2. Try second update with original version (should fail)
                 await expect(async () => {
-                    await sut.updateKlassenname(
+                    await sut.updateOrganisationName(
                         organisationEntity2.id,
                         'newName2',
                         1, // This is now outdated because previous update incremented it
@@ -1075,7 +1075,7 @@ describe('OrganisationRepository', () => {
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2]);
 
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     organisationEntity2.id,
                     'name',
                     1,

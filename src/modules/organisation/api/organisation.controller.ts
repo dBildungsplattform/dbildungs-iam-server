@@ -467,7 +467,7 @@ export class OrganisationController {
         @Body() body: OrganisationByNameBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
-        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
+        const result: DomainError | Organisation<true> = await this.organisationRepository.updateOrganisationName(
             params.organisationId,
             body.name,
             body.version,

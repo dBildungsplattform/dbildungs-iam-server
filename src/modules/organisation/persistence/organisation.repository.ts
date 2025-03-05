@@ -468,7 +468,7 @@ export class OrganisationRepository {
         return;
     }
 
-    public async updateKlassenname(
+    public async updateOrganisationName(
         id: string,
         newName: string,
         version: number,
@@ -479,62 +479,97 @@ export class OrganisationRepository {
         if (!organisationFound) {
             const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation zu ${newName} zu verändern. Fehler: ${error.message}`,
             );
             return error;
         }
-        let schoolName: string | undefined;
-        if (organisationFound.administriertVon) {
-            const school: Option<Organisation<true>> = await this.findById(organisationFound.administriertVon);
-            if (!school) {
-                const error: DomainError = new EntityNotFoundError('Organisation', organisationFound.administriertVon);
+
+        let parentName: string | undefined;
+        let parentId: string | undefined;
+
+        if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+            // Handle Klasse
+            if (organisationFound.administriertVon) {
+                const schule: Option<Organisation<true>> = await this.findById(organisationFound.administriertVon);
+                if (!schule) {
+                    const error: DomainError = new EntityNotFoundError(
+                        'Organisation',
+                        organisationFound.administriertVon,
+                    );
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                    );
+                    return error;
+                }
+                parentName = schule.name;
+                parentId = schule.id;
+            } else {
+                const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                    'The schoolName of a Klasse cannot be undefined.',
+                ]);
                 this.logger.error(
                     `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
                 );
                 return error;
             }
-            schoolName = school.name;
-        }
-        if (!schoolName) {
+        } else if (organisationFound.typ === OrganisationsTyp.TRAEGER) {
+            // Handle Schulträger
+            const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+                await this.findRootDirectChildren();
+            if (
+                organisationFound.administriertVon !== oeffentlich?.id &&
+                organisationFound.administriertVon !== ersatz?.id
+            ) {
+                const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                    'The Schulträger must be a direct child of either Öffentliche or Ersatz.',
+                ]);
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht den Namen eines Schulträgers zu ${newName} zu verändern. Fehler: ${error.message}`,
+                );
+                return error;
+            }
+            parentName = organisationFound.administriertVon === oeffentlich?.id ? 'Öffentliche' : 'Ersatz';
+            parentId = organisationFound.administriertVon;
+        } else {
             const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'The schoolName of a Klasse cannot be undefined.',
+                'Only the name of Klassen or Schulträger can be updated.',
             ]);
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation ${organisationFound.name} zu verändern. Fehler: ${error.message}`,
             );
             return error;
         }
-        if (organisationFound.typ !== OrganisationsTyp.KLASSE) {
-            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'Only the name of Klassen can be updated.',
-            ]);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
-            );
-            return error;
-        }
-        //Specifications: it needs to be clarified how the specifications can be checked using DDD principles
-        {
-            if (organisationFound.name !== newName) {
-                organisationFound.name = newName;
-                const specificationError: undefined | OrganisationSpecificationError =
-                    await organisationFound.checkKlasseSpecifications(this);
 
-                if (specificationError) {
-                    this.logger.error(
-                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
-                    );
-                    return specificationError;
-                }
+        if (organisationFound.name !== newName) {
+            organisationFound.name = newName;
+
+            // Call the appropriate specification check based on the type
+            let specificationError: undefined | OrganisationSpecificationError;
+            if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+                specificationError = await organisationFound.checkKlasseSpecifications(this);
+            } else if (organisationFound.typ === OrganisationsTyp.TRAEGER) {
+                specificationError = await organisationFound.checkSchultraegerSpecifications(this);
+            }
+
+            if (specificationError) {
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation ${organisationFound.name} (${parentName}) zu verändern. Fehler: ${specificationError.message}`,
+                );
+                return specificationError;
             }
         }
+
         organisationFound.setVersionForUpdate(version);
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);
-        this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
+
+        if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+            this.eventService.publish(new KlasseUpdatedEvent(id, newName, parentId));
+        }
         this.logger.info(
-            `Admin: ${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
+            `Admin: ${permissions.personFields.id}) hat den Namen einer Organisation geändert: ${organisationFound.name} (${parentName}).`,
         );
+
         return organisationEntity;
     }
 
