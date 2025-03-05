@@ -1094,7 +1094,7 @@ describe('OrganisationRepository', () => {
         describe('when organisation is a Schulträger', () => {
             let savedOeffentlich: OrganisationEntity;
 
-            beforeEach(() => {
+            beforeEach(async () => {
                 const oeffentlich: Organisation<false> | DomainError = Organisation.createNew(
                     sut.ROOT_ORGANISATION_ID,
                     sut.ROOT_ORGANISATION_ID,
@@ -1106,6 +1106,7 @@ describe('OrganisationRepository', () => {
                     return;
                 }
                 savedOeffentlich = em.create(OrganisationEntity, mapAggregateToData(oeffentlich));
+                await em.persistAndFlush(savedOeffentlich);
             });
 
             describe('when Schulträger is not a direct child of oeffentlich or ersatz', () => {
