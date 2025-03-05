@@ -2,18 +2,18 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonApiMapper } from '../mapper/person-api.mapper.js';
+import { ClassLogger } from '../../../../core/logging/class-logger.js';
+import { PersonApiMapper } from '../../mapper/person-api.mapper.js';
 import { PersonInfoController } from './person-info.controller.js';
 import { PersonInfoResponse } from './person-info.response.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonRepository } from '../persistence/person.repository.js';
-import { Person } from '../domain/person.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonEmailResponse } from './person-email-response.js';
+import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
+import { DoFactory } from '../../../../../test/utils/do-factory.js';
+import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonRepository } from '../../persistence/person.repository.js';
+import { Person } from '../../domain/person.js';
+import { EmailRepo } from '../../../email/persistence/email.repo.js';
+import { EmailAddressStatus } from '../../../email/domain/email-address.js';
+import { PersonEmailResponse } from '../person-email-response.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;

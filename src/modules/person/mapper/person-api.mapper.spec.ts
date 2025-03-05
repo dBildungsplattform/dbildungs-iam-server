@@ -2,7 +2,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { PersonInfoResponse } from '../api/person-info.response.js';
+import { PersonInfoResponse } from '../api/personinfo/person-info.response.js';
 import { Person } from '../domain/person.js';
 import { PersonApiMapper } from './person-api.mapper.js';
 import { Test, TestingModule } from '@nestjs/testing';

@@ -1,12 +1,12 @@
 /* eslint-disable max-classes-per-file */
 import { ApiProperty } from '@nestjs/swagger';
-import { Vertrauensstufe, VertrauensstufeTypName } from '../domain/person.enums.js';
-import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
-import { PersonNameResponse } from './person-name.response.js';
-import { PersonBirthResponse } from './person-birth.response.js';
-import { PersonEmailResponse } from './person-email-response.js';
+import { Vertrauensstufe, VertrauensstufeTypName } from '../../domain/person.enums.js';
+import { PersonenkontextResponse } from '../../../personenkontext/api/response/personenkontext.response.js';
+import { PersonNameResponse } from '../person-name.response.js';
+import { PersonBirthResponse } from '../person-birth.response.js';
+import { PersonEmailResponse } from '../person-email-response.js';
 
-class Person {
+export class PersonNestedInPersonInfoResponse {
     @ApiProperty()
     public readonly id: string;
 
@@ -43,7 +43,7 @@ class Person {
     @ApiProperty({ nullable: true })
     public readonly dienststellen?: string[];
 
-    public constructor(props: Readonly<Person>) {
+    public constructor(props: Readonly<PersonNestedInPersonInfoResponse>) {
         this.id = props.id;
         this.referrer = props.referrer;
         this.mandant = props.mandant;
@@ -64,7 +64,7 @@ export class PersonInfoResponse {
     public readonly pid: string;
 
     @ApiProperty()
-    public readonly person: Person;
+    public readonly person: PersonNestedInPersonInfoResponse;
 
     @ApiProperty({ type: [PersonenkontextResponse] })
     public readonly personenkontexte: PersonenkontextResponse[];
@@ -82,7 +82,7 @@ export class PersonInfoResponse {
 
     public constructor(props: Readonly<PersonInfoResponse>) {
         this.pid = props.pid;
-        this.person = new Person(props.person);
+        this.person = new PersonNestedInPersonInfoResponse(props.person);
         this.personenkontexte = props.personenkontexte.map(
             (kontext: Readonly<PersonenkontextResponse>) => new PersonenkontextResponse(kontext),
         );

@@ -8,6 +8,7 @@ import { FrontendConfig, HostConfig, KeycloakConfig, ServerConfig } from '../sha
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
+import { VersioningType } from '@nestjs/common';
 
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
@@ -15,6 +16,10 @@ async function bootstrap(): Promise<void> {
     const backendHostname: string | undefined = configService.getOrThrow<HostConfig>('HOST').HOSTNAME;
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
     const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
+
+    app.enableVersioning({
+        type: VersioningType.URI,
+    });
 
     const swagger: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
         .setTitle('dBildungs IAM')
