@@ -502,15 +502,17 @@ export class OrganisationRepository {
                     return error;
                 }
                 parentName = schule.name;
+
+                if (!parentName) {
+                    const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                        'The schoolName of a Klasse cannot be undefined.',
+                    ]);
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                    );
+                    return error;
+                }
                 parentId = schule.id;
-            } else {
-                const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                    'The schoolName of a Klasse cannot be undefined.',
-                ]);
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
-                );
-                return error;
             }
         } else if (organisationFound.typ === OrganisationsTyp.TRAEGER) {
             // Handle Schulträger
@@ -542,7 +544,6 @@ export class OrganisationRepository {
 
         if (organisationFound.name !== newName) {
             organisationFound.name = newName;
-
             // Call the appropriate specification check based on the type
             let specificationError: undefined | OrganisationSpecificationError;
             if (organisationFound.typ === OrganisationsTyp.KLASSE) {
@@ -564,6 +565,7 @@ export class OrganisationRepository {
             await this.save(organisationFound);
 
         if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+            // This is to update the new Klasse in itsLearning
             this.eventService.publish(new KlasseUpdatedEvent(id, newName, parentId));
         }
         this.logger.info(

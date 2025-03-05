@@ -155,13 +155,15 @@ export class Organisation<WasPersisted extends boolean> {
     }
 
     private async validateSchultraegerNameIsUnique(organisationRepository: OrganisationRepository): Promise<boolean> {
+        console.log("childOrga")
         // Only validate for Schulträger
         if (this.typ !== OrganisationsTyp.TRAEGER) return true;
 
         if (!this.name) return false; // Name is required for Schulträger
 
         // Step 1: Find the root children (oeffentlich and ersatz)
-        const [oeffentlich, ersatz] = await organisationRepository.findRootDirectChildren();
+        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+            await organisationRepository.findRootDirectChildren();
 
         // Step 2: Retrieve all child organizations of the root children. Schulen could also be under Land so we need to filter out everything that is not of Type TRAEGER after this
         const rootChildrenIds: string[] = [];
@@ -172,6 +174,7 @@ export class Organisation<WasPersisted extends boolean> {
 
         // Step 3: Check if any child organization is a Schulträger with the same name
         for (const childOrga of allChildOrgas) {
+            console.log(childOrga)
             if (childOrga.typ === OrganisationsTyp.TRAEGER && childOrga.id !== this.id) {
                 if (childOrga.name === this.name) {
                     return false;
