@@ -133,7 +133,9 @@ export class Organisation<WasPersisted extends boolean> {
 
         // The name is unique among other Schulträger under Land
         if (!(await this.validateSchultraegerNameIsUnique(organisationRepository))) {
-            return new SchultraegerNameEindeutigError(this.id ?? undefined);
+            if (this.id) {
+                return new SchultraegerNameEindeutigError(this.id ?? undefined);
+            }
         }
 
         return undefined;

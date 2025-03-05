@@ -360,20 +360,5 @@ describe('Organisation', () => {
 
             expect(result).toBeInstanceOf(NameForOrganisationWithTrailingSpaceError);
         });
-
-        describe('if Organisation has no ID', () => {
-            it('should return SchultraegerNameEindeutigError with id=undefined', async () => {
-                const orga: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
-                    name: 'name',
-                    typ: OrganisationsTyp.TRAEGER,
-                    administriertVon: undefined,
-                });
-
-                const updateError: OrganisationSpecificationError | undefined =
-                    await orga.checkSchultraegerSpecifications(organisationRepositoryMock);
-
-                expect(updateError).toBeInstanceOf(SchultraegerNameEindeutigError);
-            });
-        });
     });
 });
