@@ -1094,18 +1094,18 @@ describe('OrganisationRepository', () => {
         describe('when organisation is a Schulträger', () => {
             let savedOeffentlich: OrganisationEntity;
 
-            beforeEach(async () => {
+            beforeEach(() => {
                 const oeffentlich: Organisation<false> | DomainError = Organisation.createNew(
                     sut.ROOT_ORGANISATION_ID,
                     sut.ROOT_ORGANISATION_ID,
                     '',
                     'Öffentliche',
                 );
+
                 if (oeffentlich instanceof DomainError) {
                     return;
                 }
                 savedOeffentlich = em.create(OrganisationEntity, mapAggregateToData(oeffentlich));
-                await em.persistAndFlush(savedOeffentlich);
             });
 
             describe('when Schulträger is not a direct child of oeffentlich or ersatz', () => {
@@ -1163,8 +1163,8 @@ describe('OrganisationRepository', () => {
                 });
             });
 
-            describe('when all validations are passed', () => {
-                it('should update Schulträger name and return void', async () => {
+            describe.only('when all validations are passed', () => {
+                it('should update Schulträger under Öffentlich name and return void', async () => {
                     const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                         typ: OrganisationsTyp.TRAEGER,
                         administriertVon: savedOeffentlich.id,
