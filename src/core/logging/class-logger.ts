@@ -53,11 +53,11 @@ export class ClassLogger extends Logger {
     }
 
     /**
-     * Logs the message with log-level error, then either logs the content of the object 'error' by calling util.inspect on it, if
-     * its type is not the Error type, or
-     * logs the message and stack contained in the object 'error', if its type is Error type.
+     * Logs the message with log-level error, then either logs the content of the parameter 'error' by calling util.inspect on it, if
+     * its type is not Error, or
+     * logs the message and stack contained in the parameter 'error', if its type is Error.
      * @param message
-     * @param error
+     * @param error should implement Error interface
      */
     public logUnknownAsError(message: string, error: unknown): void {
         this.logger.log('error', message);
