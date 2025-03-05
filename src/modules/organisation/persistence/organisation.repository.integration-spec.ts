@@ -1163,7 +1163,7 @@ describe('OrganisationRepository', () => {
                 });
             });
 
-            describe.only('when all validations are passed', () => {
+            describe('when all validations are passed', () => {
                 it('should update Schulträger under Öffentlich name and return void', async () => {
                     const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                         typ: OrganisationsTyp.TRAEGER,
