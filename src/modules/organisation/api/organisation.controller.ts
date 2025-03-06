@@ -399,14 +399,14 @@ export class OrganisationController {
 
     @Post(':organisationId/zugehoerig')
     @UseGuards(StepUpGuard)
-    @ApiParam({ 
-        name: 'organisationId', 
-        description: 'The ID of the parent organisation to which another organisation will be added as a subordinate.', 
-        type: OrganisationByIdParams 
+    @ApiParam({
+        name: 'organisationId',
+        description: 'The ID of the parent organisation to which another organisation will be added as a subordinate.',
+        type: OrganisationByIdParams,
     })
-    @ApiBody({ 
-        description: 'The ID of the child organisation that will be assigned to the parent organisation.', 
-        type: OrganisationByIdBodyParams 
+    @ApiBody({
+        description: 'The ID of the child organisation that will be assigned to the parent organisation.',
+        type: OrganisationByIdBodyParams,
     })
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
