@@ -1,8 +1,11 @@
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Request } from 'express';
+import { Observable } from 'rxjs';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import {
@@ -12,44 +15,42 @@ import {
     KeycloakConfigTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { PagedResponse } from '../../../shared/paging/index.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+import {
+    PersonenkontextRolleWithOrganisation,
+    PersonPermissions,
+} from '../../authentication/domain/person-permissions.js';
+import { PassportUser } from '../../authentication/types/user.js';
+import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
+import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { Rolle } from '../domain/rolle.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
 import { RolleApiModule } from '../rolle-api.module.js';
-import { CreateRolleBodyParams } from './create-rolle.body.params.js';
-import { RolleResponse } from './rolle.response.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
-import { Rolle } from '../domain/rolle.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
-import { PagedResponse } from '../../../shared/paging/index.js';
-import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
-import { Observable } from 'rxjs';
-import { Request } from 'express';
-import { PassportUser } from '../../authentication/types/user.js';
-import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
-
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { KeycloakUserService } from '../../keycloak-administration/domain/keycloak-user.service.js';
-import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { Person } from '../../person/domain/person.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { PersonFactory } from '../../person/domain/person.factory.js';
-import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
-import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
-import { generatePassword } from '../../../shared/util/password-generator.js';
-import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
+import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
+import { RolleResponse } from './rolle.response.js';
+import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -150,15 +151,15 @@ describe('Rolle API', () => {
         it('should return created rolle', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
@@ -184,15 +185,15 @@ describe('Rolle API', () => {
         it('should save rolle to db', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
@@ -216,15 +217,15 @@ describe('Rolle API', () => {
         it('should fail if the organisation does not exist', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const params: CreateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -244,15 +245,15 @@ describe('Rolle API', () => {
         it('should fail if rollenart is invalid', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
@@ -275,15 +276,15 @@ describe('Rolle API', () => {
         it('should fail if merkmal is invalid', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
@@ -306,15 +307,15 @@ describe('Rolle API', () => {
         it('should fail if merkmale are not unique', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
@@ -795,15 +796,15 @@ describe('Rolle API', () => {
         it('should return updated rolle', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const organisation: OrganisationEntity = new OrganisationEntity();
             await em.persistAndFlush(organisation);
@@ -849,15 +850,15 @@ describe('Rolle API', () => {
         it('should fail if the rolle does not exist', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
@@ -877,9 +878,9 @@ describe('Rolle API', () => {
         it('should return error with status-code 404 if user does NOT have permissions', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -898,7 +899,7 @@ describe('Rolle API', () => {
             if (rolle instanceof DomainError) throw Error();
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
 
             const params: UpdateRolleBodyParams = {
@@ -925,9 +926,9 @@ describe('Rolle API', () => {
         it('should return error with status-code 404 if rolle is technical', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -947,7 +948,7 @@ describe('Rolle API', () => {
             if (rolle instanceof DomainError) throw Error();
 
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisation.id] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
 
             const params: UpdateRolleBodyParams = {
@@ -975,9 +976,9 @@ describe('Rolle API', () => {
             it('should return 400 if rolle is already assigned', async () => {
                 const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-                const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+                const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1020,7 +1021,7 @@ describe('Rolle API', () => {
 
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisation.id] });
-                permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+                permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
                 const params: UpdateRolleBodyParams = {
                     name: faker.person.jobTitle(),
@@ -1045,9 +1046,9 @@ describe('Rolle API', () => {
         it('should return error if new name has trailing space', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
             const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-            const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+            const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                 {
-                    organisationsId: savedUserOrganisation.id,
+                    organisation: savedUserOrganisation,
                     rolle: { systemrechte: [], serviceProviderIds: [] },
                 },
             ];
@@ -1079,7 +1080,7 @@ describe('Rolle API', () => {
 
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
             permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [organisation.id] });
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
             const response: Response = await request(app.getHttpServer() as App)
                 .put(`/rolle/${rolle.id}`)
@@ -1098,15 +1099,15 @@ describe('Rolle API', () => {
             it('if rolle does NOT exist', async () => {
                 const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-                const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+                const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
                 permissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
-                permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+                permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/rolle/${faker.string.uuid()}`)
@@ -1118,9 +1119,9 @@ describe('Rolle API', () => {
             it('if rolle is already assigned to a Personenkontext', async () => {
                 const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-                const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+                const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1163,7 +1164,7 @@ describe('Rolle API', () => {
                     all: false,
                     orgaIds: [organisation.id],
                 });
-                permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+                permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
 
@@ -1181,9 +1182,9 @@ describe('Rolle API', () => {
             it('if user does NOT have permissions', async () => {
                 const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-                const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+                const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1204,7 +1205,7 @@ describe('Rolle API', () => {
                     all: false,
                     orgaIds: [],
                 });
-                permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+                permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
 
@@ -1224,9 +1225,9 @@ describe('Rolle API', () => {
             it('if rolle is technical', async () => {
                 const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-                const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+                const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1248,7 +1249,7 @@ describe('Rolle API', () => {
                     all: false,
                     orgaIds: [organisation.id],
                 });
-                permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+                permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
 
@@ -1270,9 +1271,9 @@ describe('Rolle API', () => {
             it('if all conditions are passed', async () => {
                 const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
                 const savedUserOrganisation: Organisation<true> = await organisationRepo.save(userOrganisation);
-                const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+                const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
                     {
-                        organisationsId: savedUserOrganisation.id,
+                        organisation: savedUserOrganisation,
                         rolle: { systemrechte: [], serviceProviderIds: [] },
                     },
                 ];
@@ -1298,7 +1299,7 @@ describe('Rolle API', () => {
                     all: false,
                     orgaIds: [organisation.id],
                 });
-                permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+                permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
 
                 personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
 
