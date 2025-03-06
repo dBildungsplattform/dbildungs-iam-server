@@ -5,6 +5,7 @@ import { PersonenkontextResponse } from '../../../personenkontext/api/response/p
 import { PersonNameResponse } from '../person-name.response.js';
 import { PersonBirthResponse } from '../person-birth.response.js';
 import { PersonEmailResponse } from '../person-email-response.js';
+import { Person } from '../../domain/person.js';
 
 export class PersonNestedInPersonInfoResponse {
     @ApiProperty()
@@ -43,19 +44,63 @@ export class PersonNestedInPersonInfoResponse {
     @ApiProperty({ nullable: true })
     public readonly dienststellen?: string[];
 
-    public constructor(props: Readonly<PersonNestedInPersonInfoResponse>) {
-        this.id = props.id;
-        this.referrer = props.referrer;
-        this.mandant = props.mandant;
-        this.name = new PersonNameResponse(props.name);
-        this.geburt = new PersonBirthResponse(props.geburt);
-        this.stammorganisation = props.stammorganisation;
-        this.geschlecht = props.geschlecht;
-        this.lokalisierung = props.lokalisierung;
-        this.vertrauensstufe = props.vertrauensstufe;
-        this.revision = props.revision;
-        this.personalnummer = props.personalnummer;
-        this.dienststellen = props.dienststellen;
+    protected constructor(
+        id: string,
+        name: PersonNameResponse,
+        revision: string,
+        mandant: string,
+        referrer?: string,
+        geburt?: PersonBirthResponse,
+        stammorganisation?: string,
+        geschlecht?: string,
+        lokalisierung?: string,
+        vertrauensstufe?: Vertrauensstufe,
+        personalnummer?: string,
+        dienststellen?: string[],
+    ) {
+        this.id = id;
+        this.referrer = referrer;
+        this.mandant = mandant;
+        this.name = new PersonNameResponse(name);
+        this.geburt = new PersonBirthResponse(geburt);
+        this.stammorganisation = stammorganisation;
+        this.geschlecht = geschlecht;
+        this.lokalisierung = lokalisierung;
+        this.vertrauensstufe = vertrauensstufe;
+        this.revision = revision;
+        this.personalnummer = personalnummer;
+        this.dienststellen = dienststellen;
+    }
+
+    public static createNew(person: Person<true>, dienststellen: string[]): PersonNestedInPersonInfoResponse {
+        return new PersonNestedInPersonInfoResponse(
+            person.id,
+            {
+                titel: person.nameTitel,
+                anrede: person.nameAnrede,
+                vorname: person.vorname,
+                familiennamen: person.familienname,
+                initialenfamilienname: person.initialenFamilienname,
+                initialenvorname: person.initialenVorname,
+                rufname: person.rufname,
+                namenspraefix: person.namePraefix,
+                namenssuffix: person.nameSuffix,
+                sortierindex: person.nameSortierindex,
+            } satisfies PersonNameResponse,
+            person.revision,
+            person.mandant,
+            person.referrer,
+            {
+                datum: person.geburtsdatum,
+                geburtsort: person.geburtsort,
+            } satisfies PersonBirthResponse,
+            person.stammorganisation,
+            person.geschlecht,
+            person.lokalisierung,
+            person.vertrauensstufe,
+            person.personalnummer,
+            dienststellen,
+        );
     }
 }
 
@@ -80,13 +125,29 @@ export class PersonInfoResponse {
     })
     public readonly email?: PersonEmailResponse;
 
-    public constructor(props: Readonly<PersonInfoResponse>) {
-        this.pid = props.pid;
-        this.person = new PersonNestedInPersonInfoResponse(props.person);
-        this.personenkontexte = props.personenkontexte.map(
-            (kontext: Readonly<PersonenkontextResponse>) => new PersonenkontextResponse(kontext),
-        );
+    protected constructor(
+        pid: string,
+        kontexte: PersonenkontextResponse[],
+        email: PersonEmailResponse | undefined,
+        nestedPerson: PersonNestedInPersonInfoResponse,
+    ) {
+        this.pid = pid;
+        this.person = nestedPerson;
+        this.personenkontexte = kontexte;
         this.gruppen = [];
-        this.email = props.email;
+        this.email = email;
+    }
+
+    public static createNew(
+        person: Person<true>,
+        kontexte: PersonenkontextResponse[],
+        dienststellen: string[],
+        email: PersonEmailResponse | undefined,
+    ): PersonInfoResponse {
+        const nestedPerson: PersonNestedInPersonInfoResponse = PersonNestedInPersonInfoResponse.createNew(
+            person,
+            dienststellen,
+        );
+        return new PersonInfoResponse(person.id, kontexte, email, nestedPerson);
     }
 }

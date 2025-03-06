@@ -24,6 +24,8 @@ import { PersonRepository } from '../../persistence/person.repository.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../person-email-response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
+import { PersonenkontextResponse } from '../../../personenkontext/api/response/personenkontext.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()
@@ -60,9 +62,15 @@ export class PersonInfoController {
             this.dBiamPersonenkontextRepo.findByPerson(personId),
         ]);
 
-        const response: PersonInfoResponse = await this.mapper.mapToPersonInfoResponse(person, kontexte, email);
+        const kontextResponses: PersonenkontextResponse[] = await Promise.all(
+            kontexte.map((kontext: Personenkontext<true>) => this.mapper.mapToPersonenkontextResponse(kontext)),
+        );
 
-        return response;
+        const dienststellen: string[] = (
+            await Promise.all(kontexte.map((kontext: Personenkontext<true>) => kontext.getOrganisation()))
+        ).flatMap((orga: Option<Organisation<true>>) => (orga?.kennung ? [orga.kennung] : []));
+
+        return PersonInfoResponse.createNew(person, kontextResponses, dienststellen, email);
     }
 
     @Version('1')
@@ -86,8 +94,14 @@ export class PersonInfoController {
             this.dBiamPersonenkontextRepo.findByPerson(personId),
         ]);
 
-        const response: PersonInfoResponseV1 = await this.mapper.mapToPersonInfoResponse(person, kontexte, email);
+        const kontextResponses: PersonenkontextResponse[] = await Promise.all(
+            kontexte.map((kontext: Personenkontext<true>) => this.mapper.mapToPersonenkontextResponse(kontext)),
+        );
 
-        return response;
+        const dienststellen: string[] = (
+            await Promise.all(kontexte.map((kontext: Personenkontext<true>) => kontext.getOrganisation()))
+        ).flatMap((orga: Option<Organisation<true>>) => (orga?.kennung ? [orga.kennung] : []));
+
+        return PersonInfoResponseV1.createNew(person, kontextResponses, dienststellen, email);
     }
 }
