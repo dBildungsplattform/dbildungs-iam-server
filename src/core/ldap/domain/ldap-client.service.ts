@@ -241,9 +241,9 @@ export class LdapClientService {
                 value: true,
             };
         } catch (err) {
-            const errMsg: string = `Could not connect to LDAP, message: ${JSON.stringify(err)}`;
-            this.logger.error(errMsg);
-            return { ok: false, error: new Error(errMsg) };
+            this.logger.logUnknownAsError(`Could not connect to LDAP`, err);
+
+            return { ok: false, error: new Error('LDAP bind FAILED') };
         }
     }
 
@@ -350,8 +350,8 @@ export class LdapClientService {
 
                 return { ok: true, value: person };
             } catch (err) {
-                const errMsg: string = JSON.stringify(err);
-                this.logger.error(`LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:${errMsg}`);
+                this.logger.logUnknownAsError(`LDAP: Creating lehrer FAILED, uid:${lehrerUid}`, err);
+
                 return { ok: false, error: new LdapCreateLehrerError() };
             }
         });
@@ -776,8 +776,8 @@ export class LdapClientService {
 
                 return { ok: true, value: person };
             } catch (err) {
-                const errMsg: string = JSON.stringify(err);
-                this.logger.error(`LDAP: Deleting lehrer FAILED, uid:${lehrerUid}, errMsg:${errMsg}`);
+                this.logger.logUnknownAsError(`LDAP: Deleting lehrer FAILED, uid:${lehrerUid}`, err);
+
                 return { ok: false, error: new LdapCreateLehrerError() };
             }
         });
@@ -864,9 +864,9 @@ export class LdapClientService {
 
                 return { ok: true, value: personId };
             } catch (err) {
-                const errMsg: string = JSON.stringify(err);
-                this.logger.error(
-                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED, errMsg:${errMsg}`,
+                this.logger.logUnknownAsError(
+                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED`,
+                    err,
                 );
 
                 return { ok: false, error: new LdapModifyEmailError() };
@@ -1078,9 +1078,9 @@ export class LdapClientService {
 
                 return { ok: true, value: userPassword };
             } catch (err) {
-                const errMsg: string = JSON.stringify(err);
-                this.logger.error(
-                    `LDAP: Modifying userPassword (UEM) FAILED for personId:${personId}, referrer:${referrer}, errMsg:${errMsg}`,
+                this.logger.logUnknownAsError(
+                    `LDAP: Modifying userPassword (UEM) FAILED for personId:${personId}, referrer:${referrer}`,
+                    err,
                 );
 
                 return { ok: false, error: new LdapModifyUserPasswordError() };
