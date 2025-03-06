@@ -1891,7 +1891,7 @@ describe('OrganisationRepository', () => {
             expect(result[0].some((org: Organisation<true>) => org.id === orgas[8]!.id)).toBeTruthy();
         });
 
-        it('should return all authorized organisations with correct type and parent', async () => {
+        it('should return all authorized organisations with correct type and parent under administriertVon', async () => {
             const orgas: OrganisationEntity[] = [];
             const orgaLand: Organisation<false> | DomainError = Organisation.createNew(
                 sut.ROOT_ORGANISATION_ID,
@@ -1969,6 +1969,92 @@ describe('OrganisationRepository', () => {
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { administriertVon: [mappedOrgaLand.id], typ: OrganisationsTyp.SCHULE },
+            );
+
+            expect(result[1]).toBe(3);
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[1]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[2]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
+        });
+
+        it('should return all authorized organisations with correct type and parent under zugehoerig zu', async () => {
+            const orgas: OrganisationEntity[] = [];
+            const orgaLand: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                '',
+                'Öffentliche Schulen Land Schleswig-Holstein',
+                undefined,
+                undefined,
+                OrganisationsTyp.LAND,
+            );
+            if (orgaLand instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaLand));
+            await em.persistAndFlush(mappedOrgaLand);
+            orgas.push(mappedOrgaLand);
+
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    mappedOrgaLand.id,
+                    mappedOrgaLand.id,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+                if (orga instanceof DomainError) {
+                    fail('could not create Schule under Land');
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    mappedOrgaLand.id,
+                    mappedOrgaLand.id,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.TRAEGER,
+                );
+                if (orga instanceof DomainError) {
+                    fail('could not create Traeger');
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    sut.ROOT_ORGANISATION_ID,
+                    sut.ROOT_ORGANISATION_ID,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+                if (orga instanceof DomainError) {
+                    fail('could not create Schule under root');
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                personPermissions,
+                [RollenSystemRecht.SCHULEN_VERWALTEN],
+                { zugehoerigZu: [mappedOrgaLand.id], typ: OrganisationsTyp.SCHULE },
             );
 
             expect(result[1]).toBe(3);
