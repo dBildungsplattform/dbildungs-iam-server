@@ -99,4 +99,17 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
             'Liefert Organisationen mit den angegebenen IDs, selbst wenn andere Filterkriterien nicht zutreffen (ODER-verknüpft mit anderen Kriterien).',
     })
     public readonly organisationIds?: string[];
+
+    @AutoMap(() => String)
+    @IsOptional()
+    @TransformToArray()
+    @ArrayUnique()
+    @IsUUID(undefined, { each: true })
+    @ApiProperty({
+        required: false,
+        nullable: true,
+        isArray: true,
+        description: 'Liefert die Kinderorganisation die den IDs hier zugehören.',
+    })
+    public readonly zugehoerigZu?: string[];
 }

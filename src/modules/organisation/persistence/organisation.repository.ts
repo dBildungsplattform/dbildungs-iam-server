@@ -77,6 +77,7 @@ export type OrganisationSeachOptions = {
     readonly excludeTyp?: OrganisationsTyp[];
     readonly administriertVon?: string[];
     readonly organisationIds?: string[];
+    readonly zugehoerigZu?: string[];
     readonly offset?: number;
     readonly limit?: number;
 };
@@ -359,6 +360,9 @@ export class OrganisationRepository {
         }
         if (searchOptions.administriertVon) {
             andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
+        }
+        if (searchOptions.zugehoerigZu) {
+            andClauses.push({ zugehoerigZu: { $in: searchOptions.zugehoerigZu } });
         }
         if (searchOptions.searchString) {
             andClauses.push({
