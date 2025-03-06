@@ -19,7 +19,7 @@ import { EmailAddressNotFoundError } from '../error/email-address-not-found.erro
 import { EmailAddressEntity } from './email-address.entity.js';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
-import { MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -29,6 +29,7 @@ import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import assert from 'assert';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -38,6 +39,7 @@ describe('EmailRepo', () => {
     let personRepository: PersonRepository;
     let organisationRepository: OrganisationRepository;
     let orm: MikroORM;
+    let em: EntityManager;
 
     let loggerMock: DeepMocked<ClassLogger>;
 
@@ -87,6 +89,7 @@ describe('EmailRepo', () => {
         personRepository = module.get(PersonRepository);
         organisationRepository = module.get(OrganisationRepository);
         orm = module.get(MikroORM);
+        em = module.get(EntityManager);
 
         loggerMock = module.get(ClassLogger);
 
@@ -153,6 +156,30 @@ describe('EmailRepo', () => {
         const email: EmailAddress<true> = await createEmailAddress(status, person.id, organisation.id);
 
         return [person, organisation, email];
+    }
+
+    /**
+     * Creates an EmailAddress directly via EntityManager instead of the EmailRepo
+     * to allow for creation of invalid objects such as the second EmailAddress with ENABLED status for a person.
+     * @param status
+     * @param personId
+     * @param address
+     */
+    async function createEmailAddressViaEM(
+        status: EmailAddressStatus,
+        personId: PersonID,
+        address: string = faker.internet.email(),
+    ): Promise<void> {
+        const entityData: RequiredEntityData<EmailAddressEntity> = {
+            status: status,
+            address: address,
+            personId: personId,
+            id: faker.string.uuid(),
+            oxUserId: '0',
+            updatedAt: faker.date.future(),
+        };
+        const emailAddressEntity: EmailAddressEntity = em.create(EmailAddressEntity, entityData);
+        await em.persistAndFlush(emailAddressEntity);
     }
 
     afterAll(async () => {
@@ -358,6 +385,77 @@ describe('EmailRepo', () => {
 
                 expect(personEmailResponse.status).toStrictEqual(EmailAddressStatus.FAILED);
                 expect(personEmailResponse.address).toStrictEqual(emailFailed.value.address);
+            });
+        });
+    });
+
+    describe('getEmailAddressAndStatusForPersonIds', () => {
+        async function createPersonsOrgasEmailAddresses(): Promise<[PersonID[], EmailAddress<true>]> {
+            const [person1, , ea1]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.ENABLED);
+            const [person2]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.REQUESTED);
+            const [person3]: [Person<true>, Organisation<true>, EmailAddress<true>] =
+                await createPersonAndOrganisationAndEmailAddress(EmailAddressStatus.DISABLED);
+            const personIds: PersonID[] = [person1.id, person2.id, person3.id];
+
+            return [personIds, ea1];
+        }
+
+        describe('when EmailAddresses with other status than ENABLED are found', () => {
+            it('should result only containing ENABLED EmailAddresses', async () => {
+                const [personIds, emailAddress1]: [PersonID[], EmailAddress<true>] =
+                    await createPersonsOrgasEmailAddresses();
+                const personId1: PersonID | undefined = personIds[0];
+                assert(personId1);
+
+                const responseMap: Map<PersonID, PersonEmailResponse> =
+                    await sut.getEmailAddressAndStatusForPersonIds(personIds);
+
+                expect(responseMap.size).toStrictEqual(1);
+                expect(responseMap.get(personId1)?.address).toStrictEqual(emailAddress1.address);
+            });
+        });
+
+        describe('when for (one) personId NO ENABLED EmailAddress can be found', () => {
+            it('should return map with PersonEmailResponses for the other personIds', async () => {
+                const personIdWithoutEnabledAddress: PersonID = faker.string.uuid();
+                const [personIds, emailAddress1]: [PersonID[], EmailAddress<true>] =
+                    await createPersonsOrgasEmailAddresses();
+                const personId1: PersonID | undefined = personIds[0];
+                assert(personId1);
+
+                const extendedPersonIds: PersonID[] = personIds;
+                extendedPersonIds.push(personIdWithoutEnabledAddress);
+
+                const responseMap: Map<PersonID, PersonEmailResponse> =
+                    await sut.getEmailAddressAndStatusForPersonIds(extendedPersonIds);
+
+                expect(responseMap.size).toStrictEqual(1);
+                expect(responseMap.get(personId1)?.address).toStrictEqual(emailAddress1.address);
+                expect(responseMap.get(personIdWithoutEnabledAddress)).toBeUndefined();
+            });
+        });
+
+        describe('when for (one) personId multiple EmailAddresses are found', () => {
+            it('should sort, return map with PersonEmailResponses containing most recent address and log error', async () => {
+                const [personIds, emailAddress1]: [PersonID[], EmailAddress<true>] =
+                    await createPersonsOrgasEmailAddresses();
+                const personId1: PersonID | undefined = personIds[0];
+                assert(personId1);
+
+                const moreRecentAddress: string = faker.internet.email();
+                await createEmailAddressViaEM(EmailAddressStatus.ENABLED, personId1, moreRecentAddress);
+
+                const responseMap: Map<PersonID, PersonEmailResponse> =
+                    await sut.getEmailAddressAndStatusForPersonIds(personIds);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Found multiple ENABLED EmailAddresses for personId:${personId1}`,
+                );
+                expect(responseMap.size).toStrictEqual(1);
+                expect(responseMap.get(personId1)?.address).toStrictEqual(moreRecentAddress);
+                expect(responseMap.get(personId1)?.address).not.toStrictEqual(emailAddress1.address);
             });
         });
     });

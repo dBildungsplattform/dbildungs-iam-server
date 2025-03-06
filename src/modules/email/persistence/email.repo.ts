@@ -186,7 +186,10 @@ export class EmailRepo {
         let enabledAddressesForPersonId: EmailAddress<true>[];
         personIds.map((personId: PersonID) => {
             enabledAddressesForPersonId = enabledAddresses.filter((ea: EmailAddress<true>) => ea.personId === personId);
-            enabledAddressesForPersonId = enabledAddressesForPersonId.sort(sortEmailAddressesByUpdatedAtDesc);
+            if (enabledAddressesForPersonId.length > 1) {
+                this.logger.error(`Found multiple ENABLED EmailAddresses for personId:${personId}`);
+                enabledAddressesForPersonId = enabledAddressesForPersonId.sort(sortEmailAddressesByUpdatedAtDesc);
+            }
             if (!!enabledAddressesForPersonId[0]) {
                 responseMap.set(
                     personId,
