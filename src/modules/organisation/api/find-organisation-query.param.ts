@@ -95,10 +95,9 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
         isArray: true,
-        description:
-            'Liefert Organisationen mit den angegebenen IDs, selbst wenn andere Filterkriterien nicht zutreffen (ODER-verknüpft mit anderen Kriterien).',
+        description: 'Liefert die Kinderorganisation die den IDs hier zugehören.',
     })
-    public readonly organisationIds?: string[];
+    public readonly zugehoerigZu?: string[];
 
     @AutoMap(() => String)
     @IsOptional()
@@ -109,7 +108,8 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
         isArray: true,
-        description: 'Liefert die Kinderorganisation die den IDs hier zugehören.',
+        description:
+            'Liefert Organisationen mit den angegebenen IDs, selbst wenn andere Filterkriterien nicht zutreffen (ODER-verknüpft mit anderen Kriterien).',
     })
-    public readonly zugehoerigZu?: string[];
+    public readonly organisationIds?: string[];
 }
