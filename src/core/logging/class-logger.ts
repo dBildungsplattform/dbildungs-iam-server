@@ -3,6 +3,7 @@ import { ModuleLogger } from './module-logger.js';
 import { Logger as LoggerWinston } from 'winston';
 import { Logger } from './logger.js';
 import { INQUIRER } from '@nestjs/core';
+import { inspect } from 'util';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class ClassLogger extends Logger {
@@ -49,6 +50,48 @@ export class ClassLogger extends Logger {
 
     public debug(message: string, trace?: unknown): void {
         this.logger.log('debug', this.createMessage(message, trace));
+    }
+
+    /**
+     * Logs the message with log-level error, then either logs the content of the parameter 'error' by calling util.inspect on it, if
+     * its type is not Error, or
+     * logs the message and stack contained in the parameter 'error', if its type is Error.
+     * @param message
+     * @param error should implement Error interface
+     */
+    public logUnknownAsError(message: string, error: unknown): void {
+        if (this.instanceOfError(error)) {
+            this.error(message + ' - ' + error.message, error.stack);
+        } else {
+            this.error(message + ' - ' + inspect(error, false, 2, false), undefined);
+        }
+    }
+
+    /**
+     * Checks for any object, whether its type is Error based on existence of the attributes 'name' and 'message' from Error-interface.
+     * Note that 'stack' is an optional attribute in that interface and therefore can be UNDEFINED.
+     * Implemented as method, not a function, so two separate failures can be handled and logged internally accordingly.
+     * @param object
+     * @private only used in the ClassLogger
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private instanceOfError(object: any): object is Error {
+        if (object === undefined) {
+            const error: Error = new Error('Parameter was UNDEFINED when calling instanceOfError');
+            this.warning(error.message, error.stack);
+
+            return false;
+        }
+        if (typeof object === 'string') {
+            const error: Error = new Error(
+                'Type of parameter was String when calling instanceOfError, that may not have been intentional',
+            );
+            this.warning(error.message, error.stack);
+
+            return false;
+        }
+
+        return object instanceof Error; //instanceof-check for Error succeeds because its object as well as interface
     }
 
     private createMessage(

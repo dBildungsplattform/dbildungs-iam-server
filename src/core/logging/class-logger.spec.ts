@@ -5,6 +5,8 @@ import { ConfigTestModule } from '../../../test/utils/index.js';
 import { ClassLogger } from './class-logger.js';
 import { LoggerModule } from './logger.module.js';
 import { ModuleLogger } from './module-logger.js';
+import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
+import { inspect } from 'util';
 
 describe('ClassLogger', () => {
     let module: TestingModule;
@@ -162,6 +164,60 @@ describe('ClassLogger', () => {
 
             expect(loggerMock.log).toHaveBeenCalledTimes(1);
             expect(loggerMock.log).toHaveBeenCalledWith('emerg', createTestMessage('Blah2', 'TraceInfo'));
+        });
+    });
+
+    describe('logUnknownAsError', () => {
+        const errorMessage: string = 'error-message';
+
+        describe('when error is UNDEFINED', () => {
+            const unknownError: unknown = undefined;
+
+            it('should log warning when error CANNOT be serialized', () => {
+                sut.logUnknownAsError(errorMessage, unknownError);
+
+                const createdMsg: { message: string; context: string | undefined; trace?: unknown } = {
+                    message: 'Parameter was UNDEFINED when calling instanceOfError',
+                    context: 'TestModule.ClassLogger',
+                };
+
+                expect(loggerMock.log).toHaveBeenCalledWith('warning', expect.objectContaining(createdMsg));
+            });
+        });
+
+        describe('when error type is NOT Error', () => {
+            const unknownError: unknown = 'I am a string, not an instance of Error';
+
+            it('should call util.inspect(error) for serialization', () => {
+                sut.logUnknownAsError(errorMessage, unknownError);
+
+                const createdMsg: { message: string; context: string | undefined; trace?: unknown } = {
+                    message:
+                        'Type of parameter was String when calling instanceOfError, that may not have been intentional',
+                    context: 'TestModule.ClassLogger',
+                };
+                expect(loggerMock.log).toHaveBeenCalledWith('warning', expect.objectContaining(createdMsg));
+                expect(loggerMock.log).toHaveBeenCalledWith(
+                    'error',
+                    createTestMessage(errorMessage + ' - ' + inspect(unknownError, false, 2, false), undefined),
+                );
+            });
+        });
+
+        describe('when error type is Error', () => {
+            const entityNotFoundError: EntityNotFoundError = new EntityNotFoundError();
+
+            it('should get message and stack from Error-instance', () => {
+                sut.logUnknownAsError(errorMessage, entityNotFoundError);
+
+                expect(loggerMock.log).toHaveBeenCalledWith(
+                    'error',
+                    createTestMessage(
+                        errorMessage + ' - ' + `${entityNotFoundError.message}`,
+                        entityNotFoundError.stack,
+                    ),
+                );
+            });
         });
     });
 });
