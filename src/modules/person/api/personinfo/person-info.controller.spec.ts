@@ -77,9 +77,43 @@ describe('PersonInfoController', () => {
     });
 
     describe('info', () => {
+        let expectedBaseNestedPersonInfo: null | PersonNestedInPersonInfoResponse = null;
+        let person: null | Person<true> = null;
+        let orga: null | Organisation<true> = null;
+        beforeEach(() => {
+            person = DoFactory.createPerson(true);
+            orga = DoFactory.createOrganisation(true);
+            expectedBaseNestedPersonInfo = {
+                id: person.id,
+                mandant: person.mandant,
+                referrer: person.referrer,
+                name: {
+                    familiennamen: person.familienname,
+                    vorname: person.vorname,
+                    anrede: person.nameAnrede,
+                    initialenfamilienname: person.initialenFamilienname,
+                    initialenvorname: person.initialenVorname,
+                    rufname: person.rufname,
+                    titel: person.nameTitel,
+                    namenspraefix: person.namePraefix,
+                    namenssuffix: person.nameSuffix,
+                    sortierindex: person.nameSortierindex,
+                } satisfies PersonNameResponse,
+                geburt: {
+                    datum: person.geburtsdatum,
+                    geburtsort: person.geburtsort,
+                } satisfies PersonBirthResponse,
+                stammorganisation: person.stammorganisation,
+                geschlecht: person.geschlecht,
+                lokalisierung: person.lokalisierung,
+                vertrauensstufe: person.vertrauensstufe,
+                personalnummer: person.personalnummer,
+                revision: person.revision,
+                dienststellen: [],
+            };
+        });
         describe('when person exists', () => {
             it('should return person info', async () => {
-                const person: Person<true> = DoFactory.createPerson(true);
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -89,7 +123,6 @@ describe('PersonInfoController', () => {
                     address: faker.internet.email(),
                     status: faker.helpers.enumValue(EmailAddressStatus),
                 };
-                const orga: Organisation<true> = DoFactory.createOrganisation(true);
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
@@ -108,36 +141,48 @@ describe('PersonInfoController', () => {
                 const result: PersonInfoResponse = await sut.info(permissions);
                 expect(result).toBeInstanceOf(PersonInfoResponse);
                 expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
-                expect(result.person).toEqual<PersonNestedInPersonInfoResponse>({
-                    id: person.id,
-                    mandant: person.mandant,
-                    referrer: person.referrer,
-                    name: {
-                        familiennamen: person.familienname,
-                        vorname: person.vorname,
-                        anrede: person.nameAnrede,
-                        initialenfamilienname: person.initialenFamilienname,
-                        initialenvorname: person.initialenVorname,
-                        rufname: person.rufname,
-                        titel: person.nameTitel,
-                        namenspraefix: person.namePraefix,
-                        namenssuffix: person.nameSuffix,
-                        sortierindex: person.nameSortierindex,
-                    } satisfies PersonNameResponse,
-                    geburt: {
-                        datum: person.geburtsdatum,
-                        geburtsort: person.geburtsort,
-                    } satisfies PersonBirthResponse,
-                    stammorganisation: person.stammorganisation,
-                    geschlecht: person.geschlecht,
-                    lokalisierung: person.lokalisierung,
-                    vertrauensstufe: person.vertrauensstufe,
-                    personalnummer: person.personalnummer,
-                    revision: person.revision,
-                    dienststellen: [orga.kennung!],
-                });
+                expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
 
-                expect(result.pid).toEqual(person.id);
+                expect(result.pid).toEqual(person?.id);
+                expect(result.personenkontexte).toEqual([personenkontextResponseMock]);
+                expect(result.gruppen).toEqual([]);
+                expect(result.email).toEqual({
+                    address: email.address,
+                    status: email.status,
+                });
+            });
+            it('should return person info with empty dnr array', async () => {
+                const permissions: PersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const email: PersonEmailResponse = {
+                    address: faker.internet.email(),
+                    status: faker.helpers.enumValue(EmailAddressStatus),
+                };
+                orga!.kennung = undefined;
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orga);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+
+                const result: PersonInfoResponse = await sut.info(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponse);
+                expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
+                expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [] });
+
+                expect(result.pid).toEqual(person?.id);
                 expect(result.personenkontexte).toEqual([personenkontextResponseMock]);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
@@ -163,9 +208,43 @@ describe('PersonInfoController', () => {
     });
 
     describe('infoV1', () => {
+        let expectedBaseNestedPersonInfo: null | PersonNestedInPersonInfoResponse = null;
+        let person: null | Person<true> = null;
+        let orga: null | Organisation<true> = null;
+        beforeEach(() => {
+            person = DoFactory.createPerson(true);
+            orga = DoFactory.createOrganisation(true);
+            expectedBaseNestedPersonInfo = {
+                id: person.id,
+                mandant: person.mandant,
+                referrer: person.referrer,
+                name: {
+                    familiennamen: person.familienname,
+                    vorname: person.vorname,
+                    anrede: person.nameAnrede,
+                    initialenfamilienname: person.initialenFamilienname,
+                    initialenvorname: person.initialenVorname,
+                    rufname: person.rufname,
+                    titel: person.nameTitel,
+                    namenspraefix: person.namePraefix,
+                    namenssuffix: person.nameSuffix,
+                    sortierindex: person.nameSortierindex,
+                } satisfies PersonNameResponse,
+                geburt: {
+                    datum: person.geburtsdatum,
+                    geburtsort: person.geburtsort,
+                } satisfies PersonBirthResponse,
+                stammorganisation: person.stammorganisation,
+                geschlecht: person.geschlecht,
+                lokalisierung: person.lokalisierung,
+                vertrauensstufe: person.vertrauensstufe,
+                personalnummer: person.personalnummer,
+                revision: person.revision,
+                dienststellen: [],
+            };
+        });
         describe('when person exists', () => {
             it('should return person info v1', async () => {
-                const person: Person<true> = DoFactory.createPerson(true);
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -175,7 +254,6 @@ describe('PersonInfoController', () => {
                     address: faker.internet.email(),
                     status: faker.helpers.enumValue(EmailAddressStatus),
                 };
-                const orga: Organisation<true> = DoFactory.createOrganisation(true);
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
@@ -194,36 +272,55 @@ describe('PersonInfoController', () => {
                 const result: PersonInfoResponseV1 = await sut.infoV1(permissions);
                 expect(result).toBeInstanceOf(PersonInfoResponseV1);
                 expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
-                expect(result.person).toEqual<PersonNestedInPersonInfoResponse>({
-                    id: person.id,
-                    mandant: person.mandant,
-                    referrer: person.referrer,
-                    name: {
-                        familiennamen: person.familienname,
-                        vorname: person.vorname,
-                        anrede: person.nameAnrede,
-                        initialenfamilienname: person.initialenFamilienname,
-                        initialenvorname: person.initialenVorname,
-                        rufname: person.rufname,
-                        titel: person.nameTitel,
-                        namenspraefix: person.namePraefix,
-                        namenssuffix: person.nameSuffix,
-                        sortierindex: person.nameSortierindex,
-                    } satisfies PersonNameResponse,
-                    geburt: {
-                        datum: person.geburtsdatum,
-                        geburtsort: person.geburtsort,
-                    } satisfies PersonBirthResponse,
-                    stammorganisation: person.stammorganisation,
-                    geschlecht: person.geschlecht,
-                    lokalisierung: person.lokalisierung,
-                    vertrauensstufe: person.vertrauensstufe,
-                    personalnummer: person.personalnummer,
-                    revision: person.revision,
-                    dienststellen: [orga.kennung!],
+                expect(result.person).toEqual({
+                    ...expectedBaseNestedPersonInfo,
+                    dienststellen: [orga!.kennung],
                 });
 
-                expect(result.pid).toEqual(person.id);
+                expect(result.pid).toEqual(person?.id);
+                expect(result.personenkontexte).toEqual([personenkontextResponseMock]);
+                expect(result.gruppen).toEqual([]);
+                expect(result.email).toEqual({
+                    address: email.address,
+                    status: email.status,
+                });
+            });
+
+            it('should return person info v1 with empty dnr array', async () => {
+                const permissions: PersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const email: PersonEmailResponse = {
+                    address: faker.internet.email(),
+                    status: faker.helpers.enumValue(EmailAddressStatus),
+                };
+                orga!.kennung = undefined;
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orga);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+
+                const result: PersonInfoResponseV1 = await sut.infoV1(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV1);
+                expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
+                expect(result.person).toEqual({
+                    ...expectedBaseNestedPersonInfo,
+                    dienststellen: [],
+                });
+
+                expect(result.pid).toEqual(person?.id);
                 expect(result.personenkontexte).toEqual([personenkontextResponseMock]);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
