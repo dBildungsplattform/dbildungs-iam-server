@@ -858,6 +858,7 @@ describe('LDAP Client Service', () => {
             });
 
             it('when adding fails should log error', async () => {
+                const error: Error = new Error('LDAP-Error');
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.bind.mockResolvedValue();
@@ -868,7 +869,7 @@ describe('LDAP Client Service', () => {
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
                     clientMock.add.mockResolvedValueOnce();
-                    clientMock.add.mockRejectedValueOnce(new Error('LDAP-Error'));
+                    clientMock.add.mockRejectedValueOnce(error);
 
                     return clientMock;
                 });
@@ -887,8 +888,9 @@ describe('LDAP Client Service', () => {
                 );
 
                 if (result.ok) throw Error();
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `LDAP: Creating lehrer FAILED, uid:${lehrerUid}, errMsg:{}`,
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `LDAP: Creating lehrer FAILED, uid:${lehrerUid}`,
+                    error,
                 );
                 expect(result.error).toEqual(new LdapCreateLehrerError());
             });
@@ -1829,6 +1831,7 @@ describe('LDAP Client Service', () => {
             const currentEmailAddress: string = 'current-address@schule-sh.de';
 
             it('should set mailAlternativeAddress as current mailPrimaryAddress and throw LdapPersonEntryChangedEvent', async () => {
+                const error: Error = new Error();
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(
@@ -1854,8 +1857,9 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyEmailError());
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED, errMsg:{}`,
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED`,
+                    error,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
@@ -2412,6 +2416,7 @@ describe('LDAP Client Service', () => {
             const fakeDN: string = faker.string.alpha();
 
             it('should NOT publish event and throw LdapPersonEntryChangedEvent', async () => {
+                const error: Error = new Error();
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(
@@ -2423,7 +2428,7 @@ describe('LDAP Client Service', () => {
                             ],
                         }),
                     );
-                    clientMock.modify.mockRejectedValueOnce(new Error());
+                    clientMock.modify.mockRejectedValueOnce(error);
 
                     return clientMock;
                 });
@@ -2435,8 +2440,9 @@ describe('LDAP Client Service', () => {
 
                 if (result.ok) throw Error();
                 expect(result.error).toStrictEqual(new LdapModifyUserPasswordError());
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `LDAP: Modifying userPassword (UEM) FAILED for personId:${fakePersonID}, referrer:${fakeReferrer}, errMsg:{}`,
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `LDAP: Modifying userPassword (UEM) FAILED for personId:${fakePersonID}, referrer:${fakeReferrer}`,
+                    error,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
