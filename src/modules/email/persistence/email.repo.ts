@@ -112,7 +112,7 @@ export class EmailRepo {
         const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
             EmailAddressEntity,
             {
-                personId: { $in: personIds },
+                $and: [{ status: EmailAddressStatus.ENABLED }, { personId: { $in: personIds } }],
             },
             { orderBy: { updatedAt: QueryOrder.DESC } },
         );
@@ -179,13 +179,10 @@ export class EmailRepo {
         personIds: PersonID[],
     ): Promise<Map<PersonID, PersonEmailResponse>> {
         const addresses: EmailAddress<true>[] = await this.findByPersonIdsSortedByUpdatedAtDesc(personIds);
-        const enabledAddresses: EmailAddress<true>[] = addresses.filter(
-            (ea: EmailAddress<true>) => ea.status === EmailAddressStatus.ENABLED,
-        );
         const responseMap: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
         let enabledAddressesForPersonId: EmailAddress<true>[];
         personIds.map((personId: PersonID) => {
-            enabledAddressesForPersonId = enabledAddresses.filter((ea: EmailAddress<true>) => ea.personId === personId);
+            enabledAddressesForPersonId = addresses.filter((ea: EmailAddress<true>) => ea.personId === personId);
             if (enabledAddressesForPersonId.length > 1) {
                 this.logger.error(`Found multiple ENABLED EmailAddresses for personId:${personId}`);
                 enabledAddressesForPersonId = enabledAddressesForPersonId.sort(sortEmailAddressesByUpdatedAtDesc);
