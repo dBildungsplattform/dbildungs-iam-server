@@ -329,11 +329,18 @@ export class PersonController {
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
+        const personIds: PersonID[] = persons.map((p: Person<true>) => p.id);
+        const personEmailResponseMap: Map<PersonID, PersonEmailResponse> =
+            await this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
+
         const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person, false)),
+            items: persons.map(
+                (person: Person<true>) =>
+                    new PersonendatensatzResponse(person, false, personEmailResponseMap.get(person.id)),
+            ),
         });
 
         return response;
