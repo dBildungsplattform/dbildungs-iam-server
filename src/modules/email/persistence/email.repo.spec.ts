@@ -451,7 +451,7 @@ describe('EmailRepo', () => {
                     await sut.getEmailAddressAndStatusForPersonIds(personIds);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Found multiple ENABLED EmailAddresses for personId:${personId1}`,
+                    `Found multiple ENABLED EmailAddresses, treating ${moreRecentAddress} as latest address, personId:${personId1}`,
                 );
                 expect(responseMap.size).toStrictEqual(1);
                 expect(responseMap.get(personId1)?.address).toStrictEqual(moreRecentAddress);
