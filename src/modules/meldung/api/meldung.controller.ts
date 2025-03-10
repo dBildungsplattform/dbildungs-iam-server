@@ -6,6 +6,7 @@ import {
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
+    ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
@@ -23,6 +24,7 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { MeldungExceptionFilter } from './meldung.exception-filter.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new MeldungExceptionFilter())
+@ApiTags('meldung')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
 @Controller({ path: 'portal/meldung' })

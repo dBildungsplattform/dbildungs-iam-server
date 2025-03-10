@@ -9,9 +9,11 @@ import {
 
 export class CommonCreateUpdateOrganisationBodyParams {
     @IsUUID()
+    @ApiProperty({ required: true })
     public readonly administriertVon!: string;
 
     @IsUUID()
+    @ApiProperty({ required: true })
     public readonly zugehoerigZu!: string;
 
     @IsOptional()
