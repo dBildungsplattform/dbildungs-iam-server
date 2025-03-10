@@ -31,9 +31,9 @@ services:
       - '--health-enabled=false'
       # Import SPSH-Realm
       - '--import-realm'
-    # ports:
-    #   - 8080:8080
-    #   - 8443:8443
+    ports:
+      - 8080:8080
+      - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
 
@@ -266,9 +266,12 @@ services:
       - 8000:80
     profiles:
       - frontend
+    depends_on:
+      - frontend
+    restart: unless-stopped
     volumes:
       - source: 'nginx-local.conf'
-        target: '/etc/nginx/conf.d/nginx.conf'
+        target: '/etc/nginx/conf.d/default.conf'
         type: bind
 
 volumes:
