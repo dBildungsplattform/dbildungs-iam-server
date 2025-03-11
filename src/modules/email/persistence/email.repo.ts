@@ -182,16 +182,18 @@ export class EmailRepo {
     public async getEmailAddressAndStatusForPersonIds(
         personIds: PersonID[],
     ): Promise<Map<PersonID, PersonEmailResponse>> {
+        let lastUsedPersonId: PersonID;
         const addresses: EmailAddress<true>[] = await this.findByPersonIdsSortedByUpdatedAtDesc(personIds);
         const responseMap: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
 
         addresses.map((ea: EmailAddress<true>) => {
-            if (responseMap.has(ea.personId)) {
+            if (lastUsedPersonId === ea.personId) {
                 this.logger.error(
                     `Found multiple ENABLED EmailAddresses, treating ${ea.address} as latest address, personId:${ea.personId}`,
                 );
             }
             responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
+            lastUsedPersonId = ea.personId;
         });
 
         return responseMap;
