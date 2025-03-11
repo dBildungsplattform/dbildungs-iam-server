@@ -41,6 +41,7 @@ import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
 import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
 
 @Injectable()
 export class OrganisationService {
@@ -178,6 +179,14 @@ export class OrganisationService {
         const validateKlassen: Result<boolean, DomainError> = await this.validateKlassenSpecifications(organisationDo);
         if (!validateKlassen.ok) {
             const error: DomainError = validateKlassen.error;
+            await this.logCreation(permissions, organisationDo, error);
+            return { ok: false, error: error };
+        }
+
+        const validateSchultraeger: Result<void, DomainError> =
+            await this.validateSchultraegerSpecifications(organisationDo);
+        if (!validateSchultraeger.ok) {
+            const error: DomainError = validateSchultraeger.error;
             await this.logCreation(permissions, organisationDo, error);
             return { ok: false, error: error };
         }
@@ -438,6 +447,37 @@ export class OrganisationService {
             return { ok: false, error: new KlassenNameAnSchuleEindeutigError(childOrganisation.id ?? undefined) };
         }
         return { ok: true, value: true };
+    }
+
+    private async validateSchultraegerSpecifications(
+        organisationDo: Organisation<false>,
+    ): Promise<Result<void, DomainError>> {
+        // Only validate for Schulträger
+        if (organisationDo.typ !== OrganisationsTyp.TRAEGER) {
+            return { ok: true, value: undefined };
+        }
+
+        // Find the root children (oeffentlich and ersatz)
+        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+            await this.organisationRepo.findRootDirectChildren();
+
+        // Retrieve all child organizations of the root children
+        const rootChildrenIds: string[] = [];
+        if (oeffentlich) rootChildrenIds.push(oeffentlich.id);
+        if (ersatz) rootChildrenIds.push(ersatz.id);
+
+        const allChildOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds(rootChildrenIds);
+
+        // Check if any child organization is a Schulträger with the same name
+        for (const childOrga of allChildOrgas) {
+            if (childOrga.typ === OrganisationsTyp.TRAEGER && childOrga.id !== organisationDo.id) {
+                if (childOrga.name === organisationDo.name) {
+                    return { ok: false, error: new SchultraegerNameEindeutigError(organisationDo.id ?? undefined) };
+                }
+            }
+        }
+
+        return { ok: true, value: undefined };
     }
 
     private async validateStructureSpecifications(
