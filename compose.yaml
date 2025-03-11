@@ -3,6 +3,7 @@ version: '3'
 services:
   db:
     image: postgres:15.3-alpine
+    container_name: db
     ports:
       - 5432:5432
     environment:
@@ -266,8 +267,10 @@ services:
       - 8000:80
     profiles:
       - frontend
+      - backend
     depends_on:
       - frontend
+      - backend
     restart: unless-stopped
     volumes:
       - source: 'nginx-local.conf'

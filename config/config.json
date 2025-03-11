@@ -16,12 +16,12 @@
         "STATUS_REDIRECT_URL": "https://status.dev.spsh.dbildungsplattform.de/"
     },
     "DB": {
-        "CLIENT_URL": "postgres://127.0.0.1:5432",
+        "CLIENT_URL": "postgres://db:5432",
         "DB_NAME": "dbildungs-iam-server",
         "USERNAME": "admin",
         "PASSWORD": "password",
         "USE_SSL": false,
-        "SECRET": "dummy"
+        "SECRET": "password"
     },
     "KEYCLOAK": {
         "BASE_URL": "http://keycloak:8080",
