@@ -17,6 +17,7 @@ import {
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiBody,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -25,6 +26,7 @@ import {
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
+    ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -397,6 +399,15 @@ export class OrganisationController {
 
     @Post(':organisationId/zugehoerig')
     @UseGuards(StepUpGuard)
+    @ApiParam({
+        name: 'organisationId',
+        description: 'The ID of the parent organisation to which another organisation will be added as a subordinate.',
+        type: OrganisationByIdParams,
+    })
+    @ApiBody({
+        description: 'The ID of the child organisation that will be assigned to the parent organisation.',
+        type: OrganisationByIdBodyParams,
+    })
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
@@ -467,7 +478,7 @@ export class OrganisationController {
         @Body() body: OrganisationByNameBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
-        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
+        const result: DomainError | Organisation<true> = await this.organisationRepository.updateOrganisationName(
             params.organisationId,
             body.name,
             body.version,
