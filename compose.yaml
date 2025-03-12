@@ -13,7 +13,8 @@ services:
 
   keycloak:
     image: ghcr.io/dbildungsplattform/dbildungs-iam-keycloak:latest
-    container_name: keycloak
+    container_name: keycloak.spsh-dev
+    hostname: keycloak.spsh-dev
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
@@ -22,7 +23,8 @@ services:
       - PI_REALM=defrealm
       - PI_BASE_URL=http://privacy-idea:8080
       - STATUS_REDIRECT_URL=https://status.dev.spsh.dbildungsplattform.de/
-    entrypoint: '/opt/keycloak/bin/kc.sh start-dev'
+    # entrypoint: '/opt/keycloak/bin/kc.sh start-dev --hostname=keycloak.spsh-dev --http-port=80'
+    entrypoint: '/opt/keycloak/bin/kc.sh start-dev --hostname=keycloak.spsh-dev'
     command:
       # Internal DB but still persisted in container
       - '--db=dev-file'
@@ -33,7 +35,7 @@ services:
       # Import SPSH-Realm
       - '--import-realm'
     ports:
-      - 8080:8080
+      - 8080:80
       - 8443:8443
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
@@ -88,6 +90,8 @@ services:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
     restart: unless-stopped
+    ports:
+      - 9090:9090
     volumes:
       - source: 'config'
         target: '/app/config'
@@ -264,7 +268,7 @@ services:
   ingress:
     image: nginx:stable-alpine
     ports:
-      - 8000:80
+      - 80:80
     profiles:
       - frontend
       - backend

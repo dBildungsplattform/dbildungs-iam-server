@@ -8,11 +8,11 @@
         "SECURE_COOKIE": false,
         "SESSION_SECRET": "SessionSecretForDevelopment",
         "SESSION_TTL_MS": 3600000,
-        "BACKEND_ADDRESS": "http://localhost:9090",
-        "OIDC_CALLBACK_URL": "https://localhost:8099/api/auth/login",
-        "DEFAULT_LOGIN_REDIRECT": "https://localhost:8099/",
-        "LOGOUT_REDIRECT": "https://localhost:8099/",
-        "ERROR_PAGE_REDIRECT": "https://localhost:8099/login-error",
+        "BACKEND_ADDRESS": "http://spsh-dev",
+        "OIDC_CALLBACK_URL": "http://spsh-dev/api/auth/login",
+        "DEFAULT_LOGIN_REDIRECT": "http://spsh-dev/",
+        "LOGOUT_REDIRECT": "http://spsh-dev/",
+        "ERROR_PAGE_REDIRECT": "http://spsh-dev/login-error",
         "STATUS_REDIRECT_URL": "https://status.dev.spsh.dbildungsplattform.de/"
     },
     "DB": {
@@ -24,7 +24,7 @@
         "SECRET": "password"
     },
     "KEYCLOAK": {
-        "BASE_URL": "http://keycloak:8080",
+        "BASE_URL": "http://keycloak.spsh-dev",
         "EXTERNAL_BASE_URL": "http://localhost:8080",
         "ADMIN_REALM_NAME": "SPSH",
         "ADMIN_CLIENT_ID": "spsh-admin",
