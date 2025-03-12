@@ -224,7 +224,7 @@ jobs:
       trivyignores: '.trivyignore'
 
   trivy_scan_rocketchat_notification:
-  if: github.event_name == 'schedule' && failure()
+    if: ${{ github.event_name == 'schedule' }} && failure()
     needs:
     - scheduled_trivy_scan
     runs-on: 'ubuntu-latest'
