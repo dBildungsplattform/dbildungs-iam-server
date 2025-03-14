@@ -107,6 +107,7 @@ services:
   db-init:
     profiles:
       - db-init
+      - db-seed
     image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
       context: .
@@ -116,6 +117,70 @@ services:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
     command: ['node', 'dist/src/console/main.js', 'db', 'init']
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+      - source: 'config/docker-config.json'
+        target: '/app/config/config.json'
+        type: bind
+
+  db-seed:
+    profiles:
+      - db-seed
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      db:
+        condition: service_started
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev']
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+      - source: 'config/docker-config.json'
+        target: '/app/config/config.json'
+        type: bind
+
+  db-migrate:
+    profiles:
+      - db-migrate
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/console/main.js', 'db', 'migration-apply']
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+      - source: 'config/docker-config.json'
+        target: '/app/config/config.json'
+        type: bind
+
+  keycloak-client-update:
+    profiles:
+      - keycloak-client-update
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - db
+      - keycloak
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/console/main.js', 'keycloak', 'update-clients', 'dev']
     volumes:
       - source: 'config'
         target: '/app/config'
@@ -285,8 +350,6 @@ services:
       - frontend
     restart: unless-stopped
     volumes:
-      # swap the 'source' lines, if you intend to run just the frontend containerized
-      # - source: 'nginx/fe-only.conf'
       - source: 'nginx/default.conf'
         target: '/etc/nginx/conf.d/default.conf'
         type: bind
