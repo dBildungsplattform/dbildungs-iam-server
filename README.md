@@ -71,7 +71,7 @@ docker compose --profile backend --profile frontend up
 To bootstrap a minimal setup with front- and backend use `docker-bootstrap.sh`. It will start required services and init and seed the database. **Please note** that this will clear the database.
 
 If you need to initialize the database without seeding it, use `docker compose up db-init` do so.
-You can also use another profile, if you want to initialize the db while starting the server `docker compose --profile full-backend --profile db-init up`
+You can also use another profile, if you want to initialize the db while starting the server `docker compose --profile backend --profile db-init up`
 Similarly you may use
 
 - `db-migrate` to migrate schema changes to your current database
