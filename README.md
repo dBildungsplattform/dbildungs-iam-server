@@ -80,15 +80,16 @@ Similarly you may use
 
 ### Available profiles
 
-| Name                   | Description                                                                                   |
-| :--------------------- | :-------------------------------------------------------------------------------------------- |
-| backend                | backend with required depencies                                                               |
-| frontend               | frontend + ingress (requires either a running local or containerized instance of the backend) |
-| third-party            | any third-party systems that are not required for startup                                     |
-| db-init                | initialise the database                                                                       |
-| db-migrate             | run necessary schema migrations against the database                                          |
-| db-seed                | seed the database                                                                             |
-| keycloak-client-update | update the keycloak-client                                                                    |
+| Name                   | Description                                                         |
+| :--------------------- | :------------------------------------------------------------------ |
+| backend                | backend with required depencies                                     |
+| frontend               | frontend + ingress (requires containerized instance of the backend) |
+| third-party            | any third-party systems that are not required for startup           |
+| db-init                | initialise the database                                             |
+| db-migrate             | run necessary schema migrations against the database                |
+| db-seed                | seed the database                                                   |
+| keycloak-client-update | update the keycloak-client                                          |
+| kc-service             | start the internal micro-service to access keycloaks database       |
 
 ## Developer Guides
 
