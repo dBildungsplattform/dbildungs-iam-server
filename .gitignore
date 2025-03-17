@@ -145,3 +145,4 @@ dist
 
 mariadb/
 test/secrets.test.json
+nginx/ssl/
