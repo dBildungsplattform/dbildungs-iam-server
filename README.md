@@ -68,7 +68,7 @@ The frontend-client (and a necessary ingress) can be started with the `frontend`
 docker compose --profile backend --profile frontend up
 ```
 
-To bootstrap a minimal setup with front- and backend use `docker-bootstrap.sh`. It will start required services and init and seed the database. **Please note** that this will clear the database.
+To bootstrap a minimal setup with front- and backend use `docker-bootstrap.sh`. Depending on your setup you may need to set the correct permissions for the script with i.e. `chmod +x docker-bootstrap.sh`. It will start required services and init and seed the database. **Please note** that this will clear the database.
 
 If you need to initialize the database without seeding it, use `docker compose up db-init` do so.
 You can also use another profile, if you want to initialize the db while starting the server `docker compose --profile backend --profile db-init up`
