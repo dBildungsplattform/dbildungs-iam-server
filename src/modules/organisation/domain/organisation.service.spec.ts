@@ -404,6 +404,39 @@ describe('OrganisationService', () => {
                 error: new SchultraegerNameEindeutigError(),
             });
         });
+
+        it('should successfully validate when Schulträger name is unique', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+            // Mock data
+            const name: string = faker.company.name();
+            const schultraeger: Organisation<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.TRAEGER,
+                name: name,
+            });
+
+            const existingSchultraeger: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                name: faker.company.name(),
+            });
+
+            // Returns an existing Schulträger with the same name
+            organisationRepositoryMock.findBy.mockResolvedValueOnce([[existingSchultraeger], 1]);
+            organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([existingSchultraeger]);
+
+            organisationRepositoryMock.save.mockResolvedValue(schultraeger as unknown as Organisation<true>);
+            mapperMock.map.mockReturnValue(schultraeger as unknown as Dictionary<unknown>);
+
+            // Call the method
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                schultraeger,
+                permissionsMock,
+            );
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: true,
+                value: schultraeger as unknown as Organisation<true>,
+            });
+        });
     });
 
     describe('updateOrganisation', () => {
