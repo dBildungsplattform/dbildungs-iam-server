@@ -104,6 +104,23 @@ export class EmailRepo {
         return emails;
     }
 
+    /**
+     * Returns all ENABLED EmailAddresses for a list of personIds.
+     * The result is ordered by personId ascending and updatedAt descending.
+     * @param personIds
+     */
+    public async findByPersonIdsSortedByUpdatedAtDesc(personIds: PersonID[]): Promise<EmailAddress<true>[]> {
+        const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
+            EmailAddressEntity,
+            {
+                $and: [{ status: EmailAddressStatus.ENABLED }, { personId: { $in: personIds } }],
+            },
+            { orderBy: [{ personId: QueryOrder.ASC }, { updatedAt: QueryOrder.ASC }] },
+        );
+
+        return emailAddressEntities.map((entity: EmailAddressEntity) => mapEntityToAggregate(entity));
+    }
+
     public async findByAddress(address: string): Promise<Option<EmailAddress<true>>> {
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
             EmailAddressEntity,
@@ -151,6 +168,35 @@ export class EmailRepo {
         if (!emailAddresses || !emailAddresses[0]) return undefined;
 
         return new PersonEmailResponse(emailAddresses[0].status, emailAddresses[0].address);
+    }
+
+    /**
+     * Returns a map with key-value pairs personId -> PersonEmailResponse.
+     * NOTE: The value for a key is not a list of PersonEmailResponse but a single PersonEmailResponse, regardless how many ENABLED
+     * EmailAddresses were found per personID in DB. The most recent one (based on updatedAt) will always override the last value in the map
+     * for the specified personId.
+     * Only enabled addresses will be part of the response, so the resulting map can return UNDEFINED for a personId
+     * when either no email-addresses could be found for that person or only email-addresses with status other than ENABLED.
+     * @param personIds
+     */
+    public async getEmailAddressAndStatusForPersonIds(
+        personIds: PersonID[],
+    ): Promise<Map<PersonID, PersonEmailResponse>> {
+        let lastUsedPersonId: PersonID;
+        const addresses: EmailAddress<true>[] = await this.findByPersonIdsSortedByUpdatedAtDesc(personIds);
+        const responseMap: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
+
+        addresses.map((ea: EmailAddress<true>) => {
+            if (lastUsedPersonId === ea.personId) {
+                this.logger.error(
+                    `Found multiple ENABLED EmailAddresses, treating ${ea.address} as latest address, personId:${ea.personId}`,
+                );
+            }
+            responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
+            lastUsedPersonId = ea.personId;
+        });
+
+        return responseMap;
     }
 
     /**
