@@ -392,6 +392,7 @@ describe('OrganisationService', () => {
 
             // Returns an existing Schulträger with the same name
             organisationRepositoryMock.findBy.mockResolvedValueOnce([[existingSchultraeger], 1]);
+            organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([existingSchultraeger]);
 
             const result: Result<Organisation<true>> = await organisationService.createOrganisation(
                 schultraeger,
