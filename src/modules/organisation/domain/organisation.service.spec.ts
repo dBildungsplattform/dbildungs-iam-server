@@ -390,8 +390,19 @@ describe('OrganisationService', () => {
                 name: faker.company.name(),
             });
 
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+                name: name,
+            });
+
+            const ersatz: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+                name: name,
+            });
+
             // Returns an existing Schulträger with the same name
             organisationRepositoryMock.findBy.mockResolvedValueOnce([[existingSchultraeger], 1]);
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, ersatz]);
             organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([existingSchultraeger]);
 
             organisationRepositoryMock.save.mockResolvedValueOnce(schultraeger as unknown as Organisation<true>);
