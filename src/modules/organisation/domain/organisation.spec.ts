@@ -13,6 +13,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
 
 describe('Organisation', () => {
     let module: TestingModule;
@@ -252,6 +253,112 @@ describe('Organisation', () => {
 
                 expect(updateError).toBeInstanceOf(KennungForOrganisationWithTrailingSpaceError);
             });
+        });
+    });
+
+    describe('Schultraeger Name Uniqueness', () => {
+        it('should return undefined if Schultraeger name is unique', async () => {
+            // Setup a unique Schultraeger
+            const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                name: 'Unique Schultraeger',
+                typ: OrganisationsTyp.TRAEGER,
+            });
+
+            // Mock root children
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const ersatz: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, ersatz]);
+
+            // Mock child organizations with different names
+            organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([
+                DoFactory.createOrganisationAggregate(true, {
+                    name: 'Different Schultraeger 1',
+                    typ: OrganisationsTyp.TRAEGER,
+                }),
+                DoFactory.createOrganisationAggregate(true, {
+                    name: 'Different Schultraeger 2',
+                    typ: OrganisationsTyp.TRAEGER,
+                }),
+            ]);
+
+            const result: OrganisationSpecificationError | undefined =
+                await orga.checkSchultraegerSpecifications(organisationRepositoryMock);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return SchultraegerNameEindeutigError if Schultraeger name is not unique', async () => {
+            // Setup a Schultraeger with a duplicate name
+            const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                name: 'Duplicate Schultraeger',
+                typ: OrganisationsTyp.TRAEGER,
+                id: faker.string.uuid(),
+            });
+
+            // Mock root children
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const ersatz: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, ersatz]);
+
+            // Mock child organizations with a duplicate name
+            const duplicateOrga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                name: 'Duplicate Schultraeger',
+                typ: OrganisationsTyp.TRAEGER,
+                id: faker.string.uuid(), // Different ID to ensure it's a different organization
+            });
+            organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([duplicateOrga]);
+
+            const result: OrganisationSpecificationError | undefined =
+                await orga.checkSchultraegerSpecifications(organisationRepositoryMock);
+
+            expect(result).toBeInstanceOf(SchultraegerNameEindeutigError);
+        });
+
+        it('should return undefined if organization is not a Schultraeger', async () => {
+            // Setup a non-Schultraeger organization
+            const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                name: 'Some School',
+                typ: OrganisationsTyp.SCHULE,
+            });
+
+            const result: OrganisationSpecificationError | undefined =
+                await orga.checkSchultraegerSpecifications(organisationRepositoryMock);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return SchultraegerNameEindeutigError if Schultraeger has no name', async () => {
+            // Setup a Schultraeger without a name
+            const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                name: undefined,
+                typ: OrganisationsTyp.TRAEGER,
+            });
+
+            const result: OrganisationSpecificationError | undefined =
+                await orga.checkSchultraegerSpecifications(organisationRepositoryMock);
+
+            expect(result).toBeInstanceOf(SchultraegerNameEindeutigError);
+        });
+
+        it('should return NameForOrganisationWithTrailingSpaceError if name has trailing whitespace', async () => {
+            // Setup a Schultraeger with a name with trailing whitespace
+            const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                name: 'Schultraeger Name ',
+                typ: OrganisationsTyp.TRAEGER,
+            });
+
+            const result: OrganisationSpecificationError | undefined =
+                await orga.checkSchultraegerSpecifications(organisationRepositoryMock);
+
+            expect(result).toBeInstanceOf(NameForOrganisationWithTrailingSpaceError);
         });
     });
 });

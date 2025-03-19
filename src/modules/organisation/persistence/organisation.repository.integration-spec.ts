@@ -28,6 +28,7 @@ import { OrganisationSpecificationError } from '../specification/error/organisat
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
+import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -866,12 +867,12 @@ describe('OrganisationRepository', () => {
             });
         });
     });
-    describe('updateKlassenname', () => {
+    describe('Update Organisationsname - Klasse', () => {
         const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
         describe('when organisation does not exist', () => {
             it('should return EntityNotFoundError', async () => {
                 const id: string = faker.string.uuid();
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     id,
                     faker.company.name(),
                     faker.number.int(),
@@ -892,7 +893,7 @@ describe('OrganisationRepository', () => {
                 });
                 const savedOrganisation: Organisation<true> = await sut.save(organisation);
 
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     savedOrganisation.id,
                     'newName',
                     1,
@@ -913,7 +914,7 @@ describe('OrganisationRepository', () => {
                 });
                 const savedOrganisation: Organisation<true> = await sut.save(organisation);
 
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     savedOrganisation.id,
                     'newName',
                     1,
@@ -934,7 +935,7 @@ describe('OrganisationRepository', () => {
                     administriertVon: savedParentOrganisation.id,
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     savedOrganisaiton.id,
                     faker.company.name(),
                     faker.number.int(),
@@ -955,7 +956,7 @@ describe('OrganisationRepository', () => {
                     administriertVon: savedParentOrganisation.id,
                 });
                 const savedOrganisaiton: Organisation<true> = await sut.save(organisation);
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     savedOrganisaiton.id,
                     '',
                     faker.number.int(),
@@ -999,7 +1000,7 @@ describe('OrganisationRepository', () => {
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
                 em.clear();
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     organisationEntity2.id,
                     'newName',
                     1,
@@ -1039,11 +1040,11 @@ describe('OrganisationRepository', () => {
 
                 // Simulate concurrent updates:
                 // 1. First update
-                await sut.updateKlassenname(organisationEntity2.id, 'newName1', 1, permissionsMock);
+                await sut.updateOrganisationName(organisationEntity2.id, 'newName1', 1, permissionsMock);
 
                 // 2. Try second update with original version (should fail)
                 await expect(async () => {
-                    await sut.updateKlassenname(
+                    await sut.updateOrganisationName(
                         organisationEntity2.id,
                         'newName2',
                         1, // This is now outdated because previous update incremented it
@@ -1075,7 +1076,7 @@ describe('OrganisationRepository', () => {
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2]);
 
-                const result: DomainError | Organisation<true> = await sut.updateKlassenname(
+                const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                     organisationEntity2.id,
                     'name',
                     1,
@@ -1083,6 +1084,126 @@ describe('OrganisationRepository', () => {
                 );
 
                 expect(result).not.toBeInstanceOf(DomainError);
+            });
+        });
+    });
+
+    describe('updateOrganisationName - Schulträger', () => {
+        const permissionsMock: PersonPermissions = createMock<PersonPermissions>();
+
+        describe('when organisation is a Schulträger', () => {
+            let savedOeffentlich: OrganisationEntity;
+
+            beforeEach(async () => {
+                const oeffentlich: Organisation<false> | DomainError = Organisation.createNew(
+                    sut.ROOT_ORGANISATION_ID,
+                    sut.ROOT_ORGANISATION_ID,
+                    '',
+                    'Öffentliche',
+                );
+
+                if (oeffentlich instanceof DomainError) {
+                    return;
+                }
+                savedOeffentlich = em.create(OrganisationEntity, mapAggregateToData(oeffentlich));
+                await em.persistAndFlush(savedOeffentlich);
+            });
+
+            describe('when Schulträger is not a direct child of oeffentlich or ersatz', () => {
+                it('should return EntityCouldNotBeUpdated error', async () => {
+                    const invalidParent: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                        typ: OrganisationsTyp.SCHULE,
+                    });
+                    const savedParent: Organisation<true> = await sut.save(invalidParent);
+
+                    const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                        typ: OrganisationsTyp.TRAEGER,
+                        administriertVon: savedParent.id ?? '',
+                    });
+                    const savedSchultraeger: Organisation<true> = await sut.save(schultraeger);
+
+                    const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
+                        savedSchultraeger.id,
+                        'newName',
+                        1,
+                        permissionsMock,
+                    );
+
+                    expect(result).toEqual(
+                        new EntityCouldNotBeUpdated('Organisation', savedSchultraeger.id, [
+                            'The Schulträger must be a direct child of either Öffentliche or Ersatz.',
+                        ]),
+                    );
+                });
+            });
+
+            describe('when Schulträger name is not unique', () => {
+                it('should return SchultraegerNameEindeutigError', async () => {
+                    const existingSchultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                        typ: OrganisationsTyp.TRAEGER,
+                        administriertVon: savedOeffentlich.id,
+                        name: 'ExistingName1',
+                    });
+                    await sut.save(existingSchultraeger);
+
+                    const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                        typ: OrganisationsTyp.TRAEGER,
+                        administriertVon: savedOeffentlich.id,
+                        name: 'ExistingName',
+                    });
+                    const savedSchultraeger: Organisation<true> = await sut.save(schultraeger);
+
+                    const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
+                        savedSchultraeger.id,
+                        'ExistingName1',
+                        1,
+                        permissionsMock,
+                    );
+
+                    expect(result).toBeInstanceOf(SchultraegerNameEindeutigError);
+                });
+            });
+
+            describe('when all validations are passed', () => {
+                it('should update Schulträger under Öffentlich name and return void', async () => {
+                    const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                        typ: OrganisationsTyp.TRAEGER,
+                        administriertVon: savedOeffentlich.id,
+                        name: 'OldName',
+                    });
+                    const savedSchultraeger: Organisation<true> = await sut.save(schultraeger);
+
+                    const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
+                        savedSchultraeger.id,
+                        'NewName',
+                        1,
+                        permissionsMock,
+                    );
+
+                    expect(result).not.toBeInstanceOf(DomainError);
+                    expect((result as Organisation<true>).name).toBe('NewName');
+                });
+            });
+
+            describe('when name did not change', () => {
+                it('should not check specifications and return void', async () => {
+                    const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                        typ: OrganisationsTyp.TRAEGER,
+                        administriertVon: savedOeffentlich.id,
+                        name: 'SameName',
+                    });
+                    const savedSchultraeger: Organisation<true> = await sut.save(schultraeger);
+
+                    const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
+                        savedSchultraeger.id,
+                        'SameName',
+                        1,
+                        permissionsMock,
+                    );
+
+                    expect(result).not.toBeInstanceOf(DomainError);
+                    expect((result as Organisation<true>).name).toBe('SameName');
+                });
             });
         });
     });
@@ -1770,7 +1891,7 @@ describe('OrganisationRepository', () => {
             expect(result[0].some((org: Organisation<true>) => org.id === orgas[8]!.id)).toBeTruthy();
         });
 
-        it('should return all authorized organisations with correct type and parent', async () => {
+        it('should return all authorized organisations with correct type and parent under administriertVon', async () => {
             const orgas: OrganisationEntity[] = [];
             const orgaLand: Organisation<false> | DomainError = Organisation.createNew(
                 sut.ROOT_ORGANISATION_ID,
@@ -1848,6 +1969,92 @@ describe('OrganisationRepository', () => {
                 personPermissions,
                 [RollenSystemRecht.SCHULEN_VERWALTEN],
                 { administriertVon: [mappedOrgaLand.id], typ: OrganisationsTyp.SCHULE },
+            );
+
+            expect(result[1]).toBe(3);
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[1]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[2]!.id)).toBeTruthy();
+            expect(result[0].some((org: Organisation<true>) => org.id === orgas[3]!.id)).toBeTruthy();
+        });
+
+        it('should return all authorized organisations with correct type and parent under zugehoerig zu', async () => {
+            const orgas: OrganisationEntity[] = [];
+            const orgaLand: Organisation<false> | DomainError = Organisation.createNew(
+                sut.ROOT_ORGANISATION_ID,
+                sut.ROOT_ORGANISATION_ID,
+                '',
+                'Öffentliche Schulen Land Schleswig-Holstein',
+                undefined,
+                undefined,
+                OrganisationsTyp.LAND,
+            );
+            if (orgaLand instanceof DomainError) {
+                return;
+            }
+            const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaLand));
+            await em.persistAndFlush(mappedOrgaLand);
+            orgas.push(mappedOrgaLand);
+
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    mappedOrgaLand.id,
+                    mappedOrgaLand.id,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+                if (orga instanceof DomainError) {
+                    fail('could not create Schule under Land');
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    mappedOrgaLand.id,
+                    mappedOrgaLand.id,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.TRAEGER,
+                );
+                if (orga instanceof DomainError) {
+                    fail('could not create Traeger');
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            for (let i: number = 0; i < 3; i++) {
+                const orga: Organisation<false> | DomainError = Organisation.createNew(
+                    sut.ROOT_ORGANISATION_ID,
+                    sut.ROOT_ORGANISATION_ID,
+                    faker.string.numeric(6),
+                    faker.company.name(),
+                    undefined,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+                if (orga instanceof DomainError) {
+                    fail('could not create Schule under root');
+                }
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                await em.persistAndFlush(mappedOrga);
+                orgas.push(mappedOrga);
+            }
+            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                personPermissions,
+                [RollenSystemRecht.SCHULEN_VERWALTEN],
+                { zugehoerigZu: [mappedOrgaLand.id], typ: OrganisationsTyp.SCHULE },
             );
 
             expect(result[1]).toBe(3);

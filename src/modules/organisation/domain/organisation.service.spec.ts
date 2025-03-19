@@ -29,6 +29,7 @@ import { IPersonPermissions } from '../../../shared/permissions/person-permissio
 import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
+import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -371,6 +372,81 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new KlasseWithoutNumberOrLetterError(),
+            });
+        });
+
+        it('should successfully validate when Schulträger name is unique', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+
+            const name: string = faker.company.name();
+            const schultraeger: Organisation<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.TRAEGER,
+                name: name,
+            });
+
+            const existingSchultraeger: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                name: faker.company.name(),
+            });
+
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+                name: name,
+            });
+
+            const ersatz: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+                name: name,
+            });
+
+            // Returns an existing Schulträger with the same name
+            organisationRepositoryMock.findBy.mockResolvedValueOnce([[existingSchultraeger], 1]);
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, ersatz]);
+            organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([existingSchultraeger]);
+
+            organisationRepositoryMock.save.mockResolvedValueOnce(schultraeger as unknown as Organisation<true>);
+            mapperMock.map.mockReturnValue(schultraeger as unknown as Dictionary<unknown>);
+
+            // Call the method
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                schultraeger,
+                permissionsMock,
+            );
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: true,
+                value: schultraeger as unknown as Organisation<true>,
+            });
+        });
+
+        it('should return a domain error if Schulträger name is not unique', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+
+            const name: string = faker.company.name();
+            const schultraeger: Organisation<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.TRAEGER,
+                name: name,
+            });
+
+            const existingSchultraeger: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                name: name,
+            });
+
+            // Returns an existing Schulträger with the same name
+            organisationRepositoryMock.findBy.mockResolvedValueOnce([[existingSchultraeger], 1]);
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValueOnce([undefined, undefined]);
+            organisationRepositoryMock.findChildOrgasForIds.mockResolvedValueOnce([existingSchultraeger]);
+
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                schultraeger,
+                permissionsMock,
+            );
+
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new SchultraegerNameEindeutigError(),
             });
         });
     });
