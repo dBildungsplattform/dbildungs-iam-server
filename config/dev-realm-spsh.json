@@ -1194,6 +1194,81 @@
             ],
             "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
             "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+        },
+        {
+            "id": "cf8356bd-4bbb-4e83-b7dd-1434c58e18bd",
+            "clientId": "datum",
+            "name": "DaTuM client local/dev",
+            "description": "",
+            "rootUrl": "",
+            "adminUrl": "",
+            "baseUrl": "",
+            "surrogateAuthRequired": false,
+            "enabled": true,
+            "alwaysDisplayInConsole": false,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "${KC_DATUM_CLIENT_SECRET}",
+            "redirectUris": [
+                "https://dev-zkis-daz.ai.dataport.de/*",
+                "http://localhost:3000/*"
+            ],
+            "webOrigins": [
+                "+"
+            ],
+            "notBefore": 0,
+            "bearerOnly": false,
+            "consentRequired": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": false,
+            "serviceAccountsEnabled": false,
+            "publicClient": false,
+            "frontchannelLogout": false,
+            "protocol": "openid-connect",
+            "attributes": {
+                "client.secret.creation.time": "1722953975",
+                "client.introspection.response.allow.jwt.claim.enabled": "false",
+                "post.logout.redirect.uris": "+",
+                "oauth2.device.authorization.grant.enabled": "false",
+                "use.jwks.url": "false",
+                "backchannel.logout.revoke.offline.tokens": "false",
+                "use.refresh.tokens": "true",
+                "oidc.ciba.grant.enabled": "false",
+                "client.use.lightweight.access.token.enabled": "false",
+                "backchannel.logout.session.required": "false",
+                "client_credentials.use_refresh_token": "false",
+                "tls.client.certificate.bound.access.tokens": "false",
+                "require.pushed.authorization.requests": "false",
+                "acr.loa.map": "{}",
+                "display.on.consent.screen": "false",
+                "token.response.type.bearer.lower-case": "false",
+                "login_theme": "",
+                "consent.screen.text": "",
+                "backchannel.logout.url": ""
+            },
+            "authenticationFlowBindingOverrides": {},
+            "fullScopeAllowed": true,
+            "nodeReRegistrationTimeout": -1,
+            "defaultClientScopes": [
+                "web-origins",
+                "acr",
+                "roles",
+                "profile",
+                "basic",
+                "email"
+            ],
+            "optionalClientScopes": [
+                "address",
+                "phone",
+                "offline_access",
+                "microprofile-jwt"
+            ],
+            "access": {
+                "view": true,
+                "configure": true,
+                "manage": true
+            },
+            "authorizationServicesEnabled": false
         }
     ],
     "clientScopes": [
