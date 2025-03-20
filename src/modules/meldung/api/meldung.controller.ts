@@ -6,6 +6,7 @@ import {
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
+    ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
@@ -23,6 +24,7 @@ import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { MeldungExceptionFilter } from './meldung.exception-filter.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new MeldungExceptionFilter())
+@ApiTags('meldung')
 @ApiOAuth2(['openid'])
 @ApiBearerAuth()
 @Controller({ path: 'portal/meldung' })
@@ -34,6 +36,7 @@ export class MeldungController {
     @ApiOperation({ description: 'Get all meldungen.' })
     @ApiOkResponse({
         description: 'The meldungen were successfully returned.',
+        type: [MeldungResponse],
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available meldungen.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get meldungen.' })
@@ -66,6 +69,7 @@ export class MeldungController {
     @ApiOperation({ description: 'Get current veroeffentlicht meldung.' })
     @ApiOkResponse({
         description: 'The meldung was successfully returned.',
+        type: MeldungResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get current veroeffentlicht meldunge.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get meldungen.' })
