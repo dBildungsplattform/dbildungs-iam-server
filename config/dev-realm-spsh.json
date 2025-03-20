@@ -1207,7 +1207,7 @@
             "enabled": true,
             "alwaysDisplayInConsole": false,
             "clientAuthenticatorType": "client-secret",
-            "secret": "${KC_DATUM_CLIENT_SECRET}",
+            "secret": "DATUM_CLIENT_SECRET",
             "redirectUris": [
                 "https://dev-zkis-daz.ai.dataport.de/*",
                 "http://localhost:3000/*"
