@@ -11,11 +11,19 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
     rollenart?: RollenArt;
     kennung?: string;
+};
+
+export type KontextWithOrgaAndRolle = {
+    personenkontext: Personenkontext<true>;
+    organisation: OrganisationEntity;
+    rolle: RolleEntity;
 };
 
 export type ExternalPkDataLoaded = Loaded<
@@ -100,6 +108,20 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map((pk: PersonenkontextEntity) =>
             mapEntityToAggregate(pk, this.personenkontextFactory),
         );
+    }
+
+    public async findByPersonWithOrgaAndRolle(personId: PersonID): Promise<Array<KontextWithOrgaAndRolle>> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(
+            PersonenkontextEntity,
+            { personId },
+            { populate: ['organisationId', 'rolleId'] },
+        );
+
+        return personenKontexte.map((pk: PersonenkontextEntity) => ({
+            personenkontext: mapEntityToAggregate(pk, this.personenkontextFactory),
+            organisation: pk.organisationId.unwrap(),
+            rolle: pk.rolleId.unwrap(),
+        }));
     }
 
     /**
