@@ -11,8 +11,11 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { mapOrgaEntityToAggregate } from '../../organisation/persistence/organisation.repository.js';
+import { mapRolleEntityToAggregate } from '../../rolle/repo/rolle.repo.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
@@ -22,8 +25,8 @@ export type ExternalPkData = {
 
 export type KontextWithOrgaAndRolle = {
     personenkontext: Personenkontext<true>;
-    organisation: OrganisationEntity;
-    rolle: RolleEntity;
+    organisation: Organisation<true>;
+    rolle: Rolle<true>;
 };
 
 export type ExternalPkDataLoaded = Loaded<
@@ -60,6 +63,7 @@ export class DBiamPersonenkontextRepo {
     public constructor(
         private readonly em: EntityManager,
         private readonly personenkontextFactory: PersonenkontextFactory,
+        protected readonly rolleFactory: RolleFactory,
     ) {}
 
     public async findByID(id: string): Promise<Option<Personenkontext<true>>> {
@@ -119,8 +123,8 @@ export class DBiamPersonenkontextRepo {
 
         return personenKontexte.map((pk: PersonenkontextEntity) => ({
             personenkontext: mapEntityToAggregate(pk, this.personenkontextFactory),
-            organisation: pk.organisationId.unwrap(),
-            rolle: pk.rolleId.unwrap(),
+            organisation: mapOrgaEntityToAggregate(pk.organisationId.unwrap()),
+            rolle: mapRolleEntityToAggregate(pk.rolleId.unwrap(), this.rolleFactory),
         }));
     }
 
