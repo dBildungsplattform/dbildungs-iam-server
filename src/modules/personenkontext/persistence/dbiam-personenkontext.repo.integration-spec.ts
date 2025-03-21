@@ -9,7 +9,7 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { Personenkontext, mapAggregateToPartial } from '../domain/personenkontext.js';
-import { DBiamPersonenkontextRepo, ExternalPkData, RollenCount } from './dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepo, ExternalPkData, KontextWithOrgaAndRolle, RollenCount } from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
@@ -369,6 +369,41 @@ describe('dbiam Personenkontext Repo', () => {
             const personenkontexte: Personenkontext<true>[] = await sut.findByPerson(personA.id);
 
             expect(personenkontexte).toHaveLength(1);
+        });
+    });
+
+    describe('findByPersonWithOrgaAndRolle', () => {
+        it('should return all personenkontexte for a person with orga and rolle', async () => {
+            const personA: Person<true> = await createPerson();
+            const personB: Person<true> = await createPerson();
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisation: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolle instanceof DomainError) throw Error();
+
+            await Promise.all([
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personA.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personB.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                ),
+            ]);
+
+            const personenkontexte: Array<KontextWithOrgaAndRolle> = await sut.findByPersonWithOrgaAndRolle(personA.id);
+
+            expect(personenkontexte).toHaveLength(1);
+            expect(personenkontexte.at(0)?.organisation.id).toEqual(organisation.id);
+            expect(personenkontexte.at(0)?.rolle.id).toEqual(rolle.id);
         });
     });
 

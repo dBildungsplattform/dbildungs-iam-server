@@ -17,7 +17,7 @@ import { ZyklusInOrganisationen } from './zyklus-in-organisationen.js';
 import { KlasseNurVonSchuleAdministriert } from './klasse-nur-von-schule-administriert.js';
 import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig.js';
 import { EventModule } from '../../../core/eventbus/index.js';
-import { mapAggregateToData, OrganisationRepository } from '../persistence/organisation.repository.js';
+import { mapOrgaAggregateToData, OrganisationRepository } from '../persistence/organisation.repository.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationsOnSameSubtree } from './organisations-on-same-subtree.js';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -82,7 +82,7 @@ describe('OrganisationSpecificationTests', () => {
         await orm.em.persistAndFlush(
             orm.em.create(
                 OrganisationEntity,
-                mapAggregateToData(
+                mapOrgaAggregateToData(
                     DoFactory.createOrganisation(false, {
                         id: repo.ROOT_ORGANISATION_ID,
                         name: 'Root',

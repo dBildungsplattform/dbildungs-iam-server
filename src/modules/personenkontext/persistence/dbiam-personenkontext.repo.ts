@@ -11,11 +11,22 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { mapOrgaEntityToAggregate } from '../../organisation/persistence/organisation.repository.js';
+import { mapRolleEntityToAggregate } from '../../rolle/repo/rolle.repo.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
     rollenart?: RollenArt;
     kennung?: string;
+};
+
+export type KontextWithOrgaAndRolle = {
+    personenkontext: Personenkontext<true>;
+    organisation: Organisation<true>;
+    rolle: Rolle<true>;
 };
 
 export type ExternalPkDataLoaded = Loaded<
@@ -52,6 +63,7 @@ export class DBiamPersonenkontextRepo {
     public constructor(
         private readonly em: EntityManager,
         private readonly personenkontextFactory: PersonenkontextFactory,
+        protected readonly rolleFactory: RolleFactory,
     ) {}
 
     public async findByID(id: string): Promise<Option<Personenkontext<true>>> {
@@ -100,6 +112,20 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map((pk: PersonenkontextEntity) =>
             mapEntityToAggregate(pk, this.personenkontextFactory),
         );
+    }
+
+    public async findByPersonWithOrgaAndRolle(personId: PersonID): Promise<Array<KontextWithOrgaAndRolle>> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(
+            PersonenkontextEntity,
+            { personId },
+            { populate: ['organisationId', 'rolleId'] },
+        );
+
+        return personenKontexte.map((pk: PersonenkontextEntity) => ({
+            personenkontext: mapEntityToAggregate(pk, this.personenkontextFactory),
+            organisation: mapOrgaEntityToAggregate(pk.organisationId.unwrap()),
+            rolle: mapRolleEntityToAggregate(pk.rolleId.unwrap(), this.rolleFactory),
+        }));
     }
 
     /**

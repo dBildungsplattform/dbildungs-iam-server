@@ -16,16 +16,15 @@ import { Person } from '../../domain/person.js';
 import { PersonInfoResponse } from './person-info.response.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { SchulConnexValidationErrorFilter } from '../../../../shared/error/schulconnex-validation-error.filter.js';
-import { PersonApiMapper } from '../../mapper/person-api.mapper.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
-import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import {
+    DBiamPersonenkontextRepo,
+    KontextWithOrgaAndRolle,
+} from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../person-email-response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
-import { Organisation } from '../../../organisation/domain/organisation.js';
-import { PersonenkontextResponse } from '../../../personenkontext/api/response/personenkontext.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()
@@ -38,7 +37,6 @@ export class PersonInfoController {
         private readonly personRepo: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly emailRepo: EmailRepo,
-        private readonly mapper: PersonApiMapper,
     ) {
         this.logger.info(`Creating ${PersonInfoController.name}`);
     }
@@ -57,20 +55,13 @@ export class PersonInfoController {
             );
         }
 
-        const [email, kontexte]: [Option<PersonEmailResponse>, Personenkontext<true>[]] = await Promise.all([
-            this.emailRepo.getEmailAddressAndStatusForPerson(person),
-            this.dBiamPersonenkontextRepo.findByPerson(personId),
-        ]);
+        const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
+            await Promise.all([
+                this.emailRepo.getEmailAddressAndStatusForPerson(person),
+                this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
+            ]);
 
-        const kontextResponses: PersonenkontextResponse[] = await Promise.all(
-            kontexte.map((kontext: Personenkontext<true>) => this.mapper.mapToPersonenkontextResponse(kontext)),
-        );
-
-        const dienststellen: string[] = (
-            await Promise.all(kontexte.map((kontext: Personenkontext<true>) => kontext.getOrganisation()))
-        ).flatMap((orga: Option<Organisation<true>>) => (orga?.kennung ? [orga.kennung] : []));
-
-        return PersonInfoResponse.createNew(person, kontextResponses, dienststellen, email);
+        return PersonInfoResponse.createNew(person, kontexteWithOrgaAndRolle, email);
     }
 
     @Version('1')
@@ -89,19 +80,12 @@ export class PersonInfoController {
             );
         }
 
-        const [email, kontexte]: [Option<PersonEmailResponse>, Personenkontext<true>[]] = await Promise.all([
-            this.emailRepo.getEmailAddressAndStatusForPerson(person),
-            this.dBiamPersonenkontextRepo.findByPerson(personId),
-        ]);
+        const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
+            await Promise.all([
+                this.emailRepo.getEmailAddressAndStatusForPerson(person),
+                this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
+            ]);
 
-        const kontextResponses: PersonenkontextResponse[] = await Promise.all(
-            kontexte.map((kontext: Personenkontext<true>) => this.mapper.mapToPersonenkontextResponse(kontext)),
-        );
-
-        const dienststellen: string[] = (
-            await Promise.all(kontexte.map((kontext: Personenkontext<true>) => kontext.getOrganisation()))
-        ).flatMap((orga: Option<Organisation<true>>) => (orga?.kennung ? [orga.kennung] : []));
-
-        return PersonInfoResponseV1.createNew(person, kontextResponses, dienststellen, email);
+        return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email);
     }
 }
