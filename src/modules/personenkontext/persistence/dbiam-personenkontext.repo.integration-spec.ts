@@ -47,6 +47,7 @@ import {
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;
@@ -105,6 +106,7 @@ describe('dbiam Personenkontext Repo', () => {
                 RolleRepo,
                 ServiceProviderRepo,
                 PersonenkontextFactory,
+                EntityAggregateMapper,
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({
