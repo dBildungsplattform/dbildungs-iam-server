@@ -56,14 +56,13 @@ export class EventDiscoveryService {
                 );
             });
 
-            // remove kafka handlermethods from results where method and parentclass matches
             results.forEach((result: HandlerMethod) => {
                 kafkaResults.forEach((kafkaResult: HandlerMethod) => {
                     if (
                         result.discoveredMethod.methodName === kafkaResult.discoveredMethod.methodName &&
                         result.discoveredMethod.parentClass.name === kafkaResult.discoveredMethod.parentClass.name
                     ) {
-                        const index = results.indexOf(result);
+                        const index: number = results.indexOf(result);
                         results.splice(index, 1);
                     }
                 });

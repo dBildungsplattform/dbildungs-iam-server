@@ -1,8 +1,8 @@
 import { EmailAddressChangedEvent } from './email-address-changed.event.js';
-import { KafkaEvent } from './kafka-event';
+import { KafkaEvent } from './kafka-event.js';
 
 export class KafkaEmailAddressChangedEvent extends EmailAddressChangedEvent implements KafkaEvent {
-    getPersonID(): string {
+    public getPersonID(): string {
         return this.personId;
     }
 }

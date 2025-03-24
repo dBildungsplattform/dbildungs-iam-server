@@ -1,8 +1,8 @@
 import { EmailAddressGeneratedEvent } from './email-address-generated.event.js';
-import { KafkaEvent } from './kafka-event';
+import { KafkaEvent } from './kafka-event.js';
 
 export class KafkaEmailAddressGeneratedEvent extends EmailAddressGeneratedEvent implements KafkaEvent {
-    getPersonID(): string {
+    public getPersonID(): string {
         return this.personId;
     }
 }

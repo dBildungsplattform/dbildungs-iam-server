@@ -10,13 +10,20 @@ import { KafkaEvent } from '../../../shared/events/kafka-event.js';
 @Injectable()
 export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     private readonly handlerMap: Map<Constructor<BaseEvent>, EventHandlerType<BaseEvent>> = new Map();
+
     private readonly kafka: Kafka;
+
     private readonly consumer: Consumer;
+
     private readonly producer: Producer;
 
     public constructor(private readonly logger: ClassLogger) {
         this.kafka = new Kafka({ ssl: undefined, brokers: ['localhost:9094'] });
-        this.consumer = this.kafka.consumer({ groupId: 'my-group', sessionTimeout: 60000, heartbeatInterval: 10000 });
+        this.consumer = this.kafka.consumer({
+            groupId: 'nestjs-kafka',
+            sessionTimeout: 30000,
+            heartbeatInterval: 10000,
+        });
         this.producer = this.kafka.producer();
     }
 
@@ -48,8 +55,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     }
 
     public async handleMessage(message: KafkaMessage): Promise<void> {
-        const personId = message.key?.toString();
-        const eventKey = message.headers?.['eventKey']?.toString();
+        const personId: string | undefined = message.key?.toString();
+        const eventKey: string | undefined = message.headers?.['eventKey']?.toString();
         if (!eventKey) {
             this.logger.error('Event type header is missing');
             return;
@@ -79,15 +86,17 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     }
 
     public async publish(event: KafkaEvent): Promise<void> {
-        const eventType = event.constructor.name;
-        const eventKey = Object.keys(KafkaEventMapping).find((key) => KafkaEventMapping[key] === event.constructor);
+        const eventType: string | undefined = event.constructor.name;
+        const eventKey: string | undefined = Object.keys(KafkaEventMapping).find(
+            (key: string) => KafkaEventMapping[key] === event.constructor,
+        );
 
         if (!eventKey) {
             this.logger.error(`No mapping found for event type: ${eventType}`);
             return;
         }
 
-        let personId: string = event.getPersonID();
+        const personId: string = event.getPersonID();
 
         this.logger.info(`Publishing event to kafka for ${personId}: ${eventType}`);
         try {

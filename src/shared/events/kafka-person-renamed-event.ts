@@ -1,10 +1,10 @@
-import { Person } from '../../modules/person/domain/person';
-import { PersonReferrer } from '../types';
-import { KafkaEvent } from './kafka-event';
+import { Person } from '../../modules/person/domain/person.js';
+import { PersonReferrer } from '../types/aggregate-ids.types.js';
+import { KafkaEvent } from './kafka-event.js';
 import { PersonRenamedEvent } from './person-renamed-event.js';
 
 export class KafkaPersonRenamedEvent extends PersonRenamedEvent implements KafkaEvent {
-    getPersonID(): string {
+    public getPersonID(): string {
         return this.personId;
     }
 
