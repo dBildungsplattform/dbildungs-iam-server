@@ -1,4 +1,2 @@
-user.created
-user.deleted
-user.locked
-user.modified
+spsh-user-topic
+dlq

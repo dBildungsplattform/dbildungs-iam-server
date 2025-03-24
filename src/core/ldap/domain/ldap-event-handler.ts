@@ -16,6 +16,13 @@ import { EmailAddressChangedEvent } from '../../../shared/events/email-address-c
 import { EventService } from '../../eventbus/services/event.service.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { KafkaEventHandler } from '../../eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
+import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/kafka-email-address-generated.event.js';
+import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -37,6 +44,7 @@ export class LdapEventHandler {
         return { ok: false, error: new LdapEmailDomainError() };
     }
 
+    @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(
@@ -48,6 +56,7 @@ export class LdapEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaPersonCreatedEvent)
     @EventHandler(PersonenkontextCreatedMigrationEvent)
     public async handlePersonenkontextCreatedMigrationEvent(
         event: PersonenkontextCreatedMigrationEvent,
@@ -136,6 +145,7 @@ export class LdapEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaPersonRenamedEvent)
     @EventHandler(PersonRenamedEvent)
     public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
         this.logger.info(
@@ -156,6 +166,7 @@ export class LdapEventHandler {
         this.eventService.publish(LdapPersonEntryRenamedEvent.fromPersonRenamedEvent(event));
     }
 
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
@@ -245,6 +256,7 @@ export class LdapEventHandler {
         );
     }
 
+    @KafkaEventHandler(KafkaEmailAddressGeneratedEvent)
     @EventHandler(EmailAddressGeneratedEvent)
     public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
@@ -254,6 +266,7 @@ export class LdapEventHandler {
         await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.referrer, event.address);
     }
 
+    @KafkaEventHandler(KafkaEmailAddressChangedEvent)
     @EventHandler(EmailAddressChangedEvent)
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
         this.logger.info(

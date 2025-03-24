@@ -113,6 +113,7 @@
     },
     "FEATUREFLAG": {
         "FEATURE_FLAG_ROLLE_BEARBEITEN": false,
-        "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true
+        "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true,
+        "FEATURE_FLAG_USE_KAFKA": true
     }
 }
