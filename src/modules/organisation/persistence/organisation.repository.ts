@@ -1,36 +1,36 @@
 import {
+    EntityDictionary,
     EntityManager,
     Loaded,
     QBFilterQuery,
     QueryBuilder,
+    QueryOrder,
     RequiredEntityData,
     SelectQueryBuilder,
-    EntityDictionary,
-    QueryOrder,
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { Organisation } from '../domain/organisation.js';
-import { OrganisationEntity } from './organisation.entity.js';
-import { OrganisationScope } from './organisation.scope.js';
-import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
-import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
-import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
-import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
+import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
+import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
+import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { OrganisationEntity } from './organisation.entity.js';
+import { OrganisationScope } from './organisation.scope.js';
 
 export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -487,6 +487,17 @@ export class OrganisationRepository {
             );
             return error;
         }
+        if (
+            !(organisationFound.typ === OrganisationsTyp.KLASSE || organisationFound.typ === OrganisationsTyp.TRAEGER)
+        ) {
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'Only the name of Klassen or Schulträger can be updated.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation ${organisationFound.name} zu verändern. Fehler: ${error.message}`,
+            );
+            return error;
+        }
 
         let parentName: string | undefined;
         let parentId: string | undefined;
@@ -518,47 +529,27 @@ export class OrganisationRepository {
                 }
                 parentId = schule.id;
             }
-        } else if (organisationFound.typ === OrganisationsTyp.TRAEGER) {
-            // Handle Schulträger
-            const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
-                await this.findRootDirectChildren();
-            if (
-                organisationFound.administriertVon !== oeffentlich?.id &&
-                organisationFound.administriertVon !== ersatz?.id
-            ) {
-                const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                    'The Schulträger must be a direct child of either Öffentliche or Ersatz.',
-                ]);
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht den Namen eines Schulträgers zu ${newName} zu verändern. Fehler: ${error.message}`,
-                );
-                return error;
-            }
-        } else {
-            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'Only the name of Klassen or Schulträger can be updated.',
-            ]);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation ${organisationFound.name} zu verändern. Fehler: ${error.message}`,
-            );
-            return error;
         }
-
         if (organisationFound.name !== newName) {
             organisationFound.name = newName;
             // Call the appropriate specification check based on the type
             let specificationError: undefined | OrganisationSpecificationError;
             if (organisationFound.typ === OrganisationsTyp.KLASSE) {
                 specificationError = await organisationFound.checkKlasseSpecifications(this);
+                if (specificationError) {
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${specificationError.message}`,
+                    );
+                    return specificationError;
+                }
             } else if (organisationFound.typ === OrganisationsTyp.TRAEGER) {
                 specificationError = await organisationFound.checkSchultraegerSpecifications(this);
-            }
-
-            if (specificationError) {
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation ${organisationFound.name} (${parentName}) zu verändern. Fehler: ${specificationError.message}`,
-                );
-                return specificationError;
+                if (specificationError) {
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen eines Schulträgers zu ${newName} zu verändern. Fehler: ${specificationError?.message}`,
+                    );
+                    return specificationError;
+                }
             }
         }
 

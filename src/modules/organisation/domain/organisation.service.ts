@@ -42,6 +42,9 @@ import { OrganisationsOnDifferentSubtreesError } from '../specification/error/or
 import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
+import { TraegerNameUniqueInSubtree } from '../specification/traeger-name-unique-in-subtree.js';
+import { TraegerUnterRootChild } from '../specification/traeger-unter-root-child.js';
+import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
 
 @Injectable()
 export class OrganisationService {
@@ -457,24 +460,16 @@ export class OrganisationService {
             return { ok: true, value: undefined };
         }
 
-        // Find the root children (oeffentlich and ersatz)
-        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
-            await this.organisationRepo.findRootDirectChildren();
+        const traegerUnterRootChild: TraegerUnterRootChild<false> = new TraegerUnterRootChild(this.organisationRepo);
+        if (!(await traegerUnterRootChild.isSatisfiedBy(organisationDo))) {
+            return { ok: false, error: new TraegerUnterRootChildError(organisationDo.id ?? undefined) };
+        }
 
-        // Retrieve all child organizations of the root children
-        const rootChildrenIds: string[] = [];
-        if (oeffentlich) rootChildrenIds.push(oeffentlich.id);
-        if (ersatz) rootChildrenIds.push(ersatz.id);
-
-        const allChildOrgas: Organisation<true>[] = await this.organisationRepo.findChildOrgasForIds(rootChildrenIds);
-
-        // Check if any child organization is a Schulträger with the same name
-        for (const childOrga of allChildOrgas) {
-            if (childOrga.typ === OrganisationsTyp.TRAEGER && childOrga.id !== organisationDo.id) {
-                if (childOrga.name === organisationDo.name) {
-                    return { ok: false, error: new SchultraegerNameEindeutigError(organisationDo.id ?? undefined) };
-                }
-            }
+        const traegerNameUniqueInSubtree: TraegerNameUniqueInSubtree<false> = new TraegerNameUniqueInSubtree(
+            this.organisationRepo,
+        );
+        if (!(await traegerNameUniqueInSubtree.isSatisfiedBy(organisationDo))) {
+            return { ok: false, error: new SchultraegerNameEindeutigError(organisationDo.id ?? undefined) };
         }
 
         return { ok: true, value: undefined };

@@ -9,6 +9,9 @@ import { KennungForOrganisationWithTrailingSpaceError } from '../specification/e
 import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { OrganisationsTyp, Traegerschaft } from './organisation.enums.js';
 import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
+import { TraegerNameUniqueInSubtree } from '../specification/traeger-name-unique-in-subtree.js';
+import { TraegerUnterRootChild } from '../specification/traeger-unter-root-child.js';
+import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
 
 export class Organisation<WasPersisted extends boolean> {
     private constructor(
@@ -131,8 +134,19 @@ export class Organisation<WasPersisted extends boolean> {
             return validationError;
         }
 
-        // The name is unique among other Schulträger under Land
-        if (!(await this.validateSchultraegerNameIsUnique(organisationRepository))) {
+        const traegerUnterRootChild: TraegerUnterRootChild<WasPersisted> = new TraegerUnterRootChild(
+            organisationRepository,
+        );
+        if (!(await traegerUnterRootChild.isSatisfiedBy(this))) {
+            if (this.id) {
+                return new TraegerUnterRootChildError(this.id);
+            }
+        }
+
+        const traegerNameUniqueInSubtree: TraegerNameUniqueInSubtree<WasPersisted> = new TraegerNameUniqueInSubtree(
+            organisationRepository,
+        );
+        if (!(await traegerNameUniqueInSubtree.isSatisfiedBy(this))) {
             if (this.id) {
                 return new SchultraegerNameEindeutigError(this.id);
             }
@@ -154,35 +168,6 @@ export class Organisation<WasPersisted extends boolean> {
             }
         }
         return true;
-    }
-
-    private async validateSchultraegerNameIsUnique(organisationRepository: OrganisationRepository): Promise<boolean> {
-        // Only validate for Schulträger
-        if (this.typ !== OrganisationsTyp.TRAEGER) return true;
-
-        if (!this.name) return false; // Name is required for Schulträger
-
-        // Step 1: Find the root children (oeffentlich and ersatz)
-        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
-            await organisationRepository.findRootDirectChildren();
-
-        // Step 2: Retrieve all child organizations of the root children. Schulen could also be under Land so we need to filter out everything that is not of Type TRAEGER after this
-        const rootChildrenIds: string[] = [];
-        if (oeffentlich) rootChildrenIds.push(oeffentlich.id);
-        if (ersatz) rootChildrenIds.push(ersatz.id);
-
-        const allChildOrgas: Organisation<true>[] = await organisationRepository.findChildOrgasForIds(rootChildrenIds);
-
-        // Step 3: Check if any child organization is a Schulträger with the same name
-        for (const childOrga of allChildOrgas) {
-            if (childOrga.typ === OrganisationsTyp.TRAEGER && childOrga.id !== this.id) {
-                if (childOrga.name === this.name) {
-                    return false;
-                }
-            }
-        }
-
-        return true; // Name is unique
     }
 
     private validateFieldNames(): void | OrganisationSpecificationError {
