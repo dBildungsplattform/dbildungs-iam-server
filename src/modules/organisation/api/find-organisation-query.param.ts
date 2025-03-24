@@ -86,7 +86,7 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
         required: false,
         nullable: true,
         isArray: true,
-        description: 'Liefert die Kinderorganisation die den IDs hier zugehören.',
+        description: 'Liefert die Kind-Organisationen, die den angegebenen IDs zugehörig sind.',
     })
     public readonly zugehoerigZu?: string[];
 
