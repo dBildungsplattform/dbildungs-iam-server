@@ -1,13 +1,11 @@
-import { AutoMap } from '@automapper/classes';
-import { PagedQueryParams } from '../../../shared/paging/index.js';
-import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationsTyp, OrganisationsTypName } from '../domain/organisation.enums.js';
-import { RollenSystemRecht, RollenSystemRechtTypName } from '../../rolle/domain/rolle.enums.js';
+import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
+import { RollenSystemRecht, RollenSystemRechtTypName } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationsTyp, OrganisationsTypName } from '../domain/organisation.enums.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
-    @AutoMap()
     @IsString()
     @IsOptional()
     @ApiProperty({
@@ -16,7 +14,6 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly kennung?: string;
 
-    @AutoMap()
     @IsString()
     @IsOptional()
     @ApiProperty({
@@ -25,7 +22,6 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly name?: string;
 
-    @AutoMap()
     @IsString()
     @IsOptional()
     @ApiProperty({
@@ -34,7 +30,6 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly searchString?: string;
 
-    @AutoMap(() => String)
     @IsEnum(OrganisationsTyp)
     @IsOptional()
     @ApiProperty({
@@ -46,7 +41,6 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly typ?: OrganisationsTyp;
 
-    @AutoMap(() => String)
     @IsOptional()
     @TransformToArray()
     @IsEnum(RollenSystemRecht, { each: true })
@@ -60,7 +54,6 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly systemrechte: RollenSystemRecht[] = [];
 
-    @AutoMap(() => String)
     @IsOptional()
     @TransformToArray()
     @IsEnum(OrganisationsTyp, { each: true })
@@ -74,7 +67,6 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly excludeTyp?: OrganisationsTyp[];
 
-    @AutoMap()
     @IsOptional()
     @TransformToArray()
     @ArrayUnique()
@@ -86,7 +78,6 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly administriertVon?: string[];
 
-    @AutoMap(() => String)
     @IsOptional()
     @TransformToArray()
     @ArrayUnique()
@@ -99,7 +90,6 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
     })
     public readonly zugehoerigZu?: string[];
 
-    @AutoMap(() => String)
     @IsOptional()
     @TransformToArray()
     @ArrayUnique()
