@@ -18,7 +18,6 @@ import { Organisation } from '../../organisation/domain/organisation.js';
  * and ensure consistency across domain boundaries.
  */
 
-
 @Injectable()
 export class EntityAggregateMapper {
     public constructor(protected readonly rolleFactory: RolleFactory) {}

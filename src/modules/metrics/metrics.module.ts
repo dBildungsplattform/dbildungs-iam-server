@@ -15,7 +15,6 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
             useValue: new Registry(),
         },
         DBiamPersonenkontextRepo,
-        
     ],
     exports: [MetricsService, Registry],
 })

@@ -107,7 +107,7 @@ import { MapperModule } from '../modules/person/mapper/mapper.module.js';
         SpshConfigModule,
         VidisModule,
         MeldungModule,
-        MapperModule
+        MapperModule,
     ],
     providers: [
         {

@@ -1590,7 +1590,10 @@ describe('OrganisationRepository', () => {
             if (orgaToFind instanceof DomainError) {
                 return;
             }
-            const mappedOrgaToFind: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaToFind));
+            const mappedOrgaToFind: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapOrgaAggregateToData(orgaToFind),
+            );
             await em.persistAndFlush(mappedOrgaToFind);
             orgas.push(mappedOrgaToFind);
 
@@ -1634,7 +1637,10 @@ describe('OrganisationRepository', () => {
             if (orgaToFind instanceof DomainError) {
                 return;
             }
-            const mappedOrgaToFind: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaToFind));
+            const mappedOrgaToFind: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapOrgaAggregateToData(orgaToFind),
+            );
             await em.persistAndFlush(mappedOrgaToFind);
             orgas.push(mappedOrgaToFind);
 
@@ -1679,7 +1685,10 @@ describe('OrganisationRepository', () => {
             if (orgaToFind instanceof DomainError) {
                 return;
             }
-            const mappedOrgaToFind: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaToFind));
+            const mappedOrgaToFind: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapOrgaAggregateToData(orgaToFind),
+            );
             await em.persistAndFlush(mappedOrgaToFind);
             orgas.push(mappedOrgaToFind);
 

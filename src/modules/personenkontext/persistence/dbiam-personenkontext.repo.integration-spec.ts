@@ -9,7 +9,12 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { Personenkontext, mapAggregateToPartial } from '../domain/personenkontext.js';
-import { DBiamPersonenkontextRepo, ExternalPkData, KontextWithOrgaAndRolle, RollenCount } from './dbiam-personenkontext.repo.js';
+import {
+    DBiamPersonenkontextRepo,
+    ExternalPkData,
+    KontextWithOrgaAndRolle,
+    RollenCount,
+} from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
 import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
