@@ -1,4 +1,7 @@
+import { uniq } from 'lodash-es';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Person } from '../../person/domain/person.js';
@@ -7,8 +10,6 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 export type PersonFields = Pick<
     Person<true>,
@@ -176,8 +177,11 @@ export class PersonPermissions implements IPersonPermissions {
             const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
                 personKontextFields.map((pk: PersonKontextFields) => pk.rolleId),
             );
-            const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds(
+            const organisationenIds: Array<OrganisationID> = uniq(
                 personKontextFields.map((pk: PersonKontextFields) => pk.organisationId),
+            );
+            const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds(
+                organisationenIds,
             );
 
             this.cachedRollenFields = [];
