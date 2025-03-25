@@ -89,8 +89,9 @@ describe('PersonDeleteService', () => {
                 );
 
                 expect(res.ok).toBeFalsy();
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining('Error while loading Kontexts of person to delete'),
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    'Error while loading Kontexts of person to delete',
+                    undefined
                 );
             });
         });
@@ -112,8 +113,9 @@ describe('PersonDeleteService', () => {
                 );
 
                 expect(res.ok).toBeFalsy();
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining('Error while loading Kontexts of person to delete'),
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    'Error while loading Kontexts of person to delete',
+                    'reason',
                 );
             });
         });

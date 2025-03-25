@@ -50,7 +50,11 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                             req.passportUser.userinfo = await this.client.userinfo(tokens);
                         }
                     } catch (e: unknown) {
-                        this.logger.logUnknownAsError('Refreshing Token Failed', e);
+                        if (e instanceof Error) {
+                            this.logger.warning(e.message);
+                        } else {
+                            this.logger.warning('Refreshing Token Failed With Unknown Catch', e);
+                        }
                     }
                 } else {
                     req.logout((err: unknown) => {

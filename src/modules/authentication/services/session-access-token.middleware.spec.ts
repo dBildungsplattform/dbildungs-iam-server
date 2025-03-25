@@ -231,7 +231,10 @@ describe('sessionAccessTokenMiddleware', () => {
                     jest.fn(),
                 );
 
-                expect(loggerMock.warning).toHaveBeenCalledWith('"Something went seriously wrong"');
+                expect(loggerMock.warning).toHaveBeenCalledWith(
+                    'Refreshing Token Failed With Unknown Catch',
+                    'Something went seriously wrong',
+                );
             });
         });
     });

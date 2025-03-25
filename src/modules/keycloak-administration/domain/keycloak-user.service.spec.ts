@@ -998,7 +998,10 @@ describe('KeycloakUserService', () => {
 
                 await service.assignRealmGroupsToUser(user.id, groupNames);
 
-                expect(loggerMock.error).toHaveBeenCalled();
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining(`Failed to assign groups for user ${user.id}`),
+                    error,
+                );
             });
         });
         describe('when an error occurs during group assignment', () => {
@@ -1028,7 +1031,8 @@ describe('KeycloakUserService', () => {
                 const result: Result<void, DomainError> = await service.assignRealmGroupsToUser(user.id, groupNames);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Failed to assign groups for user ${user.id}: ${JSON.stringify(error)}`,
+                    expect.stringContaining(`Failed to assign groups for user ${user.id}`),
+                    error,
                 );
 
                 expect(result).toStrictEqual({

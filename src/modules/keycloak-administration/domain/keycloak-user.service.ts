@@ -512,7 +512,7 @@ export class KeycloakUserService {
             /* eslint-disable no-await-in-loop */
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.logUnknownAsError(`Failed to ${action} groups for user ${userId}`, err);
+            this.logger.error(`Failed to ${action} groups for user ${userId}`, err);
             return { ok: false, error: new KeycloakClientError(`Failed to ${action} groups`) };
         }
     }
