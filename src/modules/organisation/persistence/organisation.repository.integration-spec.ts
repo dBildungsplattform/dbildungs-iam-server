@@ -29,6 +29,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
 import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
+import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -1118,6 +1119,7 @@ describe('OrganisationRepository', () => {
 
                     const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                         typ: OrganisationsTyp.TRAEGER,
+                        zugehoerigZu: savedParent.id ?? '',
                         administriertVon: savedParent.id ?? '',
                     });
                     const savedSchultraeger: Organisation<true> = await sut.save(schultraeger);
@@ -1129,33 +1131,31 @@ describe('OrganisationRepository', () => {
                         permissionsMock,
                     );
 
-                    expect(result).toEqual(
-                        new EntityCouldNotBeUpdated('Organisation', savedSchultraeger.id, [
-                            'The Schulträger must be a direct child of either Öffentliche or Ersatz.',
-                        ]),
-                    );
+                    expect(result).toBeInstanceOf(TraegerUnterRootChildError);
                 });
             });
 
             describe('when Schulträger name is not unique', () => {
                 it('should return SchultraegerNameEindeutigError', async () => {
+                    const name: string = 'Existing Traeger';
                     const existingSchultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                         typ: OrganisationsTyp.TRAEGER,
                         administriertVon: savedOeffentlich.id,
-                        name: 'ExistingName1',
+                        zugehoerigZu: savedOeffentlich.id,
+                        name,
                     });
                     await sut.save(existingSchultraeger);
 
                     const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                         typ: OrganisationsTyp.TRAEGER,
                         administriertVon: savedOeffentlich.id,
-                        name: 'ExistingName',
+                        zugehoerigZu: savedOeffentlich.id,
                     });
                     const savedSchultraeger: Organisation<true> = await sut.save(schultraeger);
 
                     const result: DomainError | Organisation<true> = await sut.updateOrganisationName(
                         savedSchultraeger.id,
-                        'ExistingName1',
+                        name,
                         1,
                         permissionsMock,
                     );
