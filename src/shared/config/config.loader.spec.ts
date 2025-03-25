@@ -29,6 +29,7 @@ describe('configloader', () => {
                 FEATUREFLAG: {
                     FEATURE_FLAG_ROLLE_BEARBEITEN: true,
                     FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: true,
+                    FEATURE_FLAG_USE_KAFKA: false,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -104,6 +105,15 @@ describe('configloader', () => {
                 HEADER_API_KEY: {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
+                KAFKA: {
+                    BROKER: 'localhost:9094',
+                    TOPIC_PREFIX: 'local.',
+                    USER_TOPIC: 'spsh-user-topic',
+                    DLQ_TPOIC: 'spsh-dlq-topic',
+                    GROUP_ID: 'nestjs-kafka',
+                    SESSION_TIMEOUT: 30000,
+                    HEARTBEAT_INTERVAL: 10000,
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -167,6 +177,7 @@ describe('configloader', () => {
                 FEATUREFLAG: {
                     FEATURE_FLAG_ROLLE_BEARBEITEN: true,
                     FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: true,
+                    FEATURE_FLAG_USE_KAFKA: false,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -249,6 +260,15 @@ describe('configloader', () => {
                 },
                 HEADER_API_KEY: {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
+                },
+                KAFKA: {
+                    BROKER: 'localhost:9094',
+                    TOPIC_PREFIX: 'local.',
+                    USER_TOPIC: 'spsh-user-topic',
+                    DLQ_TPOIC: 'spsh-dlq-topic',
+                    GROUP_ID: 'nestjs-kafka',
+                    SESSION_TIMEOUT: 30000,
+                    HEARTBEAT_INTERVAL: 10000,
                 },
             };
 
