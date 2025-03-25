@@ -78,9 +78,16 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
     describe.each([['oeffentlich' as SubtreeType], ['ersatz' as SubtreeType]])(
         'when looking at %s subtree',
         (subtreeType: SubtreeType) => {
+            let root: Organisation<true>;
             let parent: Organisation<true>;
             beforeEach(() => {
-                parent = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER });
+                root = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.ROOT });
+                parent = DoFactory.createOrganisation(true, {
+                    typ: OrganisationsTyp.LAND,
+                    administriertVon: root.id,
+                    zugehoerigZu: root.id,
+                });
+                orgaRepoMock.findById.mockResolvedValueOnce(root);
                 if (subtreeType === 'oeffentlich') {
                     orgaRepoMock.findRootDirectChildren.mockResolvedValueOnce([parent, undefined]);
                 } else {
@@ -112,6 +119,26 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
                     orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(!expected);
                     await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(expected);
                 });
+            });
+
+            it('when traeger is not part of the subtree, it should return true', async () => {
+                const traeger: Organisation<true> = DoFactory.createOrganisation(true, {
+                    typ: OrganisationsTyp.TRAEGER,
+                    zugehoerigZu: '',
+                });
+                orgaRepoMock.findBy.mockResolvedValueOnce([
+                    [
+                        traeger,
+                        DoFactory.createOrganisation(true, {
+                            name: traeger.name,
+                            typ: OrganisationsTyp.TRAEGER,
+                            administriertVon: parent.id,
+                            zugehoerigZu: parent.id,
+                        }),
+                    ],
+                    2,
+                ]);
+                await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(true);
             });
         },
     );

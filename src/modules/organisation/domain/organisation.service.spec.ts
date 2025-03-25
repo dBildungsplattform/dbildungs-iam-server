@@ -30,6 +30,7 @@ import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-
 import { OrganisationsTyp, RootDirectChildrenType } from './organisation.enums.js';
 import { Organisation } from './organisation.js';
 import { OrganisationService } from './organisation.service.js';
+import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -436,6 +437,35 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new SchultraegerNameEindeutigError(),
+            });
+        });
+
+        it('should return a domain error if Schulträger is not under a root child', async () => {
+            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+            organisationRepositoryMock.exists.mockResolvedValue(true);
+
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                typ: OrganisationsTyp.TRAEGER,
+            });
+
+            // mock root nodes for specification
+            organisationRepositoryMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisationAggregate(true, { typ: OrganisationsTyp.ROOT }),
+            );
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValue([oeffentlich, undefined]);
+
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                schultraeger,
+                permissionsMock,
+            );
+
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new TraegerUnterRootChildError(),
             });
         });
     });
