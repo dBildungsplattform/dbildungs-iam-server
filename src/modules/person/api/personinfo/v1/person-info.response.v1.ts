@@ -14,7 +14,7 @@ export class PersonInfoResponseV1 extends PersonInfoResponse {
     ): PersonInfoResponseV1 {
         const dienststellen: string[] = kontexteWithOrgaAndRolle
             .map((k: KontextWithOrgaAndRolle) => k.organisation.kennung)
-            .filter((dnr: string | undefined): dnr is string => dnr !== undefined);
+            .filter((dnr: string | undefined) => dnr != null);
 
         const nestedPerson: PersonNestedInPersonInfoResponse = PersonNestedInPersonInfoResponse.createNew(
             person,

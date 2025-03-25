@@ -143,12 +143,12 @@ export class PersonInfoResponse {
 
     public static createNew(
         person: Person<true>,
-        kontexteWithOrgaAndRolle: Array<KontextWithOrgaAndRolle>,
+        kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[],
         email: PersonEmailResponse | undefined,
     ): PersonInfoResponse {
         const dienststellen: string[] = kontexteWithOrgaAndRolle
             .map((k: KontextWithOrgaAndRolle) => k.organisation.kennung)
-            .filter((dnr: string | undefined) => dnr !== undefined);
+            .filter((dnr: string | undefined) => dnr != null);
         const nestedPerson: PersonNestedInPersonInfoResponse = PersonNestedInPersonInfoResponse.createNew(
             person,
             dienststellen,
