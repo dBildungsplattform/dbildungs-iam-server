@@ -4,11 +4,12 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Controller, Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { LoggingTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { BaseEvent } from '../../../shared/events/index.js';
 import { EventHandler } from '../decorators/event-handler.decorator.js';
 import { EventDiscoveryService } from './event-discovery.service.js';
 import { EventService } from './event.service.js';
+import { KafkaEventService } from './kafka-event.service.js';
 
 class TestEvent extends BaseEvent {
     public constructor() {
@@ -40,11 +41,12 @@ describe('EventService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [LoggingTestModule, DiscoveryModule],
+            imports: [LoggingTestModule, DiscoveryModule, ConfigTestModule],
             providers: [
                 EventDiscoveryService,
                 TestProvider,
                 { provide: EventService, useValue: createMock<EventService>() },
+                { provide: KafkaEventService, useValue: createMock<KafkaEventService>() },
             ],
             controllers: [TestController],
         }).compile();
