@@ -36,7 +36,7 @@ export class EventDiscoveryService {
     }
 
     public async registerEventHandlers(): Promise<number> {
-        const results: HandlerMethod[] = await this.discoverHandlerMethods(EVENT_HANDLER_META);
+        let results: HandlerMethod[] = await this.discoverHandlerMethods(EVENT_HANDLER_META);
         const kafkaResults: HandlerMethod[] = await this.discoverHandlerMethods(KAFKA_EVENT_HANDLER_META);
 
         if (this.featureFlagConfig.FEATURE_FLAG_USE_KAFKA) {
@@ -56,15 +56,12 @@ export class EventDiscoveryService {
                 );
             });
 
-            results.forEach((result: HandlerMethod) => {
-                kafkaResults.forEach((kafkaResult: HandlerMethod) => {
-                    if (
+            results = results.filter((result: HandlerMethod) => {
+                return !kafkaResults.some((kafkaResult: HandlerMethod) => {
+                    return (
                         result.discoveredMethod.methodName === kafkaResult.discoveredMethod.methodName &&
                         result.discoveredMethod.parentClass.name === kafkaResult.discoveredMethod.parentClass.name
-                    ) {
-                        const index: number = results.indexOf(result);
-                        results.splice(index, 1);
-                    }
+                    );
                 });
             });
         }
