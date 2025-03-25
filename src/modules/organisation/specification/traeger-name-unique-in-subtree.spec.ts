@@ -21,6 +21,18 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
         await expect(sut.isSatisfiedBy(nonTraeger)).resolves.toBe(true);
     });
 
+    it('when no traeger with same name exists, it should return true', async () => {
+        const traeger: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER });
+        orgaRepoMock.findBy.mockResolvedValueOnce([[], 0]);
+        await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(true);
+    });
+
+    it('when only traeger itself has the name, it should return true', async () => {
+        const traeger: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER });
+        orgaRepoMock.findBy.mockResolvedValueOnce([[traeger], 1]);
+        await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(true);
+    });
+
     describe.each([['oeffentlich' as SubtreeType], ['ersatz' as SubtreeType]])(
         'when looking at %s subtree',
         (subtreeType: SubtreeType) => {
@@ -41,10 +53,13 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
                         typ: OrganisationsTyp.TRAEGER,
                         zugehoerigZu: label === 'direct' ? parent.id : faker.string.uuid(),
                     });
-                    if(label === 'indirect')
-                        orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
+                    if (label === 'indirect') orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
                 });
-                it('when name is unique in subtree, it should return true', async () => {
+
+                it.each([
+                    ['unique', true],
+                    ['not unique', false],
+                ])('when name is %s in subtree, it should return %s', async (_label: string, expected: boolean) => {
                     orgaRepoMock.findBy.mockResolvedValueOnce([
                         [
                             traeger,
@@ -52,12 +67,21 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
                         ],
                         1,
                     ]);
-                    orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(false);
-                    await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(true);
+                    orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(!expected);
+                    await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(expected);
+                });
+                it('when name is not unique in subtree, it should return false', async () => {
+                    orgaRepoMock.findBy.mockResolvedValueOnce([
+                        [
+                            traeger,
+                            DoFactory.createOrganisation(true, { name: traeger.name, typ: OrganisationsTyp.TRAEGER }),
+                        ],
+                        1,
+                    ]);
+                    orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
+                    await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(false);
                 });
             });
         },
     );
-
-    it('when name is not unique in subtree, it should return false', async () => {});
 });

@@ -1,4 +1,4 @@
-import { DomainError } from '../../../../shared/error';
+import { DomainError } from '../../../../shared/error/index.js';
 
 export class UnknownSubtreeError extends DomainError {
     public constructor(entityId: string, details?: unknown[] | Record<string, undefined>) {
