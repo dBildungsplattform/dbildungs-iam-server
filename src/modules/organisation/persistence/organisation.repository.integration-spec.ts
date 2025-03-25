@@ -1169,6 +1169,7 @@ describe('OrganisationRepository', () => {
                     const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
                         typ: OrganisationsTyp.TRAEGER,
                         administriertVon: savedOeffentlich.id,
+                        zugehoerigZu: savedOeffentlich.id,
                         name: 'OldName',
                     });
                     const savedSchultraeger: Organisation<true> = await sut.save(schultraeger);
