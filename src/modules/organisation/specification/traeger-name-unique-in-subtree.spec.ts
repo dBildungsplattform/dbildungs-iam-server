@@ -29,6 +29,40 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
         await expect(sut.isSatisfiedBy(traegerWithoutName)).resolves.toBe(false);
     });
 
+    type RootNode = 'ROOT' | 'OEFFENTLICH' | 'ERSATZ';
+    it.each([['ROOT' as RootNode], ['OEFFENTLICH' as RootNode], ['ERSATZ' as RootNode]])(
+        'when traeger has the same name as %s, it should return false',
+        async (duplicateNodeType: RootNode) => {
+            const root: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.ROOT,
+            });
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const ersatz: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            orgaRepoMock.findById.mockResolvedValueOnce(root);
+            orgaRepoMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, ersatz]);
+            const traeger: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.TRAEGER,
+            });
+            switch (duplicateNodeType) {
+                case 'ROOT':
+                    traeger.name = root.name;
+                    break;
+                case 'OEFFENTLICH':
+                    traeger.name = oeffentlich.name;
+                    break;
+                case 'ERSATZ':
+                    traeger.name = ersatz.name;
+                    break;
+            }
+
+            await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(false);
+        },
+    );
+
     it('when no traeger with same name exists, it should return true', async () => {
         const traeger: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER });
         orgaRepoMock.findBy.mockResolvedValueOnce([[], 0]);

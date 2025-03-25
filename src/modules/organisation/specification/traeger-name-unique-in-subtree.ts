@@ -4,9 +4,13 @@ import { Organisation } from '../domain/organisation.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 
+type RootChildren = Awaited<ReturnType<OrganisationRepository['findRootDirectChildren']>>;
+
 export class TraegerNameUniqueInSubtree<Persisted extends boolean> extends CompositeSpecification<
     Organisation<Persisted>
 > {
+    private cachedRootChildren: RootChildren = [undefined, undefined];
+
     public constructor(private readonly organisationRepository: OrganisationRepository) {
         super();
     }
@@ -14,7 +18,20 @@ export class TraegerNameUniqueInSubtree<Persisted extends boolean> extends Compo
     public override async isSatisfiedBy(t: Organisation<Persisted>): Promise<boolean> {
         if (t.typ !== OrganisationsTyp.TRAEGER) return true;
         if (!t.name) return false;
+        this.cachedRootChildren = await this.organisationRepository.findRootDirectChildren();
+        if (await this.isDuplicateOfRootNodes(t)) return false;
         return this.hasUniqueNameInSubtree(t);
+    }
+
+    private async isDuplicateOfRootNodes(t: Organisation<Persisted>): Promise<boolean> {
+        const rootOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
+            this.organisationRepository.ROOT_ORGANISATION_ID,
+        );
+        if (rootOrganisation && rootOrganisation.name === t.name) return true;
+        const [oeffentlich, ersatz]: RootChildren = this.cachedRootChildren;
+        if (oeffentlich && oeffentlich.name === t.name) return true;
+        if (ersatz && ersatz.name === t.name) return true;
+        return false;
     }
 
     private async hasUniqueNameInSubtree(t: Organisation<Persisted>): Promise<boolean> {
@@ -44,8 +61,7 @@ export class TraegerNameUniqueInSubtree<Persisted extends boolean> extends Compo
     }
 
     private async findSubtreeRoot(t: Organisation<Persisted>): Promise<Organisation<true> | undefined> {
-        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
-            await this.organisationRepository.findRootDirectChildren();
+        const [oeffentlich, ersatz]: RootChildren = this.cachedRootChildren;
         if (!t.zugehoerigZu) return;
         // test for direct children first, maybe we can return early
         if (oeffentlich && t.zugehoerigZu === oeffentlich.id) return oeffentlich;

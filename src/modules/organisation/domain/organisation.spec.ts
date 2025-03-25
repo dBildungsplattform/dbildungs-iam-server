@@ -258,9 +258,14 @@ describe('Organisation', () => {
     });
 
     describe('checkSchultraegerSpecifications', () => {
+        let root: Organisation<true>;
         let oeffentlich: Organisation<true>;
         let ersatz: Organisation<true>;
         beforeEach(() => {
+            root = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.ROOT,
+            });
+            organisationRepositoryMock.findById.mockResolvedValue(root);
             // Mock root children
             oeffentlich = DoFactory.createOrganisationAggregate(true, {
                 typ: OrganisationsTyp.LAND,
@@ -268,7 +273,7 @@ describe('Organisation', () => {
             ersatz = DoFactory.createOrganisationAggregate(true, {
                 typ: OrganisationsTyp.LAND,
             });
-            organisationRepositoryMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, ersatz]);
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValue([oeffentlich, ersatz]);
         });
 
         it('should return undefined if organization is not a Schultraeger', async () => {
@@ -315,6 +320,7 @@ describe('Organisation', () => {
         describe('TraegerNameUniqueInSubtree', () => {
             let traeger: Organisation<true>;
             beforeEach(() => {
+                jest.restoreAllMocks();
                 // Setup a unique Schultraeger
                 traeger = DoFactory.createOrganisationAggregate(true, {
                     zugehoerigZu: oeffentlich.id,
