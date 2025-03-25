@@ -6,6 +6,9 @@ import { ClassLogger } from '../../logging/class-logger.js';
 import { KafkaEventMapping } from '../types/kafka-event-mapping.js';
 import util from 'util';
 import { KafkaEvent } from '../../../shared/events/kafka-event.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { KafkaConfig } from '../../../shared/config/kafka.config.js';
 
 @Injectable()
 export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
@@ -15,14 +18,20 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
     private readonly consumer: Consumer;
 
-    private readonly producer: Producer;
+    private producer: Producer;
 
-    public constructor(private readonly logger: ClassLogger) {
-        this.kafka = new Kafka({ ssl: undefined, brokers: ['localhost:9094'] });
+    private readonly kafkaConfig: KafkaConfig;
+
+    public constructor(
+        private readonly logger: ClassLogger,
+        configService: ConfigService<ServerConfig>,
+    ) {
+        this.kafkaConfig = configService.getOrThrow<KafkaConfig>('KAFKA');
+        this.kafka = new Kafka({ brokers: [this.kafkaConfig.BROKER] });
         this.consumer = this.kafka.consumer({
-            groupId: 'nestjs-kafka',
-            sessionTimeout: 30000,
-            heartbeatInterval: 10000,
+            groupId: this.kafkaConfig.GROUP_ID,
+            sessionTimeout: this.kafkaConfig.SESSION_TIMEOUT,
+            heartbeatInterval: this.kafkaConfig.HEARTBEAT_INTERVAL,
         });
         this.producer = this.kafka.producer();
     }
@@ -31,7 +40,10 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         try {
             this.logger.info('Connecting to Kafka');
             await this.consumer.connect();
-            await this.consumer.subscribe({ topic: 'spsh-user-topic', fromBeginning: true });
+            await this.consumer.subscribe({
+                topic: this.kafkaConfig.TOPIC_PREFIX + this.kafkaConfig.USER_TOPIC,
+                fromBeginning: true,
+            });
 
             await this.consumer.run({
                 eachMessage: async ({ message }: { message: KafkaMessage }) => {
@@ -86,6 +98,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     }
 
     public async publish(event: KafkaEvent): Promise<void> {
+        await this.producer.connect();
         const eventType: string | undefined = event.constructor.name;
         const eventKey: string | undefined = Object.keys(KafkaEventMapping).find(
             (key: string) => KafkaEventMapping[key] === event.constructor,
@@ -101,7 +114,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         this.logger.info(`Publishing event to kafka for ${personId}: ${eventType}`);
         try {
             await this.producer.send({
-                topic: 'spsh-user-topic',
+                topic: this.kafkaConfig.TOPIC_PREFIX + this.kafkaConfig.USER_TOPIC,
                 messages: [{ key: personId, value: JSON.stringify(event), headers: { eventKey: eventKey } }],
             });
         } catch (err) {
