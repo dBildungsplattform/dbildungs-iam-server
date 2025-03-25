@@ -13,6 +13,7 @@ export class TraegerNameUniqueInSubtree<Persisted extends boolean> extends Compo
 
     public override async isSatisfiedBy(t: Organisation<Persisted>): Promise<boolean> {
         if (t.typ !== OrganisationsTyp.TRAEGER) return true;
+        if (!t.name) return false;
         return this.hasUniqueNameInSubtree(t);
     }
 

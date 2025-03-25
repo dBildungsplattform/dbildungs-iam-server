@@ -21,6 +21,14 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
         await expect(sut.isSatisfiedBy(nonTraeger)).resolves.toBe(true);
     });
 
+    it('when traeger has no name, it should return false', async () => {
+        const traegerWithoutName: Organisation<true> = DoFactory.createOrganisation(true, {
+            typ: OrganisationsTyp.TRAEGER,
+            name: undefined,
+        });
+        await expect(sut.isSatisfiedBy(traegerWithoutName)).resolves.toBe(false);
+    });
+
     it('when no traeger with same name exists, it should return true', async () => {
         const traeger: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.TRAEGER });
         orgaRepoMock.findBy.mockResolvedValueOnce([[], 0]);
@@ -69,17 +77,6 @@ describe('TraegerNameUniqueInSubtree Specification', () => {
                     ]);
                     orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(!expected);
                     await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(expected);
-                });
-                it('when name is not unique in subtree, it should return false', async () => {
-                    orgaRepoMock.findBy.mockResolvedValueOnce([
-                        [
-                            traeger,
-                            DoFactory.createOrganisation(true, { name: traeger.name, typ: OrganisationsTyp.TRAEGER }),
-                        ],
-                        1,
-                    ]);
-                    orgaRepoMock.isOrgaAParentOfOrgaB.mockResolvedValueOnce(true);
-                    await expect(sut.isSatisfiedBy(traeger)).resolves.toBe(false);
                 });
             });
         },
