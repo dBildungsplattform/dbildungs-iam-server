@@ -58,7 +58,7 @@ describe('PersonDeleteService', () => {
     describe('deletePerson', () => {
         describe('when error during loading of personenkontexte', () => {
             it('should log error', async () => {
-                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([createMock<Personenkontext<true>>()]);
+                personenkontextRepoMock.findByPerson.mockRejectedValueOnce(new Error('Some error'));
 
                 const res: Result<void, DomainError> = await sut.deletePerson(
                     faker.string.uuid(),
@@ -66,8 +66,9 @@ describe('PersonDeleteService', () => {
                 );
 
                 expect(res.ok).toBeFalsy();
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining('Error while loading Kontexts of person to delete'),
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    'Error while loading Kontexts of person to delete',
+                    expect.any(Error),
                 );
             });
         });
