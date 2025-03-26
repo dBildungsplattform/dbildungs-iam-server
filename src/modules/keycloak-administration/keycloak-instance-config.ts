@@ -6,12 +6,16 @@ import { KeycloakConfig, ServerConfig } from '../../shared/config/index.js';
 export class KeycloakInstanceConfig implements KeycloakConfig {
     public constructor(
         public BASE_URL: string,
+        public EXTERNAL_BASE_URL: string,
         public ADMIN_REALM_NAME: string,
         public ADMIN_CLIENT_ID: string,
         public ADMIN_SECRET: string,
+        public SERVICE_CLIENT_ID: string,
+        public SERVICE_CLIENT_PRIVATE_JWKS: string,
         public REALM_NAME: string,
         public CLIENT_ID: string,
         public CLIENT_SECRET: string,
+        public TEST_CLIENT_ID: string,
     ) {}
 
     public static fromConfigService(): Provider {
@@ -22,12 +26,16 @@ export class KeycloakInstanceConfig implements KeycloakConfig {
 
                 return new KeycloakInstanceConfig(
                     keycloakConfig.BASE_URL,
+                    keycloakConfig.EXTERNAL_BASE_URL,
                     keycloakConfig.ADMIN_REALM_NAME,
                     keycloakConfig.ADMIN_CLIENT_ID,
                     keycloakConfig.ADMIN_SECRET,
+                    keycloakConfig.SERVICE_CLIENT_ID,
+                    keycloakConfig.SERVICE_CLIENT_PRIVATE_JWKS,
                     keycloakConfig.REALM_NAME,
                     keycloakConfig.CLIENT_ID,
                     keycloakConfig.CLIENT_SECRET,
+                    keycloakConfig.TEST_CLIENT_ID,
                 );
             },
             inject: [ConfigService],

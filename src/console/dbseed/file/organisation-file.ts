@@ -1,11 +1,13 @@
 import { OrganisationsTyp, Traegerschaft } from '../../../modules/organisation/domain/organisation.enums.js';
 
 export class OrganisationFile {
-    public id!: string;
+    public id!: number;
 
-    public administriertVon?: string;
+    public overrideId?: string;
 
-    public zugehoerigZu?: string;
+    public administriertVon?: number;
+
+    public zugehoerigZu?: number;
 
     public kennung?: string;
 
@@ -18,4 +20,8 @@ export class OrganisationFile {
     public typ?: OrganisationsTyp;
 
     public traegerschaft?: Traegerschaft;
+
+    public emailDomain?: string;
+
+    public emailAdress?: string;
 }

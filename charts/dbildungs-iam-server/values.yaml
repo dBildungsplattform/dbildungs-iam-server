@@ -1,220 +1,173 @@
-dbildungsIamServerCpuMax: 2
-dbildungsIamServerMemMax: 4G
-dbildungsIamServerRedisCpuMax: 2
-dbildungsIamServerRedisMemMax: 4G
-dbildungsIamServerCpuRequest: 200m
-dbildungsIamServerMemRequest: 200Mi
-dbildungsIamServerRedisCpuRequest: 200m
-dbildungsIamServerRedisMemRequest: 200Mi
-backendHostname: ""
-keycloakHostname: ""
-imagePullPolicy: "Always"
-# Configuration of necessary secrets
-# Name of the secrets to inject
-configmap:
-  name: dbildungs-iam-server
-# If we're running inside an environment with a Prometheus-Operator installed we configure a service monitor
-enabledcontainerSecurityContext: true
-enabledbackendserviceport:  true
-enabledredisserviceport:  true
-enableServiceMonitor: false
-enabledserviceport: true
-enabledredisvolume: true
+nameOverride: ''
+fullnameOverride: ''
+namespaceOverride: ''
 
-replicaCount: 1
-image:
-  repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
-  tag: ""
-  pullPolicy: Always
-
-restartPolicy: Always
-
-database:
-  name: ""
-  db_host: ""
-  db_password: ""
-  db_username: ""
-
-auth:
-  existingSecret: ""
-  # Name of the secrets to inject
-  name: dbildungs-iam-server
-  keycloak_adminSecret: ""
-  keycloak_clientSecret: ""
-  secrets_json: ""
-  frontend_sessionSecret: ""
-
-namespace: ""
-
-environment: prod
-
-secrets:
-  name: dbildungs-iam-server
-
-service:
-  name: dbildungs-iam-server-backend
-redisservice:
-  name: redis-service
-
-dbildungsIamServer:
-  selector:
-    layer: dbildungs-iam-server
-  commonLabels:
-    name: dbildungs-iam-server
-
-backend:
-  selector:
-    layer: dbildungs-iam-server-backend
-  commonLabels:
-    name: dbildungs-iam-server-backend
-
-redis:
-  selector:
-    layer: dbildungs-iam-server-redis
-  commonLabels:
-    name: dbildungs-iam-server-redis
-
-redisservicetype: ClusterIP
-backendservicetype: ClusterIP
-
-seeding:
-  enabled: true
-  configmap: spsh-seeding-data-configmap
-  database: dev
-
-serviceMonitor:
-  namespaceSelector:
-    any: true
-  endpoints:
-    - port: "web" 
+backendHostname: ''
+keycloakHostname: 'http://dbildungs-iam-keycloak'
+keycloak2ndHostname: ""
+keycloakExternalHostname: 'spsh-xxx-keycloak.dev.spsh.dbildungsplattform.de'
+backend2ndHostname: ""
 
 containerSecurityContext:
+  enabled: true
   runAsUser: 1000
   runAsNonRoot: true
   privileged: false
   readOnlyRootFilesystem: false
   allowPrivilegeEscalation: false
   capabilities:
-    drop: ["ALL"]
+    drop: ['ALL']
   seccompProfile:
-      type: RuntimeDefault
+    type: 'RuntimeDefault'
 
-initcontainerSecurityContext:
-  allowPrivilegeEscalation: false
+restartPolicy: Always
+environment: dev
 
-containerResources:
-  requests:
-    cpu: 200m
-    memory: 200Mi
-  limits:
-    cpu: 2
-    memory: 4G
+database:
+  name: 'dbildungs_iam_server'
+  host: ''
+  password: ''
+  username: 'dbildungs_iam_server'
 
-ingress:
-  ingressClassName: nginx  
-  pathType: Prefix  
-  portnumber: 80 
-  automountServiceAccountToken: false
+ldap:
+  url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
+  oeffentlicheSchulenDomain: schule-sh.de
+  ersatzschulenDomain: ersatzschule-sh.de
+  base_dn: dc=schule-sh,dc=de
+  retryWrapperDefaultRetries: 3
 
-redisinitContainer:
-  - name: copy-tls-data
-    image: alpine
-    volumeMounts:
-      - mountPath: "/tls"
-        name: tls-data
-      - mountPath: "/data"
-        name: data
+itslearning:
+  enabled: false
+  endpoint: https://enterprise.itslintegrations.com/WCFServiceLibrary/ImsEnterpriseServicesPort.svc
+  root: sh
+  rootOeffentlich: oeffentlich
+  rootErsatz: ersatz
 
-rediscontainer: 
+privacyidea:
+  url: https://privacyidea.dev.spsh.dbildungsplattform.de
+  renameWaitingTime: 5
+  realm: ucs_users
+  userResolver: ucs_users
+
+system:
+  rename_waiting_time_in_seconds: 2
+  step_up_timeout_in_seconds: 900
+  step_up_timeout_enabled: false
+
+auth:
+  # existingSecret: Refers to a secret already present in the cluster, which is required.
+  existingSecret: ''
+  secretName: dbildungs-iam-server
+  keycloak_adminSecret: ''
+  keycloak_clientSecret: ''
+  service_account_private_jwks: ''
+  frontend_sessionSecret: ''
+  ldap_bind_dn: ''
+  ldap_admin_password: ''
+  secrets_json: ''
+  frontend_sessionSecret: ''
+  itslearning_username: ''
+  itslearning_password: ''
+  pi_admin_user: ''
+  pi_admin_password: ''
+  redis_password: ''
+  vidis_username: ''
+  vidis_password: ''
+  import_passphrase_secret: ''
+  import_passphrase_salt: ''
+  ox_password: ''
+  basic_auth_password: ''
+  redis_password: ''
+
+ox:
+  enabled: false
+  username: 'oxadmin'
+  endpoint: 'https://webmail.example.com'
+  contextId: '10'
+  contextName: '10'
+
+vidis:
+  url: 'https://service-stage.vidis.schule'
+  regionName: 'test-region'
+  keycloakGroup: 'VIDIS-service'
+  keycloakRole: 'VIDIS-user'
+
+backend:
+  replicaCount: 1
+  maxUnavailable: '50%'
+  maxSurge: '50%'
   image:
-    name: redis
-    repository: redis
-    tag: "7.2.4"
-    pullPolicy: IfNotPresent
-  volumeMounts:
-    - mountPath: "/data"
-      name: data
-  ports:
-    - name: redis-port
-      containerPort: 6379
-      protocol: TCP
-  args:
-    - "/data/tls/redis.conf"
-  livenessProbe:
-    tcpSocket:
-      port: 6379
-    initialDelaySeconds: 15
-    timeoutSeconds: 2
-  readinessProbe:
-    tcpSocket:
-      port: 6379
-    initialDelaySeconds: 5
-    timeoutSeconds: 1
+    repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    tag: ''
+    pullPolicy: Always
+  containerPorts:
+    http: 8080
+  resources:
+    limits:
+      cpu: 2
+      memory: 4G
+    requests:
+      cpu: 200m
+      memory: 200Mi
   startupProbe:
-    tcpSocket:
-      port: 6379
-    failureThreshold: 30
+    enabled: true
+    initialDelaySeconds: 10
     periodSeconds: 10
-
-redisvolumes:
-  - name: tls-data
-    configMap:
-      name: dbildungs-iam-server-redis-tls-config
-  - name: data
-    emptyDir: {}
-
-redisports:
-  - port:  6379
-    targetPort: redis-port
-    protocol: TCP
-    name: redis-port
-
-initContainers:
-  - name: db-init
-    command: ["node", "dist/src/console/main.js", "db", "init"]
-    volumeMounts:
-      - mountPath: /app/config/config.json
-        subPath: config-json
-        name: config-volume
-        readOnly: true
-      - mountPath: /app/config/secrets.json
-        subPath: secrets-json
-        name: secret-volume
-        readOnly: true
-      - mountPath: /app/sql/{{ .Values.seeding.database }}
-        name: seeding-volume
-        readOnly: true
-  - name: db-seeding
-    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev", "" ]
-    volumeMounts:
-      - mountPath: /app/config/config.json
-        subPath: config-json
-        name: config-volume
-        readOnly: true
-      - mountPath: /app/config/secrets.json
-        subPath: secrets-json
-        name: secret-volume
-        readOnly: true
-      - mountPath: /app/sql/{{ .Values.seeding.database }}
-        name: seeding-volume
-        readOnly: true
-
-backendcontainer:
-  ports:
-    - name: web
-      containerPort: 8080
+    failureThreshold: 5
+    httpGet:
+      scheme: 'HTTP'
+      port: 8080
+      path: '/health'
   livenessProbe:
+    enabled: true
     initialDelaySeconds: 10
     httpGet:
       scheme: 'HTTP'
       port: 8080
       path: '/health'
   readinessProbe:
+    enabled: true
     initialDelaySeconds: 10
     httpGet:
       scheme: 'HTTP'
       port: 8080
       path: '/health'
+  dbseeding:
+    enabled: true
+    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
+  dbmigration:
+    enabled: true
+    command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
+  keycloakdatamigration:
+    enabled: true
+    command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
+  ingress:
+    # Only enable if 2nd host name is defined
+    enabled2nd: false
+    enabled: true
+    healthenabled: true
+    ingressClassName: nginx
+    pathType: Prefix
+    portnumber: 80
+    automountServiceAccountToken: false
+    paths:
+      - /api
+      - /docs
+      - /docs-json
+      - /docs-yaml
+    annotations: []
+  service:
+    type: ClusterIP
+    ports:
+      http: 80
+  serviceMonitor:
+    enabled: true
+    path: "/metrics"
+    interval: 30m
+    endpoints:
+      - port: 'web'
+  extraEnvVars: []
+  extraVolumes: []
   volumeMounts:
     - mountPath: /app/config/config.json
       subPath: config-json
@@ -223,10 +176,68 @@ backendcontainer:
     - mountPath: /app/config/secrets.json
       subPath: secrets-json
       name: secret-volume
-      readOnly: true
+  extraVolumeMounts: []
+  env:
+    renameWaitingTimeInSeconds: 3
+    stepUpTimeoutInSeconds: 900
+    stepUpTimeoutEnabled: 'false'
+    maxOldSpaceSize: 3584
 
-backendports:
-  - port: 80
-    targetPort: web
-    protocol: TCP
-    name: web
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 60
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: "60%"
+
+status:
+  url: 'https://status.dev.spsh.dbildungsplattform.de/'
+
+cronjobs:
+  enabled: true
+  image:
+    tag: '1.1.0'
+    repository: docker.io/schulcloud/cron-tools
+    pullPolicy: IfNotPresent
+  port: 5656
+  keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
+  keycloakClientId: spsh-service
+  jwksFilePath: /keys/jwks.json
+  backendHostname: '{{ $.Values.frontendHostname }}'
+  scriptDir: scripts
+  jobs:
+    cron-trigger-1:
+      schedule: 20 0 * * *
+      endpoint: '/api/cron/kopers-lock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-2:
+      schedule: 40 0 * * *
+      endpoint: '/api/cron/kontext-expired'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-3:
+      schedule: 50 0 * * *
+      endpoint: '/api/cron/person-without-org'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-4:
+      schedule: 10 0 * * *
+      endpoint: '/api/cron/unlock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-5:
+      schedule: 30 0 * * *
+      endpoint: '/api/cron/vidis-angebote'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+
+import:
+  csvFileMaxSizeInMB: 10
+  csvMaxNumberOfUsers: 2001
+
+featureFlags:
+  befristungBearbeiten: true

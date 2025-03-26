@@ -40,7 +40,7 @@ With a bit of work you can configure Insomnia to behave similiar to Thunder, ins
 
     - Name it something like `Get Access Token`
     - POST Request to `http://127.0.0.1:8080/realms/SPSH/protocol/openid-connect/token`
-    - Set Body to `Form`
+    - Set Body to `Form`, JSON WILL NOT WORK!
         - client_id = `spsh`
         - username = `test`
         - password = `test`

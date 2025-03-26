@@ -1,11 +1,7 @@
-import { DomainError } from '../../../../shared/error/index.js';
+import { OrganisationSpecificationError } from './organisation-specification.error.js';
 
-export class KennungRequiredForSchuleError extends DomainError {
+export class KennungRequiredForSchuleError extends OrganisationSpecificationError {
     public constructor(details?: unknown[] | Record<string, undefined>) {
-        super(
-            `Schule could not be created/updated because it kennung is required`,
-            'ENTITY_COULD_NOT_BE_UPDATED',
-            details,
-        );
+        super(`Schule could not be created/updated because kennung is required`, undefined, details);
     }
 }

@@ -48,12 +48,29 @@ describe('GlobalExceptionFilter', () => {
                     httpException.getResponse(),
                     httpException.getStatus(),
                 );
+                expect(loggerMock.crit).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when filter catches HttpException Service Unavailable', () => {
+            it('should log request url with crit and pass it on to the http adapter', () => {
+                const httpException: HttpException = new HttpException('exception', 503);
+
+                sut.catch(httpException, argumentsHost);
+
+                expect(adapterImplMock.reply).toHaveBeenCalledTimes(1);
+                expect(adapterImplMock.reply).toHaveBeenCalledWith(
+                    responseMock,
+                    httpException.getResponse(),
+                    httpException.getStatus(),
+                );
+                expect(loggerMock.crit).toHaveBeenCalledTimes(1);
             });
         });
 
         describe('when filter catches DriverException', () => {
             it('should map it to SchulConnexError with code 500', () => {
-                const driverException: DriverException = new DriverException({} as Error);
+                const driverException: DriverException = new DriverException({ stack: '' } as Error);
                 const expectedOutput: SchulConnexError = new SchulConnexError({
                     titel: 'Interner Serverfehler',
                     beschreibung: 'Es ist ein interner Fehler aufgetreten. Die Datenbank hat einen Fehler erzeugt.',

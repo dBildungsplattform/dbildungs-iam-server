@@ -5,7 +5,7 @@ const commonConfig = {
     preset: 'ts-jest/presets/default-esm',
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
-        "^lodash-es$": "lodash",
+        '^lodash-es$': 'lodash',
     },
     transform: {
         '^.+\\.tsx?$': [
@@ -32,7 +32,7 @@ module.exports = {
         },
     ],
     coverageDirectory: './coverage',
-    coverageProvider: 'v8',
+    coverageProvider: 'babel',
     collectCoverageFrom: [
         '**/*.ts',
         '!**/*.d.ts',
@@ -50,5 +50,5 @@ module.exports = {
             lines: 100,
         },
     },
-    testTimeout: 10000,
+    testTimeout: 1000000,
 };

@@ -1,0 +1,67 @@
+{{if .Values.backend.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "common.names.name" . }}-backend
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{ .Values.keycloakHostname }}"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    {{- with .Values.backend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  tls:
+  - hosts:
+      - {{ .Values.backendHostname  }}
+  ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
+  rules:
+    - host: {{ .Values.backendHostname }}
+      http:
+        paths:
+          {{- range $path := .Values.backend.ingress.paths }}
+          - path: {{ $path }}
+            pathType: {{ $.Values.backend.ingress.pathType }}
+            backend:
+              service:
+                name: {{ template "common.names.name" $ }}-backend
+                port:
+                  number: {{ $.Values.backend.service.ports.http }}
+          {{- end }}
+{{ end }}
+---
+{{if .Values.backend.ingress.healthenabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "common.names.name" . }}-health-backend
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /health
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: {{ .Values.auth.secretName }}
+    nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - user'    
+    {{- with .Values.backend.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  tls:
+  - hosts:
+      - {{ .Values.backendHostname  }}
+  ingressClassName: {{ .Values.backend.ingress.ingressClassName }}
+  rules:
+    - host: {{ .Values.backendHostname }}
+      http:
+        paths:
+          - path: /api/health
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "common.names.name" $ }}-backend
+                port:
+                  number: {{ $.Values.backend.service.ports.http }}
+{{ end }}

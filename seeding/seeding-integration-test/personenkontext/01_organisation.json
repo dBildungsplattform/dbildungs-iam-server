@@ -1,0 +1,16 @@
+{
+    "entityName": "Organisation",
+    "entities": [
+        {
+            "id": 1234,
+            "kennung": "Organisation1234",
+            "name": "Schule1",
+            "namensergaenzung": "Keine",
+            "kuerzel": "01",
+            "typ": "SCHULE",
+            "traegerschaft": "05"
+        }
+    ]
+}
+
+

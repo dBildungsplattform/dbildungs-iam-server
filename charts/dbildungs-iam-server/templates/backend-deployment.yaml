@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "common.names.name" . }}-backend
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server-backend
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.backend.maxUnavailable }}
+      maxSurge: {{ .Values.backend.maxSurge }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "common.names.name" . }}
+      app.kubernetes.io/component: server-backend
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels" . | nindent 8 }}
+        app.kubernetes.io/component: server-backend
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+        {{- if .Values.backend.dbmigration.enabled }}
+        - name: "{{ template "common.names.name" . }}-db-migration-apply"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: {{ .Values.backend.dbmigration.command | toJson }}
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          volumeMounts:
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
+        {{- if .Values.backend.keycloakdatamigration.enabled }}
+        - name: "{{ template "common.names.name" . }}-keycloak-data-migration"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: {{ .Values.backend.keycloakdatamigration.command | toJson }}
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+            {{- if .Values.backend.extraEnvVars }}
+            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          volumeMounts:
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
+        {{- if .Values.backend.dbseeding.enabled }}
+        - name: db-seeding
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: {{ .Values.backend.dbseeding.command | toJson }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
+          volumeMounts:
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
+      containers:
+        - name: "{{ template "common.names.name" . }}-backend"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always"}}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          ports:
+            - name: web
+              containerPort: {{ .Values.backend.containerPorts.http }}
+              protocol: TCP
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
+            {{- if .Values.backend.extraEnvVars }}
+            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          volumeMounts:
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            {{- with .Values.backend.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+          startupProbe: {{- omit .Values.backend.startupProbe "enabled" | toYaml | nindent 12 }}
+          livenessProbe: {{- omit .Values.backend.livenessProbe "enabled" | toYaml | nindent 12 }}
+          readinessProbe: {{- omit .Values.backend.readinessProbe "enabled" | toYaml | nindent 12 }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ template "common.names.name" . }}
+        - name: secret-volume
+          secret:
+            secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        - name: migration-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-backend-migration
+        - name: keycloak-migration-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-backend-keycloak-migration
+        {{if .Values.backend.dbseeding.enabled }}
+        - name: seeding-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-backend-seeding
+        {{- end }}
+        {{- with .Values.backend.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}

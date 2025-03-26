@@ -1,71 +1,144 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    HttpStatus,
+    NotFoundException,
+    Param,
+    Patch,
+    Post,
+    Put,
+    Query,
+    UseFilters,
+    UseGuards,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
+    ApiOAuth2,
     ApiOkResponse,
+    ApiOperation,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { Paged, PagingHeadersObject } from '../../../shared/paging/index.js';
 import { PagedResponse } from '../../../shared/paging/paged.response.js';
 import { CreateOrganisationBodyParams } from './create-organisation.body.params.js';
-import { CreateOrganisationDto } from './create-organisation.dto.js';
-import { CreatedOrganisationDto } from './created-organisation.dto.js';
 import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
-import { FindOrganisationDto } from './find-organisation.dto.js';
 import { OrganisationByIdParams } from './organisation-by-id.params.js';
-import { OrganisationResponse } from './organisation.response.js';
-import { OrganisationUc } from './organisation.uc.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
-import { UpdateOrganisationDto } from './update-organisation.dto.js';
-import { UpdatedOrganisationDto } from './updated-organisation.dto.js';
 import { OrganisationByIdBodyParams } from './organisation-by-id.body.params.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { Organisation } from '../domain/organisation.js';
+import { OrganisationResponse } from './organisation.response.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DbiamOrganisationError } from './dbiam-organisation.error.js';
+import { OrganisationExceptionFilter } from './organisation-exception-filter.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { OrganisationService } from '../domain/organisation.service.js';
+import { DataConfig } from '../../../shared/config/data.config.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { OrganisationIstBereitsZugewiesenError } from '../domain/organisation-ist-bereits-zugewiesen.error.js';
+import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
+import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
+import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
+import { ParentOrganisationenResponse } from './organisation.parents.response.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 
-@UseFilters(SchulConnexValidationErrorFilter)
+@UseFilters(
+    new SchulConnexValidationErrorFilter(),
+    new OrganisationExceptionFilter(),
+    new AuthenticationExceptionFilter(),
+)
 @ApiTags('organisationen')
 @ApiBearerAuth()
+@ApiOAuth2(['openid'])
 @Controller({ path: 'organisationen' })
 export class OrganisationController {
     public constructor(
-        private readonly uc: OrganisationUc,
-        @Inject(getMapperToken()) private readonly mapper: Mapper,
+        private readonly organisationRepository: OrganisationRepository,
+        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly config: ConfigService<ServerConfig>,
+        private readonly organisationService: OrganisationService,
     ) {}
 
     @Post()
+    @UseGuards(StepUpGuard)
     @ApiCreatedResponse({ description: 'The organisation was successfully created.', type: OrganisationResponse })
-    @ApiBadRequestResponse({ description: 'The organisation already exists.' })
+    @ApiBadRequestResponse({ description: 'The organisation already exists.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to create the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the organisation.' })
-    public async createOrganisation(@Body() params: CreateOrganisationBodyParams): Promise<OrganisationResponse> {
-        const organisationDto: CreateOrganisationDto = this.mapper.map(
-            params,
-            CreateOrganisationBodyParams,
-            CreateOrganisationDto,
+    public async createOrganisation(
+        @Permissions() permissions: PersonPermissions,
+        @Body() params: CreateOrganisationBodyParams,
+    ): Promise<OrganisationResponse> {
+        const hasOrgVerwaltenRechtAtOrg: boolean = await permissions.hasOrgVerwaltenRechtAtOrga(
+            params.typ,
+            params.administriertVon,
         );
-        const result: CreatedOrganisationDto | SchulConnexError = await this.uc.createOrganisation(organisationDto);
 
-        if (result instanceof CreatedOrganisationDto) {
-            return this.mapper.map(result, CreatedOrganisationDto, OrganisationResponse);
+        if (!hasOrgVerwaltenRechtAtOrg) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Not authorized to manage this organisation'),
+                ),
+            );
         }
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        const organisation: Organisation<false> | DomainError = Organisation.createNew(
+            params.administriertVon,
+            params.zugehoerigZu,
+            params.kennung,
+            params.name,
+            params.namensergaenzung,
+            params.kuerzel,
+            params.typ,
+            params.traegerschaft,
+            undefined,
+            params.emailAdress,
+        );
+        if (organisation instanceof DomainError) {
+            throw organisation;
+        }
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.createOrganisation(
+            organisation,
+            permissions,
+        );
+        if (!result.ok) {
+            if (result.error instanceof OrganisationSpecificationError) {
+                throw result.error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+            );
+        }
+
+        return new OrganisationResponse(result.value);
     }
 
     @Put(':organisationId')
+    @UseGuards(StepUpGuard)
     @ApiOkResponse({
         description: 'The organisation was successfully updated.',
         type: OrganisationResponse,
     })
-    @ApiBadRequestResponse({ description: 'Request has wrong format.' })
+    @ApiBadRequestResponse({ description: 'Request has wrong format.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Request is not authorized.' })
     @ApiNotFoundResponse({ description: 'The organisation was not found.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to perform operation.' })
@@ -73,32 +146,119 @@ export class OrganisationController {
     public async updateOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: UpdateOrganisationBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse> {
-        const dto: UpdateOrganisationDto = this.mapper.map(body, UpdateOrganisationBodyParams, UpdateOrganisationDto);
-        dto.id = params.organisationId;
+        const existingOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
+            params.organisationId,
+        );
 
-        const response: UpdatedOrganisationDto | SchulConnexError = await this.uc.updateOrganisation(dto);
-
-        if (response instanceof UpdatedOrganisationDto) {
-            return this.mapper.map(response, UpdatedOrganisationDto, OrganisationResponse);
+        if (!existingOrganisation) {
+            throw new NotFoundException(`Organisation with ID ${params.organisationId} not found`);
         }
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(response);
+
+        const hasOrgVerwaltenRechtAtOrg: boolean = await permissions.hasOrgVerwaltenRechtAtOrga(
+            body.typ,
+            body.administriertVon,
+        );
+
+        if (!hasOrgVerwaltenRechtAtOrg) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Not authorized to manage this organisation'),
+                ),
+            );
+        }
+
+        existingOrganisation.id = params.organisationId;
+        existingOrganisation.administriertVon = body.administriertVon;
+        existingOrganisation.zugehoerigZu = body.zugehoerigZu;
+        existingOrganisation.kennung = body.kennung;
+        existingOrganisation.name = body.name;
+        existingOrganisation.namensergaenzung = body.namensergaenzung;
+        existingOrganisation.kuerzel = body.kuerzel;
+        existingOrganisation.typ = body.typ;
+        existingOrganisation.traegerschaft = body.traegerschaft;
+        existingOrganisation.emailAdress = body.emailAdress;
+        existingOrganisation.updatedAt = new Date();
+
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.updateOrganisation(
+            existingOrganisation,
+            permissions,
+        );
+
+        if (result.ok) {
+            return new OrganisationResponse(result.value);
+        } else {
+            if (result.error instanceof OrganisationSpecificationError) {
+                throw result.error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+            );
+        }
     }
 
     @Get('root')
-    @ApiOkResponse({ description: 'The organization was successfully pulled.', type: OrganisationResponse })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organization.' })
-    @ApiNotFoundResponse({ description: 'The organization does not exist.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    @ApiOkResponse({ description: 'The root organization was successfully retrieved.', type: OrganisationResponse })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the root organization.' })
+    @ApiNotFoundResponse({ description: 'The root organization does not exist.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the root organization.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the root organization.' })
     public async getRootOrganisation(): Promise<OrganisationResponse> {
-        const result: OrganisationResponse | SchulConnexError = await this.uc.findRootOrganisation();
+        const ROOT_ORGANISATION_ID: string = this.config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
+            ROOT_ORGANISATION_ID,
+        );
 
-        if (result instanceof OrganisationResponse) {
-            return result;
+        if (result.ok) {
+            return new OrganisationResponse(result.value);
         }
 
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+            SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+        );
+    }
+
+    @Get('root/children')
+    @ApiOkResponse({
+        description: 'The root organizations were successfully pulled.',
+        type: OrganisationRootChildrenResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    public async getRootChildren(): Promise<OrganisationRootChildrenResponse> {
+        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+            await this.organisationRepository.findRootDirectChildren();
+
+        if (!oeffentlich || !ersatz) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('Organisation', `${!oeffentlich && 'Oeffentlich'} ${!ersatz && 'Ersatz'}`),
+                ),
+            );
+        }
+
+        return new OrganisationRootChildrenResponse(oeffentlich, ersatz);
+    }
+
+    @Post('parents-by-ids')
+    @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.OK)
+    @ApiOkResponse({
+        description: 'The parent organizations were successfully pulled.',
+        type: ParentOrganisationenResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get the organizations.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organizations.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
+    public async getParentsByIds(
+        @Body() body: ParentOrganisationsByIdsBodyParams,
+    ): Promise<ParentOrganisationenResponse> {
+        const organisationen: Organisation<true>[] = await this.organisationRepository.findParentOrgasForIds(
+            body.organisationIds,
+        );
+        return new ParentOrganisationenResponse(organisationen);
     }
 
     @Get(':organisationId')
@@ -109,14 +269,17 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get the organization.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting the organization.' })
     public async findOrganisationById(@Param() params: OrganisationByIdParams): Promise<OrganisationResponse> {
-        const result: OrganisationResponse | SchulConnexError = await this.uc.findOrganisationById(
+        const result: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
             params.organisationId,
         );
 
-        if (result instanceof OrganisationResponse) {
-            return result;
+        if (result.ok) {
+            return new OrganisationResponse(result.value);
+        } else {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result.error),
+            );
         }
-        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
     }
 
     @Get()
@@ -130,17 +293,24 @@ export class OrganisationController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async findOrganizations(
         @Query() queryParams: FindOrganisationQueryParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const organisationDto: FindOrganisationDto = this.mapper.map(
-            queryParams,
-            FindOrganisationQueryParams,
-            FindOrganisationDto,
-        );
+        const [organisations, total, pageTotal]: [Organisation<true>[], number, number] =
+            await this.organisationRepository.findAuthorized(permissions, queryParams.systemrechte, queryParams);
 
-        const organisations: Paged<OrganisationResponse> = await this.uc.findAll(organisationDto);
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(organisations);
+        const organisationResponses: OrganisationResponse[] = organisations.map((organisation: Organisation<true>) => {
+            return new OrganisationResponse(organisation);
+        });
 
-        return response;
+        const pagedOrganisationResponse: Paged<OrganisationResponse> = {
+            offset: queryParams.offset ?? 0,
+            limit: queryParams.limit ?? total,
+            total: total,
+            pageTotal: pageTotal,
+            items: organisationResponses,
+        };
+
+        return new PagedResponse(pagedOrganisationResponse);
     }
 
     @Get(':organisationId/administriert')
@@ -153,39 +323,37 @@ export class OrganisationController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get organizations.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting all organizations.' })
     public async getAdministrierteOrganisationen(
-        @Param() params: OrganisationByIdParams,
+        @Param() routeParams: OrganisationByIdParams,
+        @Query() queryParams: OrganisationByNameQueryParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findAdministriertVon(
-            params.organisationId,
+        const parentOrg: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
+            routeParams.organisationId,
+        );
+        if (!parentOrg.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error),
+            );
+        }
+
+        const result: Paged<Organisation<true>> = await this.organisationService.findAllAdministriertVon(
+            routeParams.organisationId,
+            queryParams.searchFilter,
+            queryParams.offset,
+            queryParams.limit,
         );
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
-        }
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
-
-        return response;
+        return new PagedResponse({
+            total: result.total,
+            offset: result.offset,
+            limit: result.limit,
+            items: result.items.map((item: Organisation<true>) => new OrganisationResponse(item)),
+            pageTotal: result.items.length,
+        });
     }
 
-    @Post(':organisationId/administriert')
-    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
-    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
-    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
-    public async addAdministrierteOrganisation(
-        @Param() params: OrganisationByIdParams,
-        @Body() body: OrganisationByIdBodyParams,
-    ): Promise<void> {
-        const result: void | SchulConnexError = await this.uc.setAdministriertVon(
-            params.organisationId,
-            body.organisationId,
-        );
-
-        if (result) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
-        }
-    }
+    // This endpoint will be added again in the future, but for now it is not needed and needs to be rewritten anyways
+    // @Post(':organisationId/administriert')
+    // public addAdministrierteOrganisation(): void
 
     @Get(':organisationId/zugehoerig')
     @ApiOkResponse({
@@ -199,35 +367,155 @@ export class OrganisationController {
     public async getZugehoerigeOrganisationen(
         @Param() params: OrganisationByIdParams,
     ): Promise<PagedResponse<OrganisationResponse>> {
-        const result: Paged<OrganisationResponse> | SchulConnexError = await this.uc.findZugehoerigZu(
+        const parentOrg: Result<Organisation<true>, DomainError> = await this.organisationService.findOrganisationById(
+            params.organisationId,
+        );
+        if (!parentOrg.ok) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(parentOrg.error),
+            );
+        }
+
+        const result: Paged<Organisation<true>> = await this.organisationService.findAllZugehoerigZu(
             params.organisationId,
         );
 
-        if (result instanceof SchulConnexError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
-        }
-        const response: PagedResponse<OrganisationResponse> = new PagedResponse(result);
+        const organisations: OrganisationResponse[] = result.items.map(
+            (item: Organisation<true>) => new OrganisationResponse(item),
+        );
+
+        const response: PagedResponse<OrganisationResponse> = new PagedResponse({
+            total: result.total,
+            offset: result.offset,
+            limit: result.limit,
+            items: organisations,
+            pageTotal: organisations.length,
+        });
 
         return response;
     }
 
     @Post(':organisationId/zugehoerig')
+    @UseGuards(StepUpGuard)
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
-    @ApiBadRequestResponse({ description: 'The organisation could not be modified.' })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
     @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
     public async addZugehoerigeOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
-        const result: void | SchulConnexError = await this.uc.setZugehoerigZu(
+        const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
             params.organisationId,
             body.organisationId,
+            permissions,
         );
 
-        if (result) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(result);
+        if (!res.ok) {
+            // Avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
+            if (res.error instanceof OrganisationSpecificationError) {
+                throw res.error;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error),
+            );
         }
+    }
+
+    @Delete(':organisationId/klasse')
+    @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiOperation({ description: 'Delete an organisation of type Klasse by id.' })
+    @ApiNoContentResponse({ description: 'The organisation was deleted successfully.' })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamOrganisationError })
+    @ApiNotFoundResponse({ description: 'The organisation that should be deleted does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the organisation.' })
+    public async deleteKlasse(
+        @Param() params: OrganisationByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        if (await this.dBiamPersonenkontextRepo.isOrganisationAlreadyAssigned(params.organisationId)) {
+            throw new OrganisationIstBereitsZugewiesenError();
+        }
+
+        const result: Option<DomainError> = await this.organisationRepository.deleteKlasse(
+            params.organisationId,
+            permissions,
+        );
+        if (result instanceof DomainError) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+    }
+
+    @Patch(':organisationId/name')
+    @UseGuards(StepUpGuard)
+    @ApiOkResponse({
+        description: 'The organizations were successfully updated.',
+        type: OrganisationResponseLegacy,
+        headers: PagingHeadersObject,
+    })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async updateOrganisationName(
+        @Param() params: OrganisationByIdParams,
+        @Body() body: OrganisationByNameBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<OrganisationResponse | DomainError> {
+        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
+            params.organisationId,
+            body.name,
+            body.version,
+            permissions,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof OrganisationSpecificationError) {
+                throw result;
+            }
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+
+        return new OrganisationResponse(result);
+    }
+
+    @Put(':organisationId/enable-for-its-learning')
+    @UseGuards(StepUpGuard)
+    @ApiOkResponse({
+        description: 'The organization was successfully enabled for itslearning.',
+        type: OrganisationResponseLegacy,
+        headers: PagingHeadersObject,
+    })
+    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
+    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
+    public async enableForitslearning(
+        @Param() params: OrganisationByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<OrganisationResponse | DomainError> {
+        const result: DomainError | Organisation<true> = await this.organisationRepository.setEnabledForitslearning(
+            permissions,
+            params.organisationId,
+        );
+
+        if (result instanceof DomainError) {
+            if (result instanceof OrganisationSpecificationError) {
+                throw result;
+            }
+
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
+            );
+        }
+
+        return new OrganisationResponse(result);
     }
 }

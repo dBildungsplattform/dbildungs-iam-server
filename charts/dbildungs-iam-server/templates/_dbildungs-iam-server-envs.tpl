@@ -1,83 +1,109 @@
 {{- define "dbildungs-iam-server-backend-envs" }}
-- name: NODE_ENV
-  value: {{.Values.environment | quote}}
-- name: DEPLOY_STAGE
-  value: {{.Values.environment | quote}}
-- name: DB_NAME
-  valueFrom:
-    configMapKeyRef:
-        name: {{.Values.configmap.name}}
-        key: db-name
 - name: DB_SECRET
   valueFrom:
     secretKeyRef:
-        {{- if .Values.auth.existingSecret }}
-        name: {{ .Values.auth.existingSecret }}
-        {{- end }}
-        {{- if not .Values.auth.existingSecret }}
-        name: {{ .Values.auth.name }}
-        {{- end }}
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: db-password
+- name: DB_USERNAME
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: db-username
 - name: DB_HOST
   valueFrom:
     secretKeyRef:
-        {{- if .Values.auth.existingSecret }}
-        name: {{ .Values.auth.existingSecret }}
-        {{- end }}
-        {{- if not .Values.auth.existingSecret }}
-        name: {{ .Values.auth.name }}
-        {{- end }}
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: db-host
 - name: DB_CLIENT_URL
   value: "postgres://$(DB_HOST)/"
-- name: KC_BASE_URL
-  valueFrom:
-    configMapKeyRef:
-        name: {{.Values.configmap.name}}
-        key: keycloak-base-url
-- name: FRONTEND_OIDC_CALLBACK_URL
-  valueFrom:
-    configMapKeyRef:
-        name: {{.Values.configmap.name}}
-        key: frontend-oidc-callback-url
-- name: FRONTEND_DEFAULT_LOGIN_REDIRECT
-  valueFrom:
-    configMapKeyRef:
-        name: {{.Values.configmap.name}}
-        key: frontend-default-login-redirect
-- name: FRONTEND_LOGOUT_REDIRECT
-  valueFrom:
-    configMapKeyRef:
-        name: {{.Values.configmap.name}}
-        key: frontend-logout-redirect
 - name: KC_ADMIN_SECRET
   valueFrom:
     secretKeyRef:
-        {{- if .Values.auth.existingSecret }}
-        name: {{ .Values.auth.existingSecret }}
-        {{- end }}
-        {{- if not .Values.auth.existingSecret }}
-        name: {{ .Values.auth.name }}
-        {{- end }}
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: keycloak-adminSecret
 - name: KC_CLIENT_SECRET
   valueFrom:
     secretKeyRef:
-        {{- if .Values.auth.existingSecret }}
-        name: {{ .Values.auth.existingSecret }}
-        {{- end }}
-        {{- if not .Values.auth.existingSecret }}
-        name: {{ .Values.auth.name }}
-        {{- end }}
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: keycloak-clientSecret
+- name: KC_SERVICE_CLIENT_PRIVATE_JWKS
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: service-account-private-jwks
 - name: FRONTEND_SESSION_SECRET
   valueFrom:
     secretKeyRef:
-        {{- if .Values.auth.existingSecret }}
-        name: {{ .Values.auth.existingSecret }}
-        {{- end }}
-        {{- if not .Values.auth.existingSecret }}
-        name: {{ .Values.auth.name }}
-        {{- end }}
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: frontend-sessionSecret
+- name: ITSLEARNING_USERNAME
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: itslearning-username
+- name: ITSLEARNING_PASSWORD
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: itslearning-password
+- name: LDAP_BIND_DN
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: ldap-bind-dn
+- name: LDAP_ADMIN_PASSWORD
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: ldap-admin-password
+- name: PI_ADMIN_USER
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: pi-admin-user
+- name: PI_ADMIN_PASSWORD
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: pi-admin-password
+- name: REDIS_PASSWORD
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: redis-password
+- name: OX_PASSWORD
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: ox-password
+- name: VIDIS_USERNAME
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: vidis-username
+- name: VIDIS_PASSWORD
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: vidis-password
+- name: METRICS_BASIC_AUTH
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: auth
+- name: INTERNAL_COMMUNICATION_API_KEY
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: internal-communication-api-key
+- name: IMPORT_PASSPHRASE_SALT
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: import-passphrase-salt
+- name: IMPORT_PASSPHRASE_SECRET
+  valueFrom:
+    secretKeyRef:
+        name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        key: import-passphrase-secret
 {{- end}}

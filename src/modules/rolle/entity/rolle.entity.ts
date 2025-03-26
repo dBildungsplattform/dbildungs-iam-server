@@ -1,9 +1,10 @@
-import { Cascade, Collection, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
+import { BigIntType, Cascade, Collection, Entity, Enum, OneToMany, Opt, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
 import { RolleServiceProviderEntity } from './rolle-service-provider.entity.js';
 import { RolleSystemrechtEntity } from './rolle-systemrecht.entity.js';
+import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 
 @Entity({ tableName: 'rolle' })
 export class RolleEntity extends TimestampedEntity {
@@ -16,7 +17,7 @@ export class RolleEntity extends TimestampedEntity {
     @Property({ columnType: 'uuid' })
     public administeredBySchulstrukturknoten!: string;
 
-    @Enum(() => RollenArt)
+    @Enum({ items: () => RollenArt, nativeEnumName: 'rollen_art_enum' })
     public rollenart!: RollenArt;
 
     @OneToMany({
@@ -42,4 +43,20 @@ export class RolleEntity extends TimestampedEntity {
         cascade: [Cascade.ALL],
     })
     public serviceProvider: Collection<RolleServiceProviderEntity> = new Collection<RolleServiceProviderEntity>(this);
+
+    @OneToMany({
+        entity: () => PersonenkontextEntity,
+        mappedBy: 'rolleId',
+        cascade: [Cascade.REMOVE],
+        orphanRemoval: true,
+    })
+    public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
+
+    @Property({
+        default: false,
+    })
+    public istTechnisch!: boolean;
+
+    @Property({ type: new BigIntType('number'), defaultRaw: '1', concurrencyCheck: true })
+    public version!: number & Opt;
 }

@@ -9,16 +9,11 @@ import { PersonAlreadyExistsError } from './person-already-exists.error.js';
 import { SchulConnexError } from './schul-connex.error.js';
 import { EntityCouldNotBeDeleted } from './entity-could-not-be-deleted.error.js';
 import { EntityAlreadyExistsError } from './entity-already-exists.error.js';
-import { AddSystemrechtError } from './add-systemrecht.error.js';
-import { ZyklusInOrganisationenError } from '../../modules/organisation/specification/error/zyklus-in-organisationen.error.js';
-import { RootOrganisationImmutableError } from '../../modules/organisation/specification/error/root-organisation-immutable.error.js';
-import { NurKlasseKursUnterSchuleError } from '../../modules/organisation/specification/error/nur-klasse-kurs-unter-schule.error.js';
-import { SchuleUnterTraegerError } from '../../modules/organisation/specification/error/schule-unter-traeger.error.js';
-import { TraegerInTraegerError } from '../../modules/organisation/specification/error/traeger-in-traeger.error.js';
 import { InvalidCharacterSetError } from './invalid-character-set.error.js';
 import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js';
 import { InvalidNameError } from './invalid-name.error.js';
-import { KennungRequiredForSchuleError } from '../../modules/organisation/specification/error/kennung-required-for-schule.error.js';
+import { MissingPermissionsError } from './missing-permissions.error.js';
+import { UserExternalDataWorkflowError } from './user-externaldata-workflow.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -96,70 +91,6 @@ export class SchulConnexErrorMapper {
             }),
         ],
         [
-            AddSystemrechtError.name,
-            new SchulConnexError({
-                code: 500,
-                subcode: '00',
-                titel: 'Fehlerhafte Anfrage',
-                beschreibung: 'Systemrecht konnte Rolle nicht hinzugefügt werden.',
-            }),
-        ],
-        [
-            KennungRequiredForSchuleError.name,
-            new SchulConnexError({
-                code: 400,
-                subcode: '01',
-                titel: 'Fehlerhafte Anfrage',
-                beschreibung: "Das Feld 'kennung' darf nicht leer sein, wenn der Organisationstyp 'SCHULE' ist.",
-            }),
-        ],
-        [
-            SchuleUnterTraegerError.name,
-            new SchulConnexError({
-                code: 400,
-                subcode: '00',
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Schulen können nur Trägern zugeordnet / von Trägern administriert werden.',
-            }),
-        ],
-        [
-            TraegerInTraegerError.name,
-            new SchulConnexError({
-                code: 400,
-                subcode: '00',
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Träger können nur Trägern zugeordnet / von diesen administriert werden.',
-            }),
-        ],
-        [
-            NurKlasseKursUnterSchuleError.name,
-            new SchulConnexError({
-                code: 400,
-                subcode: '00',
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Nur Klassen und Kurse können zugehörig sein oder administriert werden von Schulen.',
-            }),
-        ],
-        [
-            ZyklusInOrganisationenError.name,
-            new SchulConnexError({
-                code: 400,
-                subcode: '00',
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung:
-                    'Die administriertVon- oder zugehörigZu-Beziehung kann nicht erstellt werden, da keine Zyklen erlaubt sind.',
-            }),
-        ],
-        [
-            RootOrganisationImmutableError.name,
-            new SchulConnexError({
-                code: 400,
-                subcode: '00',
-                titel: 'Spezifikation von Organisation nicht erfüllt',
-                beschreibung: 'Die Root-Organisation ist bzgl. administriertVon und zugehörigZu unveränderlich.',
-            }),
-        ],
-        [
             InvalidAttributeLengthError.name,
             new SchulConnexError({
                 code: 400,
@@ -184,6 +115,25 @@ export class SchulConnexErrorMapper {
                 subcode: '00',
                 titel: 'Fehlerhafte Anfrage',
                 beschreibung: 'Die Anfrage ist fehlerhaft: Es konnte kein Benutzername generiert werden',
+            }),
+        ],
+        [
+            MissingPermissionsError.name,
+            new SchulConnexError({
+                code: 404,
+                subcode: '01',
+                titel: 'Angefragte Entität existiert nicht',
+                beschreibung: 'Die angeforderte Entität existiert nicht',
+            }),
+        ],
+        [
+            UserExternalDataWorkflowError.name,
+            new SchulConnexError({
+                code: 500,
+                subcode: '01',
+                titel: 'Interner Serverfehler',
+                beschreibung:
+                    'Es ist ein interner Fehler aufgetreten. Externe Userdaten können nicht bereitgestellt werden.',
             }),
         ],
     ]);

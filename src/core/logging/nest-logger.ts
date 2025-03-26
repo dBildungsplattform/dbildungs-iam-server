@@ -10,7 +10,7 @@ export class NestLogger implements LoggerService {
     public constructor(private readonly moduleLogger: ModuleLogger) {}
 
     public log(message: unknown): void {
-        this.moduleLogger.getLogger().info(this.stringifiedMessage(message));
+        this.moduleLogger.getLogger().log('notice', this.stringifiedMessage(message));
     }
 
     public error(message: unknown): void {
@@ -18,7 +18,7 @@ export class NestLogger implements LoggerService {
     }
 
     public warn(message: unknown): void {
-        this.moduleLogger.getLogger().warn(this.stringifiedMessage(message));
+        this.moduleLogger.getLogger().log('warning', this.stringifiedMessage(message));
     }
 
     public verbose?(message: unknown): void {
@@ -30,8 +30,6 @@ export class NestLogger implements LoggerService {
     }
 
     private stringifiedMessage(message: unknown): string {
-        const stringifiedMessage: string = util.inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
-
-        return stringifiedMessage;
+        return util.inspect(message).replace(/\n/g, '').replace(/\\n/g, '');
     }
 }

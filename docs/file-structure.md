@@ -18,21 +18,22 @@ src
 │       ├───api - contains use-cases, controllers and API-dtos of a module
 │       │       [some-request].body.params.spec.ts
 │       │       [some-request].body.params.ts
-│       │       [request-body-to-dto].mapper.profile.spec.ts
-│       │       [request-body-to-dto].mapper.profile.ts
+│       │       ([request-body-to-dto].mapper.profile.spec.ts -> deprecated)
+│       │       ([request-body-to-dto].mapper.profile.ts -> deprecated)
 │       │       [controller-name].controller.spec.ts
 │       │       [controller-name].controller.ts
-│       │       [use-case-name].uc.spec.ts
-│       │       [use-case-name].uc.ts
+│       │       ([use-case-name].uc.spec.ts -> deprecated)
+│       │       ([use-case-name].uc.ts -> deprecated)
 │       │
 │       ├───domain - contains the module's services and domain objects which handle the business logic
-│       │       [domain-object].do.ts
+│       │       ([domain-object].do.ts -> deprecated)
+│       │       ([aggregate].ts -> deprecated)
 │       │       [domain-service].service.spec.ts
 │       │       [domain-service].service.ts
 │       │
 │       └───persistence - contains repositories, db-entities and adapters to other persistence systems
-│               [entity-to-do].mapper.profile.spec.ts
-│               [entity-to-do].mapper.profile.ts
+│                ([entity-to-do].mapper.profile.spec.ts  -> deprecated)
+│                ([entity-to-do].mapper.profile.ts  -> deprecated)
 │               [entity-name].entity.ts
 │               [entity-name].repo.integration-spec.ts
 │               [entity-name].repo.ts

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { FindUserFilter, KeycloakUserService, UserDo } from '../../keycloak-administration/index.js';
+import { FindUserFilter, KeycloakUserService, User } from '../../keycloak-administration/index.js';
 import {
     DomainError,
     EntityNotFoundError,
@@ -10,24 +10,56 @@ import {
     InvalidAttributeLengthError,
     InvalidCharacterSetError,
 } from '../../../shared/error/index.js';
+import { EntityManager } from '@mikro-orm/postgresql';
+import { OxUserBlacklistEntity } from '../persistence/ox-user-blacklist.entity.js';
+import {
+    DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    ConfigTestModule,
+} from '../../../../test/utils/index.js';
+import { MikroORM } from '@mikro-orm/core';
+import { OxUserBlacklistRepo } from '../persistence/ox-user-blacklist.repo.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
-describe('The UsernameGenerator Service', () => {
+describe('UsernameGeneratorService', () => {
     let module: TestingModule;
     let service: UsernameGeneratorService;
     let kcUserService: DeepMocked<KeycloakUserService>;
+    let loggerMock: DeepMocked<ClassLogger>;
+    let em: EntityManager;
+    let orm: MikroORM;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 UsernameGeneratorService,
-                { provide: KeycloakUserService, useValue: createMock<KeycloakUserService>() },
+                OxUserBlacklistRepo,
+                {
+                    provide: KeycloakUserService,
+                    useValue: createMock<KeycloakUserService>(),
+                },
+                {
+                    provide: ClassLogger,
+                    useValue: createMock<ClassLogger>(),
+                },
             ],
         }).compile();
+        orm = module.get(MikroORM);
         service = module.get(UsernameGeneratorService);
         kcUserService = module.get(KeycloakUserService);
+        loggerMock = module.get(ClassLogger);
+        em = module.get(EntityManager);
+
+        await DatabaseTestModule.setupDatabase(orm);
+    }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+
+    beforeEach(async () => {
+        await DatabaseTestModule.clearDatabase(orm);
     });
 
     afterAll(async () => {
+        await orm.close();
         await module.close();
     });
 
@@ -104,30 +136,33 @@ describe('The UsernameGenerator Service', () => {
 
     it('should add a number when username already exists', async () => {
         kcUserService.findOne
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
             .mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('Not found') });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
+        expect(loggerMock.info).toHaveBeenLastCalledWith(`Next Available Username Is:mmeyer1`);
         expect(generatedUsername).toEqual({ ok: true, value: 'mmeyer1' });
     });
 
     it('should increment the counter when a username would exist more than twice', async () => {
         kcUserService.findOne.mockImplementation((userFilter: FindUserFilter) => {
             if (userFilter.username == 'mmeyer' || userFilter.username == 'mmeyer1') {
-                return Promise.resolve({ ok: true, value: new UserDo<true>() });
+                return Promise.resolve({ ok: true, value: createMock<User<true>>() });
             } else return Promise.resolve({ ok: false, error: new EntityNotFoundError('Not found') });
         });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
+        expect(loggerMock.info).toHaveBeenLastCalledWith(`Next Available Username Is:mmeyer2`);
         expect(generatedUsername).toEqual({ ok: true, value: 'mmeyer2' });
     });
 
     it("Should fill 'holes' in the counter if there are any", async () => {
         kcUserService.findOne
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() })
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() })
             .mockResolvedValueOnce({ ok: false, error: new EntityNotFoundError('Not found') })
-            .mockResolvedValueOnce({ ok: true, value: new UserDo<true>() });
+            .mockResolvedValueOnce({ ok: true, value: createMock<User<true>>() });
         const generatedUsername: Result<string, DomainError> = await service.generateUsername('Renate', 'Bergmann');
+        expect(loggerMock.info).toHaveBeenLastCalledWith(`Next Available Username Is:rbergmann3`);
         expect(generatedUsername).toEqual({ ok: true, value: 'rbergmann3' });
     });
 
@@ -136,6 +171,7 @@ describe('The UsernameGenerator Service', () => {
         await expect(service.generateUsername('Maximilian', 'Mustermann')).rejects.toStrictEqual(
             new KeycloakClientError('Could not reach'),
         );
+        expect(loggerMock.info).toHaveBeenCalledTimes(0);
     });
 
     it('should return error if username can not be generated (cleaned names are of length 0)', async () => {
@@ -150,5 +186,37 @@ describe('The UsernameGenerator Service', () => {
             ok: false,
             error: new InvalidNameError('Could not generate valid username'),
         });
+    });
+
+    it('should add a number when username exists in blacklist', async () => {
+        // Arrange: Create the OxUserBlacklistEntity with the username
+        const usernameInBlacklist: string = 'mmeyer';
+        const oxUser: OxUserBlacklistEntity = new OxUserBlacklistEntity();
+        oxUser.username = usernameInBlacklist;
+        oxUser.email = 'email';
+        oxUser.name = 'meyer';
+
+        // Persist the OxUserBlacklistEntity to the real database
+        await em.persistAndFlush(oxUser);
+
+        // Arrange Keycloak response (simulate the user not found in Keycloak)
+        kcUserService.findOne.mockResolvedValueOnce({
+            ok: false,
+            error: new EntityNotFoundError('Not found'),
+        });
+
+        // Arrange Keycloak response (simulate the user not found in Keycloak)
+        kcUserService.findOne.mockResolvedValueOnce({
+            ok: false,
+            error: new EntityNotFoundError('Not found'),
+        });
+
+        // Act: Generate the username
+        const generatedUsername: Result<string, DomainError> = await service.generateUsername('Max', 'Meyer');
+
+        // Assert: The generated username should have the counter appended
+        expect(loggerMock.info).toHaveBeenLastCalledWith(`Next Available Username Is:mmeyer1`);
+
+        expect(generatedUsername).toEqual({ ok: true, value: 'mmeyer1' });
     });
 });

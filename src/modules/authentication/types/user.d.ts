@@ -1,9 +1,6 @@
 import { type UserinfoResponse } from 'openid-client';
-
-/**
- * User-type for keycloak-connect (parsed JWT)
- */
-export type User = UserinfoResponse;
+import { PersonPermissions } from '../domain/person-permissions.js';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
 
 /**
  * User for passport session
@@ -13,4 +10,6 @@ export type PassportUser = {
     access_token?: string;
     refresh_token?: string;
     userinfo: UserinfoResponse;
+    personPermissions: () => Promise<PersonPermissions>;
+    stepUpLevel?: StepUpLevel;
 };

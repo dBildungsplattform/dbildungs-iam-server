@@ -9,4 +9,8 @@ export class HostConfig {
     @IsOptional()
     @IsString()
     public readonly ADDRESS?: string;
+
+    @IsOptional()
+    @IsString()
+    public readonly HOSTNAME?: string;
 }

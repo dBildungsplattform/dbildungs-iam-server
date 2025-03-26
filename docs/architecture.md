@@ -47,3 +47,11 @@ We are planning to create a shared *service* that handles the check based on the
 
 If a service triggers operations in multiple *aggregates*, each *aggregate* will need to perform its own check. A user's roles and rights should be cached in the request context to not retrieve them for each check.
 The services do not check the user rights again to avoid code duplication.
+
+## Integrity Checks
+
+We need check conditions for data integrity e.g. an organisation of type form (Klasse) can not be administrated by an organisation of type school sponsor (Schulträger), but only by a school.
+To check these conditions we use the specification pattern for reusability.
+An Aggregate can run its own Specifications. This can be done while creating the Aggregate.
+
+Before persisting an aggregate the Specifications need to be checked. The Repository must trigger the check. We do not rely on the controller to do it reliably.

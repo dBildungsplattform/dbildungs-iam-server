@@ -1,4 +1,5 @@
 import { MikroORM } from '@mikro-orm/core';
+import { Migrator, TSMigrationGenerator } from '@mikro-orm/migrations';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { defineConfig } from '@mikro-orm/postgresql';
 import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
@@ -40,6 +41,21 @@ export class DatabaseTestModule implements OnModuleDestroy {
                             entitiesTs: ['./src/**/*.entity.ts'],
                             allowGlobalContext: true,
                             connect: options?.isDatabaseRequired ?? false,
+                            extensions: [Migrator],
+                            migrations: {
+                                tableName: 'mikro_orm_migrations', // name of database table with log of executed transactions
+                                path: './test-migrations', // path to the folder with migrations
+                                pathTs: './test-migrations', // path to the folder with TS migrations (if used, you should put path to compiled files in `path`)
+                                glob: '!(*.d).{js,ts}', // how to match migration files (all .js and .ts files, but not .d.ts)
+                                transactional: true, // wrap each migration in a transaction
+                                disableForeignKeys: true, // wrap statements with `set foreign_key_checks = 0` or equivalent
+                                allOrNothing: true, // wrap all migrations in master transaction
+                                dropTables: true, // allow to disable table dropping
+                                safe: false, // allow to disable table and column dropping
+                                snapshot: true, // save snapshot when creating new migrations
+                                emit: 'ts', // migration generation mode
+                                generator: TSMigrationGenerator, // migration generator, e.g. to allow custom formatting
+                            },
                         });
                     },
                     inject: [ConfigService],
@@ -49,6 +65,7 @@ export class DatabaseTestModule implements OnModuleDestroy {
     }
 
     public static async setupDatabase(orm: MikroORM): Promise<void> {
+        await orm.em.getConnection().execute('CREATE EXTENSION IF NOT EXISTS pg_trgm');
         await orm.getSchemaGenerator().createSchema();
     }
 
@@ -56,7 +73,12 @@ export class DatabaseTestModule implements OnModuleDestroy {
         await orm.getSchemaGenerator().clearDatabase();
     }
 
+    public constructor(private orm?: MikroORM) {}
+
     public async onModuleDestroy(): Promise<void> {
+        if (this.orm) {
+            await this.orm.close();
+        }
         await DatabaseTestModule.postgres?.stop();
     }
 }

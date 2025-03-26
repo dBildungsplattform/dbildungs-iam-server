@@ -1,11 +1,17 @@
-import { faker } from '@faker-js/faker';
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { Geschlecht, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from './familienname-with-trailing-space.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from './personalnummer-with-trailing-space.error.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
 
 type PasswordInternalState = { passwordInternal: string | undefined; isTemporary: boolean };
 
 export type PersonCreationParams = {
+    id?: number;
     familienname: string;
     vorname: string;
     referrer?: string;
@@ -26,6 +32,11 @@ export type PersonCreationParams = {
     auskunftssperre?: boolean;
     username?: string;
     password?: string;
+    personalnummer?: string;
+    userLock?: UserLock[];
+    isLocked?: boolean;
+    orgUnassignmentDate?: Date;
+    istTechnisch?: boolean;
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -45,24 +56,31 @@ export class Person<WasPersisted extends boolean> {
         public familienname: string,
         public vorname: string,
         public revision: string,
-        public username?: string,
-        public keycloakUserId?: string,
-        public referrer?: string,
-        public stammorganisation?: string,
-        public initialenFamilienname?: string,
-        public initialenVorname?: string,
-        public rufname?: string,
-        public nameTitel?: string,
-        public nameAnrede?: string[],
-        public namePraefix?: string[],
-        public nameSuffix?: string[],
-        public nameSortierindex?: string,
-        public geburtsdatum?: Date,
-        public geburtsort?: string,
-        public geschlecht?: Geschlecht,
-        public lokalisierung?: string,
-        public vertrauensstufe?: Vertrauensstufe,
-        public auskunftssperre?: boolean,
+        public username: string | undefined,
+        public keycloakUserId: string | undefined,
+        public referrer: string | undefined,
+        public stammorganisation: string | undefined,
+        public initialenFamilienname: string | undefined,
+        public initialenVorname: string | undefined,
+        public rufname: string | undefined,
+        public nameTitel: string | undefined,
+        public nameAnrede: string[] | undefined,
+        public namePraefix: string[] | undefined,
+        public nameSuffix: string[] | undefined,
+        public nameSortierindex: string | undefined,
+        public geburtsdatum: Date | undefined,
+        public geburtsort: string | undefined,
+        public geschlecht: Geschlecht | undefined,
+        public lokalisierung: string | undefined,
+        public vertrauensstufe: Vertrauensstufe | undefined,
+        public auskunftssperre: boolean | undefined,
+        public personalnummer: string | undefined,
+        public userLock: UserLock[],
+        public orgUnassignmentDate: Date | undefined,
+        public isLocked: boolean | undefined,
+        public email: string | undefined,
+        public oxUserId: string | undefined,
+        public istTechnisch: boolean,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
@@ -76,9 +94,9 @@ export class Person<WasPersisted extends boolean> {
     }
 
     public static construct<WasPersisted extends boolean = false>(
-        id: string,
-        createdAt: Date,
-        updatedAt: Date,
+        id: Persisted<string, WasPersisted>,
+        createdAt: Persisted<Date, WasPersisted>,
+        updatedAt: Persisted<Date, WasPersisted>,
         familienname: string,
         vorname: string,
         revision: string,
@@ -100,6 +118,13 @@ export class Person<WasPersisted extends boolean> {
         lokalisierung?: string,
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
+        personalnummer?: string,
+        orgUnassignmentDate?: Date,
+        userLock: UserLock[] = [],
+        isLocked?: boolean,
+        email?: string,
+        oxUserId?: string,
+        istTechnisch?: boolean,
     ): Person<WasPersisted> {
         return new Person(
             id,
@@ -126,6 +151,13 @@ export class Person<WasPersisted extends boolean> {
             lokalisierung,
             vertrauensstufe,
             auskunftssperre,
+            personalnummer,
+            userLock,
+            orgUnassignmentDate,
+            isLocked,
+            email,
+            oxUserId,
+            istTechnisch ?? false,
         );
     }
 
@@ -133,6 +165,16 @@ export class Person<WasPersisted extends boolean> {
         usernameGenerator: UsernameGeneratorService,
         creationParams: PersonCreationParams,
     ): Promise<Person<false> | DomainError> {
+        // Validate the Vor - and Nachname
+        if (!NameValidator.isNameValid(creationParams.vorname)) {
+            return new VornameForPersonWithTrailingSpaceError();
+        }
+        if (!NameValidator.isNameValid(creationParams.familienname)) {
+            return new FamiliennameForPersonWithTrailingSpaceError();
+        }
+        if (creationParams.personalnummer && !NameValidator.isNameValid(creationParams.personalnummer)) {
+            return new PersonalNummerForPersonWithTrailingSpaceError();
+        }
         const person: Person<false> = new Person(
             undefined,
             undefined,
@@ -158,6 +200,13 @@ export class Person<WasPersisted extends boolean> {
             creationParams.lokalisierung,
             creationParams.vertrauensstufe,
             creationParams.auskunftssperre,
+            creationParams.personalnummer,
+            creationParams.userLock ?? [],
+            creationParams.orgUnassignmentDate,
+            undefined,
+            undefined,
+            undefined,
+            creationParams.istTechnisch ?? false,
         );
 
         if (creationParams.password) {
@@ -203,14 +252,30 @@ export class Person<WasPersisted extends boolean> {
         lokalisierung?: string,
         vertrauensstufe?: Vertrauensstufe,
         auskunftssperre?: boolean,
+        personalnummer?: string,
+        userLock?: UserLock[],
+        orgUnassignmentDate?: Date,
+        isLocked?: boolean,
+        email?: string,
+        istTechnisch?: boolean,
     ): void | DomainError {
         if (this.revision !== revision) {
             return new MismatchedRevisionError(
                 `Revision ${revision} does not match revision ${this.revision} of stored person.`,
             );
         }
-
         const newRevision: string = (parseInt(this.revision) + 1).toString();
+
+        if (vorname && !NameValidator.isNameValid(vorname)) {
+            return new VornameForPersonWithTrailingSpaceError();
+        }
+        if (familienname && !NameValidator.isNameValid(familienname)) {
+            return new FamiliennameForPersonWithTrailingSpaceError();
+        }
+
+        if (personalnummer && !NameValidator.isNameValid(personalnummer)) {
+            return new PersonalNummerForPersonWithTrailingSpaceError();
+        }
 
         this.familienname = familienname ?? this.familienname;
         this.vorname = vorname ?? this.vorname;
@@ -231,12 +296,15 @@ export class Person<WasPersisted extends boolean> {
         this.vertrauensstufe = vertrauensstufe;
         this.auskunftssperre = auskunftssperre;
         this.revision = newRevision;
+        this.personalnummer = personalnummer ?? this.personalnummer;
+        this.orgUnassignmentDate = orgUnassignmentDate;
+        this.isLocked = isLocked;
+        this.email = email;
+        this.userLock = userLock ?? [];
+        if (istTechnisch !== undefined) this.istTechnisch = istTechnisch;
     }
 
     public resetPassword(): void {
-        this.passwordInternalState.passwordInternal = faker.string.alphanumeric({
-            length: { min: 10, max: 10 },
-            casing: 'mixed',
-        });
+        this.passwordInternalState.passwordInternal = generatePassword();
     }
 }
