@@ -99,14 +99,9 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                 this.logger.info(`Handling event: ${eventType.name} for ${personId}`);
                 await handler(event);
             } catch (err) {
-                this.logHandlerError(err);
+                this.logger.logUnknownAsError(`Handling event: ${eventType.name} for ${personId} failed`, err);
             }
         }
-    }
-
-    private logHandlerError(err: unknown): void {
-        const trace: unknown = err instanceof Error ? err.stack : err;
-        this.logger.error('Error in event handler', trace);
     }
 
     public async publish(event: KafkaEvent): Promise<void> {
