@@ -993,30 +993,6 @@ describe('KeycloakUserService', () => {
                     enabled: true,
                 } as UserRepresentation);
 
-                const error: Error = new Error('Simulated error during group assignment');
-                kcUsersMock.addToGroup.mockRejectedValueOnce(error);
-
-                await service.assignRealmGroupsToUser(user.id, groupNames);
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining(`Failed to assign groups for user ${user.id}`),
-                    error,
-                );
-            });
-        });
-        describe('when an error occurs during group assignment', () => {
-            it('should log the error and return a DomainError', async () => {
-                const user: User<true> = DoFactory.createUser(true);
-                const groupNames: string[] = ['group1', 'group2'];
-
-                kcUsersMock.findOne.mockResolvedValueOnce({
-                    id: user.id,
-                    username: user.username,
-                    email: user.email,
-                    createdTimestamp: user.createdDate.getTime(),
-                    enabled: true,
-                } as UserRepresentation);
-
                 const mockGroups: GroupRepresentation[] = [
                     { id: 'group-id-1', name: 'group1' },
                     { id: 'group-id-2', name: 'group2' },
