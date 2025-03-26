@@ -7,10 +7,19 @@ import { KafkaEventService } from './kafka-event.service.js';
 import { KafkaEvent } from '../../../shared/events/kafka-event.js';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../../shared/config/kafka.config.js';
-import { Kafka, Consumer, Producer, KafkaMessage } from 'kafkajs';
+import {
+    Kafka,
+    Consumer,
+    Producer,
+    KafkaMessage,
+    EachMessageHandler,
+    ConsumerRunConfig,
+    EachMessagePayload,
+} from 'kafkajs';
 import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
+import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 
 class TestEvent extends BaseEvent implements KafkaEvent {
     public constructor() {
@@ -43,7 +52,9 @@ describe('KafkaEventService', () => {
         } as KafkaConfig);
 
         producer = createMock<Producer>();
-        consumer = createMock<Consumer>();
+        consumer = createMock<Consumer>({
+            run: jest.fn(),
+        });
         kafka = createMock<Kafka>({
             producer: jest.fn(() => producer),
             consumer: jest.fn(() => consumer),
@@ -64,6 +75,10 @@ describe('KafkaEventService', () => {
 
     afterAll(async () => {
         await module.close();
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
     });
 
     it('should be defined', () => {
@@ -141,7 +156,22 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message);
 
-        expect(logger.error).toHaveBeenCalledWith('Error in event handler', expect.any(String));
+        expect(logger.logUnknownAsError).toHaveBeenCalled();
+    });
+
+    it('should log error if message value is invalid JSON', async () => {
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: undefined,
+            headers: { eventKey: 'user.created' },
+        });
+
+        const handler: jest.Mock = jest.fn();
+        sut.subscribe(KafkaPersonCreatedEvent, handler);
+
+        await sut.handleMessage(message);
+
+        expect(handler).toHaveBeenCalledWith({});
     });
 
     it('should publish event correctly', async () => {
@@ -171,5 +201,65 @@ describe('KafkaEventService', () => {
         await sut.publish(event);
 
         expect(logger.error).toHaveBeenCalledWith('No mapping found for event type: TestEvent');
+    });
+
+    it('callback should trigger handler method', async () => {
+        let consumerCb: EachMessageHandler | undefined;
+        consumer.run.mockImplementationOnce((config: ConsumerRunConfig | undefined) => {
+            consumerCb = config?.eachMessage;
+            return Promise.resolve();
+        });
+
+        const payload: DeepMocked<EachMessagePayload> = createMock<EachMessagePayload>({});
+
+        const handleMessageSpy: jest.SpyInstance = jest.spyOn(sut, 'handleMessage').mockResolvedValue(undefined);
+
+        await sut.onModuleInit();
+
+        if (consumerCb) {
+            await consumerCb(payload);
+        }
+
+        expect(handleMessageSpy).toHaveBeenCalled();
+    });
+
+    it('should log error in onModuleInit if Kafka consumer fails to connect', async () => {
+        consumer.connect.mockRejectedValueOnce(new Error('Consumer error'));
+
+        await sut.onModuleInit();
+
+        expect(logger.error).toHaveBeenCalledWith('Error in KafkaEventService', expect.any(String));
+    });
+
+    it('should not initialize Kafka consumer and producer if feature flag is disabled in constructor', () => {
+        jest.clearAllMocks();
+
+        const configServiceKafkaDisabled: DeepMocked<ConfigService> = createMock<ConfigService>();
+        configServiceKafkaDisabled.getOrThrow.mockReturnValueOnce({
+            FEATURE_FLAG_USE_KAFKA: false,
+        } as FeatureFlagConfig);
+
+        new KafkaEventService(logger, kafka, configServiceKafkaDisabled);
+
+        expect(logger.info).toHaveBeenCalledWith('Kafka is disabled');
+        expect(kafka.consumer).not.toHaveBeenCalled();
+        expect(kafka.producer).not.toHaveBeenCalled();
+    });
+
+    it('should not connect to Kafka if feature flag is disabled in onModuleInit', async () => {
+        jest.clearAllMocks();
+
+        const configServiceKafkaDisabled: DeepMocked<ConfigService> = createMock<ConfigService>();
+        configServiceKafkaDisabled.getOrThrow.mockReturnValueOnce({
+            FEATURE_FLAG_USE_KAFKA: false,
+        } as FeatureFlagConfig);
+
+        const service: KafkaEventService = new KafkaEventService(logger, kafka, configServiceKafkaDisabled);
+
+        await service.onModuleInit();
+
+        expect(logger.info).toHaveBeenCalledWith('Kafka is disabled');
+        expect(consumer.connect).not.toHaveBeenCalled();
+        expect(producer.connect).not.toHaveBeenCalled();
     });
 });
