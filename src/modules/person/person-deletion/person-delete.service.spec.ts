@@ -92,7 +92,7 @@ describe('PersonDeleteService', () => {
                 expect(res.ok).toBeFalsy();
                 expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                     'Error while loading Kontexts of person to delete',
-                    undefined
+                    undefined,
                 );
             });
         });
