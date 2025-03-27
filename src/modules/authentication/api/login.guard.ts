@@ -44,7 +44,7 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
             }
             await super.logIn(request);
         } catch (err) {
-            this.logger.info(JSON.stringify(err));
+            this.logger.logUnknownAsError('logIn failed', err);
             const frontendConfig: FrontendConfig = this.configService.getOrThrow<FrontendConfig>('FRONTEND');
 
             if (err instanceof KeycloakUserNotFoundError) {

@@ -70,11 +70,7 @@ export class PersonDeleteService {
 
             return { ok: true, value: removedPersonenkontexts };
         } catch (error) {
-            if (error instanceof Error) {
-                this.logger.error(`Error while loading Kontexts of person to delete: ${error.message}`);
-            } else {
-                this.logger.error(`Error while loading Kontexts of person to delete: ${JSON.stringify(error)}`);
-            }
+            this.logger.logUnknownAsError('Error while loading Kontexts of person to delete', error);
             return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
         }
     }
