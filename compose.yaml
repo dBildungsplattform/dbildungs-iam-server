@@ -74,7 +74,7 @@ services:
   backend:
     profiles:
       - backend
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server:spsh-1995
     container_name: spsh-backend
     # build:
     #   context: .
