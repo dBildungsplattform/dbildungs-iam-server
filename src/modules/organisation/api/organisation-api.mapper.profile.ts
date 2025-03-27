@@ -6,7 +6,6 @@ import { CreateOrganisationDto } from './create-organisation.dto.js';
 import { OrganisationDo } from '../domain/organisation.do.js';
 import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { CreatedOrganisationDto } from './created-organisation.dto.js';
-import { FindOrganisationQueryParams } from './find-organisation-query.param.js';
 import { FindOrganisationDto } from './find-organisation.dto.js';
 import { UpdateOrganisationBodyParams } from './update-organisation.body.params.js';
 import { UpdateOrganisationDto } from './update-organisation.dto.js';
@@ -47,7 +46,6 @@ export class OrganisationApiMapperProfile extends AutomapperProfile {
             createMap(mapper, CreatedOrganisationDto, OrganisationResponseLegacy);
             createMap(mapper, UpdatedOrganisationDto, OrganisationResponseLegacy);
 
-            createMap(mapper, FindOrganisationQueryParams, FindOrganisationDto);
             createMap(
                 mapper,
                 FindOrganisationDto,

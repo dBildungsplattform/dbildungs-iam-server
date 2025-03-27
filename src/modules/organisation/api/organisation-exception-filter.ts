@@ -21,6 +21,7 @@ import { EmailAdressOnOrganisationTypError } from '../specification/error/email-
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
 import { OrganisationZuordnungVerschiebenError } from '../domain/organisation-zuordnung-verschieben.error.js';
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
+import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
 
 @Catch(OrganisationSpecificationError)
 export class OrganisationExceptionFilter implements ExceptionFilter<OrganisationSpecificationError> {
@@ -149,6 +150,13 @@ export class OrganisationExceptionFilter implements ExceptionFilter<Organisation
             new DbiamOrganisationError({
                 code: 400,
                 i18nKey: OrganisationSpecificationErrorI18nTypes.ORGANISATION_WECHSELT_TEILBAUM,
+            }),
+        ],
+        [
+            SchultraegerNameEindeutigError.name,
+            new DbiamOrganisationError({
+                code: 400,
+                i18nKey: OrganisationSpecificationErrorI18nTypes.SCHULTRAEGER_NAME_EINDEUTIG,
             }),
         ],
     ]);

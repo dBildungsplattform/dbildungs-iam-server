@@ -8,6 +8,10 @@ import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { OrganisationsTyp, Traegerschaft } from './organisation.enums.js';
+import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
+import { TraegerNameUniqueInSubtree } from '../specification/traeger-name-unique-in-subtree.js';
+import { TraegerUnterRootChild } from '../specification/traeger-unter-root-child.js';
+import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
 
 export class Organisation<WasPersisted extends boolean> {
     private constructor(
@@ -117,6 +121,35 @@ export class Organisation<WasPersisted extends boolean> {
         //Refactor this to use KlassenNameAnSchuleEindeutig when ticket SPSH-738 is merged
         if (!(await this.validateClassNameIsUniqueOnSchool(organisationRepository))) {
             return new KlassenNameAnSchuleEindeutigError(this.id ?? undefined);
+        }
+
+        return undefined;
+    }
+
+    public async checkSchultraegerSpecifications(
+        organisationRepository: OrganisationRepository,
+    ): Promise<undefined | OrganisationSpecificationError> {
+        const validationError: void | OrganisationSpecificationError = this.validateFieldNames();
+        if (validationError) {
+            return validationError;
+        }
+
+        const traegerUnterRootChild: TraegerUnterRootChild<WasPersisted> = new TraegerUnterRootChild(
+            organisationRepository,
+        );
+        if (!(await traegerUnterRootChild.isSatisfiedBy(this))) {
+            if (this.id) {
+                return new TraegerUnterRootChildError(this.id);
+            }
+        }
+
+        const traegerNameUniqueInSubtree: TraegerNameUniqueInSubtree<WasPersisted> = new TraegerNameUniqueInSubtree(
+            organisationRepository,
+        );
+        if (!(await traegerNameUniqueInSubtree.isSatisfiedBy(this))) {
+            if (this.id) {
+                return new SchultraegerNameEindeutigError(this.id);
+            }
         }
 
         return undefined;
