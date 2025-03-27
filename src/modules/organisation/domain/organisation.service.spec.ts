@@ -1,34 +1,37 @@
 import { Mapper } from '@automapper/core';
 import { getMapperToken } from '@automapper/nestjs';
 import { faker } from '@faker-js/faker';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Dictionary } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { PersonPermissionsMock } from '../../../../test/utils/person-permissions.mock.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated, MissingPermissionsError } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/index.js';
-import { OrganisationService } from './organisation.service.js';
-import { OrganisationsTyp, RootDirectChildrenType } from './organisation.enums.js';
-import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
-import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
-import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
-import { OrganisationRepository } from '../persistence/organisation.repository.js';
-import { Organisation } from './organisation.js';
-import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
-import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
-import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
-import { KlasseWithoutNumberOrLetterError } from '../specification/error/klasse-without-number-or-letter.error.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { PersonenkontextRolleFields, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
-import { PersonPermissionsMock } from '../../../../test/utils/person-permissions.mock.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
+import {
+    PersonenkontextRolleWithOrganisation,
+    PersonPermissions,
+} from '../../authentication/domain/person-permissions.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
+import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
+import { KlasseWithoutNumberOrLetterError } from '../specification/error/klasse-without-number-or-letter.error.js';
+import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
+import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
+import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
+import { OrganisationsTyp, RootDirectChildrenType } from './organisation.enums.js';
+import { Organisation } from './organisation.js';
+import { OrganisationService } from './organisation.service.js';
 
 describe('OrganisationService', () => {
     let module: TestingModule;
@@ -71,9 +74,9 @@ describe('OrganisationService', () => {
     describe('createOrganisation', () => {
         const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
         const organisationUser: Organisation<true> = DoFactory.createOrganisation(true);
-        const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+        const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
             {
-                organisationsId: organisationUser.id,
+                organisation: organisationUser,
                 rolle: { systemrechte: [], serviceProviderIds: [] },
             },
         ];
@@ -92,7 +95,7 @@ describe('OrganisationService', () => {
         });
 
         it('should create a Schule and log its creation', async () => {
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(organisationUser);
             const schule: Organisation<false> = DoFactory.createOrganisation(false);
             schule.typ = OrganisationsTyp.SCHULE;
@@ -193,7 +196,7 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if kennung is not set and type is schule', async () => {
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
             const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
@@ -215,7 +218,7 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if name is not set and type is schule', async () => {
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
             const organisation: Organisation<false> = DoFactory.createOrganisation(false, {
@@ -258,7 +261,7 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if kennung is not unique and type is schule', async () => {
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
             const name: string = faker.string.alpha();
@@ -378,9 +381,9 @@ describe('OrganisationService', () => {
     describe('updateOrganisation', () => {
         const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
         const organisationUser: Organisation<true> = DoFactory.createOrganisation(true);
-        const personenkontextewithRolesMock: PersonenkontextRolleFields[] = [
+        const personenkontextewithRolesMock: PersonenkontextRolleWithOrganisation[] = [
             {
-                organisationsId: organisationUser.id,
+                organisation: organisationUser,
                 rolle: { systemrechte: [], serviceProviderIds: [] },
             },
         ];
@@ -405,7 +408,7 @@ describe('OrganisationService', () => {
             organisationRepositoryMock.findBy.mockResolvedValueOnce([[], 0]);
             organisationRepositoryMock.save.mockResolvedValue(schule as unknown as Organisation<true>);
             mapperMock.map.mockReturnValue(schule as unknown as Dictionary<unknown>);
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
@@ -488,7 +491,7 @@ describe('OrganisationService', () => {
                 kennung: undefined,
             });
             organisationRepositoryMock.findById.mockResolvedValueOnce(organisation as unknown as Organisation<true>);
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValueOnce(organisationUser);
 
             const result: Result<Organisation<true>> = await organisationService.updateOrganisation(
@@ -503,7 +506,7 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if name is not set and type is schule', async () => {
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
@@ -544,7 +547,7 @@ describe('OrganisationService', () => {
         });
 
         it('should return a domain error if kennung is not unique and type is schule', async () => {
-            permissionsMock.getPersonenkontextewithRoles.mockResolvedValue(personenkontextewithRolesMock);
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
             organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
 
             const name: string = faker.string.alpha();
