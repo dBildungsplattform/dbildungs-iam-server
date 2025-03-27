@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import {
     DomainError,
     EntityCouldNotBeCreated,
@@ -7,40 +8,39 @@ import {
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { Paged } from '../../../shared/paging/paged.js';
-import { OrganisationScope } from '../persistence/organisation.scope.js';
-import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
-import { SchuleUnterTraeger } from '../specification/schule-unter-traeger.js';
-import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
-import { ZyklusInOrganisationen } from '../specification/zyklus-in-organisationen.js';
-import { KennungRequiredForSchule } from '../specification/kennung-required-for-schule.js';
-import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
-import { KlasseNurVonSchuleAdministriert } from '../specification/klasse-nur-von-schule-administriert.js';
-import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
-import { KlassenNameAnSchuleEindeutig } from '../specification/klassen-name-an-schule-eindeutig.js';
-import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
-import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
-import { NameRequiredForSchule } from '../specification/name-required-for-schule.js';
-import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ScopeOperator } from '../../../shared/persistence/index.js';
-import { SchuleKennungEindeutig } from '../specification/schule-kennung-eindeutig.js';
-import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
-import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
-import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
-import { Organisation } from './organisation.js';
-import { OrganisationRepository } from '../persistence/organisation.repository.js';
-import { EmailAdressOnOrganisationTyp } from '../specification/email-on-organisation-type.js';
-import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
-import { OrganisationsTyp } from './organisation.enums.js';
-import { KlasseWithoutNumberOrLetterError } from '../specification/error/klasse-without-number-or-letter.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { OrganisationsOnSameSubtree } from '../specification/organisations-on-same-subtree.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { OrganisationScope } from '../persistence/organisation.scope.js';
+import { EmailAdressOnOrganisationTyp } from '../specification/email-on-organisation-type.js';
+import { EmailAdressOnOrganisationTypError } from '../specification/error/email-adress-on-organisation-typ-error.js';
+import { KennungRequiredForSchuleError } from '../specification/error/kennung-required-for-schule.error.js';
+import { KennungForOrganisationWithTrailingSpaceError } from '../specification/error/kennung-with-trailing-space.error.js';
+import { KlasseNurVonSchuleAdministriertError } from '../specification/error/klasse-nur-von-schule-administriert.error.js';
+import { KlasseWithoutNumberOrLetterError } from '../specification/error/klasse-without-number-or-letter.error.js';
+import { KlassenNameAnSchuleEindeutigError } from '../specification/error/klassen-name-an-schule-eindeutig.error.js';
+import { NameRequiredForSchuleError } from '../specification/error/name-required-for-schule.error.js';
+import { NameForOrganisationWithTrailingSpaceError } from '../specification/error/name-with-trailing-space.error.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
+import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
+import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
+import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
+import { KennungRequiredForSchule } from '../specification/kennung-required-for-schule.js';
+import { KlasseNurVonSchuleAdministriert } from '../specification/klasse-nur-von-schule-administriert.js';
+import { KlassenNameAnSchuleEindeutig } from '../specification/klassen-name-an-schule-eindeutig.js';
+import { NameRequiredForSchule } from '../specification/name-required-for-schule.js';
+import { OrganisationsOnSameSubtree } from '../specification/organisations-on-same-subtree.js';
+import { SchuleKennungEindeutig } from '../specification/schule-kennung-eindeutig.js';
+import { SchuleUnterTraeger } from '../specification/schule-unter-traeger.js';
+import { ZyklusInOrganisationen } from '../specification/zyklus-in-organisationen.js';
 import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { OrganisationsTyp } from './organisation.enums.js';
+import { Organisation } from './organisation.js';
 
 @Injectable()
 export class OrganisationService {
