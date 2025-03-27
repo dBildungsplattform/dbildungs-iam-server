@@ -1,4 +1,4 @@
-import { AnyEntity, EntityName, QBFilterQuery, QBQueryOrderMap } from '@mikro-orm/core';
+import { AnyEntity, EntityName, PopulateOptions, QBFilterQuery, QBQueryOrderMap } from '@mikro-orm/core';
 import { EntityManager, QueryBuilder, SelectQueryBuilder } from '@mikro-orm/postgresql';
 import { ScopeOrder, ScopeOperator } from './scope.enums.js';
 
@@ -14,6 +14,8 @@ export abstract class ScopeBase<T extends AnyEntity> {
     private limit: Option<number>;
 
     protected abstract get entityName(): EntityName<T>;
+
+    protected readonly populateOptions?: PopulateOptions<T>[];
 
     public setScopeWhereOperator(operator: ScopeOperator): this {
         if (this.scopeWhereOperator) {
@@ -34,12 +36,16 @@ export abstract class ScopeBase<T extends AnyEntity> {
         const combinedFilters: {
             [x: string]: QBFilterQuery<T>[];
         } = { [this.scopeWhereOperator || ScopeOperator.OR]: this.queryFilters };
-        const result: SelectQueryBuilder<T> = qb
+        let result: SelectQueryBuilder<T> = qb
             .select('*')
             .where(combinedFilters)
             .orderBy(this.queryOrderMaps)
             .offset(this.offset ?? undefined)
             .limit(this.limit ?? undefined);
+
+        if (this.populateOptions) {
+            result = result; //.populate(this.populateOptions, 'infer');
+        }
         //.getResultAndCount();
 
         return result;

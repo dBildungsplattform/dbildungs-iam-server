@@ -41,6 +41,8 @@ import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
+import { mapDefinedObjectProperties } from '../../../shared/util/object-utils.js';
+import { ExternalIdMappingEntity, ExternalIdType } from './external-id-mappings.entity.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -63,6 +65,15 @@ export function getOxUserId(entity: PersonEntity): string | undefined {
 }
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
+    const externalIds: RequiredEntityData<ExternalIdMappingEntity>[] = mapDefinedObjectProperties(
+        person.externalIds,
+        (type: ExternalIdType, externalId: string) => ({
+            person: person.id,
+            type,
+            externalId,
+        }),
+    );
+
     return {
         keycloakUserId: person.keycloakUserId!,
         referrer: person.referrer,
@@ -89,10 +100,19 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         personalnummer: person.personalnummer,
         orgUnassignmentDate: person.orgUnassignmentDate,
         istTechnisch: person.istTechnisch,
+        externalIds,
     };
 }
 
 export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
+    const externalIds: Partial<Record<ExternalIdType, string>> = entity.externalIds.reduce(
+        (aggr: Partial<Record<ExternalIdType, string>>, externalId: ExternalIdMappingEntity) => {
+            aggr[externalId.type] = externalId.externalId;
+            return aggr;
+        },
+        {} as Partial<Record<ExternalIdType, string>>,
+    );
+
     return Person.construct(
         entity.id,
         entity.createdAt,
@@ -125,6 +145,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
         entity.istTechnisch,
+        externalIds,
     );
 }
 
@@ -773,6 +794,8 @@ export class PersonRepository {
             personFound.orgUnassignmentDate,
             personFound.isLocked,
             personFound.email,
+            personFound.istTechnisch,
+            personFound.externalIds,
         );
         if (error instanceof DomainError) {
             return error;
@@ -848,7 +871,7 @@ export class PersonRepository {
             ],
         };
 
-        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters, { populate: ['externalIds'] });
         return personEntities.map((person: PersonEntity) => [person.id, person.keycloakUserId]);
     }
 
@@ -865,7 +888,7 @@ export class PersonRepository {
             },
         };
 
-        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters, { populate: ['externalIds'] });
         return personEntities.map((person: PersonEntity) => person.id);
     }
 
@@ -880,7 +903,7 @@ export class PersonRepository {
                 },
             },
         };
-        const admins: PersonEntity[] = await this.em.find(PersonEntity, filters);
+        const admins: PersonEntity[] = await this.em.find(PersonEntity, filters, { populate: ['externalIds'] });
         return admins.map((admin: PersonEntity) => admin.vorname + ' ' + admin.familienname);
     }
 }
