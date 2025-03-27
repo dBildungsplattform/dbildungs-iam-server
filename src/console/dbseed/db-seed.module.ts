@@ -14,6 +14,7 @@ import { DbSeedRepo } from './repo/db-seed.repo.js';
 import { DBiamPersonenkontextRepo } from '../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
 import { LdapModule } from '../../core/ldap/ldap.module.js';
+import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggregate.mapper.js';
 
 @Module({
     imports: [
@@ -26,7 +27,15 @@ import { LdapModule } from '../../core/ldap/ldap.module.js';
         KeycloakAdministrationModule,
         LoggerModule.register(DbSeedModule.name),
     ],
-    providers: [DbSeedService, DbSeedMapper, DbSeedConsole, DBiamPersonenkontextRepo, DbSeedRepo, DbSeedReferenceRepo],
+    providers: [
+        DbSeedService,
+        DbSeedMapper,
+        DbSeedConsole,
+        DBiamPersonenkontextRepo,
+        DbSeedRepo,
+        DbSeedReferenceRepo,
+        EntityAggregateMapper,
+    ],
     exports: [DbSeedService, DbSeedMapper, DbSeedConsole, DbSeedRepo],
 })
 export class DbSeedModule {}

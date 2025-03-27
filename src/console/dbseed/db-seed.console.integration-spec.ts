@@ -20,6 +20,7 @@ import { ServiceProviderModule } from '../../modules/service-provider/service-pr
 import { DbSeedModule } from './db-seed.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { OxUserBlacklistRepo } from '../../modules/person/persistence/ox-user-blacklist.repo.js';
+import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggregate.mapper.js';
 
 describe('DbSeedConsoleIntegration', () => {
     let module: TestingModule;
@@ -42,7 +43,7 @@ describe('DbSeedConsoleIntegration', () => {
                 ServiceProviderModule,
                 PersonenKontextModule,
             ],
-            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo, OxUserBlacklistRepo],
+            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo, OxUserBlacklistRepo, EntityAggregateMapper],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))

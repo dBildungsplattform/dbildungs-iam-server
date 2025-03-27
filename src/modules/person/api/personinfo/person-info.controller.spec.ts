@@ -8,7 +8,10 @@ import { PersonInfoController } from './person-info.controller.js';
 import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './person-info.response.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { DoFactory } from '../../../../../test/utils/do-factory.js';
-import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import {
+    DBiamPersonenkontextRepo,
+    KontextWithOrgaAndRolle,
+} from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonRepository } from '../../persistence/person.repository.js';
 import { Person } from '../../domain/person.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
@@ -113,7 +116,7 @@ describe('PersonInfoController', () => {
             };
         });
         describe('when person exists', () => {
-            it('should return person info', async () => {
+            it('should return person info with loeschung', async () => {
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -136,6 +139,13 @@ describe('PersonInfoController', () => {
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orga!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
                 emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
 
                 const result: PersonInfoResponse = await sut.info(permissions);
@@ -144,14 +154,73 @@ describe('PersonInfoController', () => {
                 expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
 
                 expect(result.pid).toEqual(person?.id);
-                expect(result.personenkontexte).toEqual([personenkontextResponseMock]);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
                     address: email.address,
                     status: email.status,
                 });
             });
-            it('should return person info with empty dnr array', async () => {
+            it('should return person info with no loeschungZeitpunkt', async () => {
+                const permissions: PersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const email: PersonEmailResponse = {
+                    address: faker.internet.email(),
+                    status: faker.helpers.enumValue(EmailAddressStatus),
+                };
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: undefined,
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orga);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orga!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+
+                const result: PersonInfoResponse = await sut.info(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponse);
+                expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
+                expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
+
+                expect(result.pid).toEqual(person?.id);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
+                expect(result.gruppen).toEqual([]);
+                expect(result.email).toEqual({
+                    address: email.address,
+                    status: email.status,
+                });
+            });
+            it('should return person info with empty dnr array and no kontexte', async () => {
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -164,7 +233,6 @@ describe('PersonInfoController', () => {
                 orga!.kennung = undefined;
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-                    loeschungZeitpunkt: new Date(),
                     getRolle: () => Promise.resolve(rolle),
                     getOrganisation() {
                         return Promise.resolve(orga);
@@ -175,6 +243,7 @@ describe('PersonInfoController', () => {
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([]);
                 emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
 
                 const result: PersonInfoResponse = await sut.info(permissions);
@@ -183,7 +252,7 @@ describe('PersonInfoController', () => {
                 expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [] });
 
                 expect(result.pid).toEqual(person?.id);
-                expect(result.personenkontexte).toEqual([personenkontextResponseMock]);
+                expect(result.personenkontexte.length).toEqual(0);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
                     address: email.address,
@@ -244,7 +313,7 @@ describe('PersonInfoController', () => {
             };
         });
         describe('when person exists', () => {
-            it('should return person info v1', async () => {
+            it('should return person info with loeschung', async () => {
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -267,26 +336,88 @@ describe('PersonInfoController', () => {
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orga!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
                 emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
 
                 const result: PersonInfoResponseV1 = await sut.infoV1(permissions);
                 expect(result).toBeInstanceOf(PersonInfoResponseV1);
                 expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
-                expect(result.person).toEqual({
-                    ...expectedBaseNestedPersonInfo,
-                    dienststellen: [orga!.kennung],
-                });
+                expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
 
                 expect(result.pid).toEqual(person?.id);
-                expect(result.personenkontexte).toEqual([personenkontextResponseMock]);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
                     address: email.address,
                     status: email.status,
                 });
             });
+            it('should return person info with no loeschungZeitpunkt', async () => {
+                const permissions: PersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const email: PersonEmailResponse = {
+                    address: faker.internet.email(),
+                    status: faker.helpers.enumValue(EmailAddressStatus),
+                };
+                const rolle: Rolle<true> = DoFactory.createRolle(true);
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: undefined,
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orga);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
 
-            it('should return person info v1 with empty dnr array', async () => {
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orga!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+
+                const result: PersonInfoResponseV1 = await sut.infoV1(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV1);
+                expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
+                expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [orga!.kennung] });
+
+                expect(result.pid).toEqual(person?.id);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(orga?.typ);
+                expect(result.personenkontexte.at(0)?.rollenart).toEqual(rolle.rollenart);
+                expect(result.personenkontexte.at(0)?.rollenname).toEqual(rolle.name);
+                expect(result.gruppen).toEqual([]);
+                expect(result.email).toEqual({
+                    address: email.address,
+                    status: email.status,
+                });
+            });
+            it('should return person info with empty dnr array and no kontexte', async () => {
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -299,7 +430,6 @@ describe('PersonInfoController', () => {
                 orga!.kennung = undefined;
                 const rolle: Rolle<true> = DoFactory.createRolle(true);
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-                    loeschungZeitpunkt: new Date(),
                     getRolle: () => Promise.resolve(rolle),
                     getOrganisation() {
                         return Promise.resolve(orga);
@@ -310,18 +440,16 @@ describe('PersonInfoController', () => {
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([]);
                 emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
 
                 const result: PersonInfoResponseV1 = await sut.infoV1(permissions);
                 expect(result).toBeInstanceOf(PersonInfoResponseV1);
                 expect(result.person).toBeInstanceOf(PersonNestedInPersonInfoResponse);
-                expect(result.person).toEqual({
-                    ...expectedBaseNestedPersonInfo,
-                    dienststellen: [],
-                });
+                expect(result.person).toEqual({ ...expectedBaseNestedPersonInfo, dienststellen: [] });
 
                 expect(result.pid).toEqual(person?.id);
-                expect(result.personenkontexte).toEqual([personenkontextResponseMock]);
+                expect(result.personenkontexte.length).toEqual(0);
                 expect(result.gruppen).toEqual([]);
                 expect(result.email).toEqual({
                     address: email.address,
