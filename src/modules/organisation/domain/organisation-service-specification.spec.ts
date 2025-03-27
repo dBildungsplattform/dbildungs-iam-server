@@ -14,7 +14,7 @@ import { DomainError } from '../../../shared/error/index.js';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { Organisation } from './organisation.js';
 import { OrganisationsTyp } from './organisation.enums.js';
-import { mapAggregateToData, OrganisationRepository } from '../persistence/organisation.repository.js';
+import { mapOrgaAggregateToData, OrganisationRepository } from '../persistence/organisation.repository.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
@@ -73,7 +73,7 @@ describe('OrganisationServiceSpecificationTest', () => {
             zugehoerigZu: undefined,
             typ: OrganisationsTyp.ROOT,
         });
-        await orm.em.persistAndFlush(orm.em.create(OrganisationEntity, mapAggregateToData(root)));
+        await orm.em.persistAndFlush(orm.em.create(OrganisationEntity, mapOrgaAggregateToData(root)));
         oeffentlich = await organisationRepository.save(
             DoFactory.createOrganisation(false, {
                 name: 'Öffentliche Schulen',
