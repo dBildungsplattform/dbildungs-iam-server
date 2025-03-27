@@ -1,5 +1,7 @@
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -9,27 +11,25 @@ import {
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { mapAggregateToData, mapEntityToAggregate, OrganisationRepository } from './organisation.repository.js';
-import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
-import { OrganisationEntity } from './organisation.entity.js';
-import { Organisation } from '../domain/organisation.js';
-import { OrganisationScope } from './organisation.scope.js';
-import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
-import { ScopeOperator } from '../../../shared/persistence/index.js';
-import { ConfigService } from '@nestjs/config';
-import { ServerConfig } from '../../../shared/config/server.config.js';
-import { DataConfig } from '../../../shared/config/index.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { DataConfig } from '../../../shared/config/index.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
-import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
+import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
 import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
+import { OrganisationPersistenceMapperProfile } from './organisation-persistence.mapper.profile.js';
+import { OrganisationEntity } from './organisation.entity.js';
+import { mapOrgaAggregateToData, mapOrgaEntityToAggregate, OrganisationRepository } from './organisation.repository.js';
+import { OrganisationScope } from './organisation.scope.js';
 
 describe('OrganisationRepository', () => {
     let module: TestingModule;
@@ -131,7 +131,7 @@ describe('OrganisationRepository', () => {
                 'traegerschaft',
             ];
 
-            const result: RequiredEntityData<OrganisationEntity> = mapAggregateToData(organisation);
+            const result: RequiredEntityData<OrganisationEntity> = mapOrgaAggregateToData(organisation);
 
             expectedProperties.forEach((prop: string) => {
                 expect(result).toHaveProperty(prop);
@@ -143,9 +143,9 @@ describe('OrganisationRepository', () => {
         it('should return New Aggregate', () => {
             const organisationEntity: OrganisationEntity = em.create(
                 OrganisationEntity,
-                mapAggregateToData(DoFactory.createOrganisation(true)),
+                mapOrgaAggregateToData(DoFactory.createOrganisation(true)),
             );
-            const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity);
+            const organisation: Organisation<true> = mapOrgaEntityToAggregate(organisationEntity);
 
             expect(organisation).toBeInstanceOf(Organisation);
         });
@@ -163,7 +163,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
 
-            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
 
             await em.persistAndFlush(mappedOrga);
 
@@ -187,7 +187,7 @@ describe('OrganisationRepository', () => {
                 return;
             }
 
-            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
 
             await em.persistAndFlush(mappedOrga);
 
@@ -250,9 +250,9 @@ describe('OrganisationRepository', () => {
                 OrganisationsTyp.SCHULE,
                 undefined,
             );
-            organisationEntity1 = em.create(OrganisationEntity, mapAggregateToData(organisation1));
-            organisationEntity2 = em.create(OrganisationEntity, mapAggregateToData(organisation2));
-            organisationEntity3 = em.create(OrganisationEntity, mapAggregateToData(organisation3));
+            organisationEntity1 = em.create(OrganisationEntity, mapOrgaAggregateToData(organisation1));
+            organisationEntity2 = em.create(OrganisationEntity, mapOrgaAggregateToData(organisation2));
+            organisationEntity3 = em.create(OrganisationEntity, mapOrgaAggregateToData(organisation3));
             await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
         });
 
@@ -395,9 +395,9 @@ describe('OrganisationRepository', () => {
             );
 
             await em.persistAndFlush([
-                em.create(OrganisationEntity, mapAggregateToData(root)),
-                em.create(OrganisationEntity, mapAggregateToData(traeger)),
-                em.create(OrganisationEntity, mapAggregateToData(schule)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
             ]);
 
             return [root.id, traeger.id, schule.id];
@@ -504,9 +504,9 @@ describe('OrganisationRepository', () => {
             );
 
             await em.persistAndFlush([
-                em.create(OrganisationEntity, mapAggregateToData(root)),
-                em.create(OrganisationEntity, mapAggregateToData(traeger)),
-                em.create(OrganisationEntity, mapAggregateToData(schule)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
             ]);
 
             return { root, traeger, schule };
@@ -627,9 +627,9 @@ describe('OrganisationRepository', () => {
             );
 
             await em.persistAndFlush([
-                em.create(OrganisationEntity, mapAggregateToData(root)),
-                em.create(OrganisationEntity, mapAggregateToData(traeger)),
-                em.create(OrganisationEntity, mapAggregateToData(schule)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(root)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(traeger)),
+                em.create(OrganisationEntity, mapOrgaAggregateToData(schule)),
             ]);
 
             return { root, traeger, schule };
@@ -772,9 +772,9 @@ describe('OrganisationRepository', () => {
                 OrganisationsTyp.SCHULE,
                 undefined,
             );
-            organisationEntity1 = em.create(OrganisationEntity, mapAggregateToData(root));
-            organisationEntity2 = em.create(OrganisationEntity, mapAggregateToData(oeffentlich));
-            organisationEntity3 = em.create(OrganisationEntity, mapAggregateToData(ersatz));
+            organisationEntity1 = em.create(OrganisationEntity, mapOrgaAggregateToData(root));
+            organisationEntity2 = em.create(OrganisationEntity, mapOrgaAggregateToData(oeffentlich));
+            organisationEntity3 = em.create(OrganisationEntity, mapOrgaAggregateToData(ersatz));
             await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
         });
 
@@ -989,15 +989,15 @@ describe('OrganisationRepository', () => {
 
                 const organisationEntity1: OrganisationEntity = em.create(
                     OrganisationEntity,
-                    mapAggregateToData(parentOrga),
+                    mapOrgaAggregateToData(parentOrga),
                 );
                 const organisationEntity2: OrganisationEntity = em.create(
                     OrganisationEntity,
-                    mapAggregateToData(organisation),
+                    mapOrgaAggregateToData(organisation),
                 );
                 const organisationEntity3: OrganisationEntity = em.create(
                     OrganisationEntity,
-                    mapAggregateToData(otherChildOrga),
+                    mapOrgaAggregateToData(otherChildOrga),
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
                 em.clear();
@@ -1029,11 +1029,11 @@ describe('OrganisationRepository', () => {
                 // Create and persist entities
                 const organisationEntity1: OrganisationEntity = em.create(
                     OrganisationEntity,
-                    mapAggregateToData(parentOrga),
+                    mapOrgaAggregateToData(parentOrga),
                 );
                 const organisationEntity2: OrganisationEntity = em.create(
                     OrganisationEntity,
-                    mapAggregateToData(organisation),
+                    mapOrgaAggregateToData(organisation),
                 );
 
                 await em.persistAndFlush([organisationEntity1, organisationEntity2]);
@@ -1069,11 +1069,11 @@ describe('OrganisationRepository', () => {
 
                 const organisationEntity1: OrganisationEntity = em.create(
                     OrganisationEntity,
-                    mapAggregateToData(parentOrga),
+                    mapOrgaAggregateToData(parentOrga),
                 );
                 const organisationEntity2: OrganisationEntity = em.create(
                     OrganisationEntity,
-                    mapAggregateToData(organisation),
+                    mapOrgaAggregateToData(organisation),
                 );
                 await em.persistAndFlush([organisationEntity1, organisationEntity2]);
 
@@ -1106,7 +1106,7 @@ describe('OrganisationRepository', () => {
                 if (oeffentlich instanceof DomainError) {
                     return;
                 }
-                savedOeffentlich = em.create(OrganisationEntity, mapAggregateToData(oeffentlich));
+                savedOeffentlich = em.create(OrganisationEntity, mapOrgaAggregateToData(oeffentlich));
                 await em.persistAndFlush(savedOeffentlich);
             });
 
@@ -1222,7 +1222,7 @@ describe('OrganisationRepository', () => {
             );
             if (orga instanceof DomainError) throw orga;
 
-            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
             await em.persistAndFlush(mappedOrga);
 
             const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
@@ -1276,7 +1276,7 @@ describe('OrganisationRepository', () => {
             if (orga instanceof DomainError) {
                 return;
             }
-            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
             await em.persistAndFlush(mappedOrga);
 
             const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
@@ -1390,9 +1390,9 @@ describe('OrganisationRepository', () => {
                 OrganisationsTyp.SCHULE,
                 undefined,
             );
-            organisationEntity1 = em.create(OrganisationEntity, mapAggregateToData(root));
-            organisationEntity2 = em.create(OrganisationEntity, mapAggregateToData(oeffentlich));
-            organisationEntity3 = em.create(OrganisationEntity, mapAggregateToData(ersatz));
+            organisationEntity1 = em.create(OrganisationEntity, mapOrgaAggregateToData(root));
+            organisationEntity2 = em.create(OrganisationEntity, mapOrgaAggregateToData(oeffentlich));
+            organisationEntity3 = em.create(OrganisationEntity, mapOrgaAggregateToData(ersatz));
             await em.persistAndFlush([organisationEntity1, organisationEntity2, organisationEntity3]);
         });
 
@@ -1471,7 +1471,7 @@ describe('OrganisationRepository', () => {
             if (orgaA instanceof DomainError) {
                 return;
             }
-            const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaA));
+            const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaA));
             await em.persistAndFlush(mappedOrgaA);
             const orgaB: Organisation<false> | DomainError = Organisation.createNew(
                 mappedOrgaA.id,
@@ -1482,7 +1482,7 @@ describe('OrganisationRepository', () => {
             if (orgaB instanceof DomainError) {
                 return;
             }
-            const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaB));
+            const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaB));
             await em.persistAndFlush(mappedOrgaB);
 
             await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(true);
@@ -1498,7 +1498,7 @@ describe('OrganisationRepository', () => {
             if (orgaA instanceof DomainError) {
                 return;
             }
-            const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaA));
+            const mappedOrgaA: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaA));
             await em.persistAndFlush(mappedOrgaA);
             const orgaB: Organisation<false> | DomainError = Organisation.createNew(
                 sut.ROOT_ORGANISATION_ID,
@@ -1509,7 +1509,7 @@ describe('OrganisationRepository', () => {
             if (orgaB instanceof DomainError) {
                 return;
             }
-            const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaB));
+            const mappedOrgaB: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaB));
             await em.persistAndFlush(mappedOrgaB);
 
             await expect(sut.isOrgaAParentOfOrgaB(mappedOrgaA.id, mappedOrgaB.id)).resolves.toBe(false);
@@ -1529,7 +1529,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1557,7 +1557,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1585,7 +1585,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1619,7 +1619,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1633,7 +1633,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1666,7 +1666,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1680,7 +1680,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1712,7 +1712,10 @@ describe('OrganisationRepository', () => {
             if (orgaToFind instanceof DomainError) {
                 return;
             }
-            const mappedOrgaToFind: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaToFind));
+            const mappedOrgaToFind: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapOrgaAggregateToData(orgaToFind),
+            );
             await em.persistAndFlush(mappedOrgaToFind);
             orgas.push(mappedOrgaToFind);
 
@@ -1726,7 +1729,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1756,7 +1759,10 @@ describe('OrganisationRepository', () => {
             if (orgaToFind instanceof DomainError) {
                 return;
             }
-            const mappedOrgaToFind: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaToFind));
+            const mappedOrgaToFind: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapOrgaAggregateToData(orgaToFind),
+            );
             await em.persistAndFlush(mappedOrgaToFind);
             orgas.push(mappedOrgaToFind);
 
@@ -1770,7 +1776,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1801,7 +1807,10 @@ describe('OrganisationRepository', () => {
             if (orgaToFind instanceof DomainError) {
                 return;
             }
-            const mappedOrgaToFind: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaToFind));
+            const mappedOrgaToFind: OrganisationEntity = em.create(
+                OrganisationEntity,
+                mapOrgaAggregateToData(orgaToFind),
+            );
             await em.persistAndFlush(mappedOrgaToFind);
             orgas.push(mappedOrgaToFind);
 
@@ -1815,7 +1824,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1849,7 +1858,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1864,7 +1873,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1906,7 +1915,7 @@ describe('OrganisationRepository', () => {
             if (orgaLand instanceof DomainError) {
                 return;
             }
-            const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaLand));
+            const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaLand));
             await em.persistAndFlush(mappedOrgaLand);
             orgas.push(mappedOrgaLand);
 
@@ -1923,7 +1932,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Schule under Land');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1940,7 +1949,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Traeger');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1957,7 +1966,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Schule under root');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -1992,7 +2001,7 @@ describe('OrganisationRepository', () => {
             if (orgaLand instanceof DomainError) {
                 return;
             }
-            const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orgaLand));
+            const mappedOrgaLand: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orgaLand));
             await em.persistAndFlush(mappedOrgaLand);
             orgas.push(mappedOrgaLand);
 
@@ -2009,7 +2018,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Schule under Land');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2026,7 +2035,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Traeger');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2043,7 +2052,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Schule under root');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2079,7 +2088,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Schule under Land');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2096,7 +2105,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Traeger');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2113,7 +2122,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     fail('could not create Traeger');
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2147,7 +2156,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2176,7 +2185,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2190,7 +2199,7 @@ describe('OrganisationRepository', () => {
                 if (orga instanceof DomainError) {
                     return;
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
                 await em.persistAndFlush(mappedOrga);
                 orgas.push(mappedOrga);
             }
@@ -2226,7 +2235,7 @@ describe('OrganisationRepository', () => {
             if (orga instanceof DomainError) {
                 fail('Could not create Organisation');
             }
-            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapAggregateToData(orga));
+            const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
             await em.persistAndFlush(mappedOrga);
             organisations.push(mappedOrga);
         }
@@ -2241,7 +2250,7 @@ describe('OrganisationRepository', () => {
         const finalOrgas: Organisation<true>[] = [];
 
         for (const orga of organisations) {
-            const orgaAggregate: Organisation<true> = mapEntityToAggregate(orga);
+            const orgaAggregate: Organisation<true> = mapOrgaEntityToAggregate(orga);
             finalOrgas.push(orgaAggregate);
         }
 

@@ -1,16 +1,17 @@
 import { faker } from '@faker-js/faker';
-import 'reflect-metadata';
-import { UserinfoExtension, UserinfoResponse } from './userinfo.response.js';
-import { PersonPermissions } from '../domain/person-permissions.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
 import { createMock } from '@golevelup/ts-jest';
+import 'reflect-metadata';
+import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { PersonPermissions } from '../domain/person-permissions.js';
 import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
-import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
+import { PersonenkontextRolleFieldsResponse } from './personen-kontext-rolle-fields.response.js';
+import { UserinfoExtension, UserinfoResponse } from './userinfo.response.js';
 
 describe('UserinfoResponse', () => {
     const permissions: PersonPermissions = new PersonPermissions(
@@ -20,7 +21,7 @@ describe('UserinfoResponse', () => {
         DoFactory.createPerson(true),
     );
     const pk: PersonenkontextRolleFieldsResponse = {
-        organisationsId: faker.string.uuid(),
+        organisation: new OrganisationResponse(DoFactory.createOrganisation(true)),
         rolle: { systemrechte: [faker.string.alpha()], serviceProviderIds: [faker.string.uuid()] },
     };
 

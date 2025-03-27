@@ -32,7 +32,7 @@ import { OrganisationSpecificationError } from '../specification/error/organisat
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
 
-export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
+export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
         id: organisation.id,
         administriertVon: organisation.administriertVon,
@@ -49,7 +49,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
     };
 }
 
-export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<true> {
+export function mapOrgaEntityToAggregate(entity: OrganisationEntity): Organisation<true> {
     return Organisation.construct(
         entity.id,
         entity.createdAt,
@@ -98,7 +98,7 @@ export class OrganisationRepository {
     public async findBy(scope: OrganisationScope): Promise<Counted<Organisation<true>>> {
         const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
-            mapEntityToAggregate(entity),
+            mapOrgaEntityToAggregate(entity),
         );
         return [organisations, total];
     }
@@ -149,7 +149,7 @@ export class OrganisationRepository {
             );
         }
 
-        return rawResult.map(mapEntityToAggregate);
+        return rawResult.map(mapOrgaEntityToAggregate);
     }
 
     public async findParentOrgasForIds(ids: OrganisationID[]): Promise<Organisation<true>[]> {
@@ -178,7 +178,7 @@ export class OrganisationRepository {
             );
         }
 
-        return rawResult.map(mapEntityToAggregate);
+        return rawResult.map(mapOrgaEntityToAggregate);
     }
 
     /**
@@ -205,7 +205,7 @@ export class OrganisationRepository {
 
         const res: Organisation<true>[] = rawResult
             .map((data: EntityDictionary<OrganisationEntity>) => this.em.map(OrganisationEntity, data))
-            .map(mapEntityToAggregate);
+            .map(mapOrgaEntityToAggregate);
 
         return res;
     }
@@ -265,13 +265,13 @@ export class OrganisationRepository {
             entity.name?.includes('Ersatz'),
         );
 
-        return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
+        return [oeffentlich && mapOrgaEntityToAggregate(oeffentlich), ersatz && mapOrgaEntityToAggregate(ersatz)];
     }
 
     public async findById(id: string): Promise<Option<Organisation<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {
-            return mapEntityToAggregate(organisation);
+            return mapOrgaEntityToAggregate(organisation);
         }
         return null;
     }
@@ -281,7 +281,7 @@ export class OrganisationRepository {
 
         const organisationMap: Map<string, Organisation<true>> = new Map();
         organisationEntities.forEach((organisationEntity: OrganisationEntity) => {
-            const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity);
+            const organisation: Organisation<true> = mapOrgaEntityToAggregate(organisationEntity);
             organisationMap.set(organisationEntity.id, organisation);
         });
 
@@ -320,7 +320,7 @@ export class OrganisationRepository {
             $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
         });
 
-        return organisations.map(mapEntityToAggregate);
+        return organisations.map(mapOrgaEntityToAggregate);
     }
 
     public async findAuthorized(
@@ -402,7 +402,7 @@ export class OrganisationRepository {
         }
 
         const organisations: Organisation<true>[] = result.map((entity: OrganisationEntity) =>
-            mapEntityToAggregate(entity),
+            mapOrgaEntityToAggregate(entity),
         );
 
         // Calculate pageTotal (excluding entitiesForIds when searchString is present
@@ -606,7 +606,7 @@ export class OrganisationRepository {
             ),
         );
 
-        return mapEntityToAggregate(organisationEntity);
+        return mapOrgaEntityToAggregate(organisationEntity);
     }
 
     public async saveSeedData(organisation: Organisation<boolean>): Promise<Organisation<true>> {
@@ -616,7 +616,7 @@ export class OrganisationRepository {
     private async create(organisation: Organisation<boolean>): Promise<Organisation<true>> {
         const organisationEntity: OrganisationEntity = this.em.create(
             OrganisationEntity,
-            mapAggregateToData(organisation),
+            mapOrgaAggregateToData(organisation),
         );
 
         await this.em.persistAndFlush(organisationEntity);
@@ -643,7 +643,7 @@ export class OrganisationRepository {
             );
         }
 
-        return mapEntityToAggregate(organisationEntity);
+        return mapOrgaEntityToAggregate(organisationEntity);
     }
 
     private async update(organisation: Organisation<true>): Promise<Organisation<true>> {
@@ -657,11 +657,11 @@ export class OrganisationRepository {
         }
         organisationEntity.version += 1;
 
-        organisationEntity.assign(mapAggregateToData(organisation));
+        organisationEntity.assign(mapOrgaAggregateToData(organisation));
 
         await this.em.persistAndFlush(organisationEntity);
 
-        return mapEntityToAggregate(organisationEntity);
+        return mapOrgaEntityToAggregate(organisationEntity);
     }
 
     public async findOrganisationZuordnungErsatzOderOeffentlich(

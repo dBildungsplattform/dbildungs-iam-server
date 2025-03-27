@@ -29,10 +29,7 @@ import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 
-/**
- * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
- */
-export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
+export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
         rolle: rolle.id,
         merkmal,
@@ -64,10 +61,7 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
     };
 }
 
-/**
- * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
- */
-export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): Rolle<boolean> {
+export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): Rolle<boolean> {
     const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
     const systemrechte: RollenSystemRecht[] = entity.systemrechte.map(
         (systemRechtEntity: RolleSystemrechtEntity) => systemRechtEntity.systemrecht,
@@ -138,7 +132,7 @@ export class RolleRepo {
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 
-        return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
+        return rolle && mapRolleEntityToAggregate(rolle, this.rolleFactory);
     }
 
     public async findByIdAuthorized(
@@ -182,7 +176,7 @@ export class RolleRepo {
 
         const rollenMap: Map<string, Rolle<true>> = new Map();
         rollenEntities.forEach((rolleEntity: RolleEntity) => {
-            const rolle: Rolle<true> = mapEntityToAggregate(rolleEntity, this.rolleFactory);
+            const rolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
             rollenMap.set(rolleEntity.id, rolle);
         });
 
@@ -207,7 +201,7 @@ export class RolleRepo {
                 offset: offset,
             },
         );
-        return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
+        return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
     }
 
     public async find(includeTechnische: boolean, limit?: number, offset?: number): Promise<Rolle<true>[]> {
@@ -221,7 +215,7 @@ export class RolleRepo {
             offset: offset,
         });
 
-        return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
+        return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
     }
 
     public async findRollenAuthorized(
@@ -261,7 +255,7 @@ export class RolleRepo {
             return [[], 0];
         }
 
-        return [rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory)), total];
+        return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
     }
 
     public async exists(id: RolleID): Promise<boolean> {
@@ -363,11 +357,11 @@ export class RolleRepo {
     }
 
     public async create(rolle: Rolle<false>): Promise<Rolle<true>> {
-        const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));
+        const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapRolleAggregateToData(rolle));
 
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapEntityToAggregate(rolleEntity, this.rolleFactory);
+        return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
     }
 
     private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
@@ -381,9 +375,9 @@ export class RolleRepo {
         }
         rolle.version = rolle.version + 1;
 
-        rolleEntity.assign(mapAggregateToData(rolle), { updateNestedEntities: true });
+        rolleEntity.assign(mapRolleAggregateToData(rolle), { updateNestedEntities: true });
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapEntityToAggregate(rolleEntity, this.rolleFactory);
+        return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
     }
 }
