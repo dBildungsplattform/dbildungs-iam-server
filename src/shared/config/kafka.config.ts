@@ -11,7 +11,7 @@ export class KafkaConfig {
     public readonly USER_TOPIC!: string;
 
     @IsString()
-    public readonly DLQ_TPOIC!: string;
+    public readonly DLQ_TOPIC!: string;
 
     @IsString()
     public readonly GROUP_ID!: string;
