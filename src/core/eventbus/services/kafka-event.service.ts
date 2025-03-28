@@ -85,27 +85,42 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             this.logger.error('Event type header is missing');
             return;
         }
-        const eventType: Constructor<BaseEvent> | undefined = KafkaEventMapping[eventKey];
+        const eventType: Constructor<BaseEvent & KafkaEvent> | undefined = KafkaEventMapping[eventKey];
         if (!eventType) {
             this.logger.error(`Unknown event type: ${eventKey}`);
             return;
         }
 
-        const event: BaseEvent = JSON.parse(message.value?.toString() ?? '{}') as BaseEvent;
+        if (!message.value) {
+            this.logger.error('Message value is missing');
+            return;
+        }
+
+        const eventData: Record<string, unknown> = JSON.parse(message.value?.toString()) as Record<string, unknown>;
+        const kafkaEvent: BaseEvent & KafkaEvent = Object.assign(new eventType(), eventData);
+
         const handler: EventHandlerType<BaseEvent> | undefined = this.handlerMap.get(eventType);
 
         if (handler) {
             try {
                 this.logger.info(`Handling event: ${eventType.name} for ${personId}`);
-                await handler(event);
+                const result: Result<unknown> | void = await handler(kafkaEvent);
+                if (result && !result.ok) {
+                    await this.publishToDLQ(kafkaEvent, result.error);
+                }
             } catch (err) {
                 this.logger.logUnknownAsError(`Handling event: ${eventType.name} for ${personId} failed`, err);
             }
         }
     }
 
-    public async publish(event: KafkaEvent): Promise<void> {
+    private async sendEvent(
+        event: KafkaEvent,
+        topic: string,
+        additionalHeaders: Record<string, string> = {},
+    ): Promise<void> {
         await this.producer?.connect();
+
         const eventType: string | undefined = event.constructor.name;
         const eventKey: string | undefined = Object.keys(KafkaEventMapping).find(
             (key: string) => KafkaEventMapping[key] === event.constructor,
@@ -117,15 +132,27 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         }
 
         const personId: string = event.getPersonID();
+        const headers: Record<string, string> = { eventKey, ...additionalHeaders };
 
-        this.logger.info(`Publishing event to kafka for ${personId}: ${eventType}`);
+        this.logger.info(`Publishing event to Kafka for ${personId}: ${eventType} on topic ${topic}`);
         try {
             await this.producer?.send({
-                topic: this.kafkaConfig.TOPIC_PREFIX + this.kafkaConfig.USER_TOPIC,
-                messages: [{ key: personId, value: JSON.stringify(event), headers: { eventKey: eventKey } }],
+                topic,
+                messages: [{ key: personId, value: JSON.stringify(event), headers }],
             });
         } catch (err) {
-            this.logger.error('Error in KafkaEventService publish', util.inspect(err));
+            this.logger.error(`Error publishing event to Kafka on topic ${topic}`, util.inspect(err));
         }
+    }
+
+    public async publish(event: KafkaEvent): Promise<void> {
+        const topic: string = this.kafkaConfig.TOPIC_PREFIX + this.kafkaConfig.USER_TOPIC;
+        await this.sendEvent(event, topic);
+    }
+
+    private async publishToDLQ(event: KafkaEvent, error: Error): Promise<void> {
+        const topic: string = this.kafkaConfig.TOPIC_PREFIX + this.kafkaConfig.DLQ_TOPIC;
+        const errorString: string = util.inspect(error);
+        await this.sendEvent(event, topic, { error: errorString });
     }
 }

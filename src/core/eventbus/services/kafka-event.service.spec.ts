@@ -20,6 +20,7 @@ import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-cre
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
+import { inspect } from 'util';
 
 class TestEvent extends BaseEvent implements KafkaEvent {
     public constructor() {
@@ -49,6 +50,7 @@ describe('KafkaEventService', () => {
             HEARTBEAT_INTERVAL: 3000,
             TOPIC_PREFIX: 'prefix.',
             USER_TOPIC: 'user-topic',
+            DLQ_TOPIC: 'dlq-topic',
         } as KafkaConfig);
 
         producer = createMock<Producer>();
@@ -171,7 +173,34 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message);
 
-        expect(handler).toHaveBeenCalledWith({});
+        expect(logger.error).toHaveBeenCalledWith('Message value is missing');
+    });
+
+    it('should publish to DLQ if handler returns an error', async () => {
+        const deleteEvent: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent('test', 'test');
+
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from(JSON.stringify(deleteEvent)),
+            headers: { eventKey: 'user.deleted' },
+        });
+        const error: Error = new Error('Handler error');
+        const handler: jest.Mock = jest.fn().mockReturnValue({ ok: false, error: error });
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
+
+        await sut.handleMessage(message);
+        expect(producer.send).toHaveBeenCalledWith({
+            topic: 'prefix.dlq-topic',
+            messages: [
+                {
+                    key: 'test',
+                    value: JSON.stringify(deleteEvent),
+                    headers: { eventKey: 'user.deleted', error: inspect(error) },
+                },
+            ],
+        });
+
+        expect(logger.info).toHaveBeenCalledWith('Handling event: KafkaPersonDeletedEvent for test');
     });
 
     it('should publish event correctly', async () => {
@@ -183,7 +212,9 @@ describe('KafkaEventService', () => {
             topic: 'prefix.user-topic',
             messages: [{ key: 'test', value: JSON.stringify(deleteEvent), headers: { eventKey: 'user.deleted' } }],
         });
-        expect(logger.info).toHaveBeenCalledWith('Publishing event to kafka for test: KafkaPersonDeletedEvent');
+        expect(logger.info).toHaveBeenCalledWith(
+            'Publishing event to Kafka for test: KafkaPersonDeletedEvent on topic prefix.user-topic',
+        );
     });
 
     it('should log error if Kafka producer fails during publish', async () => {
@@ -192,7 +223,10 @@ describe('KafkaEventService', () => {
 
         await sut.publish(deleteEvent);
 
-        expect(logger.error).toHaveBeenCalledWith('Error in KafkaEventService publish', expect.any(String));
+        expect(logger.error).toHaveBeenCalledWith(
+            'Error publishing event to Kafka on topic prefix.user-topic',
+            expect.any(String),
+        );
     });
 
     it('should log error if no mapping is found for event type', async () => {

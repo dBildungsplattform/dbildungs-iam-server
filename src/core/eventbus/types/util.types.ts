@@ -5,7 +5,9 @@ export type Constructor<T = unknown> = new (...args: any[]) => T;
 
 export type MaybePromise<T> = T | Promise<T>;
 
-export type EventHandlerType<Event extends BaseEvent> = (event: Event) => MaybePromise<void>;
+export type EventHandlerType<Event extends BaseEvent, TResult = unknown> = (
+    event: Event,
+) => MaybePromise<Result<TResult> | void>;
 
 export type TypedMethodDescriptor<T> = {
     value?: T;

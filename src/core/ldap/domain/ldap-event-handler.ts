@@ -23,6 +23,7 @@ import { KafkaEventHandler } from '../../eventbus/decorators/kafka-event-handler
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/kafka-email-address-generated.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
+import { inspect } from 'util';
 
 @Injectable()
 export class LdapEventHandler {
@@ -46,7 +47,7 @@ export class LdapEventHandler {
 
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
-    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, referrer:${event.referrer}`,
         );
@@ -54,13 +55,14 @@ export class LdapEventHandler {
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         }
+        return deletionResult;
     }
 
     @KafkaEventHandler(KafkaPersonCreatedEvent)
     @EventHandler(PersonenkontextCreatedMigrationEvent)
     public async handlePersonenkontextCreatedMigrationEvent(
         event: PersonenkontextCreatedMigrationEvent,
-    ): Promise<void> {
+    ): Promise<Result<unknown>> {
         this.logger.info(
             `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
         );
@@ -76,20 +78,20 @@ export class LdapEventHandler {
                 this.logger.error(
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Username missing`,
                 );
-                return;
+                return { ok: false, error: new Error('Username missing') };
             }
             if (!event.createdKontextOrga.kennung) {
                 this.logger.error(
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Orga Kennung missing`,
                 );
-                return;
+                return { ok: false, error: new Error('Orga Kennung missing') };
             }
             const emailDomain: Result<string> = await this.getEmailDomainForOrganisationId(event.createdKontextOrga.id);
             if (!emailDomain.ok) {
                 this.logger.error(
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting createLehrer Operation, No valid emailDomain for organisation`,
                 );
-                return;
+                return { ok: false, error: emailDomain.error };
             }
             const isLehrerExistingResult: Result<boolean> = await this.ldapClientService.isLehrerExisting(
                 event.createdKontextPerson.referrer,
@@ -99,14 +101,14 @@ export class LdapEventHandler {
                 this.logger.error(
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Check Lehrer existing call failed: ${isLehrerExistingResult.error.message}`,
                 );
-                return;
+                return { ok: false, error: isLehrerExistingResult.error };
             }
 
             if (isLehrerExistingResult.value == true) {
                 this.logger.info(
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting createLehrer Operation, LDAP Entry already exists`,
                 );
-                return;
+                return { ok: true, value: null };
             }
 
             const personData: PersonData = {
@@ -127,11 +129,12 @@ export class LdapEventHandler {
                 this.logger.error(
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Create Lehrer Operation failed: ${creationResult.error.message}`,
                 );
-                return;
+                return { ok: false, error: creationResult.error };
             }
             this.logger.info(
                 `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Successfully created LDAP Entry Lehrer`,
             );
+            return { ok: true, value: null };
         } else {
             if (event.migrationRunType !== PersonenkontextMigrationRuntype.STANDARD) {
                 this.logger.info(
@@ -142,12 +145,13 @@ export class LdapEventHandler {
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Do Nothing because Rollenart is Not LEHR`,
                 );
             }
+            return { ok: true, value: null };
         }
     }
 
     @KafkaEventHandler(KafkaPersonRenamedEvent)
     @EventHandler(PersonRenamedEvent)
-    public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
+    public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
         );
@@ -159,21 +163,22 @@ export class LdapEventHandler {
         );
         if (!modifyResult.ok) {
             this.logger.error(modifyResult.error.message);
-            return;
+            return modifyResult;
         }
 
         this.logger.info(`Successfully modified person attributes in LDAP for personId:${event.personId}`);
         this.eventService.publish(LdapPersonEntryRenamedEvent.fromPersonRenamedEvent(event));
+        return modifyResult;
     }
 
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
-    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
-        await Promise.allSettled(
+        const removeResults: PromiseSettledResult<Result<boolean>>[] = await Promise.allSettled(
             event.removedKontexte
                 .filter(
                     (pk: PersonenkontextEventKontextData) =>
@@ -218,7 +223,7 @@ export class LdapEventHandler {
         );
 
         // Create personenkontexte if rollenart === LEHR
-        await Promise.allSettled(
+        const newKontexteResults: PromiseSettledResult<Result<PersonData>>[] = await Promise.allSettled(
             event.newKontexte
                 .filter((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)
                 .map((pk: PersonenkontextEventKontextData) => {
@@ -254,26 +259,51 @@ export class LdapEventHandler {
                         });
                 }),
         );
+
+        const cominedResults: PromiseSettledResult<Result<unknown>>[] = [...removeResults, ...newKontexteResults];
+        const failureReasons: string[] = [];
+        cominedResults.forEach((result: PromiseSettledResult<Result<unknown>>) => {
+            if (result.status === 'rejected') {
+                failureReasons.push(inspect(result.reason));
+            } else if (result.status === 'fulfilled' && !result.value.ok) {
+                failureReasons.push(inspect(result.value.error));
+            }
+        });
+
+        if (failureReasons.length > 0) {
+            return { ok: false, error: new Error(failureReasons.join(', ')) };
+        }
+        return { ok: true, value: null };
     }
 
     @KafkaEventHandler(KafkaEmailAddressGeneratedEvent)
     @EventHandler(EmailAddressGeneratedEvent)
-    public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
+    public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddress:${event.address}`,
         );
 
-        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.referrer, event.address);
+        const result: Result<PersonID> = await this.ldapClientService.changeEmailAddressByPersonId(
+            event.personId,
+            event.referrer,
+            event.address,
+        );
+        return result;
     }
 
     @KafkaEventHandler(KafkaEmailAddressChangedEvent)
     @EventHandler(EmailAddressChangedEvent)
-    public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
+    public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
         );
 
-        await this.ldapClientService.changeEmailAddressByPersonId(event.personId, event.referrer, event.newAddress);
+        const result: Result<PersonID> = await this.ldapClientService.changeEmailAddressByPersonId(
+            event.personId,
+            event.referrer,
+            event.newAddress,
+        );
+        return result;
     }
 
     public hatZuordnungZuOrganisationNachLoeschen(
