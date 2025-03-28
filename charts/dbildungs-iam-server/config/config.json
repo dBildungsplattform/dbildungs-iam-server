@@ -92,6 +92,7 @@
     },
     "KAFKA": {
         "BROKER": "localhost:9092",
+        "TOPIC_PREFIX": "dev.",
         "USER_TOPIC": "spsh-user-topic",
         "DLQ_TOPIC": "spsh-dlq-topic",
         "GROUP_ID": "nestjs-kafka",
