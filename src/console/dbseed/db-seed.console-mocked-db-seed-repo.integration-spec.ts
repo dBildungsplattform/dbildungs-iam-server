@@ -26,6 +26,7 @@ import { DbSeedReferenceRepo } from './repo/db-seed-reference.repo.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { LdapClient } from '../../core/ldap/domain/ldap-client.js';
 import { OxUserBlacklistRepo } from '../../modules/person/persistence/ox-user-blacklist.repo.js';
+import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggregate.mapper.js';
 
 describe('DbSeedConsoleMockedDbSeedRepo', () => {
     let module: TestingModule;
@@ -64,6 +65,7 @@ describe('DbSeedConsoleMockedDbSeedRepo', () => {
                     provide: LdapClient,
                     useValue: createMock<LdapClient>(),
                 },
+                EntityAggregateMapper,
             ],
         })
             .overrideModule(KeycloakConfigModule)
