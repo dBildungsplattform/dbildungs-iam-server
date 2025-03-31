@@ -43,7 +43,7 @@ export class KeycloakGroupRoleService {
             this.logger.info(`keycloack group created:  ${groupName}`);
             return { ok: true, value: response.id };
         } catch (err) {
-            this.logger.error(`Could not create group, message: ${JSON.stringify(err)} `);
+            this.logger.logUnknownAsError('Could not create group', err);
             return { ok: false, error: new KeycloakClientError('Could not create group') };
         }
     }
@@ -75,7 +75,7 @@ export class KeycloakGroupRoleService {
             this.logger.info(`Keycloak role created: ${roleName}`);
             return { ok: true, value: response.roleName };
         } catch (err) {
-            this.logger.error(`Could not create role, message: ${JSON.stringify(err)} `);
+            this.logger.logUnknownAsError('Could not create role', err);
             return { ok: false, error: new KeycloakClientError('Could not create role') };
         }
     }
@@ -112,7 +112,7 @@ export class KeycloakGroupRoleService {
             this.logger.info(`Role ${roleName} added to group with ID: ${groupId}`);
             return { ok: true, value: true };
         } catch (err) {
-            this.logger.error(`Could not add role to group, message: ${JSON.stringify(err)}`);
+            this.logger.logUnknownAsError('Could not add role to group', err);
             return { ok: false, error: new KeycloakClientError('Could not add role to group') };
         }
     }
