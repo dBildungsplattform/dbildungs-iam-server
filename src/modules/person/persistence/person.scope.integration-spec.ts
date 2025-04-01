@@ -25,6 +25,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { mapAggregateToData } from './person.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { ExternalIdMappingEntity, ExternalIdType } from './external-id-mappings.entity.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -322,6 +323,32 @@ describe('PersonScope', () => {
 
             expect(total).toBe(1);
             expect(persons).toHaveLength(1);
+        });
+
+        it('should populate externalIDs', async () => {
+            const testID: string = faker.string.uuid();
+
+            const person: PersonEntity = createPersonEntity();
+            const externalId: ExternalIdMappingEntity = em.create(ExternalIdMappingEntity, {
+                type: ExternalIdType.LDAP,
+                externalId: testID,
+            });
+
+            person.externalIds.add(externalId);
+
+            await em.persistAndFlush([person, externalId]);
+
+            const scope: PersonScope = new PersonScope()
+                .findBy({ ids: [person.id] })
+                .sortBy('vorname', ScopeOrder.ASC)
+                .paged(0, 10);
+            const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+
+            expect(total).toBe(1);
+            expect(persons).toHaveLength(1);
+            expect(persons[0]?.externalIds).toHaveLength(1);
+            expect(persons[0]?.externalIds[0]?.externalId).toBe(testID);
+            expect(persons[0]?.externalIds[0]?.type).toBe(ExternalIdType.LDAP);
         });
     });
 });
