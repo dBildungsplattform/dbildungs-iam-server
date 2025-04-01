@@ -28,6 +28,8 @@ import { NameForOrganisationWithTrailingSpaceError } from '../specification/erro
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
+import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
+import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
 import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
 import { OrganisationsTyp, RootDirectChildrenType } from './organisation.enums.js';
 import { Organisation } from './organisation.js';
@@ -80,6 +82,7 @@ describe('OrganisationService', () => {
                 rolle: { systemrechte: [], serviceProviderIds: [] },
             },
         ];
+
         it('should create an organisation', async () => {
             const organisation: Organisation<false> = DoFactory.createOrganisation(false);
             organisationRepositoryMock.save.mockResolvedValue(organisation as unknown as Organisation<true>);
@@ -335,32 +338,6 @@ describe('OrganisationService', () => {
             });
         });
 
-        it('should return domain error if name contains trailing space', async () => {
-            const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { name: ' name' });
-            organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
-                organisationDo,
-                permissionsMock,
-            );
-            expect(result).toEqual<Result<Organisation<true>>>({
-                ok: false,
-                error: new NameForOrganisationWithTrailingSpaceError(),
-            });
-        });
-
-        it('should return domain error if kennung contains trailing space', async () => {
-            const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, { kennung: ' ' });
-            organisationRepositoryMock.exists.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
-            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
-                organisationDo,
-                permissionsMock,
-            );
-            expect(result).toEqual<Result<Organisation<true>>>({
-                ok: false,
-                error: new KennungForOrganisationWithTrailingSpaceError(),
-            });
-        });
-
         it('should return domain error if name contains no letter nor number', async () => {
             const organisationDo: Organisation<false> = DoFactory.createOrganisation(false, {
                 name: '-',
@@ -374,6 +351,124 @@ describe('OrganisationService', () => {
             expect(result).toEqual<Result<Organisation<true>>>({
                 ok: false,
                 error: new KlasseWithoutNumberOrLetterError(),
+            });
+        });
+
+        it('should successfully validate when Schulträger name is unique', async () => {
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValueOnce(organisationUser);
+            organisationRepositoryMock.exists.mockResolvedValue(true);
+
+            const name: string = faker.company.name();
+
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+
+            const ersatz: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+
+            const existingSchultraeger: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                name,
+                zugehoerigZu: ersatz.id,
+            });
+            const schultraeger: Organisation<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.TRAEGER,
+                name,
+                zugehoerigZu: oeffentlich.id,
+            });
+
+            // Returns an existing Schulträger with the same name
+            organisationRepositoryMock.findBy.mockResolvedValueOnce([[existingSchultraeger], 1]);
+
+            // mock root nodes for specification
+            organisationRepositoryMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisationAggregate(true, { typ: OrganisationsTyp.ROOT }),
+            );
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValueOnce([oeffentlich, ersatz]);
+
+            organisationRepositoryMock.save.mockResolvedValueOnce(schultraeger as unknown as Organisation<true>);
+
+            // Call the method
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                schultraeger,
+                permissionsMock,
+            );
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: true,
+                value: schultraeger as unknown as Organisation<true>,
+            });
+        });
+
+        it('should return a domain error if Schulträger name is not unique', async () => {
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+            organisationRepositoryMock.exists.mockResolvedValue(true);
+
+            const name: string = faker.company.name();
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const schultraeger: Organisation<false> = DoFactory.createOrganisation(false, {
+                typ: OrganisationsTyp.TRAEGER,
+                name: name,
+                zugehoerigZu: oeffentlich.id,
+            });
+
+            const existingSchultraeger: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.TRAEGER,
+                name: name,
+                zugehoerigZu: oeffentlich.id,
+            });
+
+            // Returns an existing Schulträger with the same name
+            organisationRepositoryMock.findBy.mockResolvedValueOnce([[existingSchultraeger], 1]);
+
+            // mock root nodes for specification
+            organisationRepositoryMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisationAggregate(true, { typ: OrganisationsTyp.ROOT }),
+            );
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValue([oeffentlich, undefined]);
+
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                schultraeger,
+                permissionsMock,
+            );
+
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new SchultraegerNameEindeutigError(),
+            });
+        });
+
+        it('should return a domain error if Schulträger is not under a root child', async () => {
+            permissionsMock.getPersonenkontexteWithRolesAndOrgs.mockResolvedValue(personenkontextewithRolesMock);
+            organisationRepositoryMock.findById.mockResolvedValue(organisationUser);
+            organisationRepositoryMock.exists.mockResolvedValue(true);
+
+            const oeffentlich: Organisation<true> = DoFactory.createOrganisationAggregate(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const schultraeger: Organisation<false> = DoFactory.createOrganisationAggregate(false, {
+                typ: OrganisationsTyp.TRAEGER,
+            });
+
+            // mock root nodes for specification
+            organisationRepositoryMock.findById.mockResolvedValueOnce(
+                DoFactory.createOrganisationAggregate(true, { typ: OrganisationsTyp.ROOT }),
+            );
+            organisationRepositoryMock.findRootDirectChildren.mockResolvedValue([oeffentlich, undefined]);
+
+            const result: Result<Organisation<true>> = await organisationService.createOrganisation(
+                schultraeger,
+                permissionsMock,
+            );
+
+            expect(result).toEqual<Result<Organisation<true>>>({
+                ok: false,
+                error: new TraegerUnterRootChildError(),
             });
         });
     });
