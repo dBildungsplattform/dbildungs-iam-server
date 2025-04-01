@@ -123,8 +123,12 @@ export class LdapClientService {
     public async getPersonAttributes(
         personId: PersonID,
         referrer: PersonReferrer,
+        emailDomain: string,
     ): Promise<Result<LdapPersonAttributes>> {
-        return this.executeWithRetry(() => this.getPersonAttributesInternal(personId, referrer), this.getNrOfRetries());
+        return this.executeWithRetry(
+            () => this.getPersonAttributesInternal(personId, referrer, emailDomain),
+            this.getNrOfRetries(),
+        );
     }
 
     public async getGroupsForPerson(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
@@ -480,6 +484,7 @@ export class LdapClientService {
     private async getPersonAttributesInternal(
         personId: PersonID,
         referrer: PersonReferrer,
+        emailDomain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: getPersonAttributes');
@@ -502,12 +507,16 @@ export class LdapClientService {
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(
+                this.logger.warning(
                     `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
                 );
+                const creationResult: Result<string> = await this.createEmptyPersonEntry(referrer, emailDomain);
+                if (!creationResult.ok) return creationResult;
                 return {
-                    ok: false,
-                    error: new LdapFetchAttributeError('*', referrer, personId),
+                    ok: true,
+                    value: {
+                        dn: creationResult.value,
+                    },
                 };
             }
 
@@ -586,6 +595,47 @@ export class LdapClientService {
             ok: false,
             error: new LdapFetchAttributeError(attributeName, referrer, personId),
         };
+    }
+
+    /**
+     * Returns the DN of the created PersonEntry or an Error.
+     * @param referrer
+     * @param domain
+     */
+    private async createEmptyPersonEntry(referrer: PersonReferrer, domain: string): Promise<Result<string>> {
+        this.logger.info('LDAP: createEmptyPersonEntry');
+        const client: Client = this.ldapClient.getClient();
+        const bindResult: Result<boolean> = await this.bind();
+        if (!bindResult.ok) return bindResult;
+
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) return rootName;
+
+        const lehrerUid: string = this.getLehrerUid(referrer, rootName.value);
+
+        const entry: LdapPersonEntry = {
+            uid: referrer,
+            uidNumber: LdapClientService.UID_NUMBER,
+            gidNumber: LdapClientService.GID_NUMBER,
+            homeDirectory: LdapClientService.HOME_DIRECTORY,
+            cn: referrer,
+            givenName: 'empty',
+            sn: 'empty',
+            objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
+            mailPrimaryAddress: 'empty',
+            mailAlternativeAddress: 'empty',
+        };
+
+        try {
+            await client.add(lehrerUid, entry);
+            this.logger.info(`LDAP: Successfully created empty PersonEntry, DN:${lehrerUid}`);
+
+            return { ok: true, value: lehrerUid };
+        } catch (err) {
+            this.logger.logUnknownAsError(`LDAP: Creating empty PersonEntry FAILED, DN:${lehrerUid}`, err);
+
+            return { ok: false, error: new LdapCreateLehrerError() };
+        }
     }
 
     private async getGroupsForPersonInternal(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
