@@ -29,6 +29,8 @@ import { OrganisationSpecificationError } from '../specification/error/organisat
 import { OrganisationsOnDifferentSubtreesError } from '../specification/error/organisations-on-different-subtrees.error.js';
 import { SchuleKennungEindeutigError } from '../specification/error/schule-kennung-eindeutig.error.js';
 import { SchuleUnterTraegerError } from '../specification/error/schule-unter-traeger.error.js';
+import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
+import { TraegerUnterRootChildError } from '../specification/error/traeger-unter-root-child.error.js';
 import { ZyklusInOrganisationenError } from '../specification/error/zyklus-in-organisationen.error.js';
 import { KennungRequiredForSchule } from '../specification/kennung-required-for-schule.js';
 import { KlasseNurVonSchuleAdministriert } from '../specification/klasse-nur-von-schule-administriert.js';
@@ -37,6 +39,8 @@ import { NameRequiredForSchule } from '../specification/name-required-for-schule
 import { OrganisationsOnSameSubtree } from '../specification/organisations-on-same-subtree.js';
 import { SchuleKennungEindeutig } from '../specification/schule-kennung-eindeutig.js';
 import { SchuleUnterTraeger } from '../specification/schule-unter-traeger.js';
+import { TraegerNameUniqueInSubtree } from '../specification/traeger-name-unique-in-subtree.js';
+import { TraegerUnterRootChild } from '../specification/traeger-unter-root-child.js';
 import { ZyklusInOrganisationen } from '../specification/zyklus-in-organisationen.js';
 import { OrganisationZuordnungVerschiebenError } from './organisation-zuordnung-verschieben.error.js';
 import { OrganisationsTyp } from './organisation.enums.js';
@@ -178,6 +182,14 @@ export class OrganisationService {
         const validateKlassen: Result<boolean, DomainError> = await this.validateKlassenSpecifications(organisationDo);
         if (!validateKlassen.ok) {
             const error: DomainError = validateKlassen.error;
+            await this.logCreation(permissions, organisationDo, error);
+            return { ok: false, error: error };
+        }
+
+        const validateSchultraeger: Result<void, DomainError> =
+            await this.validateSchultraegerSpecifications(organisationDo);
+        if (!validateSchultraeger.ok) {
+            const error: DomainError = validateSchultraeger.error;
             await this.logCreation(permissions, organisationDo, error);
             return { ok: false, error: error };
         }
@@ -438,6 +450,29 @@ export class OrganisationService {
             return { ok: false, error: new KlassenNameAnSchuleEindeutigError(childOrganisation.id ?? undefined) };
         }
         return { ok: true, value: true };
+    }
+
+    private async validateSchultraegerSpecifications(
+        organisationDo: Organisation<false>,
+    ): Promise<Result<void, DomainError>> {
+        // Only validate for Schulträger
+        if (organisationDo.typ !== OrganisationsTyp.TRAEGER) {
+            return { ok: true, value: undefined };
+        }
+
+        const traegerUnterRootChild: TraegerUnterRootChild<false> = new TraegerUnterRootChild(this.organisationRepo);
+        if (!(await traegerUnterRootChild.isSatisfiedBy(organisationDo))) {
+            return { ok: false, error: new TraegerUnterRootChildError(organisationDo.id ?? undefined) };
+        }
+
+        const traegerNameUniqueInSubtree: TraegerNameUniqueInSubtree<false> = new TraegerNameUniqueInSubtree(
+            this.organisationRepo,
+        );
+        if (!(await traegerNameUniqueInSubtree.isSatisfiedBy(organisationDo))) {
+            return { ok: false, error: new SchultraegerNameEindeutigError(organisationDo.id ?? undefined) };
+        }
+
+        return { ok: true, value: undefined };
     }
 
     private async validateStructureSpecifications(
