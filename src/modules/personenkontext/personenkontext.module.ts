@@ -13,6 +13,7 @@ import { EventModule } from '../../core/eventbus/index.js';
 import { DBiamPersonenkontextRepoInternal } from './persistence/internal-dbiam-personenkontext.repo.js';
 import { PersonenkontextCreationService } from './domain/personenkontext-creation.service.js';
 import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow.factory.js';
+import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflo
         PersonenkontextFactory,
         PersonenkontextCreationService,
         PersonenkontextWorkflowFactory,
+        EntityAggregateMapper,
     ],
     exports: [
         PersonenkontextService,

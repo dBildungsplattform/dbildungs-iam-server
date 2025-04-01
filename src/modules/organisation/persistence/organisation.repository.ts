@@ -1,38 +1,38 @@
 import {
+    EntityDictionary,
     EntityManager,
     Loaded,
     QBFilterQuery,
     QueryBuilder,
+    QueryOrder,
     RequiredEntityData,
     SelectQueryBuilder,
-    EntityDictionary,
-    QueryOrder,
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { Organisation } from '../domain/organisation.js';
-import { OrganisationEntity } from './organisation.entity.js';
-import { OrganisationScope } from './organisation.scope.js';
-import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
-import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
-import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
-import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
+import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
+import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
+import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
+import { Organisation } from '../domain/organisation.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
+import { OrganisationEntity } from './organisation.entity.js';
+import { OrganisationScope } from './organisation.scope.js';
 
-export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
+export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
         id: organisation.id,
         administriertVon: organisation.administriertVon,
@@ -49,7 +49,7 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
     };
 }
 
-export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<true> {
+export function mapOrgaEntityToAggregate(entity: OrganisationEntity): Organisation<true> {
     return Organisation.construct(
         entity.id,
         entity.createdAt,
@@ -77,6 +77,7 @@ export type OrganisationSeachOptions = {
     readonly excludeTyp?: OrganisationsTyp[];
     readonly administriertVon?: string[];
     readonly organisationIds?: string[];
+    readonly zugehoerigZu?: string[];
     readonly offset?: number;
     readonly limit?: number;
 };
@@ -97,7 +98,7 @@ export class OrganisationRepository {
     public async findBy(scope: OrganisationScope): Promise<Counted<Organisation<true>>> {
         const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
-            mapEntityToAggregate(entity),
+            mapOrgaEntityToAggregate(entity),
         );
         return [organisations, total];
     }
@@ -148,7 +149,7 @@ export class OrganisationRepository {
             );
         }
 
-        return rawResult.map(mapEntityToAggregate);
+        return rawResult.map(mapOrgaEntityToAggregate);
     }
 
     public async findParentOrgasForIds(ids: OrganisationID[]): Promise<Organisation<true>[]> {
@@ -177,7 +178,7 @@ export class OrganisationRepository {
             );
         }
 
-        return rawResult.map(mapEntityToAggregate);
+        return rawResult.map(mapOrgaEntityToAggregate);
     }
 
     /**
@@ -204,7 +205,7 @@ export class OrganisationRepository {
 
         const res: Organisation<true>[] = rawResult
             .map((data: EntityDictionary<OrganisationEntity>) => this.em.map(OrganisationEntity, data))
-            .map(mapEntityToAggregate);
+            .map(mapOrgaEntityToAggregate);
 
         return res;
     }
@@ -264,13 +265,13 @@ export class OrganisationRepository {
             entity.name?.includes('Ersatz'),
         );
 
-        return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
+        return [oeffentlich && mapOrgaEntityToAggregate(oeffentlich), ersatz && mapOrgaEntityToAggregate(ersatz)];
     }
 
     public async findById(id: string): Promise<Option<Organisation<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {
-            return mapEntityToAggregate(organisation);
+            return mapOrgaEntityToAggregate(organisation);
         }
         return null;
     }
@@ -280,7 +281,7 @@ export class OrganisationRepository {
 
         const organisationMap: Map<string, Organisation<true>> = new Map();
         organisationEntities.forEach((organisationEntity: OrganisationEntity) => {
-            const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity);
+            const organisation: Organisation<true> = mapOrgaEntityToAggregate(organisationEntity);
             organisationMap.set(organisationEntity.id, organisation);
         });
 
@@ -319,7 +320,7 @@ export class OrganisationRepository {
             $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
         });
 
-        return organisations.map(mapEntityToAggregate);
+        return organisations.map(mapOrgaEntityToAggregate);
     }
 
     public async findAuthorized(
@@ -360,6 +361,9 @@ export class OrganisationRepository {
         if (searchOptions.administriertVon) {
             andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
         }
+        if (searchOptions.zugehoerigZu) {
+            andClauses.push({ zugehoerigZu: { $in: searchOptions.zugehoerigZu } });
+        }
         if (searchOptions.searchString) {
             andClauses.push({
                 $or: [
@@ -398,7 +402,7 @@ export class OrganisationRepository {
         }
 
         const organisations: Organisation<true>[] = result.map((entity: OrganisationEntity) =>
-            mapEntityToAggregate(entity),
+            mapOrgaEntityToAggregate(entity),
         );
 
         // Calculate pageTotal (excluding entitiesForIds when searchString is present
@@ -468,7 +472,7 @@ export class OrganisationRepository {
         return;
     }
 
-    public async updateKlassenname(
+    public async updateOrganisationName(
         id: string,
         newName: string,
         version: number,
@@ -479,62 +483,88 @@ export class OrganisationRepository {
         if (!organisationFound) {
             const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation zu ${newName} zu verändern. Fehler: ${error.message}`,
             );
             return error;
         }
-        let schoolName: string | undefined;
-        if (organisationFound.administriertVon) {
-            const school: Option<Organisation<true>> = await this.findById(organisationFound.administriertVon);
-            if (!school) {
-                const error: DomainError = new EntityNotFoundError('Organisation', organisationFound.administriertVon);
-                this.logger.error(
-                    `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
-                );
-                return error;
-            }
-            schoolName = school.name;
-        }
-        if (!schoolName) {
+        if (
+            !(organisationFound.typ === OrganisationsTyp.KLASSE || organisationFound.typ === OrganisationsTyp.TRAEGER)
+        ) {
             const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'The schoolName of a Klasse cannot be undefined.',
+                'Only the name of Klassen or Schulträger can be updated.',
             ]);
             this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation ${organisationFound.name} zu verändern. Fehler: ${error.message}`,
             );
             return error;
         }
-        if (organisationFound.typ !== OrganisationsTyp.KLASSE) {
-            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
-                'Only the name of Klassen can be updated.',
-            ]);
-            this.logger.error(
-                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${error.message}`,
-            );
-            return error;
-        }
-        //Specifications: it needs to be clarified how the specifications can be checked using DDD principles
-        {
-            if (organisationFound.name !== newName) {
-                organisationFound.name = newName;
-                const specificationError: undefined | OrganisationSpecificationError =
-                    await organisationFound.checkKlasseSpecifications(this);
 
+        let parentName: string | undefined;
+        let parentId: string | undefined;
+
+        if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+            // Handle Klasse
+            if (organisationFound.administriertVon) {
+                const schule: Option<Organisation<true>> = await this.findById(organisationFound.administriertVon);
+                if (!schule) {
+                    const error: DomainError = new EntityNotFoundError(
+                        'Organisation',
+                        organisationFound.administriertVon,
+                    );
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                    );
+                    return error;
+                }
+                parentName = schule.name;
+
+                if (!parentName) {
+                    const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                        'The schoolName of a Klasse cannot be undefined.',
+                    ]);
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                    );
+                    return error;
+                }
+                parentId = schule.id;
+            }
+        }
+        if (organisationFound.name !== newName) {
+            organisationFound.name = newName;
+            // Call the appropriate specification check based on the type
+            let specificationError: undefined | OrganisationSpecificationError;
+            if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+                specificationError = await organisationFound.checkKlasseSpecifications(this);
                 if (specificationError) {
                     this.logger.error(
-                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse ${organisationFound.name} (${schoolName}) zu verändern. Fehler: ${specificationError.message}`,
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${specificationError.message}`,
+                    );
+                    return specificationError;
+                }
+            } else if (organisationFound.typ === OrganisationsTyp.TRAEGER) {
+                specificationError = await organisationFound.checkSchultraegerSpecifications(this);
+                if (specificationError) {
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen eines Schulträgers zu ${newName} zu verändern. Fehler: ${specificationError?.message}`,
                     );
                     return specificationError;
                 }
             }
         }
+
         organisationFound.setVersionForUpdate(version);
         const organisationEntity: Organisation<true> | OrganisationSpecificationError =
             await this.save(organisationFound);
-        this.eventService.publish(new KlasseUpdatedEvent(id, newName, organisationFound.administriertVon));
+
+        if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+            // This is to update the new Klasse in itsLearning
+            this.eventService.publish(new KlasseUpdatedEvent(id, newName, parentId));
+        }
         this.logger.info(
-            `Admin: ${permissions.personFields.id}) hat den Namen einer Klasse geändert: ${organisationFound.name} (${schoolName}).`,
+            `Admin: ${permissions.personFields.id}) hat den Namen einer Organisation geändert: ${organisationFound.name} (${parentName}).`,
         );
+
         return organisationEntity;
     }
 
@@ -576,7 +606,7 @@ export class OrganisationRepository {
             ),
         );
 
-        return mapEntityToAggregate(organisationEntity);
+        return mapOrgaEntityToAggregate(organisationEntity);
     }
 
     public async saveSeedData(organisation: Organisation<boolean>): Promise<Organisation<true>> {
@@ -586,7 +616,7 @@ export class OrganisationRepository {
     private async create(organisation: Organisation<boolean>): Promise<Organisation<true>> {
         const organisationEntity: OrganisationEntity = this.em.create(
             OrganisationEntity,
-            mapAggregateToData(organisation),
+            mapOrgaAggregateToData(organisation),
         );
 
         await this.em.persistAndFlush(organisationEntity);
@@ -613,7 +643,7 @@ export class OrganisationRepository {
             );
         }
 
-        return mapEntityToAggregate(organisationEntity);
+        return mapOrgaEntityToAggregate(organisationEntity);
     }
 
     private async update(organisation: Organisation<true>): Promise<Organisation<true>> {
@@ -627,11 +657,11 @@ export class OrganisationRepository {
         }
         organisationEntity.version += 1;
 
-        organisationEntity.assign(mapAggregateToData(organisation));
+        organisationEntity.assign(mapOrgaAggregateToData(organisation));
 
         await this.em.persistAndFlush(organisationEntity);
 
-        return mapEntityToAggregate(organisationEntity);
+        return mapOrgaEntityToAggregate(organisationEntity);
     }
 
     public async findOrganisationZuordnungErsatzOderOeffentlich(

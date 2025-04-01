@@ -11,11 +11,22 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
     rollenart?: RollenArt;
     kennung?: string;
+};
+
+export type KontextWithOrgaAndRolle = {
+    personenkontext: Personenkontext<true>;
+    organisation: Organisation<true>;
+    rolle: Rolle<true>;
 };
 
 export type ExternalPkDataLoaded = Loaded<
@@ -52,6 +63,7 @@ export class DBiamPersonenkontextRepo {
     public constructor(
         private readonly em: EntityManager,
         private readonly personenkontextFactory: PersonenkontextFactory,
+        protected readonly entityAggregateMapper: EntityAggregateMapper,
     ) {}
 
     public async findByID(id: string): Promise<Option<Personenkontext<true>>> {
@@ -100,6 +112,32 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map((pk: PersonenkontextEntity) =>
             mapEntityToAggregate(pk, this.personenkontextFactory),
         );
+    }
+
+    public async findByPersonWithOrgaAndRolle(personId: PersonID): Promise<Array<KontextWithOrgaAndRolle>> {
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(
+            PersonenkontextEntity,
+            { personId },
+            {
+                populate: [
+                    'organisationId',
+                    'rolleId',
+                    'rolleId.merkmale',
+                    'rolleId.systemrechte',
+                    'rolleId.serviceProvider',
+                ],
+            },
+        );
+
+        return personenKontexte.map((pk: PersonenkontextEntity) => {
+            const orgaEntity: OrganisationEntity = pk.organisationId.unwrap();
+            const rolleEntity: RolleEntity = pk.rolleId.unwrap();
+            return {
+                personenkontext: mapEntityToAggregate(pk, this.personenkontextFactory),
+                organisation: this.entityAggregateMapper.mapOrganisationEntityToAggregate(orgaEntity),
+                rolle: this.entityAggregateMapper.mapRolleEntityToAggregate(rolleEntity),
+            };
+        });
     }
 
     /**
