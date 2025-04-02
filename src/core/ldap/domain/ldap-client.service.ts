@@ -123,10 +123,10 @@ export class LdapClientService {
     public async getPersonAttributes(
         personId: PersonID,
         referrer: PersonReferrer,
-        emailDomain: string,
+        domain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.executeWithRetry(
-            () => this.getPersonAttributesInternal(personId, referrer, emailDomain),
+            () => this.getPersonAttributesInternal(personId, referrer, domain),
             this.getNrOfRetries(),
         );
     }

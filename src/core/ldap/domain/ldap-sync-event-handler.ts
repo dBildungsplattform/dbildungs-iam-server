@@ -178,9 +178,6 @@ export class LdapSyncEventHandler {
                 `Error while fetching attributes for personId:${personId} in LDAP, msg:${personAttributes.error.message}`,
             );
         }
-        if (personAttributes.value.dn === 'nope') {
-            this.logger.info(`Creation of user in LDAP required for personId:${personId}`);
-        }
 
         const givenName: string = person.vorname;
         const surName: string = person.familienname;

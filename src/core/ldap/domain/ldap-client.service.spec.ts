@@ -31,7 +31,6 @@ import { LdapInstanceConfig } from '../ldap-instance-config.js';
 import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
-import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -1334,6 +1333,7 @@ describe('LDAP Client Service', () => {
         const referrer: PersonReferrer = faker.internet.userName();
         const personId: PersonID = faker.string.uuid();
         const dn: string = 'dn';
+        const oeffentlicheSchulenDoamin: string = 'schule-sh.de';
         const givenName: string = faker.person.firstName();
         const sn: string = faker.person.lastName();
         const cn: string = referrer;
@@ -1367,38 +1367,165 @@ describe('LDAP Client Service', () => {
             it('should return falsy result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockRejectedValueOnce(new Error());
+
                     return clientMock;
                 });
                 const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
                     personId,
                     referrer,
+                    oeffentlicheSchulenDoamin,
                 );
 
                 expect(result.ok).toBeFalsy();
             });
         });
 
-        describe('when fetching person-attributes fails', () => {
-            it('should return LdapFetchAttributeError', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(
-                        createMock<SearchResult>({
-                            searchEntries: [],
-                        }),
+        describe('when fetching person-attributes finds NO PersonEntry', () => {
+            describe('when implicit creation of empty PersonEntry fails because bind fails', () => {
+                it('should log error and return', async () => {
+                    const bindError: Error = Error('Bind failed');
+                    ldapClientMock.getClient.mockImplementation(() => {
+                        clientMock.bind.mockResolvedValueOnce();
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [],
+                            }),
+                        );
+                        clientMock.bind.mockRejectedValueOnce(bindError);
+
+                        return clientMock;
+                    });
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                        oeffentlicheSchulenDoamin,
                     );
-                    return clientMock;
+                    const lehrerUid: string = `uid=${referrer},ou=oeffentlicheSchulen,dc=example,dc=com`;
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(`Could not connect to LDAP`, bindError);
+                    expect(loggerMock.info).not.toHaveBeenCalledWith(
+                        `LDAP: Successfully created empty PersonEntry, DN:${lehrerUid}`,
+                    );
+                    expect(result.ok).toBeFalsy();
+                    expect(result).toEqual({
+                        ok: false,
+                        error: new Error('LDAP bind FAILED'),
+                    });
                 });
+            });
 
-                const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
-                    personId,
-                    referrer,
-                );
+            describe('when implicit creation of empty PersonEntry fails because rootName CANNOT be chosen', () => {
+                it('should log error and return', async () => {
+                    const invalidEmailDomain: string = 'not-a-valid-domain.de';
+                    ldapClientMock.getClient.mockImplementation(() => {
+                        clientMock.bind.mockResolvedValueOnce();
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [],
+                            }),
+                        );
 
-                expect(result.ok).toBeFalsy();
-                expect(result).toEqual({
-                    ok: false,
-                    error: new LdapFetchAttributeError('*', referrer, personId),
+                        return clientMock;
+                    });
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                        invalidEmailDomain,
+                    );
+                    const lehrerUid: string = `uid=${referrer},ou=oeffentlicheSchulen,dc=example,dc=com`;
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(loggerMock.error).toHaveBeenCalledWith(
+                        `Could not get root-name because email-domain is invalid, domain:${invalidEmailDomain}`,
+                    );
+                    expect(loggerMock.info).not.toHaveBeenCalledWith(
+                        `LDAP: Successfully created empty PersonEntry, DN:${lehrerUid}`,
+                    );
+                    expect(result.ok).toBeFalsy();
+                    expect(result).toEqual({
+                        ok: false,
+                        error: new LdapEmailDomainError(),
+                    });
+                });
+            });
+
+            describe('when implicit creation of empty PersonEntry succeeds', () => {
+                it('should log info and return DN for PersonEntry', async () => {
+                    ldapClientMock.getClient.mockImplementation(() => {
+                        clientMock.bind.mockResolvedValueOnce();
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [],
+                            }),
+                        );
+
+                        return clientMock;
+                    });
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                        oeffentlicheSchulenDoamin,
+                    );
+                    const lehrerUid: string = `uid=${referrer},ou=oeffentlicheSchulen,dc=example,dc=com`;
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(loggerMock.info).toHaveBeenCalledWith(
+                        `LDAP: Successfully created empty PersonEntry, DN:${lehrerUid}`,
+                    );
+                    expect(result.ok).toBeTruthy();
+                    expect(result).toEqual({
+                        ok: true,
+                        value: {
+                            dn: lehrerUid,
+                        },
+                    });
+                });
+            });
+
+            describe('when implicit creation of empty PersonEntry fails', () => {
+                const ldapAddError: Error = Error('Create user failed');
+                it('should log error and return Result with Error', async () => {
+                    ldapClientMock.getClient.mockImplementation(() => {
+                        clientMock.bind.mockResolvedValueOnce();
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [],
+                            }),
+                        );
+                        clientMock.add.mockRejectedValueOnce(ldapAddError);
+
+                        return clientMock;
+                    });
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                        oeffentlicheSchulenDoamin,
+                    );
+                    const lehrerUid: string = `uid=${referrer},ou=oeffentlicheSchulen,dc=example,dc=com`;
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                        `LDAP: Creating empty PersonEntry FAILED, DN:${lehrerUid}`,
+                        ldapAddError,
+                    );
+                    expect(result.ok).toBeFalsy();
+                    expect(result).toEqual({
+                        ok: false,
+                        error: new LdapCreateLehrerError(),
+                    });
                 });
             });
         });
@@ -1418,6 +1545,7 @@ describe('LDAP Client Service', () => {
                 const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
                     personId,
                     referrer,
+                    oeffentlicheSchulenDoamin,
                 );
 
                 expect(result.ok).toBeTruthy();
@@ -1451,6 +1579,7 @@ describe('LDAP Client Service', () => {
                     const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
                         personId,
                         referrer,
+                        oeffentlicheSchulenDoamin,
                     );
 
                     expect(loggerMock.warning).toHaveBeenCalledWith(
@@ -1482,6 +1611,7 @@ describe('LDAP Client Service', () => {
                     const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
                         personId,
                         referrer,
+                        oeffentlicheSchulenDoamin,
                     );
 
                     expect(loggerMock.warning).toHaveBeenCalledWith(
@@ -1513,6 +1643,7 @@ describe('LDAP Client Service', () => {
                     const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
                         personId,
                         referrer,
+                        oeffentlicheSchulenDoamin,
                     );
 
                     expect(loggerMock.warning).toHaveBeenCalledWith(
@@ -1544,6 +1675,7 @@ describe('LDAP Client Service', () => {
                     const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
                         personId,
                         referrer,
+                        oeffentlicheSchulenDoamin,
                     );
 
                     expect(loggerMock.warning).toHaveBeenCalledWith(
@@ -1575,6 +1707,7 @@ describe('LDAP Client Service', () => {
                     const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
                         personId,
                         referrer,
+                        oeffentlicheSchulenDoamin,
                     );
 
                     expect(result.ok).toBeTruthy();
