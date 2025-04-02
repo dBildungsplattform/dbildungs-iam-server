@@ -809,6 +809,15 @@ describe('LDAP Client Service', () => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    entryUUID: faker.string.uuid(),
+                                }),
+                            ],
+                        }),
+                    );
 
                     return clientMock;
                 });
@@ -836,6 +845,15 @@ describe('LDAP Client Service', () => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
                     clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    entryUUID: faker.string.uuid(),
+                                }),
+                            ],
+                        }),
+                    );
 
                     return clientMock;
                 });

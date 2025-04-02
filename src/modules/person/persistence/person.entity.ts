@@ -18,7 +18,7 @@ import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { UserLockEntity } from '../../keycloak-administration/entity/user-lock.entity.js';
-import { ExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends TimestampedEntity {
@@ -182,10 +182,10 @@ export class PersonEntity extends TimestampedEntity {
     public istTechnisch!: boolean;
 
     @OneToMany({
-        entity: () => ExternalIdMappingEntity,
+        entity: () => PersonExternalIdMappingEntity,
         mappedBy: 'person',
         cascade: [Cascade.ALL],
         orphanRemoval: true,
     })
-    public externalIds: Collection<ExternalIdMappingEntity> = new Collection<ExternalIdMappingEntity>(this);
+    public externalIds: Collection<PersonExternalIdMappingEntity> = new Collection<PersonExternalIdMappingEntity>(this);
 }

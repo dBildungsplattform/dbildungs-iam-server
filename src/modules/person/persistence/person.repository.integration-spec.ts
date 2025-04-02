@@ -1092,6 +1092,8 @@ describe('PersonRepository Integration', () => {
                 faker.string.uuid(),
             );
 
+            person.externalIds.LDAP = faker.string.uuid();
+
             const expectedProperties: string[] = [
                 'keycloakUserId',
                 'referrer',
@@ -1123,6 +1125,8 @@ describe('PersonRepository Integration', () => {
             expectedProperties.forEach((prop: string) => {
                 expect(result).toHaveProperty(prop);
             });
+
+            expect(result.externalIds).toHaveLength(1);
         });
     });
 

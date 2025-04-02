@@ -25,7 +25,8 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { mapAggregateToData } from './person.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { ExternalIdMappingEntity, ExternalIdType } from './external-id-mappings.entity.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { PersonExternalIdType } from '../domain/person.enums.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
@@ -329,8 +330,8 @@ describe('PersonScope', () => {
             const testID: string = faker.string.uuid();
 
             const person: PersonEntity = createPersonEntity();
-            const externalId: ExternalIdMappingEntity = em.create(ExternalIdMappingEntity, {
-                type: ExternalIdType.LDAP,
+            const externalId: PersonExternalIdMappingEntity = em.create(PersonExternalIdMappingEntity, {
+                type: PersonExternalIdType.LDAP,
                 externalId: testID,
             });
 
