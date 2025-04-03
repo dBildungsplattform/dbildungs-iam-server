@@ -871,7 +871,7 @@ export class PersonRepository {
             ],
         };
 
-        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters, { populate: ['externalIds'] });
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return personEntities.map((person: PersonEntity) => [person.id, person.keycloakUserId]);
     }
 
@@ -888,7 +888,7 @@ export class PersonRepository {
             },
         };
 
-        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters, { populate: ['externalIds'] });
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return personEntities.map((person: PersonEntity) => person.id);
     }
 
@@ -903,7 +903,7 @@ export class PersonRepository {
                 },
             },
         };
-        const admins: PersonEntity[] = await this.em.find(PersonEntity, filters, { populate: ['externalIds'] });
+        const admins: PersonEntity[] = await this.em.find(PersonEntity, filters);
         return admins.map((admin: PersonEntity) => admin.vorname + ' ' + admin.familienname);
     }
 }

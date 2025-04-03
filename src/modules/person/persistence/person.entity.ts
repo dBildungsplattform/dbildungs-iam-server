@@ -186,6 +186,7 @@ export class PersonEntity extends TimestampedEntity {
         mappedBy: 'person',
         cascade: [Cascade.ALL],
         orphanRemoval: true,
+        eager: true, // Always populate this relation
     })
     public externalIds: Collection<PersonExternalIdMappingEntity> = new Collection<PersonExternalIdMappingEntity>(this);
 }

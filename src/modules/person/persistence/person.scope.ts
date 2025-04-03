@@ -44,7 +44,7 @@ export class PersonScope extends ScopeBase<PersonEntity> {
         const selectQuery: SelectQueryBuilder<PersonEntity> = this.getQueryBuilder(em);
 
         const [entities, count]: [PersonEntity[], number] = await selectQuery.getResultAndCount();
-        await em.populate(entities, ['emailAddresses', 'externalIds']);
+        await em.populate(entities, ['emailAddresses']);
 
         return [entities, count];
     }

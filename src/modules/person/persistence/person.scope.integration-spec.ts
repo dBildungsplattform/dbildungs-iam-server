@@ -349,7 +349,7 @@ describe('PersonScope', () => {
             expect(persons).toHaveLength(1);
             expect(persons[0]?.externalIds).toHaveLength(1);
             expect(persons[0]?.externalIds[0]?.externalId).toBe(testID);
-            expect(persons[0]?.externalIds[0]?.type).toBe(ExternalIdType.LDAP);
+            expect(persons[0]?.externalIds[0]?.type).toBe(PersonExternalIdType.LDAP);
         });
     });
 });
