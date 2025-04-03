@@ -50,7 +50,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
@@ -69,6 +69,7 @@ import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1136,9 +1137,16 @@ describe('PersonRepository Integration', () => {
                 PersonEntity,
                 mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
             );
+            personEntity.externalIds.add(
+                em.create(PersonExternalIdMappingEntity, {
+                    externalId: faker.string.uuid(),
+                    type: PersonExternalIdType.LDAP,
+                }),
+            );
             const person: Person<true> = mapEntityToAggregate(personEntity);
 
             expect(person).toBeInstanceOf(Person);
+            expect(person.externalIds.LDAP).toBeDefined();
         });
     });
 
