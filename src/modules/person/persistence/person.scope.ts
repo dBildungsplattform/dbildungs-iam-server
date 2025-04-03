@@ -39,7 +39,6 @@ export class PersonScope extends ScopeBase<PersonEntity> {
     }
 
     // overriding implementation is necessary to populate emailAddresses for triggering events with email properties. e.g. when person is deleted
-    // Also populates externalIds
     public override async executeQuery(em: EntityManager): Promise<Counted<PersonEntity>> {
         const selectQuery: SelectQueryBuilder<PersonEntity> = this.getQueryBuilder(em);
 
