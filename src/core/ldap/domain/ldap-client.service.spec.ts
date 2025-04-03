@@ -1085,7 +1085,7 @@ describe('LDAP Client Service', () => {
                     // Get EntryUUID
                     client.search.mockResolvedValueOnce(
                         createMock<SearchResult>({
-                            searchEntries: [{}],
+                            searchEntries: [createMock<Entry>({})],
                         }),
                     );
                 });
@@ -1096,16 +1096,16 @@ describe('LDAP Client Service', () => {
                     familienname: faker.person.lastName(),
                     referrer: faker.lorem.word(),
                 };
-                const lehrerUid: string =
-                    'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeEmailDomain,
                     fakeOrgaKennung,
                 );
 
-                expect(result.ok).toBeTruthy();
-                expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
+                expect(result.ok).toBeFalsy();
+                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                    `Could not get EntryUUID for referrer:${testLehrer.referrer}, personId:${testLehrer.id}`,
+                );
             });
 
             it('when called with invalid emailDomain returns LdapEmailDomainError', async () => {
