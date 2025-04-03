@@ -38,7 +38,7 @@ describe('PersonScope', () => {
     let organisationRepository: OrganisationRepository;
 
     const createPersonEntity = (): PersonEntity => {
-        const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
+        const person: PersonEntity = em.create(PersonEntity, mapAggregateToData(DoFactory.createPerson(false)));
         return person;
     };
 
@@ -92,7 +92,8 @@ describe('PersonScope', () => {
         describe('when filtering for persons', () => {
             beforeEach(async () => {
                 const persons: PersonEntity[] = Array.from({ length: 110 }, (_v: unknown, i: number) =>
-                    new PersonEntity().assign(
+                    em.create(
+                        PersonEntity,
                         mapAggregateToData(DoFactory.createPerson(false, { vorname: `John #${i}` })),
                     ),
                 );
@@ -117,7 +118,8 @@ describe('PersonScope', () => {
 
             beforeEach(async () => {
                 const persons: PersonEntity[] = Array.from({ length: 20 }, () =>
-                    new PersonEntity().assign(
+                    em.create(
+                        PersonEntity,
                         mapAggregateToData(DoFactory.createPerson(false, { geburtsdatum: birthday })),
                     ),
                 );
@@ -141,10 +143,12 @@ describe('PersonScope', () => {
             const suchFilter: string = 'Max';
 
             beforeEach(async () => {
-                const person1: PersonEntity = new PersonEntity().assign(
+                const person1: PersonEntity = em.create(
+                    PersonEntity,
                     mapAggregateToData(DoFactory.createPerson(false, { vorname: 'Max' })),
                 );
-                const person2: PersonEntity = new PersonEntity().assign(
+                const person2: PersonEntity = em.create(
+                    PersonEntity,
                     mapAggregateToData(DoFactory.createPerson(false, { vorname: 'John' })),
                 );
                 await em.persistAndFlush([person1, person2]);
@@ -166,7 +170,7 @@ describe('PersonScope', () => {
         describe('when filtering for organisations', () => {
             beforeEach(async () => {
                 const persons: PersonEntity[] = Array.from({ length: 110 }, () =>
-                    new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false))),
+                    em.create(PersonEntity, mapAggregateToData(DoFactory.createPerson(false))),
                 );
 
                 await em.persistAndFlush(persons);

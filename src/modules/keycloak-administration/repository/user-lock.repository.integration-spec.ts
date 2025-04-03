@@ -23,7 +23,7 @@ describe('UserLockRepository', () => {
     let em: EntityManager;
 
     const createPersonEntity = (): PersonEntity => {
-        const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
+        const person: PersonEntity = em.create(PersonEntity, mapAggregateToData(DoFactory.createPerson(false)));
         return person;
     };
 

@@ -1598,7 +1598,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
-                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
+                await em.persistAndFlush(em.create(PersonEntity, mapAggregateToData(person1)));
 
                 const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePerson(
