@@ -9,13 +9,13 @@ import { EventService } from './event.service.js';
 import { KafkaEventService } from './kafka-event.service.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
-import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
+import { KafkaConfig } from '../../../shared/config/kafka.config.js';
 
 type HandlerMethod = DiscoveredMethodWithMeta<Constructor<BaseEvent>>;
 
 @Injectable()
 export class EventDiscoveryService {
-    private readonly featureFlagConfig: FeatureFlagConfig;
+    private readonly kafkaConfig: KafkaConfig;
 
     public constructor(
         private readonly logger: ClassLogger,
@@ -24,7 +24,7 @@ export class EventDiscoveryService {
         private readonly kafkaEventService: KafkaEventService,
         private readonly configService: ConfigService<ServerConfig>,
     ) {
-        this.featureFlagConfig = this.configService.getOrThrow<FeatureFlagConfig>('FEATUREFLAG');
+        this.kafkaConfig = this.configService.getOrThrow<KafkaConfig>('KAFKA');
     }
 
     private async discoverHandlerMethods(meta: symbol): Promise<HandlerMethod[]> {
@@ -39,7 +39,7 @@ export class EventDiscoveryService {
         let results: HandlerMethod[] = await this.discoverHandlerMethods(EVENT_HANDLER_META);
         const kafkaResults: HandlerMethod[] = await this.discoverHandlerMethods(KAFKA_EVENT_HANDLER_META);
 
-        if (this.featureFlagConfig.FEATURE_FLAG_USE_KAFKA) {
+        if (this.kafkaConfig.ENABLED) {
             kafkaResults.forEach((method: HandlerMethod) => {
                 const eventConstructor: Constructor<BaseEvent> = method.meta;
                 const eventHandler: EventHandlerType<BaseEvent> = method.discoveredMethod.handler;

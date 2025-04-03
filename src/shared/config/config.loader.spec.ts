@@ -29,7 +29,6 @@ describe('configloader', () => {
                 FEATUREFLAG: {
                     FEATURE_FLAG_ROLLE_BEARBEITEN: true,
                     FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: true,
-                    FEATURE_FLAG_USE_KAFKA: false,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -113,6 +112,7 @@ describe('configloader', () => {
                     GROUP_ID: 'nestjs-kafka',
                     SESSION_TIMEOUT: 30000,
                     HEARTBEAT_INTERVAL: 10000,
+                    ENABLED: true,
                 },
             };
 
@@ -177,7 +177,6 @@ describe('configloader', () => {
                 FEATUREFLAG: {
                     FEATURE_FLAG_ROLLE_BEARBEITEN: true,
                     FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: true,
-                    FEATURE_FLAG_USE_KAFKA: false,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
@@ -269,6 +268,7 @@ describe('configloader', () => {
                     GROUP_ID: 'nestjs-kafka',
                     SESSION_TIMEOUT: 30000,
                     HEARTBEAT_INTERVAL: 10000,
+                    ENABLED: true,
                 },
             };
 

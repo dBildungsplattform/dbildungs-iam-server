@@ -260,15 +260,18 @@ export class LdapEventHandler {
                 }),
         );
 
-        const cominedResults: PromiseSettledResult<Result<unknown>>[] = [...removeResults, ...newKontexteResults];
-        const failureReasons: string[] = [];
-        cominedResults.forEach((result: PromiseSettledResult<Result<unknown>>) => {
-            if (result.status === 'rejected') {
-                failureReasons.push(inspect(result.reason));
-            } else if (result.status === 'fulfilled' && !result.value.ok) {
-                failureReasons.push(inspect(result.value.error));
-            }
-        });
+        const combinedResults: PromiseSettledResult<Result<unknown>>[] = [...removeResults, ...newKontexteResults];
+        const failureReasons: string[] = combinedResults.reduce(
+            (acc: string[], result: PromiseSettledResult<Result<unknown, Error>>) => {
+                if (result.status === 'rejected') {
+                    acc.push(inspect(result.reason));
+                } else if (result.status === 'fulfilled' && !result.value.ok) {
+                    acc.push(inspect(result.value.error));
+                }
+                return acc;
+            },
+            [],
+        );
 
         if (failureReasons.length > 0) {
             return { ok: false, error: new Error(failureReasons.join(', ')) };

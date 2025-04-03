@@ -46,7 +46,7 @@ describe('EventService', () => {
 
     async function setupModule(useKafka: boolean = false): Promise<void> {
         const configService: DeepMocked<ConfigService> = createMock<ConfigService>();
-        configService.getOrThrow.mockReturnValueOnce({ FEATURE_FLAG_USE_KAFKA: useKafka });
+        configService.getOrThrow.mockReturnValueOnce({ ENABLED: useKafka });
 
         module = await Test.createTestingModule({
             imports: [LoggingTestModule, DiscoveryModule, ConfigTestModule],

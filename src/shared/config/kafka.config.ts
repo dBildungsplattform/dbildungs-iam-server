@@ -21,4 +21,7 @@ export class KafkaConfig {
 
     @IsNumber()
     public readonly HEARTBEAT_INTERVAL!: number;
+
+    @IsNumber()
+    public readonly ENABLED!: boolean;
 }

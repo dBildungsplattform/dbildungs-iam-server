@@ -10,7 +10,6 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { KafkaConfig } from '../../../shared/config/kafka.config.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
-import { FeatureFlagConfig } from '../../../shared/config/index.js';
 
 @Injectable()
 export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
@@ -22,16 +21,13 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
     private readonly kafkaConfig: KafkaConfig;
 
-    private readonly featureFlagConfig: FeatureFlagConfig;
-
     public constructor(
         private readonly logger: ClassLogger,
         @Inject(KAFKA_INSTANCE) private readonly kafka: Kafka,
         configService: ConfigService<ServerConfig>,
     ) {
-        this.featureFlagConfig = configService.getOrThrow<FeatureFlagConfig>('FEATUREFLAG');
         this.kafkaConfig = configService.getOrThrow<KafkaConfig>('KAFKA');
-        if (this.featureFlagConfig.FEATURE_FLAG_USE_KAFKA === false) {
+        if (this.kafkaConfig.ENABLED === false) {
             this.logger.info('Kafka is disabled');
             return;
         }
@@ -45,7 +41,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
     public async onModuleInit(): Promise<void> {
         try {
-            if (this.featureFlagConfig.FEATURE_FLAG_USE_KAFKA === false) {
+            if (this.kafkaConfig.ENABLED === false) {
                 this.logger.info('Kafka is disabled');
                 return;
             }

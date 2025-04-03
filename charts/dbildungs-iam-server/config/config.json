@@ -87,8 +87,7 @@
     },
     "FEATUREFLAG": {
         "FEATURE_FLAG_ROLLE_BEARBEITEN": false,
-        "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true,
-        "FEATURE_FLAG_USE_KAFKA": false
+        "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true
     },
     "KAFKA": {
         "BROKER": "localhost:9092",
@@ -97,6 +96,7 @@
         "DLQ_TOPIC": "spsh-dlq-topic",
         "GROUP_ID": "nestjs-kafka",
         "SESSION_TIMEOUT": 30000,
-        "HEARTBEAT_INTERVAL": 10000
+        "HEARTBEAT_INTERVAL": 10000,
+        "ENABLED":true
     }
 }
