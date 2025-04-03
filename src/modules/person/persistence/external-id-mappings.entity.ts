@@ -1,12 +1,16 @@
-import { BaseEntity, Entity, Enum, Index, ManyToOne, PrimaryKeyProp, Property, Rel } from '@mikro-orm/core';
-import { PersonEntity } from './person.entity.js';
+import { BaseEntity, Cascade, Entity, Enum, ManyToOne, PrimaryKeyProp, Property, Rel } from '@mikro-orm/core';
 import { PersonExternalIdType } from '../domain/person.enums.js';
+import { PersonEntity } from './person.entity.js';
 
 @Entity({ tableName: 'external_id_mapping' })
 export class PersonExternalIdMappingEntity extends BaseEntity {
-    @ManyToOne({ primary: true, entity: () => PersonEntity })
-    @Index({
-        name: 'external_id_person_index',
+    @ManyToOne({
+        columnType: 'uuid',
+        primary: true,
+        cascade: [Cascade.REMOVE],
+        ref: true,
+        nullable: false,
+        entity: () => PersonEntity,
     })
     public person!: Rel<PersonEntity>;
 

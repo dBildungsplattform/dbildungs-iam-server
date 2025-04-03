@@ -3285,16 +3285,6 @@
       "schema": "public",
       "indexes": [
         {
-          "columnNames": [
-            "person_id"
-          ],
-          "composite": false,
-          "keyName": "external_id_person_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
           "keyName": "external_id_mapping_pkey",
           "columnNames": [
             "person_id",
@@ -3318,7 +3308,7 @@
             "id"
           ],
           "referencedTableName": "public.person",
-          "updateRule": "cascade"
+          "deleteRule": "cascade"
         }
       },
       "nativeEnums": {

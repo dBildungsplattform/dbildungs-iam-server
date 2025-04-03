@@ -184,7 +184,7 @@ export class PersonEntity extends TimestampedEntity {
     @OneToMany({
         entity: () => PersonExternalIdMappingEntity,
         mappedBy: 'person',
-        cascade: [Cascade.ALL],
+        cascade: [Cascade.REMOVE, Cascade.PERSIST],
         orphanRemoval: true,
         eager: true, // Always populate this relation
     })
