@@ -1071,6 +1071,43 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeFalsy();
             });
 
+            it('when entryUUID can not be retrieved after add', async () => {
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+                    mockAddPersonToGroup();
+
+                    // exists check
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+
+                    // Add
+                    client.add.mockResolvedValueOnce();
+
+                    // Get EntryUUID
+                    client.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [{}],
+                        }),
+                    );
+                });
+
+                const testLehrer: PersonData = {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.lorem.word(),
+                };
+                const lehrerUid: string =
+                    'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    testLehrer,
+                    fakeEmailDomain,
+                    fakeOrgaKennung,
+                );
+
+                expect(result.ok).toBeTruthy();
+                expect(loggerMock.info).toHaveBeenLastCalledWith(`LDAP: Successfully created lehrer ${lehrerUid}`);
+            });
+
             it('when called with invalid emailDomain returns LdapEmailDomainError', async () => {
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     person,

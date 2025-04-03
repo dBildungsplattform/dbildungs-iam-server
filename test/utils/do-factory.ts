@@ -51,6 +51,9 @@ export class DoFactory {
             updatedAt: withId ? faker.date.recent() : undefined,
             personalnummer: faker.string.numeric({ length: 7 }),
             revision: '1',
+            externalIds: {
+                LDAP: faker.string.uuid(),
+            },
         };
         person.istTechnisch = false;
         return Object.assign(Object.create(Person.prototype) as Person<boolean>, person, props);
