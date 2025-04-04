@@ -1,2 +1,2 @@
 spsh-user-topic
-spsh-dlq-topic
+spsh-user-dlq-topic

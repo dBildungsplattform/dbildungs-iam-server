@@ -47,7 +47,7 @@ describe('KafkaEventService', () => {
         HEARTBEAT_INTERVAL: 3000,
         TOPIC_PREFIX: 'prefix.',
         USER_TOPIC: 'user-topic',
-        DLQ_TOPIC: 'dlq-topic',
+        USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
     };
 
@@ -145,7 +145,7 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message);
 
-        expect(logger.error).toHaveBeenCalledWith('Unknown event type: UnknownEvent');
+        expect(logger.error).toHaveBeenCalledWith('Event type in header: UnknownEvent is not a valid KafkaEventKey');
     });
 
     it('should log error if handler throws an exception', async () => {
@@ -175,7 +175,7 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message);
 
-        expect(logger.error).toHaveBeenCalledWith('Message value is missing');
+        expect(logger.error).toHaveBeenCalledWith('Message value is empty or undefined');
     });
 
     it('should publish to DLQ if handler returns an error', async () => {
@@ -192,7 +192,7 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message);
         expect(producer.send).toHaveBeenCalledWith({
-            topic: 'prefix.dlq-topic',
+            topic: 'prefix.user-dlq-topic',
             messages: [
                 {
                     key: 'test',
@@ -236,7 +236,7 @@ describe('KafkaEventService', () => {
 
         await sut.publish(event);
 
-        expect(logger.error).toHaveBeenCalledWith('No mapping found for event type: TestEvent');
+        expect(logger.error).toHaveBeenCalledWith('(Standard publishing) No mapping found for event: TestEvent');
     });
 
     it('callback should trigger handler method', async () => {

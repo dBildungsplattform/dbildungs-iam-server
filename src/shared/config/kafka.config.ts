@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsString } from 'class-validator';
 
 export class KafkaConfig {
     @IsString()
@@ -11,7 +11,7 @@ export class KafkaConfig {
     public readonly USER_TOPIC!: string;
 
     @IsString()
-    public readonly DLQ_TOPIC!: string;
+    public readonly USER_DLQ_TOPIC!: string;
 
     @IsString()
     public readonly GROUP_ID!: string;
@@ -22,6 +22,6 @@ export class KafkaConfig {
     @IsNumber()
     public readonly HEARTBEAT_INTERVAL!: number;
 
-    @IsNumber()
+    @IsBoolean()
     public readonly ENABLED!: boolean;
 }
