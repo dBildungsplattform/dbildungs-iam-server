@@ -18,12 +18,19 @@ import { PersonModule } from '../../person/person.module.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
 import { MikroORM } from '@mikro-orm/core';
-import { PersonenkontextRolleFields, PersonPermissions } from '../domain/person-permissions.js';
+import { PersonenkontextRolleWithOrganisation, PersonPermissions } from '../domain/person-permissions.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../../person/domain/person.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { KeycloakConfig } from '../../../shared/config/keycloak.config.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
+import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
+import { UserExternaldataWorkflowFactory } from '../domain/user-extenaldata.factory.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('AuthenticationController', () => {
     let module: TestingModule;
@@ -34,7 +41,9 @@ describe('AuthenticationController', () => {
     let dbiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
-
+    const keycloakUserServiceMock: DeepMocked<KeycloakUserService> = createMock<KeycloakUserService>();
+    let keyCloakConfig: KeycloakConfig;
+    const personTimeLimitServiceMock: DeepMocked<PersonTimeLimitService> = createMock<PersonTimeLimitService>();
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -48,13 +57,10 @@ describe('AuthenticationController', () => {
             ],
             providers: [
                 AuthenticationController,
+                UserExternaldataWorkflowFactory,
                 {
                     provide: PersonPermissionsRepo,
                     useValue: createMock<PersonPermissionsRepo>(),
-                },
-                {
-                    provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
                     provide: OrganisationRepository,
@@ -68,14 +74,28 @@ describe('AuthenticationController', () => {
                     provide: OIDC_CLIENT,
                     useValue: createMock<Client>(),
                 },
+                {
+                    provide: KeycloakUserService,
+                    useValue: keycloakUserServiceMock,
+                },
+                {
+                    provide: PersonTimeLimitService,
+                    useValue: personTimeLimitServiceMock,
+                },
             ],
-        }).compile();
+        })
+            .overrideProvider(PersonRepository)
+            .useValue(createMock<PersonRepository>())
+            .overrideProvider(DBiamPersonenkontextRepo)
+            .useValue(createMock<DBiamPersonenkontextRepo>())
+            .compile();
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
 
         authController = module.get(AuthenticationController);
         oidcClient = module.get(OIDC_CLIENT);
         frontendConfig = module.get(ConfigService).getOrThrow<FrontendConfig>('FRONTEND');
+        keyCloakConfig = module.get(ConfigService).getOrThrow<KeycloakConfig>('KEYCLOAK');
         personPermissionsRepoMock = module.get(PersonPermissionsRepo);
         dbiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         organisationRepoMock = module.get(OrganisationRepository);
@@ -107,7 +127,12 @@ describe('AuthenticationController', () => {
 
         it('should redirect to saved redirectUrl', () => {
             const responseMock: Response = createMock<Response>();
-            const sessionMock: SessionData = createMock<SessionData>({ redirectUrl: faker.internet.url() });
+            const user: { redirect_uri: string } = { redirect_uri: faker.internet.url() };
+            const passport: { user: { redirect_uri: string } } = { user: user };
+            const sessionMock: SessionData = createMock<SessionData>({
+                redirectUrl: passport.user.redirect_uri,
+                passport: passport,
+            });
 
             authController.login(responseMock, sessionMock);
 
@@ -210,6 +235,15 @@ describe('AuthenticationController', () => {
     });
 
     describe('info', () => {
+        function setupRequest(passportUser?: PassportUser): Request {
+            const sessionMock: DeepMocked<Session> = createMock<Session>();
+            const requestMock: DeepMocked<Request> = createMock<Request>({
+                session: sessionMock,
+                passportUser,
+            });
+            return requestMock;
+        }
+
         it('should return user info', async () => {
             const person: Person<true> = Person.construct(
                 faker.string.uuid(),
@@ -239,18 +273,43 @@ describe('AuthenticationController', () => {
                         updatedAt: new Date(Date.now()),
                     });
                 },
-                getPersonenkontextewithRoles: (): Promise<PersonenkontextRolleFields[]> =>
+                getPersonenkontexteWithRolesAndOrgs: (): Promise<PersonenkontextRolleWithOrganisation[]> =>
                     Promise.resolve([
                         {
-                            organisationsId: '',
+                            organisation: createMock<Organisation<true>>(),
                             rolle: { systemrechte: [], serviceProviderIds: [] },
                         },
                     ]),
             });
-            const result: UserinfoResponse = await authController.info(permissions);
+            keycloakUserServiceMock.getLastPasswordChange.mockResolvedValueOnce({
+                ok: true,
+                value: person.updatedAt,
+            });
+
+            personTimeLimitServiceMock.getPersonTimeLimitInfo.mockResolvedValueOnce([
+                {
+                    occasion: TimeLimitOccasion.KOPERS,
+                    deadline: faker.date.future(),
+                },
+            ]);
+
+            const requestMock: Request = setupRequest();
+            const result: UserinfoResponse = await authController.info(permissions, requestMock);
 
             expect(result).toBeInstanceOf(UserinfoResponse);
             expect(result.birthdate!).toBe(permissions.personFields.geburtsdatum?.toISOString());
+        });
+    });
+
+    describe('ResetPassword', () => {
+        it('should redirect to the correct Keycloak URL', () => {
+            const responseMock: Response = createMock<Response>();
+            const redirectUrl: string = faker.internet.url();
+            const loginHint: string = faker.internet.userName();
+            authController.resetPassword(redirectUrl, loginHint, responseMock);
+            const keyCloakRealm: string = keyCloakConfig.REALM_NAME.toLowerCase();
+            const expectedUrl: string = `${oidcClient.issuer.metadata.authorization_endpoint}?client_id=${keyCloakRealm}&login_hint=${loginHint}&response_type=code&scope=openid&kc_action=UPDATE_PASSWORD&redirect_uri=${redirectUrl}`;
+            expect(responseMock.redirect).toHaveBeenCalledWith(expectedUrl);
         });
     });
 });

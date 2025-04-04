@@ -142,3 +142,7 @@ dist
 
 # VSCode user settings
 .vscode/settings.json
+
+mariadb/
+test/secrets.test.json
+nginx/ssl/

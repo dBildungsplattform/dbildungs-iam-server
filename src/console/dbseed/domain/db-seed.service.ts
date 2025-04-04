@@ -19,7 +19,7 @@ import { RolleFile } from '../file/rolle-file.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderFile } from '../file/service-provider-file.js';
-import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -31,6 +31,9 @@ import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
+import { ServiceProviderSystem } from '../../../modules/service-provider/domain/service-provider.enum.js';
+import { validate as isUUID } from 'uuid';
 
 @Injectable()
 export class DbSeedService {
@@ -40,7 +43,7 @@ export class DbSeedService {
         private readonly logger: ClassLogger,
         private readonly personFactory: PersonFactory,
         private readonly personRepository: PersonRepository,
-        private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly rolleFactory: RolleFactory,
@@ -94,14 +97,19 @@ export class DbSeedService {
             data.kuerzel,
             data.typ,
             data.traegerschaft,
+            data.emailDomain,
+            data.emailAdress,
         );
-
         if (organisation instanceof DomainError) {
             throw organisation;
         }
 
         if (!administriertVon && !zugehoerigZu && data.kuerzel === 'Root') {
             organisation.id = this.ROOT_ORGANISATION_ID;
+        }
+
+        if (data.overrideId) {
+            organisation.id = this.getValidUuidOrUndefined(data.overrideId);
         }
 
         const savedOrga: Organisation<true> = await this.organisationRepository.saveSeedData(organisation);
@@ -121,10 +129,11 @@ export class DbSeedService {
         ) as EntityFile<OrganisationFile>;
 
         const entities: OrganisationFile[] = plainToInstance(OrganisationFile, organisationFile.entities);
-
+        /* eslint-disable no-await-in-loop */
         for (const organisation of entities) {
             await this.constructAndPersistOrganisation(organisation);
         }
+        /* eslint-disable no-await-in-loop */
         this.logger.info(`Insert ${entities.length} entities of type Organisation`);
     }
 
@@ -133,9 +142,12 @@ export class DbSeedService {
         const files: RolleFile[] = plainToInstance(RolleFile, rolleFile.entities);
         for (const file of files) {
             const serviceProviderUUIDs: string[] = [];
+            const serviceProviderData: ServiceProvider<true>[] = [];
+            /* eslint-disable no-await-in-loop */
             for (const spId of file.serviceProviderIds) {
                 const sp: ServiceProvider<true> = await this.getReferencedServiceProvider(spId);
                 serviceProviderUUIDs.push(sp.id);
+                serviceProviderData.push(sp);
             }
             const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(
                 file.administeredBySchulstrukturknoten,
@@ -147,13 +159,19 @@ export class DbSeedService {
                 file.merkmale,
                 file.systemrechte,
                 serviceProviderUUIDs,
+                serviceProviderData,
+                file.istTechnisch ?? false,
             );
 
             if (rolle instanceof DomainError) {
                 throw rolle;
             }
 
-            const persistedRolle: Rolle<true> = await this.rolleRepo.save(rolle);
+            if (file.overrideId) {
+                rolle.id = this.getValidUuidOrUndefined(file.overrideId);
+            }
+
+            const persistedRolle: Rolle<true> = await this.rolleRepo.create(rolle);
             if (persistedRolle && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
                     ReferencedEntityType.ROLLE,
@@ -188,10 +206,16 @@ export class DbSeedService {
                 file.logoMimeType,
                 file.keycloakGroup,
                 file.keycloakRole,
+                file.externalSystem ?? ServiceProviderSystem.NONE,
+                file.requires2fa,
+                file.vidisAngebotId,
             );
+            if (file.overrideId) {
+                serviceProvider.id = this.getValidUuidOrUndefined(file.overrideId);
+            }
 
             const persistedServiceProvider: ServiceProvider<true> =
-                await this.serviceProviderRepo.save(serviceProvider);
+                await this.serviceProviderRepo.create(serviceProvider);
             if (persistedServiceProvider && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
                     ReferencedEntityType.SERVICE_PROVIDER,
@@ -210,6 +234,7 @@ export class DbSeedService {
     public async seedPerson(fileContentAsStr: string): Promise<void> {
         const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
         const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        /* eslint-disable no-await-in-loop */
         for (const file of files) {
             const creationParams: PersonCreationParams = {
                 familienname: file.familienname,
@@ -233,13 +258,20 @@ export class DbSeedService {
                 username: file.username,
                 password: file.password,
                 personalnummer: file.personalnummer,
+                istTechnisch: file.istTechnisch,
             };
+            /* eslint-disable no-await-in-loop */
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
             if (person instanceof DomainError) {
                 this.logger.error('Could not create person:');
                 this.logger.error(JSON.stringify(person));
                 throw person;
             }
+
+            if (file.overrideId) {
+                person.id = this.getValidUuidOrUndefined(file.overrideId);
+            }
+
             const filter: FindUserFilter = {
                 username: person.username,
             };
@@ -251,7 +283,56 @@ export class DbSeedService {
                     `Keycloak User with keycloakid: ${existingKcUser.value.id} has been deleted, and will be replaced by newly seeded user with same username: ${person.username}`,
                 );
             }
-            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(person);
+
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
+                person,
+                undefined,
+                this.getValidUuidOrUndefined(file.overrideId),
+            );
+            if (persistedPerson instanceof Person && file.id != null) {
+                const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
+                    ReferencedEntityType.PERSON,
+                    file.id,
+                    persistedPerson.id,
+                );
+                await this.dbSeedReferenceRepo.create(dbSeedReference);
+            } else {
+                this.logger.error('Person without ID thus not referenceable:');
+                this.logger.error(JSON.stringify(person));
+            }
+        }
+        this.logger.info(`Insert ${files.length} entities of type Person`);
+    }
+
+    public async seedTechnicalUser(fileContentAsStr: string): Promise<void> {
+        const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
+        const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
+        /* eslint-disable no-await-in-loop */
+        for (const file of files) {
+            /* eslint-disable no-await-in-loop */
+            const creationParams: PersonCreationParams = {
+                familienname: file.familienname,
+                vorname: file.vorname,
+                username: file.username,
+                password: file.password,
+                istTechnisch: true,
+            };
+
+            const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
+
+            if (person instanceof DomainError) {
+                this.logger.error('Could not create technical user:');
+                this.logger.error(JSON.stringify(person));
+                throw person;
+            }
+
+            person.keycloakUserId = file.keycloakUserId;
+
+            const persistedPerson: Person<true> | DomainError = await this.personRepository.create(
+                person,
+                undefined,
+                this.getValidUuidOrUndefined(file.overrideId),
+            );
             if (persistedPerson instanceof Person && file.id != null) {
                 const dbSeedReference: DbSeedReference = DbSeedReference.createNew(
                     ReferencedEntityType.PERSON,
@@ -278,6 +359,16 @@ export class DbSeedService {
             const referencedPerson: Person<true> = await this.getReferencedPerson(file.personId);
             const referencedOrga: Organisation<true> = await this.getReferencedOrganisation(file.organisationId);
             const referencedRolle: Rolle<true> = await this.getReferencedRolle(file.rolleId);
+
+            let befristung: Date | undefined = undefined;
+            const hasBefristungPflicht: boolean = referencedRolle.merkmale?.some(
+                (merkmal: RollenMerkmal) => merkmal === RollenMerkmal.BEFRISTUNG_PFLICHT,
+            );
+            if (hasBefristungPflicht) {
+                befristung = new Date(2099, 1, 1, 0, 1, 0); // In consultation with Kristoff, Kiefer (Cap): Set Befristung fixed to Date far in future
+                this.logger.info(`Automatically Set Befristung to 2099 for seeded kontext`);
+            }
+
             const personenKontext: Personenkontext<false> = this.personenkontextFactory.construct(
                 undefined,
                 new Date(),
@@ -286,6 +377,13 @@ export class DbSeedService {
                 referencedPerson.id,
                 referencedOrga.id,
                 referencedRolle.id,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                befristung,
             );
 
             //Check specifications
@@ -295,7 +393,11 @@ export class DbSeedService {
                 throw specificationCheckError;
             }
 
-            persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepo.save(personenKontext));
+            if (file.overrideId) {
+                personenKontext.id = this.getValidUuidOrUndefined(file.overrideId);
+            }
+
+            persistedPersonenkontexte.push(await this.dBiamPersonenkontextRepoInternal.create(personenKontext));
             //at the moment no saving of Personenkontext
         }
         this.logger.info(`Insert ${files.length} entities of type Personenkontext`);
@@ -333,7 +435,7 @@ export class DbSeedService {
             ReferencedEntityType.ROLLE,
         );
         if (!rolleUUID) throw new EntityNotFoundError('Rolle', seedingId.toString());
-        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(rolleUUID);
+        const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(rolleUUID, true);
         if (!rolle) throw new EntityNotFoundError('Rolle', seedingId.toString());
 
         return rolle;
@@ -375,5 +477,14 @@ export class DbSeedService {
         return fs.readdirSync(path).filter(function (file: string) {
             return fs.statSync(path + '/' + file).isDirectory();
         });
+    }
+
+    public isValidUuid(id: unknown): id is string {
+        return typeof id === 'string' && isUUID(id);
+    }
+
+    public getValidUuidOrUndefined(id: string | undefined): string | undefined {
+        const valid: boolean = this.isValidUuid(id);
+        return valid ? id : undefined;
     }
 }

@@ -20,19 +20,24 @@
     "REALM_NAME": "SPSH",
     "ADMIN_CLIENT_ID": "spsh-admin",
     "CLIENT_ID": "spsh",
-    "TEST_CLIENT_ID": "spsh-test"
+    "TEST_CLIENT_ID": "spsh-test",
+    "SERVICE_CLIENT_ID": "spsh-service"
   },
   "REDIS": {
-    "HOST": "dbildungs-iam-server-redis",
+    "HOST": "dbildungs-iam-redis-master.spsh.svc.cluster.local",
     "PORT": 6379,
     "USERNAME": "default",
+    "PASSWORD": "",
     "USE_TLS": false
   },
+
   "LDAP": {
     "URL": "ldap://spsh-xxx.svc.cluster.local",
     "BIND_DN": "cn=admin,dc=schule-sh,dc=de",
-    "ADMIN_PASSWORD": "password"
+    "ADMIN_PASSWORD": "password",
+    "BASE_DN": "dc=schule-sh,dc=de"
   },
+
   "DATA": {
     "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
   },
@@ -49,11 +54,39 @@
     "BACKEND_FOR_FRONTEND_MODULE_LOG_LEVEL": "debug"
   },
   "ITSLEARNING": {
-    "ENABLED": "false",
-    "ENDPOINT": "https://itslearning.example.com",
-    "USERNAME": "username",
-    "PASSWORD": "password",
+    "ROOT": "sh",
     "ROOT_OEFFENTLICH": "oeffentlich",
     "ROOT_ERSATZ": "ersatz"
+  },
+  "PRIVACYIDEA": {
+    "ENDPOINT": "http://localhost:5000",
+    "USERNAME": "admin",
+    "PASSWORD": "admin",
+    "USER_RESOLVER": "mariadb_resolver",
+    "REALM": "defrealm"
+  },
+  "IMPORT": {
+    "CSV_FILE_MAX_SIZE_IN_MB": 5,
+    "CSV_MAX_NUMBER_OF_USERS": 2001
+  },
+  "SYSTEM": {
+    "RENAME_WAITING_TIME_IN_SECONDS": 3,
+    "STEP_UP_TIMEOUT_ENABLED": "true",
+    "STEP_UP_TIMEOUT_IN_SECONDS": 10
+  },
+  "VIDIS": {
+      "BASE_URL": "https://service-stage.vidis.schule",
+      "USERNAME": "",
+      "PASSWORD": "",
+      "REGION_NAME": "test-region",
+      "KEYCLOAK_GROUP": "VIDIS-service",
+      "KEYCLOAK_ROLE": "VIDIS-user"
+  },
+  "HEADER_API_KEY": {
+    "INTERNAL_COMMUNICATION_API_KEY": "api-key"
+  },
+  "FEATUREFLAG": {
+    "FEATURE_FLAG_ROLLE_BEARBEITEN": false,
+    "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true
   }
 }

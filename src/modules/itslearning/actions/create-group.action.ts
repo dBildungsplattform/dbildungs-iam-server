@@ -1,20 +1,8 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { IMS_COMMON_SCHEMA, IMS_GROUP_MAN_DATA_SCHEMA, IMS_GROUP_MAN_MESS_SCHEMA } from '../schemas.js';
+import { ItslearningGroupLengthLimits } from '../types/groups.enum.js';
 import { IMSESAction } from './base-action.js';
-
-// Incomplete
-export type CreateGroupParams = {
-    id: string;
-
-    name: string;
-    type: 'Unspecified' | 'Site' | 'School' | 'Course' | 'CourseGroup';
-
-    parentId: string;
-    relationLabel?: string;
-
-    longDescription?: string;
-    fullDescription?: string;
-};
+import { CreateGroupParams } from './create-group.params.js';
 
 type CreateGroupResponseBody = {
     createGroupResponse: undefined;
@@ -69,9 +57,9 @@ export class CreateGroupAction extends IMSESAction<CreateGroupResponseBody, void
                         'ims2:label': this.params.relationLabel,
                     },
                     'ims2:description': {
-                        'ims2:descShort': this.params.name,
-                        'ims2:descLong': this.params.longDescription,
-                        'ims2:descFull': this.params.fullDescription,
+                        'ims2:descShort': this.params.name.slice(0, ItslearningGroupLengthLimits.SHORT_DESC),
+                        'ims2:descLong': this.params.longDescription?.slice(0, ItslearningGroupLengthLimits.LONG_DESC),
+                        'ims2:descFull': this.params.fullDescription?.slice(0, ItslearningGroupLengthLimits.FULL_DESC),
                     },
                     'ims2:extension': extension && { 'ims1:extensionField': extension },
                 },

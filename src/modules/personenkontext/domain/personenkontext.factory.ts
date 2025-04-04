@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OrganisationID, PersonID, RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { Personenkontext } from './personenkontext.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -9,8 +9,8 @@ import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from './personenkon
 @Injectable()
 export class PersonenkontextFactory {
     public constructor(
-        private readonly personRepo: PersonRepository,
-        private readonly organisationRepo: OrganisationRepository,
+        private readonly personRepository: PersonRepository,
+        private readonly organisationRepository: OrganisationRepository,
         private readonly rolleRepo: RolleRepo,
     ) {}
 
@@ -22,16 +22,17 @@ export class PersonenkontextFactory {
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
-        referrer?: string,
+        referrer?: PersonReferrer,
         mandant?: string,
         personenstatus?: Personenstatus,
         jahrgangsstufe?: Jahrgangsstufe,
         sichtfreigabe?: SichtfreigabeType,
         loeschungZeitpunkt?: Date,
+        befristung?: Date,
     ): Personenkontext<WasPersisted> {
         return Personenkontext.construct(
-            this.personRepo,
-            this.organisationRepo,
+            this.personRepository,
+            this.organisationRepository,
             this.rolleRepo,
             id,
             createdAt,
@@ -46,6 +47,7 @@ export class PersonenkontextFactory {
             sichtfreigabe,
             loeschungZeitpunkt,
             revision,
+            befristung,
         );
     }
 
@@ -53,16 +55,17 @@ export class PersonenkontextFactory {
         personId: PersonID,
         organisationId: OrganisationID,
         rolleId: RolleID,
-        referrer: string | undefined = undefined,
+        referrer: PersonReferrer | undefined = undefined,
         mandant: string | undefined = undefined,
         personenstatus: Personenstatus | undefined = undefined,
         jahrgangsstufe: Jahrgangsstufe | undefined = undefined,
         sichtfreigabe: SichtfreigabeType | undefined = undefined,
         loeschungZeitpunkt: Date | undefined = undefined,
+        befristung: Date | undefined = undefined,
     ): Personenkontext<false> {
         return Personenkontext.createNew(
-            this.personRepo,
-            this.organisationRepo,
+            this.personRepository,
+            this.organisationRepository,
             this.rolleRepo,
             personId,
             organisationId,
@@ -73,6 +76,7 @@ export class PersonenkontextFactory {
             jahrgangsstufe,
             sichtfreigabe,
             loeschungZeitpunkt,
+            befristung,
         );
     }
 }

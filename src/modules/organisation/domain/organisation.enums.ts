@@ -20,3 +20,8 @@ export enum Traegerschaft {
     KIRCHLICH = '05',
     SONSTIGE = '06',
 }
+
+export enum RootDirectChildrenType {
+    ERSATZ = 'ERSATZ',
+    OEFFENTLICH = 'OEFFENTLICH',
+}

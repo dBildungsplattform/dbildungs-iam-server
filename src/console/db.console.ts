@@ -5,6 +5,7 @@ import { DbSeedConsole } from './dbseed/db-seed.console.js';
 import { DbInitMigrationConsole } from './dbmigrate/db-init-migration.console.js';
 import { DbCreateMigrationConsole } from './dbmigrate/db-create-migration.console.js';
 import { DbApplyMigrationConsole } from './dbmigrate/db-apply-migration.console.js';
+import { DbSeedDataGeneratorConsole } from './dbseed/db-seed-data-generator.console.js';
 
 @Command({
     name: 'db',
@@ -16,6 +17,7 @@ import { DbApplyMigrationConsole } from './dbmigrate/db-apply-migration.console.
         DbInitMigrationConsole,
         DbCreateMigrationConsole,
         DbApplyMigrationConsole,
+        DbSeedDataGeneratorConsole,
     ],
 })
 export class DbConsole extends CommandRunner {

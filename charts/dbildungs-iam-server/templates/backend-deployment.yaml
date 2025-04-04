@@ -7,7 +7,14 @@ metadata:
     {{- include "common.labels" . | nindent 4 }}
     app.kubernetes.io/component: server-backend
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.backend.maxUnavailable }}
+      maxSurge: {{ .Values.backend.maxSurge }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ template "common.names.name" . }}
@@ -20,11 +27,12 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
+        {{- if .Values.backend.dbmigration.enabled }}
         - name: "{{ template "common.names.name" . }}-db-migration-apply"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
+          command: {{ .Values.backend.dbmigration.command | toJson }}
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
               {{- if .Values.backend.extraEnvVars }}
@@ -36,12 +44,31 @@ spec:
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
+        {{- if .Values.backend.keycloakdatamigration.enabled }}
+        - name: "{{ template "common.names.name" . }}-keycloak-data-migration"
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "Always" }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: {{ .Values.backend.keycloakdatamigration.command | toJson }}
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+            {{- if .Values.backend.extraEnvVars }}
+            {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          volumeMounts:
+            {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
         {{- if .Values.backend.dbseeding.enabled }}
         - name: db-seeding
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{.Values.imagePullPolicy | default "Always"}}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
+          command: {{ .Values.backend.dbseeding.command | toJson }}
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
@@ -49,7 +76,7 @@ spec:
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
-        {{end}}
+        {{ end }}
       containers:
         - name: "{{ template "common.names.name" . }}-backend"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
@@ -87,6 +114,9 @@ spec:
         - name: migration-volume
           configMap:
             name: {{ template "common.names.name" . }}-backend-migration
+        - name: keycloak-migration-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-backend-keycloak-migration
         {{if .Values.backend.dbseeding.enabled }}
         - name: seeding-volume
           configMap:

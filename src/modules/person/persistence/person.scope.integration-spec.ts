@@ -6,6 +6,7 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
@@ -13,7 +14,7 @@ import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
 import { faker } from '@faker-js/faker';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
@@ -22,14 +23,17 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { mapAggregateToData } from './person.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('PersonScope', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let em: EntityManager;
-    let kontextRepo: DBiamPersonenkontextRepo;
+    let kontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let rolleRepo: RolleRepo;
     let personenkontextFactory: PersonenkontextFactory;
+    let organisationRepository: OrganisationRepository;
 
     const createPersonEntity = (): PersonEntity => {
         const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
@@ -42,24 +46,33 @@ describe('PersonScope', () => {
             orgnisationID,
             rolleID,
         );
-        await kontextRepo.save(personkentext);
+        await kontextRepoInternal.save(personkentext);
     };
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 PersonenKontextModule,
+                LoggingTestModule,
             ],
-            providers: [DBiamPersonenkontextRepo, RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository],
+            providers: [
+                DBiamPersonenkontextRepoInternal,
+                RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
+                OrganisationRepository,
+            ],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        kontextRepo = module.get(DBiamPersonenkontextRepo);
+        kontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         rolleRepo = module.get(RolleRepo);
         personenkontextFactory = module.get(PersonenkontextFactory);
+        organisationRepository = module.get(OrganisationRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -170,19 +183,22 @@ describe('PersonScope', () => {
         });
 
         describe('when filtering for organisation ID', () => {
-            const orgnisationID: string = faker.string.uuid();
+            let organisation: Organisation<true>;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
+                organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
+
                 await em.persistAndFlush([person1, person2]);
-                await createPersonenkontext(person1.id, orgnisationID, rolle.id);
+                await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findBy({ organisationen: [orgnisationID] })
+                    .findBy({ organisationen: [organisation.id] })
                     .sortBy('vorname', ScopeOrder.ASC);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
@@ -192,21 +208,23 @@ describe('PersonScope', () => {
         });
 
         describe('when filtering for organisation ID & Rollen ID', () => {
-            const orgnisationID: string = faker.string.uuid();
+            let organisation: Organisation<true>;
             let rolleID: string;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
                 const person2: PersonEntity = createPersonEntity();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
+                organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
                 rolleID = rolle.id;
                 await em.persistAndFlush([person1, person2]);
-                await createPersonenkontext(person1.id, orgnisationID, rolle.id);
+                await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findByPersonenKontext([orgnisationID], [rolleID])
+                    .findByPersonenKontext([organisation.id], [rolleID])
                     .sortBy('vorname', ScopeOrder.ASC);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
@@ -216,19 +234,21 @@ describe('PersonScope', () => {
         });
 
         describe('when filtering for organisation ID only', () => {
-            const organisationID: string = faker.string.uuid();
+            let organisation: Organisation<true>;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
+                organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
 
                 await em.persistAndFlush([person1]);
-                await createPersonenkontext(person1.id, organisationID, rolle.id);
+                await createPersonenkontext(person1.id, organisation.id, rolle.id);
             });
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findByPersonenKontext([organisationID])
+                    .findByPersonenKontext([organisation.id])
                     .sortBy('vorname', ScopeOrder.ASC);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
 
@@ -239,13 +259,17 @@ describe('PersonScope', () => {
 
         describe('when filtering for Rolle ID only', () => {
             let rolleID: string;
+            let organisation: Organisation<true>;
 
             beforeEach(async () => {
                 const person1: PersonEntity = createPersonEntity();
-                const rolle: Rolle<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
+                organisation = await organisationRepository.save(DoFactory.createOrganisation(false));
+
                 rolleID = rolle.id;
                 await em.persistAndFlush([person1]);
-                await createPersonenkontext(person1.id, faker.string.uuid(), rolleID);
+                await createPersonenkontext(person1.id, organisation.id, rolleID);
             });
 
             it('should return found persons', async () => {
@@ -273,7 +297,7 @@ describe('PersonScope', () => {
 
             it('should return found persons', async () => {
                 const scope: PersonScope = new PersonScope()
-                    .findBy({ id: knownId })
+                    .findBy({ ids: [knownId] })
                     .sortBy('vorname', ScopeOrder.ASC)
                     .paged(0, 10);
                 const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
@@ -281,6 +305,23 @@ describe('PersonScope', () => {
                 expect(total).toBe(1);
                 expect(persons).toHaveLength(1);
             });
+        });
+
+        it('should not return technical users', async () => {
+            const person1: PersonEntity = createPersonEntity();
+            const person2: PersonEntity = createPersonEntity();
+            person2.istTechnisch = true;
+
+            await em.persistAndFlush([person1, person2]);
+
+            const scope: PersonScope = new PersonScope()
+                .findBy({ ids: [person1.id, person2.id] })
+                .sortBy('vorname', ScopeOrder.ASC)
+                .paged(0, 10);
+            const [persons, total]: Counted<PersonEntity> = await scope.executeQuery(em);
+
+            expect(total).toBe(1);
+            expect(persons).toHaveLength(1);
         });
     });
 });

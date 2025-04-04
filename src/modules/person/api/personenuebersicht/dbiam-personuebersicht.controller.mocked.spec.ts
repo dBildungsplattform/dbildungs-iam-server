@@ -5,6 +5,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../../test/utils/index.js';
 import { ServiceProviderRepo } from '../../../service-provider/repo/service-provider.repo.js';
@@ -22,11 +23,11 @@ import { DBiamFindPersonenuebersichtByPersonIdParams } from './dbiam-find-person
 import { Person } from '../../domain/person.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
-import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
 import { DBiamPersonenuebersichtResponse } from './dbiam-personenuebersicht.response.js';
-import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
-import { EntityNotFoundError } from '../../../../shared/error/index.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
+import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
+import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
+import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -83,6 +84,7 @@ describe('Personenuebersicht API Mocked', () => {
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
                 MapperTestModule,
+                LoggingTestModule,
             ],
             providers: [ServiceProviderRepo, RolleFactory, OrganisationRepository],
         })
@@ -138,7 +140,10 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([orga.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [orga.id],
+                });
 
                 await expect(sut.findPersonenuebersichtenByPerson(params, personPermissionsMock)).rejects.toThrow(
                     HttpException,
@@ -174,7 +179,10 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([orga.id]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [orga.id],
+                });
 
                 const result: DBiamPersonenuebersichtResponse = await sut.findPersonenuebersichtenByPerson(
                     params,
@@ -213,7 +221,10 @@ describe('Personenuebersicht API Mocked', () => {
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
                 organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([faker.string.uuid()]);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                    all: false,
+                    orgaIds: [faker.string.uuid()],
+                });
 
                 const result: DBiamPersonenuebersichtResponse = await sut.findPersonenuebersichtenByPerson(
                     params,
@@ -223,48 +234,43 @@ describe('Personenuebersicht API Mocked', () => {
                 expect(result.zuordnungen).toContainEqual(expect.objectContaining({ editable: false }));
             });
         });
+    });
 
-        describe('when an entity is not found when searching all personenkontexte', () => {
-            it('should return Error', async () => {
-                const queryParams: PersonenuebersichtQueryParams = {
-                    offset: 0,
-                    limit: 100,
-                };
-                const person: Person<true> = createPerson();
-                const rolle: Rolle<true> = DoFactory.createRolle(true);
-                const rollenMap: Map<string, Rolle<true>> = new Map();
-                rollenMap.set(faker.string.numeric(), rolle);
-                const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true);
-                const orgaMap: Map<string, Organisation<true>> = new Map();
-                orgaMap.set(orga.id, orga);
-                const pk: Personenkontext<true> = createPersonenkontext(
-                    true,
-                    personRepositoryMock,
-                    organisationRepositoryMock,
-                    rolleRepoMock,
-                    {
-                        personId: person.id,
-                        rolleId: rolle.id,
-                        organisationId: orga.id,
-                    },
-                );
+    describe('when an entity is not found when searching all personenkontexte', () => {
+        it('should return Error', async () => {
+            const bodyParams: PersonenuebersichtBodyParams = { personIds: [faker.string.uuid()] };
+            const person: Person<true> = createPerson();
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const rollenMap: Map<string, Rolle<true>> = new Map();
+            rollenMap.set(faker.string.numeric(), rolle);
+            const orga: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+            const orgaMap: Map<string, Organisation<true>> = new Map();
+            orgaMap.set(orga.id, orga);
+            const pk: Personenkontext<true> = createPersonenkontext(
+                true,
+                personRepositoryMock,
+                organisationRepositoryMock,
+                rolleRepoMock,
+                {
+                    personId: person.id,
+                    rolleId: rolle.id,
+                    organisationId: orga.id,
+                },
+            );
 
-                jest.spyOn(DbiamPersonenuebersicht.prototype, 'createZuordnungenForKontexte').mockImplementation(() => {
-                    return new EntityNotFoundError();
-                });
-
-                const counted: Counted<Person<true>> = [[person], 1];
-
-                personRepositoryMock.findBy.mockResolvedValueOnce(counted);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
-                organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([orga.id]);
-
-                await expect(sut.findPersonenuebersichten(queryParams, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
+            jest.spyOn(DbiamPersonenuebersicht.prototype, 'createZuordnungenForKontexte').mockImplementation(() => {
+                return Promise.resolve(new EntityNotFoundError('Some message here'));
             });
+
+            personRepositoryMock.findByIds.mockResolvedValueOnce([person]);
+            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(rollenMap);
+            organisationRepositoryMock.findByIds.mockResolvedValueOnce(orgaMap);
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [orga.id] });
+
+            await expect(sut.findPersonenuebersichten(bodyParams, personPermissionsMock)).rejects.toThrow(
+                HttpException,
+            );
         });
     });
 });

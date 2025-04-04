@@ -8,3 +8,8 @@ export * from './keycloak.config.js';
 export * from './redis.config.js';
 export * from './server.config.js';
 export * from './itslearning.config.js';
+export * from './privacyidea.config.js';
+export * from './system.config.js';
+export * from './featureflag.config.js';
+export * from './vidis.config.js';
+export * from './headerapikey.config.js';

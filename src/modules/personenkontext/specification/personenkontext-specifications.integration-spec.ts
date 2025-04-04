@@ -3,12 +3,14 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     KeycloakConfigTestModule,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Personenkontext } from '../domain/personenkontext.js';
 
 import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { GleicheRolleAnKlasseWieSchule } from './gleiche-rolle-an-klasse-wie-schule.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -26,6 +28,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -54,6 +57,7 @@ describe('PersonenkontextSpecifications Integration', () => {
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let personenkontextRepoInternalMock: DeepMocked<DBiamPersonenkontextRepoInternal>;
 
     let personFactory: PersonFactory;
     let personRepo: PersonRepository;
@@ -67,11 +71,13 @@ describe('PersonenkontextSpecifications Integration', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 KeycloakAdministrationModule,
                 MapperTestModule,
+                LoggingTestModule,
             ],
             providers: [
                 PersonRepository,
                 PersonFactory,
                 UsernameGeneratorService,
+                OxUserBlacklistRepo,
                 PersonenkontextFactory,
                 {
                     provide: EmailRepo,
@@ -86,6 +92,10 @@ describe('PersonenkontextSpecifications Integration', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
+                    provide: DBiamPersonenkontextRepoInternal,
+                    useValue: createMock<DBiamPersonenkontextRepoInternal>(),
+                },
+                {
                     provide: OrganisationRepository,
                     useValue: createMock<OrganisationRepository>(),
                 },
@@ -97,10 +107,13 @@ describe('PersonenkontextSpecifications Integration', () => {
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .overrideProvider(DBiamPersonenkontextRepo)
+            .useValue(createMock<DBiamPersonenkontextRepo>())
             .compile();
         organisationRepoMock = module.get(OrganisationRepository);
         rolleRepoMock = module.get(RolleRepo);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        personenkontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
         personFactory = module.get(PersonFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
         personRepo = module.get(PersonRepository);
@@ -159,7 +172,7 @@ describe('PersonenkontextSpecifications Integration', () => {
                     personId: person.id,
                 },
             );
-            await personenkontextRepoMock.save(foundPersonenkontextDummy);
+            await personenkontextRepoInternalMock.save(foundPersonenkontextDummy);
 
             organisationRepoMock.findById.mockResolvedValueOnce(klasse); //mock Klasse
             organisationRepoMock.findById.mockResolvedValueOnce(schule); //mock Schule

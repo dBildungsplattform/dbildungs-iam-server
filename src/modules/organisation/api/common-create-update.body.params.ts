@@ -8,15 +8,13 @@ import {
 } from '../domain/organisation.enums.js';
 
 export class CommonCreateUpdateOrganisationBodyParams {
-    @IsOptional()
     @IsUUID()
-    @ApiPropertyOptional()
-    public readonly administriertVon?: string;
+    @ApiProperty({ required: true })
+    public readonly administriertVon!: string;
 
-    @IsOptional()
     @IsUUID()
-    @ApiPropertyOptional()
-    public readonly zugehoerigZu?: string;
+    @ApiProperty({ required: true })
+    public readonly zugehoerigZu!: string;
 
     @IsOptional()
     @IsString()
@@ -45,4 +43,9 @@ export class CommonCreateUpdateOrganisationBodyParams {
     @ApiProperty({ enum: Traegerschaft, enumName: TraegerschaftTypName, required: false })
     @IsOptional()
     public traegerschaft?: Traegerschaft;
+
+    @IsOptional()
+    @IsString()
+    @ApiPropertyOptional()
+    public readonly emailAdress?: string;
 }

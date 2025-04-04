@@ -4,14 +4,7 @@ import { PersonScope } from '../persistence/person.scope.js';
 import { Paged } from '../../../shared/paging/paged.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { Person } from './person.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonRepository } from '../persistence/person.repository.js';
-
-export type PersonPersonenkontext = {
-    person: Person<true>;
-    personenkontext: Personenkontext<true>;
-};
-
 @Injectable()
 export class PersonService {
     public constructor(private readonly personRepository: PersonRepository) {}
@@ -25,15 +18,15 @@ export class PersonService {
     }
 
     public async findAllPersons(
-        personDo: Partial<Person<false>>,
+        person: Partial<Person<false>>,
         offset?: number,
         limit?: number,
     ): Promise<Paged<Person<true>>> {
         const scope: PersonScope = new PersonScope()
             .findBy({
-                vorname: personDo.vorname,
-                familienname: personDo.familienname,
-                geburtsdatum: personDo.geburtsdatum,
+                vorname: person.vorname,
+                familienname: person.familienname,
+                geburtsdatum: person.geburtsdatum,
             })
             .sortBy('vorname', ScopeOrder.ASC)
             .paged(offset, limit);

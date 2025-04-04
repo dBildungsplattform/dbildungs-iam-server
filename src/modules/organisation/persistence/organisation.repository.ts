@@ -1,22 +1,38 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/postgresql';
+import {
+    EntityDictionary,
+    EntityManager,
+    Loaded,
+    QBFilterQuery,
+    QueryBuilder,
+    QueryOrder,
+    RequiredEntityData,
+    SelectQueryBuilder,
+} from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { KlasseCreatedEvent } from '../../../shared/events/klasse-created.event.js';
+import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.js';
+import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
+import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
+import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
+import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
+import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';
+import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
-import { OrganisationsTyp } from '../domain/organisation.enums.js';
-import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
-import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
-import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 
-export function mapAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
+export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
         id: organisation.id,
         administriertVon: organisation.administriertVon,
@@ -27,14 +43,18 @@ export function mapAggregateToData(organisation: Organisation<boolean>): Require
         kuerzel: organisation.kuerzel,
         typ: organisation.typ,
         traegerschaft: organisation.traegerschaft,
+        emailDomain: organisation.emailDomain,
+        emailAddress: organisation.emailAdress,
+        itslearningEnabled: organisation.itslearningEnabled,
     };
 }
 
-export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<true> {
+export function mapOrgaEntityToAggregate(entity: OrganisationEntity): Organisation<true> {
     return Organisation.construct(
         entity.id,
         entity.createdAt,
         entity.updatedAt,
+        entity.version,
         entity.administriertVon,
         entity.zugehoerigZu,
         entity.kennung,
@@ -43,14 +63,31 @@ export function mapEntityToAggregate(entity: OrganisationEntity): Organisation<t
         entity.kuerzel,
         entity.typ,
         entity.traegerschaft,
+        entity.emailDomain,
+        entity.emailAddress,
+        entity.itslearningEnabled,
     );
 }
+
+export type OrganisationSeachOptions = {
+    readonly kennung?: string;
+    readonly name?: string;
+    readonly searchString?: string;
+    readonly typ?: OrganisationsTyp;
+    readonly excludeTyp?: OrganisationsTyp[];
+    readonly administriertVon?: string[];
+    readonly organisationIds?: string[];
+    readonly zugehoerigZu?: string[];
+    readonly offset?: number;
+    readonly limit?: number;
+};
 
 @Injectable()
 export class OrganisationRepository {
     public readonly ROOT_ORGANISATION_ID: string;
 
     public constructor(
+        private readonly logger: ClassLogger,
         private readonly eventService: EventService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
@@ -61,9 +98,8 @@ export class OrganisationRepository {
     public async findBy(scope: OrganisationScope): Promise<Counted<Organisation<true>>> {
         const [entities, total]: Counted<OrganisationEntity> = await scope.executeQuery(this.em);
         const organisations: Organisation<true>[] = entities.map((entity: OrganisationEntity) =>
-            mapEntityToAggregate(entity),
+            mapOrgaEntityToAggregate(entity),
         );
-
         return [organisations, total];
     }
 
@@ -107,10 +143,90 @@ export class OrganisationRepository {
                 FROM sub_organisations;
             `;
 
-            rawResult = await this.em.execute(query, [ids]);
+            const rawEntities: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [ids]);
+            rawResult = rawEntities.map((data: EntityDictionary<OrganisationEntity>) =>
+                this.em.map(OrganisationEntity, data),
+            );
         }
 
-        return rawResult.map(mapEntityToAggregate);
+        return rawResult.map(mapOrgaEntityToAggregate);
+    }
+
+    public async findParentOrgasForIds(ids: OrganisationID[]): Promise<Organisation<true>[]> {
+        let rawResult: OrganisationEntity[];
+
+        if (ids.length === 0) {
+            return [];
+        } else {
+            const query: string = `
+                WITH RECURSIVE parent_organisations AS (
+                    SELECT *
+                    FROM public.organisation
+                    WHERE id IN (?)
+                    UNION ALL
+                    SELECT o.*
+                    FROM public.organisation o
+                    INNER JOIN parent_organisations po ON po.administriert_von = o.id
+                )
+                SELECT DISTINCT ON (id) *
+                FROM parent_organisations;
+            `;
+
+            const rawEntities: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [ids]);
+            rawResult = rawEntities.map((data: EntityDictionary<OrganisationEntity>) =>
+                this.em.map(OrganisationEntity, data),
+            );
+        }
+
+        return rawResult.map(mapOrgaEntityToAggregate);
+    }
+
+    /**
+     * Searches for all upper level organisations for a given organisation by its organisationID
+     * and returns an array sorted by the depth ascending. Element at index 0 is always the organisationIDs organisation,
+     * this way the lowest child is always included. Its direct parent will be at index 1 and so on.
+     */
+    public async findParentOrgasForIdSortedByDepthAsc(id: OrganisationID): Promise<Organisation<true>[]> {
+        const query: string = `
+             WITH RECURSIVE parent_organisations AS (
+                SELECT *, 0 as depth
+                FROM public.organisation
+                WHERE id = (?)
+                UNION ALL
+                SELECT o.*, depth + 1
+                FROM public.organisation o
+                INNER JOIN parent_organisations po ON po.administriert_von = o.id
+            )
+            SELECT *
+            FROM parent_organisations ORDER BY depth;
+        `;
+
+        const rawResult: EntityDictionary<OrganisationEntity>[] = await this.em.execute(query, [id]);
+
+        const res: Organisation<true>[] = rawResult
+            .map((data: EntityDictionary<OrganisationEntity>) => this.em.map(OrganisationEntity, data))
+            .map(mapOrgaEntityToAggregate);
+
+        return res;
+    }
+
+    /**
+     * Uses findParentOrgasForIdSortedByDepthAsc method to search for the first occurrence of an email-domain in the tree of organisations starting from passed organisationId.
+     * @param id start of search (leaf)
+     */
+    public async findEmailDomainForOrganisation(id: OrganisationID): Promise<string | undefined> {
+        const organisations: Organisation<true>[] = await this.findParentOrgasForIdSortedByDepthAsc(id);
+        const emailDomain: Option<string> = this.getDomainRecursive(organisations);
+
+        return emailDomain ?? undefined;
+    }
+
+    private getDomainRecursive(organisationsSortedByDepthAsc: Organisation<true>[]): Option<string> {
+        if (!organisationsSortedByDepthAsc || organisationsSortedByDepthAsc.length == 0) return undefined;
+        if (organisationsSortedByDepthAsc[0] && organisationsSortedByDepthAsc[0].emailDomain)
+            return organisationsSortedByDepthAsc[0].emailDomain;
+
+        return this.getDomainRecursive(organisationsSortedByDepthAsc.slice(1));
     }
 
     public async isOrgaAParentOfOrgaB(
@@ -149,21 +265,13 @@ export class OrganisationRepository {
             entity.name?.includes('Ersatz'),
         );
 
-        return [oeffentlich && mapEntityToAggregate(oeffentlich), ersatz && mapEntityToAggregate(ersatz)];
-    }
-
-    public async find(limit?: number, offset?: number): Promise<Organisation<true>[]> {
-        const organisations: OrganisationEntity[] = await this.em.findAll(OrganisationEntity, {
-            limit: limit,
-            offset: offset,
-        });
-        return organisations.map(mapEntityToAggregate);
+        return [oeffentlich && mapOrgaEntityToAggregate(oeffentlich), ersatz && mapOrgaEntityToAggregate(ersatz)];
     }
 
     public async findById(id: string): Promise<Option<Organisation<true>>> {
         const organisation: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
         if (organisation) {
-            return mapEntityToAggregate(organisation);
+            return mapOrgaEntityToAggregate(organisation);
         }
         return null;
     }
@@ -173,7 +281,7 @@ export class OrganisationRepository {
 
         const organisationMap: Map<string, Organisation<true>> = new Map();
         organisationEntities.forEach((organisationEntity: OrganisationEntity) => {
-            const organisation: Organisation<true> = mapEntityToAggregate(organisationEntity);
+            const organisation: Organisation<true> = mapOrgaEntityToAggregate(organisationEntity);
             organisationMap.set(organisationEntity.id, organisation);
         });
 
@@ -183,19 +291,24 @@ export class OrganisationRepository {
     public async findByNameOrKennungAndExcludeByOrganisationType(
         excludeOrganisationType: OrganisationsTyp,
         searchStr?: string,
+        permittedOrgaIds?: string[],
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const scope: OrganisationScope = new OrganisationScope();
-        if (searchStr) {
-            // searchStr is set, the scope is not paged
-            scope
-                .searchString(searchStr)
-                .setScopeWhereOperator(ScopeOperator.AND)
-                .excludeTyp([excludeOrganisationType]);
-        } else {
-            scope.excludeTyp([excludeOrganisationType]).paged(0, limit);
+
+        // Set up the query with the search string, limit, and excluded type
+        scope
+            .searchString(searchStr)
+            .setScopeWhereOperator(ScopeOperator.AND)
+            .paged(0, limit)
+            .excludeTyp([excludeOrganisationType]);
+
+        // If permitted organization IDs are provided, add them to the query scope
+        if (permittedOrgaIds && permittedOrgaIds.length > 0) {
+            scope.filterByIds(permittedOrgaIds);
         }
 
+        // Execute the query and return the result
         let foundOrganisations: Organisation<true>[] = [];
         [foundOrganisations] = await this.findBy(scope);
 
@@ -207,34 +320,293 @@ export class OrganisationRepository {
             $or: [{ name: { $ilike: '%' + searchStr + '%' } }, { kennung: { $ilike: '%' + searchStr + '%' } }],
         });
 
-        return organisations.map(mapEntityToAggregate);
+        return organisations.map(mapOrgaEntityToAggregate);
     }
 
-    public async updateKlassenname(id: string, newName: string): Promise<DomainError | Organisation<true>> {
+    public async findAuthorized(
+        personPermissions: PersonPermissions,
+        systemrechte: RollenSystemRecht[],
+        searchOptions: OrganisationSeachOptions,
+    ): Promise<[Organisation<true>[], total: number, pageTotal: number]> {
+        const permittedOrgas: PermittedOrgas = await personPermissions.getOrgIdsWithSystemrecht(systemrechte, true);
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+            return [[], 0, 0];
+        }
+
+        let entitiesForIds: OrganisationEntity[] = [];
+        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
+
+        if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
+            const organisationIds: string[] = permittedOrgas.all
+                ? searchOptions.organisationIds
+                : searchOptions.organisationIds.filter((id: string) => permittedOrgas.orgaIds.includes(id));
+            const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
+                .select('*')
+                .where({ id: { $in: organisationIds } })
+                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }]);
+            entitiesForIds = (await queryForIds.getResultAndCount())[0];
+        }
+
+        let whereClause: QBFilterQuery<OrganisationEntity> = {};
+        const andClauses: QBFilterQuery<OrganisationEntity>[] = [];
+        if (searchOptions.kennung) {
+            andClauses.push({ kennung: searchOptions.kennung });
+        }
+        if (searchOptions.name) {
+            andClauses.push({ name: searchOptions.name });
+        }
+        if (searchOptions.typ) {
+            andClauses.push({ typ: searchOptions.typ });
+        }
+        if (searchOptions.administriertVon) {
+            andClauses.push({ administriertVon: { $in: searchOptions.administriertVon } });
+        }
+        if (searchOptions.zugehoerigZu) {
+            andClauses.push({ zugehoerigZu: { $in: searchOptions.zugehoerigZu } });
+        }
+        if (searchOptions.searchString) {
+            andClauses.push({
+                $or: [
+                    { name: { $ilike: `%${searchOptions.searchString}%` } },
+                    { kennung: { $ilike: `%${searchOptions.searchString}%` } },
+                ],
+            });
+        }
+        if (searchOptions.excludeTyp) {
+            andClauses.push({ typ: { $nin: searchOptions.excludeTyp } });
+        }
+        if (andClauses.length > 0) {
+            whereClause = { $and: andClauses };
+        }
+        // return only permitted organisations
+        if (!permittedOrgas.all) {
+            whereClause = { $and: [whereClause, { id: { $in: permittedOrgas.orgaIds } }] };
+        }
+
+        const query: SelectQueryBuilder<OrganisationEntity> = qb
+            .select('*')
+            .where(whereClause)
+            .offset(searchOptions.offset)
+            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
+            .limit(searchOptions.limit);
+        const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
+
+        const result: OrganisationEntity[] = [...entitiesForIds];
+        let duplicates: number = 0;
+        for (const entity of entities) {
+            if (!result.find((orga: OrganisationEntity) => orga.id === entity.id)) {
+                result.push(entity);
+            } else {
+                duplicates++;
+            }
+        }
+
+        const organisations: Organisation<true>[] = result.map((entity: OrganisationEntity) =>
+            mapOrgaEntityToAggregate(entity),
+        );
+
+        // Calculate pageTotal (excluding entitiesForIds when searchString is present
+        // Otherwise we show a wrong number in the filter since the selected orgas are always returned regardless if we search for them or not)
+        const pageTotal: number = searchOptions.searchString
+            ? Math.min(entities.length, searchOptions.limit || entities.length)
+            : Math.min(organisations.length, searchOptions.limit || organisations.length);
+
+        // Apply limit to the final result
+        if (searchOptions.limit && organisations.length > searchOptions.limit) {
+            organisations.splice(searchOptions.limit);
+        }
+
+        return [organisations, total + entitiesForIds.length - duplicates, pageTotal];
+    }
+
+    public async deleteKlasse(id: OrganisationID, permissions: PersonPermissions): Promise<Option<DomainError>> {
+        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, { id });
+        if (!organisationEntity) {
+            const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse mit der ID ${id} zu entfernen. Fehler: ${error.message}`,
+            );
+            return error;
+        }
+
+        let schoolName: string | undefined;
+        if (organisationEntity.administriertVon) {
+            const school: Option<Organisation<true>> = await this.findById(organisationEntity.administriertVon);
+            if (!school) {
+                const error: DomainError = new EntityNotFoundError('Organisation', organisationEntity.administriertVon);
+                this.logger.error(
+                    `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
+                );
+                return error;
+            }
+            schoolName = school.name;
+        }
+        if (!schoolName) {
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'The schoolName of a Klasse cannot be undefined.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
+            );
+            return error;
+        }
+        if (organisationEntity.typ !== OrganisationsTyp.KLASSE) {
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'Only Klassen can be deleted.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} (${schoolName}) zu entfernen. Fehler: ${error.message}`,
+            );
+            return error;
+        }
+
+        await this.em.removeAndFlush(organisationEntity);
+        this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
+
+        if (organisationEntity.zugehoerigZu) {
+            this.logger.info(
+                `Admin: ${permissions.personFields.id}) hat eine Klasse entfernt: ${organisationEntity.name} (${schoolName}).`,
+            );
+        }
+
+        return;
+    }
+
+    public async updateOrganisationName(
+        id: string,
+        newName: string,
+        version: number,
+        permissions: PersonPermissions,
+    ): Promise<DomainError | Organisation<true>> {
         const organisationFound: Option<Organisation<true>> = await this.findById(id);
 
         if (!organisationFound) {
-            return new EntityNotFoundError('Organisation', id);
+            const error: EntityNotFoundError = new EntityNotFoundError('Organisation', id);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation zu ${newName} zu verändern. Fehler: ${error.message}`,
+            );
+            return error;
         }
-        if (organisationFound.typ !== OrganisationsTyp.KLASSE) {
-            return new EntityCouldNotBeUpdated('Organisation', id, ['Only the name of Klassen can be updated.']);
+        if (
+            !(organisationFound.typ === OrganisationsTyp.KLASSE || organisationFound.typ === OrganisationsTyp.TRAEGER)
+        ) {
+            const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                'Only the name of Klassen or Schulträger can be updated.',
+            ]);
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Organisation ${organisationFound.name} zu verändern. Fehler: ${error.message}`,
+            );
+            return error;
         }
-        //Specifications: it needs to be clarified how the specifications can be checked using DDD principles
-        {
-            if (organisationFound.name !== newName) {
-                organisationFound.name = newName;
-                const specificationError: undefined | OrganisationSpecificationError =
-                    await organisationFound.checkKlasseSpecifications(this);
 
+        let parentName: string | undefined;
+        let parentId: string | undefined;
+
+        if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+            // Handle Klasse
+            if (organisationFound.administriertVon) {
+                const schule: Option<Organisation<true>> = await this.findById(organisationFound.administriertVon);
+                if (!schule) {
+                    const error: DomainError = new EntityNotFoundError(
+                        'Organisation',
+                        organisationFound.administriertVon,
+                    );
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                    );
+                    return error;
+                }
+                parentName = schule.name;
+
+                if (!parentName) {
+                    const error: EntityCouldNotBeUpdated = new EntityCouldNotBeUpdated('Organisation', id, [
+                        'The schoolName of a Klasse cannot be undefined.',
+                    ]);
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${error.message}`,
+                    );
+                    return error;
+                }
+                parentId = schule.id;
+            }
+        }
+        if (organisationFound.name !== newName) {
+            organisationFound.name = newName;
+            // Call the appropriate specification check based on the type
+            let specificationError: undefined | OrganisationSpecificationError;
+            if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+                specificationError = await organisationFound.checkKlasseSpecifications(this);
                 if (specificationError) {
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen einer Klasse zu ${newName} zu verändern. Fehler: ${specificationError.message}`,
+                    );
+                    return specificationError;
+                }
+            } else if (organisationFound.typ === OrganisationsTyp.TRAEGER) {
+                specificationError = await organisationFound.checkSchultraegerSpecifications(this);
+                if (specificationError) {
+                    this.logger.error(
+                        `Admin: ${permissions.personFields.id}) hat versucht den Namen eines Schulträgers zu ${newName} zu verändern. Fehler: ${specificationError?.message}`,
+                    );
                     return specificationError;
                 }
             }
         }
-        const organisationEntity: Organisation<true> = await this.save(organisationFound);
-        this.eventService.publish(new KlasseUpdatedEvent(id));
+
+        organisationFound.setVersionForUpdate(version);
+        const organisationEntity: Organisation<true> | OrganisationSpecificationError =
+            await this.save(organisationFound);
+
+        if (organisationFound.typ === OrganisationsTyp.KLASSE) {
+            // This is to update the new Klasse in itsLearning
+            this.eventService.publish(new KlasseUpdatedEvent(id, newName, parentId));
+        }
+        this.logger.info(
+            `Admin: ${permissions.personFields.id}) hat den Namen einer Organisation geändert: ${organisationFound.name} (${parentName}).`,
+        );
 
         return organisationEntity;
+    }
+
+    public async setEnabledForitslearning(
+        personPermissions: PersonPermissions,
+        id: string,
+    ): Promise<DomainError | Organisation<true>> {
+        if (!(await personPermissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SCHULEN_VERWALTEN]))) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+
+        const organisationEntity: Option<OrganisationEntity> = await this.em.findOne(OrganisationEntity, id);
+
+        if (!organisationEntity) {
+            return new EntityNotFoundError('Organisation', id);
+        }
+
+        if (organisationEntity.typ !== OrganisationsTyp.SCHULE) {
+            return new EntityCouldNotBeUpdated('Organisation', id, [
+                'Only organisations of typ SCHULE can be enabled for ITSLearning.',
+            ]);
+        }
+
+        organisationEntity.itslearningEnabled = true;
+        organisationEntity.version += 1;
+
+        this.logger.info(
+            `User with personId:${personPermissions.personFields.id} enabled itslearning for organisationId:${id}`,
+        );
+
+        await this.em.persistAndFlush(organisationEntity);
+
+        this.eventService.publish(
+            new SchuleItslearningEnabledEvent(
+                organisationEntity.id,
+                organisationEntity.typ,
+                organisationEntity.kennung,
+                organisationEntity.name,
+            ),
+        );
+
+        return mapOrgaEntityToAggregate(organisationEntity);
     }
 
     public async saveSeedData(organisation: Organisation<boolean>): Promise<Organisation<true>> {
@@ -244,16 +616,34 @@ export class OrganisationRepository {
     private async create(organisation: Organisation<boolean>): Promise<Organisation<true>> {
         const organisationEntity: OrganisationEntity = this.em.create(
             OrganisationEntity,
-            mapAggregateToData(organisation),
+            mapOrgaAggregateToData(organisation),
         );
 
         await this.em.persistAndFlush(organisationEntity);
 
         if (organisationEntity.typ === OrganisationsTyp.SCHULE) {
-            this.eventService.publish(new SchuleCreatedEvent(organisationEntity.id));
+            const orgaBaumZuordnung: RootDirectChildrenType = await this.findOrganisationZuordnungErsatzOderOeffentlich(
+                organisationEntity.id,
+            );
+            this.eventService.publish(
+                new SchuleCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.kennung,
+                    organisationEntity.name,
+                    orgaBaumZuordnung,
+                ),
+            );
+        } else if (organisationEntity.typ === OrganisationsTyp.KLASSE) {
+            this.eventService.publish(
+                new KlasseCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.name,
+                    organisationEntity.administriertVon,
+                ),
+            );
         }
 
-        return mapEntityToAggregate(organisationEntity);
+        return mapOrgaEntityToAggregate(organisationEntity);
     }
 
     private async update(organisation: Organisation<true>): Promise<Organisation<true>> {
@@ -261,10 +651,34 @@ export class OrganisationRepository {
             OrganisationEntity,
             organisation.id,
         );
-        organisationEntity.assign(mapAggregateToData(organisation));
+
+        if (organisationEntity.version !== organisation.version) {
+            throw new OrganisationUpdateOutdatedError();
+        }
+        organisationEntity.version += 1;
+
+        organisationEntity.assign(mapOrgaAggregateToData(organisation));
 
         await this.em.persistAndFlush(organisationEntity);
 
-        return mapEntityToAggregate(organisationEntity);
+        return mapOrgaEntityToAggregate(organisationEntity);
+    }
+
+    public async findOrganisationZuordnungErsatzOderOeffentlich(
+        organisationId: OrganisationID,
+    ): Promise<RootDirectChildrenType> {
+        const [oeffentlich, ersatz]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+            await this.findRootDirectChildren();
+
+        const parents: Organisation<true>[] = await this.findParentOrgasForIdSortedByDepthAsc(organisationId);
+        for (const parent of parents) {
+            if (parent.id === oeffentlich?.id) {
+                return RootDirectChildrenType.OEFFENTLICH;
+            } else if (parent.id === ersatz?.id) {
+                return RootDirectChildrenType.ERSATZ;
+            }
+        }
+
+        return RootDirectChildrenType.OEFFENTLICH;
     }
 }

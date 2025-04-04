@@ -4,6 +4,7 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { MikroORM } from '@mikro-orm/core';
@@ -16,13 +17,24 @@ import { ZyklusInOrganisationen } from './zyklus-in-organisationen.js';
 import { KlasseNurVonSchuleAdministriert } from './klasse-nur-von-schule-administriert.js';
 import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig.js';
 import { EventModule } from '../../../core/eventbus/index.js';
-import { OrganisationRepository } from '../persistence/organisation.repository.js';
+import { mapOrgaAggregateToData, OrganisationRepository } from '../persistence/organisation.repository.js';
 import { Organisation } from '../domain/organisation.js';
+import { OrganisationsOnSameSubtree } from './organisations-on-same-subtree.js';
+import { DataConfig } from '../../../shared/config/data.config.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/server.config.js';
+import { OrganisationEntity } from '../persistence/organisation.entity.js';
 
 describe('OrganisationSpecificationTests', () => {
     let module: TestingModule;
     let repo: OrganisationRepository;
     let orm: MikroORM;
+
+    let ROOT_ORGANISATION_ID: string;
+
+    let root: Organisation<true>;
+    let oeffentlich: Organisation<true>;
+    let ersatz: Organisation<true>;
 
     let schule1: Organisation<true>;
     let schule2: Organisation<true>;
@@ -33,10 +45,12 @@ describe('OrganisationSpecificationTests', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [OrganisationPersistenceMapperProfile, OrganisationRepository],
         }).compile();
@@ -44,6 +58,9 @@ describe('OrganisationSpecificationTests', () => {
         orm = module.get(MikroORM);
 
         await DatabaseTestModule.setupDatabase(orm);
+
+        const config: ConfigService<ServerConfig> = module.get(ConfigService<ServerConfig>);
+        ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     afterAll(async () => {
@@ -54,11 +71,52 @@ describe('OrganisationSpecificationTests', () => {
     beforeEach(async () => {
         await DatabaseTestModule.clearDatabase(orm);
 
+        root = DoFactory.createOrganisation(true, {
+            id: ROOT_ORGANISATION_ID,
+            name: 'Root',
+            typ: OrganisationsTyp.ROOT,
+            administriertVon: undefined,
+            zugehoerigZu: undefined,
+        });
+
+        await orm.em.persistAndFlush(
+            orm.em.create(
+                OrganisationEntity,
+                mapOrgaAggregateToData(
+                    DoFactory.createOrganisation(false, {
+                        id: repo.ROOT_ORGANISATION_ID,
+                        name: 'Root',
+                        typ: OrganisationsTyp.ROOT,
+                        administriertVon: undefined,
+                        zugehoerigZu: undefined,
+                    }),
+                ),
+            ),
+        );
+
+        oeffentlich = await repo.save(
+            DoFactory.createOrganisation(false, {
+                name: 'Öffentliche Schulen',
+                typ: OrganisationsTyp.LAND,
+                administriertVon: root.id,
+                zugehoerigZu: root.id,
+            }),
+        );
+
+        ersatz = await repo.save(
+            DoFactory.createOrganisation(false, {
+                name: 'Ersatz',
+                typ: OrganisationsTyp.LAND,
+                administriertVon: root.id,
+                zugehoerigZu: root.id,
+            }),
+        );
+
         let traeger: Organisation<boolean> = DoFactory.createOrganisation(false, {
             name: 'Traeger1',
             typ: OrganisationsTyp.TRAEGER,
-            administriertVon: undefined,
-            zugehoerigZu: undefined,
+            administriertVon: oeffentlich.id,
+            zugehoerigZu: oeffentlich.id,
         });
         traeger1 = await repo.save(traeger);
         traeger = DoFactory.createOrganisation(false, {
@@ -78,7 +136,7 @@ describe('OrganisationSpecificationTests', () => {
         let schule: Organisation<false> = DoFactory.createOrganisation(false, {
             name: 'Schule1',
             typ: OrganisationsTyp.SCHULE,
-            administriertVon: traeger1.id,
+            administriertVon: oeffentlich.id,
             zugehoerigZu: traeger1.id,
         });
         schule1 = await repo.save(schule);
@@ -96,7 +154,7 @@ describe('OrganisationSpecificationTests', () => {
     });
 
     describe('schule-unter-traeger', () => {
-        it('should be satisfied when typ is SCHULE and administriertVon and zugehoerigZu is TRAEGER ', async () => {
+        it('should be satisfied when typ is SCHULE and administriertVon is LAND and zugehoerigZu is TRAEGER ', async () => {
             const schuleUnterTraeger: SchuleUnterTraeger = new SchuleUnterTraeger(repo);
             expect(await schuleUnterTraeger.isSatisfiedBy(schule1)).toBeTruthy();
         });
@@ -293,6 +351,25 @@ describe('OrganisationSpecificationTests', () => {
             });
             const klassenNameAnSchuleEindeutig: KlassenNameAnSchuleEindeutig = new KlassenNameAnSchuleEindeutig(repo);
             expect(await klassenNameAnSchuleEindeutig.isSatisfiedBy(klasse)).toBeFalsy();
+        });
+    });
+
+    describe('organisations-on-same-subtree', () => {
+        it('should be satisfied when organisations have same land parent', async () => {
+            const organisationsOnSameSubtree: OrganisationsOnSameSubtree = new OrganisationsOnSameSubtree(repo);
+            expect(await organisationsOnSameSubtree.isSatisfiedBy([traeger1, schule1])).toBeTruthy();
+        });
+
+        it("should NOT be satisfied when organisations don't have same land parent", async () => {
+            const ersatzschule: Organisation<true> = await repo.save(
+                DoFactory.createOrganisation(false, {
+                    typ: OrganisationsTyp.SCHULE,
+                    administriertVon: ersatz.id,
+                    zugehoerigZu: ersatz.id,
+                }),
+            );
+            const organisationsOnSameSubtree: OrganisationsOnSameSubtree = new OrganisationsOnSameSubtree(repo);
+            expect(await organisationsOnSameSubtree.isSatisfiedBy([traeger1, ersatzschule])).toBeFalsy();
         });
     });
 });

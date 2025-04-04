@@ -18,62 +18,14 @@ import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js'
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-
-function createPersonenkontext<WasPersisted extends boolean>(
-    this: void,
-    factory: PersonenkontextFactory,
-    withId: WasPersisted,
-    params: Partial<Personenkontext<boolean>> = {},
-): Personenkontext<WasPersisted> {
-    const personenkontext: Personenkontext<WasPersisted> = factory.construct<boolean>(
-        withId ? faker.string.uuid() : undefined,
-        withId ? faker.date.past() : undefined,
-        withId ? faker.date.recent() : undefined,
-        undefined,
-        faker.string.uuid(),
-        faker.string.uuid(),
-        faker.string.uuid(),
-    );
-
-    Object.assign(personenkontext, params);
-
-    return personenkontext;
-}
-
-function createRolleOrganisationsPersonKontext(
-    factory: PersonenkontextFactory,
-    anlage: PersonenkontextWorkflowAggregate,
-): [Rolle<true>, Organisation<true>, Organisation<true>, Organisation<true>, Personenkontext<true>] {
-    const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
-    const parentOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
-        typ: OrganisationsTyp.TRAEGER,
-    });
-    const childOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
-        typ: OrganisationsTyp.SCHULE,
-    });
-    const childsChildOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
-        typ: OrganisationsTyp.KLASSE,
-    });
-    childsChildOrganisation.administriertVon = childOrganisation.id;
-    childOrganisation.administriertVon = parentOrganisation.id;
-    anlage.selectedOrganisationId = childOrganisation.id;
-    anlage.selectedRolleId = rolle.id;
-    const personenkontext: Personenkontext<true> = createPersonenkontext(factory, true, {
-        rolleId: rolle.id,
-        organisationId: parentOrganisation.id,
-    });
-    return [rolle, parentOrganisation, childOrganisation, childsChildOrganisation, personenkontext];
-}
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 describe('PersonenkontextWorkflow', () => {
-    const LIMIT: number = 25;
     let module: TestingModule;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
-    let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let anlage: PersonenkontextWorkflowAggregate;
     let personenkontextAnlageFactory: PersonenkontextWorkflowFactory;
-    let personenkontextFactory: PersonenkontextFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
     let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
 
@@ -110,11 +62,8 @@ describe('PersonenkontextWorkflow', () => {
         }).compile();
         rolleRepoMock = module.get(RolleRepo);
         organisationRepoMock = module.get(OrganisationRepository);
-        dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         dbiamPersonenkontextFactoryMock = module.get(DbiamPersonenkontextFactory);
-        personenkontextFactory = module.get(PersonenkontextFactory);
         personenkontextAnlageFactory = module.get(PersonenkontextWorkflowFactory);
-        personenkontextFactory = module.get(PersonenkontextFactory);
         anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
     });
@@ -133,9 +82,9 @@ describe('PersonenkontextWorkflow', () => {
 
     describe('initialize', () => {
         it('should initialize the aggregate with the selected Organisation and Rolle', () => {
-            anlage.initialize('org-id', 'role-id');
+            anlage.initialize('org-id', ['role-id']);
             expect(anlage.selectedOrganisationId).toBe('org-id');
-            expect(anlage.selectedRolleId).toBe('role-id');
+            expect(anlage.selectedRolleIds).toStrictEqual(['role-id']);
         });
     });
 
@@ -144,38 +93,41 @@ describe('PersonenkontextWorkflow', () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             const organisations: Organisation<true>[] = [organisation];
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue(organisations);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [organisation.id],
+            });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                LIMIT,
             );
-            expect(result.length).toBe(1);
+            expect(result.length).toBe(2);
         });
 
         it('should return organisations based on name or kennung if provided', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true);
             const organisations: Organisation<true>[] = [organisation];
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue(organisations);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [organisation.id],
+            });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 organisation.name,
-                LIMIT,
             );
             expect(result.length).toBe(1);
         });
 
         it('should return an empty array if no organisations are found', async () => {
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce([]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [] });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                LIMIT,
             );
             expect(result.length).toBe(0);
         });
@@ -199,12 +151,11 @@ describe('PersonenkontextWorkflow', () => {
                 org3,
                 org4,
             ]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toBe(4);
@@ -216,12 +167,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toBe(2);
@@ -234,12 +184,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toBe(3);
@@ -252,12 +201,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toBe(3);
@@ -273,12 +221,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id, org3.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2, org3]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toBe(3);
@@ -289,12 +236,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toBe(2);
@@ -316,12 +262,11 @@ describe('PersonenkontextWorkflow', () => {
                 org3,
                 org4,
             ]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toBe(4);
@@ -333,12 +278,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toBe(2);
@@ -355,12 +299,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toEqual(2);
@@ -377,12 +320,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toEqual(2);
@@ -399,12 +341,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toEqual(2);
@@ -421,12 +362,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toEqual(2);
@@ -443,12 +383,11 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toEqual(2);
@@ -465,21 +404,86 @@ describe('PersonenkontextWorkflow', () => {
             const orgsWithRecht: string[] = [org1.id, org2.id];
 
             organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([org1, org2]);
-            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: orgsWithRecht });
 
             const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
                 personpermissionsMock,
                 undefined,
-                10,
             );
 
             expect(result.length).toEqual(2);
+        });
+
+        it('should call findByNameOrKennungAndExcludeByOrganisationType with undefined orgaIds when all permissions are granted', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true);
+            const organisations: Organisation<true>[] = [organisation];
+
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue(organisations);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                all: true,
+            });
+
+            const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+            );
+
+            // Ensure that the method is called with undefined orgaIds
+            expect(organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType).toHaveBeenCalledWith(
+                OrganisationsTyp.KLASSE,
+                undefined,
+                undefined,
+                undefined,
+            );
+
+            expect(result).toEqual(organisations);
+        });
+
+        it('should return an empty array if no organisations are found', async () => {
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([]);
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: ['someId'] });
+
+            const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+            );
+
+            expect(result.length).toBe(0); // Verify that the result is empty
+        });
+
+        it('should filter organisations by permittedOrgaIds when all permissions are not granted', async () => {
+            const organisation1: Organisation<true> = DoFactory.createOrganisation(true, { name: 'Org 1' });
+            const organisation2: Organisation<true> = DoFactory.createOrganisation(true, { name: 'Org 2' });
+            const permittedOrgaIds: string[] = [organisation1.id]; // Only Org 1 is permitted
+
+            // Mock the repository to return both organisations
+            organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([
+                organisation1,
+                organisation2,
+            ]);
+
+            // Mock permissions to indicate that all organisations are not permitted
+            personpermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: permittedOrgaIds, // Only permit Org 1
+            });
+
+            const result: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
+                personpermissionsMock,
+                undefined,
+            );
+
+            // Ensure only the permitted organisation is returned
+            expect(result.length).toEqual(1); // Only Org 1 should be returned
         });
     });
 
     describe('findRollenForOrganisation', () => {
         it('should return an empty array if no roles are found by name', async () => {
+            anlage.initialize('organisation-id');
             rolleRepoMock.findByName.mockResolvedValue(undefined);
+            const organisation: Organisation<true> = createMock<Organisation<true>>();
+            organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(
                 createMock<PersonPermissions>(),
@@ -493,7 +497,7 @@ describe('PersonenkontextWorkflow', () => {
         it('should return an empty array if no organisations with system rights are found', async () => {
             rolleRepoMock.find.mockResolvedValue([createMock<Rolle<true>>()]);
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue([]);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize('organisation-id');
 
@@ -508,7 +512,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue([rolle]);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(['org-id']);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             organisationRepoMock.findById.mockResolvedValue(undefined);
 
@@ -526,7 +530,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(['some-other-org-id']);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(false);
 
             anlage.initialize('organisation-id');
 
@@ -560,7 +564,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize(organisation.id);
 
@@ -575,7 +579,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisation.id]);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize(organisation.id);
 
@@ -617,13 +621,67 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValue(orgsWithRecht);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            rolleRepoMock.findById.mockResolvedValue(rolle1);
 
             anlage.initialize(organisation.id);
+
+            jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, 2);
 
             expect(result).toHaveLength(2);
+        });
+        it('should filter out roles that do not pass the reference check', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const childOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.KLASSE,
+            });
+            const rolle1: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'rolle1',
+            });
+            const rolle2: Rolle<true> = DoFactory.createRolle(true, {
+                rollenart: RollenArt.ORGADMIN,
+                name: 'rolle2',
+            });
+            const rollen: Rolle<true>[] = [rolle1, rolle2];
+            const orgsWithRecht: string[] = [organisation.id, childOrganisation.id];
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValue([childOrganisation]);
+            organisationRepoMock.findByIds.mockResolvedValue(
+                new Map(orgsWithRecht.map((id: string) => [id, DoFactory.createOrganisation(true, { id })])),
+            );
+            rolleRepoMock.find.mockResolvedValue(rollen);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            rolleRepoMock.findById.mockResolvedValue(rolle1);
+
+            anlage.initialize(organisation.id);
+
+            const mockDomainError: DomainError = {
+                name: 'ReferenceCheckError',
+                message: 'Some error message',
+                code: 'ERROR_CODE',
+            };
+
+            // Mock checkReferences to return the mockDomainError for the first call (for rolle1)
+            jest.spyOn(anlage, 'checkReferences')
+                .mockResolvedValueOnce(mockDomainError) // For rolle1
+                .mockResolvedValueOnce(undefined); // For rolle2
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
+
+            // Only rolle2 should be included because rolle1 fails the reference check
+            expect(result).toHaveLength(1);
+            expect(result[0]).toEqual(rolle2);
         });
     });
     describe('commit', () => {
@@ -693,379 +751,5 @@ describe('PersonenkontextWorkflow', () => {
         );
 
         expect(result).toEqual([]);
-    });
-
-    describe('findSchulstrukturknoten', () => {
-        it('should return list of schulstrukturknoten when parent-organisation is matching', async () => {
-            const [rolle, parentOrganisation, , , personenkontext]: [
-                Rolle<true>,
-                Organisation<true>,
-                Organisation<true>,
-                Organisation<true>,
-                Personenkontext<true>,
-            ] = createRolleOrganisationsPersonKontext(personenkontextFactory, anlage);
-            const organisationen: Organisation<true>[] = [parentOrganisation];
-            const personenkontexte: Personenkontext<true>[] = [personenkontext];
-
-            organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisationen);
-            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
-
-            organisationRepoMock.findById.mockResolvedValue(parentOrganisation);
-
-            organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([]);
-
-            const counted2: Counted<Organisation<true>> = [[], 1];
-            organisationRepoMock.findBy.mockResolvedValueOnce(counted2); //mock call in findChildOrganisations, 2nd time (recursive)
-
-            const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                rolle.id,
-                parentOrganisation.name!,
-                LIMIT,
-            );
-            expect(result).toHaveLength(1);
-        });
-
-        describe('matching of parent or child SSK', () => {
-            it('should return list of schulstrukturknoten when child-organisation is matching', async () => {
-                const [rolle, parent, child, subchild]: [
-                    Rolle<true>,
-                    Organisation<true>,
-                    Organisation<true>,
-                    Organisation<true>,
-                    Personenkontext<true>,
-                ] = createRolleOrganisationsPersonKontext(personenkontextFactory, anlage);
-
-                const foundByName: Organisation<true>[] = [child];
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue(foundByName);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(parent); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([parent, child, subchild]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(rolle.id, child.name!, LIMIT);
-                expect(result).toHaveLength(1);
-            });
-
-            it('should return list of schulstrukturknoten when child of child-organisation is matching with one results', async () => {
-                const [rolle, parent, child, childOfChild]: [
-                    Rolle<true>,
-                    Organisation<true>,
-                    Organisation<true>,
-                    Organisation<true>,
-                    Personenkontext<true>,
-                ] = createRolleOrganisationsPersonKontext(personenkontextFactory, anlage);
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([child, childOfChild]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(parent); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([parent, child, childOfChild]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(rolle.id, child.name!, LIMIT);
-                expect(result).toHaveLength(1);
-            });
-
-            it('should return list of schulstrukturknoten when a valid child with name exist', async () => {
-                const [rolle, parent, child]: [
-                    Rolle<true>,
-                    Organisation<true>,
-                    Organisation<true>,
-                    Organisation<true>,
-                    Personenkontext<true>,
-                ] = createRolleOrganisationsPersonKontext(personenkontextFactory, anlage);
-
-                const foundByName: Organisation<true>[] = [child];
-                const personenkontext: Personenkontext<true> = createPersonenkontext(personenkontextFactory, true, {
-                    rolleId: rolle.id,
-                    organisationId: parent.id,
-                });
-                const personenkontexte: Personenkontext<true>[] = [personenkontext];
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue(foundByName);
-                dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
-
-                organisationRepoMock.findById.mockResolvedValue(undefined); //mock call to find parent in findSchulstrukturknoten
-
-                const counted: Counted<Organisation<true>> = [foundByName, 1];
-                organisationRepoMock.findBy.mockResolvedValue(counted); //mock call in findChildOrganisations
-
-                await expect(anlage.findSchulstrukturknoten(rolle.id, child.name!, LIMIT)).resolves.not.toThrow(Error);
-            });
-        });
-
-        it('should return empty list when no rolle could be found', async () => {
-            const rolle: Rolle<true> = DoFactory.createRolle(true);
-            const organisationen: Organisation<true>[] = [DoFactory.createOrganisation(true)];
-
-            organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisationen);
-            rolleRepoMock.findById.mockResolvedValue(undefined);
-
-            const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent', LIMIT);
-
-            expect(result).toHaveLength(0);
-        });
-
-        it('should return empty list when no parent organisation could be found', async () => {
-            const rolle: Rolle<true> = DoFactory.createRolle(true);
-            const organisationen: Organisation<true>[] = [DoFactory.createOrganisation(true)];
-
-            organisationRepoMock.findByNameOrKennung.mockResolvedValue(organisationen);
-            rolleRepoMock.findById.mockResolvedValue(rolle);
-            organisationRepoMock.findById.mockResolvedValue(undefined);
-
-            const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent', LIMIT);
-
-            expect(result).toHaveLength(0);
-        });
-
-        it('should return empty list when no ssks could be found', async () => {
-            const rolle: Rolle<true> = DoFactory.createRolle(true);
-            const personenkontext: Personenkontext<true> = createPersonenkontext(personenkontextFactory, true);
-            const personenkontexte: Personenkontext<true>[] = [personenkontext];
-            organisationRepoMock.findByNameOrKennung.mockResolvedValue([]);
-            dBiamPersonenkontextRepoMock.findByRolle.mockResolvedValue(personenkontexte);
-
-            const counted: Counted<Organisation<true>> = [[], 0];
-            organisationRepoMock.findBy.mockResolvedValueOnce(counted); //mock call in findChildOrganisations, 2nd time (recursive)
-
-            const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(rolle.id, 'nonexistent', LIMIT);
-            expect(result).toHaveLength(0);
-        });
-
-        describe('filter organisations by RollenArt', () => {
-            it('should return empty list, because orga as SCHULE does not match RollenArt SYSADMIN', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.SCHULE,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(0);
-            });
-
-            it('should return one element, because orga as LAND does match RollenArt SYSADMIN', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.LAND,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(1);
-                expect(result).toContainEqual(organisationDo);
-            });
-
-            it('should return one element, because orga as ROOT does match RollenArt SYSADMIN', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.ROOT,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(1);
-                expect(result).toContainEqual(organisationDo);
-            });
-
-            it('should return empty list, because orga as LAND does not match RollenArt LEIT', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEIT });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.LAND,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(0);
-            });
-
-            it('should return one element, because orga as SCHULE does match RollenArt LEIT', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEIT });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.SCHULE,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(1);
-                expect(result).toContainEqual(organisationDo);
-            });
-
-            it('should return one element, because orga as SCHULE does match RollenArt LERN', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.SCHULE,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(1);
-                expect(result).toContainEqual(organisationDo);
-            });
-
-            it('should return one element, because orga as KLASSE does match RollenArt LERN', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.KLASSE,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(1);
-                expect(result).toContainEqual(organisationDo);
-            });
-
-            it('should return empty list, because orga as LAND does not match RollenArt LERN', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.LAND,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(0);
-            });
-
-            it('should return one element, because orga as SCHULE does match RollenArt LEHR', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.SCHULE,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(1);
-                expect(result).toContainEqual(organisationDo);
-            });
-
-            it('should return no element, because orga as KLASSE does not match RollenArt LEHR', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.KLASSE,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(0);
-            });
-
-            it('should return empty list, because orga as LAND does not match RollenArt LEHR', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.LAND,
-                });
-
-                organisationRepoMock.findByNameOrKennung.mockResolvedValue([organisationDo]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                );
-                expect(result).toHaveLength(0);
-            });
-
-            it('should not return klassen when excluded', async () => {
-                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
-                const organisationDo: Organisation<true> = DoFactory.createOrganisation(true, {
-                    typ: OrganisationsTyp.KLASSE,
-                });
-
-                organisationRepoMock.findByNameOrKennungAndExcludeByOrganisationType.mockResolvedValue([]);
-                rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-                organisationRepoMock.findById.mockResolvedValue(organisationDo); //mock call to find parent in findSchulstrukturknoten
-                organisationRepoMock.findChildOrgasForIds.mockResolvedValueOnce([organisationDo]);
-
-                const result: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-                    rolle.id,
-                    organisationDo.name!,
-                    LIMIT,
-                    true,
-                );
-                expect(result).toHaveLength(0);
-            });
-        });
     });
 });

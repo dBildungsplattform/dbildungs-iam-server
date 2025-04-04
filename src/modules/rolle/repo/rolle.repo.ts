@@ -16,17 +16,20 @@ import { RolleFactory } from '../domain/rolle.factory.js';
 import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.entity.js';
 import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
-/**
- * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
- */
-export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
+import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
+import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
+
+export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
         rolle: rolle.id,
         merkmal,
@@ -53,13 +56,12 @@ export function mapAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<Ro
         merkmale,
         systemrechte,
         serviceProvider,
+        istTechnisch: rolle.istTechnisch,
+        version: rolle.version,
     };
 }
 
-/**
- * @deprecated Not for use outside of rolle-repo, export will be removed at a later date
- */
-export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): Rolle<boolean> {
+export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): Rolle<boolean> {
     const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
     const systemrechte: RollenSystemRecht[] = entity.systemrechte.map(
         (systemRechtEntity: RolleSystemrechtEntity) => systemRechtEntity.systemrecht,
@@ -69,16 +71,42 @@ export function mapEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFac
         (serviceProvider: RolleServiceProviderEntity) => serviceProvider.serviceProvider.id,
     );
 
+    const serviceProviderData: ServiceProvider<true>[] = entity.serviceProvider.map(
+        (serviceProvider: RolleServiceProviderEntity) => {
+            const sp: ServiceProviderEntity = serviceProvider.serviceProvider;
+            return ServiceProvider.construct(
+                sp.id,
+                sp.createdAt,
+                sp.updatedAt,
+                sp.name,
+                sp.target,
+                sp.url,
+                sp.kategorie,
+                sp.providedOnSchulstrukturknoten,
+                sp.logo,
+                sp.logoMimeType,
+                sp.keycloakGroup,
+                sp.keycloakRole,
+                sp.externalSystem,
+                sp.requires2fa,
+                sp.vidisAngebotId,
+            );
+        },
+    );
+
     return rolleFactory.construct(
         entity.id,
         entity.createdAt,
         entity.updatedAt,
+        entity.version,
         entity.name,
         entity.administeredBySchulstrukturknoten,
         entity.rollenart,
         merkmale,
         systemrechte,
         serviceProviderIds,
+        entity.istTechnisch,
+        serviceProviderData,
     );
 }
 
@@ -96,14 +124,15 @@ export class RolleRepo {
         return RolleEntity;
     }
 
-    public async findById(id: RolleID): Promise<Option<Rolle<true>>> {
-        const rolle: Option<RolleEntity> = await this.em.findOne(
-            this.entityName,
-            { id },
-            { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const },
-        );
+    public async findById(id: RolleID, includeTechnical: boolean = false): Promise<Option<Rolle<true>>> {
+        const query: { id: RolleID; istTechnisch?: boolean } = includeTechnical ? { id } : { id, istTechnisch: false };
 
-        return rolle && mapEntityToAggregate(rolle, this.rolleFactory);
+        const rolle: Option<RolleEntity> = await this.em.findOne(this.entityName, query, {
+            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+        });
+
+        return rolle && mapRolleEntityToAggregate(rolle, this.rolleFactory);
     }
 
     public async findByIdAuthorized(
@@ -117,15 +146,13 @@ export class RolleRepo {
                 error: new EntityNotFoundError(),
             };
         }
+
         const rolleAdministeringOrganisationId: OrganisationID = rolle.administeredBySchulstrukturknoten;
 
         const relevantSystemRechte: RollenSystemRecht[] = [RollenSystemRecht.ROLLEN_VERWALTEN];
 
-        const organisationIDs: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            relevantSystemRechte,
-            true,
-        );
-        if (organisationIDs.includes(rolleAdministeringOrganisationId)) {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(relevantSystemRechte, true);
+        if (permittedOrgas.all || permittedOrgas.orgaIds.includes(rolleAdministeringOrganisationId)) {
             return {
                 ok: true,
                 value: rolle,
@@ -142,83 +169,93 @@ export class RolleRepo {
             RolleEntity,
             { id: { $in: ids } },
             {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                exclude: ['serviceProvider.serviceProvider.logo'] as const,
             },
         );
 
         const rollenMap: Map<string, Rolle<true>> = new Map();
         rollenEntities.forEach((rolleEntity: RolleEntity) => {
-            const rolle: Rolle<true> = mapEntityToAggregate(rolleEntity, this.rolleFactory);
+            const rolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
             rollenMap.set(rolleEntity.id, rolle);
         });
 
         return rollenMap;
     }
 
-    public async findByName(searchStr: string, limit?: number, offset?: number): Promise<Option<Rolle<true>[]>> {
+    public async findByName(
+        searchStr: string,
+        includeTechnische: boolean,
+        limit?: number,
+        offset?: number,
+    ): Promise<Option<Rolle<true>[]>> {
+        const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
+
         const rollen: Option<RolleEntity[]> = await this.em.find(
             this.entityName,
-            { name: { $ilike: '%' + searchStr + '%' } },
-            { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
+            { name: { $ilike: '%' + searchStr + '%' }, ...technischeQuery },
+            {
+                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                limit: limit,
+                offset: offset,
+            },
         );
-        return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
+        return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
     }
 
-    public async find(limit?: number, offset?: number): Promise<Rolle<true>[]> {
+    public async find(includeTechnische: boolean, limit?: number, offset?: number): Promise<Rolle<true>[]> {
+        const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
+
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
+            where: technischeQuery,
             limit: limit,
             offset: offset,
         });
 
-        return rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory));
+        return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
     }
 
     public async findRollenAuthorized(
         permissions: PersonPermissions,
+        includeTechnische: boolean,
         searchStr?: string,
         limit?: number,
         offset?: number,
     ): Promise<[Option<Rolle<true>[]>, number]> {
-        const orgIdsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
+        const orgIdsWithRecht: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.ROLLEN_VERWALTEN],
             true,
         );
 
-        if (!orgIdsWithRecht || orgIdsWithRecht.length == 0) {
+        if (!orgIdsWithRecht.all && orgIdsWithRecht.orgaIds.length == 0) {
             return [[], 0];
         }
 
-        let rollen: Option<RolleEntity[]>;
-        let total: number;
-        const organisationWhereClause: {
-            administeredBySchulstrukturknoten: { $in: OrganisationID[] };
-        } = { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht } };
-        if (searchStr) {
-            [rollen, total] = await this.em.findAndCount(
-                this.entityName,
-                {
-                    name: { $ilike: '%' + searchStr + '%' },
-                    ...organisationWhereClause,
-                },
-                { populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const, limit: limit, offset: offset },
-            );
-        } else {
-            [rollen, total] = await this.em.findAndCount(
-                this.entityName,
-                { ...organisationWhereClause },
-                {
-                    populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
-                    limit: limit,
-                    offset: offset,
-                },
-            );
-        }
+        const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
+
+        const [rollen, total]: [Option<RolleEntity[]>, number] = await this.em.findAndCount(
+            this.entityName,
+            {
+                ...(searchStr ? { name: { $ilike: '%' + searchStr + '%' } } : {}),
+                ...technischeQuery,
+                ...(orgIdsWithRecht.all ? {} : { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht.orgaIds } }),
+            },
+            {
+                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                exclude: ['serviceProvider.serviceProvider.logo'] as const,
+                limit: limit,
+                offset: offset,
+            },
+        );
+
         if (total === 0) {
             return [[], 0];
         }
 
-        return [rollen.map((rolle: RolleEntity) => mapEntityToAggregate(rolle, this.rolleFactory)), total];
+        return [rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory)), total];
     }
 
     public async exists(id: RolleID): Promise<boolean> {
@@ -231,7 +268,10 @@ export class RolleRepo {
         return !!rolle;
     }
 
-    public async save(rolle: Rolle<boolean>): Promise<Rolle<true>> {
+    public async save(rolle: Rolle<boolean>): Promise<Rolle<true> | DomainError> {
+        const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this, rolle.name);
+        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) return new RolleNameNotUniqueOnSskError();
+
         if (rolle.id) {
             return this.update(rolle);
         } else {
@@ -245,6 +285,7 @@ export class RolleRepo {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        version: number,
         isAlreadyAssigned: boolean,
         permissions: PersonPermissions,
     ): Promise<Rolle<true> | DomainError> {
@@ -254,13 +295,11 @@ export class RolleRepo {
             return authorizedRoleResult.error;
         }
         //Specifications
-        {
-            if (
-                isAlreadyAssigned &&
-                (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
-            ) {
-                return new UpdateMerkmaleError();
-            }
+        if (
+            isAlreadyAssigned &&
+            (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
+        ) {
+            return new UpdateMerkmaleError();
         }
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;
@@ -269,18 +308,23 @@ export class RolleRepo {
             id,
             authorizedRole.createdAt,
             authorizedRole.updatedAt,
+            version,
             name,
             authorizedRole.administeredBySchulstrukturknoten,
             authorizedRole.rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
+            authorizedRole.istTechnisch,
         );
 
         if (updatedRolle instanceof DomainError) {
             return updatedRolle;
         }
-        const result: Rolle<true> = await this.save(updatedRolle);
+        const result: Rolle<true> | DomainError = await this.save(updatedRolle);
+        if (result instanceof DomainError) {
+            return result;
+        }
         this.eventService.publish(
             new RolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
         );
@@ -296,7 +340,8 @@ export class RolleRepo {
         }
 
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 
         try {
@@ -311,22 +356,28 @@ export class RolleRepo {
         return;
     }
 
-    private async create(rolle: Rolle<false>): Promise<Rolle<true>> {
-        const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapAggregateToData(rolle));
+    public async create(rolle: Rolle<false>): Promise<Rolle<true>> {
+        const rolleEntity: RolleEntity = this.em.create(RolleEntity, mapRolleAggregateToData(rolle));
 
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapEntityToAggregate(rolleEntity, this.rolleFactory);
+        return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
     }
 
     private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, rolle.id, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider'] as const,
+            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
-        rolleEntity.assign(mapAggregateToData(rolle), { updateNestedEntities: true });
 
+        if (rolleEntity.version !== rolle.version) {
+            throw new RolleUpdateOutdatedError();
+        }
+        rolle.version = rolle.version + 1;
+
+        rolleEntity.assign(mapRolleAggregateToData(rolle), { updateNestedEntities: true });
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapEntityToAggregate(rolleEntity, this.rolleFactory);
+        return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
     }
 }

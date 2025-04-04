@@ -1,13 +1,28 @@
+export type ExternalSystemIDs = {
+    ID_NEXTCLOUD?: string[];
+    ID_ITSLEARNING?: string[];
+    ID_OX?: string[];
+};
+
+export type KcCustomAttributes = Record<string, string[]>;
+
 export class User<WasPersisted extends boolean> {
     private constructor(
         public id: Persisted<string, WasPersisted>,
         public username: string,
         public email: string | undefined,
         public createdDate: Persisted<Date, WasPersisted>,
+        public externalSystemIDs: ExternalSystemIDs,
+        public enabled: boolean,
+        public attributes: KcCustomAttributes,
     ) {}
 
-    public static createNew(username: string, email: string | undefined): User<false> {
-        return new User(undefined, username, email, undefined);
+    public static createNew(
+        username: string,
+        email: string | undefined,
+        externalSystemIDs: ExternalSystemIDs,
+    ): User<false> {
+        return new User(undefined, username, email, undefined, externalSystemIDs, true, {});
     }
 
     public static construct<WasPersisted extends boolean = true>(
@@ -15,7 +30,10 @@ export class User<WasPersisted extends boolean> {
         username: string,
         email: string | undefined,
         createdDate: Date,
+        externalSystemIDs: ExternalSystemIDs,
+        enabled: boolean,
+        attributes: KcCustomAttributes,
     ): User<WasPersisted> {
-        return new User(id, username, email, createdDate);
+        return new User(id, username, email, createdDate, externalSystemIDs, enabled, attributes);
     }
 }

@@ -9,6 +9,8 @@ import { lastValueFrom } from 'rxjs';
 import { ItsLearningConfig, ServerConfig } from '../../shared/config/index.js';
 import { DomainError, ItsLearningError } from '../../shared/error/index.js';
 import { IMSESAction } from './actions/base-action.js';
+import { IMSESMassAction } from './actions/base-mass-action.js';
+import { IMS_MESS_BIND_SCHEMA } from './schemas.js';
 
 @Injectable()
 export class ItsLearningIMSESService {
@@ -32,10 +34,11 @@ export class ItsLearningIMSESService {
     }
 
     public async send<ResponseBody, ResultType>(
-        action: IMSESAction<ResponseBody, ResultType>,
+        action: IMSESAction<ResponseBody, ResultType> | IMSESMassAction<ResponseBody, ResultType>,
+        syncId?: string,
     ): Promise<Result<ResultType, DomainError>> {
         const body: object = action.buildRequest();
-        const message: string = this.createMessage(body);
+        const message: string = this.createMessage(body, syncId);
 
         try {
             const response: AxiosResponse<string> = await lastValueFrom(
@@ -56,25 +59,29 @@ export class ItsLearningIMSESService {
         }
     }
 
-    private createMessage(body: object): string {
+    private createMessage(body: object, syncId?: string): string {
         return this.xmlBuilder.build({
             'soapenv:Envelope': {
                 '@_xmlns:soapenv': 'http://schemas.xmlsoap.org/soap/envelope/',
 
-                'soapenv:Header': this.createSecurityObject(),
+                'soapenv:Header': this.createSecurityObject(syncId),
 
                 'soapenv:Body': body,
             },
         }) as string;
     }
 
-    private createSecurityObject(): object {
+    private createSecurityObject(syncId?: string): object {
         const now: string = new Date().toISOString();
         const nHash: Hash = createHash('sha1');
         nHash.update(now + Math.random());
         const nonce: string = nHash.digest('base64');
 
         return {
+            'ims:syncRequestHeaderInfo': syncId && {
+                '@_xmlns:ims': IMS_MESS_BIND_SCHEMA,
+                'ims:messageIdentifier': syncId,
+            },
             'wsse:Security': {
                 '@_xmlns:wsse': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd',
                 '@_xmlns:wsu': 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd',

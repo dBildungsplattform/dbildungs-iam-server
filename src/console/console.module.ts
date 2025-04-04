@@ -11,7 +11,6 @@ import { DbConsole } from './db.console.js';
 import { DbInitConsole } from './db-init.console.js';
 import { LoggerModule } from '../core/logging/logger.module.js';
 import { KeycloakAdministrationModule } from '../modules/keycloak-administration/keycloak-administration.module.js';
-import { UsernameGeneratorService } from '../modules/person/domain/username-generator.service.js';
 import { KeycloakConfigModule } from '../modules/keycloak-administration/keycloak-config.module.js';
 import { OrganisationModule } from '../modules/organisation/organisation.module.js';
 import { RolleModule } from '../modules/rolle/rolle.module.js';
@@ -25,6 +24,8 @@ import { DbInitMigrationConsole } from './dbmigrate/db-init-migration.console.js
 import { DbCreateMigrationConsole } from './dbmigrate/db-create-migration.console.js';
 import { DbApplyMigrationConsole } from './dbmigrate/db-apply-migration.console.js';
 import { LdapModule } from '../core/ldap/ldap.module.js';
+import { DbSeedDataGeneratorConsole } from './dbseed/db-seed-data-generator.console.js';
+import { KeycloakConsoleModule } from './keycloak/keycloak-console.module.js';
 
 @Module({
     imports: [
@@ -37,6 +38,7 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
         PersonenKontextModule,
         LdapModule,
         DbSeedModule,
+        KeycloakConsoleModule,
         LoggerModule.register(ConsoleModule.name),
         ConfigModule.forRoot({
             isGlobal: true,
@@ -52,6 +54,7 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
                 return defineConfig({
                     clientUrl: config.getOrThrow<DbConfig>('DB').CLIENT_URL,
                     dbName: config.getOrThrow<DbConfig>('DB').DB_NAME,
+                    user: config.getOrThrow<DbConfig>('DB').USERNAME,
                     password: config.getOrThrow<DbConfig>('DB').SECRET,
                     entities: ['./dist/**/*.entity.js'],
                     entitiesTs: ['./src/**/*.entity.ts'],
@@ -89,7 +92,7 @@ import { LdapModule } from '../core/ldap/ldap.module.js';
         DbInitMigrationConsole,
         DbCreateMigrationConsole,
         DbApplyMigrationConsole,
-        UsernameGeneratorService,
+        DbSeedDataGeneratorConsole,
     ],
 })
 export class ConsoleModule {}

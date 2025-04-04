@@ -18,7 +18,6 @@ import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
-import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
 import { KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
 import { Person } from '../../../modules/person/domain/person.js';
@@ -32,6 +31,8 @@ import { KeycloakGroupRoleService } from '../../../modules/keycloak-administrati
 import { Organisation } from '../../../modules/organisation/domain/organisation.js';
 import { NameForOrganisationWithTrailingSpaceError } from '../../../modules/organisation/specification/error/name-with-trailing-space.error.js';
 import { NameForRolleWithTrailingSpaceError } from '../../../modules/rolle/domain/name-with-trailing-space.error.js';
+import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
+import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 
 describe('DbSeedService', () => {
     let module: TestingModule;
@@ -43,6 +44,7 @@ describe('DbSeedService', () => {
     let personenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let dbSeedReferenceRepoMock: DeepMocked<DbSeedReferenceRepo>;
     let kcUserService: DeepMocked<KeycloakUserService>;
+    let personFactory: DeepMocked<PersonFactory>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -74,8 +76,8 @@ describe('DbSeedService', () => {
                     useValue: createMock<PersonRepository>(),
                 },
                 {
-                    provide: DBiamPersonenkontextRepo,
-                    useValue: createMock<DBiamPersonenkontextRepo>(),
+                    provide: DBiamPersonenkontextRepoInternal,
+                    useValue: createMock<DBiamPersonenkontextRepoInternal>(),
                 },
                 {
                     provide: OrganisationRepository,
@@ -107,6 +109,7 @@ describe('DbSeedService', () => {
         personenkontextServiceMock = module.get(DBiamPersonenkontextService);
         dbSeedReferenceRepoMock = module.get(DbSeedReferenceRepo);
         kcUserService = module.get(KeycloakUserService);
+        personFactory = module.get(PersonFactory);
     });
 
     afterAll(async () => {
@@ -159,6 +162,21 @@ describe('DbSeedService', () => {
             it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
                     `./seeding/seeding-integration-test/organisation/00_organisation_with_only_nulls.json`,
+                    'utf-8',
+                );
+                const persistedOrganisation: Organisation<true> = DoFactory.createOrganisationAggregate(true);
+
+                organisationRepositoryMock.saveSeedData.mockResolvedValueOnce(persistedOrganisation);
+                await expect(dbSeedService.seedOrganisation(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with overrideId', () => {
+            it('should insert one entity in database', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/organisation/08_organisation_with_overrideId.json`,
                     'utf-8',
                 );
                 const persistedOrganisation: Organisation<true> = DoFactory.createOrganisationAggregate(true);
@@ -267,6 +285,25 @@ describe('DbSeedService', () => {
     });
 
     describe('seedRolle', () => {
+        describe('with existing overrideId in seeding file', () => {
+            it('should insert one entity in database with overrideId as id', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/rolle/09_rolle_with_override_id.json`,
+                    'utf-8',
+                );
+                const persistedRolle: Rolle<true> = DoFactory.createRolle(true);
+                const serviceProviderMocked: ServiceProvider<true> = createMock<ServiceProvider<true>>();
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced serviceProvider
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(serviceProviderMocked);
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock get-SSK
+
+                rolleRepoMock.create.mockResolvedValueOnce(persistedRolle);
+                await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
+            });
+        });
+
         describe('with existing organisation for administeredBySchulstrukturknoten and ID', () => {
             it('should insert one entity in database', async () => {
                 const fileContentAsStr: string = fs.readFileSync(
@@ -281,7 +318,7 @@ describe('DbSeedService', () => {
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValueOnce(faker.string.uuid()); //mock UUID of referenced parent
                 organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock get-SSK
 
-                rolleRepoMock.save.mockResolvedValueOnce(persistedRolle);
+                rolleRepoMock.create.mockResolvedValueOnce(persistedRolle);
                 await expect(dbSeedService.seedRolle(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
             });
         });
@@ -374,6 +411,19 @@ describe('DbSeedService', () => {
                     EntityNotFoundError,
                 );
             });
+
+            it('should not throw an error and use the overrideId as id', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/serviceProvider/04_service-provider-with-overrideId.json`,
+                    'utf-8',
+                );
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID providedOnSchulstrukturknoten
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock get-SSK
+
+                await expect(dbSeedService.seedServiceProvider(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
         });
     });
 
@@ -391,6 +441,12 @@ describe('DbSeedService', () => {
                     'testusername',
                     'test@example.com',
                     faker.date.recent(),
+                    {
+                        ID_NEXTCLOUD: [faker.string.uuid()],
+                        ID_ITSLEARNING: [faker.string.uuid()],
+                    },
+                    true,
+                    {},
                 );
 
                 kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });
@@ -401,6 +457,44 @@ describe('DbSeedService', () => {
 
                 await expect(dbSeedService.seedPerson(fileContentAsStr)).resolves.not.toThrow(EntityNotFoundError);
                 expect(kcUserService.delete).toHaveBeenCalled();
+            });
+        });
+    });
+
+    describe('seedTechnicalUser', () => {
+        describe('no id in seeding', () => {
+            it('should not create user', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/invalidPerson/06_technical-user.json`,
+                    'utf-8',
+                );
+
+                const person: Person<false> = createMock<Person<true>>();
+                const personPersisted: Person<true> = createMock<Person<true>>();
+                personFactory.createNew.mockResolvedValueOnce(person);
+                personRepoMock.create.mockResolvedValue(personPersisted);
+
+                await dbSeedService.seedTechnicalUser(fileContentAsStr);
+
+                expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('error in person factory', () => {
+            it('should throw Domain Error', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/invalidPerson/06_technical-user.json`,
+                    'utf-8',
+                );
+
+                // return DomainError
+                personFactory.createNew.mockResolvedValueOnce(new NameForOrganisationWithTrailingSpaceError());
+
+                await expect(dbSeedService.seedTechnicalUser(fileContentAsStr)).rejects.toThrow(
+                    NameForOrganisationWithTrailingSpaceError,
+                );
+                expect(personRepoMock.create).toHaveBeenCalledTimes(0);
+                expect(dbSeedReferenceRepoMock.create).toHaveBeenCalledTimes(0);
             });
         });
     });
@@ -419,13 +513,63 @@ describe('DbSeedService', () => {
                 organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
 
                 dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
-                rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>()); // mock getReferencedRolle
+                rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>({ merkmale: [] })); // mock getReferencedRolle
 
                 personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(
                     new GleicheRolleAnKlasseWieSchuleError(),
                 );
                 await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).rejects.toThrow(
                     GleicheRolleAnKlasseWieSchuleError,
+                );
+            });
+        });
+
+        describe('with Rolle with Befristung', () => {
+            it('should insert one entity with Befristung', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/05_personenkontext.json`,
+                    'utf-8',
+                );
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                personRepoMock.findById.mockResolvedValue(createMock<Person<true>>()); // mock getReferencedPerson
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                rolleRepoMock.findById.mockResolvedValue(
+                    createMock<Rolle<true>>({ merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT] }),
+                ); // mock getReferencedRolle
+
+                personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(null);
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
+                );
+            });
+        });
+
+        describe('with overrideId', () => {
+            it('should use the overrideId as id', async () => {
+                const fileContentAsStr: string = fs.readFileSync(
+                    `./seeding/seeding-integration-test/personenkontext/06_personenkontext-with-overrideId.json`,
+                    'utf-8',
+                );
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                personRepoMock.findById.mockResolvedValue(createMock<Person<true>>()); // mock getReferencedPerson
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
+
+                dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
+                rolleRepoMock.findById.mockResolvedValue(
+                    createMock<Rolle<true>>({ merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT] }),
+                ); // mock getReferencedRolle
+
+                personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(null);
+
+                await expect(dbSeedService.seedPersonenkontext(fileContentAsStr)).resolves.not.toThrow(
+                    EntityNotFoundError,
                 );
             });
         });
@@ -511,7 +655,7 @@ describe('DbSeedService', () => {
                     organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>()); // mock getReferencedOrganisation
 
                     dbSeedReferenceRepoMock.findUUID.mockResolvedValue(faker.string.uuid()); //mock UUID in seeding-ref-table
-                    rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>()); // mock getReferencedRolle
+                    rolleRepoMock.findById.mockResolvedValue(createMock<Rolle<true>>({ merkmale: [] })); // mock getReferencedRolle
 
                     personenkontextServiceMock.checkSpecifications.mockResolvedValueOnce(
                         new GleicheRolleAnKlasseWieSchuleError(),
@@ -565,7 +709,7 @@ describe('DbSeedService', () => {
                     'seeding-integration-test/all',
                     '01',
                 );
-                expect(entityFileNames).toHaveLength(6);
+                expect(entityFileNames).toHaveLength(7);
             });
         });
     });

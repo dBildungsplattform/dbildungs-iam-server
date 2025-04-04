@@ -21,7 +21,7 @@ import { AuthenticationApiModule } from '../modules/authentication/authenticatio
 import { PersonenKontextApiModule } from '../modules/personenkontext/personenkontext-api.module.js';
 import { ServiceProviderApiModule } from '../modules/service-provider/service-provider-api.module.js';
 import { SessionAccessTokenMiddleware } from '../modules/authentication/services/session-access-token.middleware.js';
-import { createClient, RedisClientType } from 'redis';
+import { createClient, createCluster, RedisClientType, RedisClusterType } from 'redis';
 import RedisStore from 'connect-redis';
 import session from 'express-session';
 import passport from 'passport';
@@ -33,6 +33,16 @@ import { EventModule } from '../core/eventbus/index.js';
 import { ItsLearningModule } from '../modules/itslearning/itslearning.module.js';
 import { LdapModule } from '../core/ldap/ldap.module.js';
 import { EmailModule } from '../modules/email/email.module.js';
+import { OxModule } from '../modules/ox/ox.module.js';
+import { KeycloakHandlerModule } from '../modules/keycloak-handler/keycloak-handler.module.js';
+import { CronModule } from '../modules/cron/cron.module.js';
+import { ImportApiModule } from '../modules/import/import-api.module.js';
+import { ReporterModule } from '../modules/metrics/reporter/reporter.module.js';
+import { StatusModule } from '../modules/status/status.module.js';
+import { SpshConfigModule } from '../modules/spshconfig/spshconfig.module.js';
+import { VidisModule } from '../modules/vidis/vidis.module.js';
+import { MeldungModule } from '../modules/meldung/meldung.module.js';
+import { MapperModule } from '../modules/person/mapper/mapper.module.js';
 
 @Module({
     imports: [
@@ -50,6 +60,7 @@ import { EmailModule } from '../modules/email/email.module.js';
                 const dbConfig: DbConfig = config.getOrThrow<DbConfig>('DB');
                 return defineConfig({
                     clientUrl: dbConfig.CLIENT_URL,
+                    user: dbConfig.USERNAME,
                     password: dbConfig.SECRET,
                     dbName: dbConfig.DB_NAME,
                     entities: ['./dist/**/*.entity.js'],
@@ -67,7 +78,7 @@ import { EmailModule } from '../modules/email/email.module.js';
         }),
         PassportModule.register({
             session: true,
-            defaultStrategy: ['jwt', 'oidc'],
+            defaultStrategy: ['api-key', 'jwt', 'oidc'],
             keepSessionInfo: true,
             property: 'passportUser',
         }),
@@ -86,7 +97,17 @@ import { EmailModule } from '../modules/email/email.module.js';
         ItsLearningModule,
         LdapModule,
         EmailModule,
+        OxModule,
         PrivacyIdeaAdministrationModule,
+        KeycloakHandlerModule,
+        CronModule,
+        ImportApiModule,
+        ReporterModule,
+        StatusModule,
+        SpshConfigModule,
+        VidisModule,
+        MeldungModule,
+        MapperModule,
     ],
     providers: [
         {
@@ -107,24 +128,46 @@ export class ServerModule implements NestModule {
 
     public async configure(consumer: MiddlewareConsumer): Promise<void> {
         const redisConfig: RedisConfig = this.configService.getOrThrow<RedisConfig>('REDIS');
-        const redisClient: RedisClientType = createClient({
-            username: redisConfig.USERNAME,
-            password: redisConfig.PASSWORD,
-            socket: {
-                host: redisConfig.HOST,
-                port: redisConfig.PORT,
-                tls: redisConfig.USE_TLS,
-                key: redisConfig.PRIVATE_KEY,
-                cert: redisConfig.CERTIFICATE_AUTHORITIES,
-            },
-        });
+        let redisClient: RedisClientType | RedisClusterType;
+        /* istanbul ignore next */
+        if (redisConfig.CLUSTERED) {
+            redisClient = createCluster({
+                defaults: {
+                    username: redisConfig.USERNAME,
+                    password: redisConfig.PASSWORD,
+                },
+                rootNodes: [
+                    {
+                        socket: {
+                            host: redisConfig.HOST,
+                            port: redisConfig.PORT,
+                            tls: redisConfig.USE_TLS,
+                            key: redisConfig.PRIVATE_KEY,
+                            cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                        },
+                    },
+                ],
+            });
+        } else {
+            redisClient = createClient({
+                username: redisConfig.USERNAME,
+                password: redisConfig.PASSWORD,
+                socket: {
+                    host: redisConfig.HOST,
+                    port: redisConfig.PORT,
+                    tls: redisConfig.USE_TLS,
+                    key: redisConfig.PRIVATE_KEY,
+                    cert: redisConfig.CERTIFICATE_AUTHORITIES,
+                },
+            });
+        }
 
         /*
-        Just retrying does not work.
-        Once the connection has failed if no error handler is registered later connection attempts might just fail because
-        the client library assumes termination of the process if failure
-        Also the documentation expressly requires listening to on('error')
-         */
+            Just retrying does not work.
+            Once the connection has failed if no error handler is registered later connection attempts might just fail because
+            the client library assumes termination of the process if failure
+            Also the documentation expressly requires listening to on('error')
+             */
 
         /* istanbul ignore next */
         await redisClient

@@ -3,6 +3,8 @@ import { Geschlecht, Vertrauensstufe } from '../../../modules/person/domain/pers
 export class PersonFile {
     public id?: number;
 
+    public overrideId?: string;
+
     public username?: string;
 
     public password?: string;
@@ -52,4 +54,6 @@ export class PersonFile {
     public revision!: string;
 
     public personalnummer?: string;
+
+    public istTechnisch?: boolean;
 }

@@ -1,15 +1,18 @@
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
 import { IMS_COMMON_SCHEMA, IMS_PERSON_MAN_MESS_SCHEMA } from '../schemas.js';
-import { ItsLearningRoleType } from '../types/role.enum.js';
+import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { IMSESAction } from './base-action.js';
 
 export type PersonResponse = {
-    institutionRole: ItsLearningRoleType;
+    username: string;
+    firstName: string;
+    lastName: string;
+    institutionRole: IMSESInstitutionRoleType;
     primaryRoleType: boolean;
-    userId: string;
 };
 
-// Incomplete
+// Partial, actual structure contains more data
 type ReadPersonResponseBody = {
     readPersonResponse: {
         person: {
@@ -24,7 +27,7 @@ type ReadPersonResponseBody = {
                 userIdValue: string;
             };
             institutionRole: {
-                institutionRoleType: ItsLearningRoleType;
+                institutionRoleType: IMSESInstitutionRoleType;
                 primaryRoleType: boolean;
             };
         };
@@ -56,12 +59,29 @@ export class ReadPersonAction extends IMSESAction<ReadPersonResponseBody, Person
     }
 
     public override parseBody(body: ReadPersonResponseBody): Result<PersonResponse, DomainError> {
+        const firstName: string | undefined = body.readPersonResponse.person.name.partName.find(
+            ({ namePartType }: { namePartType: string }) => namePartType.toLowerCase() === 'first',
+        )?.namePartValue;
+
+        const lastName: string | undefined = body.readPersonResponse.person.name.partName.find(
+            ({ namePartType }: { namePartType: string }) => namePartType.toLowerCase() === 'last',
+        )?.namePartValue;
+
+        if (!firstName || !lastName) {
+            return {
+                ok: false,
+                error: new ItsLearningError('Person is missing a name.'),
+            };
+        }
+
         return {
             ok: true,
             value: {
+                firstName,
+                lastName,
                 institutionRole: body.readPersonResponse.person.institutionRole.institutionRoleType,
                 primaryRoleType: body.readPersonResponse.person.institutionRole.primaryRoleType,
-                userId: body.readPersonResponse.person.userId.userIdValue,
+                username: body.readPersonResponse.person.userId.userIdValue,
             },
         };
     }

@@ -1,12 +1,12 @@
-import { Mapper, MappingProfile, beforeMap, createMap, forMember, ignore, mapFrom } from '@automapper/core';
+import { Mapper, MappingProfile, beforeMap, createMap, forMember, mapFrom } from '@automapper/core';
 import { AutomapperProfile, getMapperToken } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
-import { PersonDo } from '../domain/person.do.js';
 import { PersonEntity } from '../persistence/person.entity.js';
 import { PersonenkontextDo } from '../../personenkontext/domain/personenkontext.do.js';
 import { ref } from '@mikro-orm/core';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 
 @Injectable()
 export class PersonPersistenceMapperProfile extends AutomapperProfile {
@@ -16,9 +16,6 @@ export class PersonPersistenceMapperProfile extends AutomapperProfile {
 
     public override get profile(): MappingProfile {
         return (mapper: Mapper) => {
-            createMap(mapper, PersonDo, PersonEntity);
-            createMap(mapper, PersonEntity, PersonDo);
-
             createMap(
                 mapper,
                 PersonenkontextDo,
@@ -28,6 +25,7 @@ export class PersonPersistenceMapperProfile extends AutomapperProfile {
                 beforeMap((_source: PersonenkontextDo<boolean>, dest: PersonenkontextEntity) => {
                     dest.personId = ref(PersonEntity, '');
                     dest.rolleId = ref(RolleEntity, '');
+                    dest.organisationId = ref(OrganisationEntity, '');
                 }),
                 forMember(
                     (dest: PersonenkontextEntity) => dest.personId,
@@ -37,12 +35,15 @@ export class PersonPersistenceMapperProfile extends AutomapperProfile {
                     (dest: PersonenkontextEntity) => dest.rolleId,
                     mapFrom((from: PersonenkontextDo<boolean>) => ref(RolleEntity, from.rolleId)),
                 ),
+                forMember(
+                    (dest: PersonenkontextEntity) => dest.organisationId,
+                    mapFrom((from: PersonenkontextDo<boolean>) => ref(OrganisationEntity, from.organisationId)),
+                ),
             );
             createMap(
                 mapper,
                 PersonenkontextEntity,
                 PersonenkontextDo,
-                forMember((dest: PersonenkontextDo<boolean>) => dest.organisationId, ignore()),
                 forMember(
                     (dest: PersonenkontextDo<boolean>) => dest.personId,
                     mapFrom((from: PersonenkontextEntity) => from.personId?.id),
@@ -50,6 +51,10 @@ export class PersonPersistenceMapperProfile extends AutomapperProfile {
                 forMember(
                     (dest: PersonenkontextDo<boolean>) => dest.rolleId,
                     mapFrom((from: PersonenkontextEntity) => from.rolleId?.id),
+                ),
+                forMember(
+                    (dest: PersonenkontextDo<boolean>) => dest.organisationId,
+                    mapFrom((from: PersonenkontextEntity) => from.organisationId?.id),
                 ),
             );
         };

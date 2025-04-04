@@ -1,9 +1,10 @@
 import { Cascade, DateTimeType, Entity, Enum, Index, ManyToOne, Opt, Property, Ref, Unique } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Jahrgangsstufe, Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { AutoMap } from '@automapper/classes';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 
 @Entity({ tableName: 'personenkontext' })
 @Unique({ properties: ['personId', 'organisationId', 'rolleId'] })
@@ -17,13 +18,21 @@ export class PersonenkontextEntity extends TimestampedEntity {
         nullable: false,
         entity: () => PersonEntity,
     })
-    @Index({ name: 'personenkontext_person_id_index' })
+    @Index({ name: 'personenkontext_person_id_index', type: 'hash' })
+    @Index({ name: 'personenkontext_person_id_index', type: 'hash' })
     public personId!: Ref<PersonEntity>;
 
     // TODO EW-636: get from access_token, see SchulConneX (Version 1.003.003.000) page 91
     @AutoMap()
-    @Property({ columnType: 'uuid', nullable: true })
-    public organisationId!: string;
+    @ManyToOne({
+        fieldName: 'organisation_id',
+        columnType: 'uuid',
+        ref: true,
+        nullable: false,
+        entity: () => OrganisationEntity,
+    })
+    @Index({ name: 'personenkontext_organisation_id_index', type: 'hash' })
+    public organisationId!: Ref<OrganisationEntity>;
 
     @ManyToOne({
         fieldName: 'rolle_id',
@@ -32,6 +41,8 @@ export class PersonenkontextEntity extends TimestampedEntity {
         nullable: false,
         entity: () => RolleEntity,
     })
+    @Index({ name: 'personenkontext_rolle_id_index', type: 'hash' })
+    @Index({ name: 'personenkontext_rolle_id_index', type: 'hash' })
     public rolleId!: Ref<RolleEntity>;
 
     @AutoMap()
@@ -43,11 +54,6 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @AutoMap()
     @Property({ nullable: true })
     public mandant?: string;
-
-    // Will be removed in favor of `rolleId`.
-    @AutoMap(() => String)
-    @Enum({ nullable: false, items: () => Rolle })
-    public rolle!: Rolle;
 
     @AutoMap(() => String)
     @Enum({ nullable: true, items: () => Personenstatus, nativeEnumName: 'personenstatus_enum' })
@@ -68,4 +74,8 @@ export class PersonenkontextEntity extends TimestampedEntity {
     @AutoMap(() => String)
     @Property({ nullable: false, default: '1' })
     public revision!: string & Opt;
+
+    @AutoMap(() => Date)
+    @Property({ nullable: true, type: DateTimeType })
+    public readonly befristung?: Date;
 }

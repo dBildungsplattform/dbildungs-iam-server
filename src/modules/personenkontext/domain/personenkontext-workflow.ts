@@ -2,8 +2,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -16,12 +15,12 @@ import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js'
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
 
-    public selectedRolleId?: string;
+    public selectedRolleIds?: string[];
 
     private constructor(
         private readonly rolleRepo: RolleRepo,
@@ -38,37 +37,57 @@ export class PersonenkontextWorkflowAggregate {
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
-    public initialize(organisationId?: string, rolleId?: string): void {
+    public initialize(organisationId?: string, rolleIds?: string[]): void {
         this.selectedOrganisationId = organisationId;
-        this.selectedRolleId = rolleId;
+        this.selectedRolleIds = rolleIds;
     }
 
     // Finds all SSKs that the admin can see
     public async findAllSchulstrukturknoten(
         permissions: PersonPermissions,
         organisationName: string | undefined,
+        organisationId?: string, // Add organisationId as an optional parameter
         limit?: number,
     ): Promise<Organisation<true>[]> {
-        let allOrganisationsExceptKlassen: Organisation<boolean>[] = [];
-        // If the search string for organisation is present then search for Name or Kennung
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            true,
+        );
 
+        // If there are no permitted orgas, return an empty array early
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) return [];
+
+        let allOrganisationsExceptKlassen: Organisation<true>[] = [];
+
+        // Fetch organisations based on the permitted organization IDs and the search string
         allOrganisationsExceptKlassen =
             await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
                 OrganisationsTyp.KLASSE,
                 organisationName,
+                permittedOrgas.all ? undefined : permittedOrgas.orgaIds, // Only fetch permitted organizations if restricted
                 limit,
             );
 
+        // If no organizations were found, return an empty array
         if (allOrganisationsExceptKlassen.length === 0) return [];
 
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
         // Return only the orgas that the admin have rights on
-        const filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
-            (orga: Organisation<boolean>) => orgsWithRecht.includes(orga.id as OrganisationID),
+        let filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
+            (orga: Organisation<true>) => permittedOrgas.all || permittedOrgas.orgaIds.includes(orga.id),
         );
+
+        // If organisationId is provided and it's not in the filtered results, fetch it explicitly
+        if (
+            this.selectedOrganisationId &&
+            !filteredOrganisations.find((orga: Organisation<true>) => orga.id === organisationId)
+        ) {
+            const selectedOrg: Option<Organisation<true>> = await this.organisationRepository.findById(
+                this.selectedOrganisationId,
+            );
+            if (selectedOrg) {
+                filteredOrganisations = [selectedOrg, ...filteredOrganisations]; // Add the selected org at the beginning
+            }
+        }
 
         // Sort the filtered organizations, handling undefined kennung and name
         filteredOrganisations.sort((a: Organisation<boolean>, b: Organisation<boolean>) => {
@@ -82,7 +101,8 @@ export class PersonenkontextWorkflowAggregate {
             if (b.name) return 1;
             return 0;
         });
-        // Return only the orgas that the admin have rights on
+
+        // Return the organizations that the admin has rights to
         return filteredOrganisations;
     }
 
@@ -91,26 +111,13 @@ export class PersonenkontextWorkflowAggregate {
         rolleName?: string,
         limit?: number,
     ): Promise<Rolle<true>[]> {
-        let rollen: Option<Rolle<true>[]>;
-
-        if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName);
-        } else {
-            rollen = await this.rolleRepo.find();
-        }
-
-        if (!rollen) {
-            return [];
-        }
-
-        // Retrieve all organisations that the admin has access to
-        const orgsWithRecht: OrganisationID[] = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
-
-        // If the admin has no right on any orga then return an empty array
-        if (!orgsWithRecht || orgsWithRecht.length === 0) {
+        if (
+            !this.selectedOrganisationId ||
+            !(await permissions.hasSystemrechtAtOrganisation(
+                this.selectedOrganisationId,
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ))
+        ) {
             return [];
         }
 
@@ -124,39 +131,68 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
+        let rollen: Option<Rolle<true>[]>;
+
+        if (rolleName) {
+            rollen = await this.rolleRepo.findByName(rolleName, false);
+        } else {
+            rollen = await this.rolleRepo.find(false);
+        }
+
+        if (!rollen) {
+            return [];
+        }
+
         let allowedRollen: Rolle<true>[] = [];
         // If the user has rights for this specific organization or any of its children, return the filtered roles
-        if (orgsWithRecht.includes(organisation.id)) {
-            const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-            rollen.forEach(function (rolle: Rolle<true>) {
-                // Check here what kind of roles the admin can assign depending on the type of organisation
-                if (organisationMatchesRollenart.isSatisfiedBy(organisation, rolle) && !allowedRollen.includes(rolle)) {
-                    allowedRollen.push(rolle);
-                }
-            });
-        }
+
+        const allowedRollenPromises: Promise<Rolle<true> | null>[] = rollen.map(async (rolle: Rolle<true>) => {
+            // Check if the rolle can be assigned to the target organisation
+            const referenceCheckError: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
+
+            // If the reference check passes and the organisation matches the role type
+            if (!referenceCheckError) {
+                return rolle;
+            }
+            return null;
+        });
+
+        // Resolve all the promises and filter out any null values (roles that can't be assigned)
+        const resolvedRollen: Rolle<true>[] = (await Promise.all(allowedRollenPromises)).filter(
+            (rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null,
+        );
+
+        allowedRollen = resolvedRollen;
+        allowedRollen = allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
+            a.name.localeCompare(b.name, 'de', { numeric: true }),
+        );
+
         if (limit) {
             allowedRollen = allowedRollen.slice(0, limit);
         }
 
         // Sort the Roles by name
-        return allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
-            a.name.localeCompare(b.name, 'de', { numeric: true }),
-        );
+        return allowedRollen;
     }
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
     // Also verifies again if the organisationId is allowed to be assigned by the admin
     public async canCommit(permissions: PersonPermissions): Promise<DomainError | boolean> {
-        if (this.selectedOrganisationId && this.selectedRolleId) {
-            const referenceCheckError: Option<DomainError> = await this.checkReferences(
-                this.selectedOrganisationId,
-                this.selectedRolleId,
+        if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
+            // Check references for all selected roles concurrently
+            const referenceCheckErrors: Option<DomainError>[] = await Promise.all(
+                this.selectedRolleIds.map((rolleId: string) =>
+                    this.checkReferences(this.selectedOrganisationId!, rolleId),
+                ),
             );
-            if (referenceCheckError) {
-                return referenceCheckError;
+
+            // Find the first error if any
+            const firstError: Option<DomainError> = referenceCheckErrors.find((error: Option<DomainError>) => error);
+            if (firstError) {
+                return firstError;
             }
 
+            // Check permissions after verifying references
             const permissionCheckError: Option<DomainError> = await this.checkPermissions(
                 permissions,
                 this.selectedOrganisationId,
@@ -177,6 +213,7 @@ export class PersonenkontextWorkflowAggregate {
         count: number,
         personenkontexte: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
+        personalnummer?: string,
     ): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             personId,
@@ -184,6 +221,7 @@ export class PersonenkontextWorkflowAggregate {
             count,
             personenkontexte,
             permissions,
+            personalnummer,
         );
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
 
@@ -199,7 +237,6 @@ export class PersonenkontextWorkflowAggregate {
             this.organisationRepository.findById(organisationId),
             this.rolleRepo.findById(rolleId),
         ]);
-
         if (!orga) {
             return new EntityNotFoundError('Organisation', organisationId);
         }
@@ -237,55 +274,5 @@ export class PersonenkontextWorkflowAggregate {
         }
 
         return undefined;
-    }
-
-    public async findSchulstrukturknoten(
-        rolleId: string,
-        sskName: string,
-        limit?: number,
-        excludeKlassen: boolean = false,
-    ): Promise<Organisation<true>[]> {
-        this.selectedRolleId = rolleId;
-
-        let organisationsFoundByName: Organisation<boolean>[] = [];
-
-        if (excludeKlassen) {
-            organisationsFoundByName =
-                await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
-                    OrganisationsTyp.KLASSE,
-                    sskName,
-                );
-        } else {
-            organisationsFoundByName = await this.organisationRepository.findByNameOrKennung(sskName);
-        }
-
-        if (organisationsFoundByName.length === 0) return [];
-
-        const rolleResult: Option<Rolle<true>> = await this.rolleRepo.findById(rolleId);
-        if (!rolleResult) return [];
-
-        const organisationsRoleIsAvalableIn: Organisation<true>[] = [];
-
-        const parentOrganisation: Option<Organisation<true>> = await this.organisationRepository.findById(
-            rolleResult.administeredBySchulstrukturknoten,
-        );
-        if (!parentOrganisation) return [];
-        organisationsRoleIsAvalableIn.push(parentOrganisation);
-
-        const childOrganisations: Organisation<true>[] = await this.organisationRepository.findChildOrgasForIds([
-            rolleResult.administeredBySchulstrukturknoten,
-        ]);
-        organisationsRoleIsAvalableIn.push(...childOrganisations);
-
-        let orgas: Organisation<true>[] = organisationsFoundByName.filter((ssk: Organisation<true>) =>
-            organisationsRoleIsAvalableIn.some((organisation: Organisation<true>) => ssk.id === organisation.id),
-        );
-
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        orgas = orgas.filter((orga: Organisation<true>) =>
-            organisationMatchesRollenart.isSatisfiedBy(orga, rolleResult),
-        );
-
-        return orgas.slice(0, limit);
     }
 }

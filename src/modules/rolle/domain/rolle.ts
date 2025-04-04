@@ -15,12 +15,15 @@ export class Rolle<WasPersisted extends boolean> {
         public id: Persisted<string, WasPersisted>,
         public createdAt: Persisted<Date, WasPersisted>,
         public updatedAt: Persisted<Date, WasPersisted>,
+        public version: Persisted<number, WasPersisted>,
         public name: string,
         public administeredBySchulstrukturknoten: string,
         public rollenart: RollenArt,
         public merkmale: RollenMerkmal[],
         public systemrechte: RollenSystemRecht[],
         public serviceProviderIds: string[],
+        public istTechnisch: boolean,
+        public serviceProviderData: ServiceProvider<true>[],
     ) {}
 
     public static createNew(
@@ -32,6 +35,8 @@ export class Rolle<WasPersisted extends boolean> {
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        serviceProviderData: ServiceProvider<true>[],
+        istTechnisch: boolean,
     ): Rolle<false> | DomainError {
         // Validate the Rollenname
         if (!NameValidator.isNameValid(name)) {
@@ -43,12 +48,15 @@ export class Rolle<WasPersisted extends boolean> {
             undefined,
             undefined,
             undefined,
+            undefined,
             name,
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
+            istTechnisch,
+            serviceProviderData,
         );
     }
 
@@ -58,35 +66,48 @@ export class Rolle<WasPersisted extends boolean> {
         id: string,
         createdAt: Date,
         updatedAt: Date,
+        version: number,
         name: string,
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
+        serviceProviderData?: ServiceProvider<true>[],
     ): Promise<Rolle<true> | DomainError> {
         if (!NameValidator.isNameValid(name)) {
             return new NameForRolleWithTrailingSpaceError();
         }
+
         const rolleToUpdate: Rolle<true> = new Rolle(
             organisationRepo,
             serviceProviderRepo,
             id,
             createdAt,
             updatedAt,
+            version,
             name,
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
             systemrechte,
             [],
+            istTechnisch,
+            serviceProviderData ?? [],
         );
-        //Replace service providers with new ones.
-        for (const serviceProviderId of serviceProviderIds) {
-            const result: void | DomainError = await rolleToUpdate.attachServiceProvider(serviceProviderId);
-            if (result instanceof DomainError) {
-                return result;
-            }
+        //Replace service providers with new ones
+        const attachmentResults: (void | DomainError)[] = await Promise.all(
+            serviceProviderIds.map(async (serviceProviderId: string) => {
+                return rolleToUpdate.attachServiceProvider(serviceProviderId);
+            }),
+        );
+
+        const error: void | DomainError = attachmentResults.find(
+            (result: void | DomainError) => result instanceof DomainError,
+        );
+        if (error instanceof DomainError) {
+            return error;
         }
         return rolleToUpdate;
     }
@@ -97,12 +118,15 @@ export class Rolle<WasPersisted extends boolean> {
         id: string,
         createdAt: Date,
         updatedAt: Date,
+        version: number,
         name: string,
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
+        serviceProviderData: ServiceProvider<true>[] | undefined,
     ): Rolle<WasPersisted> {
         return new Rolle(
             organisationRepo,
@@ -110,12 +134,15 @@ export class Rolle<WasPersisted extends boolean> {
             id,
             createdAt,
             updatedAt,
+            version,
             name,
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
+            istTechnisch,
+            serviceProviderData ?? [],
         );
     }
 
@@ -160,10 +187,38 @@ export class Rolle<WasPersisted extends boolean> {
         this.serviceProviderIds.push(serviceProviderId);
     }
 
-    public detatchServiceProvider(serviceProviderId: string): void | DomainError {
-        if (!this.serviceProviderIds.includes(serviceProviderId)) {
-            return new EntityNotFoundError('Rolle ServiceProvider Verknüpfung', serviceProviderId);
+    public detatchServiceProvider(serviceProviderIds: string[]): void | DomainError {
+        // Find any serviceProviderIds that are not currently attached
+        const missingServiceProviderIds: string[] = serviceProviderIds.filter(
+            (id: string) => !this.serviceProviderIds.includes(id),
+        );
+
+        // If any IDs are missing, return an error indicating which ones were not found
+        if (missingServiceProviderIds.length > 0) {
+            return new EntityNotFoundError(
+                'Rolle ServiceProvider Verknüpfung',
+                `The following service-provider IDs were not found: ${missingServiceProviderIds.join(', ')}`,
+            );
         }
-        this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => id !== serviceProviderId);
+
+        // Filter out all the serviceProviderIds that need to be detached
+        this.serviceProviderIds = this.serviceProviderIds.filter((id: string) => !serviceProviderIds.includes(id));
+    }
+
+    public async updateServiceProviders(serviceProviderIds: string[]): Promise<void | DomainError> {
+        const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
+            serviceProviderIds,
+        );
+
+        const missingIds: string[] = serviceProviderIds.filter((id: string) => !serviceProviderMap.has(id));
+        if (missingIds.length > 0) {
+            return new EntityNotFoundError('ServiceProvider', missingIds.join(', '));
+        }
+
+        this.serviceProviderIds = serviceProviderIds;
+    }
+
+    public setVersionForUpdate(version: number): void {
+        this.version = version;
     }
 }

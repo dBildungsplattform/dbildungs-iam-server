@@ -14,3 +14,14 @@ export enum Geschlecht {
     D = 'd',
     X = 'x',
 }
+export enum SortFieldPersonFrontend {
+    FAMILIENNAME = 'familienname',
+    VORNAME = 'vorname',
+    PERSONALNUMMER = 'personalnummer',
+    REFERRER = 'referrer',
+}
+
+export enum PersonLockOccasion {
+    KOPERS_GESPERRT = 'KOPERS_GESPERRT',
+    MANUELL_GESPERRT = 'MANUELL_GESPERRT',
+}

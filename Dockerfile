@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_BUILDER=node:20.11.1-alpine3.19
+ARG BASE_IMAGE_BUILDER=node:22.14.0-alpine3.21
 
 # Build Stage
 FROM $BASE_IMAGE_BUILDER as build
@@ -28,5 +28,5 @@ RUN npm ci --omit-dev
 
 COPY --from=build /app/dist/ ./dist/
 COPY /seeding/ /app/seeding/
-
+COPY /keycloak-migrations/ /app/keycloak-migrations/
 CMD [ "node", "dist/src/server/main.js" ]

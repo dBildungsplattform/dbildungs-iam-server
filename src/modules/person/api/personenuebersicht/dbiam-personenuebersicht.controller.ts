@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseFilters } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseFilters } from '@nestjs/common';
 import {
     ApiBearerAuth,
     ApiForbiddenResponse,
@@ -21,15 +21,12 @@ import { DBiamPersonenkontextRepo } from '../../../personenkontext/persistence/d
 import { RolleRepo } from '../../../rolle/repo/rolle.repo.js';
 import { OrganisationID, PersonID, RolleID } from '../../../../shared/types/aggregate-ids.types.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { ApiOkResponsePaginated, PagedResponse, PagingHeadersObject } from '../../../../shared/paging/index.js';
-import { PersonenuebersichtQueryParams } from './personenuebersicht-query.params.js';
+import { ApiOkResponsePaginated, PagingHeadersObject } from '../../../../shared/paging/index.js';
+import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
-import { PersonScope } from '../../persistence/person.scope.js';
-import { ScopeOrder } from '../../../../shared/persistence/scope.enums.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig, DataConfig } from '../../../../shared/config/index.js';
-import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
 import { OrganisationRepository } from '../../../organisation/persistence/organisation.repository.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
@@ -53,7 +50,7 @@ export class DBiamPersonenuebersichtController {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
 
-    @Get('')
+    @Post('')
     @ApiOkResponsePaginated(DBiamPersonenuebersichtResponse, {
         description: 'The personenuebersichten were successfully returned.',
         headers: PagingHeadersObject,
@@ -62,30 +59,13 @@ export class DBiamPersonenuebersichtController {
     @ApiForbiddenResponse({ description: 'Insufficient permission to get personenuebersichten.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting personenuebersichten.' })
     public async findPersonenuebersichten(
-        @Query() queryParams: PersonenuebersichtQueryParams,
+        @Body() bodyParams: PersonenuebersichtBodyParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<PagedResponse<DBiamPersonenuebersichtResponse>> {
-        // Find all organisations where user has permission
-        let organisationIDs: OrganisationID[] | undefined = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
-            true,
-        );
-
-        // Check if user has permission on root organisation
-        if (organisationIDs?.includes(this.ROOT_ORGANISATION_ID)) {
-            organisationIDs = undefined;
-        }
-
-        // Find all Personen on child-orgas (+root orgas)
-        const scope: PersonScope = new PersonScope()
-            .findBy({ organisationen: organisationIDs })
-            .sortBy('vorname', ScopeOrder.ASC)
-            .paged(queryParams.offset, queryParams.limit);
-
-        const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
+    ): Promise<{ items: DBiamPersonenuebersichtResponse[] }> {
+        const persons: Person<true>[] = await this.personRepository.findByIds(bodyParams.personIds, permissions);
 
         const items: DBiamPersonenuebersichtResponse[] = [];
-        if (total > 0) {
+        if (persons.length > 0) {
             const allPersonIds: PersonID[] = persons.map((person: Person<true>) => person.id);
             const allPersonenKontexte: Map<PersonID, Personenkontext<true>[]> =
                 await this.dbiamPersonenkontextRepo.findByPersonIds(allPersonIds);
@@ -112,30 +92,34 @@ export class DBiamPersonenuebersichtController {
                 this.config,
             );
 
-            persons.forEach((person: Person<true>) => {
-                const personenKontexte: Personenkontext<true>[] = allPersonenKontexte.get(person.id) ?? [];
-                const personenUebersichtenResult: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
-                    dbiamPersonenUebersicht.createZuordnungenForKontexte(personenKontexte, allRollen, allOrganisations);
-                if (personenUebersichtenResult instanceof EntityNotFoundError) {
-                    throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                        SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenUebersichtenResult),
+            await Promise.all(
+                persons.map(async (person: Person<true>) => {
+                    const personenKontexte: Personenkontext<true>[] = allPersonenKontexte.get(person.id) ?? [];
+                    const personenUebersichtenResult: [DBiamPersonenzuordnungResponse[], Date?] | EntityNotFoundError =
+                        await dbiamPersonenUebersicht.createZuordnungenForKontexte(
+                            personenKontexte,
+                            allRollen,
+                            allOrganisations,
+                        );
+
+                    if (personenUebersichtenResult instanceof EntityNotFoundError) {
+                        throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                            SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(personenUebersichtenResult),
+                        );
+                    }
+                    items.push(
+                        new DBiamPersonenuebersichtResponse(
+                            person,
+                            personenUebersichtenResult[0],
+                            personenUebersichtenResult[1],
+                        ),
                     );
-                }
-                items.push(
-                    new DBiamPersonenuebersichtResponse(
-                        person,
-                        personenUebersichtenResult[0],
-                        personenUebersichtenResult[1],
-                    ),
-                );
-            });
+                }),
+            );
         }
 
         return {
             items,
-            offset: queryParams.offset ?? 0,
-            limit: queryParams.limit ?? 0,
-            total,
         };
     }
 

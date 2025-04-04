@@ -24,19 +24,27 @@ describe('configloader', () => {
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
                     ERROR_PAGE_REDIRECT: '/error',
+                    STATUS_REDIRECT_URL: '/',
+                },
+                FEATUREFLAG: {
+                    FEATURE_FLAG_ROLLE_BEARBEITEN: true,
+                    FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: true,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
                     DB_NAME: 'test-db',
                     USE_SSL: false,
                 },
                 KEYCLOAK: {
                     BASE_URL: 'localhost:8080',
+                    EXTERNAL_BASE_URL: 'localhost:8080',
                     ADMIN_CLIENT_ID: 'admin-cli',
                     ADMIN_REALM_NAME: 'master',
                     REALM_NAME: 'schulportal',
                     CLIENT_ID: 'schulportal',
                     TEST_CLIENT_ID: 'schulportal-test',
+                    SERVICE_CLIENT_ID: 'spsh-service',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -50,23 +58,69 @@ describe('configloader', () => {
                 LDAP: {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
+                    ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
+                },
+                PRIVACYIDEA: {
+                    ENDPOINT: 'http://localhost:5000',
+                    USERNAME: 'admin',
+                    PASSWORD: 'admin',
+                    USER_RESOLVER: 'mariadb_resolver',
+                    REALM: 'defrealm',
+                },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
+                OX: {
+                    ENABLED: true,
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
+                    USERNAME: 'username',
+                },
+                IMPORT: {
+                    CSV_FILE_MAX_SIZE_IN_MB: 10,
+                    CSV_MAX_NUMBER_OF_USERS: 2001,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                    PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
+                },
+                SYSTEM: {
+                    RENAME_WAITING_TIME_IN_SECONDS: 2,
+                    STEP_UP_TIMEOUT_ENABLED: 'true',
+                    STEP_UP_TIMEOUT_IN_SECONDS: 10,
+                },
+                HEADER_API_KEY: {
+                    INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
                 DB: { SECRET: 'SuperSecretSecret' },
-                KEYCLOAK: { ADMIN_SECRET: 'AdminClientSecret', CLIENT_SECRET: 'ClientSecret' },
+                KEYCLOAK: {
+                    ADMIN_SECRET: 'AdminClientSecret',
+                    CLIENT_SECRET: 'ClientSecret',
+                    SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
+                },
                 LDAP: { ADMIN_PASSWORD: 'password' },
                 FRONTEND: { SESSION_SECRET: 'SessionSecret' },
+                FEATUREFLAG: {},
                 REDIS: { PASSWORD: 'password' },
                 ITSLEARNING: {
+                    PASSWORD: 'password',
+                },
+                OX: {
                     PASSWORD: 'password',
                 },
             };
@@ -81,6 +135,7 @@ describe('configloader', () => {
             });
 
             it('should return validated JsonConfig', () => {
+                jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
                 const validatedConfig: JsonConfig = loadConfigFiles();
                 expect(validatedConfig).toBeInstanceOf(JsonConfig);
                 expect(readFileSyncSpy).toHaveBeenCalledTimes(2);
@@ -88,6 +143,10 @@ describe('configloader', () => {
         });
 
         describe('When there is no secrets config', () => {
+            beforeAll(() => {
+                jest.clearAllMocks();
+            });
+
             const config: DeepPartial<JsonConfig> = {
                 HOST: {
                     PORT: 8080,
@@ -103,15 +162,22 @@ describe('configloader', () => {
                     DEFAULT_LOGIN_REDIRECT: '/login?done',
                     LOGOUT_REDIRECT: '/logout',
                     ERROR_PAGE_REDIRECT: '/error',
+                    STATUS_REDIRECT_URL: '/',
+                },
+                FEATUREFLAG: {
+                    FEATURE_FLAG_ROLLE_BEARBEITEN: true,
+                    FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: true,
                 },
                 DB: {
                     CLIENT_URL: 'postgres://localhost:5432',
+                    USERNAME: 'admin',
                     DB_NAME: 'test-db',
                     USE_SSL: false,
                     SECRET: 'gehaim',
                 },
                 KEYCLOAK: {
                     BASE_URL: 'localhost:8080',
+                    EXTERNAL_BASE_URL: 'localhost:8080',
                     ADMIN_CLIENT_ID: 'admin-cli',
                     ADMIN_REALM_NAME: 'master',
                     REALM_NAME: 'schulportal',
@@ -119,6 +185,8 @@ describe('configloader', () => {
                     ADMIN_SECRET: 'geheimer Admin',
                     CLIENT_SECRET: 'geheimer client',
                     TEST_CLIENT_ID: 'schulportal-test',
+                    SERVICE_CLIENT_ID: 'spsh-service',
+                    SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
                 },
                 REDIS: {
                     HOST: 'localhost',
@@ -134,14 +202,53 @@ describe('configloader', () => {
                     URL: 'ldap://localhost',
                     BIND_DN: 'cn=admin,dc=schule-sh,dc=de',
                     ADMIN_PASSWORD: 'password',
+                    BASE_DN: 'dc=schule-sh,dc=de',
                 },
                 ITSLEARNING: {
-                    ENABLED: 'true',
+                    ENABLED: true,
                     ENDPOINT: 'http://itslearning',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
+                },
+                PRIVACYIDEA: {
+                    ENDPOINT: 'http://localhost:5000',
+                    USERNAME: 'admin',
+                    PASSWORD: 'admin',
+                    USER_RESOLVER: 'mariadb_resolver',
+                    REALM: 'defrealm',
+                },
+                VIDIS: {
+                    BASE_URL: 'dummy-url',
+                    USERNAME: 'dummy-username',
+                    PASSWORD: 'dummy-password',
+                    REGION_NAME: 'dummy-region',
+                    KEYCLOAK_GROUP: 'VIDIS-service',
+                    KEYCLOAK_ROLE: 'VIDIS-user',
+                },
+                OX: {
+                    ENABLED: true,
+                    ENDPOINT: 'https://ox_ip:ox_port/webservices/OXUserService',
+                    CONTEXT_ID: '1337',
+                    CONTEXT_NAME: 'context1',
+                    USERNAME: 'username',
+                    PASSWORD: 'password',
+                },
+                IMPORT: {
+                    CSV_FILE_MAX_SIZE_IN_MB: 10,
+                    CSV_MAX_NUMBER_OF_USERS: 2001,
+                    PASSPHRASE_SECRET: '44abDqJk2qgwRbpGfO0VZx7DpXeFsm7R',
+                    PASSPHRASE_SALT: 'YDp6fYkbUcj4ZkyAOnbAHGQ9O72htc5M',
+                },
+                SYSTEM: {
+                    RENAME_WAITING_TIME_IN_SECONDS: 2,
+                    STEP_UP_TIMEOUT_ENABLED: 'true',
+                    STEP_UP_TIMEOUT_IN_SECONDS: 10,
+                },
+                HEADER_API_KEY: {
+                    INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
             };
 

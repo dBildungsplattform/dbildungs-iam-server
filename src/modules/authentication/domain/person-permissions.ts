@@ -1,4 +1,7 @@
+import { uniq } from 'lodash-es';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Person } from '../../person/domain/person.js';
@@ -7,7 +10,6 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { IPersonPermissions } from './person-permissions.interface.js';
 
 export type PersonFields = Pick<
     Person<true>,
@@ -23,17 +25,19 @@ export type PersonFields = Pick<
 >;
 type PersonKontextFields = Pick<Personenkontext<true>, 'rolleId' | 'organisationId'>;
 type RolleFields = Pick<Rolle<true>, 'systemrechte' | 'serviceProviderIds'>;
-export type PersonenkontextRolleFields = {
-    organisationsId: OrganisationID;
+export type PersonenkontextRolleWithOrganisation = {
+    organisation: Organisation<true>;
     rolle: RolleFields;
 };
+
+export type PermittedOrgas = { all: true } | { all: false; orgaIds: OrganisationID[] };
 
 export class PersonPermissions implements IPersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
     private cachedPersonFields: PersonFields;
 
-    private cachedRollenFields?: PersonenkontextRolleFields[];
+    private cachedRollenFields?: PersonenkontextRolleWithOrganisation[];
 
     public constructor(
         private personenkontextRepo: DBiamPersonenkontextRepo,
@@ -47,7 +51,7 @@ export class PersonPermissions implements IPersonPermissions {
             vorname: person.vorname,
             familienname: person.familienname,
             rufname: person.rufname,
-            username: person.username,
+            username: person.username ?? person.referrer,
             geschlecht: person.geschlecht,
             geburtsdatum: person.geburtsdatum,
             updatedAt: person.updatedAt,
@@ -62,13 +66,14 @@ export class PersonPermissions implements IPersonPermissions {
         });
     }
 
-    /**
-     * @deprecated Inefficient
-     */
     public async getOrgIdsWithSystemrecht(
         systemrechte: RollenSystemRecht[],
         withChildren: boolean = false,
-    ): Promise<OrganisationID[]> {
+        matchAll: boolean = true,
+    ): Promise<PermittedOrgas> {
+        if (await this.hasSystemrechteAtRootOrganisation(systemrechte, matchAll)) {
+            return { all: true };
+        }
         const organisationIDs: Set<OrganisationID> = new Set();
 
         const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
@@ -78,7 +83,12 @@ export class PersonPermissions implements IPersonPermissions {
 
         for (const pk of personKontextFields) {
             const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
-            if (rolle && systemrechte.every((r: RollenSystemRecht) => rolle.hasSystemRecht(r))) {
+            if (
+                rolle &&
+                (matchAll
+                    ? systemrechte.every((r: RollenSystemRecht) => rolle.hasSystemRecht(r))
+                    : systemrechte.some((r: RollenSystemRecht) => rolle.hasSystemRecht(r)))
+            ) {
                 organisationIDs.add(pk.organisationId);
             }
         }
@@ -91,12 +101,16 @@ export class PersonPermissions implements IPersonPermissions {
             childOrgas.forEach((orga: Organisation<true>) => organisationIDs.add(orga.id));
         }
 
-        return Array.from(organisationIDs);
+        return {
+            all: false,
+            orgaIds: Array.from(organisationIDs),
+        };
     }
 
     public async hasSystemrechteAtOrganisation(
         organisationId: OrganisationID,
         systemrechte: RollenSystemRecht[],
+        matchAll: boolean = true,
     ): Promise<boolean> {
         const checks: Promise<boolean>[] = systemrechte.map(
             (systemrecht: RollenSystemRecht): Promise<boolean> =>
@@ -104,11 +118,16 @@ export class PersonPermissions implements IPersonPermissions {
         );
         const results: boolean[] = await Promise.all(checks);
 
-        return results.every((result: boolean): boolean => result);
+        return matchAll
+            ? results.every((result: boolean): boolean => result)
+            : results.some((result: boolean): boolean => result);
     }
 
-    public async hasSystemrechteAtRootOrganisation(systemrechte: RollenSystemRecht[]): Promise<boolean> {
-        return this.hasSystemrechteAtOrganisation(this.organisationRepo.ROOT_ORGANISATION_ID, systemrechte);
+    public async hasSystemrechteAtRootOrganisation(
+        systemrechte: RollenSystemRecht[],
+        matchAll: boolean = true,
+    ): Promise<boolean> {
+        return this.hasSystemrechteAtOrganisation(this.organisationRepo.ROOT_ORGANISATION_ID, systemrechte, matchAll);
     }
 
     public async hasSystemrechtAtOrganisation(
@@ -152,20 +171,27 @@ export class PersonPermissions implements IPersonPermissions {
         return this.cachedPersonenkontextsFields;
     }
 
-    public async getPersonenkontextewithRoles(): Promise<PersonenkontextRolleFields[]> {
+    public async getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]> {
         if (!this.cachedRollenFields) {
             const personKontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
             const rollen: Map<RolleID, Rolle<true>> = await this.rolleRepo.findByIds(
                 personKontextFields.map((pk: PersonKontextFields) => pk.rolleId),
+            );
+            const organisationenIds: Array<OrganisationID> = uniq(
+                personKontextFields.map((pk: PersonKontextFields) => pk.organisationId),
+            );
+            const organisationen: Map<OrganisationID, Organisation<true>> = await this.organisationRepo.findByIds(
+                organisationenIds,
             );
 
             this.cachedRollenFields = [];
 
             for (const pk of personKontextFields) {
                 const rolle: Rolle<true> | undefined = rollen.get(pk.rolleId);
-                if (rolle) {
+                const organisation: Organisation<true> | undefined = organisationen.get(pk.organisationId);
+                if (rolle && organisation) {
                     this.cachedRollenFields.push({
-                        organisationsId: pk.organisationId,
+                        organisation,
                         rolle: {
                             systemrechte: rolle.systemrechte,
                             serviceProviderIds: rolle.serviceProviderIds,
@@ -191,5 +217,21 @@ export class PersonPermissions implements IPersonPermissions {
 
     public get personFields(): PersonFields {
         return this.cachedPersonFields;
+    }
+
+    public async hasOrgVerwaltenRechtAtOrga(typ: OrganisationsTyp, administriertVon?: string): Promise<boolean> {
+        if (typ === OrganisationsTyp.KLASSE) {
+            const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =
+                await this.organisationRepo.findRootDirectChildren();
+            return this.hasSystemrechtAtOrganisation(
+                administriertVon ?? oeffentlich?.id ?? this.organisationRepo.ROOT_ORGANISATION_ID,
+                RollenSystemRecht.KLASSEN_VERWALTEN,
+            );
+        } else if (typ === OrganisationsTyp.SCHULE) {
+            return this.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SCHULEN_VERWALTEN]);
+        } else if (typ === OrganisationsTyp.TRAEGER) {
+            return this.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SCHULTRAEGER_VERWALTEN]);
+        }
+        return false;
     }
 }

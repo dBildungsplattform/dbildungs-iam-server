@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { ItsLearningRoleType } from '../types/role.enum.js';
+import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { CreatePersonAction } from './create-person.action.js';
 
 describe('CreatePersonAction', () => {
@@ -11,7 +11,8 @@ describe('CreatePersonAction', () => {
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 username: faker.internet.userName(),
-                institutionRoleType: faker.helpers.enumValue(ItsLearningRoleType),
+                institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
+                email: faker.internet.email(),
             });
 
             expect(action.buildRequest()).toBeDefined();
@@ -25,7 +26,8 @@ describe('CreatePersonAction', () => {
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 username: faker.internet.userName(),
-                institutionRoleType: faker.helpers.enumValue(ItsLearningRoleType),
+                institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
+                email: faker.internet.email(),
             });
 
             expect(action.parseBody()).toEqual({

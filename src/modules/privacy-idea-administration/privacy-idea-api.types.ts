@@ -91,7 +91,7 @@ export type PrivacyIdeaResponseTokens = {
     signature: string;
 };
 
-export type AuthenticaitonResponse = {
+export type AuthenticationResponse = {
     id: number;
     jsonrpc: string;
     result: {
@@ -162,4 +162,131 @@ export type UserResponse = {
     version: string;
     versionnumber: string;
     signature: string;
+};
+
+export type ResetTokenResponse = {
+    id: number;
+    jsonrpc: string;
+    result: {
+        status: boolean;
+        value: number;
+    };
+    time: number;
+    version: string;
+    versionNumber: string;
+    signature: string;
+};
+
+export type ResetTokenPayload = {
+    serial: string;
+};
+
+export type TokenOTPSerialResponse = {
+    id: number;
+    jsonrpc: string;
+    result: {
+        status: boolean;
+        value: {
+            count: number;
+            serial: string | null;
+        };
+    };
+    time: number;
+    version: string;
+    versionnumber: string;
+    signature: string;
+};
+
+export type AssignTokenPayload = {
+    serial: string;
+    user: string;
+    realm: string;
+};
+
+export type TokenVerificationResponse = {
+    id: number;
+    jsonrpc: string;
+    result: {
+        status: boolean;
+        value: {
+            count: number;
+            current: number;
+            next: number | null;
+            prev: number | null;
+            tokens: {
+                active: boolean;
+                count: number;
+                count_window: number;
+                description: string;
+                failcount: number;
+                id: number;
+                info: {
+                    hashlib: string;
+                    timeShift: string;
+                    timeStep: string;
+                    timeWindow: string;
+                    tokenkind: string;
+                };
+                locked: boolean;
+                maxfail: number;
+                otplen: number;
+                realms: string[];
+                resolver: string;
+                revoked: boolean;
+                rollout_state: string;
+                serial: string;
+                sync_window: number;
+                tokengroup: string[];
+                tokentype: string;
+                user_id: string;
+                user_realm: string;
+                username: string;
+            }[];
+        };
+    };
+    time: number;
+    version: string;
+    versionnumber: string;
+    signature: string;
+};
+
+export type AssignTokenResponse = {
+    id: number;
+    jsonrpc: string;
+    result: {
+        status: boolean;
+        value: boolean;
+    };
+    time: number;
+    version: string;
+    versionnumber: string;
+    signature: string;
+};
+
+export type VerificationResponse = {
+    detail: Detail | null;
+    id: number;
+    jsonrpc: string;
+    result: Result;
+    time: number;
+    version: string;
+    versionnumber?: string;
+    signature: string;
+};
+
+type Detail = {
+    rollout_state: string;
+    serial: string;
+    threadid: number;
+};
+
+type Result = {
+    status: boolean;
+    value?: boolean;
+    error?: ErrorDetail;
+};
+
+type ErrorDetail = {
+    code: number;
+    message: string;
 };

@@ -8,12 +8,13 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { FrontendConfig } from '../../../shared/config/frontend.config.js';
 import { AuthenticationErrorI18nTypes } from './dbiam-authentication.error.js';
+import { StepUpLevel } from '../passport/oidc.strategy.js';
 
 @Injectable()
 export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
     public constructor(
-        private logger: ClassLogger,
-        private configService: ConfigService<ServerConfig>,
+        private readonly logger: ClassLogger,
+        private readonly configService: ConfigService<ServerConfig>,
     ) {
         super();
     }
@@ -21,11 +22,19 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
     public override async canActivate(context: ExecutionContext): Promise<boolean> {
         const request: Request = context.switchToHttp().getRequest<Request>();
         const res: Response = context.switchToHttp().getResponse<Response>();
+        const requiredStepUpLevel: StepUpLevel = request.query['requiredStepUpLevel'] as StepUpLevel;
 
         if (request.query['redirectUrl']) {
             request.session.redirectUrl = request.query['redirectUrl'] as string;
         }
-        if (request.isAuthenticated()) {
+
+        if (requiredStepUpLevel) {
+            request.session.requiredStepupLevel = requiredStepUpLevel;
+        }
+        if (
+            request.isAuthenticated() &&
+            request.session.requiredStepupLevel === (request.passportUser?.stepUpLevel ?? StepUpLevel.NONE)
+        ) {
             return true;
         }
 
@@ -35,11 +44,11 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
             }
             await super.logIn(request);
         } catch (err) {
-            this.logger.info(JSON.stringify(err));
+            this.logger.logUnknownAsError('logIn failed', err);
+            const frontendConfig: FrontendConfig = this.configService.getOrThrow<FrontendConfig>('FRONTEND');
 
             if (err instanceof KeycloakUserNotFoundError) {
                 //Redirect to error page
-                const frontendConfig: FrontendConfig = this.configService.getOrThrow<FrontendConfig>('FRONTEND');
                 res.setHeader('location', frontendConfig.ERROR_PAGE_REDIRECT).status(403);
                 const msg: Record<string, unknown> = {
                     DbiamAuthenticationError: {
@@ -50,9 +59,19 @@ export class LoginGuard extends AuthGuard(['jwt', 'oidc']) {
                 throw new HttpFoundException(msg);
             }
 
-            return false;
+            request.session.passport = { user: { redirect_uri: frontendConfig.OIDC_CALLBACK_URL } };
+            return true;
         }
-
-        return request.isAuthenticated();
+        const isAuthenticated: boolean = request.isAuthenticated();
+        if (isAuthenticated) {
+            this.logger.info(
+                `Benutzer ${request.passportUser?.userinfo.preferred_username} hat sich im Schulportal angemeldet.`,
+            );
+        } else {
+            this.logger.error(
+                `Fehlergeschlagener Login mit Benutzer ${request.passportUser?.userinfo.preferred_username}`,
+            );
+        }
+        return isAuthenticated;
     }
 }

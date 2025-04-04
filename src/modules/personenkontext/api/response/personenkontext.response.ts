@@ -2,46 +2,39 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Jahrgangsstufe, Personenstatus, SichtfreigabeType } from '../../domain/personenkontext.enums.js';
 import { CreatedPersonenkontextOrganisation } from '../created-personenkontext-organisation.js';
 import { LoeschungResponse } from '../../../person/api/loeschung.response.js';
-import { AutoMap } from '@automapper/classes';
+import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 
 export class PersonenkontextResponse {
-    @AutoMap()
     @ApiProperty()
     public id!: string;
 
-    @AutoMap()
     @ApiProperty({ nullable: true })
     public referrer?: string;
 
-    @AutoMap()
     @ApiProperty()
     public mandant!: string;
 
-    @AutoMap(() => CreatedPersonenkontextOrganisation)
     @ApiProperty({ type: CreatedPersonenkontextOrganisation })
     public organisation!: CreatedPersonenkontextOrganisation;
 
-    @AutoMap()
     @ApiProperty({ nullable: true })
-    public roleName?: string;
+    public rollenart?: RollenArt;
 
-    @AutoMap(() => String)
+    @ApiProperty({ nullable: true })
+    public rollenname?: string;
+
     @ApiProperty({ enum: Personenstatus, nullable: true })
     public personenstatus?: Personenstatus;
 
-    @AutoMap(() => String)
     @ApiProperty({ enum: Jahrgangsstufe, nullable: true })
     public jahrgangsstufe?: Jahrgangsstufe;
 
-    @AutoMap(() => String)
     @ApiProperty({ enum: SichtfreigabeType, nullable: true })
     public sichtfreigabe?: SichtfreigabeType;
 
-    @AutoMap(() => LoeschungResponse)
     @ApiProperty({ type: LoeschungResponse, nullable: true })
     public loeschung?: LoeschungResponse;
 
-    @AutoMap()
     @ApiProperty()
     public revision!: string;
 
@@ -55,5 +48,7 @@ export class PersonenkontextResponse {
         this.sichtfreigabe = props.sichtfreigabe;
         this.loeschung = props.loeschung;
         this.revision = props.revision;
+        this.rollenart = props.rollenart;
+        this.rollenname = props.rollenname;
     }
 }

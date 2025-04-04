@@ -1,10 +1,13 @@
 import {
     ServiceProviderKategorie,
+    ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../../modules/service-provider/domain/service-provider.enum.js';
 
 export class ServiceProviderFile {
     public id!: number;
+
+    public overrideId?: string;
 
     public name!: string;
 
@@ -23,4 +26,10 @@ export class ServiceProviderFile {
     public keycloakGroup?: string;
 
     public keycloakRole?: string;
+
+    public externalSystem?: ServiceProviderSystem;
+
+    public requires2fa!: boolean;
+
+    public vidisAngebotId?: string;
 }

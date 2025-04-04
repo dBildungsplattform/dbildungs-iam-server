@@ -8,6 +8,7 @@ import { FrontendConfig, HostConfig, KeycloakConfig, ServerConfig } from '../sha
 import { GlobalValidationPipe } from '../shared/validation/index.js';
 import { ServerModule } from './server.module.js';
 import { GlobalPagingHeadersInterceptor } from '../shared/paging/index.js';
+import { VersioningType } from '@nestjs/common';
 
 async function bootstrap(): Promise<void> {
     const app: NestExpressApplication = await NestFactory.create<NestExpressApplication>(ServerModule);
@@ -15,6 +16,10 @@ async function bootstrap(): Promise<void> {
     const backendHostname: string | undefined = configService.getOrThrow<HostConfig>('HOST').HOSTNAME;
     const port: number = configService.getOrThrow<HostConfig>('HOST').PORT;
     const keycloakConfig: KeycloakConfig = configService.getOrThrow<KeycloakConfig>('KEYCLOAK');
+
+    app.enableVersioning({
+        type: VersioningType.URI,
+    });
 
     const swagger: Omit<OpenAPIObject, 'paths'> = new DocumentBuilder()
         .setTitle('dBildungs IAM')
@@ -24,9 +29,9 @@ async function bootstrap(): Promise<void> {
             type: 'oauth2',
             flows: {
                 authorizationCode: {
-                    authorizationUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/auth`,
-                    tokenUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
-                    refreshUrl: `${keycloakConfig.BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
+                    authorizationUrl: `${keycloakConfig.EXTERNAL_BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/auth`,
+                    tokenUrl: `${keycloakConfig.EXTERNAL_BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
+                    refreshUrl: `${keycloakConfig.EXTERNAL_BASE_URL}/realms/${keycloakConfig.REALM_NAME}/protocol/openid-connect/token`,
                     scopes: {},
                 },
             },
@@ -42,7 +47,7 @@ async function bootstrap(): Promise<void> {
     app.useGlobalInterceptors(new GlobalPagingHeadersInterceptor());
     app.useGlobalPipes(new GlobalValidationPipe());
     app.setGlobalPrefix('api', {
-        exclude: ['health'],
+        exclude: ['health', 'metrics', 'keycloakinternal/externaldata'],
     });
 
     let redirectUrl: string;

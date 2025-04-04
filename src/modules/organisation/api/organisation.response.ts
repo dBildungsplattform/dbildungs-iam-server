@@ -15,6 +15,9 @@ export class OrganisationResponse {
     public readonly administriertVon?: string;
 
     @ApiProperty({ nullable: true })
+    public readonly zugehoerigZu?: string;
+
+    @ApiProperty({ nullable: true })
     public readonly kennung?: string;
 
     @ApiProperty()
@@ -32,14 +35,23 @@ export class OrganisationResponse {
     @ApiProperty({ enum: Traegerschaft, enumName: TraegerschaftTypName })
     public traegerschaft?: Traegerschaft;
 
+    @ApiProperty({ required: true })
+    public itslearningEnabled!: boolean;
+
+    @ApiProperty()
+    public version: number;
+
     public constructor(organisation: Organisation<true>) {
         this.id = organisation.id;
         this.administriertVon = organisation.administriertVon;
+        this.zugehoerigZu = organisation.zugehoerigZu;
         this.kennung = organisation.kennung;
         this.name = organisation.name!;
         this.namensergaenzung = organisation.namensergaenzung;
         this.kuerzel = organisation.kuerzel;
         this.typ = organisation.typ!;
         this.traegerschaft = organisation.traegerschaft;
+        this.itslearningEnabled = organisation.itslearningEnabled;
+        this.version = organisation.version;
     }
 }

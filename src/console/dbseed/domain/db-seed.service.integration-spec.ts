@@ -21,6 +21,8 @@ import { PersonModule } from '../../../modules/person/person.module.js';
 import { DbSeedModule } from '../db-seed.module.js';
 import { PersonenKontextModule } from '../../../modules/personenkontext/personenkontext.module.js';
 import { VornameForPersonWithTrailingSpaceError } from '../../../modules/person/domain/vorname-with-trailing-space.error.js';
+import { OxUserBlacklistRepo } from '../../../modules/person/persistence/ox-user-blacklist.repo.js';
+import { EntityAggregateMapper } from '../../../modules/person/mapper/entity-aggregate.mapper.js';
 
 describe('DbSeedServiceIntegration', () => {
     let module: TestingModule;
@@ -42,7 +44,7 @@ describe('DbSeedServiceIntegration', () => {
                 LoggingTestModule,
                 PersonenKontextModule,
             ],
-            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo],
+            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo, OxUserBlacklistRepo, EntityAggregateMapper],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))

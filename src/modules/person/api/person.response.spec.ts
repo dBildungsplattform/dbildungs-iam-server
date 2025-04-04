@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { Vertrauensstufe } from '../domain/person.enums.js';
+import { PersonLockOccasion, Vertrauensstufe } from '../domain/person.enums.js';
 import { plainToInstance } from 'class-transformer';
 import { PersonResponse } from './person.response.js';
 
@@ -28,6 +28,23 @@ describe('PersonResponseDDD', () => {
         lokalisierung: faker.location.country(),
         vertrauensstufe: Vertrauensstufe.VOLL,
         revision: '1',
+        lastModified: faker.date.past(),
+        userLock: [
+            {
+                personId: faker.string.uuid(),
+                locked_by: 'test',
+                created_at: new Date().toISOString(),
+                locked_until: undefined,
+                lock_occasion: PersonLockOccasion.KOPERS_GESPERRT,
+            },
+            {
+                personId: faker.string.uuid(),
+                locked_by: 'test',
+                created_at: new Date().toISOString(),
+                locked_until: undefined,
+                lock_occasion: PersonLockOccasion.MANUELL_GESPERRT,
+            },
+        ],
     };
 
     it('should convert plain object of person response to a class of person response', () => {
@@ -41,6 +58,8 @@ describe('PersonResponseDDD', () => {
             lokalisierung: personResponse.lokalisierung,
             vertrauensstufe: personResponse.vertrauensstufe,
             revision: personResponse.revision,
+            lastModified: personResponse.lastModified,
+            userLock: personResponse.userLock,
         };
         const mappedParams: PersonResponse = plainToInstance(PersonResponse, person, {});
         expect(mappedParams).toBeInstanceOf(PersonResponse);

@@ -1,16 +1,17 @@
 import { EntityName } from '@mikro-orm/core';
 import { ScopeBase } from '../../../shared/persistence/scope-base.js';
 import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
-import { Personenstatus, Rolle, SichtfreigabeType } from '../domain/personenkontext.enums.js';
+import { Personenstatus, SichtfreigabeType } from '../domain/personenkontext.enums.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 type FindProps = {
     personId: string;
     referrer: string;
-    rolle: Rolle;
     personenstatus: Personenstatus;
     sichtfreigabe: SichtfreigabeType;
+    rolleart: RollenArt;
 };
 
 export class PersonenkontextScope extends ScopeBase<PersonenkontextEntity> {
@@ -23,7 +24,6 @@ export class PersonenkontextScope extends ScopeBase<PersonenkontextEntity> {
             {
                 personId: findProps.personId,
                 referrer: findProps.referrer,
-                rolle: findProps.rolle,
                 personenstatus: findProps.personenstatus,
                 sichtfreigabe: findProps.sichtfreigabe,
             },
@@ -37,6 +37,16 @@ export class PersonenkontextScope extends ScopeBase<PersonenkontextEntity> {
         if (organisationIDs) {
             this.findByQuery({
                 organisationId: { $in: organisationIDs },
+            });
+        }
+
+        return this;
+    }
+
+    public findByRollen(rollen: RollenArt[] | undefined): this {
+        if (rollen) {
+            this.findByQuery({
+                rolleId: { rollenart: { $in: rollen } },
             });
         }
 

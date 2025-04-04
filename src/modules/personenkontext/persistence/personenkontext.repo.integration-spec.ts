@@ -5,6 +5,7 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
     DoFactory,
+    LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { PersonenkontextDo } from '../domain/personenkontext.do.js';
@@ -19,6 +20,8 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { EventModule } from '../../../core/eventbus/event.module.js';
 import { mapAggregateToData } from '../../person/persistence/person.repository.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('PersonenkontextRepo', () => {
     let module: TestingModule;
@@ -26,6 +29,7 @@ describe('PersonenkontextRepo', () => {
     let orm: MikroORM;
     let em: EntityManager;
     let rolleRepo: RolleRepo;
+    let organisationRepo: OrganisationRepository;
 
     const createPersonEntity = (): PersonEntity => {
         const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
@@ -35,10 +39,12 @@ describe('PersonenkontextRepo', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
+                LoggingTestModule,
                 ConfigTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
                 EventModule,
+                LoggingTestModule,
             ],
             providers: [
                 PersonPersistenceMapperProfile,
@@ -53,6 +59,7 @@ describe('PersonenkontextRepo', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         rolleRepo = module.get(RolleRepo);
+        organisationRepo = module.get(OrganisationRepository);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -66,6 +73,10 @@ describe('PersonenkontextRepo', () => {
         await DatabaseTestModule.clearDatabase(orm);
     });
 
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
     it('should be defined', () => {
         expect(sut).toBeDefined();
     });
@@ -74,9 +85,14 @@ describe('PersonenkontextRepo', () => {
         describe('When referenced person entity exists', () => {
             it('should create a personenkontext', async () => {
                 const newPerson: PersonEntity = createPersonEntity();
-                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: RolleAggregate<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
 
                 await em.persistAndFlush(newPerson);
+
+                const organisation1: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
                     vorname: newPerson.vorname,
@@ -84,6 +100,7 @@ describe('PersonenkontextRepo', () => {
                 const newPersonenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontextDo(false, {
                     personId: personEntity.id,
                     rolleId: rolle.id,
+                    organisationId: organisation1.id,
                 });
 
                 const savedPersonenkontext: Option<PersonenkontextDo<true>> = await sut.save(newPersonenkontext);
@@ -95,9 +112,14 @@ describe('PersonenkontextRepo', () => {
 
             it('should update a personenkontext and should not create a new personenkontext', async () => {
                 const newPerson: PersonEntity = createPersonEntity();
-                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: RolleAggregate<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
 
                 await em.persistAndFlush(newPerson);
+
+                const organisation1: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
                     vorname: newPerson.vorname,
@@ -105,6 +127,7 @@ describe('PersonenkontextRepo', () => {
                 const newPersonenkontext: PersonenkontextDo<false> = DoFactory.createPersonenkontextDo(false, {
                     personId: personEntity.id,
                     rolleId: rolle.id,
+                    organisationId: organisation1.id,
                 });
 
                 const savedPersonenkontext: Option<PersonenkontextDo<true>> = await sut.save(newPersonenkontext);
@@ -118,9 +141,14 @@ describe('PersonenkontextRepo', () => {
 
             it('should update a personenkontext with id and should not create a new personenkontext', async () => {
                 const newPerson: PersonEntity = createPersonEntity();
-                const rolle: RolleAggregate<true> = await rolleRepo.save(DoFactory.createRolle(false));
+                const rolle: RolleAggregate<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                if (rolle instanceof DomainError) throw Error();
 
                 await em.persistAndFlush(newPerson);
+
+                const organisation1: Organisation<true> = await organisationRepo.save(
+                    DoFactory.createOrganisation(false),
+                );
 
                 const personEntity: PersonEntity = await em.findOneOrFail(PersonEntity, {
                     vorname: newPerson.vorname,
@@ -128,6 +156,7 @@ describe('PersonenkontextRepo', () => {
                 const newPersonenkontext: PersonenkontextDo<true> = DoFactory.createPersonenkontextDo(true, {
                     personId: personEntity.id,
                     rolleId: rolle.id,
+                    organisationId: organisation1.id,
                 });
 
                 const savedPersonenkontext: Option<PersonenkontextDo<true>> = await sut.save(newPersonenkontext);

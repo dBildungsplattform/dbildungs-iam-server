@@ -8,8 +8,6 @@ import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.e
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { EventService } from '../../../core/eventbus/index.js';
-import { PersonenkontextDeletedEvent } from '../../../shared/events/personenkontext-deleted.event.js';
-import { PersonenkontextCreatedEvent } from '../../../shared/events/personenkontext-created.event.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -21,12 +19,20 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { IPersonPermissions } from '../../authentication/domain/person-permissions.interface.js';
+import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { CheckRollenartSpecification } from '../specification/nur-gleiche-rolle.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
+import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
+import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
         private readonly eventService: EventService,
+        private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         private readonly personRepo: PersonRepository,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
@@ -36,11 +42,14 @@ export class PersonenkontexteUpdate {
         private readonly count: number,
         private readonly dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         private readonly permissions: IPersonPermissions,
+        private readonly personalnummer?: string,
     ) {}
 
     public static createNew(
         eventService: EventService,
+        logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
         personRepo: PersonRepository,
         rolleRepo: RolleRepo,
         organisationRepo: OrganisationRepository,
@@ -50,10 +59,13 @@ export class PersonenkontexteUpdate {
         count: number,
         dBiamPersonenkontextBodyParams: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
+        personalnummer?: string,
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
             eventService,
+            logger,
             dBiamPersonenkontextRepo,
+            dBiamPersonenkontextRepoInternal,
             personRepo,
             rolleRepo,
             organisationRepo,
@@ -63,9 +75,11 @@ export class PersonenkontexteUpdate {
             count,
             dBiamPersonenkontextBodyParams,
             permissions,
+            personalnummer,
         );
     }
 
+    /* eslint-disable no-await-in-loop */
     private async getSentPersonenkontexte(): Promise<Personenkontext<boolean>[] | PersonenkontexteUpdateError> {
         const personenKontexte: Personenkontext<boolean>[] = [];
         for (const pkBodyParam of this.dBiamPersonenkontextBodyParams) {
@@ -77,7 +91,7 @@ export class PersonenkontexteUpdate {
                 pkBodyParam.organisationId,
                 pkBodyParam.rolleId,
             );
-            if (!pk) {
+            if (!pk || pk.befristung?.getTime() != pkBodyParam.befristung?.getTime()) {
                 const newPK: Personenkontext<false> = this.personenkontextFactory.createNew(
                     pkBodyParam.personId,
                     pkBodyParam.organisationId,
@@ -88,6 +102,7 @@ export class PersonenkontexteUpdate {
                     undefined,
                     undefined,
                     undefined,
+                    pkBodyParam.befristung,
                 );
                 personenKontexte.push(newPK); // New
             } else {
@@ -98,6 +113,7 @@ export class PersonenkontexteUpdate {
         return personenKontexte;
     }
 
+    /* eslint-disable no-await-in-loop */
     private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
         const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
 
@@ -151,7 +167,8 @@ export class PersonenkontexteUpdate {
                     (pk: Personenkontext<true>) =>
                         pk.personId === existingPK.personId &&
                         pk.organisationId === existingPK.organisationId &&
-                        pk.rolleId === existingPK.rolleId,
+                        pk.rolleId === existingPK.rolleId &&
+                        pk.befristung === existingPK.befristung,
                 )
             ) {
                 modifiedPKs.push(existingPK);
@@ -164,7 +181,8 @@ export class PersonenkontexteUpdate {
                     (pk: Personenkontext<true>) =>
                         pk.personId === sentPK.personId &&
                         pk.organisationId === sentPK.organisationId &&
-                        pk.rolleId === sentPK.rolleId,
+                        pk.rolleId === sentPK.rolleId &&
+                        pk.befristung === sentPK.befristung,
                 )
             ) {
                 modifiedPKs.push(sentPK);
@@ -203,20 +221,28 @@ export class PersonenkontexteUpdate {
                     (pk: Personenkontext<true>) =>
                         pk.personId == existingPK.personId &&
                         pk.organisationId == existingPK.organisationId &&
-                        pk.rolleId == existingPK.rolleId,
+                        pk.rolleId == existingPK.rolleId &&
+                        pk.befristung?.getTime() == existingPK.befristung?.getTime(),
                 )
             ) {
-                await this.dBiamPersonenkontextRepo.delete(existingPK);
-                deletedPKs.push(existingPK);
-                this.eventService.publish(
-                    new PersonenkontextDeletedEvent(existingPK.personId, existingPK.organisationId, existingPK.rolleId),
-                );
+                try {
+                    /* eslint-disable no-await-in-loop */
+                    await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
+                    deletedPKs.push(existingPK);
+                    this.logger.info(
+                        `Schulzuordnung (Organisation:${existingPK.organisationId}, Rolle:${existingPK.rolleId}) für Benutzer mit BenutzerId: {${existingPK.personId}}.'}`,
+                    );
+                    /* eslint-disable no-await-in-loop */
+                } catch (err) {
+                    this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
+                }
             }
         }
 
         return deletedPKs;
     }
 
+    /* eslint-disable no-await-in-loop */
     private async add(
         existingPKs: Personenkontext<true>[],
         sentPKs: Personenkontext<boolean>[],
@@ -229,27 +255,76 @@ export class PersonenkontexteUpdate {
                     (existingPK: Personenkontext<true>) =>
                         existingPK.personId == sentPK.personId &&
                         existingPK.organisationId == sentPK.organisationId &&
-                        existingPK.rolleId == sentPK.rolleId,
+                        existingPK.rolleId == sentPK.rolleId &&
+                        existingPK.befristung?.getTime() == sentPK.befristung?.getTime(),
                 )
             ) {
-                await this.dBiamPersonenkontextRepo.save(sentPK);
-                createdPKs.push(sentPK);
-                this.eventService.publish(
-                    new PersonenkontextCreatedEvent(sentPK.personId, sentPK.organisationId, sentPK.rolleId),
-                );
+                try {
+                    const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepoInternal.save(sentPK);
+                    createdPKs.push(savedPK);
+                    this.logger.info(
+                        `Schulzuordnung (Organisation:${sentPK.organisationId}, Rolle:${sentPK.rolleId}) für Benutzer mit BenutzerId: {${sentPK.personId}}. Befristung: ${sentPK.befristung?.toDateString() ?? 'unbefristet'}`,
+                    );
+                } catch (err) {
+                    this.logger.error(
+                        `Personenkontext with (person: ${sentPK.personId}, organisation: ${sentPK.organisationId}, rolle: ${sentPK.rolleId}) could not be added!`,
+                        err,
+                    );
+                }
             }
         }
+        /* eslint-disable no-await-in-loop */
 
         return createdPKs;
     }
 
-    public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+    private async checkRollenartSpecification(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new CheckRollenartSpecification(
+            this.dBiamPersonenkontextRepo,
+            this.rolleRepo,
+        ).checkRollenart(sentPKs);
+
+        if (!isSatisfied) {
+            return new UpdateInvalidRollenartForLernError();
+        }
+
+        return undefined;
+    }
+
+    private async checkBefristungSpecification(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new CheckBefristungSpecification(this.rolleRepo).checkBefristung(sentPKs);
+
+        if (!isSatisfied) {
+            return new PersonenkontextBefristungRequiredError();
+        }
+
+        return undefined;
+    }
+
+    public async update(ldapEntryUUID?: string): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+        //If first lehrer kontext is created and a UUID is passed as ldapEntryUUID it is used as internal LDAP entryUUID (needed for migration, can be build back afterwards)
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
         }
 
         const existingPKs: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(this.personId);
+
+        const validationForLernError: Option<PersonenkontexteUpdateError> =
+            await this.checkRollenartSpecification(sentPKs);
+        if (validationForLernError) {
+            return validationForLernError;
+        }
+
+        const validationForBefristung: Option<PersonenkontexteUpdateError> =
+            await this.checkBefristungSpecification(sentPKs);
+        if (validationForBefristung) {
+            return validationForBefristung;
+        }
         const validationError: Option<PersonenkontexteUpdateError> = await this.validate(existingPKs);
         if (validationError) {
             return validationError;
@@ -267,7 +342,31 @@ export class PersonenkontexteUpdate {
             this.personId,
         );
 
-        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate);
+        // Update the personalnummer if it is provided
+        if (this.personalnummer) {
+            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
+            if (person) {
+                person.personalnummer = this.personalnummer;
+                await this.personRepo.save(person);
+            }
+        }
+
+        // Set value with current date in database, when person has no Personenkontext anymore
+        if (existingPKsAfterUpdate.length == 0) {
+            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
+            if (person) {
+                person.orgUnassignmentDate = new Date();
+                await this.personRepo.save(person);
+            }
+        } else {
+            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
+            if (person && person.orgUnassignmentDate) {
+                person.orgUnassignmentDate = undefined;
+                await this.personRepo.save(person);
+            }
+        }
+
+        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate, ldapEntryUUID);
 
         return existingPKsAfterUpdate;
     }
@@ -276,6 +375,7 @@ export class PersonenkontexteUpdate {
         deletedPKs: Personenkontext<true>[],
         createdPKs: Personenkontext<true>[],
         existingPKs: Personenkontext<true>[],
+        ldapEntryUUID?: string,
     ): Promise<void> {
         const deletedRollenIDs: RolleID[] = deletedPKs.map((pk: Personenkontext<true>) => pk.rolleId);
         const createdRollenIDs: RolleID[] = createdPKs.map((pk: Personenkontext<true>) => pk.rolleId);
@@ -298,6 +398,9 @@ export class PersonenkontexteUpdate {
         ]);
 
         if (!person) {
+            this.logger.error(
+                `Could not find person with ID ${this.personId} while building PersonenkontextUpdatedEvent`,
+            );
             return; // Person can not be found
         }
 
@@ -319,6 +422,7 @@ export class PersonenkontexteUpdate {
                     orgas.get(pk.organisationId)!,
                     rollen.get(pk.rolleId)!,
                 ]),
+                ldapEntryUUID,
             ),
         );
     }

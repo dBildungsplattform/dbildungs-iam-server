@@ -71,11 +71,13 @@ export class DbSeedConsole extends CommandRunner {
             this.logger.info(`Following files from ${subDir} will be processed:`);
             entityFileNames.forEach((n: string) => this.logger.info(n));
             try {
+                /* eslint-disable no-await-in-loop */
                 for (const entityFileName of entityFileNames) {
                     await this.readAndProcessEntityFile(directory, subDir, entityFileName);
                 }
                 await this.orm.em.flush();
                 this.logger.info(`Created seed data from ${subDir} successfully.`);
+                /* eslint-disable no-await-in-loop */
             } catch (err) {
                 this.logger.error('Seed data could not be created!');
                 this.logger.error(String(err));
@@ -119,6 +121,7 @@ export class DbSeedConsole extends CommandRunner {
     }
 
     private async processEntityFile(entityFileName: string, directory: string, subDir: string): Promise<void> {
+        this.logger.info(`Processing file ${directory}/${subDir}/${entityFileName}`);
         const fileContentAsStr: string = fs.readFileSync(`./seeding/${directory}/${subDir}/${entityFileName}`, 'utf-8');
         const seedFile: SeedFile = JSON.parse(fileContentAsStr) as SeedFile;
         this.logger.info(`Processing ${seedFile.entityName} from ${directory}/${subDir}/${entityFileName}`);
@@ -140,6 +143,9 @@ export class DbSeedConsole extends CommandRunner {
                 break;
             case 'Personenkontext':
                 await this.dbSeedService.seedPersonenkontext(fileContentAsStr);
+                break;
+            case 'TechnicalUser':
+                await this.dbSeedService.seedTechnicalUser(fileContentAsStr);
                 break;
             default:
                 throw new Error(`Unsupported EntityName / EntityType: ${seedFile.entityName}`);

@@ -4,6 +4,7 @@ import { Rolle } from './rolle.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 
 @Injectable()
 export class RolleFactory {
@@ -16,12 +17,15 @@ export class RolleFactory {
         id: string,
         createdAt: Date,
         updatedAt: Date,
+        version: number,
         name: string,
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
+        serviceProviderData?: ServiceProvider<true>[],
     ): Rolle<true> {
         return Rolle.construct(
             this.organisationRepo,
@@ -29,12 +33,15 @@ export class RolleFactory {
             id,
             createdAt,
             updatedAt,
+            version,
             name,
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
+            istTechnisch,
+            serviceProviderData,
         );
     }
 
@@ -44,7 +51,9 @@ export class RolleFactory {
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
-        serviceProviderIds?: string[],
+        serviceProviderIds: string[],
+        serviceProviderData: ServiceProvider<true>[],
+        istTechnisch: boolean,
     ): Rolle<false> | DomainError {
         return Rolle.createNew(
             this.organisationRepo,
@@ -54,7 +63,9 @@ export class RolleFactory {
             rollenart,
             merkmale,
             systemrechte,
-            serviceProviderIds ?? [],
+            serviceProviderIds,
+            serviceProviderData,
+            istTechnisch,
         );
     }
 
@@ -62,12 +73,14 @@ export class RolleFactory {
         id: string,
         createdAt: Date,
         updatedAt: Date,
+        version: number,
         name: string,
         administeredBySchulstrukturknoten: string,
         rollenart: RollenArt,
         merkmale: RollenMerkmal[],
         systemrechte: RollenSystemRecht[],
         serviceProviderIds: string[],
+        istTechnisch: boolean,
     ): Promise<Rolle<true> | DomainError> {
         return Rolle.update(
             this.organisationRepo,
@@ -75,12 +88,15 @@ export class RolleFactory {
             id,
             createdAt,
             updatedAt,
+            version,
             name,
             administeredBySchulstrukturknoten,
             rollenart,
             merkmale,
             systemrechte,
             serviceProviderIds,
+            istTechnisch,
+            undefined,
         );
     }
 }

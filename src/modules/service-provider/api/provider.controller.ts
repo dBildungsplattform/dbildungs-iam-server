@@ -16,15 +16,14 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -33,9 +32,9 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 @Controller({ path: 'provider' })
 export class ProviderController {
     public constructor(
-        private readonly rolleRepo: RolleRepo,
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
+        private readonly serviceProviderService: ServiceProviderService,
     ) {}
 
     @Get('all')
@@ -69,22 +68,8 @@ export class ProviderController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
         const roleIds: string[] = await permissions.getRoleIds();
-        const serviceProviders: ServiceProvider<true>[] = [];
-        for (const roleId of roleIds) {
-            const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(roleId);
-            if (rolle) {
-                for (const serviceProviderId of rolle.serviceProviderIds) {
-                    const serviceProvider: Option<ServiceProvider<true>> =
-                        await this.serviceProviderRepo.findById(serviceProviderId);
-                    if (
-                        serviceProvider &&
-                        !serviceProviders.some((sp: ServiceProvider<true>) => sp.id === serviceProvider.id)
-                    ) {
-                        serviceProviders.push(serviceProvider);
-                    }
-                }
-            }
-        }
+        const serviceProviders: ServiceProvider<true>[] =
+            await this.serviceProviderService.getServiceProvidersByRolleIds(roleIds);
 
         return serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),

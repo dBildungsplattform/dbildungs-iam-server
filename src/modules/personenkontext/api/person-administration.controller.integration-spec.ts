@@ -13,7 +13,6 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/index.js';
-import { OrganisationRepo } from '../../organisation/persistence/organisation.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenKontextApiModule } from '../personenkontext-api.module.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -26,12 +25,10 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { FindRollenResponse } from './response/find-rollen.response.js';
 import { KeycloakAdministrationModule } from '../../keycloak-administration/keycloak-administration.module.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 
 describe('PersonAdministrationController Integration Test', () => {
     let app: INestApplication;
     let orm: MikroORM;
-    let organisationRepo: OrganisationRepository;
     let rolleRepo: RolleRepo;
     let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
 
@@ -74,7 +71,6 @@ describe('PersonAdministrationController Integration Test', () => {
             .compile();
 
         orm = module.get(MikroORM);
-        organisationRepo = module.get(OrganisationRepo);
         rolleRepo = module.get(RolleRepo);
         personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
@@ -102,7 +98,6 @@ describe('PersonAdministrationController Integration Test', () => {
             );
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
-            personpermissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce([organisationRepo.ROOT_ORGANISATION_ID]);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)

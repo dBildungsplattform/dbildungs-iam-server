@@ -1,0 +1,5 @@
+export enum TimeLimitOccasion {
+    KOPERS = 'KOPERS',
+    NO_KONTEXTE = 'NO_KONTEXTE',
+    PERSONENKONTEXT_EXPIRES = 'PERSONENKONTEXT_EXPIRES',
+}

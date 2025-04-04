@@ -15,7 +15,7 @@ export type PersonResponse = {
     id: string;
 };
 
-// Incomplete
+// Partial, actual structure contains more data
 type PersonIdPair = {
     sourceId: {
         identifier: string;
@@ -27,7 +27,7 @@ type PersonIdPair = {
     };
 };
 
-// Incomplete
+// Partial, actual structure contains more data
 type ReadAllPersonsReponseBody = {
     readAllPersonsResponse: {
         personIdPairSet: {

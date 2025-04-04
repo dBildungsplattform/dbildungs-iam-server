@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    HttpStatus,
+    Param,
+    Post,
+    Put,
+    Query,
+    UseFilters,
+    UseGuards,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -12,8 +24,6 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { FindPersonenkontextSchulstrukturknotenBodyParams } from './param/find-personenkontext-schulstrukturknoten.body.params.js';
-import { FindSchulstrukturknotenResponse } from './response/find-schulstrukturknoten.response.js';
 import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationResponseLegacy } from '../../organisation/api/organisation.response.legacy.js';
@@ -31,7 +41,7 @@ import { DbiamPersonenkontexteUpdateError } from './dbiam-personenkontexte-updat
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { DBiamPersonResponse } from './response/dbiam-person.response.js';
 import { DbiamPersonenkontextError } from './dbiam-personenkontext.error.js';
-import { DbiamCreatePersonWithContextBodyParams } from './param/dbiam-create-person-with-context.body.params.js';
+import { DbiamCreatePersonWithPersonenkontexteBodyParams } from './param/dbiam-create-person-with-personenkontexte.body.params.js';
 import { PersonPersonenkontext, PersonenkontextCreationService } from '../domain/personenkontext-creation.service.js';
 import { PersonenkontextCommitError } from '../domain/error/personenkontext-commit.error.js';
 import { PersonenkontextSpecificationError } from '../specification/error/personenkontext-specification.error.js';
@@ -39,11 +49,18 @@ import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error
 import { PersonenkontextExceptionFilter } from './personenkontext-exception-filter.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontexteUpdateExceptionFilter } from './personenkontexte-update-exception-filter.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DbiamUpdatePersonenkontexteQueryParams } from './param/dbiam-update-personenkontexte.query.params.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
     new PersonenkontextExceptionFilter(),
     new PersonenkontexteUpdateExceptionFilter(),
+    new AuthenticationExceptionFilter(),
 )
 @ApiTags('personenkontext')
 @ApiBearerAuth()
@@ -53,6 +70,7 @@ export class DbiamPersonenkontextWorkflowController {
     public constructor(
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
+        private readonly logger: ClassLogger,
     ) {}
 
     @Get('step')
@@ -77,12 +95,13 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Initializes the aggregate with the values of the selected organisation and rolle through the UI
         // (Both values could be undefined when nothing was done yet)
-        anlage.initialize(params.organisationId, params.rolleId);
+        anlage.initialize(params.organisationId, params.rollenIds);
 
         // Find all possible SSKs (Possibly through name if the name was given)
         const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
             permissions,
             params.organisationName,
+            undefined,
             params.limit,
         );
 
@@ -97,7 +116,7 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
         let canCommit: boolean = false;
-        if (params.organisationId && params.rolleId) {
+        if (params.organisationId && params.rollenIds) {
             const commitResult: DomainError | boolean = await anlage.canCommit(permissions);
             if (commitResult === true) {
                 canCommit = true;
@@ -109,13 +128,14 @@ export class DbiamPersonenkontextWorkflowController {
             rollen,
             canCommit,
             params.organisationId,
-            params.rolleId,
+            params.rollenIds,
         );
 
         return response;
     }
 
     @Put(':personId')
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.OK)
     @ApiOkResponse({
         description:
@@ -132,6 +152,7 @@ export class DbiamPersonenkontextWorkflowController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
     public async commit(
         @Param() params: DBiamFindPersonenkontexteByPersonIdParams,
+        @Query() queryParams: DbiamUpdatePersonenkontexteQueryParams,
         @Body() bodyParams: DbiamUpdatePersonenkontexteBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
@@ -144,6 +165,7 @@ export class DbiamPersonenkontextWorkflowController {
                     bodyParams.count,
                     bodyParams.personenkontexte,
                     permissions,
+                    queryParams.personalnummer || undefined,
                 );
 
         if (updateResult instanceof PersonenkontexteUpdateError) {
@@ -152,42 +174,8 @@ export class DbiamPersonenkontextWorkflowController {
         return new PersonenkontexteUpdateResponse(updateResult);
     }
 
-    @Get('schulstrukturknoten')
-    @ApiOkResponse({
-        description: 'The schulstrukturknoten for a personenkontext were successfully returned.',
-        type: FindSchulstrukturknotenResponse,
-    })
-    @ApiUnauthorizedResponse({
-        description: 'Not authorized to get available schulstrukturknoten for personenkontexte.',
-    })
-    @ApiForbiddenResponse({ description: 'Insufficient permission to get schulstrukturknoten for personenkontext.' })
-    @ApiInternalServerErrorResponse({
-        description: 'Internal server error while getting schulstrukturknoten for personenkontexte.',
-    })
-    public async findSchulstrukturknoten(
-        @Query() params: FindPersonenkontextSchulstrukturknotenBodyParams,
-    ): Promise<FindSchulstrukturknotenResponse> {
-        const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
-        const sskName: string = params.sskName ?? '';
-        const ssks: Organisation<true>[] = await anlage.findSchulstrukturknoten(
-            params.rolleId,
-            sskName,
-            params.limit,
-            true,
-        );
-
-        const sskResponses: OrganisationResponseLegacy[] = ssks.map(
-            (org: Organisation<true>) => new OrganisationResponseLegacy(org),
-        );
-        const response: FindSchulstrukturknotenResponse = new FindSchulstrukturknotenResponse(
-            sskResponses,
-            ssks.length,
-        );
-
-        return response;
-    }
-
     @Post()
+    @UseGuards(StepUpGuard)
     @HttpCode(HttpStatus.CREATED)
     @ApiCreatedResponse({
         description: 'Person with Personenkontext was successfully created.',
@@ -204,33 +192,68 @@ export class DbiamPersonenkontextWorkflowController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error while creating person with personenkontext.',
     })
-    public async createPersonWithKontext(
-        @Body() params: DbiamCreatePersonWithContextBodyParams,
+    public async createPersonWithPersonenkontexte(
+        @Body() params: DbiamCreatePersonWithPersonenkontexteBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<DBiamPersonResponse> {
         //Check all references & permissions then save person
-        const savedPersonWithPersonenkontext: PersonPersonenkontext | DomainError | PersonenkontextCommitError =
-            await this.personenkontextCreationService.createPersonWithPersonenkontext(
-                permissions,
-                params.vorname,
-                params.familienname,
-                params.organisationId,
-                params.rolleId,
+        const savedPersonWithPersonenkontext:
+            | PersonPersonenkontext
+            | DomainError
+            | PersonenkontextCommitError
+            | DuplicatePersonalnummerError = await this.personenkontextCreationService.createPersonWithPersonenkontexte(
+            permissions,
+            params.vorname,
+            params.familienname,
+            params.createPersonenkontexte,
+            params.personalnummer || undefined,
+            params.befristung || undefined,
+        );
+        if (savedPersonWithPersonenkontext instanceof Error) {
+            this.logger.error(
+                `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht einen neuen Benutzer für ${params.vorname} ${params.familienname} anzulegen. Fehler:  ${savedPersonWithPersonenkontext.message}`,
             );
+            params.createPersonenkontexte.map((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
+                const rolleId: string = kontextParams.rolleId;
+                const organisationId: string = kontextParams.organisationId;
+                this.logger.error(
+                    `Benutzer für ${params.vorname} ${params.familienname} mit Rolle ${rolleId} und Organisation ${organisationId} anzulegen ist fehlgeschlagen.`,
+                );
+            });
+            if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
+                throw savedPersonWithPersonenkontext;
+            }
+            if (savedPersonWithPersonenkontext instanceof PersonenkontexteUpdateError) {
+                throw savedPersonWithPersonenkontext;
+            }
 
-        if (savedPersonWithPersonenkontext instanceof PersonenkontextSpecificationError) {
-            throw savedPersonWithPersonenkontext;
+            if (savedPersonWithPersonenkontext instanceof DuplicatePersonalnummerError) {
+                throw savedPersonWithPersonenkontext;
+            }
+
+            if (savedPersonWithPersonenkontext instanceof DomainError) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPersonWithPersonenkontext),
+                );
+            }
         }
 
-        if (savedPersonWithPersonenkontext instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(savedPersonWithPersonenkontext),
-            );
-        }
+        this.logger.info(
+            `Admin ${permissions.personFields.username} (AdmindId: ${permissions.personFields.id}) hat neuen Benutzer ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}) angelegt.`,
+        );
+        await Promise.all(
+            savedPersonWithPersonenkontext.personenkontexte.map(async (personenKontext: Personenkontext<true>) => {
+                const rolle: Option<Rolle<true>> = await personenKontext.getRolle();
+                const organisation: Option<Organisation<true>> = await personenKontext.getOrganisation();
+                this.logger.info(
+                    `Benutzer ${savedPersonWithPersonenkontext.person.referrer} angelegt mit Rolle: ${rolle?.name} (${rolle?.id}), und Organisation: ${organisation?.name} (${organisation?.id}).`,
+                );
+            }),
+        );
 
         return new DBiamPersonResponse(
             savedPersonWithPersonenkontext.person,
-            savedPersonWithPersonenkontext.personenkontext,
+            savedPersonWithPersonenkontext.personenkontexte,
         );
     }
 }

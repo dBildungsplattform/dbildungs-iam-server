@@ -1,4 +1,4 @@
-import { Cascade, Collection, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
+import { BigIntType, Cascade, Collection, Entity, Enum, OneToMany, Opt, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { RollenArt } from '../domain/rolle.enums.js';
 import { RolleMerkmalEntity } from './rolle-merkmal.entity.js';
@@ -51,4 +51,12 @@ export class RolleEntity extends TimestampedEntity {
         orphanRemoval: true,
     })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
+
+    @Property({
+        default: false,
+    })
+    public istTechnisch!: boolean;
+
+    @Property({ type: new BigIntType('number'), defaultRaw: '1', concurrencyCheck: true })
+    public version!: number & Opt;
 }
