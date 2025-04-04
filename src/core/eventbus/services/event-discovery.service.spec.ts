@@ -4,11 +4,14 @@ import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Controller, Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { LoggingTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { BaseEvent } from '../../../shared/events/index.js';
 import { EventHandler } from '../decorators/event-handler.decorator.js';
 import { EventDiscoveryService } from './event-discovery.service.js';
 import { EventService } from './event.service.js';
+import { KafkaEventService } from './kafka-event.service.js';
+import { ConfigService } from '@nestjs/config';
+import { KafkaEventHandler } from '../decorators/kafka-event-handler.decorator.js';
 
 class TestEvent extends BaseEvent {
     public constructor() {
@@ -18,6 +21,7 @@ class TestEvent extends BaseEvent {
 
 @Injectable()
 class TestProvider {
+    @KafkaEventHandler(TestEvent)
     @EventHandler(TestEvent)
     public handleEvent(_event: TestEvent): void {}
 
@@ -26,6 +30,7 @@ class TestProvider {
 
 @Controller({})
 class TestController {
+    @KafkaEventHandler(TestEvent)
     @EventHandler(TestEvent)
     public handleEvent(_event: TestEvent): void {}
 
@@ -33,18 +38,24 @@ class TestController {
 }
 
 describe('EventService', () => {
-    let module: TestingModule;
-
     let sut: EventDiscoveryService;
     let eventServiceMock: DeepMocked<EventService>;
+    let kafkaEventServiceMock: DeepMocked<KafkaEventService>;
 
-    beforeAll(async () => {
+    let module: TestingModule;
+
+    async function setupModule(useKafka: boolean = false): Promise<void> {
+        const configService: DeepMocked<ConfigService> = createMock<ConfigService>();
+        configService.getOrThrow.mockReturnValueOnce({ ENABLED: useKafka });
+
         module = await Test.createTestingModule({
-            imports: [LoggingTestModule, DiscoveryModule],
+            imports: [LoggingTestModule, DiscoveryModule, ConfigTestModule],
             providers: [
                 EventDiscoveryService,
                 TestProvider,
                 { provide: EventService, useValue: createMock<EventService>() },
+                { provide: KafkaEventService, useValue: createMock<KafkaEventService>() },
+                { provide: ConfigService, useValue: configService },
             ],
             controllers: [TestController],
         }).compile();
@@ -53,14 +64,16 @@ describe('EventService', () => {
 
         sut = module.get(EventDiscoveryService);
         eventServiceMock = module.get(EventService);
-    });
+        kafkaEventServiceMock = module.get(KafkaEventService);
+    }
 
-    afterAll(async () => {
+    afterEach(async () => {
+        jest.resetAllMocks();
         await module.close();
     });
 
-    afterEach(() => {
-        jest.resetAllMocks();
+    beforeEach(async () => {
+        await setupModule();
     });
 
     it('should be defined', () => {
@@ -85,6 +98,15 @@ describe('EventService', () => {
 
             expect(eventServiceMock.subscribe).toHaveBeenCalledTimes(2);
             expect(count).toBe(2);
+        });
+
+        it('should register kafka event handlers if feature flag is set', async () => {
+            await setupModule(true);
+
+            await sut.registerEventHandlers();
+
+            expect(kafkaEventServiceMock.subscribe).toHaveBeenCalledTimes(2);
+            expect(eventServiceMock.subscribe).not.toHaveBeenCalled();
         });
     });
 });

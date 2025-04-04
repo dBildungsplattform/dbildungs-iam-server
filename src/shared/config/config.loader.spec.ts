@@ -104,6 +104,16 @@ describe('configloader', () => {
                 HEADER_API_KEY: {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
+                KAFKA: {
+                    BROKER: 'localhost:9094',
+                    TOPIC_PREFIX: 'local.',
+                    USER_TOPIC: 'spsh-user-topic',
+                    USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
+                    GROUP_ID: 'nestjs-kafka',
+                    SESSION_TIMEOUT: 30000,
+                    HEARTBEAT_INTERVAL: 10000,
+                    ENABLED: true,
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -249,6 +259,16 @@ describe('configloader', () => {
                 },
                 HEADER_API_KEY: {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
+                },
+                KAFKA: {
+                    BROKER: 'localhost:9094',
+                    TOPIC_PREFIX: 'local.',
+                    USER_TOPIC: 'spsh-user-topic',
+                    USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
+                    GROUP_ID: 'nestjs-kafka',
+                    SESSION_TIMEOUT: 30000,
+                    HEARTBEAT_INTERVAL: 10000,
+                    ENABLED: true,
                 },
             };
 

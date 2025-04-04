@@ -66,6 +66,7 @@
         "generate-password-ts": "^1.6.5",
         "jsonwebtoken": "^9.0.2",
         "jwks-rsa": "^3.2.0",
+        "kafkajs": "^2.2.4",
         "ldapts": "^7.3.3",
         "lodash-es": "^4.17.21",
         "nest-commander": "^3.17.0",

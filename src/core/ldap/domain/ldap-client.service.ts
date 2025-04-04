@@ -1115,7 +1115,7 @@ export class LdapClientService {
                 );
 
                 // eslint-disable-next-line no-await-in-loop
-                await this.sleep(currentDelay);
+                if (currentAttempt < retries) await this.sleep(currentDelay);
             }
             currentAttempt++;
         }
