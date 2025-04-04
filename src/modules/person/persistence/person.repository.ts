@@ -27,7 +27,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -41,6 +41,8 @@ import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
+import { mapDefinedObjectProperties } from '../../../shared/util/object-utils.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -63,6 +65,15 @@ export function getOxUserId(entity: PersonEntity): string | undefined {
 }
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
+    const externalIds: RequiredEntityData<PersonExternalIdMappingEntity>[] = mapDefinedObjectProperties(
+        person.externalIds,
+        (type: PersonExternalIdType, externalId: string) => ({
+            person: person.id,
+            type,
+            externalId,
+        }),
+    );
+
     return {
         keycloakUserId: person.keycloakUserId!,
         referrer: person.referrer,
@@ -89,10 +100,19 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         personalnummer: person.personalnummer,
         orgUnassignmentDate: person.orgUnassignmentDate,
         istTechnisch: person.istTechnisch,
+        externalIds,
     };
 }
 
 export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
+    const externalIds: Partial<Record<PersonExternalIdType, string>> = entity.externalIds.reduce(
+        (aggr: Partial<Record<PersonExternalIdType, string>>, externalId: PersonExternalIdMappingEntity) => {
+            aggr[externalId.type] = externalId.externalId;
+            return aggr;
+        },
+        {} as Partial<Record<PersonExternalIdType, string>>,
+    );
+
     return Person.construct(
         entity.id,
         entity.createdAt,
@@ -125,6 +145,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
         entity.istTechnisch,
+        externalIds,
     );
 }
 
@@ -773,6 +794,8 @@ export class PersonRepository {
             personFound.orgUnassignmentDate,
             personFound.isLocked,
             personFound.email,
+            personFound.istTechnisch,
+            personFound.externalIds,
         );
         if (error instanceof DomainError) {
             return error;

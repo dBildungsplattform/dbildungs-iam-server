@@ -25,3 +25,7 @@ export enum PersonLockOccasion {
     KOPERS_GESPERRT = 'KOPERS_GESPERRT',
     MANUELL_GESPERRT = 'MANUELL_GESPERRT',
 }
+
+export enum PersonExternalIdType {
+    LDAP = 'LDAP',
+}
