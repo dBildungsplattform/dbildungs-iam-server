@@ -13,7 +13,7 @@ import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbia
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 
-describe('PersonTimeLimitService', () => {
+describe('PersonTimeLimitInfoService', () => {
     let module: TestingModule;
     let sut: PersonTimeLimitService;
     let personRepoMock: DeepMocked<PersonRepository>;
