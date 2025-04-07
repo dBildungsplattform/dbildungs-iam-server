@@ -6,6 +6,7 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -13,7 +14,7 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 import { LdapModule } from '../ldap.module.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { LdapClientService } from './ldap-client.service.js';
+import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { faker } from '@faker-js/faker';
@@ -44,6 +45,7 @@ describe('LDAP Event Handler', () => {
     let ldapEventHandler: LdapEventHandler;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let personRepositoryMock: DeepMocked<PersonRepository>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -82,6 +84,7 @@ describe('LDAP Event Handler', () => {
         ldapEventHandler = module.get(LdapEventHandler);
         ldapClientServiceMock = module.get(LdapClientService);
         organisationRepositoryMock = module.get(OrganisationRepository);
+        personRepositoryMock = module.get(PersonRepository);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -879,6 +882,107 @@ describe('LDAP Event Handler', () => {
             expect(loggerMock.error).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenCalledWith(
                 expect.stringContaining('Error in getEmailDomainForOrganisationId:'),
+            );
+        });
+
+        it('should persist entryUUID to database', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+                [],
+            );
+
+            const entryUUID: string = faker.string.uuid();
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+            ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
+                ok: true,
+                value: createMock<PersonData>({
+                    ldapEntryUUID: entryUUID,
+                }),
+            });
+
+            personRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true));
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(personRepositoryMock.save).toHaveBeenCalledTimes(1);
+        });
+
+        it('should log error if person can not be found', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+                [],
+            );
+
+            const entryUUID: string = faker.string.uuid();
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+            ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
+                ok: true,
+                value: createMock<PersonData>({
+                    ldapEntryUUID: entryUUID,
+                }),
+            });
+
+            personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(personRepositoryMock.save).toHaveBeenCalledTimes(0);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.referrer}`,
             );
         });
     });

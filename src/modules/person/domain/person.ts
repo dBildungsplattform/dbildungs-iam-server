@@ -1,5 +1,5 @@
 import { DomainError, MismatchedRevisionError } from '../../../shared/error/index.js';
-import { Geschlecht, Vertrauensstufe } from './person.enums.js';
+import { Geschlecht, PersonExternalIdType, Vertrauensstufe } from './person.enums.js';
 import { UsernameGeneratorService } from './username-generator.service.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { VornameForPersonWithTrailingSpaceError } from './vorname-with-trailing-space.error.js';
@@ -37,6 +37,7 @@ export type PersonCreationParams = {
     isLocked?: boolean;
     orgUnassignmentDate?: Date;
     istTechnisch?: boolean;
+    externalIds?: Partial<Record<PersonExternalIdType, string>>;
 };
 
 export class Person<WasPersisted extends boolean> {
@@ -81,6 +82,7 @@ export class Person<WasPersisted extends boolean> {
         public email: string | undefined,
         public oxUserId: string | undefined,
         public istTechnisch: boolean,
+        public externalIds: Partial<Record<PersonExternalIdType, string>>,
     ) {
         this.mandant = Person.CREATE_PERSON_DTO_MANDANT_UUID;
     }
@@ -125,6 +127,7 @@ export class Person<WasPersisted extends boolean> {
         email?: string,
         oxUserId?: string,
         istTechnisch?: boolean,
+        externalIds?: Partial<Record<PersonExternalIdType, string>>,
     ): Person<WasPersisted> {
         return new Person(
             id,
@@ -158,6 +161,7 @@ export class Person<WasPersisted extends boolean> {
             email,
             oxUserId,
             istTechnisch ?? false,
+            externalIds ?? {},
         );
     }
 
@@ -207,6 +211,7 @@ export class Person<WasPersisted extends boolean> {
             undefined,
             undefined,
             creationParams.istTechnisch ?? false,
+            creationParams.externalIds ?? {},
         );
 
         if (creationParams.password) {
@@ -258,6 +263,7 @@ export class Person<WasPersisted extends boolean> {
         isLocked?: boolean,
         email?: string,
         istTechnisch?: boolean,
+        externalIds?: Partial<Record<PersonExternalIdType, string>>,
     ): void | DomainError {
         if (this.revision !== revision) {
             return new MismatchedRevisionError(
@@ -302,6 +308,7 @@ export class Person<WasPersisted extends boolean> {
         this.email = email;
         this.userLock = userLock ?? [];
         if (istTechnisch !== undefined) this.istTechnisch = istTechnisch;
+        this.externalIds = externalIds ?? this.externalIds;
     }
 
     public resetPassword(): void {

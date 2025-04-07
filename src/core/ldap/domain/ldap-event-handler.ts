@@ -24,6 +24,8 @@ import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-ren
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/kafka-email-address-generated.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
 import { inspect } from 'util';
+import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
+import { Person } from '../../../modules/person/domain/person.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -31,6 +33,7 @@ export class LdapEventHandler {
         private readonly logger: ClassLogger,
         private readonly ldapClientService: LdapClientService,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly personRepo: PersonRepository,
         private readonly eventService: EventService,
     ) {}
 
@@ -240,10 +243,23 @@ export class LdapEventHandler {
                             if (emailDomain.ok) {
                                 return this.ldapClientService
                                     .createLehrer(event.person, emailDomain.value, pk.orgaKennung!)
-                                    .then((creationResult: Result<PersonData>) => {
+                                    .then(async (creationResult: Result<PersonData>) => {
                                         if (!creationResult.ok) {
                                             this.logger.error(creationResult.error.message);
+                                        } else {
+                                            const person: Option<Person<true>> = await this.personRepo.findById(
+                                                event.person.id,
+                                            );
+                                            if (!person) {
+                                                this.logger.error(
+                                                    `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.referrer}`,
+                                                );
+                                            } else {
+                                                person.externalIds.LDAP = creationResult.value.ldapEntryUUID;
+                                                await this.personRepo.save(person);
+                                            }
                                         }
+
                                         return creationResult;
                                     })
                                     .catch((error: Error) => {
