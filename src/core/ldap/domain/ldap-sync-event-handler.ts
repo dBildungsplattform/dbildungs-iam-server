@@ -178,6 +178,12 @@ export class LdapSyncEventHandler {
                 `Error while fetching attributes for personId:${personId} in LDAP, msg:${personAttributes.error.message}`,
             );
         }
+        // entryUUID is only return within LdapPersonAttributes, when an empty PersonEntry had to be created,
+        // therefore changed data has to be persisted via repository
+        if (personAttributes.value.entryUUID) {
+            person.externalIds.LDAP = personAttributes.value.entryUUID;
+            await this.personRepository.save(person);
+        }
 
         const givenName: string = person.vorname;
         const surName: string = person.familienname;

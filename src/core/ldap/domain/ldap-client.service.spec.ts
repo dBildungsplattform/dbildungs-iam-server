@@ -1582,8 +1582,61 @@ describe('LDAP Client Service', () => {
 
             describe('when implicit creation of empty PersonEntry succeeds', () => {
                 it('should log info and return DN for PersonEntry', async () => {
+                    const newEntryUUID: string = faker.string.uuid();
+                    const entryUUIDSearchEntry: Entry = createMock<Entry>({
+                        dn: dn,
+                        entryUUID: newEntryUUID,
+                    });
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [],
+                            }),
+                        );
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [entryUUIDSearchEntry],
+                            }),
+                        );
+
+                        return clientMock;
+                    });
+
+                    const result: Result<LdapPersonAttributes> = await ldapClientService.getPersonAttributes(
+                        personId,
+                        referrer,
+                        oeffentlicheSchulenDoamin,
+                    );
+                    const lehrerUid: string = `uid=${referrer},ou=oeffentlicheSchulen,dc=example,dc=com`;
+
+                    expect(loggerMock.warning).toHaveBeenCalledWith(
+                        `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(loggerMock.info).toHaveBeenCalledWith(
+                        `LDAP: Successfully created empty PersonEntry, DN:${lehrerUid}`,
+                    );
+                    expect(result.ok).toBeTruthy();
+                    expect(result).toEqual({
+                        ok: true,
+                        value: {
+                            entryUUID: newEntryUUID,
+                            dn: lehrerUid,
+                        },
+                    });
+                });
+            });
+
+            describe('when implicit creation of empty PersonEntry succeeds but entryUUID COULD NOT be fetched', () => {
+                it('should log error about failing fetch of entryUUID and return DN for PersonEntry', async () => {
+                    ldapClientMock.getClient.mockImplementation(() => {
+                        clientMock.bind.mockResolvedValueOnce();
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [],
+                            }),
+                        );
+                        //mock: 2. search-request == entryUUID-search return no result
                         clientMock.search.mockResolvedValueOnce(
                             createMock<SearchResult>({
                                 searchEntries: [],
@@ -1602,6 +1655,9 @@ describe('LDAP Client Service', () => {
 
                     expect(loggerMock.warning).toHaveBeenCalledWith(
                         `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                    );
+                    expect(loggerMock.error).toHaveBeenCalledWith(
+                        `Could not get EntryUUID for referrer:${referrer}, personId:${personId}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
                         `LDAP: Successfully created empty PersonEntry, DN:${lehrerUid}`,

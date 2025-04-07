@@ -21,6 +21,7 @@ import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from
 import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 
 export type LdapPersonAttributes = {
+    entryUUID?: string;
     dn: string;
     givenName?: string;
     surName?: string;
@@ -534,9 +535,18 @@ export class LdapClientService {
                 );
                 const creationResult: Result<string> = await this.createEmptyPersonEntry(referrer, emailDomain);
                 if (!creationResult.ok) return creationResult;
+
+                const entryUUIDResult: Result<string> = await this.getEntryUUID(client, personId, referrer);
+                if (!entryUUIDResult.ok) {
+                    this.logger.error(
+                        `Could not fetch entryUUID after creation of empty PersonEntry, personId:${personId}, referrer:${referrer}`,
+                    );
+                }
+
                 return {
                     ok: true,
                     value: {
+                        entryUUID: entryUUIDResult.ok ? entryUUIDResult.value : undefined,
                         dn: creationResult.value,
                     },
                 };
@@ -658,6 +668,30 @@ export class LdapClientService {
 
             return { ok: false, error: new LdapCreateLehrerError() };
         }
+    }
+
+    private async getEntryUUID(client: Client, personId: PersonID, referrer: PersonReferrer): Promise<Result<string>> {
+        const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+            scope: 'sub',
+            filter: `(uid=${referrer})`,
+            attributes: [LdapClientService.ENTRY_UUID],
+            returnAttributeValues: true,
+        });
+
+        const entryUUID: unknown = searchResult.searchEntries[0]?.[LdapClientService.ENTRY_UUID];
+
+        if (typeof entryUUID !== 'string') {
+            this.logger.error(`Could not get EntryUUID for referrer:${referrer}, personId:${personId}`);
+            return {
+                ok: false,
+                error: new LdapCreateLehrerError(),
+            };
+        }
+
+        return {
+            ok: true,
+            value: entryUUID,
+        };
     }
 
     private async getGroupsForPersonInternal(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
