@@ -57,6 +57,48 @@ describe('LDAP Client Service', () => {
         ADMIN_PASSWORD: '',
     };
 
+    function makeMockClient(cb: (client: DeepMocked<Client>) => void): void {
+        ldapClientMock.getClient.mockImplementationOnce(() => {
+            const client: DeepMocked<Client> = createMock<Client>();
+
+            cb(client);
+
+            return client;
+        });
+    }
+
+    function mockBind(error?: unknown): void {
+        makeMockClient((client: DeepMocked<Client>) => {
+            if (error) {
+                client.bind.mockRejectedValueOnce(error);
+            } else {
+                client.bind.mockResolvedValueOnce();
+            }
+        });
+    }
+
+    function mockAddPersonToGroup(): void {
+        makeMockClient((client: DeepMocked<Client>) => {
+            mockBind();
+
+            // Organisation Unit check
+            client.search.mockResolvedValueOnce(
+                createMock<SearchResult>({
+                    searchEntries: [{}],
+                }),
+            );
+
+            // Organisation Role check
+            client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [{}] }));
+
+            // Group of Names check
+            client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [{}] }));
+
+            // Add user to group
+            client.modify.mockResolvedValueOnce();
+        });
+    }
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [
@@ -805,13 +847,28 @@ describe('LDAP Client Service', () => {
 
         describe('lehrer', () => {
             it('when called with extra entryUUID should return truthy result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValue();
-                    clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+                    mockAddPersonToGroup();
 
-                    return clientMock;
+                    // exists check
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+
+                    // Add
+                    client.add.mockResolvedValueOnce();
+
+                    // Get EntryUUID
+                    client.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    entryUUID: faker.string.uuid(),
+                                }),
+                            ],
+                        }),
+                    );
                 });
+
                 const testLehrer: PersonData = {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
@@ -832,13 +889,28 @@ describe('LDAP Client Service', () => {
             });
 
             it('when called WITHOUT entryUUID should use person.id and return truthy result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValue();
-                    clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+                    mockAddPersonToGroup();
 
-                    return clientMock;
+                    // exists check
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+
+                    // Add
+                    client.add.mockResolvedValueOnce();
+
+                    // Get EntryUUID
+                    client.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    entryUUID: faker.string.uuid(),
+                                }),
+                            ],
+                        }),
+                    );
                 });
+
                 const testLehrer: PersonData = {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
@@ -896,13 +968,28 @@ describe('LDAP Client Service', () => {
             });
 
             it('when called with explicit domain "ersatzschule-sh.de" should return truthy result', async () => {
-                ldapClientMock.getClient.mockImplementation(() => {
-                    clientMock.bind.mockResolvedValue();
-                    clientMock.add.mockResolvedValueOnce();
-                    clientMock.search.mockResolvedValueOnce(createMock<SearchResult>()); //mock existsLehrer
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+                    mockAddPersonToGroup();
 
-                    return clientMock;
+                    // exists check
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+
+                    // Add
+                    client.add.mockResolvedValueOnce();
+
+                    // Get EntryUUID
+                    client.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [
+                                createMock<Entry>({
+                                    entryUUID: faker.string.uuid(),
+                                }),
+                            ],
+                        }),
+                    );
                 });
+
                 const testLehrer: PersonData = {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
@@ -982,6 +1069,43 @@ describe('LDAP Client Service', () => {
                 );
 
                 expect(result.ok).toBeFalsy();
+            });
+
+            it('when entryUUID can not be retrieved after add', async () => {
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+                    mockAddPersonToGroup();
+
+                    // exists check
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+
+                    // Add
+                    client.add.mockResolvedValueOnce();
+
+                    // Get EntryUUID
+                    client.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [createMock<Entry>({})],
+                        }),
+                    );
+                });
+
+                const testLehrer: PersonData = {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.lorem.word(),
+                };
+                const result: Result<PersonData> = await ldapClientService.createLehrer(
+                    testLehrer,
+                    fakeEmailDomain,
+                    fakeOrgaKennung,
+                );
+
+                expect(result.ok).toBeFalsy();
+                expect(loggerMock.error).toHaveBeenLastCalledWith(
+                    `Could not get EntryUUID for referrer:${testLehrer.referrer}, personId:${testLehrer.id}`,
+                );
             });
 
             it('when called with invalid emailDomain returns LdapEmailDomainError', async () => {
