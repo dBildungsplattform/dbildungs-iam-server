@@ -32,7 +32,7 @@ describe('PersonenkontextRepo', () => {
     let organisationRepo: OrganisationRepository;
 
     const createPersonEntity = (): PersonEntity => {
-        const person: PersonEntity = new PersonEntity().assign(mapAggregateToData(DoFactory.createPerson(false)));
+        const person: PersonEntity = em.create(PersonEntity, mapAggregateToData(DoFactory.createPerson(false)));
         return person;
     };
 
