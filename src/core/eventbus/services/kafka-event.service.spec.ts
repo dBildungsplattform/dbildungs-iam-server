@@ -148,6 +148,30 @@ describe('KafkaEventService', () => {
         expect(logger.error).toHaveBeenCalledWith('Event type in header: UnknownEvent is not a valid KafkaEventKey');
     });
 
+    it('should log error if parsed kafka message is not valid', async () => {
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from(JSON.stringify([{ invalid: 'invalid' }])),
+            headers: { eventKey: 'user.created' },
+        });
+
+        await sut.handleMessage(message);
+
+        expect(logger.error).toHaveBeenCalledWith('Parsed Kafka message is not a valid object');
+    });
+
+    it('should log error if parsing kafka message throws error', async () => {
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from('{ invalidJson: '),
+            headers: { eventKey: 'user.created' },
+        });
+
+        await sut.handleMessage(message);
+
+        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to parse Kafka message'));
+    });
+
     it('should log error if handler throws an exception', async () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
@@ -231,12 +255,22 @@ describe('KafkaEventService', () => {
         );
     });
 
-    it('should log error if no mapping is found for event type', async () => {
+    it('should log error if no mapping is found for event type in publsih process', async () => {
         const event: KafkaEvent = new TestEvent();
 
         await sut.publish(event);
 
         expect(logger.error).toHaveBeenCalledWith('(Standard publishing) No mapping found for event: TestEvent');
+    });
+
+    it('should log error if no mapping is found for event type in dlq publish process', async () => {
+        const event: KafkaEvent = new TestEvent();
+
+        await sut.publishToDLQ(event, new Error());
+
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.stringContaining('(DLQ publishing) No mapping found for event: TestEvent'),
+        );
     });
 
     it('callback should trigger handler method', async () => {

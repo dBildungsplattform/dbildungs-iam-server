@@ -5,6 +5,7 @@ import { Constructor, EventHandlerType } from '../types/util.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import {
     isKafkaEventKey,
+    KafkaEventKey,
     KafkaEventMapping,
     KafkaEventMappingEntry,
     KafkaTopic,
@@ -97,11 +98,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             return;
         }
 
-        const mappingEntry: KafkaEventMappingEntry | undefined = KafkaEventMapping[eventKey];
-        if (!mappingEntry) {
-            this.logger.error(`Unknown event key: ${eventKey}`);
-            return;
-        }
+        const mappingEntry: KafkaEventMappingEntry = KafkaEventMapping[eventKey] satisfies KafkaEventMappingEntry;
         const { eventClass }: { eventClass: Constructor<BaseEvent & KafkaEvent> } = mappingEntry;
 
         const json: string | undefined = message.value?.toString();
@@ -164,47 +161,32 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     }
 
     public async publish(event: KafkaEvent): Promise<void> {
-        const eventKey: string | undefined = Object.keys(KafkaEventMapping).find(
-            (key: string) => isKafkaEventKey(key) && KafkaEventMapping[key]?.eventClass === event.constructor,
+        const eventKey: KafkaEventKey | undefined = Object.keys(KafkaEventMapping).find(
+            (key: string): key is KafkaEventKey =>
+                isKafkaEventKey(key) && KafkaEventMapping[key]?.eventClass === event.constructor,
         );
+
         if (!eventKey) {
             this.logger.error(`(Standard publishing) No mapping found for event: ${event.constructor.name}`);
             return;
         }
-        if (!isKafkaEventKey(eventKey)) {
-            this.logger.error(`(Standard publishing) ${eventKey} is not a valid KafkaEventKey`);
-            return;
-        }
 
-        const topic: KafkaTopic | undefined = KafkaEventMapping[eventKey]?.topic;
-        if (!topic) {
-            this.logger.error('(Standard publishing) Topic is undefined');
-            return;
-        }
-
+        const topic: KafkaTopic = KafkaEventMapping[eventKey].topic;
         const topicWithPrefix: string = this.kafkaConfig.TOPIC_PREFIX + topic;
         await this.sendEvent(event, eventKey, topicWithPrefix);
     }
 
-    private async publishToDLQ(event: KafkaEvent, error: Error): Promise<void> {
-        const eventKey: string | undefined = Object.keys(KafkaEventMapping).find(
-            (key: string) => isKafkaEventKey(key) && KafkaEventMapping[key]?.eventClass === event.constructor,
+    public async publishToDLQ(event: KafkaEvent, error: Error): Promise<void> {
+        const eventKey: KafkaEventKey | undefined = Object.keys(KafkaEventMapping).find(
+            (key: string): key is KafkaEventKey =>
+                isKafkaEventKey(key) && KafkaEventMapping[key]?.eventClass === event.constructor,
         );
         if (!eventKey) {
             this.logger.error(`(DLQ publishing) No mapping found for event: ${event.constructor.name}`);
             return;
         }
-        if (!isKafkaEventKey(eventKey)) {
-            this.logger.error(`(DLQ publishing) ${eventKey} is not a valid KafkaEventKey`);
-            return;
-        }
 
-        const topicDlq: KafkaTopicDlq | undefined = KafkaEventMapping[eventKey]?.topicDlq;
-        if (!topicDlq) {
-            this.logger.error(`(DLQ publishing) DLQ topic is undefined for event: ${event.constructor.name}`);
-            return;
-        }
-
+        const topicDlq: KafkaTopicDlq = KafkaEventMapping[eventKey].topicDlq;
         const topicWithPrefix: string = this.kafkaConfig.TOPIC_PREFIX + topicDlq;
         const errorString: string = util.inspect(error);
 
