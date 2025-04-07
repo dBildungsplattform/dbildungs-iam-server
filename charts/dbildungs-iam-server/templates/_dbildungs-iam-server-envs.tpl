@@ -30,7 +30,7 @@
   valueFrom:
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-        key: service-account-private-jwks^
+        key: service-account-private-jwks
 - name: VIDIS_CLIENT_ID
 valueFrom:
     secretKeyRef:
