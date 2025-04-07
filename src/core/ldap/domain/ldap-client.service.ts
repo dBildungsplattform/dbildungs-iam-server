@@ -67,6 +67,8 @@ export class LdapClientService {
 
     public static readonly MEMBER: string = 'member';
 
+    public static readonly ENTRY_UUID: string = 'entryUUID';
+
     public static readonly DC_SCHULE_SH_DC_DE: string = 'dc=schule-sh,dc=de';
 
     public static readonly GID_NUMBER: string = '100'; //because 0 to 99 are used for statically allocated user groups on Unix-systems
@@ -346,6 +348,26 @@ export class LdapClientService {
 
             try {
                 await client.add(lehrerUid, entry, controls);
+
+                const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+                    scope: 'sub',
+                    filter: `(uid=${referrer})`,
+                    attributes: [LdapClientService.ENTRY_UUID],
+                    returnAttributeValues: true,
+                });
+
+                const entryUUID: unknown = searchResult.searchEntries[0]?.[LdapClientService.ENTRY_UUID];
+
+                if (typeof entryUUID !== 'string') {
+                    this.logger.error(`Could not get EntryUUID for referrer:${referrer}, personId:${person.id}`);
+                    return {
+                        ok: false,
+                        error: new LdapCreateLehrerError(),
+                    };
+                }
+
+                person.ldapEntryUUID = entryUUID;
+
                 this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
                 return { ok: true, value: person };
