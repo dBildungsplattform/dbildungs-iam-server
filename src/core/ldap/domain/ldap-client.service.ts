@@ -354,24 +354,9 @@ export class LdapClientService {
             try {
                 await client.add(lehrerUid, entry, controls);
 
-                const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
-                    scope: 'sub',
-                    filter: `(uid=${referrer})`,
-                    attributes: [LdapClientService.ENTRY_UUID],
-                    returnAttributeValues: true,
-                });
-
-                const entryUUID: unknown = searchResult.searchEntries[0]?.[LdapClientService.ENTRY_UUID];
-
-                if (typeof entryUUID !== 'string') {
-                    this.logger.error(`Could not get EntryUUID for referrer:${referrer}, personId:${person.id}`);
-                    return {
-                        ok: false,
-                        error: new LdapCreateLehrerError(),
-                    };
-                }
-
-                person.ldapEntryUUID = entryUUID;
+                const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, referrer);
+                if (!entryUUIDResult.ok) return entryUUIDResult;
+                person.ldapEntryUUID = entryUUIDResult.value;
 
                 this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
