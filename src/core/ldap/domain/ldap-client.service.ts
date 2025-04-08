@@ -78,6 +78,8 @@ export class LdapClientService {
 
     public static readonly HOME_DIRECTORY: string = 'none'; //highlight it's a dummy value
 
+    public static readonly ATTRIBUTE_VALUE_EMPTY: string = 'empty';
+
     private static readonly RELAX_OID: string = '1.3.6.1.4.1.4203.666.5.12'; // Relax Control
 
     private static readonly GROUPS: string = 'groups';
@@ -489,6 +491,14 @@ export class LdapClientService {
         });
     }
 
+    /**
+     * Fetches the following attributes for a person: givenName, sn, cn, mailPrimaryAddress, mailAlternativeAddress.
+     * If no entry can be found for the referrer, a new empty entry will be implicitly created via createEmptyPersonEntry
+     * and the entryUUID attribute of the result will be set accordingly.
+     * If creation of entry was not necessary because it already existed, entryUUID will NOT be set in the result.
+     * Failures during fetch of single attributes result in logging warnings but not as an error as result.
+     * An error as method result is intended when both, fetching entry for referrer and necessary creation of missing entry fail.
+     */
     private async getPersonAttributesInternal(
         personId: PersonID,
         referrer: PersonReferrer,
@@ -615,9 +625,9 @@ export class LdapClientService {
     }
 
     /**
+     * Creates a new PersonEntry and sets uid and cn to referrer value. Other person related attributes are set to 'empty'.
      * Returns the DN of the created PersonEntry or an Error.
-     * @param referrer
-     * @param domain
+     * For fetching the EntryUUID of an Entry use getEntryUUID.
      */
     private async createEmptyPersonEntry(referrer: PersonReferrer, domain: string): Promise<Result<string>> {
         this.logger.info('LDAP: createEmptyPersonEntry');
@@ -636,11 +646,11 @@ export class LdapClientService {
             gidNumber: LdapClientService.GID_NUMBER,
             homeDirectory: LdapClientService.HOME_DIRECTORY,
             cn: referrer,
-            givenName: 'empty',
-            sn: 'empty',
+            givenName: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
+            sn: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
             objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
-            mailPrimaryAddress: 'empty',
-            mailAlternativeAddress: 'empty',
+            mailPrimaryAddress: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
+            mailAlternativeAddress: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
         };
 
         try {
