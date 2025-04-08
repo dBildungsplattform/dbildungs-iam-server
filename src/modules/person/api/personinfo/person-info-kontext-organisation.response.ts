@@ -1,12 +1,17 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 
 export class PersonenInfoKontextOrganisationResponse {
+    @ApiProperty({ nullable: false })
     public id!: string;
 
+    @ApiProperty({ nullable: true })
     public name?: string;
 
+    @ApiProperty({ enum: OrganisationsTyp, nullable: true })
     public typ?: OrganisationsTyp;
 
+    @ApiProperty({ nullable: true })
     public kennung?: string;
 
     public static new(
