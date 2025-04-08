@@ -35,6 +35,6 @@ describe('KafkaPersonenkontextUpdatedEvent', () => {
         );
 
         expect(event).toBeInstanceOf(KafkaPersonenkontextUpdatedEvent);
-        expect(event.getPersonID()).toBe(person.id);
+        expect(event.kafkaKeyPersonId).toBe(person.id);
     });
 });

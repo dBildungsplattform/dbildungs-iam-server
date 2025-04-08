@@ -18,6 +18,6 @@ describe('KafkaPersonRenamedEvent', () => {
         );
 
         expect(event).toBeInstanceOf(KafkaPersonRenamedEvent);
-        expect(event.getPersonID()).toBe(person.id);
+        expect(event.kafkaKeyPersonId).toBe(person.id);
     });
 });

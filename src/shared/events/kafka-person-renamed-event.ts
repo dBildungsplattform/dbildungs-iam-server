@@ -4,7 +4,7 @@ import { KafkaEvent } from './kafka-event.js';
 import { PersonRenamedEvent } from './person-renamed-event.js';
 
 export class KafkaPersonRenamedEvent extends PersonRenamedEvent implements KafkaEvent {
-    public getPersonID(): string {
+    public get kafkaKeyPersonId(): string {
         return this.personId;
     }
 

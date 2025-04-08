@@ -145,15 +145,13 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         await this.producer?.connect();
 
         const eventType: string | undefined = event.constructor.name;
-
-        const personId: string = event.getPersonID();
         const headers: Record<string, string> = { eventKey, ...additionalHeaders };
 
-        this.logger.info(`Publishing event to Kafka for ${personId}: ${eventType} on topic ${topic}`);
+        this.logger.info(`Publishing event to Kafka for ${event.kafkaKeyPersonId}: ${eventType} on topic ${topic}`);
         try {
             await this.producer?.send({
                 topic,
-                messages: [{ key: personId, value: JSON.stringify(event), headers }],
+                messages: [{ key: event.kafkaKeyPersonId, value: JSON.stringify(event), headers }],
             });
         } catch (err) {
             this.logger.error(`Error publishing event to Kafka on topic ${topic}`, util.inspect(err));

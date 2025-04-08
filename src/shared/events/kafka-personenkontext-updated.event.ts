@@ -6,7 +6,7 @@ import { type Organisation } from '../../modules/organisation/domain/organisatio
 import { type Rolle } from '../../modules/rolle/domain/rolle.js';
 
 export class KafkaPersonenkontextUpdatedEvent extends PersonenkontextUpdatedEvent implements KafkaEvent {
-    public getPersonID(): string {
+    public get kafkaKeyPersonId(): string {
         return this.person.id;
     }
 

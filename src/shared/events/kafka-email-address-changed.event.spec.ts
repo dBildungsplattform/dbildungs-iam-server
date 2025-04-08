@@ -21,6 +21,6 @@ describe('KafkaEmailAddressChangedEvent', () => {
         );
 
         expect(event).toBeInstanceOf(KafkaEmailAddressChangedEvent);
-        expect(event.getPersonID()).toBe(personId);
+        expect(event.kafkaKeyPersonId).toBe(personId);
     });
 });
