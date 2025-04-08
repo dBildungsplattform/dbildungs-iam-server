@@ -38,6 +38,8 @@ import { OrganisationsTyp } from '../../../modules/organisation/domain/organisat
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 
 describe('LdapSyncEventHandler', () => {
+    const oeffentlicheSchulenDomain: string = 'schule-sh.de';
+
     let app: INestApplication;
     let orm: MikroORM;
 
@@ -268,6 +270,7 @@ describe('LdapSyncEventHandler', () => {
         mailPrimaryAddress = faker.internet.email();
         mailAlternativeAddress = faker.internet.email();
         personAttributes = {
+            entryUUID: undefined, // entryUUID is only set in LdapClientService when an empty PersonEntry had to be created
             dn: 'dn',
             givenName: givenName,
             surName: surName,
@@ -429,6 +432,10 @@ describe('LdapSyncEventHandler', () => {
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
 
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
+
                 const error: LdapFetchAttributeError = new LdapFetchAttributeError(personId, referrer, 'attribute');
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: false,
@@ -458,6 +465,13 @@ describe('LdapSyncEventHandler', () => {
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
 
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
+                personAttributes = {
+                    entryUUID: undefined, // entryUUID is only set in LdapClientService when an empty PersonEntry had to be created
+                    dn: 'dn',
+                };
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
                     value: personAttributes,
@@ -503,6 +517,10 @@ describe('LdapSyncEventHandler', () => {
                     return undefined;
                 });
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, mockedMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
+
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining(`Could not find organisation`));
@@ -528,11 +546,65 @@ describe('LdapSyncEventHandler', () => {
                 if (!orgaWithoutKennung) throw Error();
                 orgaWithoutKennung.kennung = undefined;
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
 
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     expect.stringContaining(`Required kennung is missing on organisation`),
+                );
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,
+                );
+            });
+        });
+
+        describe('when organisationIds CANNOT be found, no PKs exist', () => {
+            it('should log error and return without syncing', async () => {
+                mockPersonFoundEnabledAddressFoundDisabledAddressNotFound();
+                mockPersonenKontextRelatedRepositoryCalls(
+                    [],
+                    new Map<OrganisationID, Organisation<true>>(),
+                    new Map<RolleID, Rolle<true>>(),
+                );
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could NOT fetch domain from organisations, no organisations found for person, ABORTING SYNC, personId:${personId}`,
+                );
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,
+                );
+            });
+        });
+
+        describe('when emailDomain CANNOT be found in organisation tree recursively', () => {
+            it('should log error and return without syncing', async () => {
+                mockPersonFoundEnabledAddressFoundDisabledAddressNotFound();
+
+                // create PKs, orgaMap and rolleMap
+                const [kontexte, orgaMap, rolleMap]: [
+                    Personenkontext<true>[],
+                    Map<OrganisationID, Organisation<true>>,
+                    Map<RolleID, Rolle<true>>,
+                ] = getPkArrayOrgaMapAndRolleMap(person);
+                // set kennung for an organisation undefined to force 'Required kennung is missing on organisation'
+                assert(kontexte[0]);
+                const orgaWithoutKennung: Organisation<true> | undefined = orgaMap.get(kontexte[0].organisationId);
+                if (!orgaWithoutKennung) throw Error();
+                orgaWithoutKennung.kennung = undefined;
+                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(undefined);
+
+                await sut.personExternalSystemSyncEventHandler(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    expect.stringContaining(
+                        `Could NOT fetch domain from organisations, LDAP-root CANNOT be chosen, ABORTING SYNC, personId:${personId}`,
+                    ),
                 );
                 expect(loggerMock.info).not.toHaveBeenCalledWith(
                     `Syncing data to LDAP for personId:${personId}, referrer:${referrer}`,
@@ -564,6 +636,9 @@ describe('LdapSyncEventHandler', () => {
                     Map<RolleID, Rolle<true>>,
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
 
                 mockPersonAttributesFoundGroupsNotFound();
 
@@ -598,6 +673,9 @@ describe('LdapSyncEventHandler', () => {
                         Map<RolleID, Rolle<true>>,
                     ] = getPkArrayOrgaMapAndRolleMap(person);
                     mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                    organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                        oeffentlicheSchulenDomain,
+                    );
 
                     mockPersonAttributesFoundGroupsNotFound();
 
@@ -631,6 +709,9 @@ describe('LdapSyncEventHandler', () => {
                         Map<RolleID, Rolle<true>>,
                     ] = getPkArrayOrgaMapAndRolleMap(person);
                     mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                    organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                        oeffentlicheSchulenDomain,
+                    );
 
                     mockPersonAttributesFoundGroupsNotFound();
 
@@ -671,6 +752,9 @@ describe('LdapSyncEventHandler', () => {
                         Map<RolleID, Rolle<true>>,
                     ] = getPkArrayOrgaMapAndRolleMap(person);
                     mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                    organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                        oeffentlicheSchulenDomain,
+                    );
 
                     mockPersonAttributesFoundGroupsNotFound();
 
@@ -722,6 +806,9 @@ describe('LdapSyncEventHandler', () => {
                 mockPersonFoundEnabledAddressFoundDisabledAddressNotFound();
 
                 mockPersonenKontextRelatedRepositoryCalls(pks, orgaMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
 
                 ldapClientServiceMock.getPersonAttributes.mockResolvedValueOnce({
                     ok: true,
@@ -782,6 +869,9 @@ describe('LdapSyncEventHandler', () => {
                     Map<RolleID, Rolle<true>>,
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
 
                 mockPersonAttributesFoundGroupsNotFound();
 
@@ -817,6 +907,9 @@ describe('LdapSyncEventHandler', () => {
                     Map<RolleID, Rolle<true>>,
                 ] = getPkArrayOrgaMapAndRolleMap(person);
                 mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+                organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce(
+                    oeffentlicheSchulenDomain,
+                );
 
                 mockPersonAttributesFoundGroupsNotFound();
 
