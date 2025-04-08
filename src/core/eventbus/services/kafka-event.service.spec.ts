@@ -169,7 +169,10 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message);
 
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to parse Kafka message'));
+        expect(logger.error).toHaveBeenCalledWith(
+            expect.stringContaining('Failed to parse Kafka message'),
+            expect.any(SyntaxError),
+        );
     });
 
     it('should log error if handler throws an exception', async () => {
