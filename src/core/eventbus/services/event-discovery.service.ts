@@ -52,7 +52,7 @@ export class EventDiscoveryService {
                 const handlerMethodName: string = method.discoveredMethod.methodName;
 
                 this.logger.notice(
-                    `Registered handler '${parentClassName}.${handlerMethodName}' for '${eventConstructor.name}'`,
+                    `Registered kafka handler '${parentClassName}.${handlerMethodName}' for '${eventConstructor.name}'`,
                 );
             });
 
@@ -76,7 +76,7 @@ export class EventDiscoveryService {
             const handlerMethodName: string = method.discoveredMethod.methodName;
 
             this.logger.notice(
-                `Registered handler '${parentClassName}.${handlerMethodName}' for '${eventConstructor.name}'`,
+                `Registered legacy handler '${parentClassName}.${handlerMethodName}' for '${eventConstructor.name}'`,
             );
         });
 
