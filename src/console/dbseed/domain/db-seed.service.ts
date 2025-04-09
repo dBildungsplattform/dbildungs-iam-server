@@ -133,7 +133,6 @@ export class DbSeedService {
         for (const organisation of entities) {
             await this.constructAndPersistOrganisation(organisation);
         }
-        /* eslint-disable no-await-in-loop */
         this.logger.info(`Insert ${entities.length} entities of type Organisation`);
     }
 
@@ -234,7 +233,6 @@ export class DbSeedService {
     public async seedPerson(fileContentAsStr: string): Promise<void> {
         const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
         const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
-        /* eslint-disable no-await-in-loop */
         for (const file of files) {
             const creationParams: PersonCreationParams = {
                 familienname: file.familienname,
@@ -307,9 +305,7 @@ export class DbSeedService {
     public async seedTechnicalUser(fileContentAsStr: string): Promise<void> {
         const personFile: EntityFile<PersonFile> = JSON.parse(fileContentAsStr) as EntityFile<PersonFile>;
         const files: PersonFile[] = plainToInstance(PersonFile, personFile.entities);
-        /* eslint-disable no-await-in-loop */
         for (const file of files) {
-            /* eslint-disable no-await-in-loop */
             const creationParams: PersonCreationParams = {
                 familienname: file.familienname,
                 vorname: file.vorname,
@@ -317,7 +313,7 @@ export class DbSeedService {
                 password: file.password,
                 istTechnisch: true,
             };
-
+            /* eslint-disable no-await-in-loop */
             const person: Person<false> | DomainError = await this.personFactory.createNew(creationParams);
 
             if (person instanceof DomainError) {
