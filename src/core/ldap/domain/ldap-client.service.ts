@@ -21,6 +21,7 @@ import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from
 import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
 
 export type LdapPersonAttributes = {
+    entryUUID?: string;
     dn: string;
     givenName?: string;
     surName?: string;
@@ -67,6 +68,8 @@ export class LdapClientService {
 
     public static readonly MEMBER: string = 'member';
 
+    public static readonly ENTRY_UUID: string = 'entryUUID';
+
     public static readonly DC_SCHULE_SH_DC_DE: string = 'dc=schule-sh,dc=de';
 
     public static readonly GID_NUMBER: string = '100'; //because 0 to 99 are used for statically allocated user groups on Unix-systems
@@ -74,6 +77,8 @@ export class LdapClientService {
     public static readonly UID_NUMBER: string = '100'; //to match the GID_NUMBER rule above and 0 is reserved for super-user
 
     public static readonly HOME_DIRECTORY: string = 'none'; //highlight it's a dummy value
+
+    public static readonly ATTRIBUTE_VALUE_EMPTY: string = 'empty';
 
     private static readonly RELAX_OID: string = '1.3.6.1.4.1.4203.666.5.12'; // Relax Control
 
@@ -123,8 +128,12 @@ export class LdapClientService {
     public async getPersonAttributes(
         personId: PersonID,
         referrer: PersonReferrer,
+        domain: string,
     ): Promise<Result<LdapPersonAttributes>> {
-        return this.executeWithRetry(() => this.getPersonAttributesInternal(personId, referrer), this.getNrOfRetries());
+        return this.executeWithRetry(
+            () => this.getPersonAttributesInternal(personId, referrer, domain),
+            this.getNrOfRetries(),
+        );
     }
 
     public async getGroupsForPerson(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
@@ -346,6 +355,11 @@ export class LdapClientService {
 
             try {
                 await client.add(lehrerUid, entry, controls);
+
+                const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, referrer);
+                if (!entryUUIDResult.ok) return entryUUIDResult;
+                person.ldapEntryUUID = entryUUIDResult.value;
+
                 this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
 
                 return { ok: true, value: person };
@@ -477,9 +491,18 @@ export class LdapClientService {
         });
     }
 
+    /**
+     * Fetches the following attributes for a person: givenName, sn, cn, mailPrimaryAddress, mailAlternativeAddress.
+     * If no entry can be found for the referrer, a new empty entry will be implicitly created via createEmptyPersonEntry
+     * and the entryUUID attribute of the result will be set accordingly.
+     * If creation of entry was not necessary because it already existed, entryUUID will NOT be set in the result.
+     * Failures during fetch of single attributes result in logging warnings but not as an error as result.
+     * An error as method result is intended when both, fetching entry for referrer and necessary creation of missing entry fail.
+     */
     private async getPersonAttributesInternal(
         personId: PersonID,
         referrer: PersonReferrer,
+        emailDomain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: getPersonAttributes');
@@ -502,12 +525,25 @@ export class LdapClientService {
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(
+                this.logger.warning(
                     `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
                 );
+                const creationResult: Result<string> = await this.createEmptyPersonEntry(referrer, emailDomain);
+                if (!creationResult.ok) return creationResult;
+
+                const entryUUIDResult: Result<string> = await this.getEntryUUID(client, personId, referrer);
+                if (!entryUUIDResult.ok) {
+                    this.logger.error(
+                        `Could not fetch entryUUID after creation of empty PersonEntry, personId:${personId}, referrer:${referrer}`,
+                    );
+                }
+
                 return {
-                    ok: false,
-                    error: new LdapFetchAttributeError('*', referrer, personId),
+                    ok: true,
+                    value: {
+                        entryUUID: entryUUIDResult.ok ? entryUUIDResult.value : undefined,
+                        dn: creationResult.value,
+                    },
                 };
             }
 
@@ -585,6 +621,71 @@ export class LdapClientService {
         return {
             ok: false,
             error: new LdapFetchAttributeError(attributeName, referrer, personId),
+        };
+    }
+
+    /**
+     * Creates a new PersonEntry and sets uid and cn to referrer value. Other person related attributes are set to 'empty'.
+     * Returns the DN of the created PersonEntry or an Error.
+     * For fetching the EntryUUID of an Entry use getEntryUUID.
+     */
+    private async createEmptyPersonEntry(referrer: PersonReferrer, domain: string): Promise<Result<string>> {
+        this.logger.info('LDAP: createEmptyPersonEntry');
+        const client: Client = this.ldapClient.getClient();
+        const bindResult: Result<boolean> = await this.bind();
+        if (!bindResult.ok) return bindResult;
+
+        const rootName: Result<string> = this.getRootNameOrError(domain);
+        if (!rootName.ok) return rootName;
+
+        const lehrerUid: string = this.getLehrerUid(referrer, rootName.value);
+
+        const entry: LdapPersonEntry = {
+            uid: referrer,
+            uidNumber: LdapClientService.UID_NUMBER,
+            gidNumber: LdapClientService.GID_NUMBER,
+            homeDirectory: LdapClientService.HOME_DIRECTORY,
+            cn: referrer,
+            givenName: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
+            sn: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
+            objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
+            mailPrimaryAddress: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
+            mailAlternativeAddress: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
+        };
+
+        try {
+            await client.add(lehrerUid, entry);
+            this.logger.info(`LDAP: Successfully created empty PersonEntry, DN:${lehrerUid}`);
+
+            return { ok: true, value: lehrerUid };
+        } catch (err) {
+            this.logger.logUnknownAsError(`LDAP: Creating empty PersonEntry FAILED, DN:${lehrerUid}`, err);
+
+            return { ok: false, error: new LdapCreateLehrerError() };
+        }
+    }
+
+    private async getEntryUUID(client: Client, personId: PersonID, referrer: PersonReferrer): Promise<Result<string>> {
+        const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+            scope: 'sub',
+            filter: `(uid=${referrer})`,
+            attributes: [LdapClientService.ENTRY_UUID],
+            returnAttributeValues: true,
+        });
+
+        const entryUUID: unknown = searchResult.searchEntries[0]?.[LdapClientService.ENTRY_UUID];
+
+        if (typeof entryUUID !== 'string') {
+            this.logger.error(`Could not get EntryUUID for referrer:${referrer}, personId:${personId}`);
+            return {
+                ok: false,
+                error: new LdapCreateLehrerError(),
+            };
+        }
+
+        return {
+            ok: true,
+            value: entryUUID,
         };
     }
 

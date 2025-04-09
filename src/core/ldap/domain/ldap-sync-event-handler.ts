@@ -67,7 +67,7 @@ export class LdapSyncEventHandler {
 
     /**
      * This event-handler-method is implemented to make fetchDataAndSync() callable indirectly and also avoid the usage without await.
-     * Otherwise method calls to fetchDataAndSync() had to be possible without await and would force usage floating-promises.
+     * Otherwise, method calls to fetchDataAndSync() had to be possible without await and would force usage floating-promises.
      **/
     @EventHandler(PersonLdapSyncEvent)
     public async personLdapSyncEventHandler(event: PersonLdapSyncEvent): Promise<void> {
@@ -124,11 +124,24 @@ export class LdapSyncEventHandler {
             }
         }
 
+        let emailDomain: Option<string> = null;
         // Delete all organisations from map which are NOT typ SCHULE
         for (const [orgaId, orga] of organisations.entries()) {
             if (orga.typ !== OrganisationsTyp.SCHULE) {
                 organisations.delete(orgaId);
             }
+        }
+        // checking emailDomain for only the first organisation is sufficient, tree can only consist of either OeffentlicheSchulen or ErsatzSchulen.
+        if (!organisationIDs[0]) {
+            return this.logger.error(
+                `Could NOT fetch domain from organisations, no organisations found for person, ABORTING SYNC, personId:${personId}`,
+            );
+        }
+        emailDomain = await this.organisationRepository.findEmailDomainForOrganisation(organisationIDs[0]);
+        if (!emailDomain) {
+            return this.logger.error(
+                `Could NOT fetch domain from organisations, LDAP-root CANNOT be chosen, ABORTING SYNC, personId:${personId}`,
+            );
         }
 
         // Filter PKs for the remaining rollen with rollenArt LEHR and the remaining organisations with typ SCHULE
@@ -158,11 +171,18 @@ export class LdapSyncEventHandler {
         const personAttributes: Result<LdapPersonAttributes> = await this.ldapClientService.getPersonAttributes(
             personId,
             person.referrer,
+            emailDomain,
         );
         if (!personAttributes.ok) {
             return this.logger.error(
                 `Error while fetching attributes for personId:${personId} in LDAP, msg:${personAttributes.error.message}`,
             );
+        }
+        // entryUUID is only return within LdapPersonAttributes, when an empty PersonEntry had to be created,
+        // therefore changed data has to be persisted via repository
+        if (personAttributes.value.entryUUID) {
+            person.externalIds.LDAP = personAttributes.value.entryUUID;
+            await this.personRepository.save(person);
         }
 
         const givenName: string = person.vorname;
