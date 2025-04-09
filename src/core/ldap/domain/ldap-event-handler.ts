@@ -254,11 +254,9 @@ export class LdapEventHandler {
                                                 this.logger.error(
                                                     `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.referrer}`,
                                                 );
-                                            } else {
-                                                if (creationResult.value.ldapEntryUUID) {
-                                                    person.externalIds.LDAP = creationResult.value.ldapEntryUUID;
-                                                    await this.personRepo.save(person);
-                                                }
+                                            } else if (creationResult.value.ldapEntryUUID) {
+                                                person.externalIds.LDAP = creationResult.value.ldapEntryUUID;
+                                                await this.personRepo.save(person);
                                             }
                                         }
 
