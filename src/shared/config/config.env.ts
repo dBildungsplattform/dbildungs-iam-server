@@ -13,6 +13,7 @@ import { envToOptionalBoolean, envToOptionalInteger } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
 import { ImportConfig } from './import.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
+import { KafkaConfig } from './kafka.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -29,6 +30,7 @@ export type Config = {
     VIDIS: Partial<VidisConfig>;
     IMPORT: Partial<ImportConfig>;
     HEADER_API_KEY: Partial<HeaderApiKeyConfig>;
+    KAFKA: Partial<KafkaConfig>;
 };
 
 export default (): Config => ({
@@ -116,5 +118,15 @@ export default (): Config => ({
     },
     HEADER_API_KEY: {
         INTERNAL_COMMUNICATION_API_KEY: process.env['INTERNAL_COMMUNICATION_API_KEY'],
+    },
+    KAFKA: {
+        BROKER: process.env['KAFKA_BROKER'],
+        TOPIC_PREFIX: process.env['KAFKA_TOPIC_PREFIX'],
+        USER_TOPIC: process.env['KAFKA_USER_TOPIC'],
+        USER_DLQ_TOPIC: process.env['KAFKA_USER_DLQ_TOPIC'],
+        GROUP_ID: process.env['KAFKA_GROUP_ID'],
+        SESSION_TIMEOUT: envToOptionalInteger('KAFKA_SESSION_TIMEOUT'),
+        HEARTBEAT_INTERVAL: envToOptionalInteger('KAFKA_HEARTBEAT_INTERVAL'),
+        ENABLED: envToOptionalBoolean('KAFKA_ENABLED'),
     },
 });
