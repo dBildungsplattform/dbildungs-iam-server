@@ -65,7 +65,6 @@ auth:
   ldap_bind_dn: ''
   ldap_admin_password: ''
   secrets_json: ''
-  frontend_sessionSecret: ''
   itslearning_username: ''
   itslearning_password: ''
   pi_admin_user: ''
@@ -77,7 +76,8 @@ auth:
   import_passphrase_salt: ''
   ox_password: ''
   basic_auth_password: ''
-  redis_password: ''
+  vidis_client_id: ''
+  vidis_client_secret: ''
 
 ox:
   enabled: false
