@@ -33,6 +33,7 @@ import { MissingPermissionsError } from '../../shared/error/missing-permissions.
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { EmailAddressDeletionService } from '../email/email-address-deletion/email-address-deletion.service.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
@@ -46,6 +47,7 @@ export class CronController {
         private readonly personenKonextRepository: DBiamPersonenkontextRepo,
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly userLockRepository: UserLockRepository,
+        private readonly emailAddressDeletionService: EmailAddressDeletionService,
         private readonly logger: ClassLogger,
         private readonly serviceProviderService: ServiceProviderService,
     ) {}
@@ -426,6 +428,34 @@ export class CronController {
                 `ServiceProvider für VIDIS-Angebote konnten nicht aktualisiert werden. Fehler: ${errorMessage}`,
             );
             throw error;
+        }
+    }
+
+    @Put('email-addresses-delete')
+    @HttpCode(HttpStatus.OK)
+    @ApiCreatedResponse({ description: 'EmailAddresses were successfully removed.', type: Boolean })
+    @ApiBadRequestResponse({ description: 'EmailAddresses not found.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete EmailAddresses.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to delete EmailAddresses.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to delete EmailAddresses.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to delete EmailAddresses.' })
+    public async emailAddressesDelete(@Permissions() permissions: PersonPermissions): Promise<boolean> {
+        try {
+            /* const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+                RollenSystemRecht.CRON_DURCHFUEHREN,
+            ]);
+            if (!hasCronJobPermission) {
+                throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                    SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                        new MissingPermissionsError('Cronrecht Required For This Endpoint'),
+                    ),
+                );
+            }*/
+            await this.emailAddressDeletionService.deleteEmailAddresses(permissions);
+
+            return true;
+        } catch (error) {
+            throw new Error('Failed to remove users due to an internal server error.');
         }
     }
 }

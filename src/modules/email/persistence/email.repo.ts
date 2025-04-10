@@ -1,6 +1,6 @@
-import { EntityManager, QueryOrder, ref, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, Loaded, QueryOrder, ref, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
-import { PersonID } from '../../../shared/types/index.js';
+import { EmailAddressID, PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from './email-address.entity.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
@@ -10,6 +10,9 @@ import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-already-has-enabled-email-address.error.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
+
+export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: number = 180;
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
     const oxUserIdStr: string | undefined = emailAddress.oxUserID ? emailAddress.oxUserID + '' : undefined;
@@ -135,6 +138,23 @@ export class EmailRepo {
         return mapEntityToAggregate(emailAddressEntity);
     }
 
+    public async getEmailAddressesDeleteList(): Promise<EmailAddress<true>[]> {
+        const daysAgo: Date = new Date();
+        daysAgo.setDate(daysAgo.getDate() - NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS);
+
+        const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
+            EmailAddressEntity,
+            {
+                $and: [{ status: { $ne: EmailAddressStatus.ENABLED } }, { updatedAt: { $lt: daysAgo } }],
+            },
+            { orderBy: { updatedAt: QueryOrder.DESC } },
+        );
+
+        const emails: EmailAddress<true>[] = emailAddressEntities.map(mapEntityToAggregate);
+
+        return emails;
+    }
+
     public async existsEmailAddress(address: string): Promise<boolean> {
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
             EmailAddressEntity,
@@ -243,5 +263,23 @@ export class EmailRepo {
         }
 
         return mapEntityToAggregate(emailAddressEntity);
+    }
+
+    /**
+     * Deletes an EmailAddress by its ID. Returns a Defined Error on failure or Undefined on success.
+     * @param id
+     */
+    public async deleteById(id: EmailAddressID): Promise<Option<DomainError>> {
+        const emailAddressEntity: Loaded<EmailAddressEntity> = await this.em.findOneOrFail(EmailAddressEntity, id, {});
+
+        try {
+            await this.em.removeAndFlush(emailAddressEntity);
+        } catch (err) {
+            this.logger.logUnknownAsError('Error during deletion of EmailAddress', err);
+
+            return new EmailAddressDeletionError(id);
+        }
+
+        return undefined;
     }
 }
