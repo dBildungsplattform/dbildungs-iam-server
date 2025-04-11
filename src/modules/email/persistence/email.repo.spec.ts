@@ -19,7 +19,7 @@ import { EmailAddressNotFoundError } from '../error/email-address-not-found.erro
 import { EmailAddressEntity } from './email-address.entity.js';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
-import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, MikroORM, NotFoundError, RequiredEntityData } from '@mikro-orm/core';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -30,6 +30,7 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import assert from 'assert';
+import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -143,7 +144,7 @@ describe('EmailRepo', () => {
                 break;
         }
         const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-        if (savedEmail instanceof DomainError) throw new Error();
+        assert(!(savedEmail instanceof DomainError));
 
         return savedEmail;
     }
@@ -169,17 +170,20 @@ describe('EmailRepo', () => {
         status: EmailAddressStatus,
         personId: PersonID,
         address: string = faker.internet.email(),
-    ): Promise<void> {
+        updatedAt?: Date,
+    ): Promise<string> {
         const entityData: RequiredEntityData<EmailAddressEntity> = {
             status: status,
             address: address,
             personId: personId,
             id: faker.string.uuid(),
             oxUserId: '0',
-            updatedAt: faker.date.future(),
+            updatedAt: updatedAt ?? faker.date.future(),
         };
         const emailAddressEntity: EmailAddressEntity = em.create(EmailAddressEntity, entityData);
         await em.persistAndFlush(emailAddressEntity);
+
+        return emailAddressEntity.id;
     }
 
     afterAll(async () => {
@@ -481,6 +485,51 @@ describe('EmailRepo', () => {
         });
     });
 
+    describe('getEmailAddressesDeleteList', () => {
+        describe('when some exceeded and some non-exceeded EmailAddresses exist', () => {
+            it('should return only EmailAddresses which exceed the deadline', async () => {
+                const person: Person<true> = await createPerson();
+                const address1: string = faker.internet.email();
+                const address2: string = faker.internet.email();
+                const address3: string = faker.internet.email();
+                const address4: string = faker.internet.email();
+                const address5: string = faker.internet.email();
+                const address6: string = faker.internet.email();
+
+                const today: Date = new Date();
+                const dateInPast: Date = new Date();
+                dateInPast.setDate(dateInPast.getDate() - 180);
+
+                await createEmailAddressViaEM(EmailAddressStatus.REQUESTED, person.id, address1, dateInPast);
+                await createEmailAddressViaEM(EmailAddressStatus.FAILED, person.id, address2, dateInPast);
+                await createEmailAddressViaEM(EmailAddressStatus.DISABLED, person.id, address3, dateInPast);
+
+                await createEmailAddressViaEM(EmailAddressStatus.REQUESTED, person.id, address4, today);
+                await createEmailAddressViaEM(EmailAddressStatus.FAILED, person.id, address5, today);
+                await createEmailAddressViaEM(EmailAddressStatus.DISABLED, person.id, address6, today);
+
+                const deleteList: EmailAddress<true>[] = await sut.getEmailAddressesDeleteList();
+
+                expect(deleteList).toHaveLength(3);
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: address1,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: address2,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: address3,
+                    }),
+                );
+            });
+        });
+    });
+
     describe('deactivateEmailAddress', () => {
         describe('when email-address exists', () => {
             it('should disable it and return EmailAddressEntity', async () => {
@@ -558,6 +607,43 @@ describe('EmailRepo', () => {
                     email.value.address,
                 );
                 expect(persistedValidEmail2).toEqual(error);
+            });
+        });
+    });
+
+    describe('deleteById', () => {
+        describe('when EmailAddress with specified id exists', () => {
+            it('should delete EmailAddress in DB and return undefined', async () => {
+                const person: Person<true> = await createPerson();
+                const address1: string = faker.internet.email();
+                const today: Date = new Date();
+                const address1Id: string = await createEmailAddressViaEM(
+                    EmailAddressStatus.REQUESTED,
+                    person.id,
+                    address1,
+                    today,
+                );
+
+                const deletionResult1: Option<DomainError> = await sut.deleteById(address1Id);
+                const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address1);
+                expect(deletionResult1).toBeUndefined();
+                expect(emailAddress).toBeUndefined();
+            });
+        });
+
+        describe('when EmailAddress with specified id does NOT exist', () => {
+            it('should return Error', async () => {
+                const address2Id: string = faker.string.uuid();
+                const notFoundError: NotFoundError = new NotFoundError(
+                    `EmailAddressEntity not found ({ id: '${address2Id}' })`,
+                );
+                const deletionResult2: Option<DomainError> = await sut.deleteById(address2Id);
+
+                expect(deletionResult2).toBeInstanceOf(EmailAddressDeletionError);
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    'Error during deletion of EmailAddress',
+                    notFoundError,
+                );
             });
         });
     });

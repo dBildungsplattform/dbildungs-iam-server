@@ -270,9 +270,10 @@ export class EmailRepo {
      * @param id
      */
     public async deleteById(id: EmailAddressID): Promise<Option<DomainError>> {
-        const emailAddressEntity: Loaded<EmailAddressEntity> = await this.em.findOneOrFail(EmailAddressEntity, id, {});
-
         try {
+            const emailAddressEntity: Loaded<EmailAddressEntity> = await this.em.findOneOrFail(EmailAddressEntity, {
+                id,
+            });
             await this.em.removeAndFlush(emailAddressEntity);
         } catch (err) {
             this.logger.logUnknownAsError('Error during deletion of EmailAddress', err);
