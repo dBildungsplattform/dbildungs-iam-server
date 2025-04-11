@@ -26,6 +26,8 @@ import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-emai
 import { inspect } from 'util';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
+import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/kafka-email-address-deleted.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -324,6 +326,38 @@ export class LdapEventHandler {
         );
         return result;
     }
+
+    @KafkaEventHandler(KafkaEmailAddressDeletedEvent)
+    @EventHandler(EmailAddressDeletedEvent)
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async handleEmailAddressDeletedEvent(event: EmailAddressDeletedEvent): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer: ${event.username}, address:${event.address}`,
+        );
+        const result: Result<boolean> = await this.ldapClientService.removeMailAlternativeAddress(
+            event.personId,
+            event.username,
+            event.address,
+        );
+
+        return result;
+    }
+
+    /*@KafkaEventHandler(KafkaPrimaryEmailAddressDeletedEvent)
+    @EventHandler(PrimaryEmailAddressDeletedEvent)
+    // eslint-disable-next-line @typescript-eslint/require-await
+    public async handlePrimaryEmailAddressDeletedEvent(
+        event: PrimaryEmailAddressDeletedEvent,
+    ): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer: ${event.username}, address:${event.address}`,
+        );
+        const val: unknown = 'aa';
+        return {
+            ok: true,
+            value: val,
+        };
+    }*/
 
     public hatZuordnungZuOrganisationNachLoeschen(
         personenkontextUpdatedEvent: PersonenkontextUpdatedEvent,

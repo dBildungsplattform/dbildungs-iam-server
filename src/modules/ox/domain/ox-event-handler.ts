@@ -56,6 +56,8 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
+import { DeleteUserAction, DeleteUserResponse } from '../actions/user/delete-user.action.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -353,6 +355,39 @@ export class OxEventHandler {
 
         return this.logger.info(
             `Successfully Changed OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent`,
+        );
+    }
+
+    @EventHandler(EmailAddressesPurgedEvent)
+    public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+
+        // Check if the functionality is enabled
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        const params: UserIdParams = {
+            contextId: this.contextID,
+            userId: event.oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: DeleteUserAction = new DeleteUserAction(params);
+
+        const result: Result<DeleteUserResponse, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(
+                `Could Not Delete OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent, error:${result.error.message}`,
+            );
+        }
+
+        return this.logger.info(
+            `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,
         );
     }
 
