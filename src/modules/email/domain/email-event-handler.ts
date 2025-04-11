@@ -36,6 +36,9 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/kafka-email-address-generated.event.js';
+import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -54,6 +57,7 @@ export class EmailEventHandler {
         private readonly organisationRepository: OrganisationRepository,
         private readonly personRepository: PersonRepository,
         private readonly eventService: EventService,
+        private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
     ) {}
 
     /*
@@ -558,8 +562,17 @@ export class EmailEventHandler {
                     this.logger.info(
                         `Set REQUESTED status and persisted address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
                     );
-                    this.eventService.publish(
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.eventRoutingLegacyKafkaService.publish(
                         new EmailAddressGeneratedEvent(
+                            personId,
+                            personReferrer.value,
+                            persistenceResult.id,
+                            persistenceResult.address,
+                            persistenceResult.enabled,
+                            organisationKennung.value,
+                        ),
+                        new KafkaEmailAddressGeneratedEvent(
                             personId,
                             personReferrer.value,
                             persistenceResult.id,
@@ -626,8 +639,16 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
-            this.eventService.publish(
+            await this.eventRoutingLegacyKafkaService.publish(
                 new EmailAddressGeneratedEvent(
+                    personId,
+                    personReferrer.value,
+                    persistenceResult.id,
+                    persistenceResult.address,
+                    persistenceResult.enabled,
+                    organisationKennung.value,
+                ),
+                new KafkaEmailAddressGeneratedEvent(
                     personId,
                     personReferrer.value,
                     persistenceResult.id,
@@ -705,8 +726,17 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted change-email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
-            this.eventService.publish(
+            await this.eventRoutingLegacyKafkaService.publish(
                 new EmailAddressChangedEvent(
+                    personId,
+                    personReferrer.value,
+                    oldEmail.id,
+                    oldEmail.address,
+                    persistenceResult.id,
+                    persistenceResult.address,
+                    organisationKennung.value,
+                ),
+                new KafkaEmailAddressChangedEvent(
                     personId,
                     personReferrer.value,
                     oldEmail.id,
