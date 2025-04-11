@@ -23,6 +23,7 @@ import { ServiceProviderService } from '../service-provider/domain/service-provi
 import { HttpException } from '@nestjs/common';
 import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 import { DomainError } from '../../shared/error/domain.error.js';
+import { EmailAddressDeletionService } from "../email/email-address-deletion/email-address-deletion.service.js";
 
 describe('CronController', () => {
     let cronController: CronController;
@@ -51,6 +52,10 @@ describe('CronController', () => {
                 {
                     provide: PersonDeleteService,
                     useValue: createMock<PersonDeleteService>(),
+                },
+                {
+                    provide: EmailAddressDeletionService,
+                    useValue: createMock<EmailAddressDeletionService>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,

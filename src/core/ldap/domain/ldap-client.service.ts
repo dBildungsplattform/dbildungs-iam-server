@@ -178,6 +178,17 @@ export class LdapClientService {
         );
     }
 
+    public async removeMailAlternativeAddress(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        address: string,
+    ): Promise<Result<boolean>> {
+        return this.executeWithRetry(
+            () => this.removeMailAlternativeAddressInternal(personId, referrer, address),
+            this.getNrOfRetries(),
+        );
+    }
+
     public async changeEmailAddressByPersonId(
         personId: PersonID,
         referrer: PersonReferrer,
@@ -688,6 +699,155 @@ export class LdapClientService {
             value: entryUUID,
         };
     }
+
+    private async removeMailAlternativeAddressInternal(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        address: string,
+    ): Promise<Result<boolean>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: removeMailAlternativeAddress');
+            const splitted: string[] = address.split('@');
+            if (!splitted || !splitted[1]) {
+                this.logger.error(`LDAP: Invalid email-address:${address}`);
+
+                return {
+                    ok: false,
+                    error: new LdapEmailAddressError(),
+                };
+            }
+            const domain: string = splitted[1];
+            const rootName: Result<string> = this.getRootNameOrError(domain);
+            if (!rootName.ok) return rootName;
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+                scope: 'sub',
+                filter: `(uid=${referrer})`,
+                attributes: [
+                    LdapClientService.DN,
+                    LdapClientService.UID,
+                    LdapClientService.MAIL_PRIMARY_ADDRESS,
+                    LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                ],
+                returnAttributeValues: true,
+            });
+            if (!searchResult.searchEntries[0]) {
+                this.logger.error(
+                    `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                );
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
+
+            const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                referrer,
+                personId,
+            );
+            if (!mailAlternativeAddress.ok) {
+                this.logger.error(`MailAlternativeAddress was undefined, referrer:${referrer}, personId:${personId}`);
+                return { ok: false, error: new LdapModifyEmailError() };
+            }
+            if (mailAlternativeAddress.value !== address) {
+                this.logger.info(
+                    `MailAlternativeAddress:${mailAlternativeAddress.value} deletion not necessary, address:${address}, referrer:${referrer}, personId:${personId}`,
+                );
+                return { ok: true, value: false };
+            }
+            try {
+                await client.modify(searchResult.searchEntries[0].dn, [
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                            values: [''],
+                        }),
+                    }),
+                ]);
+                this.logger.info(
+                    `LDAP: Successfully deleted mailPrimaryAddress:${address} for personId:${personId}, referrer:${referrer}`,
+                );
+                this.eventService.publish(new LdapPersonEntryChangedEvent(personId));
+                return { ok: true, value: true };
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Deletion of mailAlternativeAddress FAILED`, err);
+                return { ok: false, error: new LdapModifyEmailError() };
+            }
+        });
+    }
+
+    /*private async removeMailPrimaryAddressInternal(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        address: string,
+        newAddress: string,
+    ): Promise<Result<PersonID>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: removeMailPrimaryAddress');
+            const splitted: string[] = address.split('@');
+            if (!splitted || !splitted[1]) {
+                this.logger.error(`LDAP: Invalid email-address:${address}`);
+
+                return {
+                    ok: false,
+                    error: new LdapEmailAddressError(),
+                };
+            }
+            const domain: string = splitted[1];
+            const rootName: Result<string> = this.getRootNameOrError(domain);
+            if (!rootName.ok) return rootName;
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+                scope: 'sub',
+                filter: `(uid=${referrer})`,
+                attributes: [
+                    LdapClientService.DN,
+                    LdapClientService.UID,
+                    LdapClientService.MAIL_PRIMARY_ADDRESS,
+                    LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                ],
+                returnAttributeValues: true,
+            });
+            if (!searchResult.searchEntries[0]) {
+                this.logger.error(
+                    `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                );
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
+
+            const mailPrimaryAddress: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.MAIL_PRIMARY_ADDRESS,
+                referrer,
+                personId,
+            );
+            if (!mailPrimaryAddress.ok) {
+                this.logger.warning(`MailPrimaryAddress was undefined, referrer:${referrer}, personId:${personId}`);
+            }
+            const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                referrer,
+                personId,
+            );
+            if (!mailAlternativeAddress.ok) {
+                this.logger.warning(`MailAlternativeAddress was undefined, referrer:${referrer}, personId:${personId}`);
+            }
+            return { ok: true, value: personId };
+        });
+    }*/
 
     private async getGroupsForPersonInternal(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
         return this.mutex.runExclusive(async () => {
