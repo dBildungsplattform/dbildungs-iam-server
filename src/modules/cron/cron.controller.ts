@@ -1,4 +1,4 @@
-import { Controller, HttpCode, HttpStatus, Put } from '@nestjs/common';
+import { Controller, Delete, HttpCode, HttpStatus, Put } from '@nestjs/common';
 import {
     ApiCreatedResponse,
     ApiBadRequestResponse,
@@ -431,7 +431,7 @@ export class CronController {
         }
     }
 
-    @Put('email-addresses-delete')
+    @Delete('email-addresses-delete')
     @HttpCode(HttpStatus.OK)
     @ApiCreatedResponse({ description: 'EmailAddresses were successfully removed.', type: Boolean })
     @ApiBadRequestResponse({ description: 'EmailAddresses not found.' })
@@ -439,9 +439,9 @@ export class CronController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to delete EmailAddresses.' })
     @ApiNotFoundResponse({ description: 'Insufficient permissions to delete EmailAddresses.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to delete EmailAddresses.' })
-    public async emailAddressesDelete(@Permissions() permissions: PersonPermissions): Promise<boolean> {
+    public async emailAddressesDelete(@Permissions() permissions: PersonPermissions): Promise<void> {
         try {
-            /* const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
+            const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
                 RollenSystemRecht.CRON_DURCHFUEHREN,
             ]);
             if (!hasCronJobPermission) {
@@ -450,12 +450,12 @@ export class CronController {
                         new MissingPermissionsError('Cronrecht Required For This Endpoint'),
                     ),
                 );
-            }*/
+            }
             await this.emailAddressDeletionService.deleteEmailAddresses(permissions);
 
-            return true;
+            return;
         } catch (error) {
-            throw new Error('Failed to remove users due to an internal server error.');
+            throw error;
         }
     }
 }

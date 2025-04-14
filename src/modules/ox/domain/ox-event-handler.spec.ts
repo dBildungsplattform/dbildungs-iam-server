@@ -29,6 +29,7 @@ import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -1280,6 +1281,64 @@ describe('OxEventHandler', () => {
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully Changed OxUsername For oxUserId:${oxUserId} After PersonDeletedEvent`,
+                );
+            });
+        });
+    });
+
+    describe('handleEmailAddressesPurgedEvent', () => {
+        let personId: PersonID;
+        let referrer: PersonReferrer;
+        let oxUserId: OXUserID;
+        let event: EmailAddressesPurgedEvent;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            personId = faker.string.uuid();
+            referrer = faker.internet.userName();
+            oxUserId = faker.string.numeric();
+            event = new EmailAddressesPurgedEvent(personId, referrer, oxUserId);
+        });
+
+        describe('when handler is disabled', () => {
+            it('should log and skip processing when not enabled', async () => {
+                sut.ENABLED = false;
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            });
+        });
+
+        describe('when delete-request to OX fails', () => {
+            it('should log error about failure', async () => {
+                const error: OxError = new OxError();
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: error,
+                });
+
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could Not Delete OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent, error:${error.message}`,
+                );
+            });
+        });
+
+        describe('when delete-request to OX succeeds', () => {
+            it('should log info about success', async () => {
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,
                 );
             });
         });
