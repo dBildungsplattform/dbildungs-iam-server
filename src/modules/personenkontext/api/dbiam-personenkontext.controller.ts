@@ -30,7 +30,6 @@ import { PersonenkontextSpecificationError } from '../specification/error/person
 import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
-import { EventService } from '../../../core/eventbus/index.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -38,6 +37,8 @@ import { Person } from '../../person/domain/person.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextMigrationRuntype } from '../domain/personenkontext.enums.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -57,7 +58,7 @@ export class DBiamPersonenkontextController {
         private readonly organisationRepo: OrganisationRepository,
         private readonly personRepo: PersonRepository,
         private readonly rolleRepo: RolleRepo,
-        private readonly eventService: EventService,
+        private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
         private readonly logger: ClassLogger,
     ) {}
 
@@ -204,7 +205,7 @@ export class DBiamPersonenkontextController {
             `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / New Kontext has been saved to DB successfully`,
         );
 
-        this.eventService.publish(
+        await this.eventRoutingLegacyKafkaService.publish(
             new PersonenkontextCreatedMigrationEvent(
                 params.migrationRunType,
                 createdKontext,
@@ -213,6 +214,7 @@ export class DBiamPersonenkontextController {
                 orga,
                 params.email,
             ),
+            new KafkaPersonCreatedEvent(params.migrationRunType, createdKontext, person, rolle, orga, params.email),
         );
 
         return new DBiamPersonenkontextResponse(createdKontext);

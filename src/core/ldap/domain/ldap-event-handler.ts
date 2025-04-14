@@ -50,7 +50,9 @@ export class LdapEventHandler {
 
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
-    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<Result<unknown>> {
+    public async handlePersonDeletedEvent(
+        event: PersonDeletedEvent | KafkaPersonDeletedEvent,
+    ): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, referrer:${event.referrer}`,
         );
@@ -64,7 +66,7 @@ export class LdapEventHandler {
     @KafkaEventHandler(KafkaPersonCreatedEvent)
     @EventHandler(PersonenkontextCreatedMigrationEvent)
     public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent,
+        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<Result<unknown>> {
         this.logger.info(
             `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,

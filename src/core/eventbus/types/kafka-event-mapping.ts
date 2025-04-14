@@ -27,37 +27,37 @@ export interface KafkaEventMappingEntry {
 
 export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = {
     'user.created': {
-        eventClass: KafkaPersonCreatedEvent,
+        eventClass: KafkaPersonCreatedEvent, // CHECKED
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.created.email': {
-        eventClass: KafkaEmailAddressGeneratedEvent,
+        eventClass: KafkaEmailAddressGeneratedEvent, // --
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.deleted': {
-        eventClass: KafkaPersonDeletedEvent,
+        eventClass: KafkaPersonDeletedEvent, // --
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.modified.name': {
-        eventClass: KafkaPersonRenamedEvent,
+        eventClass: KafkaPersonRenamedEvent, // --
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.modified.email': {
-        eventClass: KafkaEmailAddressChangedEvent,
+        eventClass: KafkaEmailAddressChangedEvent, // --
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.school.assigned': {
-        eventClass: KafkaPersonenkontextUpdatedEvent,
+        eventClass: KafkaPersonenkontextUpdatedEvent, // --
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.school.unassigned': {
-        eventClass: KafkaPersonenkontextUpdatedEvent,
+        eventClass: KafkaPersonenkontextUpdatedEvent, // --
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },

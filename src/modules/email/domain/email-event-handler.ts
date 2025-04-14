@@ -39,6 +39,8 @@ import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/kafka-email-address-generated.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -156,9 +158,10 @@ export class EmailEventHandler {
         return resMap;
     }
 
+    @KafkaEventHandler(KafkaPersonCreatedEvent)
     @EventHandler(PersonenkontextCreatedMigrationEvent)
     public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent,
+        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<void> {
         this.logger.info(
             `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,

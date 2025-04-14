@@ -14,6 +14,8 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OXContextName } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 
 @Injectable()
 export class KeycloakEventHandler {
@@ -30,8 +32,9 @@ export class KeycloakEventHandler {
     }
 
     @EventHandler(PersonenkontextCreatedMigrationEvent)
+    @KafkaEventHandler(KafkaPersonCreatedEvent)
     public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent,
+        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<void> {
         this.logger.info(
             `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
