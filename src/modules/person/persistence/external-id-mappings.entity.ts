@@ -1,4 +1,4 @@
-import { BaseEntity, Cascade, Entity, Enum, ManyToOne, PrimaryKeyProp, Property, Rel } from '@mikro-orm/core';
+import { BaseEntity, Entity, Enum, ManyToOne, PrimaryKeyProp, Property, Rel } from '@mikro-orm/core';
 import { PersonExternalIdType } from '../domain/person.enums.js';
 import { PersonEntity } from './person.entity.js';
 
@@ -7,9 +7,9 @@ export class PersonExternalIdMappingEntity extends BaseEntity {
     @ManyToOne({
         columnType: 'uuid',
         primary: true,
-        cascade: [Cascade.REMOVE],
         ref: true,
         nullable: false,
+        deleteRule: 'cascade',
         entity: () => PersonEntity,
     })
     public person!: Rel<PersonEntity>;
