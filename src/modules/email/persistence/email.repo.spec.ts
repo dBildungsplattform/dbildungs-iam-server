@@ -30,6 +30,7 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import assert from 'assert';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -57,6 +58,10 @@ describe('EmailRepo', () => {
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
+                },
+                {
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: ClassLogger,
