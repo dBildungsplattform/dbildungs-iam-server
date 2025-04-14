@@ -66,7 +66,3 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
 export function isKafkaEventKey(value: unknown): value is KafkaEventKey {
     return typeof value === 'string' && value in KafkaEventMapping;
 }
-
-export function isKafkaMappedEvent(event: BaseEvent): event is BaseEvent & KafkaEvent {
-    return Object.values(KafkaEventMapping).some((entry: KafkaEventMappingEntry) => event instanceof entry.eventClass);
-}
