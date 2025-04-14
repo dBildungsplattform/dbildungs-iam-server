@@ -1722,6 +1722,23 @@ describe('PersonRepository Integration', () => {
                 expect(result.familienname).toEqual(updatedPerson.familienname);
             });
 
+            it('should correctly set and unset external systems', async () => {
+                const existingPerson: Person<true> = await savePerson();
+                existingPerson.externalIds.LDAP = faker.string.uuid();
+
+                let result: Person<true> | DomainError = await sut.save(existingPerson);
+                if (result instanceof DomainError) throw result;
+
+                expect(result.externalIds.LDAP).toEqual(existingPerson.externalIds.LDAP);
+
+                existingPerson.externalIds.LDAP = undefined;
+
+                result = await sut.save(existingPerson);
+                if (result instanceof DomainError) throw result;
+
+                expect(result.externalIds.LDAP).toBeUndefined();
+            });
+
             describe('when person does not have an id', () => {
                 it('should call the create method and return the created person', async () => {
                     usernameGeneratorService.generateUsername.mockResolvedValueOnce({
