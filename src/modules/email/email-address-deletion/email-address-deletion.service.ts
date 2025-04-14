@@ -55,7 +55,14 @@ export class EmailAddressDeletionService {
                 );
             } else {
                 this.eventService.publish(
-                    new EmailAddressDeletedEvent(ea.personId, username, ea.id, ea.status, ea.address),
+                    new EmailAddressDeletedEvent(
+                        ea.personId,
+                        username,
+                        ea.oxUserID ?? undefined,
+                        ea.id,
+                        ea.status,
+                        ea.address,
+                    ),
                 );
             }
         }

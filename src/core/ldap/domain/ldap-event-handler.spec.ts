@@ -1035,6 +1035,7 @@ describe('LDAP Event Handler', () => {
             const event: EmailAddressDeletedEvent = new EmailAddressDeletedEvent(
                 faker.string.uuid(),
                 faker.internet.userName(),
+                faker.string.numeric(),
                 faker.string.uuid(),
                 EmailAddressStatus.ENABLED,
                 faker.internet.email(),
