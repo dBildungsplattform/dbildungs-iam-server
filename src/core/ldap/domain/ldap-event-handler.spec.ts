@@ -37,6 +37,8 @@ import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontex
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
+import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -1008,7 +1010,7 @@ describe('LDAP Event Handler', () => {
     });
 
     describe('handleEmailAddressChangedEvent', () => {
-        it('should call ldap client changeEmailAddressByPersonId', async () => {
+        it('should call LdapClientService changeEmailAddressByPersonId', async () => {
             const event: EmailAddressChangedEvent = new EmailAddressChangedEvent(
                 faker.string.uuid(),
                 faker.internet.userName(),
@@ -1025,6 +1027,25 @@ describe('LDAP Event Handler', () => {
                 `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('handleEmailAddressDeletedEvent', () => {
+        it('should call LdapClientService removeMailAlternativeAddress', async () => {
+            const event: EmailAddressDeletedEvent = new EmailAddressDeletedEvent(
+                faker.string.uuid(),
+                faker.internet.userName(),
+                faker.string.uuid(),
+                EmailAddressStatus.ENABLED,
+                faker.internet.email(),
+            );
+
+            await ldapEventHandler.handleEmailAddressDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer: ${event.username}, address:${event.address}`,
+            );
+            expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(1);
         });
     });
 });

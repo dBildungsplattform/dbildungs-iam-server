@@ -343,22 +343,6 @@ export class LdapEventHandler {
         return result;
     }
 
-    /*@KafkaEventHandler(KafkaPrimaryEmailAddressDeletedEvent)
-    @EventHandler(PrimaryEmailAddressDeletedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
-    public async handlePrimaryEmailAddressDeletedEvent(
-        event: PrimaryEmailAddressDeletedEvent,
-    ): Promise<Result<unknown>> {
-        this.logger.info(
-            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer: ${event.username}, address:${event.address}`,
-        );
-        const val: unknown = 'aa';
-        return {
-            ok: true,
-            value: val,
-        };
-    }*/
-
     public hatZuordnungZuOrganisationNachLoeschen(
         personenkontextUpdatedEvent: PersonenkontextUpdatedEvent,
         personenkontextEventKontextData: PersonenkontextEventKontextData,
