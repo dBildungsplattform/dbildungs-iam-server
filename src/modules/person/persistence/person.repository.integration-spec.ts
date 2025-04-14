@@ -1756,9 +1756,9 @@ describe('PersonRepository Integration', () => {
                     undefined,
                     undefined,
                     undefined,
-                    undefined,
+                    undefined, //istTechnisch
                     {
-                        LDAP: faker.string.uuid(),
+                        LDAP: faker.string.uuid(), //externalIds
                     },
                 );
 
