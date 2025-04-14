@@ -1724,16 +1724,52 @@ describe('PersonRepository Integration', () => {
 
             it('should correctly set and unset external systems', async () => {
                 const existingPerson: Person<true> = await savePerson();
-                existingPerson.externalIds.LDAP = faker.string.uuid();
 
-                let result: Person<true> | DomainError = await sut.save(existingPerson);
+                const updatedPerson: Person<true> = Person.construct(
+                    existingPerson.id,
+                    existingPerson.createdAt,
+                    existingPerson.updatedAt,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    existingPerson.mandant,
+                    existingPerson.stammorganisation,
+                    existingPerson.keycloakUserId,
+                    existingPerson.referrer,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    {
+                        LDAP: faker.string.uuid(),
+                    },
+                );
+
+                let result: Person<true> | DomainError = await sut.save(updatedPerson);
                 if (result instanceof DomainError) throw result;
 
-                expect(result.externalIds.LDAP).toEqual(existingPerson.externalIds.LDAP);
+                expect(result.externalIds.LDAP).toEqual(updatedPerson.externalIds.LDAP);
 
-                existingPerson.externalIds.LDAP = undefined;
+                updatedPerson.externalIds.LDAP = undefined;
 
-                result = await sut.save(existingPerson);
+                result = await sut.save(updatedPerson);
                 if (result instanceof DomainError) throw result;
 
                 expect(result.externalIds.LDAP).toBeUndefined();
