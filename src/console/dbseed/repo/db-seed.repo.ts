@@ -20,12 +20,13 @@ function mapEntityToAggregate(entity: DbSeedEntity): DbSeed<boolean> {
 export class DbSeedRepo {
     public constructor(private em: EntityManager) {}
 
-    public async findById(hash: string): Promise<Option<DbSeed<true>>> {
-        const dbSeedEntity: Option<DbSeedEntity> = (await this.em.findOne(DbSeedEntity, {
-            hash,
-        })) as Option<DbSeedEntity>;
+    /**
+     * Returns TRUE if seeding table contains any seeding record, regardless of its status, FALSE vice versa.
+     */
+    public async existsSeeding(): Promise<boolean> {
+        const dbSeedEntities: DbSeedEntity[] = await this.em.find(DbSeedEntity, {});
 
-        return dbSeedEntity && mapEntityToAggregate(dbSeedEntity);
+        return dbSeedEntities.length > 0;
     }
 
     public async create(dbSeed: DbSeed<false>): Promise<DbSeed<true>> {
