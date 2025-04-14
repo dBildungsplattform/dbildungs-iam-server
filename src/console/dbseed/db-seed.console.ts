@@ -55,6 +55,10 @@ export class DbSeedConsole extends CommandRunner {
     }
 
     public override async run(_passedParams: string[], _options?: Record<string, unknown>): Promise<void> {
+        const existsSeeding: boolean = await this.dbSeedRepo.existsSeeding();
+        if (existsSeeding) {
+            return this.logger.error('Seeding data has already been created in database!');
+        }
         const directory: string = this.getDirectory(_passedParams);
         const subDirs: string[] = this.dbSeedService.getDirectories(directory);
         this.logger.info('Found following sub-directories:');
@@ -77,10 +81,8 @@ export class DbSeedConsole extends CommandRunner {
                 }
                 await this.orm.em.flush();
                 this.logger.info(`Created seed data from ${subDir} successfully.`);
-                /* eslint-disable no-await-in-loop */
             } catch (err) {
-                this.logger.error('Seed data could not be created!');
-                this.logger.error(String(err));
+                this.logger.logUnknownAsError('Seed data could not be created!', err);
                 throw err;
             }
         }
@@ -89,34 +91,23 @@ export class DbSeedConsole extends CommandRunner {
     private async readAndProcessEntityFile(directory: string, subDir: string, entityFileName: string): Promise<void> {
         const fileContentAsStr: string = fs.readFileSync(`./seeding/${directory}/${subDir}/${entityFileName}`, 'utf-8');
         const contentHash: string = this.generateHashForEntityFile(fileContentAsStr);
-        const dbSeedE: Option<DbSeed<true>> = await this.dbSeedRepo.findById(contentHash);
-        if (dbSeedE) {
-            if (dbSeedE.status === DbSeedStatus.FAILED) {
-                this.logger.warning(
-                    `Skipping file ${entityFileName} because previous execution failed on ${dbSeedE.executedAt.toLocaleString()}`,
-                );
-            } else if (dbSeedE.status === DbSeedStatus.DONE) {
-                this.logger.info(
-                    `Skipping file ${entityFileName} because it was successfully executed on ${dbSeedE.executedAt.toLocaleString()}`,
-                );
-            }
-        } else {
-            const dbSeed: DbSeed<false> = DbSeed.createNew(
-                contentHash,
-                DbSeedStatus.STARTED,
-                subDir + '/' + entityFileName,
-            );
-            const persistedDbSeed: DbSeed<true> = await this.dbSeedRepo.create(dbSeed);
-            try {
-                await this.processEntityFile(entityFileName, directory, subDir);
-                persistedDbSeed.setDone();
-                await this.dbSeedRepo.update(persistedDbSeed);
-            } catch (err) {
-                persistedDbSeed.setFailed();
-                this.dbSeedRepo.forkEntityManager();
-                await this.dbSeedRepo.update(persistedDbSeed);
-                throw err;
-            }
+        // Removed former check whether file has to be skipped when in FAILED or DONE status,
+        // since seeding is skipped totally when any existing record is found in seeding table (see run)
+        const dbSeed: DbSeed<false> = DbSeed.createNew(
+            contentHash,
+            DbSeedStatus.STARTED,
+            subDir + '/' + entityFileName,
+        );
+        const persistedDbSeed: DbSeed<true> = await this.dbSeedRepo.create(dbSeed);
+        try {
+            await this.processEntityFile(entityFileName, directory, subDir);
+            persistedDbSeed.setDone();
+            await this.dbSeedRepo.update(persistedDbSeed);
+        } catch (err) {
+            persistedDbSeed.setFailed();
+            this.dbSeedRepo.forkEntityManager();
+            await this.dbSeedRepo.update(persistedDbSeed);
+            throw err;
         }
     }
 
