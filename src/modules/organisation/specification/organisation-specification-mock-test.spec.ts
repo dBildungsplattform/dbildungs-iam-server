@@ -11,7 +11,6 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { NurKlasseKursUnterSchule } from './nur-klasse-kurs-unter-schule.js';
 import { SchuleUnterTraeger } from './schule-unter-traeger.js';
-import { TraegerInTraeger } from './traeger-in-traeger.js';
 import { KlasseNurVonSchuleAdministriert } from './klasse-nur-von-schule-administriert.js';
 import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
@@ -86,67 +85,6 @@ describe('OrganisationSpecificationMockedRepoTest', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(traeger); //mock call to administriertVon
             organisationRepositoryMock.findById.mockResolvedValueOnce(null);
             expect(await schuleUnterTraeger.isSatisfiedBy(schule)).toBeFalsy();
-        });
-    });
-
-    describe('traeger-in-traeger', () => {
-        it('should be satisfied when organisation is not TRAEGER', async () => {
-            const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(organisationRepositoryMock);
-            const traeger: Organisation<true> = DoFactory.createOrganisation(true, {
-                typ: OrganisationsTyp.SONSTIGE,
-                administriertVon: '1',
-            });
-            organisationRepositoryMock.findById.mockResolvedValueOnce(null);
-            expect(await traegerInTraeger.isSatisfiedBy(traeger)).toBeTruthy();
-        });
-        it('should not be satisfied when administriertVon is undefined', async () => {
-            const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(organisationRepositoryMock);
-            const traeger: Organisation<true> = DoFactory.createOrganisation(true, {
-                typ: OrganisationsTyp.TRAEGER,
-                administriertVon: undefined,
-            });
-            expect(await traegerInTraeger.isSatisfiedBy(traeger)).toBeFalsy();
-        });
-        it('should not be satisfied when zugehoerigZu is undefined', async () => {
-            const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(organisationRepositoryMock);
-            const traeger: Organisation<true> = DoFactory.createOrganisation(true, {
-                typ: OrganisationsTyp.TRAEGER,
-                administriertVon: '1',
-                zugehoerigZu: undefined,
-            });
-            const andererTraeger: Organisation<true> = DoFactory.createOrganisation(true, {
-                typ: OrganisationsTyp.TRAEGER,
-                administriertVon: '1',
-                zugehoerigZu: '1',
-            });
-            organisationRepositoryMock.findById.mockResolvedValueOnce(andererTraeger);
-            expect(await traegerInTraeger.isSatisfiedBy(traeger)).toBeFalsy();
-        });
-        it('should not be satisfied when organisation referenced by administriertVon cannot be found', async () => {
-            const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(organisationRepositoryMock);
-            const traeger: Organisation<true> = DoFactory.createOrganisation(true, {
-                typ: OrganisationsTyp.TRAEGER,
-                administriertVon: '1',
-                zugehoerigZu: '1',
-            });
-            organisationRepositoryMock.findById.mockResolvedValueOnce(null);
-            expect(await traegerInTraeger.isSatisfiedBy(traeger)).toBeFalsy();
-        });
-        it('should not be satisfied when organisation referenced by zugehoerigZu cannot be found', async () => {
-            const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(organisationRepositoryMock);
-            const andererTraeger: Organisation<true> = DoFactory.createOrganisation(true, {
-                typ: OrganisationsTyp.TRAEGER,
-                administriertVon: '1',
-                zugehoerigZu: '1',
-            });
-            const traeger: Organisation<true> = DoFactory.createOrganisation(true, {
-                typ: OrganisationsTyp.TRAEGER,
-                administriertVon: '1',
-                zugehoerigZu: '1',
-            });
-            organisationRepositoryMock.findById.mockResolvedValueOnce(andererTraeger);
-            organisationRepositoryMock.findById.mockResolvedValueOnce(null);
-            expect(await traegerInTraeger.isSatisfiedBy(traeger)).toBeFalsy();
         });
     });
 
