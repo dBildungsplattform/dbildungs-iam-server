@@ -3308,7 +3308,8 @@
             "id"
           ],
           "referencedTableName": "public.person",
-          "deleteRule": "cascade"
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
         }
       },
       "nativeEnums": {
@@ -4056,7 +4057,8 @@
             "id"
           ],
           "referencedTableName": "public.person",
-          "deleteRule": "cascade"
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
         },
         "personenkontext_organisation_id_foreign": {
           "constraintName": "personenkontext_organisation_id_foreign",
@@ -6982,7 +6984,8 @@
             "id"
           ],
           "referencedTableName": "public.person",
-          "deleteRule": "cascade"
+          "deleteRule": "cascade",
+          "updateRule": "cascade"
         }
       },
       "nativeEnums": {

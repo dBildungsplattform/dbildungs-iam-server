@@ -1736,6 +1736,59 @@ describe('PersonRepository Integration', () => {
                 expect(result.familienname).toEqual(updatedPerson.familienname);
             });
 
+            it('should correctly set and unset external systems', async () => {
+                const existingPerson: Person<true> = await savePerson();
+
+                const updatedPerson: Person<true> = Person.construct(
+                    existingPerson.id,
+                    existingPerson.createdAt,
+                    existingPerson.updatedAt,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    existingPerson.mandant,
+                    existingPerson.stammorganisation,
+                    existingPerson.keycloakUserId,
+                    existingPerson.referrer,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined, //istTechnisch
+                    {
+                        LDAP: faker.string.uuid(), //externalIds
+                    },
+                );
+
+                let result: Person<true> | DomainError = await sut.save(updatedPerson);
+                if (result instanceof DomainError) throw result;
+
+                expect(result.externalIds.LDAP).toEqual(updatedPerson.externalIds.LDAP);
+
+                updatedPerson.externalIds.LDAP = undefined;
+
+                result = await sut.save(updatedPerson);
+                if (result instanceof DomainError) throw result;
+
+                expect(result.externalIds.LDAP).toBeUndefined();
+            });
+
             describe('when person does not have an id', () => {
                 it('should call the create method and return the created person', async () => {
                     usernameGeneratorService.generateUsername.mockResolvedValueOnce({
