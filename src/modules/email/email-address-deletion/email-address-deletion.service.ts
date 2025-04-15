@@ -3,11 +3,17 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
+import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+
+type ReferrerAndOxUserId = {
+    oxUserName: PersonReferrer;
+    oxUserId: OXUserID;
+};
 
 @Injectable()
 export class EmailAddressDeletionService {
@@ -23,18 +29,7 @@ export class EmailAddressDeletionService {
         const nonPrimaryEmailAddresses: EmailAddress<true>[] = emailAddresses.filter(
             (ea: EmailAddress<true>) => ea.status !== EmailAddressStatus.ENABLED,
         );
-        const primaryEmailAddresses: EmailAddress<true>[] = emailAddresses.filter(
-            (ea: EmailAddress<true>) => ea.status === EmailAddressStatus.ENABLED,
-        );
-        this.logger.info('Non-primary EAs:');
-        for (const ea of nonPrimaryEmailAddresses) {
-            this.logger.info(`id:${ea.id}, address:${ea.address}, status:${ea.status}`);
-        }
-        this.logger.info('Primary EAs:');
-        for (const ea of primaryEmailAddresses) {
-            this.logger.info(`id:${ea.id}, address:${ea.address}, status:${ea.status}`);
-        }
-        const affectedPersonIds: PersonID[] = emailAddresses.map((ea: EmailAddress<true>) => ea.personId);
+        const affectedPersonIds: PersonID[] = nonPrimaryEmailAddresses.map((ea: EmailAddress<true>) => ea.personId);
         const uniqueAffectedPersonIdSet: Set<PersonID> = new Set(affectedPersonIds);
         const uniqueAffectedPersonIds: PersonID[] = Array.from(uniqueAffectedPersonIdSet);
 
@@ -46,44 +41,60 @@ export class EmailAddressDeletionService {
         affectedPersons.map((p: Person<true>) => {
             personMap.set(p.id, p);
         });
+        const emailPersonMap: Map<PersonID, ReferrerAndOxUserId> = new Map<PersonID, ReferrerAndOxUserId>();
 
-        for (const ea of emailAddresses) {
+        for (const ea of nonPrimaryEmailAddresses) {
             const username: string | undefined = personMap.get(ea.personId)?.referrer;
             if (!username) {
                 this.logger.error(
                     `Could NOT get username when generating EmailAddressDeletedEvent, personId:${ea.personId}`,
                 );
-            } else {
-                this.eventService.publish(
-                    new EmailAddressDeletedEvent(
-                        ea.personId,
-                        username,
-                        ea.oxUserID ?? undefined,
-                        ea.id,
-                        ea.status,
-                        ea.address,
-                    ),
-                );
+                continue;
             }
+            if (!ea.oxUserID) {
+                this.logger.error(
+                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}, referrer:${username}`,
+                );
+                continue;
+            }
+            emailPersonMap.set(ea.personId, {
+                oxUserName: username,
+                oxUserId: ea.oxUserID,
+            });
+            this.eventService.publish(
+                new EmailAddressDeletedEvent(ea.personId, username, ea.oxUserID, ea.id, ea.status, ea.address),
+            );
         }
 
         for (const person of affectedPersons) {
-            this.logger.info(`id:${person.id}, vorname:${person.vorname}, familienname:${person.familienname}`);
+            this.logger.info(
+                `Affected Person: personId:${person.id}, referrer:${person.referrer}, vorname:${person.vorname}, familienname:${person.familienname}`,
+            );
         }
 
-        const personIdsWithoutAnyEmailAddresses: PersonID[] =
-            await this.getAffectedPersonsWithoutEmailAddresses(uniqueAffectedPersonIds);
-        this.logger.info(JSON.stringify(personIdsWithoutAnyEmailAddresses));
+        // const personIdsWithoutAnyEmailAddresses: PersonID[] = await this.getAffectedPersonsWithoutEmailAddresses(
+        //     uniqueAffectedPersonIds,
+        //     nonPrimaryEmailAddresses,
+        // );
+        //this.logger.info(JSON.stringify(personIdsWithoutAnyEmailAddresses));
+        //this.publishPersonPurgeEvents(personIdsWithoutAnyEmailAddresses, emailPersonMap);
     }
 
-    private async getAffectedPersonsWithoutEmailAddresses(uniqueAffectedPersonIds: PersonID[]): Promise<PersonID[]> {
+    /*private async getAffectedPersonsWithoutEmailAddresses(
+        uniqueAffectedPersonIds: PersonID[],
+        emailAddressesForDeletion: EmailAddress<true>[],
+    ): Promise<PersonID[]> {
         const personIdsWithoutAnyEmailAddresses: PersonID[] = [];
 
         await Promise.allSettled(
             uniqueAffectedPersonIds.map(async (personId: PersonID) => {
                 const emailAddressesForPerson: EmailAddress<true>[] =
                     await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
-                if (emailAddressesForPerson.length == 0) {
+                const remainingEmailAddressesForPerson: EmailAddress<true>[] = emailAddressesForPerson.filter(
+                    (ea: EmailAddress<true>) =>
+                        emailAddressesForDeletion.every((ead: EmailAddress<true>) => ead.id !== ea.id),
+                );
+                if (remainingEmailAddressesForPerson.length == 0) {
                     personIdsWithoutAnyEmailAddresses.push(personId);
                 }
             }),
@@ -91,4 +102,19 @@ export class EmailAddressDeletionService {
 
         return personIdsWithoutAnyEmailAddresses;
     }
+
+    private publishPersonPurgeEvents(personIds: PersonID[], emailPersonMap: Map<PersonID, ReferrerAndOxUserId>): void {
+        for (const personId of personIds) {
+            const data: ReferrerAndOxUserId | undefined = emailPersonMap.get(personId);
+            if (!data) {
+                this.logger.error(`Could not create PurgeEvent, no data for personId:${personId}`);
+                continue;
+            }
+            if (!data.oxUserId) {
+                this.logger.error(`Could not create PurgeEvent, no OxUserId for personId:${personId}`);
+                continue;
+            }
+            this.eventService.publish(new EmailAddressesPurgedEvent(personId, data.oxUserName, data.oxUserId));
+        }
+    }*/
 }

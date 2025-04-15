@@ -21,7 +21,7 @@ import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-addre
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
 import { GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/index.js';
-import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { OXContextID, OXContextName, OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { ListGroupsAction } from '../actions/group/list-groups.action.js';
 import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
@@ -1310,6 +1310,9 @@ describe('OxEventHandler', () => {
     });
 
     describe('handleEmailAddressDeletedEvent', () => {
+        const contextId: OXContextID = '10';
+        const contextName: OXContextName = 'testContext';
+
         let personId: PersonID;
         let referrer: PersonReferrer;
         let oxUserId: OXUserID;
@@ -1338,18 +1341,6 @@ describe('OxEventHandler', () => {
                     `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
-            });
-        });
-
-        describe('when oxUserId is NOT defined in event', () => {
-            it('should log error about missing emailAddress', async () => {
-                event = new EmailAddressDeletedEvent(personId, referrer, undefined, emailAddressId, status, address);
-
-                await sut.handleEmailAddressDeletedEvent(event);
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Remove EmailAddress from OX-account without oxUserId, personId:${event.personId}, referrer:${event.username}`,
-                );
             });
         });
 
@@ -1397,6 +1388,17 @@ describe('OxEventHandler', () => {
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+                );
+                //kap
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: event.personId,
+                        oxUserId: event.oxUserId,
+                        username: event.username,
+                        address: event.address,
+                        oxContextId: contextId,
+                        oxContextName: contextName,
+                    }),
                 );
             });
         });

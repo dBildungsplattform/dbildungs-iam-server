@@ -59,6 +59,7 @@ import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-u
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
 import { DeleteUserAction, DeleteUserResponse } from '../actions/user/delete-user.action.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
+import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox-email-address-deleted.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -370,12 +371,6 @@ export class OxEventHandler {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        if (!event.oxUserId) {
-            return this.logger.error(
-                `Could Not Remove EmailAddress from OX-account without oxUserId, personId:${event.personId}, referrer:${event.username}`,
-            );
-        }
-
         const idParams: UserIdParams = {
             contextId: this.contextID,
             userId: event.oxUserId,
@@ -414,6 +409,16 @@ export class OxEventHandler {
             );
         }
 
+        this.eventService.publish(
+            new OxEmailAddressDeletedEvent(
+                event.personId,
+                event.oxUserId,
+                event.username,
+                event.address,
+                this.contextID,
+                this.contextName,
+            ),
+        );
         return this.logger.info(
             `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
         );

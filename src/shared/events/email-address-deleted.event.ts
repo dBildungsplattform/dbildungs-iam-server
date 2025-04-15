@@ -7,7 +7,7 @@ export class EmailAddressDeletedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
         public readonly username: PersonReferrer,
-        public readonly oxUserId: OXUserID | undefined,
+        public readonly oxUserId: OXUserID,
         public readonly emailAddressId: EmailAddressID,
         public readonly status: EmailAddressStatus,
         public readonly address: string,
