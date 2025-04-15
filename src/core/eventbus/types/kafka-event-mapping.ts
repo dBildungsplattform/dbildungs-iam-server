@@ -14,8 +14,7 @@ export type KafkaEventKey =
     | 'user.deleted'
     | 'user.modified.name'
     | 'user.modified.email'
-    | 'user.school.assigned'
-    | 'user.school.unassigned';
+    | 'user.modified.personenkontexte'
 
 export type KafkaTopic = 'user-topic';
 export type KafkaTopicDlq = 'user-dlq-topic';
@@ -32,32 +31,27 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topicDlq: 'user-dlq-topic',
     },
     'user.created.email': {
-        eventClass: KafkaEmailAddressGeneratedEvent, // --
+        eventClass: KafkaEmailAddressGeneratedEvent, // CHECKED
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.deleted': {
-        eventClass: KafkaPersonDeletedEvent, // --
+        eventClass: KafkaPersonDeletedEvent, // CHECKED
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.modified.name': {
-        eventClass: KafkaPersonRenamedEvent, // --
+        eventClass: KafkaPersonRenamedEvent, // CHECKED
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.modified.email': {
-        eventClass: KafkaEmailAddressChangedEvent, // --
+        eventClass: KafkaEmailAddressChangedEvent, // CHECKED
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
-    'user.school.assigned': {
-        eventClass: KafkaPersonenkontextUpdatedEvent, // --
-        topic: 'user-topic',
-        topicDlq: 'user-dlq-topic',
-    },
-    'user.school.unassigned': {
-        eventClass: KafkaPersonenkontextUpdatedEvent, // --
+    'user.modified.personenkontexte': {
+        eventClass: KafkaPersonenkontextUpdatedEvent, // CHECKED
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },

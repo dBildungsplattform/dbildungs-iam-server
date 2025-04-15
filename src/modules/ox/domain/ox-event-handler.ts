@@ -56,6 +56,11 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
+import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/kafka-email-address-generated.event.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -140,6 +145,7 @@ export class OxEventHandler {
     }
 
     @EventHandler(EmailAddressChangedEvent)
+    @KafkaEventHandler(KafkaEmailAddressChangedEvent)
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
@@ -153,7 +159,10 @@ export class OxEventHandler {
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
-    public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<void> {
+    @KafkaEventHandler(KafkaEmailAddressGeneratedEvent)
+    public async handleEmailAddressGeneratedEvent(
+        event: EmailAddressGeneratedEvent | KafkaEmailAddressGeneratedEvent,
+    ): Promise<void> {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
         );
@@ -267,6 +276,7 @@ export class OxEventHandler {
         await this.removeOxUserFromAllItsOxGroups(person.oxUserId, person.id);
     }
 
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
@@ -303,6 +313,7 @@ export class OxEventHandler {
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
+    @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);

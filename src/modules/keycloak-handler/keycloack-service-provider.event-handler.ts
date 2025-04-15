@@ -10,6 +10,8 @@ import { RolleID } from '../../shared/types/aggregate-ids.types.js';
 import { ServiceProvider } from '../service-provider/domain/service-provider.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { Rolle } from '../rolle/domain/rolle.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../shared/events/kafka-personenkontext-updated.event.js';
+import { KafkaEventHandler } from '../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 
 export type KontextIdsAndDuplicationFlag = {
     hasDuplicateRolleIds: boolean;
@@ -52,6 +54,7 @@ export class KeycloackServiceProviderHandler {
         return updateRole;
     }
 
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         const { newKontexte, currentKontexte, removedKontexte, person }: PersonenkontextUpdatedEvent = event;

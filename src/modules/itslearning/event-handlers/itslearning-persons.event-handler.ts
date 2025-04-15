@@ -21,6 +21,9 @@ import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.j
 import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 
 @Injectable()
 export class ItsLearningPersonsEventHandler {
@@ -41,6 +44,7 @@ export class ItsLearningPersonsEventHandler {
     }
 
     @EventHandler(PersonRenamedEvent)
+    @KafkaEventHandler(KafkaPersonRenamedEvent)
     public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`[EventID: ${event.eventID}] Received PersonRenamedEvent, ${event.personId}`);
@@ -112,6 +116,7 @@ export class ItsLearningPersonsEventHandler {
         });
     }
 
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     public async updatePersonenkontexteEventHandler(event: PersonenkontextUpdatedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {

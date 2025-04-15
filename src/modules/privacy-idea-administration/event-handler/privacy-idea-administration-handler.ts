@@ -3,6 +3,8 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PrivacyIdeaAdministrationService } from '../privacy-idea-administration.service.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationServiceHandler {
@@ -12,6 +14,7 @@ export class PrivacyIdeaAdministrationServiceHandler {
     ) {}
 
     @EventHandler(PersonRenamedEvent)
+    @KafkaEventHandler(KafkaPersonRenamedEvent)
     public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
         this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
         if (!event.referrer) throw new Error('Referrer is missing');

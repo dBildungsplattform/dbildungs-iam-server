@@ -4,6 +4,8 @@ import { EventHandler } from '../../core/eventbus/decorators/event-handler.decor
 import { ClassLogger } from '../../core/logging/class-logger.js';
 import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
 import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
+import { KafkaPersonDeletedEvent } from '../../shared/events/kafka-person-deleted.event.js';
+import { KafkaEventHandler } from '../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 
 @Injectable()
 export class PrivacyIdeaAdministrationEventHandler {
@@ -12,6 +14,7 @@ export class PrivacyIdeaAdministrationEventHandler {
         private readonly privacyIdeaAdministrationService: PrivacyIdeaAdministrationService,
     ) {}
 
+    @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);

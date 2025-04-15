@@ -41,6 +41,8 @@ import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/kafka-em
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -215,6 +217,7 @@ export class EmailEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
@@ -226,8 +229,9 @@ export class EmailEventHandler {
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
+    @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
-    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}, referrer:${event.referrer}`);
         //Setting person_id to null in Email table is done via deleteRule, not necessary here
 
