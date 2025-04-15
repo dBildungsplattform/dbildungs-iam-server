@@ -97,6 +97,6 @@
         "GROUP_ID": "nestjs-kafka",
         "SESSION_TIMEOUT": 30000,
         "HEARTBEAT_INTERVAL": 10000,
-        "ENABLED":false
+        "ENABLED":true
     }
 }
