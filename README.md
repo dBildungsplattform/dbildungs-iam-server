@@ -62,7 +62,7 @@ Optional dependencies are in the `third-party` profile. So for the complete back
 docker compose --profile backend --profile third-party up
 ```
 
-The frontend-client (and a necessary ingress) can be started with the `frontend` profile, assuming a certificate for the ingress has been created. You can use `create-cert.sh` inside `nginx/` to do so. Afterwards you can start front- and backend together with:
+The frontend-client (and a necessary ingress) can be started with the `frontend` profile, assuming a certificate for the ingress has been created. You can use `create-cert.sh` inside `nginx/` to do so. Afterwards you can start front- and backend together with
 
 ```sh
 docker compose --profile backend --profile frontend up
