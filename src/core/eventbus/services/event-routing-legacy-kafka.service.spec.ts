@@ -84,4 +84,26 @@ describe('EventRoutingLegacyKafkaService', () => {
             expect(eventServiceMock.publish).toHaveBeenCalledWith(legacyEvent);
         });
     });
+
+    it('should set kafkaEnabled to false when kafkaConfig is undefined', async () => {
+        configServiceMock = createMock<ConfigService>();
+        configServiceMock.get.mockReturnValue(undefined); // Simulate undefined kafkaConfig
+
+        module = await Test.createTestingModule({
+            imports: [LoggingTestModule],
+            providers: [
+                EventRoutingLegacyKafkaService,
+                { provide: EventService, useValue: createMock<EventService>() },
+                { provide: KafkaEventService, useValue: createMock<KafkaEventService>() },
+                { provide: ConfigService, useValue: configServiceMock },
+            ],
+        }).compile();
+
+        sut = module.get(EventRoutingLegacyKafkaService);
+
+        // @ts-expect-error - accessing private field for testing
+        expect(sut.kafkaEnabled).toBe(false);
+
+        await module.close();
+    });
 });
