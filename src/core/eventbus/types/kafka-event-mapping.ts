@@ -14,7 +14,7 @@ export type KafkaEventKey =
     | 'user.deleted'
     | 'user.modified.name'
     | 'user.modified.email'
-    | 'user.modified.personenkontexte'
+    | 'user.modified.personenkontexte';
 
 export type KafkaTopic = 'user-topic';
 export type KafkaTopicDlq = 'user-dlq-topic';
