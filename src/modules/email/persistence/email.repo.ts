@@ -138,21 +138,38 @@ export class EmailRepo {
         return mapEntityToAggregate(emailAddressEntity);
     }
 
-    public async getEmailAddressesDeleteList(): Promise<EmailAddress<true>[]> {
+    /**
+     * Returns all EmailAddresses with status DELETED_LDAP, DELETED_OX and DELETE or
+     * which have an updatedAt that exceeds the deadline (180 days).
+     * The result is ordered by updatedAt descending.
+     */
+    public async getByDeletedStatusOrUpdatedAtExceedsDeadline(): Promise<EmailAddress<true>[]> {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS);
 
         const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
             EmailAddressEntity,
             {
-                $and: [{ status: { $ne: EmailAddressStatus.ENABLED } }, { updatedAt: { $lt: daysAgo } }],
+                $or: [
+                    { status: EmailAddressStatus.DELETED_LDAP },
+                    { status: EmailAddressStatus.DELETED_OX },
+                    { status: EmailAddressStatus.DELETED },
+                    {
+                        $and: [{ status: { $ne: EmailAddressStatus.ENABLED } }, { updatedAt: { $lt: daysAgo } }],
+                    },
+                ],
             },
             { orderBy: { updatedAt: QueryOrder.DESC } },
         );
 
-        const emails: EmailAddress<true>[] = emailAddressEntities.map(mapEntityToAggregate);
+        return emailAddressEntities.map(mapEntityToAggregate);
+    }
 
-        return emails;
+    public async getEmailAddressesDeleteList(): Promise<EmailAddress<true>[]> {
+        const emailAddressesForDeletion: EmailAddress<true>[] =
+            await this.getByDeletedStatusOrUpdatedAtExceedsDeadline();
+
+        return emailAddressesForDeletion;
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {

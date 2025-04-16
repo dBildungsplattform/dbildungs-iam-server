@@ -486,44 +486,132 @@ describe('EmailRepo', () => {
     });
 
     describe('getEmailAddressesDeleteList', () => {
-        describe('when some exceeded and some non-exceeded EmailAddresses exist', () => {
-            it('should return only EmailAddresses which exceed the deadline', async () => {
+        describe('when exceeded EmailAddresses, EmailAddresses with an DELETED status and non-exceeded EmailAddresses exist', () => {
+            it('should return only EmailAddresses which exceed the deadline or an DELETED status', async () => {
                 const person: Person<true> = await createPerson();
-                const address1: string = faker.internet.email();
-                const address2: string = faker.internet.email();
-                const address3: string = faker.internet.email();
-                const address4: string = faker.internet.email();
-                const address5: string = faker.internet.email();
-                const address6: string = faker.internet.email();
+                const addressRequestedExceeded: string = faker.internet.email();
+                const addressFailedExceeded: string = faker.internet.email();
+                const addressDisabledExceeded: string = faker.internet.email();
+                const addressDeletedLdapExceeded: string = faker.internet.email();
+                const addressDeletedOxExceeded: string = faker.internet.email();
+                const addressDeletedExceeded: string = faker.internet.email();
+                const addressDeletedLdapNotExceeded: string = faker.internet.email();
+                const addressDeletedOxNotExceeded: string = faker.internet.email();
+                const addressDeletedNotExceeded: string = faker.internet.email();
+
+                const addressRequestedNotExceeded: string = faker.internet.email();
+                const addressFailedNotExceeded: string = faker.internet.email();
+                const addressDisabledNotExceeded: string = faker.internet.email();
 
                 const today: Date = new Date();
                 const dateInPast: Date = new Date();
                 dateInPast.setDate(dateInPast.getDate() - 180);
 
-                await createEmailAddressViaEM(EmailAddressStatus.REQUESTED, person.id, address1, dateInPast);
-                await createEmailAddressViaEM(EmailAddressStatus.FAILED, person.id, address2, dateInPast);
-                await createEmailAddressViaEM(EmailAddressStatus.DISABLED, person.id, address3, dateInPast);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.REQUESTED,
+                    person.id,
+                    addressRequestedExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(EmailAddressStatus.FAILED, person.id, addressFailedExceeded, dateInPast);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DISABLED,
+                    person.id,
+                    addressDisabledExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED_LDAP,
+                    person.id,
+                    addressDeletedLdapExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED_OX,
+                    person.id,
+                    addressDeletedOxExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED,
+                    person.id,
+                    addressDeletedExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED_LDAP,
+                    person.id,
+                    addressDeletedLdapNotExceeded,
+                    today,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED_OX,
+                    person.id,
+                    addressDeletedOxNotExceeded,
+                    today,
+                );
+                await createEmailAddressViaEM(EmailAddressStatus.DELETED, person.id, addressDeletedNotExceeded, today);
 
-                await createEmailAddressViaEM(EmailAddressStatus.REQUESTED, person.id, address4, today);
-                await createEmailAddressViaEM(EmailAddressStatus.FAILED, person.id, address5, today);
-                await createEmailAddressViaEM(EmailAddressStatus.DISABLED, person.id, address6, today);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.REQUESTED,
+                    person.id,
+                    addressRequestedNotExceeded,
+                    today,
+                );
+                await createEmailAddressViaEM(EmailAddressStatus.FAILED, person.id, addressFailedNotExceeded, today);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DISABLED,
+                    person.id,
+                    addressDisabledNotExceeded,
+                    today,
+                );
 
                 const deleteList: EmailAddress<true>[] = await sut.getEmailAddressesDeleteList();
 
-                expect(deleteList).toHaveLength(3);
+                expect(deleteList).toHaveLength(9);
                 expect(deleteList).toContainEqual(
                     expect.objectContaining({
-                        address: address1,
+                        address: addressRequestedExceeded,
                     }),
                 );
                 expect(deleteList).toContainEqual(
                     expect.objectContaining({
-                        address: address2,
+                        address: addressFailedExceeded,
                     }),
                 );
                 expect(deleteList).toContainEqual(
                     expect.objectContaining({
-                        address: address3,
+                        address: addressDisabledExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedLdapExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedOxExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedLdapNotExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedOxNotExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedNotExceeded,
                     }),
                 );
             });
