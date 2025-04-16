@@ -4,6 +4,7 @@ import { PrivacyIdeaAdministrationService } from '../privacy-idea-administration
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 
 describe('PrivacyIdeaAdministrationServiceHandler', () => {
     let handler: PrivacyIdeaAdministrationServiceHandler;
@@ -12,6 +13,7 @@ describe('PrivacyIdeaAdministrationServiceHandler', () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 PrivacyIdeaAdministrationServiceHandler,
                 {

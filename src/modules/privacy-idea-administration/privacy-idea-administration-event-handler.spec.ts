@@ -4,7 +4,7 @@ import { PrivacyIdeaAdministrationEventHandler } from './privacy-idea-administra
 import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.service.js';
 import { faker } from '@faker-js/faker';
 import { TestingModule, Test } from '@nestjs/testing';
-import { ConfigTestModule, LoggingTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../test/utils/index.js';
 import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js';
 import { ResetTokenResponse, PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import { TokenResetError } from './api/error/token-reset.error.js';
@@ -50,7 +50,7 @@ describe('PrivacyIdeaAdministration Event Handler', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, LoggingTestModule],
+            imports: [ConfigTestModule, LoggingTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 PrivacyIdeaAdministrationEventHandler,
                 {
