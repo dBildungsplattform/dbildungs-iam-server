@@ -1,5 +1,4 @@
 import { INestApplication } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -7,7 +6,6 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { EventModule, EventService } from '../../../core/eventbus/index.js';
@@ -21,7 +19,15 @@ import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
 import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox-email-address-deleted.event.js';
 import { OXContextID, OXContextName, OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 
+/**
+ * Returns a new EmailAddress with random createdAt and updatedAt attributes, sets personId, address and status
+ * accordingly to parameter values.
+ * @param personId
+ * @param address
+ * @param status
+ */
 function getEmailAddress(personId: PersonID, address: string, status: EmailAddressStatus): EmailAddress<true> {
     const fakeEmailAddressId: string = faker.string.uuid();
     return EmailAddress.construct(
@@ -36,7 +42,6 @@ function getEmailAddress(personId: PersonID, address: string, status: EmailAddre
 
 describe('EmailAddressDeletionHandler', () => {
     let app: INestApplication;
-
     let sut: EmailAddressDeletionHandler;
     let emailRepoMock: DeepMocked<EmailRepo>;
     let loggerMock: DeepMocked<ClassLogger>;
@@ -50,12 +55,7 @@ describe('EmailAddressDeletionHandler', () => {
                 EventModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: false }),
             ],
-            providers: [
-                {
-                    provide: APP_PIPE,
-                    useClass: GlobalValidationPipe,
-                },
-            ],
+            providers: [],
         })
             .overrideProvider(EmailRepo)
             .useValue(createMock<EmailRepo>())
@@ -74,6 +74,24 @@ describe('EmailAddressDeletionHandler', () => {
         app = module.createNestApplication();
         await app.init();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
+
+    function expectReceivedEventLogAndStatusChangeLog(
+        event: LdapEmailAddressDeletedEvent | OxEmailAddressDeletedEvent,
+        status: EmailAddressStatus,
+    ): void {
+        if (event instanceof LdapEmailAddressDeletedEvent) {
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+            );
+        } else {
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Received OxEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
+            );
+        }
+        expect(loggerMock.info).toHaveBeenCalledWith(
+            `New EmailAddressStatus is:${status}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+        );
+    }
 
     afterAll(async () => {
         await app.close();
@@ -108,19 +126,38 @@ describe('EmailAddressDeletionHandler', () => {
 
         describe('when EmailAddress is found by address', () => {
             describe('when status change results in DELETED_LDAP', () => {
-                it('should log info and NOT call EmailRepo.deletedById', async () => {
-                    emailAddress = getEmailAddress(personId, address, EmailAddressStatus.DISABLED);
-                    emailRepoMock.findByAddress.mockResolvedValueOnce(emailAddress);
+                describe('persisting changed status fails', () => {
+                    it('should log error', async () => {
+                        emailAddress = getEmailAddress(personId, address, EmailAddressStatus.DISABLED);
+                        emailRepoMock.findByAddress.mockResolvedValueOnce(emailAddress);
+                        emailRepoMock.save.mockResolvedValueOnce(new EmailAddressNotFoundError()); //mock: an Error is returned
 
-                    await sut.handleLdapEmailAddressDeletedEvent(event);
+                        await sut.handleLdapEmailAddressDeletedEvent(event);
 
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                    );
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `New EmailAddressStatus is:${EmailAddressStatus.DELETED_LDAP}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                    );
-                    expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
+                        expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED_LDAP);
+                        expect(loggerMock.error).toHaveBeenCalledWith(
+                            `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                        );
+                        expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
+                        expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
+                    });
+                });
+
+                describe('persisting changed status succeeds', () => {
+                    it('should log info', async () => {
+                        emailAddress = getEmailAddress(personId, address, EmailAddressStatus.DISABLED);
+                        emailRepoMock.findByAddress.mockResolvedValueOnce(emailAddress);
+                        emailRepoMock.save.mockResolvedValueOnce(emailAddress); //mock: no Error is returned
+
+                        await sut.handleLdapEmailAddressDeletedEvent(event);
+
+                        expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED_LDAP);
+                        expect(loggerMock.info).toHaveBeenCalledWith(
+                            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                        );
+                        expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
+                        expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
+                    });
                 });
             });
 
@@ -135,12 +172,7 @@ describe('EmailAddressDeletionHandler', () => {
                         emailRepoMock.deleteById.mockResolvedValueOnce(new EmailAddressDeletionError(emailAddress.id));
                         await sut.handleLdapEmailAddressDeletedEvent(event);
 
-                        expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                        );
-                        expect(loggerMock.info).toHaveBeenCalledWith(
-                            `New EmailAddressStatus is:${EmailAddressStatus.DELETED}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                        );
+                        expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED);
                         expect(loggerMock.error).toHaveBeenCalledWith(
                             `Deletion of EmailAddress failed, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
                         );
@@ -154,12 +186,7 @@ describe('EmailAddressDeletionHandler', () => {
                         emailRepoMock.deleteById.mockResolvedValueOnce(undefined);
                         await sut.handleLdapEmailAddressDeletedEvent(event);
 
-                        expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                        );
-                        expect(loggerMock.info).toHaveBeenCalledWith(
-                            `New EmailAddressStatus is:${EmailAddressStatus.DELETED}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                        );
+                        expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED);
                         expect(loggerMock.info).toHaveBeenCalledWith(
                             `Successfully deleted EmailAddress, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
                         );
@@ -205,19 +232,38 @@ describe('EmailAddressDeletionHandler', () => {
 
         describe('when EmailAddress is found by address', () => {
             describe('when status change results in DELETED_OX', () => {
-                it('should log info and NOT call EmailRepo.deletedById', async () => {
-                    emailAddress = getEmailAddress(personId, address, EmailAddressStatus.DISABLED);
-                    emailRepoMock.findByAddress.mockResolvedValueOnce(emailAddress);
+                describe('persisting changed status fails', () => {
+                    it('should log error', async () => {
+                        emailAddress = getEmailAddress(personId, address, EmailAddressStatus.DISABLED);
+                        emailRepoMock.findByAddress.mockResolvedValueOnce(emailAddress);
+                        emailRepoMock.save.mockResolvedValueOnce(new EmailAddressNotFoundError()); //mock: an Error is returned
 
-                    await sut.handleOxEmailAddressDeletedEvent(event);
+                        await sut.handleOxEmailAddressDeletedEvent(event);
 
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received OxEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
-                    );
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `New EmailAddressStatus is:${EmailAddressStatus.DELETED_OX}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                    );
-                    expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
+                        expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED_OX);
+                        expect(loggerMock.error).toHaveBeenCalledWith(
+                            `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                        );
+                        expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
+                        expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
+                    });
+                });
+
+                describe('persisting changed status succeeds', () => {
+                    it('should log info', async () => {
+                        emailAddress = getEmailAddress(personId, address, EmailAddressStatus.DISABLED);
+                        emailRepoMock.findByAddress.mockResolvedValueOnce(emailAddress);
+                        emailRepoMock.save.mockResolvedValueOnce(emailAddress); //mock: no Error is returned
+
+                        await sut.handleOxEmailAddressDeletedEvent(event);
+
+                        expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED_OX);
+                        expect(loggerMock.info).toHaveBeenCalledWith(
+                            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                        );
+                        expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
+                        expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
+                    });
                 });
             });
 
@@ -232,12 +278,7 @@ describe('EmailAddressDeletionHandler', () => {
                         emailRepoMock.deleteById.mockResolvedValueOnce(new EmailAddressDeletionError(emailAddress.id));
                         await sut.handleOxEmailAddressDeletedEvent(event);
 
-                        expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Received OxEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
-                        );
-                        expect(loggerMock.info).toHaveBeenCalledWith(
-                            `New EmailAddressStatus is:${EmailAddressStatus.DELETED}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                        );
+                        expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED);
                         expect(loggerMock.error).toHaveBeenCalledWith(
                             `Deletion of EmailAddress failed, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
                         );
@@ -251,12 +292,7 @@ describe('EmailAddressDeletionHandler', () => {
                         emailRepoMock.deleteById.mockResolvedValueOnce(undefined);
                         await sut.handleOxEmailAddressDeletedEvent(event);
 
-                        expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Received OxEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
-                        );
-                        expect(loggerMock.info).toHaveBeenCalledWith(
-                            `New EmailAddressStatus is:${EmailAddressStatus.DELETED}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-                        );
+                        expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED);
                         expect(loggerMock.info).toHaveBeenCalledWith(
                             `Successfully deleted EmailAddress, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
                         );

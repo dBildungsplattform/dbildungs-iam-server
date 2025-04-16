@@ -60,6 +60,8 @@ export class EmailAddressDeletionHandler {
         );
         if (newStatus === EmailAddressStatus.DELETED) {
             await this.deleteEmailAddressInDatabase(emailAddress, username);
+        } else {
+            await this.saveChangedStatus(emailAddress, username);
         }
     }
 
@@ -76,6 +78,19 @@ export class EmailAddressDeletionHandler {
 
         return this.logger.info(
             `Successfully deleted EmailAddress, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+        );
+    }
+
+    private async saveChangedStatus(emailAddress: EmailAddress<true>, username: PersonReferrer): Promise<void> {
+        const result: EmailAddress<true> | DomainError = await this.emailRepo.save(emailAddress);
+        if (result instanceof DomainError) {
+            return this.logger.error(
+                `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+            );
+        }
+
+        return this.logger.info(
+            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
         );
     }
 }
