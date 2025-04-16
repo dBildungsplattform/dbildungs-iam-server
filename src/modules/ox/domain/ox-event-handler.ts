@@ -61,6 +61,7 @@ import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -135,6 +136,10 @@ export class OxEventHandler {
         private readonly emailRepo: EmailRepo,
         private readonly eventService: EventService,
         configService: ConfigService<ServerConfig>,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
         this.ENABLED = oxConfig.ENABLED;
@@ -146,6 +151,7 @@ export class OxEventHandler {
 
     @EventHandler(EmailAddressChangedEvent)
     @KafkaEventHandler(KafkaEmailAddressChangedEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
@@ -160,6 +166,7 @@ export class OxEventHandler {
 
     @EventHandler(EmailAddressGeneratedEvent)
     @KafkaEventHandler(KafkaEmailAddressGeneratedEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressGeneratedEvent(
         event: EmailAddressGeneratedEvent | KafkaEmailAddressGeneratedEvent,
     ): Promise<void> {
@@ -278,6 +285,7 @@ export class OxEventHandler {
 
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
@@ -315,6 +323,7 @@ export class OxEventHandler {
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
+    @EnsureRequestContext()
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
 

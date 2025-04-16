@@ -12,6 +12,7 @@ import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { Rolle } from '../rolle/domain/rolle.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../shared/events/kafka-personenkontext-updated.event.js';
 import { KafkaEventHandler } from '../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 export type KontextIdsAndDuplicationFlag = {
     hasDuplicateRolleIds: boolean;
@@ -23,6 +24,10 @@ export class KeycloackServiceProviderHandler {
     public constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly KeycloackService: KeycloakUserService,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {}
 
     private async fetchFilteredRolesDifference(
@@ -56,6 +61,7 @@ export class KeycloackServiceProviderHandler {
 
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         const { newKontexte, currentKontexte, removedKontexte, person }: PersonenkontextUpdatedEvent = event;
 

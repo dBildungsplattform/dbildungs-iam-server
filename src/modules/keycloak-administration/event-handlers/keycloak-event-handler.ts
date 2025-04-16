@@ -16,6 +16,7 @@ import { OXContextName } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 @Injectable()
 export class KeycloakEventHandler {
@@ -26,6 +27,10 @@ export class KeycloakEventHandler {
         private readonly kcUserService: KeycloakUserService,
         private readonly eventService: EventService,
         configService: ConfigService<ServerConfig>,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
         this.contextName = oxConfig.CONTEXT_NAME;
@@ -33,6 +38,7 @@ export class KeycloakEventHandler {
 
     @EventHandler(PersonenkontextCreatedMigrationEvent)
     @KafkaEventHandler(KafkaPersonCreatedEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextCreatedMigrationEvent(
         event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<void> {

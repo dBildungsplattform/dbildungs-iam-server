@@ -6,16 +6,22 @@ import { PersonDeletedEvent } from '../../shared/events/person-deleted.event.js'
 import { PrivacyIdeaToken } from './privacy-idea-api.types.js';
 import { KafkaPersonDeletedEvent } from '../../shared/events/kafka-person-deleted.event.js';
 import { KafkaEventHandler } from '../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 @Injectable()
 export class PrivacyIdeaAdministrationEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly privacyIdeaAdministrationService: PrivacyIdeaAdministrationService,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {}
 
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
+    @EnsureRequestContext()
     public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
         const userTokens: PrivacyIdeaToken[] = await this.privacyIdeaAdministrationService.getUserTokens(

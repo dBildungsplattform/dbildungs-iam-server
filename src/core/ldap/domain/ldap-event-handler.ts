@@ -26,6 +26,7 @@ import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-emai
 import { inspect } from 'util';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 @Injectable()
 export class LdapEventHandler {
@@ -35,6 +36,10 @@ export class LdapEventHandler {
         private readonly organisationRepository: OrganisationRepository,
         private readonly personRepo: PersonRepository,
         private readonly eventService: EventService,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {}
 
     private async getEmailDomainForOrganisationId(organisationId: OrganisationID): Promise<Result<string>> {
@@ -50,6 +55,7 @@ export class LdapEventHandler {
 
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
+    @EnsureRequestContext()
     public async handlePersonDeletedEvent(
         event: PersonDeletedEvent | KafkaPersonDeletedEvent,
     ): Promise<Result<unknown>> {
@@ -65,6 +71,7 @@ export class LdapEventHandler {
 
     @KafkaEventHandler(KafkaPersonCreatedEvent)
     @EventHandler(PersonenkontextCreatedMigrationEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextCreatedMigrationEvent(
         event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<Result<unknown>> {
@@ -156,6 +163,7 @@ export class LdapEventHandler {
 
     @KafkaEventHandler(KafkaPersonRenamedEvent)
     @EventHandler(PersonRenamedEvent)
+    @EnsureRequestContext()
     public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
@@ -178,6 +186,7 @@ export class LdapEventHandler {
 
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
@@ -299,6 +308,7 @@ export class LdapEventHandler {
 
     @KafkaEventHandler(KafkaEmailAddressGeneratedEvent)
     @EventHandler(EmailAddressGeneratedEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddress:${event.address}`,
@@ -314,6 +324,7 @@ export class LdapEventHandler {
 
     @KafkaEventHandler(KafkaEmailAddressChangedEvent)
     @EventHandler(EmailAddressChangedEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,

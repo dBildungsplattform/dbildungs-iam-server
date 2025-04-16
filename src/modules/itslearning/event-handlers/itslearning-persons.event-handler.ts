@@ -24,6 +24,7 @@ import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 @Injectable()
 export class ItsLearningPersonsEventHandler {
@@ -37,6 +38,10 @@ export class ItsLearningPersonsEventHandler {
         private readonly itslearningPersonRepo: ItslearningPersonRepo,
         private readonly itslearningMembershipRepo: ItslearningMembershipRepo,
         configService: ConfigService<ServerConfig>,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
@@ -45,6 +50,7 @@ export class ItsLearningPersonsEventHandler {
 
     @EventHandler(PersonRenamedEvent)
     @KafkaEventHandler(KafkaPersonRenamedEvent)
+    @EnsureRequestContext()
     public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`[EventID: ${event.eventID}] Received PersonRenamedEvent, ${event.personId}`);
@@ -118,6 +124,7 @@ export class ItsLearningPersonsEventHandler {
 
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
+    @EnsureRequestContext()
     public async updatePersonenkontexteEventHandler(event: PersonenkontextUpdatedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(

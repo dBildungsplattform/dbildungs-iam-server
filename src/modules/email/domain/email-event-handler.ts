@@ -43,6 +43,7 @@ import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event
 import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -62,6 +63,10 @@ export class EmailEventHandler {
         private readonly personRepository: PersonRepository,
         private readonly eventService: EventService,
         private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {}
 
     /*
@@ -162,6 +167,7 @@ export class EmailEventHandler {
 
     @KafkaEventHandler(KafkaPersonCreatedEvent)
     @EventHandler(PersonenkontextCreatedMigrationEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextCreatedMigrationEvent(
         event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<void> {
@@ -219,6 +225,7 @@ export class EmailEventHandler {
 
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
+    @EnsureRequestContext()
     // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
@@ -231,6 +238,7 @@ export class EmailEventHandler {
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
+    @EnsureRequestContext()
     public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}, referrer:${event.referrer}`);
         //Setting person_id to null in Email table is done via deleteRule, not necessary here
