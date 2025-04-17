@@ -12,4 +12,4 @@ data:
   topics.txt: |-
     {{ .Values.kafka_init.topics | toStrings }}
   config.properties: |-
-    {{ .Values.kafka_init.jaas | toString }}
+    {{ .Values.kafka_init.jaas }}
