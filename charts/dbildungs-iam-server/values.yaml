@@ -188,9 +188,6 @@ backend:
 kafka_init:
   enabled: true
   prefix: ""
-  topics:
-    - spsh-user-topic
-    - spsh-user-dlq-topic
   command: [ "create_topics.sh", "topics.txt" ]
   image:
     repository: ghcr.io/schulcloud/cron-tools

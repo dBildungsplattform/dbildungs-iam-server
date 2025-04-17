@@ -9,7 +9,5 @@ type: Opaque
 data:
   create_topics.sh: |-
     {{ .Files.Get "kafka/scripts/create_topics.sh" | nindent 4 }}
-  # topics.txt: |-
-  #   {{ .Values.kafka_init.topics | toStrings | nindent 4  }}
-  # config.properties: |-
-  #   {{ .Values.kafka_init.jaas | toString | nindent 4 }}
+  topics.txt: |-
+    {{ .Files.Get "config/scripts/create_topics.sh" | nindent 4 }}
