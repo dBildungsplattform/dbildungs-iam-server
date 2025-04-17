@@ -78,6 +78,8 @@ auth:
   ox_password: ''
   basic_auth_password: ''
   redis_password: ''
+  kafka_username: ''
+  kafka_password: ''
 
 ox:
   enabled: false
@@ -182,6 +184,21 @@ backend:
     stepUpTimeoutInSeconds: 900
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
+
+kafka-init:
+  enabled: true
+  topics:
+    - spsh-user-topic
+    - spsh-user-dlq-topic
+  command: [ "create_topics.sh", "topics.txt" ]
+  image:
+    repository: ghcr.io/schulcloud/cron-tools
+    tag: '1.2'
+    pullPolicy: Always
+  jaas: |-
+    sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ $.Values.auth.kafka-username }}" password="{{ $.Values.auth.kafka-password }}";
+    security.protocol=SASL_PLAINTEXT
+    sasl.mechanism=PLAIN
 
 autoscaling:
   enabled: false

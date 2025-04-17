@@ -8,6 +8,7 @@
 #   KAFKA_TOPIC_PREFIX       - (optional) A prefix that will be prepended to every created topic
 #   KAFKA_TOPIC_PARTITIONS   - (optional) The number of partitions to use
 #   KAFKA_REPLICATION_FACTOR - (optional) The replication factor to use
+#   KAFKA_JAAS_FILE          - (optional) The JAAS file to use for authentication
 #
 # This script will create a topic for every line in the input file (if it does not already exist)
 
@@ -41,6 +42,13 @@ else
     REPLICATION_FLAG="--replication-factor ${KAFKA_REPLICATION_FACTOR}"
 fi
 
+# Check for KAFKA_TOPIC_PREFIX (optional)
+if [ -z "${KAFKA_JAAS_FILE}" ]; then
+    echo "Environment-variable KAFKA_JAAS_FILE was not set, connecting without authentication."
+else
+    CONFIG_FLAG="--command-config ${KAFKA_JAAS_FILE}"
+fi
+
 echo "Creating all topics..."
 
 # Run the topic-creation for every line in the file
@@ -51,10 +59,11 @@ echo "Creating all topics..."
     --if-not-exists \
     --topic "${KAFKA_TOPIC_PREFIX}%" \
     --partitions "${KAFKA_TOPIC_PARTITIONS}" \
-    ${REPLICATION_FLAG}
+    ${REPLICATION_FLAG} \
+    ${CONFIG_FLAG}
 
 echo "Created all topics!"
 
 # Ouput all topics and metadata
 echo "Running kafka-topics.sh --describe"
-kafka-topics.sh --bootstrap-server "${KAFKA_URL}" --describe
+kafka-topics.sh --bootstrap-server "${KAFKA_URL}" ${CONFIG_FLAG} --describe

@@ -27,6 +27,27 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
+        {{- if .Values.kafka-init.enabled }}
+        - name: "{{ template "common.names.name" . }}-kafka-topics-create"
+          image: "{{ .Values.kafka-init.image.repository }}:{{ .Values.kafka-init.image.tag }}"
+          imagePullPolicy: {{ .Values.kafka-init.image.pullPolicy | default "Always" }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: {{ .Values.kafka-init.command | toJson }}
+          env:
+            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+              {{- if .Values.backend.extraEnvVars }}
+              {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
+              {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}
+          volumeMounts:
+          - name: data-volume
+            configMap:
+              name: {{ template "common.names.name" $ }}-kafka-init-configmap
+              defaultMode: 0555
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
         {{- if .Values.backend.dbmigration.enabled }}
         - name: "{{ template "common.names.name" . }}-db-migration-apply"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
