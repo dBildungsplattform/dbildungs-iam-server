@@ -24,7 +24,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 @Injectable()
 export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
-    private readonly handlerMap: Map<Constructor<BaseEvent>, EventHandlerType<BaseEvent>> = new Map();
+    private readonly handlerMap: Map<Constructor<BaseEvent>, EventHandlerType<BaseEvent>[]> = new Map();
 
     private readonly consumer?: Consumer;
 
@@ -82,13 +82,15 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     }
 
     public subscribe<Event extends BaseEvent>(eventType: Constructor<Event>, handler: EventHandlerType<Event>): void {
-        this.handlerMap.set(eventType, handler as EventHandlerType<BaseEvent>);
+        const handlers: EventHandlerType<BaseEvent>[] = this.handlerMap.get(eventType) ?? [];
+        handlers.push(handler as EventHandlerType<BaseEvent>);
+        this.handlerMap.set(eventType, handlers);
     }
 
     public async handleMessage(message: KafkaMessage): Promise<void> {
         const personId: string | undefined = message.key?.toString();
-
         const eventKey: string | undefined = message.headers?.['eventKey']?.toString();
+
         if (!eventKey) {
             this.logger.error('Event type header is missing');
             return;
@@ -120,18 +122,46 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             return;
         }
         const kafkaEvent: BaseEvent & KafkaEvent = Object.assign(new eventClass(), eventData);
+        const handlers: EventHandlerType<BaseEvent>[] | undefined = this.handlerMap.get(eventClass);
 
-        const handler: EventHandlerType<BaseEvent> | undefined = this.handlerMap.get(eventClass);
+        if (handlers?.length) {
+            this.logger.info(`Handling event: ${eventClass.name} for ${personId} with ${handlers.length} handlers`);
+            const handlerPromises: Promise<Result<unknown>>[] = handlers.map(
+                async (handler: EventHandlerType<BaseEvent>) => {
+                    try {
+                        const result: Result<unknown> | void = await handler(kafkaEvent);
 
-        if (handler) {
-            try {
-                this.logger.info(`Handling event: ${eventClass.name} for ${personId}`);
-                const result: Result<unknown> | void = await handler(kafkaEvent);
-                if (result && !result.ok) {
-                    await this.publishToDLQ(kafkaEvent, result.error);
-                }
-            } catch (err) {
-                this.logger.logUnknownAsError(`Handling event: ${eventClass.name} for ${personId} failed`, err);
+                        if (!result) return { ok: true, value: null } satisfies Result<unknown>;
+                        return result;
+                    } catch (err) {
+                        this.logger.logUnknownAsError(
+                            `Handler ${handler.name} failed for event ${eventClass.name}`,
+                            err,
+                        );
+                        return {
+                            ok: false,
+                            error: err instanceof Error ? err : new Error('Unknown handler error'),
+                        } satisfies Result<Error>;
+                    }
+                },
+            );
+
+            const results: PromiseSettledResult<Result<unknown>>[] = await Promise.allSettled(handlerPromises);
+
+            const firstFailure:
+                | PromiseFulfilledResult<{
+                      ok: false;
+                      error: Error;
+                  }>
+                | undefined = results.find(
+                (
+                    res: PromiseSettledResult<Result<unknown, Error>>,
+                ): res is PromiseFulfilledResult<{ ok: false; error: Error }> =>
+                    res.status === 'fulfilled' && !res.value.ok && res.value.error instanceof Error,
+            );
+
+            if (firstFailure) {
+                await this.publishToDLQ(kafkaEvent, firstFailure.value.error);
             }
         }
     }
