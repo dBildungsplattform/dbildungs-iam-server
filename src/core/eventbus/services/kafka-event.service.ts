@@ -140,7 +140,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                         );
                         return {
                             ok: false,
-                            error: err instanceof Error ? err : new Error('Unknown handler error'),
+                            error: new Error('Unexpected handler error'),
                         } satisfies Result<Error>;
                     }
                 },
@@ -177,7 +177,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         const eventType: string | undefined = event.constructor.name;
         const headers: Record<string, string> = { eventKey, ...additionalHeaders };
 
-        this.logger.info(`Publishing event to Kafka for ${event.kafkaKeyPersonId}: ${eventType} on topic ${topic}`);
+        this.logger.info(`Publishing ${eventType} to Kafka on topic ${topic}`);
         try {
             await this.producer?.send({
                 topic,
