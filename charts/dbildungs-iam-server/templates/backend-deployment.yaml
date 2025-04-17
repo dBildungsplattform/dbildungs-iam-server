@@ -42,10 +42,9 @@ spec:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
           volumeMounts:
-          - name: data-volume
-            configMap:
-              name: {{ template "common.names.name" $ }}-kafka-init-configmap
-              defaultMode: 0555
+          - name: kafka-init-volume
+            mountPath: /init
+            readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
         {{- if .Values.backend.dbmigration.enabled }}
@@ -132,6 +131,12 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        {{if .Values.kafka_init.enabled }}
+        - name: kafka-init-volume
+          configMap:
+            name: {{ template "common.names.name" $ }}-kafka-init-configmap
+            defaultMode: 0555
+        {{- end }}
         - name: migration-volume
           configMap:
             name: {{ template "common.names.name" . }}-backend-migration
