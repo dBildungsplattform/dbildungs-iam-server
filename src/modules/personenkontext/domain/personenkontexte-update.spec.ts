@@ -28,6 +28,7 @@ import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -90,6 +91,10 @@ describe('PersonenkontexteUpdate', () => {
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
+                },
+                {
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 EventService,
                 DbiamPersonenkontextFactory,

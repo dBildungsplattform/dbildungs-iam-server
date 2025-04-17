@@ -40,7 +40,6 @@ import { ConfigService } from '@nestjs/config';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
@@ -70,6 +69,9 @@ import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -80,6 +82,7 @@ describe('PersonRepository Integration', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let eventServiceMock: DeepMocked<EventService>;
+    let eventRoutingLegacyKafkaService: DeepMocked<EventRoutingLegacyKafkaService>;
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
@@ -98,7 +101,6 @@ describe('PersonRepository Integration', () => {
             providers: [
                 PersonRepository,
                 OrganisationRepository,
-
                 ConfigService,
                 {
                     provide: EmailRepo,
@@ -108,6 +110,10 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
+                },
+                {
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: UsernameGeneratorService,
@@ -141,6 +147,7 @@ describe('PersonRepository Integration', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
+        eventRoutingLegacyKafkaService = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -758,7 +765,11 @@ describe('PersonRepository Integration', () => {
                     if (result instanceof DomainError) {
                         return;
                     }
-                    expect(eventServiceMock.publish).toHaveBeenCalledWith(expect.any(PersonRenamedEvent));
+                    expect(eventServiceMock.publish).not.toHaveBeenCalled();
+                    expect(eventRoutingLegacyKafkaService.publish).toHaveBeenCalledWith(
+                        expect.any(PersonRenamedEvent),
+                        expect.any(KafkaPersonRenamedEvent),
+                    );
                     expect(result.vorname).toEqual(person.vorname);
                     expect(result.familienname).not.toEqual(person.familienname);
                 });
@@ -1593,7 +1604,10 @@ describe('PersonRepository Integration', () => {
                         removedPersonenkontexts,
                     );
 
-                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect(eventRoutingLegacyKafkaService.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            emailAddress: emailAddress.address,
+                        }),
                         expect.objectContaining({
                             emailAddress: emailAddress.address,
                         }),

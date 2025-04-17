@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { ConfigTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { KeycloakUserService } from '../domain/keycloak-user.service.js';
 import { KeycloakEventHandler } from './keycloak-event-handler.js';
 import { faker } from '@faker-js/faker';
@@ -28,7 +28,7 @@ describe('KeycloakEventHandler', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [LoggingTestModule, ConfigTestModule],
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 KeycloakEventHandler,
                 EventService,
