@@ -24,7 +24,7 @@ import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persi
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
@@ -37,6 +37,9 @@ import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontex
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
+import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
+import { EventService } from '../../eventbus/services/event.service.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -46,6 +49,7 @@ describe('LDAP Event Handler', () => {
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let eventServiceMock: DeepMocked<EventService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -77,6 +81,8 @@ describe('LDAP Event Handler', () => {
             .useValue(createMock<DBiamPersonenkontextRepo>())
             .overrideProvider(OrganisationRepository)
             .useValue(createMock<OrganisationRepository>())
+            .overrideProvider(EventService)
+            .useValue(createMock<EventService>())
             .compile();
 
         orm = module.get(MikroORM);
@@ -85,6 +91,7 @@ describe('LDAP Event Handler', () => {
         ldapClientServiceMock = module.get(LdapClientService);
         organisationRepositoryMock = module.get(OrganisationRepository);
         personRepositoryMock = module.get(PersonRepository);
+        eventServiceMock = module.get(EventService);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -1008,7 +1015,7 @@ describe('LDAP Event Handler', () => {
     });
 
     describe('handleEmailAddressChangedEvent', () => {
-        it('should call ldap client changeEmailAddressByPersonId', async () => {
+        it('should call LdapClientService changeEmailAddressByPersonId', async () => {
             const event: EmailAddressChangedEvent = new EmailAddressChangedEvent(
                 faker.string.uuid(),
                 faker.internet.userName(),
@@ -1025,6 +1032,37 @@ describe('LDAP Event Handler', () => {
                 `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('handleEmailAddressDeletedEvent', () => {
+        const personId: PersonID = faker.string.uuid();
+        const username: PersonReferrer = faker.internet.userName();
+        const address: string = faker.internet.email();
+
+        it('should call LdapClientService removeMailAlternativeAddress', async () => {
+            const event: EmailAddressDeletedEvent = new EmailAddressDeletedEvent(
+                personId,
+                username,
+                faker.string.numeric(),
+                faker.string.uuid(),
+                EmailAddressStatus.ENABLED,
+                address,
+            );
+
+            await ldapEventHandler.handleEmailAddressDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer: ${event.username}, address:${event.address}`,
+            );
+            expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(1);
+            expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    personId: personId,
+                    username: username,
+                    address: address,
+                }),
+            );
         });
     });
 });

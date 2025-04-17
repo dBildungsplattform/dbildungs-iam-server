@@ -7,6 +7,9 @@ export enum EmailAddressStatus {
     DISABLED = 'DISABLED',
     REQUESTED = 'REQUESTED',
     FAILED = 'FAILED',
+    DELETED_LDAP = 'DELETED_LDAP',
+    DELETED_OX = 'DELETED_OX',
+    DELETED = 'DELETED',
 }
 
 export class EmailAddress<WasPersisted extends boolean> {
@@ -67,6 +70,36 @@ export class EmailAddress<WasPersisted extends boolean> {
         this.addressStatus = EmailAddressStatus.FAILED;
 
         return oldValue;
+    }
+
+    /**
+     * Sets the status to DELETED_FROM_LDAP, unless status is already DELETED_OX, then the resulting status is DELETED.
+     * Returns the resulting status.
+     */
+    public deletedFromLdap(): EmailAddressStatus {
+        const oldStatus: EmailAddressStatus = this.addressStatus;
+        if (oldStatus === EmailAddressStatus.DELETED_OX) {
+            this.addressStatus = EmailAddressStatus.DELETED;
+        } else {
+            this.addressStatus = EmailAddressStatus.DELETED_LDAP;
+        }
+
+        return this.addressStatus;
+    }
+
+    /**
+     * Sets the status to DELETED_OX, unless status is already DELETED_LDAP, then the resulting status is DELETED.
+     * Returns the resulting status.
+     */
+    public deletedFromOx(): EmailAddressStatus {
+        const oldStatus: EmailAddressStatus = this.addressStatus;
+        if (oldStatus === EmailAddressStatus.DELETED_LDAP) {
+            this.addressStatus = EmailAddressStatus.DELETED;
+        } else {
+            this.addressStatus = EmailAddressStatus.DELETED_OX;
+        }
+
+        return this.addressStatus;
     }
 
     public get enabled(): boolean {

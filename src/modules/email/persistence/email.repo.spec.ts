@@ -19,7 +19,7 @@ import { EmailAddressNotFoundError } from '../error/email-address-not-found.erro
 import { EmailAddressEntity } from './email-address.entity.js';
 import { Person } from '../../person/domain/person.js';
 import { DomainError } from '../../../shared/error/index.js';
-import { EntityManager, MikroORM, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, MikroORM, NotFoundError, RequiredEntityData } from '@mikro-orm/core';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -30,6 +30,9 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import assert from 'assert';
+import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
+import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -41,6 +44,7 @@ describe('EmailRepo', () => {
     let orm: MikroORM;
     let em: EntityManager;
 
+    let eventServiceMock: DeepMocked<EventService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -91,6 +95,7 @@ describe('EmailRepo', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
 
+        eventServiceMock = module.get(EventService);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -143,7 +148,7 @@ describe('EmailRepo', () => {
                 break;
         }
         const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-        if (savedEmail instanceof DomainError) throw new Error();
+        assert(!(savedEmail instanceof DomainError));
 
         return savedEmail;
     }
@@ -168,18 +173,22 @@ describe('EmailRepo', () => {
     async function createEmailAddressViaEM(
         status: EmailAddressStatus,
         personId: PersonID,
+        oxUserId: OXUserID | undefined,
         address: string = faker.internet.email(),
-    ): Promise<void> {
+        updatedAt?: Date,
+    ): Promise<string> {
         const entityData: RequiredEntityData<EmailAddressEntity> = {
             status: status,
             address: address,
             personId: personId,
             id: faker.string.uuid(),
-            oxUserId: '0',
-            updatedAt: faker.date.future(),
+            oxUserId: oxUserId,
+            updatedAt: updatedAt ?? faker.date.future(),
         };
         const emailAddressEntity: EmailAddressEntity = em.create(EmailAddressEntity, entityData);
         await em.persistAndFlush(emailAddressEntity);
+
+        return emailAddressEntity.id;
     }
 
     afterAll(async () => {
@@ -445,7 +454,12 @@ describe('EmailRepo', () => {
                 assert(personId1);
 
                 const moreRecentAddress: string = faker.internet.email();
-                await createEmailAddressViaEM(EmailAddressStatus.ENABLED, personId1, moreRecentAddress);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.ENABLED,
+                    personId1,
+                    faker.string.numeric(),
+                    moreRecentAddress,
+                );
 
                 const responseMap: Map<PersonID, PersonEmailResponse> =
                     await sut.getEmailAddressAndStatusForPersonIds(personIds);
@@ -477,6 +491,167 @@ describe('EmailRepo', () => {
                 if (!emailAddress) throw new Error();
 
                 expect(emailAddress.address).toStrictEqual(savedRequestedEmail.address);
+            });
+        });
+    });
+
+    describe('getEmailAddressesDeleteList', () => {
+        describe('when exceeded EmailAddresses, EmailAddresses with an DELETED status and non-exceeded EmailAddresses exist', () => {
+            it('should return only EmailAddresses which exceed the deadline or an DELETED status', async () => {
+                const person: Person<true> = await createPerson();
+                const oxUserId: OXUserID = faker.string.numeric();
+                const addressRequestedExceeded: string = faker.internet.email();
+                const addressFailedExceeded: string = faker.internet.email();
+                const addressDisabledExceeded: string = faker.internet.email();
+                const addressDeletedLdapExceeded: string = faker.internet.email();
+                const addressDeletedOxExceeded: string = faker.internet.email();
+                const addressDeletedExceeded: string = faker.internet.email();
+                const addressDeletedLdapNotExceeded: string = faker.internet.email();
+                const addressDeletedOxNotExceeded: string = faker.internet.email();
+                const addressDeletedNotExceeded: string = faker.internet.email();
+
+                const addressRequestedNotExceeded: string = faker.internet.email();
+                const addressFailedNotExceeded: string = faker.internet.email();
+                const addressDisabledNotExceeded: string = faker.internet.email();
+
+                const today: Date = new Date();
+                const dateInPast: Date = new Date();
+                dateInPast.setDate(dateInPast.getDate() - 180);
+
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.REQUESTED,
+                    person.id,
+                    oxUserId,
+                    addressRequestedExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.FAILED,
+                    person.id,
+                    oxUserId,
+                    addressFailedExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DISABLED,
+                    person.id,
+                    oxUserId,
+                    addressDisabledExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED_LDAP,
+                    person.id,
+                    oxUserId,
+                    addressDeletedLdapExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED_OX,
+                    person.id,
+                    oxUserId,
+                    addressDeletedOxExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED,
+                    person.id,
+                    oxUserId,
+                    addressDeletedExceeded,
+                    dateInPast,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED_LDAP,
+                    person.id,
+                    oxUserId,
+                    addressDeletedLdapNotExceeded,
+                    today,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED_OX,
+                    person.id,
+                    oxUserId,
+                    addressDeletedOxNotExceeded,
+                    today,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED,
+                    person.id,
+                    oxUserId,
+                    addressDeletedNotExceeded,
+                    today,
+                );
+
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.REQUESTED,
+                    person.id,
+                    oxUserId,
+                    addressRequestedNotExceeded,
+                    today,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.FAILED,
+                    person.id,
+                    oxUserId,
+                    addressFailedNotExceeded,
+                    today,
+                );
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DISABLED,
+                    person.id,
+                    oxUserId,
+                    addressDisabledNotExceeded,
+                    today,
+                );
+
+                const deleteList: EmailAddress<true>[] = await sut.getEmailAddressesDeleteList();
+
+                expect(deleteList).toHaveLength(9);
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressRequestedExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressFailedExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDisabledExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedLdapExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedOxExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedLdapNotExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedOxNotExceeded,
+                    }),
+                );
+                expect(deleteList).toContainEqual(
+                    expect.objectContaining({
+                        address: addressDeletedNotExceeded,
+                    }),
+                );
             });
         });
     });
@@ -558,6 +733,82 @@ describe('EmailRepo', () => {
                     email.value.address,
                 );
                 expect(persistedValidEmail2).toEqual(error);
+            });
+        });
+    });
+
+    describe('deleteById', () => {
+        describe('when EmailAddress with specified id exists', () => {
+            let person: Person<true>;
+            let address: string;
+            let today: Date;
+
+            beforeEach(async () => {
+                person = await createPerson();
+                address = faker.internet.email();
+                today = new Date();
+            });
+
+            describe('but oxUserId is undefined', () => {
+                it('should delete EmailAddress in DB, publish EmailAddressDeletedInDatabaseEvent and return undefined', async () => {
+                    const addressId: string = await createEmailAddressViaEM(
+                        EmailAddressStatus.REQUESTED,
+                        person.id,
+                        undefined,
+                        address,
+                        today,
+                    );
+
+                    const deletionResult1: Option<DomainError> = await sut.deleteById(addressId);
+                    const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address);
+
+                    expect(deletionResult1).toBeDefined();
+                    expect(deletionResult1).toStrictEqual(new EmailAddressMissingOxUserIdError(addressId, address));
+                    expect(emailAddress).toBeUndefined();
+                    expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+                });
+            });
+            describe('and oxUserId is defined', () => {
+                it('should delete EmailAddress in DB, publish EmailAddressDeletedInDatabaseEvent and return undefined', async () => {
+                    const oxUserId: OXUserID = faker.string.numeric();
+                    const addressId: string = await createEmailAddressViaEM(
+                        EmailAddressStatus.REQUESTED,
+                        person.id,
+                        oxUserId,
+                        address,
+                        today,
+                    );
+
+                    const deletionResult1: Option<DomainError> = await sut.deleteById(addressId);
+                    const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address);
+
+                    expect(deletionResult1).toBeUndefined();
+                    expect(emailAddress).toBeUndefined();
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            personId: person.id,
+                            oxUserId: oxUserId,
+                            id: addressId,
+                            address: address,
+                        }),
+                    );
+                });
+            });
+        });
+
+        describe('when EmailAddress with specified id does NOT exist', () => {
+            it('should return Error', async () => {
+                const address2Id: string = faker.string.uuid();
+                const notFoundError: NotFoundError = new NotFoundError(
+                    `EmailAddressEntity not found ({ id: '${address2Id}' })`,
+                );
+                const deletionResult2: Option<DomainError> = await sut.deleteById(address2Id);
+
+                expect(deletionResult2).toBeInstanceOf(EmailAddressDeletionError);
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    'Error during deletion of EmailAddress',
+                    notFoundError,
+                );
             });
         });
     });

@@ -89,6 +89,68 @@ describe('EmailAddress Aggregate', () => {
         });
     });
 
+    describe('deletedFromLdap', () => {
+        describe('when old status is NOT DELETED_FROM_OX', () => {
+            it('should set status to DELETED_FROM_LDAD', () => {
+                const emailAddress: EmailAddress<false> = EmailAddress.createNew(
+                    personId,
+                    faker.internet.email(),
+                    EmailAddressStatus.DISABLED,
+                );
+
+                const newStatus: EmailAddressStatus = emailAddress.deletedFromLdap();
+
+                expect(newStatus).toStrictEqual(EmailAddressStatus.DELETED_LDAP);
+                expect(emailAddress.status).toStrictEqual(EmailAddressStatus.DELETED_LDAP);
+            });
+        });
+        describe('when old status is DELETED_FROM_OX', () => {
+            it('should set status to DELETED', () => {
+                const emailAddress: EmailAddress<false> = EmailAddress.createNew(
+                    personId,
+                    faker.internet.email(),
+                    EmailAddressStatus.DELETED_OX,
+                );
+
+                const newStatus: EmailAddressStatus = emailAddress.deletedFromLdap();
+
+                expect(newStatus).toStrictEqual(EmailAddressStatus.DELETED);
+                expect(emailAddress.status).toStrictEqual(EmailAddressStatus.DELETED);
+            });
+        });
+    });
+
+    describe('deletedFromOx', () => {
+        describe('when old status is NOT DELETED_FROM_LDAD', () => {
+            it('should set status to DELETED_FROM_OX', () => {
+                const emailAddress: EmailAddress<false> = EmailAddress.createNew(
+                    personId,
+                    faker.internet.email(),
+                    EmailAddressStatus.DISABLED,
+                );
+
+                const newStatus: EmailAddressStatus = emailAddress.deletedFromOx();
+
+                expect(newStatus).toStrictEqual(EmailAddressStatus.DELETED_OX);
+                expect(emailAddress.status).toStrictEqual(EmailAddressStatus.DELETED_OX);
+            });
+        });
+        describe('when old status is DELETED_FROM_LDAD', () => {
+            it('should set status to DELETED', () => {
+                const emailAddress: EmailAddress<false> = EmailAddress.createNew(
+                    personId,
+                    faker.internet.email(),
+                    EmailAddressStatus.DELETED_LDAP,
+                );
+
+                const newStatus: EmailAddressStatus = emailAddress.deletedFromOx();
+
+                expect(newStatus).toStrictEqual(EmailAddressStatus.DELETED);
+                expect(emailAddress.status).toStrictEqual(EmailAddressStatus.DELETED);
+            });
+        });
+    });
+
     describe('setAddress', () => {
         describe('when called', () => {
             it('should set address', () => {

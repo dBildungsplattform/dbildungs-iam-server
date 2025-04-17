@@ -26,6 +26,9 @@ import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-emai
 import { inspect } from 'util';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
+import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/kafka-email-address-deleted.event.js';
+import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap-email-address-deleted.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -292,6 +295,7 @@ export class LdapEventHandler {
         if (failureReasons.length > 0) {
             return { ok: false, error: new Error(failureReasons.join(', ')) };
         }
+
         return { ok: true, value: null };
     }
 
@@ -307,6 +311,7 @@ export class LdapEventHandler {
             event.referrer,
             event.address,
         );
+
         return result;
     }
 
@@ -322,6 +327,26 @@ export class LdapEventHandler {
             event.referrer,
             event.newAddress,
         );
+
+        return result;
+    }
+
+    @KafkaEventHandler(KafkaEmailAddressDeletedEvent)
+    @EventHandler(EmailAddressDeletedEvent)
+    public async handleEmailAddressDeletedEvent(event: EmailAddressDeletedEvent): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer: ${event.username}, address:${event.address}`,
+        );
+        const result: Result<boolean> = await this.ldapClientService.removeMailAlternativeAddress(
+            event.personId,
+            event.username,
+            event.address,
+        );
+
+        if (result.ok) {
+            this.eventService.publish(new LdapEmailAddressDeletedEvent(event.personId, event.username, event.address));
+        }
+
         return result;
     }
 
@@ -333,6 +358,7 @@ export class LdapEventHandler {
         const currentOrgaIds: OrganisationID[] = personenkontextUpdatedEvent.currentKontexte.map(
             (pk: PersonenkontextEventKontextData) => pk.orgaId,
         );
+
         return currentOrgaIds.includes(orgaId);
     }
 }
