@@ -51,7 +51,7 @@ export class ItsLearningPersonsEventHandler {
     @EventHandler(PersonRenamedEvent)
     @KafkaEventHandler(KafkaPersonRenamedEvent)
     @EnsureRequestContext()
-    public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
+    public async personRenamedEventHandler(event: PersonRenamedEvent | KafkaPersonRenamedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`[EventID: ${event.eventID}] Received PersonRenamedEvent, ${event.personId}`);
 
@@ -125,7 +125,9 @@ export class ItsLearningPersonsEventHandler {
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
-    public async updatePersonenkontexteEventHandler(event: PersonenkontextUpdatedEvent): Promise<void> {
+    public async updatePersonenkontexteEventHandler(
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
+    ): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(
                 `[EventID: ${event.eventID}] Received PersonenkontextUpdatedEvent, ${event.person.id}, ${event.person.referrer}`,

@@ -152,7 +152,9 @@ export class OxEventHandler {
     @EventHandler(EmailAddressChangedEvent)
     @KafkaEventHandler(KafkaEmailAddressChangedEvent)
     @EnsureRequestContext()
-    public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<void> {
+    public async handleEmailAddressChangedEvent(
+        event: EmailAddressChangedEvent | KafkaEmailAddressChangedEvent,
+    ): Promise<void> {
         this.logger.info(
             `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
         );
@@ -286,7 +288,9 @@ export class OxEventHandler {
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
-    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
+    public async handlePersonenkontextUpdatedEvent(
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
+    ): Promise<void> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
@@ -324,7 +328,7 @@ export class OxEventHandler {
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
     @EnsureRequestContext()
-    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
 
         // Check if the functionality is enabled

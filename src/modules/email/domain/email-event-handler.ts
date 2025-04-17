@@ -227,7 +227,9 @@ export class EmailEventHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
     // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
-    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
+    public async handlePersonenkontextUpdatedEvent(
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
+    ): Promise<void> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );

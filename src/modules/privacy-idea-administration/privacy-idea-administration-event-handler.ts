@@ -22,7 +22,7 @@ export class PrivacyIdeaAdministrationEventHandler {
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
     @EnsureRequestContext()
-    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
         const userTokens: PrivacyIdeaToken[] = await this.privacyIdeaAdministrationService.getUserTokens(
             event.referrer,

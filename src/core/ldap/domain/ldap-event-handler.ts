@@ -164,7 +164,9 @@ export class LdapEventHandler {
     @KafkaEventHandler(KafkaPersonRenamedEvent)
     @EventHandler(PersonRenamedEvent)
     @EnsureRequestContext()
-    public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<Result<unknown>> {
+    public async personRenamedEventHandler(
+        event: PersonRenamedEvent | KafkaPersonRenamedEvent,
+    ): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
         );
@@ -187,7 +189,9 @@ export class LdapEventHandler {
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
-    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<Result<unknown>> {
+    public async handlePersonenkontextUpdatedEvent(
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
+    ): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
@@ -309,7 +313,9 @@ export class LdapEventHandler {
     @KafkaEventHandler(KafkaEmailAddressGeneratedEvent)
     @EventHandler(EmailAddressGeneratedEvent)
     @EnsureRequestContext()
-    public async handleEmailAddressGeneratedEvent(event: EmailAddressGeneratedEvent): Promise<Result<unknown>> {
+    public async handleEmailAddressGeneratedEvent(
+        event: EmailAddressGeneratedEvent | KafkaEmailAddressGeneratedEvent,
+    ): Promise<Result<unknown>> {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddress:${event.address}`,
         );
@@ -325,7 +331,9 @@ export class LdapEventHandler {
     @KafkaEventHandler(KafkaEmailAddressChangedEvent)
     @EventHandler(EmailAddressChangedEvent)
     @EnsureRequestContext()
-    public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<Result<unknown>> {
+    public async handleEmailAddressChangedEvent(
+        event: EmailAddressChangedEvent | KafkaEmailAddressChangedEvent,
+    ): Promise<Result<unknown>> {
         this.logger.info(
             `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
         );

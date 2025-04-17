@@ -62,8 +62,15 @@ export class KeycloackServiceProviderHandler {
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
-    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
-        const { newKontexte, currentKontexte, removedKontexte, person }: PersonenkontextUpdatedEvent = event;
+    public async handlePersonenkontextUpdatedEvent(
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
+    ): Promise<void> {
+        const {
+            newKontexte,
+            currentKontexte,
+            removedKontexte,
+            person,
+        }: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent = event;
 
         const newRolleIDs: RolleID[] = newKontexte.map((kontext: PersonenkontextUpdatedData) => kontext.rolleId);
         const deleteRolleIDs: RolleID[] = removedKontexte.map((kontext: PersonenkontextUpdatedData) => kontext.rolleId);

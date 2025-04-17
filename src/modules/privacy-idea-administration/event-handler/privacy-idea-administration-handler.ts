@@ -21,7 +21,7 @@ export class PrivacyIdeaAdministrationServiceHandler {
     @EventHandler(PersonRenamedEvent)
     @KafkaEventHandler(KafkaPersonRenamedEvent)
     @EnsureRequestContext()
-    public async handlePersonRenamedEvent(event: PersonRenamedEvent): Promise<void> {
+    public async handlePersonRenamedEvent(event: PersonRenamedEvent | KafkaPersonRenamedEvent): Promise<void> {
         this.logger.info(`Received PersonRenamedEvent, personId:${event.personId}`);
         if (!event.referrer) throw new Error('Referrer is missing');
 
