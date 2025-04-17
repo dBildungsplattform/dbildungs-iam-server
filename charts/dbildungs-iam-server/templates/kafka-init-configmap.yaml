@@ -10,4 +10,6 @@ data:
   create_topics.sh: |-
     {{ .Files.Get "kafka/scripts/create_topics.sh" | nindent 4 }}
   topics.txt: |-
-    {{ .Files.Get "config/scripts/create_topics.sh" | nindent 4 }}
+    {{ .Files.Get "config/kafka-topics.txt" | nindent 4 }}
+  client.config: |-
+    {{ .Values.kafka_init.jaas | nindent 4}}
