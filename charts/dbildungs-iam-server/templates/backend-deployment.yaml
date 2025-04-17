@@ -27,12 +27,12 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
-        {{- if .Values.kafka-init.enabled }}
+        {{- if .Values.kafka_init.enabled }}
         - name: "{{ template "common.names.name" . }}-kafka-topics-create"
-          image: "{{ .Values.kafka-init.image.repository }}:{{ .Values.kafka-init.image.tag }}"
-          imagePullPolicy: {{ .Values.kafka-init.image.pullPolicy | default "Always" }}
+          image: "{{ .Values.kafka_init.image.repository }}:{{ .Values.kafka_init.image.tag }}"
+          imagePullPolicy: {{ .Values.kafka_init.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: {{ .Values.kafka-init.command | toJson }}
+          command: {{ .Values.kafka_init.command | toJson }}
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
               {{- if .Values.backend.extraEnvVars }}

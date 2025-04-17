@@ -185,7 +185,7 @@ backend:
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
 
-kafka-init:
+kafka_init:
   enabled: true
   prefix: ""
   topics:
