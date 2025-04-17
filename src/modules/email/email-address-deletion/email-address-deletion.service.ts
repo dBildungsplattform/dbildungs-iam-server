@@ -3,17 +3,18 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
 
-type ReferrerAndOxUserId = {
-    oxUserName: PersonReferrer;
-    oxUserId: OXUserID;
-};
+// type ReferrerAndOxUserId = {
+//     oxUserName: PersonReferrer;
+//     oxUserId: OXUserID;
+// };
 
 @Injectable()
 export class EmailAddressDeletionService {
@@ -41,7 +42,7 @@ export class EmailAddressDeletionService {
         affectedPersons.map((p: Person<true>) => {
             personMap.set(p.id, p);
         });
-        const emailPersonMap: Map<PersonID, ReferrerAndOxUserId> = new Map<PersonID, ReferrerAndOxUserId>();
+        //const emailPersonMap: Map<PersonID, ReferrerAndOxUserId> = new Map<PersonID, ReferrerAndOxUserId>();
 
         for (const ea of nonPrimaryEmailAddresses) {
             const username: string | undefined = personMap.get(ea.personId)?.referrer;
@@ -57,64 +58,44 @@ export class EmailAddressDeletionService {
                 );
                 continue;
             }
-            emailPersonMap.set(ea.personId, {
-                oxUserName: username,
-                oxUserId: ea.oxUserID,
-            });
+            // emailPersonMap.set(ea.personId, {
+            //     oxUserName: username,
+            //     oxUserId: ea.oxUserID,
+            // });
             this.eventService.publish(
                 new EmailAddressDeletedEvent(ea.personId, username, ea.oxUserID, ea.id, ea.status, ea.address),
             );
         }
 
-        for (const person of affectedPersons) {
-            this.logger.info(
-                `Affected Person: personId:${person.id}, referrer:${person.referrer}, vorname:${person.vorname}, familienname:${person.familienname}`,
+        // for (const person of affectedPersons) {
+        //     this.logger.info(
+        //         `Affected Person: personId:${person.id}, referrer:${person.referrer}, vorname:${person.vorname}, familienname:${person.familienname}`,
+        //     );
+        // }
+    }
+
+    public async checkRemainingEmailAddressesByPersonId(personId: PersonID, oxUserId: OXUserID): Promise<void> {
+        const person: Option<Person<true>> = await this.personRepository.findById(personId);
+        if (!person) {
+            return this.logger.error(
+                `Could not check for remaining EmailAddresses, no Person found for personId:${personId}`,
             );
         }
-
-        // const personIdsWithoutAnyEmailAddresses: PersonID[] = await this.getAffectedPersonsWithoutEmailAddresses(
-        //     uniqueAffectedPersonIds,
-        //     nonPrimaryEmailAddresses,
-        // );
-        //this.logger.info(JSON.stringify(personIdsWithoutAnyEmailAddresses));
-        //this.publishPersonPurgeEvents(personIdsWithoutAnyEmailAddresses, emailPersonMap);
-    }
-
-    /*private async getAffectedPersonsWithoutEmailAddresses(
-        uniqueAffectedPersonIds: PersonID[],
-        emailAddressesForDeletion: EmailAddress<true>[],
-    ): Promise<PersonID[]> {
-        const personIdsWithoutAnyEmailAddresses: PersonID[] = [];
-
-        await Promise.allSettled(
-            uniqueAffectedPersonIds.map(async (personId: PersonID) => {
-                const emailAddressesForPerson: EmailAddress<true>[] =
-                    await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
-                const remainingEmailAddressesForPerson: EmailAddress<true>[] = emailAddressesForPerson.filter(
-                    (ea: EmailAddress<true>) =>
-                        emailAddressesForDeletion.every((ead: EmailAddress<true>) => ead.id !== ea.id),
-                );
-                if (remainingEmailAddressesForPerson.length == 0) {
-                    personIdsWithoutAnyEmailAddresses.push(personId);
-                }
-            }),
-        );
-
-        return personIdsWithoutAnyEmailAddresses;
-    }
-
-    private publishPersonPurgeEvents(personIds: PersonID[], emailPersonMap: Map<PersonID, ReferrerAndOxUserId>): void {
-        for (const personId of personIds) {
-            const data: ReferrerAndOxUserId | undefined = emailPersonMap.get(personId);
-            if (!data) {
-                this.logger.error(`Could not create PurgeEvent, no data for personId:${personId}`);
-                continue;
-            }
-            if (!data.oxUserId) {
-                this.logger.error(`Could not create PurgeEvent, no OxUserId for personId:${personId}`);
-                continue;
-            }
-            this.eventService.publish(new EmailAddressesPurgedEvent(personId, data.oxUserName, data.oxUserId));
+        if (!person.referrer) {
+            return this.logger.error(
+                `Would not be able to create EmailAddressesPurgedEvent, no referrer found for personId:${personId}`,
+            );
         }
-    }*/
+        const allEmailAddressesForPerson: EmailAddress<true>[] =
+            await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
+        if (allEmailAddressesForPerson.length == 0) {
+            this.logger.info(
+                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${person.referrer}`,
+            );
+            return this.eventService.publish(new EmailAddressesPurgedEvent(personId, person.referrer, oxUserId));
+        }
+        this.logger.info(
+            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${person.referrer}`,
+        );
+    }
 }

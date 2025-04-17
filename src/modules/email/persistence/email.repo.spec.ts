@@ -31,6 +31,8 @@ import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import assert from 'assert';
 import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
+import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -42,6 +44,7 @@ describe('EmailRepo', () => {
     let orm: MikroORM;
     let em: EntityManager;
 
+    let eventServiceMock: DeepMocked<EventService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -92,6 +95,7 @@ describe('EmailRepo', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
 
+        eventServiceMock = module.get(EventService);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -169,6 +173,7 @@ describe('EmailRepo', () => {
     async function createEmailAddressViaEM(
         status: EmailAddressStatus,
         personId: PersonID,
+        oxUserId: OXUserID | undefined,
         address: string = faker.internet.email(),
         updatedAt?: Date,
     ): Promise<string> {
@@ -177,7 +182,7 @@ describe('EmailRepo', () => {
             address: address,
             personId: personId,
             id: faker.string.uuid(),
-            oxUserId: '0',
+            oxUserId: oxUserId,
             updatedAt: updatedAt ?? faker.date.future(),
         };
         const emailAddressEntity: EmailAddressEntity = em.create(EmailAddressEntity, entityData);
@@ -449,7 +454,12 @@ describe('EmailRepo', () => {
                 assert(personId1);
 
                 const moreRecentAddress: string = faker.internet.email();
-                await createEmailAddressViaEM(EmailAddressStatus.ENABLED, personId1, moreRecentAddress);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.ENABLED,
+                    personId1,
+                    faker.string.numeric(),
+                    moreRecentAddress,
+                );
 
                 const responseMap: Map<PersonID, PersonEmailResponse> =
                     await sut.getEmailAddressAndStatusForPersonIds(personIds);
@@ -489,6 +499,7 @@ describe('EmailRepo', () => {
         describe('when exceeded EmailAddresses, EmailAddresses with an DELETED status and non-exceeded EmailAddresses exist', () => {
             it('should return only EmailAddresses which exceed the deadline or an DELETED status', async () => {
                 const person: Person<true> = await createPerson();
+                const oxUserId: OXUserID = faker.string.numeric();
                 const addressRequestedExceeded: string = faker.internet.email();
                 const addressFailedExceeded: string = faker.internet.email();
                 const addressDisabledExceeded: string = faker.internet.email();
@@ -510,58 +521,85 @@ describe('EmailRepo', () => {
                 await createEmailAddressViaEM(
                     EmailAddressStatus.REQUESTED,
                     person.id,
+                    oxUserId,
                     addressRequestedExceeded,
                     dateInPast,
                 );
-                await createEmailAddressViaEM(EmailAddressStatus.FAILED, person.id, addressFailedExceeded, dateInPast);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.FAILED,
+                    person.id,
+                    oxUserId,
+                    addressFailedExceeded,
+                    dateInPast,
+                );
                 await createEmailAddressViaEM(
                     EmailAddressStatus.DISABLED,
                     person.id,
+                    oxUserId,
                     addressDisabledExceeded,
                     dateInPast,
                 );
                 await createEmailAddressViaEM(
                     EmailAddressStatus.DELETED_LDAP,
                     person.id,
+                    oxUserId,
                     addressDeletedLdapExceeded,
                     dateInPast,
                 );
                 await createEmailAddressViaEM(
                     EmailAddressStatus.DELETED_OX,
                     person.id,
+                    oxUserId,
                     addressDeletedOxExceeded,
                     dateInPast,
                 );
                 await createEmailAddressViaEM(
                     EmailAddressStatus.DELETED,
                     person.id,
+                    oxUserId,
                     addressDeletedExceeded,
                     dateInPast,
                 );
                 await createEmailAddressViaEM(
                     EmailAddressStatus.DELETED_LDAP,
                     person.id,
+                    oxUserId,
                     addressDeletedLdapNotExceeded,
                     today,
                 );
                 await createEmailAddressViaEM(
                     EmailAddressStatus.DELETED_OX,
                     person.id,
+                    oxUserId,
                     addressDeletedOxNotExceeded,
                     today,
                 );
-                await createEmailAddressViaEM(EmailAddressStatus.DELETED, person.id, addressDeletedNotExceeded, today);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.DELETED,
+                    person.id,
+                    oxUserId,
+                    addressDeletedNotExceeded,
+                    today,
+                );
 
                 await createEmailAddressViaEM(
                     EmailAddressStatus.REQUESTED,
                     person.id,
+                    oxUserId,
                     addressRequestedNotExceeded,
                     today,
                 );
-                await createEmailAddressViaEM(EmailAddressStatus.FAILED, person.id, addressFailedNotExceeded, today);
+                await createEmailAddressViaEM(
+                    EmailAddressStatus.FAILED,
+                    person.id,
+                    oxUserId,
+                    addressFailedNotExceeded,
+                    today,
+                );
                 await createEmailAddressViaEM(
                     EmailAddressStatus.DISABLED,
                     person.id,
+                    oxUserId,
                     addressDisabledNotExceeded,
                     today,
                 );
@@ -701,21 +739,60 @@ describe('EmailRepo', () => {
 
     describe('deleteById', () => {
         describe('when EmailAddress with specified id exists', () => {
-            it('should delete EmailAddress in DB and return undefined', async () => {
-                const person: Person<true> = await createPerson();
-                const address1: string = faker.internet.email();
-                const today: Date = new Date();
-                const address1Id: string = await createEmailAddressViaEM(
-                    EmailAddressStatus.REQUESTED,
-                    person.id,
-                    address1,
-                    today,
-                );
+            let person: Person<true>;
+            let address: string;
+            let today: Date;
 
-                const deletionResult1: Option<DomainError> = await sut.deleteById(address1Id);
-                const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address1);
-                expect(deletionResult1).toBeUndefined();
-                expect(emailAddress).toBeUndefined();
+            beforeEach(async () => {
+                person = await createPerson();
+                address = faker.internet.email();
+                today = new Date();
+            });
+
+            describe('but oxUserId is undefined', () => {
+                it('should delete EmailAddress in DB, publish EmailAddressDeletedInDatabaseEvent and return undefined', async () => {
+                    const addressId: string = await createEmailAddressViaEM(
+                        EmailAddressStatus.REQUESTED,
+                        person.id,
+                        undefined,
+                        address,
+                        today,
+                    );
+
+                    const deletionResult1: Option<DomainError> = await sut.deleteById(addressId);
+                    const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address);
+
+                    expect(deletionResult1).toBeDefined();
+                    expect(deletionResult1).toStrictEqual(new EmailAddressMissingOxUserIdError(addressId, address));
+                    expect(emailAddress).toBeUndefined();
+                    expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+                });
+            });
+            describe('and oxUserId is defined', () => {
+                it('should delete EmailAddress in DB, publish EmailAddressDeletedInDatabaseEvent and return undefined', async () => {
+                    const oxUserId: OXUserID = faker.string.numeric();
+                    const addressId: string = await createEmailAddressViaEM(
+                        EmailAddressStatus.REQUESTED,
+                        person.id,
+                        oxUserId,
+                        address,
+                        today,
+                    );
+
+                    const deletionResult1: Option<DomainError> = await sut.deleteById(addressId);
+                    const emailAddress: Option<EmailAddress<true>> = await sut.findByAddress(address);
+
+                    expect(deletionResult1).toBeUndefined();
+                    expect(emailAddress).toBeUndefined();
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            personId: person.id,
+                            oxUserId: oxUserId,
+                            id: addressId,
+                            address: address,
+                        }),
+                    );
+                });
             });
         });
 

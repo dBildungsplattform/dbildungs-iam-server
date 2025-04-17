@@ -7,17 +7,18 @@ import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap-email-
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email-address-deleted-in-database.event.js';
+import { EmailAddressDeletionService } from './email-address-deletion.service.js';
 
 @Injectable()
 export class EmailAddressDeletionHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailRepo: EmailRepo,
-        //private readonly eventService: EventService,
+        private readonly emailAddressDeletionService: EmailAddressDeletionService,
     ) {}
 
     @EventHandler(LdapEmailAddressDeletedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
     public async handleLdapEmailAddressDeletedEvent(event: LdapEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
@@ -34,7 +35,6 @@ export class EmailAddressDeletionHandler {
     }
 
     @EventHandler(OxEmailAddressDeletedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
     public async handleOxEmailAddressDeletedEvent(event: OxEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received OxEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
@@ -48,6 +48,15 @@ export class EmailAddressDeletionHandler {
         }
         const newStatus: EmailAddressStatus = emailAddress.deletedFromOx();
         await this.processNewStatus(newStatus, emailAddress, event.username);
+    }
+
+    @EventHandler(EmailAddressDeletedInDatabaseEvent)
+    public async handleEmailAddressDeletedInDatabaseEvent(event: EmailAddressDeletedInDatabaseEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.id}, status:${event.status}, address:${event.address}`,
+        );
+
+        await this.emailAddressDeletionService.checkRemainingEmailAddressesByPersonId(event.personId, event.oxUserId);
     }
 
     private async processNewStatus(

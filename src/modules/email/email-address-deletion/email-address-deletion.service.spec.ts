@@ -19,6 +19,7 @@ describe('EmailAddressDeletionService', () => {
 
     let emailRepoMock: DeepMocked<EmailRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
+    let eventServiceMock: DeepMocked<EventService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -48,6 +49,7 @@ describe('EmailAddressDeletionService', () => {
 
         emailRepoMock = module.get(EmailRepo);
         personRepositoryMock = module.get(PersonRepository);
+        eventServiceMock = module.get(EventService);
         loggerMock = module.get(ClassLogger);
     });
 
@@ -142,7 +144,7 @@ describe('EmailAddressDeletionService', () => {
     });
 
     describe('deleteEmailAddresses', () => {
-        describe('when a non-primary EmailAddress referrers to a personId that does NOT exist', () => {
+        describe('when an EmailAddress referrers to a personId that does NOT exist', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
@@ -163,15 +165,10 @@ describe('EmailAddressDeletionService', () => {
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could NOT get username when generating EmailAddressDeletedEvent, personId:${emailAddressWithUnknownPersonId.personId}`,
                 );
-                for (const person of persons) {
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Affected Person: personId:${person.id}, referrer:${person.referrer}, vorname:${person.vorname}, familienname:${person.familienname}`,
-                    );
-                }
             });
         });
 
-        describe('when a non-primary EmailAddress does NOT have an OxUserId', () => {
+        describe('when an EmailAddress does NOT have an OxUserId', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
@@ -194,11 +191,79 @@ describe('EmailAddressDeletionService', () => {
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${emailAddressWithoutOxUserId.personId}, referrer:${persons[0].referrer}`,
                 );
-                for (const person of persons) {
-                    expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Affected Person: personId:${person.id}, referrer:${person.referrer}, vorname:${person.vorname}, familienname:${person.familienname}`,
-                    );
-                }
+            });
+        });
+    });
+
+    describe('checkRemainingEmailAddressesByPersonId', () => {
+        let personId: PersonID;
+        let oxUserId: OXUserID;
+
+        beforeEach(() => {
+            personId = faker.string.uuid();
+            oxUserId = faker.string.numeric();
+        });
+
+        describe('when Person CANNOT be found', () => {
+            it('should log error about that and return', async () => {
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+                await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could not check for remaining EmailAddresses, no Person found for personId:${personId}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person can be found BUT has no referrer', () => {
+            it('should log error about that and return', async () => {
+                const person: Person<true> = createMock<Person<true>>({
+                    id: personId,
+                    referrer: undefined,
+                });
+                personRepositoryMock.findById.mockResolvedValueOnce(person);
+
+                await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Would not be able to create EmailAddressesPurgedEvent, no referrer found for personId:${personId}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person has remaining EmailAddresses', () => {
+            it('should not log info about NOT publishing event', async () => {
+                const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
+                    createPersonsAndEmailAddresses();
+                assert(persons[0]);
+                personRepositoryMock.findById.mockResolvedValueOnce(persons[0]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce(emailAddresses);
+
+                await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${persons[0].referrer}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when person does NOT have remaining EmailAddresses', () => {
+            it('should not log info about publishing event', async () => {
+                const [persons]: [Person<true>[], EmailAddress<true>[]] = createPersonsAndEmailAddresses();
+                assert(persons[0]);
+                personRepositoryMock.findById.mockResolvedValueOnce(persons[0]);
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${persons[0].referrer}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
             });
         });
     });

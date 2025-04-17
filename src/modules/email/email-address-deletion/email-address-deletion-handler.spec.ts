@@ -20,6 +20,8 @@ import { EmailAddressDeletionError } from '../error/email-address-deletion.error
 import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox-email-address-deleted.event.js';
 import { OXContextID, OXContextName, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email-address-deleted-in-database.event.js';
+import { EmailAddressDeletionService } from './email-address-deletion.service.js';
 
 /**
  * Returns a new EmailAddress with random createdAt and updatedAt attributes, sets personId, address and status
@@ -43,7 +45,9 @@ function getEmailAddress(personId: PersonID, address: string, status: EmailAddre
 describe('EmailAddressDeletionHandler', () => {
     let app: INestApplication;
     let sut: EmailAddressDeletionHandler;
+
     let emailRepoMock: DeepMocked<EmailRepo>;
+    let emailAddressDeletionServiceMock: DeepMocked<EmailAddressDeletionService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -63,12 +67,16 @@ describe('EmailAddressDeletionHandler', () => {
             .useClass(EmailAddressDeletionHandler)
             .overrideProvider(EventService)
             .useValue(createMock<EventService>())
+            .overrideProvider(EmailAddressDeletionService)
+            .useValue(createMock<EmailAddressDeletionService>())
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
 
         sut = module.get(EmailAddressDeletionHandler);
+
         emailRepoMock = module.get(EmailRepo);
+        emailAddressDeletionServiceMock = module.get(EmailAddressDeletionService);
         loggerMock = module.get(ClassLogger);
 
         app = module.createNestApplication();
@@ -299,6 +307,35 @@ describe('EmailAddressDeletionHandler', () => {
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(1);
                     });
                 });
+            });
+        });
+    });
+
+    describe('handleEmailAddressDeletedInDatabaseEvent', () => {
+        const personId: PersonID = faker.string.uuid();
+        const oxUserId: OXUserID = faker.string.uuid();
+        const emailAddressId: string = faker.string.uuid();
+        const status: EmailAddressStatus = EmailAddressStatus.DELETED;
+        const address: string = faker.internet.email();
+        const event: EmailAddressDeletedInDatabaseEvent = new EmailAddressDeletedInDatabaseEvent(
+            personId,
+            oxUserId,
+            emailAddressId,
+            status,
+            address,
+        );
+
+        describe('when EmailAddressDeletedInDatabaseEvent is received', () => {
+            it('should log info about that', async () => {
+                await sut.handleEmailAddressDeletedInDatabaseEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.id}, status:${event.status}, address:${event.address}`,
+                );
+                expect(emailAddressDeletionServiceMock.checkRemainingEmailAddressesByPersonId).toHaveBeenCalledWith(
+                    event.personId,
+                    event.oxUserId,
+                );
             });
         });
     });
