@@ -187,6 +187,7 @@ backend:
 
 kafka-init:
   enabled: true
+  prefix: ""
   topics:
     - spsh-user-topic
     - spsh-user-dlq-topic
