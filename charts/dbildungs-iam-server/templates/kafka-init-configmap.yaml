@@ -10,9 +10,10 @@ data:
   create_topics.sh: |-
     echo "Installing kafka CLI tools..."
 
-    wget https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz -O /kafka-bin/kafka.tgz || { echo 'Could not download kafka'; exit 1; }
-    tar -xvzf /kafka-bin/kafka.tgz -C /kafka-bin || { echo 'Could not untar kafka'; exit 1; }
-    PATH=$PATH:/kafka-bin/kafka
+    mkdir /kafka-bin
+
+    wget https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz -O - | tar -xvzf - -C /kafka-bin
+    PATH=$PATH:/kafka-bin/kafka_2.13-4.0.0
 
     {{ .Files.Get "kafka/scripts/create_topics.sh" | nindent 4 }}
   topics.txt: |-
