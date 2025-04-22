@@ -194,7 +194,7 @@ kafka_init:
     tag: '4.0.0'
     pullPolicy: Always
   jaas: |-
-    sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ $.Values.auth.kafka-username }}" password="{{ $.Values.auth.kafka-password }}";
+    sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ .Values.auth.kafka-username }}" password="{{ .Values.auth.kafka-password }}";
     security.protocol=SASL_PLAINTEXT
     sasl.mechanism=PLAIN
 
