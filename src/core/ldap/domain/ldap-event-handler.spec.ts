@@ -1087,13 +1087,12 @@ describe('LDAP Event Handler', () => {
                 `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
             );
             expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
-            /*expect(eventServiceMock.publish).toHaveBeenCalledWith(
+            expect(eventServiceMock.publish).toHaveBeenCalledWith(
                 expect.objectContaining({
                     personId: personId,
                     username: username,
-                    address: address,
                 }),
-            );*/
+            );
         });
 
         it('should call LdapClientService deleteLehrerByReferrer and log error if result is NOT ok', async () => {
@@ -1114,13 +1113,7 @@ describe('LDAP Event Handler', () => {
             );
             expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(error.message);
-            /*expect(eventServiceMock.publish).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    personId: personId,
-                    username: username,
-                    address: address,
-                }),
-            );*/
+            expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });
     });
 });

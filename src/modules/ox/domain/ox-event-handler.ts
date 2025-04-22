@@ -60,6 +60,7 @@ import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresse
 import { DeleteUserAction } from '../actions/user/delete-user.action.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
 import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox-email-address-deleted.event.js';
+import { OxAccountDeletedEvent } from '../../../shared/events/ox-account-deleted.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -463,6 +464,7 @@ export class OxEventHandler {
                 `Could Not Delete OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent, error:${result.error.message}`,
             );
         }
+        this.eventService.publish(new OxAccountDeletedEvent(event.personId, event.username, event.oxUserId));
 
         return this.logger.info(
             `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,

@@ -31,6 +31,7 @@ import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/kafka-emai
 import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap-email-address-deleted.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/kafka-email-addresses-purged.event.js';
+import { LdapEntryDeletedEvent } from '../../../shared/events/ldap-entry-deleted.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -362,6 +363,8 @@ export class LdapEventHandler {
         const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.username);
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
+        } else {
+            this.eventService.publish(new LdapEntryDeletedEvent(event.personId, event.username));
         }
 
         return deletionResult;

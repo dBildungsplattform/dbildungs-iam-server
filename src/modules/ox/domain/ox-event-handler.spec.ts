@@ -1477,6 +1477,13 @@ describe('OxEventHandler', () => {
 
                 await sut.handleEmailAddressesPurgedEvent(event);
 
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: personId,
+                        username: referrer,
+                        oxUserId: oxUserId,
+                    }),
+                );
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,
                 );
