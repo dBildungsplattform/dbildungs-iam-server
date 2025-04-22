@@ -5,11 +5,12 @@ metadata:
   name: {{ template "common.names.name" . }}-kafka-init-configmap
   namespace: {{ template "common.names.namespace" . }}
   labels: {{- include "common.labels" . | nindent 4 }}
-type: Opaque
 data:
   create_topics.sh: |-
     {{ .Files.Get "kafka/scripts/create_topics.sh" | nindent 4 }}
   topics.txt: |-
     {{ .Files.Get "config/kafka-topics.txt" | nindent 4 }}
   client.config: |-
-    {{ .Values.kafka_init.jaas | nindent 4}}
+    sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ $.Values.auth.kafka-username }}" password="{{ $.Values.auth.kafka-password }}";
+    security.protocol=SASL_PLAINTEXT
+    sasl.mechanism=PLAIN
