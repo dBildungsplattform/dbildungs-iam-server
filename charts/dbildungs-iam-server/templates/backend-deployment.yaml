@@ -32,16 +32,7 @@ spec:
           image: "{{ .Values.kafka_init.image.repository }}:{{ .Values.kafka_init.image.tag }}"
           imagePullPolicy: {{ .Values.kafka_init.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command:
-            - "sh"
-            - "-c"
-            - |
-              mkdir /tmp/kafka-bin/ &&
-              cd /tmp/kafka-bin &&
-              wget https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz &&
-              tar -xvzf kafka_2.13-4.0.0.tgz &&
-              PATH=$PATH:/tmp/kafka-bin/kafka_2.13-4.0.0/bin &&
-              /init/create_topics.sh /init/topics.txt
+          command: [ "sh", "/init/create_topics.sh", "/init/topics.txt" ]
           envFrom:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap

@@ -190,8 +190,8 @@ kafka_init:
   prefix: ""
   command: [ "create_topics.sh", "topics.txt" ]
   image:
-    repository: docker.io/schulcloud/cron-tools
-    tag: '1.2.1'
+    repository: docker.io/bitnami/kafka
+    tag: '4.0.0'
     pullPolicy: Always
   jaas: |-
     sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ $.Values.auth.kafka-username }}" password="{{ $.Values.auth.kafka-password }}";

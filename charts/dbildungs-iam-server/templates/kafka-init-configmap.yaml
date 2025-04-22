@@ -8,8 +8,8 @@ metadata:
 type: Opaque
 data:
   create_topics.sh: |-
-    {{ .Files.Get "kafka/scripts/create_topics.sh" | nindent 4 }}
-  topics.txt: |
+    {{ .Files.Get "kafka/scripts/create_topics.sh" | indent 4 }}
+  topics.txt: |-
     {{ .Files.Get "config/kafka-topics.txt" | indent 4 }}
   client.config: |-
-    {{ .Values.kafka_init.jaas | nindent 4}}
+    {{ .Values.kafka_init.jaas | indent 4}}
