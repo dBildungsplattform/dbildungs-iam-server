@@ -50,6 +50,9 @@ spec:
           - name: kafka-init-volume
             mountPath: /init
             readOnly: true
+          - name: kafka-bin-volume
+            mountPath: /kafka-bin
+            readOnly: false
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
         {{- if .Values.backend.dbmigration.enabled }}
