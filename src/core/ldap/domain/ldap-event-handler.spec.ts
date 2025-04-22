@@ -40,6 +40,7 @@ import { EmailAddressChangedEvent } from '../../../shared/events/email-address-c
 import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 import { EventService } from '../../eventbus/services/event.service.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -1029,7 +1030,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handleEmailAddressChangedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
+                `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress:${event.newAddress}, oldEmailAddress:${event.oldAddress}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });
@@ -1053,7 +1054,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handleEmailAddressDeletedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer: ${event.username}, address:${event.address}`,
+                `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
             );
             expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(1);
             expect(eventServiceMock.publish).toHaveBeenCalledWith(
@@ -1063,6 +1064,63 @@ describe('LDAP Event Handler', () => {
                     address: address,
                 }),
             );
+        });
+    });
+
+    describe('EmailAddressesPurgedEvent', () => {
+        const personId: PersonID = faker.string.uuid();
+        const username: PersonReferrer = faker.internet.userName();
+
+        it('should call LdapClientService deleteLehrerByReferrer', async () => {
+            const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
+                personId,
+                username,
+                faker.string.numeric(),
+            );
+            ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce({
+                ok: true,
+                value: personId,
+            });
+            await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+            expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
+            /*expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    personId: personId,
+                    username: username,
+                    address: address,
+                }),
+            );*/
+        });
+
+        it('should call LdapClientService deleteLehrerByReferrer and log error if result is NOT ok', async () => {
+            const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
+            const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
+                personId,
+                username,
+                faker.string.numeric(),
+            );
+            ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce({
+                ok: false,
+                error: error,
+            });
+            await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+            expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(error.message);
+            /*expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    personId: personId,
+                    username: username,
+                    address: address,
+                }),
+            );*/
         });
     });
 });

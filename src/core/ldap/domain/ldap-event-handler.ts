@@ -29,6 +29,8 @@ import { Person } from '../../../modules/person/domain/person.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
 import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/kafka-email-address-deleted.event.js';
 import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap-email-address-deleted.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/kafka-email-addresses-purged.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -319,7 +321,7 @@ export class LdapEventHandler {
     @EventHandler(EmailAddressChangedEvent)
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<Result<unknown>> {
         this.logger.info(
-            `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
+            `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress:${event.newAddress}, oldEmailAddress:${event.oldAddress}`,
         );
 
         const result: Result<PersonID> = await this.ldapClientService.changeEmailAddressByPersonId(
@@ -335,7 +337,7 @@ export class LdapEventHandler {
     @EventHandler(EmailAddressDeletedEvent)
     public async handleEmailAddressDeletedEvent(event: EmailAddressDeletedEvent): Promise<Result<unknown>> {
         this.logger.info(
-            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer: ${event.username}, address:${event.address}`,
+            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
         );
         const result: Result<boolean> = await this.ldapClientService.removeMailAlternativeAddress(
             event.personId,
@@ -348,6 +350,21 @@ export class LdapEventHandler {
         }
 
         return result;
+    }
+
+    @KafkaEventHandler(KafkaEmailAddressesPurgedEvent)
+    @EventHandler(EmailAddressesPurgedEvent)
+    public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.username);
+        if (!deletionResult.ok) {
+            this.logger.error(deletionResult.error.message);
+        }
+
+        return deletionResult;
     }
 
     public hatZuordnungZuOrganisationNachLoeschen(

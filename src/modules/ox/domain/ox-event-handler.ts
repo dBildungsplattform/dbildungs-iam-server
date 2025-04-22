@@ -57,7 +57,7 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
-import { DeleteUserAction, DeleteUserResponse } from '../actions/user/delete-user.action.js';
+import { DeleteUserAction } from '../actions/user/delete-user.action.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
 import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox-email-address-deleted.event.js';
 
@@ -369,7 +369,7 @@ export class OxEventHandler {
         // Check if the functionality is enabled
         if (!this.ENABLED) {
             // ONLY ACTIVATE EVENT-PUBLISHING BENEATH IN DEVELOPMENT !!! //
-            /* this.eventService.publish(
+            this.eventService.publish(
                 new OxEmailAddressDeletedEvent(
                     event.personId,
                     event.oxUserId,
@@ -378,7 +378,7 @@ export class OxEventHandler {
                     this.contextID,
                     this.contextName,
                 ),
-            );*/
+            );
 
             return this.logger.info('Not enabled, ignoring event');
         }
@@ -456,7 +456,7 @@ export class OxEventHandler {
 
         const action: DeleteUserAction = new DeleteUserAction(params);
 
-        const result: Result<DeleteUserResponse, DomainError> = await this.oxService.send(action);
+        const result: Result<void, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
             return this.logger.error(
