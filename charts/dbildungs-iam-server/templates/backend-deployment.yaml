@@ -41,7 +41,7 @@ spec:
               wget https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz &&
               tar -xvzf kafka_2.13-4.0.0.tgz &&
               PATH=$PATH:/tmp/kafka-bin/kafka_2.13-4.0.0/bin &&
-              bash /init/create_topics.sh /init/topics.txt
+              /init/create_topics.sh /init/topics.txt
           envFrom:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
