@@ -32,7 +32,12 @@ spec:
           image: "{{ .Values.kafka_init.image.repository }}:{{ .Values.kafka_init.image.tag }}"
           imagePullPolicy: {{ .Values.kafka_init.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
-          command: ["/bin/bash", "-c", "/init/create_topics.sh", "/init/kafka-topics.txt"]
+          command:
+            - "sh"
+            - "-c"
+            - |
+              cd ~
+              bash /init/create_topics.sh /init/kafka-topics.txt
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
               {{- if .Values.backend.extraEnvVars }}
