@@ -37,8 +37,10 @@ spec:
             - "-c"
             - |
               mkdir /tmp/kafka-bin/ &&
-              wget -qO- https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz | tar -xvz -C /tmp/kafka-bin &&
-              PATH=$PATH:/tmp/kafka-bin/kafka_2.13-4.0.0/bin &&
+              cd /tmp/kafka-bin &&
+              wget https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz -O kafka.tgz &&
+              tar -xvzf kafka.tgz &&
+              PATH=$PATH:/tmp/kafka-bin/kafka/bin &&
               bash /init/create_topics.sh /init/kafka-topics.txt
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
