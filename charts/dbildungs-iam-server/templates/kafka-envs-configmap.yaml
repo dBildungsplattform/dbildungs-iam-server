@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-kafka-envs-configmap
+  namespace: {{ template "common.names.namespace" . }}
+  labels: {{- include "common.labels" . | nindent 4 }}
+data:
+  KAFKA_URL: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
+  KAFKA_TOPIC_PREFIX: "prefix-"
+  KAFKA_JAAS_FILE: "/init/client.config"
