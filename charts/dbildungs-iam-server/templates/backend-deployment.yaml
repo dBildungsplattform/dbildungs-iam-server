@@ -36,7 +36,10 @@ spec:
             - "sh"
             - "-c"
             - |
-              cd ~
+              mkdir /kafka-bin
+              curl -L https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz | tar -xvzf -C /kafka-bin
+              PATH=$PATH:/kafka-bin/kafka_2.13-4.0.0
+
               bash /init/create_topics.sh /init/kafka-topics.txt
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
@@ -141,9 +144,6 @@ spec:
           configMap:
             name: {{ template "common.names.name" $ }}-kafka-init-configmap
             defaultMode: 0555
-        - name: kafka-init-volume
-          configMap:
-            name: {{ template "common.names.name" $ }}-kafka-init-configmap
         {{- end }}
         - name: migration-volume
           configMap:

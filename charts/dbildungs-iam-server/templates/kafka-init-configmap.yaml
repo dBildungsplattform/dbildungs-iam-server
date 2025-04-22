@@ -8,13 +8,6 @@ metadata:
 type: Opaque
 data:
   create_topics.sh: |-
-    echo "Installing kafka CLI tools..."
-
-    mkdir /kafka-bin
-
-    wget https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz -O - | tar -xvzf - -C /kafka-bin
-    PATH=$PATH:/kafka-bin/kafka_2.13-4.0.0
-
     {{ .Files.Get "kafka/scripts/create_topics.sh" | nindent 4 }}
   topics.txt: |-
     {{ .Files.Get "config/kafka-topics.txt" | nindent 4 }}
