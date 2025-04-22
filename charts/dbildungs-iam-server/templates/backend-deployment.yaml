@@ -37,8 +37,8 @@ spec:
             - "-c"
             - |
               mkdir /tmp/kafka-bin/ &&
-              curl -L https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz | tar -xvzf -C /tmp/kafka-bin &&
-              PATH=$PATH:/tmp/kafka-bin/kafka_2.13-4.0.0 &&
+              curl -s -L https://dlcdn.apache.org/kafka/4.0.0/kafka_2.13-4.0.0.tgz | tar -xvzf - -C /tmp/kafka-bin &&
+              PATH=$PATH:/tmp/kafka-bin/kafka_2.13-4.0.0/bin &&
               bash /init/create_topics.sh /init/kafka-topics.txt
           env:
             {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
