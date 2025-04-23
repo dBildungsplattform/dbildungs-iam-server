@@ -3,7 +3,7 @@ import { BaseEvent } from './base-event.js';
 import { OXUserID } from '../types/ox-ids.types.js';
 
 /**
- * Fired when all EmailAddresses for a Person were removed.
+ * Published when all EmailAddresses for a Person were removed.
  */
 export class EmailAddressesPurgedEvent extends BaseEvent {
     public constructor(

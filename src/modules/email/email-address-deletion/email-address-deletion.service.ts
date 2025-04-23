@@ -11,11 +11,6 @@ import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-d
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
 
-// type ReferrerAndOxUserId = {
-//     oxUserName: PersonReferrer;
-//     oxUserId: OXUserID;
-// };
-
 @Injectable()
 export class EmailAddressDeletionService {
     public constructor(
@@ -42,7 +37,6 @@ export class EmailAddressDeletionService {
         affectedPersons.map((p: Person<true>) => {
             personMap.set(p.id, p);
         });
-        //const emailPersonMap: Map<PersonID, ReferrerAndOxUserId> = new Map<PersonID, ReferrerAndOxUserId>();
 
         for (const ea of nonPrimaryEmailAddresses) {
             const username: string | undefined = personMap.get(ea.personId)?.referrer;
@@ -58,20 +52,10 @@ export class EmailAddressDeletionService {
                 );
                 continue;
             }
-            // emailPersonMap.set(ea.personId, {
-            //     oxUserName: username,
-            //     oxUserId: ea.oxUserID,
-            // });
             this.eventService.publish(
                 new EmailAddressDeletedEvent(ea.personId, username, ea.oxUserID, ea.id, ea.status, ea.address),
             );
         }
-
-        // for (const person of affectedPersons) {
-        //     this.logger.info(
-        //         `Affected Person: personId:${person.id}, referrer:${person.referrer}, vorname:${person.vorname}, familienname:${person.familienname}`,
-        //     );
-        // }
     }
 
     public async checkRemainingEmailAddressesByPersonId(personId: PersonID, oxUserId: OXUserID): Promise<void> {

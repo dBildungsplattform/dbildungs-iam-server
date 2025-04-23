@@ -916,7 +916,6 @@ describe('LDAP Client Service', () => {
 
                 assert(result.ok);
                 expect(result.value).toBeFalsy();
-                //expect(loggerMock.info).toHaveBeenCalledWith(`MailAlternativeAddress:${mailAlternativeAddress} deletion not necessary, address:${address}, referrer:${referrer}, personId:${personId}`,);
                 expect(clientMock.modify).toHaveBeenCalledTimes(0);
             });
         });
