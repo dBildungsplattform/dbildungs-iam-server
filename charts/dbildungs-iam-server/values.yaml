@@ -241,3 +241,6 @@ import:
 
 featureFlags:
   befristungBearbeiten: true
+
+kafka:
+  enabled: false
