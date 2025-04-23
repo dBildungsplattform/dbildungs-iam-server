@@ -11,7 +11,7 @@ import { CreateUserAction, CreateUserParams, CreateUserResponse } from '../actio
 import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { ExistsUserAction, ExistsUserResponse } from '../actions/user/exists-user.action.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import {
@@ -22,9 +22,9 @@ import {
     OXUserID,
     OXUserName,
 } from '../../../shared/types/ox-ids.types.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { GetDataForUserAction, GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
 import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -39,14 +39,14 @@ import {
     ChangeByModuleAccessAction,
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import {
     ListGroupsForUserAction,
     ListGroupsForUserParams,
     ListGroupsForUserResponse,
 } from '../actions/group/list-groups-for-user.action.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
 import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
@@ -54,13 +54,13 @@ import {
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
-import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
-import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
+import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { DeleteUserAction } from '../actions/user/delete-user.action.js';
-import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
-import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox-email-address-deleted.event.js';
-import { OxAccountDeletedEvent } from '../../../shared/events/ox-account-deleted.event.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
+import { OxAccountDeletedEvent } from '../../../shared/events/ox/ox-account-deleted.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,

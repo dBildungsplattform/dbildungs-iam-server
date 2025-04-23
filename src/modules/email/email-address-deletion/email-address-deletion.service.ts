@@ -7,9 +7,9 @@ import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
-import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 
 @Injectable()
 export class EmailAddressDeletionService {

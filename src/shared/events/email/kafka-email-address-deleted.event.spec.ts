@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker';
 
-import { EmailAddressStatus } from '../../modules/email/domain/email-address.js';
+import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 import { KafkaEmailAddressDeletedEvent } from './kafka-email-address-deleted.event.js';
-import { EmailAddressID, PersonID, PersonReferrer } from '../types/aggregate-ids.types.js';
-import { OXUserID } from '../types/ox-ids.types.js';
+import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-ids.types.js';
+import { OXUserID } from '../../types/ox-ids.types.js';
 
 describe('KafkaEmailAddressDeletedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {

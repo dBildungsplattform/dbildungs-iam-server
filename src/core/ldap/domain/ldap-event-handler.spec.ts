@@ -28,7 +28,7 @@ import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.ty
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
@@ -36,11 +36,11 @@ import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
-import { EmailAddressDeletedEvent } from '../../../shared/events/email-address-deleted.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 import { EventService } from '../../eventbus/services/event.service.js';
-import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;

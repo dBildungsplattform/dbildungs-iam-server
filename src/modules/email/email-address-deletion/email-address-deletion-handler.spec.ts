@@ -14,13 +14,13 @@ import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonID, PersonReferrer } from '../../../shared/types/index.js';
 import { EmailAddressDeletionModule } from './email-address-deletion.module.js';
 import { EmailAddressDeletionHandler } from './email-address-deletion-handler.js';
-import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap-email-address-deleted.event.js';
+import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-email-address-deleted.event.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
-import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox-email-address-deleted.event.js';
+import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
 import { OXContextID, OXContextName, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
-import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email-address-deleted-in-database.event.js';
+import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
 
 /**

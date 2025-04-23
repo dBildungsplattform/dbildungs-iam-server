@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { EmailRepo } from '../persistence/email.repo.js';
-import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox-email-address-deleted.event.js';
-import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap-email-address-deleted.event.js';
+import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
+import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-email-address-deleted.event.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
-import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email-address-deleted-in-database.event.js';
+import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
 
 @Injectable()

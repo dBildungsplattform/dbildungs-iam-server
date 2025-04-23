@@ -8,7 +8,7 @@ import { faker } from '@faker-js/faker';
 import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
@@ -17,8 +17,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
-import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 
 describe('KeycloakEventHandler', () => {
     let module: TestingModule;

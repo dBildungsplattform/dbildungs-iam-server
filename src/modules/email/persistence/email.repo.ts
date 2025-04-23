@@ -12,7 +12,7 @@ import { Person } from '../../person/domain/person.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email-address-deleted-in-database.event.js';
+import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 
 export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: number = 180;
