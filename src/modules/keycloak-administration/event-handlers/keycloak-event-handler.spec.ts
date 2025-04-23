@@ -18,6 +18,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
 
 describe('KeycloakEventHandler', () => {
     let module: TestingModule;
@@ -235,7 +236,7 @@ describe('KeycloakEventHandler', () => {
             );
             expect(loggerMock.info).toHaveBeenNthCalledWith(
                 2,
-                `Removed OX access for personId:${fakePersonID} & username:${fakeUsername} in Keycloak`,
+                `Removed OX access for personId:${fakePersonID}, username:${fakeUsername} in Keycloak`,
             );
             expect(keycloakUserServiceMock.removeOXUserAttributes).toHaveBeenCalledTimes(1);
         });
@@ -254,6 +255,59 @@ describe('KeycloakEventHandler', () => {
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Updating user in Keycloak FAILED for EmailAddressDisabledEvent, personId:${fakePersonID}, username:${fakeUsername}`,
+                );
+            });
+        });
+    });
+
+    //kap
+    describe('handleEmailAddressesPurgedEvent', () => {
+        let fakePersonID: PersonID;
+        let fakeUsername: string;
+        let fakeOxUserID: OXUserID;
+        let event: EmailAddressesPurgedEvent;
+
+        beforeEach(() => {
+            fakePersonID = faker.string.uuid();
+            fakeUsername = faker.internet.userName();
+            fakeOxUserID = faker.string.numeric();
+            event = new EmailAddressesPurgedEvent(fakePersonID, fakeUsername, fakeOxUserID);
+        });
+
+        describe('when updating user-attributes fails', () => {
+            it('should log error about failure', async () => {
+                keycloakUserServiceMock.removeOXUserAttributes.mockResolvedValueOnce({
+                    ok: false,
+                    error: new KeycloakClientError('Could not update user-attributes'),
+                });
+
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `Received EmailAddressesPurgedEvent personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+                );
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Updating user in Keycloak FAILED for EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}`,
+                );
+            });
+        });
+
+        describe('when updating user-attributes succeeds', () => {
+            it('should log info about success', async () => {
+                keycloakUserServiceMock.removeOXUserAttributes.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenNthCalledWith(
+                    1,
+                    `Received EmailAddressesPurgedEvent personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+                );
+                expect(loggerMock.info).toHaveBeenNthCalledWith(
+                    2,
+                    `Removed OX access for personId:${event.personId}, username:${event.username} in Keycloak`,
                 );
             });
         });

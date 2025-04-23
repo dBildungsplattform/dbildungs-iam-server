@@ -14,6 +14,9 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OXContextName } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email-addresses-purged.event.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/kafka-email-addresses-purged.event.js';
 
 @Injectable()
 export class KeycloakEventHandler {
@@ -104,12 +107,31 @@ export class KeycloakEventHandler {
 
         if (updateResult.ok) {
             this.logger.info(
-                `Removed OX access for personId:${event.personId} & username:${event.username} in Keycloak`,
+                `Removed OX access for personId:${event.personId}, username:${event.username} in Keycloak`,
             );
         } else {
             this.logger.error(
                 `Updating user in Keycloak FAILED for EmailAddressDisabledEvent, personId:${event.personId}, username:${event.username}`,
             );
         }
+    }
+
+    @KafkaEventHandler(KafkaEmailAddressesPurgedEvent)
+    @EventHandler(EmailAddressesPurgedEvent)
+    public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressesPurgedEvent personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+
+        const updateResult: Result<void> = await this.kcUserService.removeOXUserAttributes(event.username);
+
+        if (updateResult.ok) {
+            return this.logger.info(
+                `Removed OX access for personId:${event.personId}, username:${event.username} in Keycloak`,
+            );
+        }
+        return this.logger.error(
+            `Updating user in Keycloak FAILED for EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}`,
+        );
     }
 }
