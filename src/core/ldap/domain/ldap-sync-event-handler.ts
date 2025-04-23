@@ -226,6 +226,7 @@ export class LdapSyncEventHandler {
         this.logger.info(
             `Syncing data to LDAP for personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
         );
+
         // Check and sync EmailAddress
         const currentMailPrimaryAddress: string | undefined = personAttributes.mailPrimaryAddress;
         if (ldapSyncData.enabledEmailAddress !== currentMailPrimaryAddress) {
@@ -264,6 +265,23 @@ export class LdapSyncEventHandler {
                 } else {
                     return this.logger.crit(
                         `COULD NOT find ${currentMailPrimaryAddress} in DISABLED addresses, Overwriting ABORTED, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                    );
+                }
+            }
+        }
+
+        const currentMailAlternativeAddress: string | undefined = personAttributes.mailAlternativeAddress;
+
+        if (ldapSyncData.disabledEmailAddresses[0]) {
+            if (ldapSyncData.disabledEmailAddresses[0] !== currentMailAlternativeAddress) {
+                this.logger.info(
+                    `Mismatch mailAlternativeAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailAlternativeAddress}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                );
+                if (ldapSyncData.disabledEmailAddresses[0]) {
+                    await this.ldapClientService.setMailAlternativeAddress(
+                        ldapSyncData.personId,
+                        ldapSyncData.referrer,
+                        ldapSyncData.disabledEmailAddresses[0],
                     );
                 }
             }
