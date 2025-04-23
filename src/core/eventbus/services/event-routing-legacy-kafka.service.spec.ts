@@ -8,13 +8,18 @@ import { KafkaEventService } from './kafka-event.service.js';
 import { LoggingTestModule } from '../../../../test/utils/index.js';
 import { BaseEvent } from '../../../shared/events/base-event.js';
 import { KafkaEvent } from '../../../shared/events/kafka-event.js';
+import { ClassLogger } from '../../logging/class-logger.js';
+
+function flushPromises(): Promise<void> {
+    return new Promise((resolve: (value: void | PromiseLike<void>) => void) => setImmediate(resolve));
+}
 
 describe('EventRoutingLegacyKafkaService', () => {
     let sut: EventRoutingLegacyKafkaService;
     let eventServiceMock: DeepMocked<EventService>;
     let kafkaEventServiceMock: DeepMocked<KafkaEventService>;
     let configServiceMock: DeepMocked<ConfigService>;
-
+    let logger: DeepMocked<ClassLogger>;
     let module: TestingModule;
 
     async function setupModule(kafkaEnabled: boolean = false): Promise<void> {
@@ -36,6 +41,7 @@ describe('EventRoutingLegacyKafkaService', () => {
         sut = module.get(EventRoutingLegacyKafkaService);
         eventServiceMock = module.get(EventService);
         kafkaEventServiceMock = module.get(KafkaEventService);
+        logger = module.get(ClassLogger);
     }
 
     afterEach(async () => {
@@ -54,8 +60,10 @@ describe('EventRoutingLegacyKafkaService', () => {
 
             const legacyEvent: DeepMocked<BaseEvent> = createMock<BaseEvent>();
             const kafkaEvent: DeepMocked<KafkaEvent> = createMock<KafkaEvent>();
+            kafkaEventServiceMock.publish.mockResolvedValue(undefined);
 
-            await sut.publish(legacyEvent, kafkaEvent);
+            sut.publish(legacyEvent, kafkaEvent);
+            await flushPromises();
 
             expect(kafkaEventServiceMock.publish).toHaveBeenCalledWith(kafkaEvent);
             expect(eventServiceMock.publish).not.toHaveBeenCalled();
@@ -67,7 +75,7 @@ describe('EventRoutingLegacyKafkaService', () => {
             const legacyEvent: DeepMocked<BaseEvent> = createMock<BaseEvent>();
             const kafkaEvent: DeepMocked<KafkaEvent> = createMock<KafkaEvent>();
 
-            await sut.publish(legacyEvent, kafkaEvent);
+            sut.publish(legacyEvent, kafkaEvent);
 
             expect(kafkaEventServiceMock.publish).not.toHaveBeenCalled();
             expect(eventServiceMock.publish).toHaveBeenCalledWith(legacyEvent);
@@ -78,10 +86,27 @@ describe('EventRoutingLegacyKafkaService', () => {
 
             const legacyEvent: DeepMocked<BaseEvent> = createMock<BaseEvent>();
 
-            await sut.publish(legacyEvent);
+            sut.publish(legacyEvent);
 
             expect(kafkaEventServiceMock.publish).not.toHaveBeenCalled();
             expect(eventServiceMock.publish).toHaveBeenCalledWith(legacyEvent);
+        });
+
+        it('should log error if publish throws error', async () => {
+            await setupModule(true);
+
+            const legacyEvent: DeepMocked<BaseEvent> = createMock<BaseEvent>();
+            const kafkaEvent: DeepMocked<KafkaEvent> = createMock<KafkaEvent>();
+
+            const error: Error = new Error('Kafka publish failed');
+            kafkaEventServiceMock.publish.mockRejectedValue(error);
+
+            sut.publish(legacyEvent, kafkaEvent);
+            await flushPromises();
+
+            expect(kafkaEventServiceMock.publish).toHaveBeenCalledWith(kafkaEvent);
+            expect(eventServiceMock.publish).not.toHaveBeenCalled();
+            expect(logger.logUnknownAsError).toHaveBeenCalled();
         });
     });
 
