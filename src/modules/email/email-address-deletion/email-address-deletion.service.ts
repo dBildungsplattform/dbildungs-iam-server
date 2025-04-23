@@ -34,7 +34,7 @@ export class EmailAddressDeletionService {
             permissions,
         );
         const personMap: Map<PersonID, Person<true>> = new Map<PersonID, Person<true>>();
-        affectedPersons.map((p: Person<true>) => {
+        affectedPersons.forEach((p: Person<true>) => {
             personMap.set(p.id, p);
         });
 
