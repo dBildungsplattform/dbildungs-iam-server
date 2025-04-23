@@ -11,6 +11,6 @@ data:
   topics.txt: |-
     {{ .Files.Get "config/kafka-topics.txt" | nindent 4 }}
   client.config: |-
-    sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ index $.Values.auth "kafka-username }}" password="{{ index $.Values.auth "kafka-password" }}";
+    sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="{{ $.Values.auth.kafka_username }}" password="{{ $.Values.auth.kafka_password }}";
     security.protocol=SASL_PLAINTEXT
     sasl.mechanism=PLAIN
