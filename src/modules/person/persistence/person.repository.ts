@@ -380,13 +380,13 @@ export class PersonRepository {
             [],
         );
 
-        await this.eventRoutingLegacyKafkaService.publish(
+        this.eventRoutingLegacyKafkaService.publish(
             personenkontextUpdatedEvent,
             kafkaPersonenkontextUpdatedEvent,
         );
 
         if (person.referrer !== undefined) {
-            await this.eventRoutingLegacyKafkaService.publish(
+            this.eventRoutingLegacyKafkaService.publish(
                 new PersonDeletedEvent(personId, person.referrer, person.email),
                 new KafkaPersonDeletedEvent(personId, person.referrer, person.email),
             );
@@ -523,7 +523,7 @@ export class PersonRepository {
         await this.em.persistAndFlush(personEntity);
 
         if (isPersonRenamedEventNecessary) {
-            await this.eventRoutingLegacyKafkaService.publish(
+            this.eventRoutingLegacyKafkaService.publish(
                 PersonRenamedEvent.fromPerson(person, oldReferrer, personEntity.vorname, personEntity.familienname),
                 KafkaPersonRenamedEvent.fromPerson(
                     person,

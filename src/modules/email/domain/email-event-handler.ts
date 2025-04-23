@@ -580,7 +580,7 @@ export class EmailEventHandler {
                         `Set REQUESTED status and persisted address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
                     );
                     // eslint-disable-next-line no-await-in-loop
-                    await this.eventRoutingLegacyKafkaService.publish(
+                    this.eventRoutingLegacyKafkaService.publish(
                         new EmailAddressGeneratedEvent(
                             personId,
                             personReferrer.value,
@@ -656,7 +656,7 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
-            await this.eventRoutingLegacyKafkaService.publish(
+            this.eventRoutingLegacyKafkaService.publish(
                 new EmailAddressGeneratedEvent(
                     personId,
                     personReferrer.value,
@@ -743,7 +743,7 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted change-email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
-            await this.eventRoutingLegacyKafkaService.publish(
+            this.eventRoutingLegacyKafkaService.publish(
                 new EmailAddressChangedEvent(
                     personId,
                     personReferrer.value,

@@ -22,13 +22,16 @@ export class EventRoutingLegacyKafkaService {
         this.kafkaEnabled = kafkaConfig?.ENABLED ?? false;
     }
 
-    public async publish(legacyEvent: BaseEvent, kafkaEvent?: KafkaEvent): Promise<void> {
+    public publish(legacyEvent: BaseEvent, kafkaEvent?: KafkaEvent): void {
         const legacyEventName: string = legacyEvent.constructor.name;
         const kafkaEventName: string | undefined = kafkaEvent?.constructor.name;
 
         if (this.kafkaEnabled && kafkaEvent) {
             this.logger.debug(`Publishing '${kafkaEventName}' to Kafka`);
-            await this.kafkaEventService.publish(kafkaEvent);
+            this.kafkaEventService
+                .publish(kafkaEvent)
+                .then(() => this.logger.debug(`Successfully published kafka Event`))
+                .catch((err: unknown) => this.logger.logUnknownAsError(`Failed publishing kafka event`, err));
         } else {
             this.logger.debug(`Publishing '${legacyEventName}' to legacy event service`);
             this.eventService.publish(legacyEvent);

@@ -417,7 +417,7 @@ export class PersonenkontexteUpdate {
             (pk: Personenkontext<true>) => [pk, orgas.get(pk.organisationId)!, rollen.get(pk.rolleId)!],
         );
 
-        await this.eventRoutingLegacyKafkaService.publish(
+        this.eventRoutingLegacyKafkaService.publish(
             PersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing, ldapEntryUUID),
             KafkaPersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing, ldapEntryUUID),
         );

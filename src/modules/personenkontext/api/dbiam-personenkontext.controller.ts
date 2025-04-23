@@ -205,7 +205,7 @@ export class DBiamPersonenkontextController {
             `MIGRATION: Create Kontext Operation / personId: ${params.personId} ;  orgaId: ${params.organisationId} ;  rolleId: ${params.rolleId} / New Kontext has been saved to DB successfully`,
         );
 
-        await this.eventRoutingLegacyKafkaService.publish(
+        this.eventRoutingLegacyKafkaService.publish(
             new PersonenkontextCreatedMigrationEvent(
                 params.migrationRunType,
                 createdKontext,
