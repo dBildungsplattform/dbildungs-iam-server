@@ -380,10 +380,7 @@ export class PersonRepository {
             [],
         );
 
-        this.eventRoutingLegacyKafkaService.publish(
-            personenkontextUpdatedEvent,
-            kafkaPersonenkontextUpdatedEvent,
-        );
+        this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
         if (person.referrer !== undefined) {
             this.eventRoutingLegacyKafkaService.publish(
