@@ -86,6 +86,9 @@ ox:
   contextId: '10'
   contextName: '10'
 
+email:
+  non_enabled_email_addresses_deadline_exceeded_in_days: 180
+
 vidis:
   url: 'https://service-stage.vidis.schule'
   regionName: 'test-region'
