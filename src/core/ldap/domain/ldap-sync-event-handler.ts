@@ -272,6 +272,8 @@ export class LdapSyncEventHandler {
 
         const currentMailAlternativeAddress: string | undefined = personAttributes.mailAlternativeAddress;
 
+        // if mailPrimaryAddress also is overwritten in LDAP before, the async writing process may also overwrite mailAlternativeAddress
+        // but a second executing can successfully set mailAlternativeAddress
         if (ldapSyncData.disabledEmailAddresses[0]) {
             if (ldapSyncData.disabledEmailAddresses[0] !== currentMailAlternativeAddress) {
                 this.logger.info(

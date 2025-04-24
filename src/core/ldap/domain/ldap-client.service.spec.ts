@@ -1856,23 +1856,7 @@ describe('LDAP Client Service', () => {
         const cn: string = referrer;
         const mailPrimaryAddress: string = faker.internet.email();
         const mailAlternativeAddress: string = faker.internet.email();
-        let entry: Entry;
-
-        /*function mockEntryCanBeFound(): void {
-            ldapClientMock.getClient.mockImplementation(() => {
-                clientMock.bind.mockResolvedValueOnce();
-                clientMock.search.mockResolvedValueOnce(
-                    createMock<SearchResult>({
-                        searchEntries: [entry],
-                    }),
-                );
-                return clientMock;
-            });
-        }*/
-
-        beforeEach(() => {
-            entry = getPersonEntry(dn, givenName, sn, cn, mailPrimaryAddress, mailAlternativeAddress);
-        });
+        const entry: Entry = getPersonEntry(dn, givenName, sn, cn, mailPrimaryAddress, mailAlternativeAddress);
 
         describe('when bind returns error', () => {
             it('should return falsy result', async () => {
