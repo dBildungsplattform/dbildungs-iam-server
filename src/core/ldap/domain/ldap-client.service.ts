@@ -722,16 +722,6 @@ export class LdapClientService {
                 return { ok: false, error: new LdapModifyEmailError() };
             }
 
-            const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
-                searchResult.searchEntries[0],
-                LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
-                referrer,
-                personId,
-            );
-            if (!mailAlternativeAddress.ok) {
-                return { ok: false, error: new LdapModifyEmailError() };
-            }
-
             try {
                 await client.modify(searchResult.searchEntries[0].dn, [
                     new Change({
