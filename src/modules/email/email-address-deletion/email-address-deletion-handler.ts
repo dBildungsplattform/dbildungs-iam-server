@@ -53,7 +53,7 @@ export class EmailAddressDeletionHandler {
     @EventHandler(EmailAddressDeletedInDatabaseEvent)
     public async handleEmailAddressDeletedInDatabaseEvent(event: EmailAddressDeletedInDatabaseEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.id}, status:${event.status}, address:${event.address}`,
+            `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.emailAddressId}, status:${event.status}, address:${event.address}`,
         );
 
         await this.emailAddressDeletionService.checkRemainingEmailAddressesByPersonId(event.personId, event.oxUserId);

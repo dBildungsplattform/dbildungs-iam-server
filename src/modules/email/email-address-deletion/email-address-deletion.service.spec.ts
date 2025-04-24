@@ -153,14 +153,14 @@ describe('EmailAddressDeletionService', () => {
                     EmailAddressStatus.DISABLED,
                     faker.string.numeric(),
                 );
-                emailRepoMock.getEmailAddressesDeleteList.mockResolvedValueOnce(
+                emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce(
                     emailAddresses.concat([emailAddressWithUnknownPersonId]),
                 );
                 personRepositoryMock.findByIds.mockResolvedValueOnce(persons);
 
                 await sut.deleteEmailAddresses(permissionsMock);
 
-                expect(emailRepoMock.getEmailAddressesDeleteList).toHaveBeenCalledTimes(1);
+                expect(emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could NOT get username when generating EmailAddressDeletedEvent, personId:${emailAddressWithUnknownPersonId.personId}`,
@@ -179,14 +179,14 @@ describe('EmailAddressDeletionService', () => {
                     undefined,
                     persons[0],
                 );
-                emailRepoMock.getEmailAddressesDeleteList.mockResolvedValueOnce(
+                emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline.mockResolvedValueOnce(
                     emailAddresses.concat([emailAddressWithoutOxUserId]),
                 );
                 personRepositoryMock.findByIds.mockResolvedValueOnce(persons);
 
                 await sut.deleteEmailAddresses(permissionsMock);
 
-                expect(emailRepoMock.getEmailAddressesDeleteList).toHaveBeenCalledTimes(1);
+                expect(emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${emailAddressWithoutOxUserId.personId}, referrer:${persons[0].referrer}`,

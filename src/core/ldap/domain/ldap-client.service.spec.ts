@@ -785,15 +785,10 @@ describe('LDAP Client Service', () => {
     describe('removeMailAlternativeAddress', () => {
         const personId: PersonID = faker.string.uuid();
         const referrer: PersonReferrer = faker.internet.userName();
-        let address: string;
-
-        beforeEach(() => {
-            address = 'vorname.nachname@schule-sh.de';
-        });
 
         describe('when emailAddress CANNOT be splitted at @', () => {
             it('should return error', async () => {
-                address = 'vorname.nachname';
+                const address: string = 'vorname.nachname';
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
@@ -814,7 +809,7 @@ describe('LDAP Client Service', () => {
         describe('when getting root-name fails', () => {
             it('should return error', async () => {
                 const domain: string = 'not-a-valid-domain.de';
-                address = 'vorname.nachname@' + domain;
+                const address: string = 'vorname.nachname@' + domain;
                 const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
                     personId,
                     referrer,
@@ -831,6 +826,7 @@ describe('LDAP Client Service', () => {
 
         describe('when bind fails', () => {
             it('should return error', async () => {
+                const address: string = 'vorname.nachname@schule-sh.de';
                 const bindError: Error = new Error('LDAP bind FAILED');
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind(bindError);
@@ -851,6 +847,7 @@ describe('LDAP Client Service', () => {
 
         describe('when PersonEntry CANNOT be fetched by uid', () => {
             it('should return error', async () => {
+                const address: string = 'vorname.nachname@schule-sh.de';
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
@@ -871,6 +868,7 @@ describe('LDAP Client Service', () => {
         describe('when fetching PersonEntry succeeds but fetching mailAlternativeAddress fails', () => {
             it('should return error', async () => {
                 const entry: Entry = getPersonEntry('uid=user,ou=oeffentlicheSchulen,dc=schule-sh,dc=de');
+                const address: string = 'vorname.nachname@schule-sh.de';
                 makeMockClient((client: DeepMocked<Client>) => {
                     mockBind();
 
@@ -891,6 +889,7 @@ describe('LDAP Client Service', () => {
         describe('when mailAlternativeAddress of PersonEntry does NOT match address', () => {
             it('should log info error and return without modification', async () => {
                 const mailAlternativeAddress: string = faker.internet.email();
+                const address: string = 'vorname.nachname@schule-sh.de';
                 const entry: Entry = getPersonEntry(
                     'uid=user,ou=oeffentlicheSchulen,dc=schule-sh,dc=de',
                     faker.person.firstName(),
@@ -922,6 +921,7 @@ describe('LDAP Client Service', () => {
 
         describe('when modifying PersonEntry with changed mailAlternativeAddress fails', () => {
             it('should log unknown error and return error', async () => {
+                const address: string = 'vorname.nachname@schule-sh.de';
                 const entry: Entry = getPersonEntry(
                     'uid=user,ou=oeffentlicheSchulen,dc=schule-sh,dc=de',
                     faker.person.firstName(),
@@ -956,6 +956,7 @@ describe('LDAP Client Service', () => {
 
         describe('when modifying PersonEntry with changed mailAlternativeAddress succeeds', () => {
             it('should log info and publish LdapPersonEntryChangedEvent', async () => {
+                const address: string = 'vorname.nachname@schule-sh.de';
                 const entry: Entry = getPersonEntry(
                     'uid=user,ou=oeffentlicheSchulen,dc=schule-sh,dc=de',
                     faker.person.firstName(),

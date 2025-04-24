@@ -21,7 +21,8 @@ export class EmailAddressDeletionService {
     ) {}
 
     public async deleteEmailAddresses(permissions: PersonPermissions): Promise<void> {
-        const emailAddresses: EmailAddress<true>[] = await this.emailRepo.getEmailAddressesDeleteList();
+        const emailAddresses: EmailAddress<true>[] =
+            await this.emailRepo.getByDeletedStatusOrUpdatedAtExceedsDeadline();
         const nonPrimaryEmailAddresses: EmailAddress<true>[] = emailAddresses.filter(
             (ea: EmailAddress<true>) => ea.status !== EmailAddressStatus.ENABLED,
         );

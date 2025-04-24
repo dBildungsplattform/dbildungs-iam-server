@@ -369,18 +369,6 @@ export class OxEventHandler {
 
         // Check if the functionality is enabled
         if (!this.ENABLED) {
-            // ONLY ACTIVATE EVENT-PUBLISHING BENEATH IN DEVELOPMENT !!! //
-            this.eventService.publish(
-                new OxEmailAddressDeletedEvent(
-                    event.personId,
-                    event.oxUserId,
-                    event.username,
-                    event.address,
-                    this.contextID,
-                    this.contextName,
-                ),
-            );
-
             return this.logger.info('Not enabled, ignoring event');
         }
 

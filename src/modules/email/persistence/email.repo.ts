@@ -14,8 +14,9 @@ import { EmailAddressDeletionError } from '../error/email-address-deletion.error
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
+import { EmailInstanceConfig } from '../email-instance-config.js';
 
-export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: number = 180;
+export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT: number = 180;
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
     const oxUserIdStr: string | undefined = emailAddress.oxUserID ? emailAddress.oxUserID + '' : undefined;
@@ -46,6 +47,7 @@ export class EmailRepo {
     public constructor(
         private readonly em: EntityManager,
         private readonly eventService: EventService,
+        private readonly emailInstanceConfig: EmailInstanceConfig,
         private readonly logger: ClassLogger,
     ) {}
 
@@ -149,7 +151,9 @@ export class EmailRepo {
      */
     public async getByDeletedStatusOrUpdatedAtExceedsDeadline(): Promise<EmailAddress<true>[]> {
         const daysAgo: Date = new Date();
-        daysAgo.setDate(daysAgo.getDate() - NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS);
+        const deadlineInDays: number = this.getDeadlineInDaysForNonEnabledEmailAddresses();
+        this.logger.info(`Fetching EmailAddressing For Deletion, deadlineInDays:${deadlineInDays}`);
+        daysAgo.setDate(daysAgo.getDate() - deadlineInDays);
 
         const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
             EmailAddressEntity,
@@ -167,17 +171,6 @@ export class EmailRepo {
         );
 
         return emailAddressEntities.map(mapEntityToAggregate);
-    }
-
-    /**
-     * Returns EmailAddresses with status DELETED_LDAP, DELETED_OX and DELETE or
-     * which have an updatedAt that exceeds the deadline (180 days) and are not ENABLED.
-     */
-    public async getEmailAddressesDeleteList(): Promise<EmailAddress<true>[]> {
-        const emailAddressesForDeletion: EmailAddress<true>[] =
-            await this.getByDeletedStatusOrUpdatedAtExceedsDeadline();
-
-        return emailAddressesForDeletion;
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {
@@ -321,5 +314,12 @@ export class EmailRepo {
 
             return new EmailAddressDeletionError(id);
         }
+    }
+
+    private getDeadlineInDaysForNonEnabledEmailAddresses(): number {
+        return (
+            this.emailInstanceConfig.NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS ??
+            NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT
+        );
     }
 }

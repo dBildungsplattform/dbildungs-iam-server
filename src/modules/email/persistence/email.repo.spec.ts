@@ -5,13 +5,13 @@ import {
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
+    MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { EmailRepo, mapAggregateToData } from './email.repo.js';
 import { EmailFactory } from '../domain/email.factory.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
 import { EventService } from '../../../core/eventbus/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -24,15 +24,15 @@ import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-already-has-enabled-email-address.error.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
-import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import assert from 'assert';
 import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
+import { EmailModule } from '../email.module.js';
+import { EmailInstanceConfig } from '../email-instance-config.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -41,57 +41,56 @@ describe('EmailRepo', () => {
     let personFactory: PersonFactory;
     let personRepository: PersonRepository;
     let organisationRepository: OrganisationRepository;
+    let instanceConfig: EmailInstanceConfig;
     let orm: MikroORM;
     let em: EntityManager;
 
     let eventServiceMock: DeepMocked<EventService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
+    const mockEmailInstanceConfig: EmailInstanceConfig = {
+        NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: 100,
+    };
+
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
-            providers: [
-                UsernameGeneratorService,
-                OxUserBlacklistRepo,
-                EmailRepo,
-                EmailFactory,
-                PersonFactory,
-                PersonRepository,
-                OrganisationRepository,
-                {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
-                },
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
-                },
-                {
-                    provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.uuid(),
-                            }),
-                        setPassword: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.alphanumeric(16),
-                            }),
-                    }),
-                },
-                {
-                    provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
-                },
+            imports: [
+                ConfigTestModule,
+                MapperTestModule,
+                DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
+                EmailModule,
             ],
-        }).compile();
+            providers: [],
+        })
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
+            .overrideProvider(EventService)
+            .useValue(createMock<EventService>())
+            .overrideProvider(EmailInstanceConfig)
+            .useValue(mockEmailInstanceConfig)
+            .overrideProvider(KeycloakUserService)
+            .useValue(
+                createMock<KeycloakUserService>({
+                    create: () =>
+                        Promise.resolve({
+                            ok: true,
+                            value: faker.string.uuid(),
+                        }),
+                    setPassword: () =>
+                        Promise.resolve({
+                            ok: true,
+                            value: faker.string.alphanumeric(16),
+                        }),
+                }),
+            )
+            .compile();
         sut = module.get(EmailRepo);
         emailFactory = module.get(EmailFactory);
         personFactory = module.get(PersonFactory);
         personRepository = module.get(PersonRepository);
         organisationRepository = module.get(OrganisationRepository);
+        instanceConfig = module.get(EmailInstanceConfig);
+
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
 
@@ -148,7 +147,7 @@ describe('EmailRepo', () => {
                 break;
         }
         const savedEmail: EmailAddress<true> | DomainError = await sut.save(email.value);
-        assert(!(savedEmail instanceof DomainError));
+        assert(savedEmail instanceof EmailAddress);
 
         return savedEmail;
     }
@@ -495,7 +494,7 @@ describe('EmailRepo', () => {
         });
     });
 
-    describe('getEmailAddressesDeleteList', () => {
+    describe('getByDeletedStatusOrUpdatedAtExceedsDeadline', () => {
         describe('when exceeded EmailAddresses, EmailAddresses with an DELETED status and non-exceeded EmailAddresses exist', () => {
             it('should return only EmailAddresses which exceed the deadline or an DELETED status', async () => {
                 const person: Person<true> = await createPerson();
@@ -604,8 +603,11 @@ describe('EmailRepo', () => {
                     today,
                 );
 
-                const deleteList: EmailAddress<true>[] = await sut.getEmailAddressesDeleteList();
+                const deleteList: EmailAddress<true>[] = await sut.getByDeletedStatusOrUpdatedAtExceedsDeadline();
 
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Fetching EmailAddressing For Deletion, deadlineInDays:${100}`,
+                );
                 expect(deleteList).toHaveLength(9);
                 expect(deleteList).toContainEqual(
                     expect.objectContaining({
@@ -652,6 +654,18 @@ describe('EmailRepo', () => {
                         address: addressDeletedNotExceeded,
                     }),
                 );
+            });
+        });
+
+        describe('when emailInstanceConfig does NOT provide NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS', () => {
+            it('should use NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT of 180 days', async () => {
+                instanceConfig.NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS = undefined;
+                const deleteList: EmailAddress<true>[] = await sut.getByDeletedStatusOrUpdatedAtExceedsDeadline();
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Fetching EmailAddressing For Deletion, deadlineInDays:${180}`,
+                );
+                expect(deleteList).toHaveLength(0);
             });
         });
     });
@@ -788,7 +802,7 @@ describe('EmailRepo', () => {
                         expect.objectContaining({
                             personId: person.id,
                             oxUserId: oxUserId,
-                            id: addressId,
+                            emailAddressId: addressId,
                             address: address,
                         }),
                     );

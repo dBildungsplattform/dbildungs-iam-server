@@ -1,4 +1,3 @@
-import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -43,7 +42,6 @@ function getEmailAddress(personId: PersonID, address: string, status: EmailAddre
 }
 
 describe('EmailAddressDeletionHandler', () => {
-    let app: INestApplication;
     let sut: EmailAddressDeletionHandler;
 
     let emailRepoMock: DeepMocked<EmailRepo>;
@@ -78,9 +76,6 @@ describe('EmailAddressDeletionHandler', () => {
         emailRepoMock = module.get(EmailRepo);
         emailAddressDeletionServiceMock = module.get(EmailAddressDeletionService);
         loggerMock = module.get(ClassLogger);
-
-        app = module.createNestApplication();
-        await app.init();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     function expectReceivedEventLogAndStatusChangeLog(
@@ -100,10 +95,6 @@ describe('EmailAddressDeletionHandler', () => {
             `New EmailAddressStatus is:${status}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
         );
     }
-
-    afterAll(async () => {
-        await app.close();
-    });
 
     beforeEach(() => {
         jest.resetAllMocks();
@@ -330,7 +321,7 @@ describe('EmailAddressDeletionHandler', () => {
                 await sut.handleEmailAddressDeletedInDatabaseEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.id}, status:${event.status}, address:${event.address}`,
+                    `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.emailAddressId}, status:${event.status}, address:${event.address}`,
                 );
                 expect(emailAddressDeletionServiceMock.checkRemainingEmailAddressesByPersonId).toHaveBeenCalledWith(
                     event.personId,

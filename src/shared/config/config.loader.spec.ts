@@ -90,6 +90,9 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                 },
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: 180,
+                },
                 IMPORT: {
                     CSV_FILE_MAX_SIZE_IN_MB: 10,
                     CSV_MAX_NUMBER_OF_USERS: 2001,
@@ -245,6 +248,9 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                },
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: 180,
                 },
                 IMPORT: {
                     CSV_FILE_MAX_SIZE_IN_MB: 10,
