@@ -1609,7 +1609,7 @@ describe('KeycloakUserService', () => {
                         createdTimestamp: faker.date.recent().getTime(),
                     },
                 ]);
-                const kcError: DomainError = new KeycloakClientError('Could not update user-attributes');
+                const kcError: DomainError = new KeycloakClientError('Could not remove ID_OX from user-attributes');
                 kcUsersMock.update.mockRejectedValueOnce(kcError);
                 const attributes: Record<string, string[]> = {};
                 attributes['ID_OX'] = [''];

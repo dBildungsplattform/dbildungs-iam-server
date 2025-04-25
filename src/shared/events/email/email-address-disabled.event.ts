@@ -1,4 +1,4 @@
-import { BaseEvent } from './base-event.js';
+import { BaseEvent } from '../base-event.js';
 
 export class EmailAddressDisabledEvent extends BaseEvent {
     public constructor(
