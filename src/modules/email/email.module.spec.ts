@@ -3,8 +3,8 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     LoggingTestModule,
-    MapperTestModule
-} from "../../../test/utils/index.js";
+    MapperTestModule,
+} from '../../../test/utils/index.js';
 import { EmailModule } from './email.module.js';
 import { EmailRepo } from './persistence/email.repo.js';
 import { EmailFactory } from './domain/email.factory.js';
