@@ -7,25 +7,31 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { OrganisationID, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { EventService } from '../../eventbus/services/event.service.js';
-import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
+import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { KafkaEventHandler } from '../../eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
-import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/kafka-email-address-generated.event.js';
-import { KafkaEmailAddressChangedEvent } from '../../../shared/events/kafka-email-address-changed.event.js';
+import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
+import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
 import { inspect } from 'util';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/email/kafka-email-address-deleted.event.js';
+import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-email-address-deleted.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
+import { LdapEntryDeletedEvent } from '../../../shared/events/ldap/ldap-entry-deleted.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -296,6 +302,7 @@ export class LdapEventHandler {
         if (failureReasons.length > 0) {
             return { ok: false, error: new Error(failureReasons.join(', ')) };
         }
+
         return { ok: true, value: null };
     }
 
@@ -311,6 +318,7 @@ export class LdapEventHandler {
             event.referrer,
             event.address,
         );
+
         return result;
     }
 
@@ -318,7 +326,7 @@ export class LdapEventHandler {
     @EventHandler(EmailAddressChangedEvent)
     public async handleEmailAddressChangedEvent(event: EmailAddressChangedEvent): Promise<Result<unknown>> {
         this.logger.info(
-            `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
+            `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress:${event.newAddress}, oldEmailAddress:${event.oldAddress}`,
         );
 
         const result: Result<PersonID> = await this.ldapClientService.changeEmailAddressByPersonId(
@@ -326,7 +334,44 @@ export class LdapEventHandler {
             event.referrer,
             event.newAddress,
         );
+
         return result;
+    }
+
+    @KafkaEventHandler(KafkaEmailAddressDeletedEvent)
+    @EventHandler(EmailAddressDeletedEvent)
+    public async handleEmailAddressDeletedEvent(event: EmailAddressDeletedEvent): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+        );
+        const result: Result<boolean> = await this.ldapClientService.removeMailAlternativeAddress(
+            event.personId,
+            event.username,
+            event.address,
+        );
+
+        if (result.ok) {
+            this.eventService.publish(new LdapEmailAddressDeletedEvent(event.personId, event.username, event.address));
+        }
+
+        return result;
+    }
+
+    @KafkaEventHandler(KafkaEmailAddressesPurgedEvent)
+    @EventHandler(EmailAddressesPurgedEvent)
+    public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.username);
+        if (!deletionResult.ok) {
+            this.logger.error(deletionResult.error.message);
+        } else {
+            this.eventService.publish(new LdapEntryDeletedEvent(event.personId, event.username));
+        }
+
+        return deletionResult;
     }
 
     public hatZuordnungZuOrganisationNachLoeschen(
@@ -337,6 +382,7 @@ export class LdapEventHandler {
         const currentOrgaIds: OrganisationID[] = personenkontextUpdatedEvent.currentKontexte.map(
             (pk: PersonenkontextEventKontextData) => pk.orgaId,
         );
+
         return currentOrgaIds.includes(orgaId);
     }
 }

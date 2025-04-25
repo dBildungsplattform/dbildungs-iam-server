@@ -9,9 +9,11 @@ import { EmailFactory } from './domain/email.factory.js';
 import { EmailRepo } from './persistence/email.repo.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
+import { EmailConfigModule } from './email-config.module.js';
 
 @Module({
     imports: [
+        EmailConfigModule,
         OrganisationModule,
         PersonModule,
         RolleModule,

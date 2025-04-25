@@ -1,4 +1,4 @@
-import { PersonRenamedEvent } from './person-renamed-event.js';
+import { PersonRenamedEvent } from '../person-renamed-event.js';
 
 /**
  * This event is used to chain LdapEventHandler and EmailEventHandler, so operations as result
