@@ -62,7 +62,7 @@ describe('EmailRepo', () => {
                 ConfigTestModule,
                 MapperTestModule,
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
-                EmailModule
+                EmailModule,
             ],
             providers: [
                 UsernameGeneratorService,
@@ -102,8 +102,8 @@ describe('EmailRepo', () => {
                 {
                     provide: UserLockRepository,
                     useValue: createMock<UserLockRepository>(),
-                }
-            ]
+                },
+            ],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
