@@ -32,6 +32,7 @@ data:
   OX_ENDPOINT: "{{ .Values.ox.endpoint }}"
   OX_CONTEXT_ID: "{{ .Values.ox.contextId }}"
   OX_CONTEXT_NAME: "{{ .Values.ox.contextName }}"
+  NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: "{{ .Values.email.nonEnabledEmailAddressesDeadlineInDays }}"
   SYSTEM_RENAME_WAITING_TIME_IN_SECONDS: "{{ .Values.backend.env.renameWaitingTimeInSeconds }}"
   SYSTEM_STEP_UP_TIMEOUT_ENABLED: "{{ .Values.backend.env.stepUpTimeoutEnabled }}"
   SYSTEM_STEP_UP_TIMEOUT_IN_SECONDS: "{{ .Values.backend.env.stepUpTimeoutInSeconds }}"

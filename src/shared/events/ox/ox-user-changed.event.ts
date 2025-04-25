@@ -1,6 +1,6 @@
-import { BaseEvent } from './base-event.js';
-import { OXContextID, OXContextName, OXUserID, OXUserName } from '../types/ox-ids.types.js';
-import { PersonReferrer } from '../types/aggregate-ids.types.js';
+import { BaseEvent } from '../base-event.js';
+import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../types/ox-ids.types.js';
+import { PersonReferrer } from '../../types/aggregate-ids.types.js';
 
 export class OxUserChangedEvent extends BaseEvent {
     public constructor(

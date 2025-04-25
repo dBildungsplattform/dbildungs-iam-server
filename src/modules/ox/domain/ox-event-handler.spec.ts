@@ -3,7 +3,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import { EmailAddressID, OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
 import { OxEventHandler } from './ox-event-handler.js';
 import { OxService } from './ox.service.js';
 import { CreateUserAction } from '../actions/user/create-user.action.js';
@@ -13,22 +13,24 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { ExistsUserAction } from '../actions/user/exists-user.action.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddress } from '../../email/domain/email-address.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/index.js';
-import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { OXContextID, OXContextName, OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { ListGroupsAction } from '../actions/group/list-groups.action.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
+import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -141,6 +143,28 @@ describe('OxEventHandler', () => {
                 exists: exists,
             },
         });
+    }
+
+    /**
+     * Returns an instance of GetDataForUserResponse.
+     * If id, username, primaryMail or aliases are undefined, they will be set with default fake values.
+     * Firstname and lastname are always set to fake values and mailenabled to true.
+     */
+    function getGetDataForUserResponse(
+        id?: OXUserID,
+        username?: string,
+        primaryMail?: string,
+        aliases?: string[],
+    ): GetDataForUserResponse {
+        return {
+            id: id ?? faker.string.numeric(),
+            username: username ?? faker.internet.userName(),
+            firstname: faker.person.firstName(),
+            lastname: faker.person.lastName(),
+            mailenabled: true,
+            primaryEmail: primaryMail ?? faker.internet.email(),
+            aliases: aliases ?? [],
+        };
     }
 
     afterAll(async () => {
@@ -1280,6 +1304,188 @@ describe('OxEventHandler', () => {
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully Changed OxUsername For oxUserId:${oxUserId} After PersonDeletedEvent`,
+                );
+            });
+        });
+    });
+
+    describe('handleEmailAddressDeletedEvent', () => {
+        const contextId: OXContextID = '10';
+        const contextName: OXContextName = 'testContext';
+
+        let personId: PersonID;
+        let referrer: PersonReferrer;
+        let oxUserId: OXUserID;
+        let emailAddressId: EmailAddressID;
+        let status: EmailAddressStatus;
+        let address: string;
+        let event: EmailAddressDeletedEvent;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            personId = faker.string.uuid();
+            referrer = faker.internet.userName();
+            oxUserId = faker.string.numeric();
+            emailAddressId = faker.string.uuid();
+            status = EmailAddressStatus.DISABLED;
+            address = faker.internet.email();
+            event = new EmailAddressDeletedEvent(personId, referrer, oxUserId, emailAddressId, status, address);
+        });
+
+        describe('when handler is disabled', () => {
+            it('should log and skip processing when not enabled', async () => {
+                sut.ENABLED = false;
+                await sut.handleEmailAddressDeletedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            });
+        });
+
+        describe('when getting current user-data from OX fails', () => {
+            it('should log error about that', async () => {
+                //mock: get-user-data fails
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: new OxError(),
+                });
+                await sut.handleEmailAddressDeletedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Cannot get data for oxUsername:${event.username} from OX, Aborting Email-Address Removal, personId:${event.personId}, referrer:${event.username}`,
+                );
+            });
+        });
+
+        describe('when getting current user-data from OX succeeds and aliases contains address', () => {
+            it('should log infos about that', async () => {
+                const aliases: string[] = [faker.internet.email(), address];
+                const userData: GetDataForUserResponse = getGetDataForUserResponse(
+                    oxUserId,
+                    referrer,
+                    address,
+                    aliases,
+                );
+                //mock: get-user-data succeeds
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: userData,
+                });
+                //mock: change-user-data succeeds
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                await sut.handleEmailAddressDeletedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Found Current aliases:${JSON.stringify(aliases)}, personId:${event.personId}, referrer:${event.username}`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Removed From alias:${event.address}, personId:${event.personId}, referrer:${event.username}`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+                );
+                //kap
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: event.personId,
+                        oxUserId: event.oxUserId,
+                        username: event.username,
+                        address: event.address,
+                        oxContextId: contextId,
+                        oxContextName: contextName,
+                    }),
+                );
+            });
+        });
+
+        describe('when getting current user-data from OX succeeds but changing user-data fails', () => {
+            it('should log error about that', async () => {
+                const userData: GetDataForUserResponse = getGetDataForUserResponse(oxUserId, referrer, address);
+                //mock: get-user-data succeeds
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: userData,
+                });
+                const oxError: OxError = new OxError();
+                //mock: change-user-data fails
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: oxError,
+                });
+                await sut.handleEmailAddressDeletedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could Not Remove EmailAddress from OxAccount, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, error:${oxError.message}`,
+                );
+            });
+        });
+    });
+
+    describe('handleEmailAddressesPurgedEvent', () => {
+        let personId: PersonID;
+        let referrer: PersonReferrer;
+        let oxUserId: OXUserID;
+        let event: EmailAddressesPurgedEvent;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            personId = faker.string.uuid();
+            referrer = faker.internet.userName();
+            oxUserId = faker.string.numeric();
+            event = new EmailAddressesPurgedEvent(personId, referrer, oxUserId);
+        });
+
+        describe('when handler is disabled', () => {
+            it('should log and skip processing when not enabled', async () => {
+                sut.ENABLED = false;
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            });
+        });
+
+        describe('when delete-request to OX fails', () => {
+            it('should log error about failure', async () => {
+                const error: OxError = new OxError();
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: error,
+                });
+
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could Not Delete OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent, error:${error.message}`,
+                );
+            });
+        });
+
+        describe('when delete-request to OX succeeds', () => {
+            it('should log info about success', async () => {
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: personId,
+                        username: referrer,
+                        oxUserId: oxUserId,
+                    }),
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,
                 );
             });
         });

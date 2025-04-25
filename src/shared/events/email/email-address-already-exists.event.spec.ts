@@ -1,4 +1,4 @@
-import { BaseEvent } from './base-event.js';
+import { BaseEvent } from '../base-event.js';
 import { EmailAddressAlreadyExistsEvent } from './email-address-already-exists.event.js';
 
 describe('EmailAddressAlreadyExistsEvent', () => {

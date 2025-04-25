@@ -1,5 +1,5 @@
-import { BaseEvent } from './base-event.js';
-import { EmailAddressID, PersonID, PersonReferrer } from '../types/index.js';
+import { BaseEvent } from '../base-event.js';
+import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-ids.types.js';
 
 /**
  * This event should be triggered when a new email-address is generated for a user and persisted successfully in the database.

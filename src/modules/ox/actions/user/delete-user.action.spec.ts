@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { DeleteUserAction, DeleteUserResponseBody } from './delete-user.action.js';
+import { DeleteUserAction } from './delete-user.action.js';
 
 describe('DeleteUserAction', () => {
     describe('buildRequest', () => {
@@ -25,33 +25,9 @@ describe('DeleteUserAction', () => {
                 password: '',
             });
 
-            const body: DeleteUserResponseBody = {
-                deleteResponse: {
-                    return: {
-                        aliases: [],
-                        email1: 'string',
-                        email2: 'string',
-                        email3: 'string',
-                        primaryEmail: 'string',
-                        mailenabled: true,
-
-                        id: 'id',
-                        given_name: 'firstname',
-                        sur_name: 'lastname',
-                        name: 'username',
-                    },
-                },
-            };
-            expect(action.parseBody(body)).toEqual({
+            expect(action.parseBody()).toEqual({
                 ok: true,
-                value: {
-                    firstname: 'firstname',
-                    lastname: 'lastname',
-                    username: 'username',
-                    id: 'id',
-                    primaryEmail: 'string',
-                    mailenabled: true,
-                },
+                value: undefined,
             });
         });
     });
