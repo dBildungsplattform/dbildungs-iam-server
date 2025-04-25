@@ -191,7 +191,8 @@ kafka_init:
   command: [ "create_topics.sh", "topics.txt" ]
   image:
     repository: docker.io/bitnami/kafka
-    tag: '4.0.0'
+    tag: '3.9.0'
+    # tag: '4.0.0'
     pullPolicy: Always
 
 autoscaling:
