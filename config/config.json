@@ -83,7 +83,7 @@
         "PASSWORD": "password"
     },
     "EMAIL": {
-        "NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS": 180
+        "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 180
     },
     "PRIVACYIDEA": {
         "ENDPOINT": "http://localhost:5000",

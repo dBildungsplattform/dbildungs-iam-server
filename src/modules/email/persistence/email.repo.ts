@@ -318,7 +318,7 @@ export class EmailRepo {
 
     private getDeadlineInDaysForNonEnabledEmailAddresses(): number {
         return (
-            this.emailInstanceConfig.NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS ??
+            this.emailInstanceConfig.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ??
             NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT
         );
     }

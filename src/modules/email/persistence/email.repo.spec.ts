@@ -49,7 +49,7 @@ describe('EmailRepo', () => {
     let loggerMock: DeepMocked<ClassLogger>;
 
     const mockEmailInstanceConfig: EmailInstanceConfig = {
-        NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: 100,
+        NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 100,
     };
 
     beforeAll(async () => {
@@ -659,7 +659,7 @@ describe('EmailRepo', () => {
 
         describe('when emailInstanceConfig does NOT provide NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS', () => {
             it('should use NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT of 180 days', async () => {
-                instanceConfig.NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS = undefined;
+                instanceConfig.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS = undefined;
                 const deleteList: EmailAddress<true>[] = await sut.getByDeletedStatusOrUpdatedAtExceedsDeadline();
 
                 expect(loggerMock.info).toHaveBeenCalledWith(

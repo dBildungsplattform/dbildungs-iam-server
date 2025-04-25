@@ -91,7 +91,7 @@ describe('configloader', () => {
                     USERNAME: 'username',
                 },
                 EMAIL: {
-                    NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: 180,
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
                 },
                 IMPORT: {
                     CSV_FILE_MAX_SIZE_IN_MB: 10,
@@ -250,7 +250,7 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                 },
                 EMAIL: {
-                    NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS: 180,
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
                 },
                 IMPORT: {
                     CSV_FILE_MAX_SIZE_IN_MB: 10,
