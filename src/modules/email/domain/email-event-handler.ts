@@ -18,24 +18,24 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonDomainError } from '../../person/domain/person-domain.error.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
-import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
-import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
+import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
+import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;

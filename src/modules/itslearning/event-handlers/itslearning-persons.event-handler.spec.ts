@@ -6,7 +6,7 @@ import { ConfigTestModule, DoFactory, LoggingTestModule } from '../../../../test
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import {
     PersonenkontextUpdatedData,
