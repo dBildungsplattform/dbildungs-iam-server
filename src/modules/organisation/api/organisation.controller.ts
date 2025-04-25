@@ -62,6 +62,7 @@ import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -447,6 +448,19 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
+        if (
+            !(await permissions.hasSystemrechtAtOrganisation(
+                params.organisationId,
+                RollenSystemRecht.KLASSEN_VERWALTEN,
+            ))
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Not authorized to manage this organisation'),
+                ),
+            );
+        }
+
         if (await this.dBiamPersonenkontextRepo.isOrganisationAlreadyAssigned(params.organisationId)) {
             throw new OrganisationIstBereitsZugewiesenError();
         }
@@ -478,6 +492,19 @@ export class OrganisationController {
         @Body() body: OrganisationByNameBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
+        if (
+            !(await permissions.hasSystemrechtAtOrganisation(
+                params.organisationId,
+                RollenSystemRecht.KLASSEN_VERWALTEN,
+            ))
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Not authorized to manage this organisation'),
+                ),
+            );
+        }
+
         const result: DomainError | Organisation<true> = await this.organisationRepository.updateOrganisationName(
             params.organisationId,
             body.name,
