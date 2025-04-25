@@ -1,5 +1,5 @@
-import { BaseEvent } from './base-event.js';
-import { PersonID } from '../types/index.js';
+import { BaseEvent } from '../base-event.js';
+import { PersonID } from '../../types/aggregate-ids.types.js';
 
 export class LdapPersonEntryChangedEvent extends BaseEvent {
     public constructor(

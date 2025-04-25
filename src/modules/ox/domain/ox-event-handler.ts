@@ -11,7 +11,7 @@ import { CreateUserAction, CreateUserParams, CreateUserResponse } from '../actio
 import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { ExistsUserAction, ExistsUserResponse } from '../actions/user/exists-user.action.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
 import {
@@ -22,9 +22,9 @@ import {
     OXUserID,
     OXUserName,
 } from '../../../shared/types/ox-ids.types.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { GetDataForUserAction, GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
 import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -39,14 +39,14 @@ import {
     ChangeByModuleAccessAction,
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import {
     ListGroupsForUserAction,
     ListGroupsForUserParams,
     ListGroupsForUserResponse,
 } from '../actions/group/list-groups-for-user.action.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
 import {
     RemoveMemberFromGroupAction,
     RemoveMemberFromGroupResponse,
@@ -54,8 +54,13 @@ import {
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
-import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
+import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { DeleteUserAction } from '../actions/user/delete-user.action.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
+import { OxAccountDeletedEvent } from '../../../shared/events/ox/ox-account-deleted.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -353,6 +358,104 @@ export class OxEventHandler {
 
         return this.logger.info(
             `Successfully Changed OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent`,
+        );
+    }
+
+    @EventHandler(EmailAddressDeletedEvent)
+    public async handleEmailAddressDeletedEvent(event: EmailAddressDeletedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+
+        // Check if the functionality is enabled
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        const idParams: UserIdParams = {
+            contextId: this.contextID,
+            userId: event.oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const getDataAction: GetDataForUserAction = new GetDataForUserAction(idParams);
+        const getDataResult: Result<GetDataForUserResponse, DomainError> = await this.oxService.send(getDataAction);
+
+        if (!getDataResult.ok) {
+            return this.logger.error(
+                `Cannot get data for oxUsername:${event.username} from OX, Aborting Email-Address Removal, personId:${event.personId}, referrer:${event.username}`,
+            );
+        }
+        let newAliasesArray: string[] = getDataResult.value.aliases;
+        const aliasesLengthBeforeRemoval: number = newAliasesArray.length;
+        this.logger.info(
+            `Found Current aliases:${JSON.stringify(newAliasesArray)}, personId:${event.personId}, referrer:${event.username}`,
+        );
+
+        newAliasesArray = newAliasesArray.filter((a: string) => a !== event.address);
+        if (aliasesLengthBeforeRemoval !== newAliasesArray.length) {
+            this.logger.info(
+                `Removed From alias:${event.address}, personId:${event.personId}, referrer:${event.username}`,
+            );
+        }
+
+        const changeParams: ChangeUserParams = idParams;
+        changeParams.aliases = newAliasesArray;
+        const action: ChangeUserAction = new ChangeUserAction(changeParams);
+        const result: Result<void, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(
+                `Could Not Remove EmailAddress from OxAccount, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, error:${result.error.message}`,
+            );
+        }
+
+        this.eventService.publish(
+            new OxEmailAddressDeletedEvent(
+                event.personId,
+                event.oxUserId,
+                event.username,
+                event.address,
+                this.contextID,
+                this.contextName,
+            ),
+        );
+        return this.logger.info(
+            `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+    }
+
+    @EventHandler(EmailAddressesPurgedEvent)
+    public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+
+        // Check if the functionality is enabled
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        const params: UserIdParams = {
+            contextId: this.contextID,
+            userId: event.oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: DeleteUserAction = new DeleteUserAction(params);
+
+        const result: Result<void, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(
+                `Could Not Delete OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent, error:${result.error.message}`,
+            );
+        }
+        this.eventService.publish(new OxAccountDeletedEvent(event.personId, event.username, event.oxUserId));
+
+        return this.logger.info(
+            `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,
         );
     }
 

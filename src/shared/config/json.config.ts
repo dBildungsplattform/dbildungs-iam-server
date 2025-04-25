@@ -17,6 +17,7 @@ import { FeatureFlagConfig } from './featureflag.config.js';
 import { VidisConfig } from './vidis.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
 import { KafkaConfig } from './kafka.config.js';
+import { EmailConfig } from './email.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -66,6 +67,10 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => OxConfig)
     public readonly OX!: OxConfig;
+
+    @ValidateNested()
+    @Type(() => EmailConfig)
+    public readonly EMAIL!: EmailConfig;
 
     @ValidateNested()
     @Type(() => ImportConfig)
