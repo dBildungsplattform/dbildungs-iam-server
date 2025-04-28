@@ -58,7 +58,7 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                     }
                 } else {
                     req.logout((err: unknown) => {
-                        this.logger.logUnknownAsError('Logout Failed', err);
+                        this.logger.logUnknownAsError('Logout Failed', err, false);
                     });
                 }
         }
