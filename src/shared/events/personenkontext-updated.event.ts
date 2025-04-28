@@ -19,7 +19,7 @@ function mapPersonToData(person: Person<true>, ldapEntryUUID?: string): Personen
         id: person.id,
         vorname: person.vorname,
         familienname: person.familienname,
-        referrer: person.referrer,
+        username: person.referrer,
         ldapEntryUUID: ldapEntryUUID,
         keycloakUserId: person.keycloakUserId,
         email: person.email,

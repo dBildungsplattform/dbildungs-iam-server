@@ -59,7 +59,7 @@ export class ItsLearningPersonsEventHandler {
                 return this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring event.`);
             }
 
-            if (!event.referrer) {
+            if (!event.username) {
                 return this.logger.error(
                     `[EventID: ${event.eventID}] Person with ID ${event.personId} has no username!`,
                 );
@@ -81,7 +81,7 @@ export class ItsLearningPersonsEventHandler {
                     id: event.personId,
                     firstName: event.vorname,
                     lastName: event.familienname,
-                    username: event.referrer,
+                    username: event.username,
                     institutionRoleType: readPersonResult.institutionRole,
                 },
                 `${event.eventID}-PERSON-RENAMED-UPDATE`,
@@ -130,7 +130,7 @@ export class ItsLearningPersonsEventHandler {
     ): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(
-                `[EventID: ${event.eventID}] Received PersonenkontextUpdatedEvent, ${event.person.id}, ${event.person.referrer}`,
+                `[EventID: ${event.eventID}] Received PersonenkontextUpdatedEvent, ${event.person.id}, ${event.person.username}`,
             );
 
             if (!this.ENABLED) {
@@ -192,7 +192,7 @@ export class ItsLearningPersonsEventHandler {
         currentPersonenkontexte: PersonenkontextUpdatedData[],
         eventID: string,
     ): Promise<void> {
-        if (!person.referrer) {
+        if (!person.username) {
             return this.logger.error(`[EventID: ${eventID}] Person with ID ${person.id} has no username!`);
         }
 
@@ -205,7 +205,7 @@ export class ItsLearningPersonsEventHandler {
                 id: person.id,
                 firstName: person.vorname,
                 lastName: person.familienname,
-                username: person.referrer,
+                username: person.username,
                 institutionRoleType: targetRole,
                 email: person.email,
             },

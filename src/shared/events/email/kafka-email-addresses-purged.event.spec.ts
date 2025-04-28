@@ -7,10 +7,10 @@ import { KafkaEmailAddressesPurgedEvent } from './kafka-email-addresses-purged.e
 describe('KafkaEmailAddressesPurgedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const personId: PersonID = faker.string.uuid();
-        const referrer: PersonReferrer = 'test-referrer';
+        const username: PersonReferrer = 'test-username';
         const oxUserId: OXUserID = faker.string.numeric();
 
-        const event: KafkaEmailAddressesPurgedEvent = new KafkaEmailAddressesPurgedEvent(personId, referrer, oxUserId);
+        const event: KafkaEmailAddressesPurgedEvent = new KafkaEmailAddressesPurgedEvent(personId, username, oxUserId);
 
         expect(event).toBeInstanceOf(KafkaEmailAddressesPurgedEvent);
         expect(event.kafkaKeyPersonId).toBe(personId);

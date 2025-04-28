@@ -77,7 +77,7 @@ export class EmailEventHandler {
     @EventHandler(LdapPersonEntryRenamedEvent)
     public async handleLdapPersonEntryRenamedEvent(event: LdapPersonEntryRenamedEvent): Promise<void> {
         this.logger.info(
-            `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
+            `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${event.oldUsername}`,
         );
         const rollenWithPK: Map<string, RolleWithPK> = await this.getRollenWithPKForPerson(event.personId);
         const rollen: Rolle<true>[] = Array.from(rollenWithPK.values(), (value: RolleWithPK) => {
@@ -88,7 +88,7 @@ export class EmailEventHandler {
             const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(event.personId);
             if (existingEmail) {
                 this.logger.info(
-                    `Existing email found for personId:${event.personId}, address:${existingEmail.address}, referrer:${event.referrer}`,
+                    `Existing email found for personId:${event.personId}, address:${existingEmail.address}, referrer:${event.username}`,
                 );
                 if (existingEmail.enabledOrRequested) {
                     existingEmail.disable();
@@ -96,11 +96,11 @@ export class EmailEventHandler {
                         await this.emailRepo.save(existingEmail);
                     if (persistenceResult instanceof EmailAddress) {
                         this.logger.info(
-                            `DISABLED and saved address:${persistenceResult.address}, personId:${event.personId}, referrer:${event.referrer}`,
+                            `DISABLED and saved address:${persistenceResult.address}, personId:${event.personId}, referrer:${event.username}`,
                         );
                     } else {
                         this.logger.error(
-                            `Could not DISABLE email, personId:${event.personId}, referrer:${event.referrer}, error:${persistenceResult.message}`,
+                            `Could not DISABLE email, personId:${event.personId}, referrer:${event.username}, error:${persistenceResult.message}`,
                         );
                     }
                 }
@@ -124,14 +124,14 @@ export class EmailEventHandler {
             );
             if (existingDisabledEmails.length === 0 || !existingDisabledEmails[0]) {
                 return this.logger.info(
-                    `Renamed person with personId:${event.personId}, referrer:${event.referrer} has no SP with Email and no existing DISABLED addresses, nothing to do`,
+                    `Renamed person with personId:${event.personId}, referrer:${event.username} has no SP with Email and no existing DISABLED addresses, nothing to do`,
                 );
             }
             const mostRecentDisabledEmail: EmailAddress<true> = existingDisabledEmails[0];
             const splitted: string[] = mostRecentDisabledEmail.address.split('@');
             if (!splitted[1]) {
                 return this.logger.error(
-                    `Could not extract domain from existing DISABLED email-address, personId:${event.personId}, referrer:${event.referrer}`,
+                    `Could not extract domain from existing DISABLED email-address, personId:${event.personId}, referrer:${event.username}`,
                 );
             }
             await this.createNewDisabledEmail(event.personId, splitted[1]);
@@ -231,10 +231,10 @@ export class EmailEventHandler {
         event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
     ): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
-        await this.handlePerson(event.person.id, event.person.referrer, event.removedKontexte);
+        await this.handlePerson(event.person.id, event.person.username, event.removedKontexte);
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
@@ -242,24 +242,24 @@ export class EmailEventHandler {
     @EventHandler(PersonDeletedEvent)
     @EnsureRequestContext()
     public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
-        this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}, referrer:${event.referrer}`);
+        this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}, referrer:${event.username}`);
         //Setting person_id to null in Email table is done via deleteRule, not necessary here
 
         if (!event.emailAddress) {
             return this.logger.info(
-                `Cannot deactivate email-address, personId:${event.personId}, referrer:${event.referrer}, person did not have an email-address`,
+                `Cannot deactivate email-address, personId:${event.personId}, referrer:${event.username}, person did not have an email-address`,
             );
         }
         const deactivationResult: EmailAddressEntity | EmailAddressNotFoundError =
             await this.emailRepo.deactivateEmailAddress(event.emailAddress);
         if (deactivationResult instanceof EmailAddressNotFoundError) {
             return this.logger.error(
-                `Deactivation of email-address:${event.emailAddress} failed, personId:${event.personId}, referrer:${event.referrer}`,
+                `Deactivation of email-address:${event.emailAddress} failed, personId:${event.personId}, referrer:${event.username}`,
             );
         }
 
         return this.logger.info(
-            `Successfully deactivated email-address:${event.emailAddress}, personId:${event.personId}, referrer:${event.referrer}`,
+            `Successfully deactivated email-address:${event.emailAddress}, personId:${event.personId}, referrer:${event.username}`,
         );
     }
 

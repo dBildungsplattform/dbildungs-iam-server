@@ -1190,7 +1190,7 @@ describe('OxEventHandler', () => {
                 await sut.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    'Cannot Create OX-change-user-request, Email-Address Is Not Defined',
+                    'Cannot Create OX-delete-user-request, Email-Address Is Not Defined',
                 );
             });
         });
@@ -1204,7 +1204,7 @@ describe('OxEventHandler', () => {
                 await sut.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Cannot Create OX-change-user-request For address:${event.emailAddress} Could Not Be Found`,
+                    `Cannot Create OX-delete-user-request For address:${event.emailAddress} Could Not Be Found`,
                 );
             });
         });
@@ -1223,12 +1223,12 @@ describe('OxEventHandler', () => {
                 await sut.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Cannot Create OX-change-user-request For address:${event.emailAddress}, OxUserId Is Not Defined`,
+                    `Cannot Create OX-delete-user-request For address:${event.emailAddress}, OxUserId Is Not Defined`,
                 );
             });
         });
 
-        describe('when usernameChange-request to OX fails', () => {
+        describe('when delete-request to OX fails', () => {
             it('should log error about failing request', async () => {
                 event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
                 const oxUserId: OXUserID = faker.string.numeric();
@@ -1255,6 +1255,7 @@ describe('OxEventHandler', () => {
                     },
                 });
 
+                // Mock delete request fails
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
                     error: new OxError(),
@@ -1263,12 +1264,12 @@ describe('OxEventHandler', () => {
                 await sut.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Change OxUsername For oxUserId:${oxUserId} After PersonDeletedEvent, error:Unknown OX-error`,
+                    `Could Not Delete OxAccount For oxUserId:${oxUserId}, error:Unknown OX-error`,
                 );
             });
         });
 
-        describe('when usernameChange-request to OX succeeds', () => {
+        describe('when delete-request to OX succeeds', () => {
             it('should log info about success', async () => {
                 event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
                 const oxUserId: OXUserID = faker.string.numeric();
@@ -1295,6 +1296,7 @@ describe('OxEventHandler', () => {
                     },
                 });
 
+                // Mock delete request succeeds
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
                     value: undefined,
@@ -1302,9 +1304,7 @@ describe('OxEventHandler', () => {
 
                 await sut.handlePersonDeletedEvent(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Successfully Changed OxUsername For oxUserId:${oxUserId} After PersonDeletedEvent`,
-                );
+                expect(loggerMock.info).toHaveBeenCalledWith(`Successfully Deleted OxAccount For oxUserId:${oxUserId}`);
             });
         });
     });
@@ -1454,7 +1454,22 @@ describe('OxEventHandler', () => {
 
         describe('when delete-request to OX fails', () => {
             it('should log error about failure', async () => {
+                // Mock group retrieval successfully
+                mockGroupRetrievalRequestSuccessful(oxUserId);
+
+                // Mock removal as member from oxGroups successfully
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        status: {
+                            code: 'success',
+                        },
+                        data: undefined,
+                    },
+                });
+
                 const error: OxError = new OxError();
+                // Mock delete request fails
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
                     error: error,
@@ -1463,13 +1478,28 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressesPurgedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Delete OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent, error:${error.message}`,
+                    `Could Not Delete OxAccount For oxUserId:${event.oxUserId}, error:${error.message}`,
                 );
             });
         });
 
         describe('when delete-request to OX succeeds', () => {
             it('should log info about success', async () => {
+                // Mock group retrieval successfully
+                mockGroupRetrievalRequestSuccessful(oxUserId);
+
+                // Mock removal as member from oxGroups successfully
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: {
+                        status: {
+                            code: 'success',
+                        },
+                        data: undefined,
+                    },
+                });
+
+                // Mock delete request succeeds
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: true,
                     value: undefined,
@@ -1485,7 +1515,7 @@ describe('OxEventHandler', () => {
                     }),
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,
+                    `Successfully Deleted OxAccount For oxUserId:${event.oxUserId}`,
                 );
             });
         });
@@ -1616,7 +1646,7 @@ describe('OxEventHandler', () => {
                     id: personId,
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [

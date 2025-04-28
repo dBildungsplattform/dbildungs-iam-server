@@ -66,9 +66,9 @@ export class LdapEventHandler {
         event: PersonDeletedEvent | KafkaPersonDeletedEvent,
     ): Promise<Result<unknown>> {
         this.logger.info(
-            `Received PersonenkontextDeletedEvent, personId:${event.personId}, referrer:${event.referrer}`,
+            `Received PersonenkontextDeletedEvent, personId:${event.personId}, referrer:${event.username}`,
         );
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.referrer);
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.username);
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         }
@@ -174,13 +174,13 @@ export class LdapEventHandler {
         event: PersonRenamedEvent | KafkaPersonRenamedEvent,
     ): Promise<Result<unknown>> {
         this.logger.info(
-            `Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
+            `Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${event.oldUsername}`,
         );
         const modifyResult: Result<PersonID> = await this.ldapClientService.modifyPersonAttributes(
-            event.oldReferrer,
+            event.oldUsername,
             event.vorname,
             event.familienname,
-            event.referrer,
+            event.username,
         );
         if (!modifyResult.ok) {
             this.logger.error(modifyResult.error.message);
@@ -199,7 +199,7 @@ export class LdapEventHandler {
         event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
     ): Promise<Result<unknown>> {
         this.logger.info(
-            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
 
         const removeResults: PromiseSettledResult<Result<boolean>>[] = await Promise.allSettled(
@@ -222,7 +222,7 @@ export class LdapEventHandler {
                                 this.logger.info(`Call LdapClientService because rollenArt is LEHR, pkId: ${pk.id}`);
                                 return this.ldapClientService
                                     .removePersonFromGroupByUsernameAndKennung(
-                                        event.person.referrer!,
+                                        event.person.username!,
                                         pk.orgaKennung!,
                                         emailDomain.value,
                                     )
@@ -273,7 +273,7 @@ export class LdapEventHandler {
                                             );
                                             if (!person) {
                                                 this.logger.error(
-                                                    `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.referrer}`,
+                                                    `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.username}`,
                                                 );
                                             } else if (creationResult.value.ldapEntryUUID) {
                                                 person.externalIds.LDAP = creationResult.value.ldapEntryUUID;
@@ -324,12 +324,12 @@ export class LdapEventHandler {
         event: EmailAddressGeneratedEvent | KafkaEmailAddressGeneratedEvent,
     ): Promise<Result<unknown>> {
         this.logger.info(
-            `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddress:${event.address}`,
+            `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.username}, emailAddress:${event.address}`,
         );
 
         const result: Result<PersonID> = await this.ldapClientService.changeEmailAddressByPersonId(
             event.personId,
-            event.referrer,
+            event.username,
             event.address,
         );
 
@@ -348,7 +348,7 @@ export class LdapEventHandler {
 
         const result: Result<PersonID> = await this.ldapClientService.changeEmailAddressByPersonId(
             event.personId,
-            event.referrer,
+            event.username,
             event.newAddress,
         );
 

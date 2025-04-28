@@ -3,9 +3,9 @@ import { KafkaPersonDeletedEvent } from './kafka-person-deleted.event.js';
 describe('KafkaPersonDeletedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const personId: string = 'test-person-id';
-        const referrer: string = 'test-referrer';
+        const username: string = 'test-username';
 
-        const event: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent(personId, referrer);
+        const event: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent(personId, username);
 
         expect(event).toBeInstanceOf(KafkaPersonDeletedEvent);
         expect(event.kafkaKeyPersonId).toBe(personId);

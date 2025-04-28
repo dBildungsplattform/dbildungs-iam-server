@@ -7,7 +7,7 @@ export type PersonenkontextEventPersonData = {
     id: PersonID;
     vorname: string;
     familienname: string;
-    referrer?: string;
+    username?: string;
     keycloakUserId?: string;
     email?: string;
     ldapEntryUUID?: string;

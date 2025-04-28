@@ -4,7 +4,7 @@ import { PersonID, PersonReferrer } from '../types/index.js';
 export class PersonDeletedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
-        public readonly referrer: PersonReferrer,
+        public readonly username: PersonReferrer,
         public readonly emailAddress?: string,
     ) {
         super();

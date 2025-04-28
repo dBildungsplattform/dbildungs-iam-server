@@ -8,11 +8,11 @@ describe('KafkaPersonRenamedEvent', () => {
 
         const oldVorname: string = 'Jane';
         const oldFamilienname: string = 'Smith';
-        const oldReferrer: string = 'old-referrer';
+        const oldUsername: string = 'old-username';
 
         const event: KafkaPersonRenamedEvent = KafkaPersonRenamedEvent.fromPerson(
             person,
-            oldReferrer,
+            oldUsername,
             oldVorname,
             oldFamilienname,
         );

@@ -358,7 +358,7 @@ export class PersonRepository {
         const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
             {
                 id: personId,
-                referrer: person.referrer,
+                username: person.referrer,
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,
@@ -370,7 +370,7 @@ export class PersonRepository {
         const kafkaPersonenkontextUpdatedEvent: KafkaPersonenkontextUpdatedEvent = new KafkaPersonenkontextUpdatedEvent(
             {
                 id: personId,
-                referrer: person.referrer,
+                username: person.referrer,
                 familienname: person.familienname,
                 vorname: person.vorname,
                 email: person.email,

@@ -3,7 +3,7 @@ import { KafkaEmailAddressChangedEvent } from './kafka-email-address-changed.eve
 describe('KafkaEmailAddressChangedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const personId: string = 'test-person-id';
-        const referrer: string = 'test-referrer';
+        const username: string = 'test-username';
         const oldEmailAddressId: string = 'old-email-address-id';
         const oldEmailAddress: string = 'old-email-address';
         const newEmailAddressId: string = 'new-email-address-id';
@@ -12,7 +12,7 @@ describe('KafkaEmailAddressChangedEvent', () => {
 
         const event: KafkaEmailAddressChangedEvent = new KafkaEmailAddressChangedEvent(
             personId,
-            referrer,
+            username,
             oldEmailAddressId,
             oldEmailAddress,
             newEmailAddressId,

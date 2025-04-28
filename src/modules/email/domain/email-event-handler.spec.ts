@@ -346,7 +346,7 @@ describe('EmailEventHandler', () => {
                     expect(emailFactoryMock.createNewFromPersonIdAndDomain).toHaveBeenCalledTimes(0);
                     expect(emailRepoMock.save).toHaveBeenCalledTimes(0);
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.referrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.username}, oldReferrer:${fakeOldReferrer}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         `Person Could Not Be Found For personId:${fakePersonId}`,
@@ -381,7 +381,7 @@ describe('EmailEventHandler', () => {
                     expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                     expect(emailFactoryMock.createNewFromPersonIdAndDomain).toHaveBeenCalledTimes(1);
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.referrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.username}, oldReferrer:${fakeOldReferrer}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         `Could not create new and DISABLED email for personId:${fakePersonId}, referrer:${fakeReferrer}, error:${fakeErrorMessage}`,
@@ -418,7 +418,7 @@ describe('EmailEventHandler', () => {
                     expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                     expect(emailFactoryMock.createNewFromPersonIdAndDomain).toHaveBeenCalledTimes(1);
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.referrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.username}, oldReferrer:${fakeOldReferrer}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         `Could not persist email for personId:${fakePersonId}, referrer:${fakeReferrer}, error:EmailAddress could not be created`,
@@ -450,7 +450,7 @@ describe('EmailEventHandler', () => {
             fakeEmailAddressString = faker.internet.email();
 
             event = createMock<PersonenkontextUpdatedEvent>({
-                person: { id: fakePersonId, referrer: fakeReferrer },
+                person: { id: fakePersonId, username: fakeReferrer },
                 removedKontexte: [],
                 newKontexte: [],
             });
@@ -1057,10 +1057,10 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.referrer}`,
+                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.username}`,
                     );
                 });
             });
@@ -1088,10 +1088,10 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.referrer}`,
+                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.username}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         `Could not create change-email for personId:${event.personId}, referrer:${fakeReferrer}, error:EmailAddress could not be created`,
@@ -1119,10 +1119,10 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.referrer}`,
+                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.username}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         `Could not persist change-email for personId:${event.personId}, referrer:${fakeReferrer}, error:EmailAddress could not be created`,
@@ -1146,7 +1146,7 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
                     );
                 });
             });
@@ -1166,10 +1166,10 @@ describe('EmailEventHandler', () => {
                         expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                         expect(emailRepoMock.save).toHaveBeenCalledTimes(0);
                         expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${fakeOldReferrer}`,
+                            `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
                         );
                         expect(loggerMock.info).toHaveBeenLastCalledWith(
-                            `Renamed person with personId:${event.personId}, referrer:${event.referrer} has no SP with Email and no existing DISABLED addresses, nothing to do`,
+                            `Renamed person with personId:${event.personId}, referrer:${event.username} has no SP with Email and no existing DISABLED addresses, nothing to do`,
                         );
                     });
                 });
@@ -1196,10 +1196,10 @@ describe('EmailEventHandler', () => {
                             expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                             expect(emailRepoMock.save).toHaveBeenCalledTimes(0);
                             expect(loggerMock.info).toHaveBeenCalledWith(
-                                `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${fakeOldReferrer}`,
+                                `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
                             );
                             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                                `Could not extract domain from existing DISABLED email-address, personId:${event.personId}, referrer:${event.referrer}`,
+                                `Could not extract domain from existing DISABLED email-address, personId:${event.personId}, referrer:${event.username}`,
                             );
                         });
                     });
@@ -1233,10 +1233,10 @@ describe('EmailEventHandler', () => {
                             expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                             expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
                             expect(loggerMock.info).toHaveBeenCalledWith(
-                                `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${fakeOldReferrer}`,
+                                `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
                             );
                             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                                `Successfully persisted new email with DISABLED status for address:${fakeNewEmailAddress}, personId:${event.personId}, referrer:${event.referrer}`,
+                                `Successfully persisted new email with DISABLED status for address:${fakeNewEmailAddress}, personId:${event.personId}, referrer:${event.username}`,
                             );
                         });
                     });
@@ -1259,10 +1259,10 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
                     );
                     expect(loggerMock.error).toHaveBeenCalledWith(
-                        `Could not DISABLE email, personId:${event.personId}, referrer:${event.referrer}, error:requested EmailAddress with the address:${fakeEmailAddress} was not found`,
+                        `Could not DISABLE email, personId:${event.personId}, referrer:${event.username}, error:requested EmailAddress with the address:${fakeEmailAddress} was not found`,
                     );
                 });
             });
@@ -1287,7 +1287,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Successfully deactivated email-address:${emailAddress}, personId:${event.personId}, referrer:${event.referrer}`,
+                    `Successfully deactivated email-address:${emailAddress}, personId:${event.personId}, referrer:${event.username}`,
                 );
             });
         });
@@ -1298,7 +1298,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Cannot deactivate email-address, personId:${event.personId}, referrer:${event.referrer}, person did not have an email-address`,
+                    `Cannot deactivate email-address, personId:${event.personId}, referrer:${event.username}, person did not have an email-address`,
                 );
             });
         });
@@ -1309,7 +1309,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Deactivation of email-address:${event.emailAddress} failed, personId:${event.personId}, referrer:${event.referrer}`,
+                    `Deactivation of email-address:${event.emailAddress} failed, personId:${event.personId}, referrer:${event.username}`,
                 );
             });
         });

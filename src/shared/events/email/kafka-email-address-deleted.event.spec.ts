@@ -8,7 +8,7 @@ import { OXUserID } from '../../types/ox-ids.types.js';
 describe('KafkaEmailAddressDeletedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const personId: PersonID = faker.string.uuid();
-        const referrer: PersonReferrer = 'test-referrer';
+        const username: PersonReferrer = 'test-username';
         const oxUserId: OXUserID = faker.string.numeric();
         const emailAddressId: EmailAddressID = faker.string.uuid();
         const emailStatus: EmailAddressStatus = EmailAddressStatus.ENABLED;
@@ -16,7 +16,7 @@ describe('KafkaEmailAddressDeletedEvent', () => {
 
         const event: KafkaEmailAddressDeletedEvent = new KafkaEmailAddressDeletedEvent(
             personId,
-            referrer,
+            username,
             oxUserId,
             emailAddressId,
             emailStatus,

@@ -404,7 +404,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -444,7 +444,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -486,7 +486,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -526,7 +526,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -565,7 +565,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -608,7 +608,7 @@ describe('LDAP Event Handler', () => {
                         id: faker.string.uuid(),
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
-                        referrer: faker.internet.userName(),
+                        username: faker.internet.userName(),
                     },
                     [
                         {
@@ -640,7 +640,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -674,7 +674,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -702,7 +702,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -731,7 +731,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -774,7 +774,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -816,7 +816,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -857,7 +857,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -899,7 +899,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -948,7 +948,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -990,7 +990,7 @@ describe('LDAP Event Handler', () => {
 
             expect(personRepositoryMock.save).toHaveBeenCalledTimes(0);
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.referrer}`,
+                `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.username}`,
             );
         });
     });
@@ -1009,7 +1009,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handleEmailAddressGeneratedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddress:${event.address}`,
+                `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.username}, emailAddress:${event.address}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });

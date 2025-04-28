@@ -161,14 +161,14 @@ export class OxEventHandler {
         event: EmailAddressChangedEvent | KafkaEmailAddressChangedEvent,
     ): Promise<void> {
         this.logger.info(
-            `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
+            `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.username}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
         );
 
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.changeOxUser(event.personId, event.referrer, generateOxUserChangedEvent);
+        await this.changeOxUser(event.personId, event.username, generateOxUserChangedEvent);
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
@@ -178,27 +178,27 @@ export class OxEventHandler {
         event: EmailAddressGeneratedEvent | KafkaEmailAddressGeneratedEvent,
     ): Promise<void> {
         this.logger.info(
-            `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
+            `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.username}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
         );
 
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.createOxUser(event.personId, event.referrer, event.orgaKennung);
+        await this.createOxUser(event.personId, event.username, event.orgaKennung);
     }
 
     @EventHandler(DisabledEmailAddressGeneratedEvent)
     public async handleDisabledEmailAddressGeneratedEvent(event: DisabledEmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressGeneratedAndDisabledEvent, personId:${event.personId}, referrer:${event.referrer}, address:${event.address}, domain:${event.domain}`,
+            `Received EmailAddressGeneratedAndDisabledEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}, domain:${event.domain}`,
         );
 
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.changeOxUser(event.personId, event.referrer, generateDisabledOxUserChangedEvent);
+        await this.changeOxUser(event.personId, event.username, generateDisabledOxUserChangedEvent);
     }
 
     @EventHandler(EmailAddressAlreadyExistsEvent)
@@ -297,7 +297,7 @@ export class OxEventHandler {
         event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
     ): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
@@ -342,21 +342,21 @@ export class OxEventHandler {
         }
 
         if (!event.emailAddress) {
-            return this.logger.error('Cannot Create OX-change-user-request, Email-Address Is Not Defined');
+            return this.logger.error('Cannot Create OX-delete-user-request, Email-Address Is Not Defined');
         }
 
         const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(event.emailAddress);
         if (!emailAddress) {
             return this.logger.error(
-                `Cannot Create OX-change-user-request For address:${event.emailAddress} Could Not Be Found`,
+                `Cannot Create OX-delete-user-request For address:${event.emailAddress} Could Not Be Found`,
             );
         }
         if (!emailAddress.oxUserID) {
             return this.logger.error(
-                `Cannot Create OX-change-user-request For address:${event.emailAddress}, OxUserId Is Not Defined`,
+                `Cannot Create OX-delete-user-request For address:${event.emailAddress}, OxUserId Is Not Defined`,
             );
         }
-
+        /*
         //remove oxUser as member from all its oxGroups
         //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
         await this.removeOxUserFromAllItsOxGroups(emailAddress.oxUserID, event.personId);
@@ -382,6 +382,12 @@ export class OxEventHandler {
 
         return this.logger.info(
             `Successfully Changed OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent`,
+        );*/
+
+        return this.removeOxUserFromAllItsGroupsAndDeleteOxAccount(
+            event.personId,
+            event.username,
+            emailAddress.oxUserID,
         );
     }
 
@@ -460,7 +466,7 @@ export class OxEventHandler {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        const params: UserIdParams = {
+        /*const params: UserIdParams = {
             contextId: this.contextID,
             userId: event.oxUserId,
             login: this.authUser,
@@ -480,7 +486,43 @@ export class OxEventHandler {
 
         return this.logger.info(
             `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,
+        );*/
+
+        return this.removeOxUserFromAllItsGroupsAndDeleteOxAccount(event.personId, event.username, event.oxUserId);
+    }
+
+    private async removeOxUserFromAllItsGroupsAndDeleteOxAccount(
+        personId: PersonID,
+        username: PersonReferrer,
+        oxUserId: OXUserID,
+    ): Promise<void> {
+        this.logger.info(
+            `Remove OxUser from all its groups and delete OxAccount, personId:${personId}, referrer:${username}, oxUserId:${oxUserId}`,
         );
+
+        //remove oxUser as member from all its oxGroups
+        //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
+        await this.removeOxUserFromAllItsOxGroups(oxUserId, personId);
+
+        const params: UserIdParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: DeleteUserAction = new DeleteUserAction(params);
+
+        const result: Result<void, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(
+                `Could Not Delete OxAccount For oxUserId:${oxUserId}, error:${result.error.message}`,
+            );
+        }
+        this.eventService.publish(new OxAccountDeletedEvent(personId, username, oxUserId));
+
+        return this.logger.info(`Successfully Deleted OxAccount For oxUserId:${oxUserId}`);
     }
 
     private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID): Promise<void> {
