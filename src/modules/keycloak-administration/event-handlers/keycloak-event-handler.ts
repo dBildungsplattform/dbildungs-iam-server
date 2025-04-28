@@ -13,6 +13,8 @@ import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OXContextName } from '../../../shared/types/ox-ids.types.js';
+import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
@@ -27,14 +29,20 @@ export class KeycloakEventHandler {
         private readonly kcUserService: KeycloakUserService,
         private readonly eventService: EventService,
         configService: ConfigService<ServerConfig>,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
         this.contextName = oxConfig.CONTEXT_NAME;
     }
 
     @EventHandler(PersonenkontextCreatedMigrationEvent)
+    @KafkaEventHandler(KafkaPersonCreatedEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent,
+        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<void> {
         this.logger.info(
             `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
