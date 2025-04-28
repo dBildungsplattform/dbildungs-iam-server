@@ -199,7 +199,7 @@ describe('sessionAccessTokenMiddleware', () => {
                     createMock(),
                     jest.fn(),
                 );
-                expect(logger.error).toHaveBeenCalled();
+                expect(logger.logUnknownAsError).toHaveBeenCalled();
             });
         });
 
