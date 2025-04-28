@@ -374,9 +374,9 @@ describe('LDAP Event Handler', () => {
     describe('handlePersonRenamedEvent', () => {
         describe('when calling LdapClientService.modifyPersonAttributes is successful', () => {
             it('should NOT log errors', async () => {
-                const modifyResult: Result<PersonID> = {
+                const modifyResult: Result<PersonReferrer> = {
                     ok: true,
-                    value: faker.string.uuid(),
+                    value: faker.internet.userName(),
                 };
                 ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
                 await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());

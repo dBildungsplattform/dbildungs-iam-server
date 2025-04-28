@@ -6,8 +6,7 @@ import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
+import { OrganisationID, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
@@ -33,6 +32,7 @@ import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-e
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 import { LdapEntryDeletedEvent } from '../../../shared/events/ldap/ldap-entry-deleted.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -56,6 +56,7 @@ export class LdapEventHandler {
                 ok: true,
                 value: emailDomain,
             };
+
         return { ok: false, error: new LdapEmailDomainError() };
     }
 
@@ -72,6 +73,7 @@ export class LdapEventHandler {
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         }
+
         return deletionResult;
     }
 
@@ -163,6 +165,7 @@ export class LdapEventHandler {
                     `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Do Nothing because Rollenart is Not LEHR`,
                 );
             }
+
             return { ok: true, value: null };
         }
     }
@@ -176,7 +179,7 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
         );
-        const modifyResult: Result<PersonID> = await this.ldapClientService.modifyPersonAttributes(
+        const modifyResult: Result<PersonReferrer> = await this.ldapClientService.modifyPersonAttributes(
             event.oldReferrer,
             event.vorname,
             event.familienname,
@@ -189,6 +192,7 @@ export class LdapEventHandler {
 
         this.logger.info(`Successfully modified person attributes in LDAP for personId:${event.personId}`);
         this.eventService.publish(LdapPersonEntryRenamedEvent.fromPersonRenamedEvent(event));
+
         return modifyResult;
     }
 

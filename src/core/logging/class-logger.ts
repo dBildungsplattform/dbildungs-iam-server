@@ -59,8 +59,8 @@ export class ClassLogger extends Logger {
      * @param message
      * @param error should implement Error interface
      */
-    public logUnknownAsError(message: string, error: unknown): void {
-        if (this.instanceOfError(error)) {
+    public logUnknownAsError(message: string, error: unknown, warnWhenErrorIsUndefined: boolean = true): void {
+        if (this.instanceOfError(error, warnWhenErrorIsUndefined)) {
             this.error(message + ' - ' + error.message, error.stack);
         } else {
             this.error(message + ' - ' + inspect(error, false, 2, false), undefined);
@@ -75,8 +75,8 @@ export class ClassLogger extends Logger {
      * @private only used in the ClassLogger
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private instanceOfError(object: any): object is Error {
-        if (object === undefined) {
+    private instanceOfError(object: any, warnWhenErrorIsUndefined: boolean): object is Error {
+        if (object === undefined && warnWhenErrorIsUndefined) {
             const error: Error = new Error('Parameter was UNDEFINED when calling instanceOfError');
             this.warning(error.message, error.stack);
 
