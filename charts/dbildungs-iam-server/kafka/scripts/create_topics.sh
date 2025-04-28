@@ -5,6 +5,8 @@
 #
 # Environment variables:
 #   KAFKA_URL                - (required) The server to send the requests to
+#   KAFKA_USERNAME           - (required) The username to authenicate with
+#   KAFKA_PASSWORD           - (required) The password to authenicate with
 #   KAFKA_TOPIC_PREFIX       - (optional) A prefix that will be prepended to every created topic
 #   KAFKA_TOPIC_PARTITIONS   - (optional) The number of partitions to use
 #   KAFKA_REPLICATION_FACTOR - (optional) The replication factor to use
@@ -27,7 +29,7 @@ if [ -z "${KAFKA_TOPIC_PREFIX}" ]; then
     echo "Environment-variable KAFKA_TOPIC_PREFIX was not set, creating topics without a prefix."
 fi
 
-# Check for KAFKA_TOPIC_PREFIX (optional)
+# Check for KAFKA_TOPIC_PARTITIONS (optional)
 # Set to "1" as a default
 if [ -z "${KAFKA_TOPIC_PARTITIONS}" ]; then
     KAFKA_TOPIC_PARTITIONS="1"
@@ -42,7 +44,19 @@ else
     REPLICATION_FLAG="--replication-factor ${KAFKA_REPLICATION_FACTOR}"
 fi
 
-# Check for KAFKA_TOPIC_PREFIX (optional)
+# When KAFKA_USERNAME and KAFKA_PASSWORD are set create JAAS file
+if [ ! -z "${KAFKA_USERNAME}" ] && [ ! -z "${KAFKA_PASSWORD}" ]; then
+    KAFKA_JAAS_FILE="/tmp/client.info"
+    cat <<EOF > ${KAFKA_JAAS_FILE}
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_USERNAME}" password="${KAFKA_PASSWORD}";
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=PLAIN
+EOF
+else 
+    echo "The envs KAFKA_USERNAME and KAFKA_PASSWORD not set. Authentication may fail."
+fi
+
+# Check for KAFKA_JAAS_FILE
 if [ -z "${KAFKA_JAAS_FILE}" ]; then
     echo "Environment-variable KAFKA_JAAS_FILE was not set, connecting without authentication."
 else
@@ -64,6 +78,6 @@ echo "Creating all topics..."
 
 echo "Created all topics!"
 
-# Ouput all topics and metadata
+# Output all topics and metadata
 echo "Running kafka-topics.sh --describe"
 kafka-topics.sh --bootstrap-server "${KAFKA_URL}" ${CONFIG_FLAG} --describe

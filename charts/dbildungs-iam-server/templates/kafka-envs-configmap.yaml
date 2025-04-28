@@ -6,6 +6,7 @@ metadata:
   namespace: {{ template "common.names.namespace" . }}
   labels: {{- include "common.labels" . | nindent 4 }}
 data:
-  KAFKA_URL: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
-  KAFKA_TOPIC_PREFIX: "prefix-"
-  KAFKA_JAAS_FILE: "/init/client.config"
+  KAFKA_URL: "{{ $.Values.kafka.url }}"
+  # this should be taken fron branch name
+  # KAFKA_TOPIC_PREFIX: "prefix-"
+  KAFKA_TOPIC_PREFIX: "{{ $.Values.kafka.prefix }}"
