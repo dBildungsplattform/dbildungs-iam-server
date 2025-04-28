@@ -34,9 +34,6 @@ import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 import { EmailModule } from '../email.module.js';
 import { EmailInstanceConfig } from '../email-instance-config.js';
-import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
-import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -64,51 +61,14 @@ describe('EmailRepo', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 EmailModule,
             ],
-            providers: [
-                UsernameGeneratorService,
-                OxUserBlacklistRepo,
-                EmailRepo,
-                EmailFactory,
-                PersonFactory,
-                PersonRepository,
-                OrganisationRepository,
-                {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
-                },
-                {
-                    provide: EventRoutingLegacyKafkaService,
-                    useValue: createMock<EventRoutingLegacyKafkaService>(),
-                },
-                {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
-                },
-                {
-                    provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.uuid(),
-                            }),
-                        setPassword: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.alphanumeric(16),
-                            }),
-                    }),
-                },
-                {
-                    provide: UserLockRepository,
-                    useValue: createMock<UserLockRepository>(),
-                },
-            ],
+            providers: [],
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .overrideProvider(EventService)
             .useValue(createMock<EventService>())
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
             .overrideProvider(EmailInstanceConfig)
             .useValue(mockEmailInstanceConfig)
             .overrideProvider(KeycloakUserService)
