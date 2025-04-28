@@ -28,6 +28,7 @@ import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import assert from 'assert';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
@@ -66,6 +67,8 @@ describe('EmailRepo', () => {
             .useValue(createMock<ClassLogger>())
             .overrideProvider(EventService)
             .useValue(createMock<EventService>())
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
             .overrideProvider(EmailInstanceConfig)
             .useValue(mockEmailInstanceConfig)
             .overrideProvider(KeycloakUserService)

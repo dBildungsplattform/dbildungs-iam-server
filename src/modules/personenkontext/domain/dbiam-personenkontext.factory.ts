@@ -5,18 +5,18 @@ import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
 import { PersonID } from '../../../shared/types/index.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
-import { EventService } from '../../../core/eventbus/index.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 
 @Injectable()
 export class DbiamPersonenkontextFactory {
     public constructor(
         private personenkontextFactory: PersonenkontextFactory,
-        private readonly eventService: EventService,
+        private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
         private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
@@ -34,7 +34,7 @@ export class DbiamPersonenkontextFactory {
         personalnummer?: string,
     ): PersonenkontexteUpdate {
         return PersonenkontexteUpdate.createNew(
-            this.eventService,
+            this.eventRoutingLegacyKafkaService,
             this.logger,
             this.dBiamPersonenkontextRepo,
             this.dBiamPersonenkontextRepoInternal,
