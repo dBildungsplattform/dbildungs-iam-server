@@ -191,6 +191,7 @@ backend:
 kafka:
   url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
   prefix: "{{ .Release.Namespace  }}-"
+  enabled: false
   init:
     enabled: true
     command: [ "create_topics.sh", "topics.txt" ]
@@ -262,6 +263,3 @@ import:
 
 featureFlags:
   befristungBearbeiten: true
-
-kafka:
-  enabled: false
