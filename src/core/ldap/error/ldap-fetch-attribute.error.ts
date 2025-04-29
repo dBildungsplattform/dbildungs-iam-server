@@ -9,7 +9,7 @@ export class LdapFetchAttributeError extends DomainError {
         details?: unknown[] | Record<string, unknown>,
     ) {
         super(
-            `Error while fetching attribute:${attributeName}, referrer:${referrer}, personId:${personId}`,
+            `Error while fetching attribute:${attributeName}, username:${referrer}, personId:${personId}`,
             'LDAP_FETCH_ATTRIBUTE_ERROR',
             details,
         );

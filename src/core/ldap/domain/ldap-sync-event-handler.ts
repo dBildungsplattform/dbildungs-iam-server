@@ -29,7 +29,7 @@ export type LdapSyncData = {
     disabledEmailAddresses: string[];
 
     personId: PersonID;
-    referrer: string;
+    username: string;
     groupsToAdd: string[];
     groupsToRemove: string[];
 };
@@ -164,7 +164,7 @@ export class LdapSyncEventHandler {
             schulenDstNrList.push(schule.kennung);
         }
         this.logger.info(
-            `Found orgaKennungen:${JSON.stringify(schulenDstNrList)}, for personId:${personId}, referrer:${person.referrer}`,
+            `Found orgaKennungen:${JSON.stringify(schulenDstNrList)}, for personId:${personId}, username:${person.referrer}`,
         );
 
         // Get current attributes for person from LDAP
@@ -201,7 +201,7 @@ export class LdapSyncEventHandler {
             );
         }
         this.logger.info(
-            `Found groups in LDAP:${JSON.stringify(groups.value)}, for personId:${personId}, referrer:${person.referrer}`,
+            `Found groups in LDAP:${JSON.stringify(groups.value)}, for personId:${personId}, username:${person.referrer}`,
         );
 
         const groupsToAdd: string[] = this.createGroupAdditionList(schulenDstNrList, groups.value);
@@ -209,7 +209,7 @@ export class LdapSyncEventHandler {
 
         const syncData: LdapSyncData = {
             personId: person.id,
-            referrer: person.referrer,
+            username: person.referrer,
             givenName: givenName,
             surName: surName,
             cn: cn,
@@ -224,47 +224,47 @@ export class LdapSyncEventHandler {
 
     private async syncDataToLdap(ldapSyncData: LdapSyncData, personAttributes: LdapPersonAttributes): Promise<void> {
         this.logger.info(
-            `Syncing data to LDAP for personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+            `Syncing data to LDAP for personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
         );
 
         // Check and sync EmailAddress
         const currentMailPrimaryAddress: string | undefined = personAttributes.mailPrimaryAddress;
         if (ldapSyncData.enabledEmailAddress !== currentMailPrimaryAddress) {
             this.logger.warning(
-                `Mismatch mailPrimaryAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailPrimaryAddress}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                `Mismatch mailPrimaryAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailPrimaryAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
             );
             if (!currentMailPrimaryAddress) {
                 this.logger.warning(
-                    `MailPrimaryAddress undefined for personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                    `MailPrimaryAddress undefined for personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                 );
                 await this.ldapClientService.changeEmailAddressByPersonId(
                     ldapSyncData.personId,
-                    ldapSyncData.referrer,
+                    ldapSyncData.username,
                     ldapSyncData.enabledEmailAddress,
                 );
             } else {
                 if (this.isAddressInDisabledAddresses(currentMailPrimaryAddress, ldapSyncData.disabledEmailAddresses)) {
                     this.logger.info(
-                        `Found ${currentMailPrimaryAddress} in DISABLED addresses, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                        `Found ${currentMailPrimaryAddress} in DISABLED addresses, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                     );
                     this.logger.info(
-                        `Overwriting LDAP:${currentMailPrimaryAddress} with person:${ldapSyncData.enabledEmailAddress}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                        `Overwriting LDAP:${currentMailPrimaryAddress} with person:${ldapSyncData.enabledEmailAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                     );
                     await this.ldapClientService.changeEmailAddressByPersonId(
                         ldapSyncData.personId,
-                        ldapSyncData.referrer,
+                        ldapSyncData.username,
                         ldapSyncData.enabledEmailAddress,
                     );
                     if (personAttributes.mailAlternativeAddress) {
                         await this.createDisabledEmailAddress(
                             ldapSyncData.personId,
-                            ldapSyncData.referrer,
+                            ldapSyncData.username,
                             personAttributes.mailAlternativeAddress,
                         );
                     }
                 } else {
                     return this.logger.crit(
-                        `COULD NOT find ${currentMailPrimaryAddress} in DISABLED addresses, Overwriting ABORTED, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                        `COULD NOT find ${currentMailPrimaryAddress} in DISABLED addresses, Overwriting ABORTED, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                     );
                 }
             }
@@ -277,12 +277,12 @@ export class LdapSyncEventHandler {
         if (ldapSyncData.disabledEmailAddresses[0]) {
             if (ldapSyncData.disabledEmailAddresses[0] !== currentMailAlternativeAddress) {
                 this.logger.info(
-                    `Mismatch mailAlternativeAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailAlternativeAddress}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                    `Mismatch mailAlternativeAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailAlternativeAddress}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
                 );
                 if (ldapSyncData.disabledEmailAddresses[0]) {
                     await this.ldapClientService.setMailAlternativeAddress(
                         ldapSyncData.personId,
-                        ldapSyncData.referrer,
+                        ldapSyncData.username,
                         ldapSyncData.disabledEmailAddresses[0],
                     );
                 }
@@ -292,22 +292,22 @@ export class LdapSyncEventHandler {
         // Check and sync PersonAttributes
         if (ldapSyncData.givenName !== personAttributes.givenName) {
             this.logger.warning(
-                `Mismatch for givenName, person:${ldapSyncData.givenName}, LDAP:${personAttributes.givenName}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                `Mismatch for givenName, person:${ldapSyncData.givenName}, LDAP:${personAttributes.givenName}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
             );
         }
         if (ldapSyncData.surName !== personAttributes.surName) {
             this.logger.warning(
-                `Mismatch for surName, person:${ldapSyncData.surName}, LDAP:${personAttributes.surName}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                `Mismatch for surName, person:${ldapSyncData.surName}, LDAP:${personAttributes.surName}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
             );
         }
         if (ldapSyncData.cn !== personAttributes.cn) {
             this.logger.warning(
-                `Mismatch for cn, person:${ldapSyncData.cn}, LDAP:${personAttributes.cn}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                `Mismatch for cn, person:${ldapSyncData.cn}, LDAP:${personAttributes.cn}, personId:${ldapSyncData.personId}, username:${ldapSyncData.username}`,
             );
         }
 
         await this.ldapClientService.modifyPersonAttributes(
-            ldapSyncData.referrer,
+            ldapSyncData.username,
             ldapSyncData.givenName,
             ldapSyncData.surName,
             ldapSyncData.cn,
@@ -315,10 +315,10 @@ export class LdapSyncEventHandler {
 
         await Promise.all([
             ldapSyncData.groupsToAdd.map((kennung: string) =>
-                this.ldapClientService.addPersonToGroup(ldapSyncData.referrer, kennung, personAttributes.dn),
+                this.ldapClientService.addPersonToGroup(ldapSyncData.username, kennung, personAttributes.dn),
             ),
             ldapSyncData.groupsToRemove.map((kennung: string) =>
-                this.ldapClientService.removePersonFromGroup(ldapSyncData.referrer, kennung, personAttributes.dn),
+                this.ldapClientService.removePersonFromGroup(ldapSyncData.username, kennung, personAttributes.dn),
             ),
         ]);
     }
@@ -382,7 +382,7 @@ export class LdapSyncEventHandler {
 
     private async createDisabledEmailAddress(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         address: string,
     ): Promise<void> {
         const email: EmailAddress<false> = EmailAddress.createNew(
@@ -395,12 +395,12 @@ export class LdapSyncEventHandler {
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
         if (persistenceResult instanceof EmailAddress) {
             this.logger.info(
-                `Successfully persisted new DISABLED EmailAddress for address:${persistenceResult.address}, personId:${personId}, referrer:${referrer}`,
+                `Successfully persisted new DISABLED EmailAddress for address:${persistenceResult.address}, personId:${personId}, username:${username}`,
             );
             //* NO EVENT IS PUBLISHED HERE -> NO COMMUNICATION TO OX */
         } else {
             this.logger.error(
-                `Could not persist email for personId:${personId}, referrer:${referrer}, error:${persistenceResult.message}`,
+                `Could not persist email for personId:${personId}, username:${username}, error:${persistenceResult.message}`,
             );
         }
     }

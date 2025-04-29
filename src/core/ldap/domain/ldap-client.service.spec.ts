@@ -46,7 +46,6 @@ describe('LDAP Client Service', () => {
     let instanceConfig: LdapInstanceConfig;
 
     let person: Person<true>;
-    let personWithoutReferrer: Person<true>;
     const mockLdapInstanceConfig: LdapInstanceConfig = {
         BASE_DN: 'dc=example,dc=com',
         OEFFENTLICHE_SCHULEN_DOMAIN: 'schule-sh.de',
@@ -86,14 +85,14 @@ describe('LDAP Client Service', () => {
         id?: string,
         vorname?: string,
         familienname?: string,
-        referrer?: string,
+        username?: string,
         ldapEntryUUID?: string,
     ): PersonData {
         return {
             id: id ?? faker.string.uuid(),
             vorname: vorname ?? faker.person.firstName(),
             familienname: familienname ?? faker.person.lastName(),
-            referrer: referrer ?? faker.internet.userName(),
+            username: username ?? faker.internet.userName(),
             ldapEntryUUID: ldapEntryUUID ?? faker.string.uuid(),
         };
     }
@@ -190,18 +189,7 @@ describe('LDAP Client Service', () => {
             '1',
             faker.lorem.word(),
             undefined,
-            faker.string.uuid(),
-        );
-        personWithoutReferrer = Person.construct(
-            faker.string.uuid(),
-            faker.date.past(),
-            faker.date.recent(),
-            faker.person.lastName(),
-            faker.person.firstName(),
-            '1',
-            faker.lorem.word(),
-            undefined,
-            undefined,
+            faker.internet.userName(),
         );
 
         //currently only used to wait for the LDAP container, because setupDatabase() is blocking
@@ -1098,7 +1086,7 @@ describe('LDAP Client Service', () => {
 
                 const testLehrer: PersonData = getPersonData();
                 const lehrerUid: string =
-                    'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
+                    'uid=' + testLehrer.username + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeEmailDomain,
@@ -1134,7 +1122,7 @@ describe('LDAP Client Service', () => {
 
                 const testLehrer: PersonData = getPersonData();
                 const lehrerUid: string =
-                    'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
+                    'uid=' + testLehrer.username + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeEmailDomain,
@@ -1163,7 +1151,7 @@ describe('LDAP Client Service', () => {
                 });
                 const testLehrer: PersonData = getPersonData();
                 const lehrerUid: string =
-                    'uid=' + testLehrer.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
+                    'uid=' + testLehrer.username + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeEmailDomain,
@@ -1204,7 +1192,7 @@ describe('LDAP Client Service', () => {
                 const testLehrer: PersonData = getPersonData();
                 const fakeErsatzSchuleAddressDomain: string = 'ersatzschule-sh.de';
                 const lehrerUid: string =
-                    'uid=' + testLehrer.referrer + ',ou=ersatzSchulen,' + mockLdapInstanceConfig.BASE_DN;
+                    'uid=' + testLehrer.username + ',ou=ersatzSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
                     testLehrer,
                     fakeErsatzSchuleAddressDomain,
@@ -1217,8 +1205,9 @@ describe('LDAP Client Service', () => {
             });
 
             it('when lehrer already exists', async () => {
+                const personData: PersonData = getPersonData();
                 const lehrerUid: string =
-                    'uid=' + person.referrer + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
+                    'uid=' + personData.username + ',ou=oeffentlicheSchulen,' + mockLdapInstanceConfig.BASE_DN;
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
@@ -1235,7 +1224,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
-                    person,
+                    personData,
                     fakeEmailDomain,
                     fakeOrgaKennung,
                 );
@@ -1244,7 +1233,7 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeTruthy();
             });
 
-            it('when called with person without referrer should return error result', async () => {
+            it('when called with person without username should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValue();
                     clientMock.add.mockResolvedValueOnce();
@@ -1252,8 +1241,10 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
+                const personData: PersonData = getPersonData();
+                personData.username = undefined;
                 const result: Result<PersonData> = await ldapClientService.createLehrer(
-                    personWithoutReferrer,
+                    personData,
                     fakeEmailDomain,
                     fakeOrgaKennung,
                 );
@@ -1304,7 +1295,7 @@ describe('LDAP Client Service', () => {
 
                 expect(result.ok).toBeFalsy();
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `Could not get EntryUUID for referrer:${testLehrer.referrer}, personId:${testLehrer.id}`,
+                    `Could not get EntryUUID for referrer:${testLehrer.username}, personId:${testLehrer.id}`,
                 );
             });
 
@@ -1342,7 +1333,7 @@ describe('LDAP Client Service', () => {
                         id: faker.string.uuid(),
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
-                        referrer,
+                        username: referrer,
                     },
                     'schule-sh.de',
                     schulId,
@@ -1425,15 +1416,17 @@ describe('LDAP Client Service', () => {
                 expect(result.ok).toBeFalsy();
             });
 
-            it('when called with person without referrer should return error result', async () => {
+            it('when called with person without username should return error result', async () => {
                 ldapClientMock.getClient.mockImplementation(() => {
                     clientMock.bind.mockResolvedValueOnce();
                     clientMock.add.mockResolvedValueOnce();
 
                     return clientMock;
                 });
+                const personData: PersonData = getPersonData();
+                personData.username = undefined;
                 const result: Result<PersonData> = await ldapClientService.deleteLehrer(
-                    personWithoutReferrer,
+                    personData,
                     fakeOrgaKennung,
                     fakeEmailDomain,
                 );

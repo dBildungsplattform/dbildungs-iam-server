@@ -34,7 +34,7 @@ export type PersonData = {
     vorname: string;
     familienname: string;
     id: string;
-    referrer?: string;
+    username?: string;
     ldapEntryUUID?: string; // When this field is set, it will use the relax operator. Only use during migration.
 };
 
@@ -320,8 +320,8 @@ export class LdapClientService {
         schulId: string,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
     ): Promise<Result<PersonData>> {
-        const referrer: PersonReferrer | undefined = person.referrer;
-        if (!referrer) {
+        const username: PersonReferrer | undefined = person.username;
+        if (!username) {
             return {
                 ok: false,
                 error: new UsernameRequiredError(
@@ -332,23 +332,23 @@ export class LdapClientService {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
-        const lehrerUid: string = this.getLehrerUid(referrer, rootName.value);
+        const lehrerUid: string = this.getLehrerUid(username, rootName.value);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
-            const groupResult: Result<boolean, Error> = await this.addPersonToGroup(referrer, schulId, lehrerUid);
+            const groupResult: Result<boolean, Error> = await this.addPersonToGroup(username, schulId, lehrerUid);
             if (!groupResult.ok) {
-                this.logger.error(`LDAP: Failed to add lehrer ${referrer} to group lehrer-${schulId}`);
+                this.logger.error(`LDAP: Failed to add lehrer ${username} to group lehrer-${schulId}`);
                 return groupResult;
             }
 
             const searchResultLehrer: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
-                    filter: `(uid=${person.referrer})`,
+                    filter: `(uid=${person.username})`,
                 },
             );
             if (searchResultLehrer.searchEntries.length > 0) {
@@ -357,11 +357,11 @@ export class LdapClientService {
                 return { ok: true, value: person };
             }
             const entry: LdapPersonEntry = {
-                uid: referrer,
+                uid: username,
                 uidNumber: LdapClientService.UID_NUMBER,
                 gidNumber: LdapClientService.GID_NUMBER,
                 homeDirectory: LdapClientService.HOME_DIRECTORY,
-                cn: referrer,
+                cn: username,
                 givenName: person.vorname,
                 sn: person.familienname,
                 objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
@@ -378,7 +378,7 @@ export class LdapClientService {
             try {
                 await client.add(lehrerUid, entry, controls);
 
-                const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, referrer);
+                const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, username);
                 if (!entryUUIDResult.ok) return entryUUIDResult;
                 person.ldapEntryUUID = entryUUIDResult.value;
 
@@ -920,7 +920,7 @@ export class LdapClientService {
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            if (!person.referrer) {
+            if (!person.username) {
                 return {
                     ok: false,
                     error: new UsernameRequiredError(
@@ -928,13 +928,13 @@ export class LdapClientService {
                     ),
                 };
             }
-            const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
-            await this.removePersonFromGroup(person.referrer, orgaKennung, lehrerUid);
+            const lehrerUid: string = this.getLehrerUid(person.username, rootName.value);
+            await this.removePersonFromGroup(person.username, orgaKennung, lehrerUid);
             try {
                 const searchResultLehrer: SearchResult = await client.search(
                     `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                     {
-                        filter: `(uid=${person.referrer})`,
+                        filter: `(uid=${person.username})`,
                     },
                 );
                 if (!searchResultLehrer.searchEntries[0]) {
