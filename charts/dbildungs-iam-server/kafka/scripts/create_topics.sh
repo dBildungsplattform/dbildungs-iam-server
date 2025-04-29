@@ -5,12 +5,12 @@
 #
 # Environment variables:
 #   KAFKA_URL                - (required) The server to send the requests to
-#   KAFKA_USERNAME           - (required) The username to authenicate with
-#   KAFKA_PASSWORD           - (required) The password to authenicate with
+#   KAFKA_USERNAME           - (optional) The username to authenicate with
+#   KAFKA_PASSWORD           - (optional) The password to authenicate with
 #   KAFKA_TOPIC_PREFIX       - (optional) A prefix that will be prepended to every created topic
 #   KAFKA_TOPIC_PARTITIONS   - (optional) The number of partitions to use
 #   KAFKA_REPLICATION_FACTOR - (optional) The replication factor to use
-#   KAFKA_JAAS_FILE          - (optional) The JAAS file to use for authentication
+#   KAFKA_JAAS_FILE          - (optional) The JAAS file to use for authentication (does nothing, when username and password are set)
 #
 # This script will create a topic for every line in the input file (if it does not already exist)
 
@@ -52,7 +52,7 @@ sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule require
 security.protocol=SASL_PLAINTEXT
 sasl.mechanism=PLAIN
 EOF
-else 
+else
     echo "The envs KAFKA_USERNAME and KAFKA_PASSWORD not set. Authentication may fail."
 fi
 

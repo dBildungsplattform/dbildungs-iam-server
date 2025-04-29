@@ -5,7 +5,9 @@
 #
 # Environment variables:
 #   KAFKA_URL                - (required) The server to send the requests to
-#   KAFKA_JAAS_FILE          - (optional) The JAAS file to use for authentication
+#   KAFKA_USERNAME           - (optional) The username to authenicate with
+#   KAFKA_PASSWORD           - (optional) The password to authenicate with
+#   KAFKA_JAAS_FILE          - (optional) The JAAS file to use for authentication (does nothing, when username and password are set)
 #
 # This script will delete all topics with the specified prefix
 
@@ -26,10 +28,21 @@ sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule require
 security.protocol=SASL_PLAINTEXT
 sasl.mechanism=PLAIN
 EOF
-else 
+else
     echo "The envs KAFKA_USERNAME and KAFKA_PASSWORD not set. Authentication may fail."
 fi
 
+# When KAFKA_USERNAME and KAFKA_PASSWORD are set create JAAS file
+if [ ! -z "${KAFKA_USERNAME}" ] && [ ! -z "${KAFKA_PASSWORD}" ]; then
+    KAFKA_JAAS_FILE="/tmp/client.info"
+    cat <<EOF > ${KAFKA_JAAS_FILE}
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_USERNAME}" password="${KAFKA_PASSWORD}";
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=PLAIN
+EOF
+else
+    echo "The envs KAFKA_USERNAME and KAFKA_PASSWORD not set. Authentication may fail."
+fi
 
 # Check for KAFKA_TOPIC_PREFIX (optional)
 if [ -z "${KAFKA_JAAS_FILE}" ]; then
