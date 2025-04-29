@@ -190,7 +190,7 @@ backend:
 
 kafka:
   url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
-  prefix: {{ .Release.Namespace }}-
+  prefix: {{ print .Release.Namespace "-" | quote }}
   enabled: false
   initEnabled: true
   initImage:
