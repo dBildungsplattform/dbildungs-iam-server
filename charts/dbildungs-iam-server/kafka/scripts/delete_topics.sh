@@ -11,13 +11,25 @@
 
 # Check for prefix argument
 if [ -z "$1" ]; then
-    echo "Usage: ./create_topics.sh <prefix>" && exit 1
+    echo "Usage: ./delete_topics.sh <prefix>" && exit 1
 fi
 
 # Check for KAFKA_URL environment variable (required)
 if [ -z "${KAFKA_URL}" ]; then
     echo "Environment-variable KAFKA_URL should point to the Kafka server! (e.g. localhost:9094)" && exit 1
 fi
+
+if [ ! -z "${KAFKA_USERNAME}" ] && [ ! -z "${KAFKA_PASSWORD}" ]; then
+    KAFKA_JAAS_FILE="/tmp/client.info"
+    cat <<EOF > ${KAFKA_JAAS_FILE}
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_USERNAME}" password="${KAFKA_PASSWORD}";
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=PLAIN
+EOF
+else 
+    echo "The envs KAFKA_USERNAME and KAFKA_PASSWORD not set. Authentication may fail."
+fi
+
 
 # Check for KAFKA_TOPIC_PREFIX (optional)
 if [ -z "${KAFKA_JAAS_FILE}" ]; then

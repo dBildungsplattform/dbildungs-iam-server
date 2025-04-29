@@ -7,6 +7,4 @@ metadata:
   labels: {{- include "common.labels" . | nindent 4 }}
 data:
   KAFKA_URL: "{{ $.Values.kafka.url }}"
-  # this should be taken fron branch name
-  # KAFKA_TOPIC_PREFIX: "prefix-"
   KAFKA_TOPIC_PREFIX: "{{ $.Values.kafka.prefix }}"
