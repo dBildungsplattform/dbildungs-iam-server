@@ -27,16 +27,16 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
-        {{- if .Values.kafka.init.enabled }}
+        {{- if .Values.kafkaInit.enabled }}
         - name: "{{ template "common.names.name" . }}-kafka-topics-create"
-          image: "{{ .Values.kafka.init.image.repository }}:{{ .Values.kafka.init.image.tag }}"
-          imagePullPolicy: {{ .Values.kafka.init.image.pullPolicy | default "Always" }}
+          image: "{{ .Values.kafkaInit.image.repository }}:{{ .Values.kafkaInit.image.tag }}"
+          imagePullPolicy: {{ .Values.kafkaInit.image.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: [ "sh", "/init/create_topics.sh", "/init/topics.txt" ]
           envFrom:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
-          env: 
+          env:
             - name: KAFKA_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -137,7 +137,7 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-        {{if .Values.kafka.init.enabled }}
+        {{if .Values.kafkaInit.enabled }}
         - name: kafka-init-volume
           configMap:
             name: {{ template "common.names.name" $ }}-kafka-init-configmap

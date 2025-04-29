@@ -192,13 +192,14 @@ kafka:
   url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
   prefix: "{{ .Release.Namespace  }}-"
   enabled: false
-  init:
-    enabled: true
-    command: [ "create_topics.sh", "topics.txt" ]
-    image:
-      repository: docker.io/bitnami/kafka
-      tag: '3.9.0'
-      pullPolicy: Always
+
+kafkaInit:
+  enabled: true
+  command: [ "create_topics.sh", "topics.txt" ]
+  image:
+    repository: docker.io/bitnami/kafka
+    tag: '3.9.0'
+    pullPolicy: Always
 
 autoscaling:
   enabled: false
