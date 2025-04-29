@@ -190,13 +190,10 @@ backend:
 
 kafka:
   url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
-  prefix: "{{ .Release.Namespace  }}-"
+  prefix: "{{ .Release.Namespace }}-"
   enabled: false
-
-kafkaInit:
-  enabled: true
-  command: [ "create_topics.sh", "topics.txt" ]
-  image:
+  initEnabled: true
+  initImage:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'
     pullPolicy: Always
