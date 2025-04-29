@@ -7,4 +7,4 @@ metadata:
   labels: {{- include "common.labels" . | nindent 4 }}
 data:
   KAFKA_URL: "{{ $.Values.kafka.url }}"
-  KAFKA_TOPIC_PREFIX: "{{ .Release.Namespace }}-"
+  KAFKA_TOPIC_PREFIX: '{{ .Release.Namespace }}-'
