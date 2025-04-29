@@ -18,24 +18,32 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email-address-already-exists.event.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonDomainError } from '../../person/domain/person-domain.error.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/disabled-email-address-generated.event.js';
-import { DisabledOxUserChangedEvent } from '../../../shared/events/disabled-ox-user-changed.event.js';
-import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap-person-entry-renamed.event.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
+import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
+import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
+import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -54,6 +62,11 @@ export class EmailEventHandler {
         private readonly organisationRepository: OrganisationRepository,
         private readonly personRepository: PersonRepository,
         private readonly eventService: EventService,
+        private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {}
 
     /*
@@ -152,9 +165,11 @@ export class EmailEventHandler {
         return resMap;
     }
 
+    @KafkaEventHandler(KafkaPersonCreatedEvent)
     @EventHandler(PersonenkontextCreatedMigrationEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent,
+        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<void> {
         this.logger.info(
             `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
@@ -208,9 +223,13 @@ export class EmailEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
+    @EnsureRequestContext()
     // currently receiving of this event is not causing a deletion of email and the related addresses for the affected user, this is intentional
-    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
+    public async handlePersonenkontextUpdatedEvent(
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
+    ): Promise<void> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
@@ -219,8 +238,10 @@ export class EmailEventHandler {
     }
 
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
+    @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
-    public async handlePersonDeletedEvent(event: PersonDeletedEvent): Promise<void> {
+    @EnsureRequestContext()
+    public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}, referrer:${event.referrer}`);
         //Setting person_id to null in Email table is done via deleteRule, not necessary here
 
@@ -558,8 +579,17 @@ export class EmailEventHandler {
                     this.logger.info(
                         `Set REQUESTED status and persisted address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
                     );
-                    this.eventService.publish(
+                    // eslint-disable-next-line no-await-in-loop
+                    this.eventRoutingLegacyKafkaService.publish(
                         new EmailAddressGeneratedEvent(
+                            personId,
+                            personReferrer.value,
+                            persistenceResult.id,
+                            persistenceResult.address,
+                            persistenceResult.enabled,
+                            organisationKennung.value,
+                        ),
+                        new KafkaEmailAddressGeneratedEvent(
                             personId,
                             personReferrer.value,
                             persistenceResult.id,
@@ -626,8 +656,16 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
-            this.eventService.publish(
+            this.eventRoutingLegacyKafkaService.publish(
                 new EmailAddressGeneratedEvent(
+                    personId,
+                    personReferrer.value,
+                    persistenceResult.id,
+                    persistenceResult.address,
+                    persistenceResult.enabled,
+                    organisationKennung.value,
+                ),
+                new KafkaEmailAddressGeneratedEvent(
                     personId,
                     personReferrer.value,
                     persistenceResult.id,
@@ -705,8 +743,17 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted change-email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
-            this.eventService.publish(
+            this.eventRoutingLegacyKafkaService.publish(
                 new EmailAddressChangedEvent(
+                    personId,
+                    personReferrer.value,
+                    oldEmail.id,
+                    oldEmail.address,
+                    persistenceResult.id,
+                    persistenceResult.address,
+                    organisationKennung.value,
+                ),
+                new KafkaEmailAddressChangedEvent(
                     personId,
                     personReferrer.value,
                     oldEmail.id,

@@ -782,6 +782,212 @@ describe('LDAP Client Service', () => {
         });
     });
 
+    describe('removeMailAlternativeAddress', () => {
+        const personId: PersonID = faker.string.uuid();
+        const referrer: PersonReferrer = faker.internet.userName();
+
+        describe('when emailAddress CANNOT be splitted at @', () => {
+            it('should return error', async () => {
+                const address: string = 'vorname.nachname';
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                });
+
+                const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    address,
+                );
+
+                assert(!result.ok);
+                expect(result.error).toBeInstanceOf(LdapEmailAddressError);
+            });
+        });
+
+        describe('when getting root-name fails', () => {
+            it('should return error', async () => {
+                const domain: string = 'not-a-valid-domain.de';
+                const address: string = 'vorname.nachname@' + domain;
+                const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    address,
+                );
+
+                assert(!result.ok);
+                expect(result.error).toBeInstanceOf(LdapEmailDomainError);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could not get root-name because email-domain is invalid, domain:${domain}`,
+                );
+            });
+        });
+
+        describe('when bind fails', () => {
+            it('should return error', async () => {
+                const address: string = 'vorname.nachname@schule-sh.de';
+                const bindError: Error = new Error('LDAP bind FAILED');
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind(bindError);
+
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                });
+
+                const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    address,
+                );
+
+                assert(!result.ok);
+                expect(result.error).toBeInstanceOf(Error);
+            });
+        });
+
+        describe('when PersonEntry CANNOT be fetched by uid', () => {
+            it('should return error', async () => {
+                const address: string = 'vorname.nachname@schule-sh.de';
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [] }));
+                });
+
+                const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    address,
+                );
+
+                assert(!result.ok);
+                expect(result.error).toBeInstanceOf(LdapSearchError);
+            });
+        });
+
+        describe('when fetching PersonEntry succeeds but fetching mailAlternativeAddress fails', () => {
+            it('should return error', async () => {
+                const entry: Entry = getPersonEntry('uid=user,ou=oeffentlicheSchulen,dc=schule-sh,dc=de');
+                const address: string = 'vorname.nachname@schule-sh.de';
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [entry] }));
+                });
+
+                const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    address,
+                );
+
+                assert(!result.ok);
+                expect(result.error).toBeInstanceOf(LdapModifyEmailError);
+            });
+        });
+
+        describe('when mailAlternativeAddress of PersonEntry does NOT match address', () => {
+            it('should log info error and return without modification', async () => {
+                const mailAlternativeAddress: string = faker.internet.email();
+                const address: string = 'vorname.nachname@schule-sh.de';
+                const entry: Entry = getPersonEntry(
+                    'uid=user,ou=oeffentlicheSchulen,dc=schule-sh,dc=de',
+                    faker.person.firstName(),
+                    faker.person.lastName(),
+                    referrer,
+                    faker.internet.email(),
+                    mailAlternativeAddress,
+                );
+                const modifyError: Error = new Error();
+
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [entry] }));
+                    client.modify.mockRejectedValueOnce(modifyError);
+                });
+
+                const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    address,
+                );
+
+                assert(result.ok);
+                expect(result.value).toBeFalsy();
+                expect(clientMock.modify).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when modifying PersonEntry with changed mailAlternativeAddress fails', () => {
+            it('should log unknown error and return error', async () => {
+                const address: string = 'vorname.nachname@schule-sh.de';
+                const entry: Entry = getPersonEntry(
+                    'uid=user,ou=oeffentlicheSchulen,dc=schule-sh,dc=de',
+                    faker.person.firstName(),
+                    faker.person.lastName(),
+                    referrer,
+                    faker.internet.email(),
+                    address,
+                );
+                const modifyError: Error = new Error();
+
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [entry] }));
+                    client.modify.mockRejectedValueOnce(modifyError);
+                });
+
+                const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    address,
+                );
+
+                assert(!result.ok);
+                expect(result.error).toBeInstanceOf(LdapModifyEmailError);
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `LDAP: Deletion of mailAlternativeAddress FAILED`,
+                    modifyError,
+                );
+            });
+        });
+
+        describe('when modifying PersonEntry with changed mailAlternativeAddress succeeds', () => {
+            it('should log info and publish LdapPersonEntryChangedEvent', async () => {
+                const address: string = 'vorname.nachname@schule-sh.de';
+                const entry: Entry = getPersonEntry(
+                    'uid=user,ou=oeffentlicheSchulen,dc=schule-sh,dc=de',
+                    faker.person.firstName(),
+                    faker.person.lastName(),
+                    referrer,
+                    faker.internet.email(),
+                    address,
+                );
+
+                makeMockClient((client: DeepMocked<Client>) => {
+                    mockBind();
+
+                    client.search.mockResolvedValueOnce(createMock<SearchResult>({ searchEntries: [entry] }));
+                    client.modify.mockResolvedValueOnce();
+                });
+
+                const result: Result<boolean> = await ldapClientService.removeMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    address,
+                );
+
+                assert(result.ok);
+                expect(result.value).toBeTruthy();
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `LDAP: Successfully deleted mailPrimaryAddress:${address} for personId:${personId}, referrer:${referrer}`,
+                );
+            });
+        });
+    });
+
     describe('executeWithRetry', () => {
         beforeEach(() => {
             jest.restoreAllMocks(); //Needed To Reset the global executeWithRetry Mock
@@ -1320,7 +1526,7 @@ describe('LDAP Client Service', () => {
                     clientMock.bind.mockRejectedValueOnce(new Error());
                     return clientMock;
                 });
-                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                     faker.internet.userName(),
                 );
 
@@ -1340,7 +1546,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                     faker.internet.userName(),
                 );
 
@@ -1375,7 +1581,7 @@ describe('LDAP Client Service', () => {
                     const newGivenName: string = faker.person.firstName();
                     const newSn: string = faker.person.lastName();
                     const newUid: string = faker.string.alphanumeric(6);
-                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                         oldReferrer,
                         newGivenName,
                         newSn,
@@ -1413,7 +1619,7 @@ describe('LDAP Client Service', () => {
                 });
 
                 it('Should Do nothing when called with No Attributes', async () => {
-                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                         faker.internet.userName(),
                     );
                     expect(result.ok).toBeTruthy();
@@ -1430,7 +1636,7 @@ describe('LDAP Client Service', () => {
                         error: new Error('Failed to update groups'),
                     });
 
-                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                         oldReferrer,
                         undefined,
                         undefined,
@@ -1841,6 +2047,133 @@ describe('LDAP Client Service', () => {
                             mailAlternativeAddress: undefined,
                         }),
                     });
+                });
+            });
+        });
+    });
+
+    describe('setMailAlternativeAddress', () => {
+        const referrer: PersonReferrer = faker.internet.userName();
+        const personId: PersonID = faker.string.uuid();
+        const dn: string = 'dn';
+        const newMailAlternativeAddress: string = 'newMailAlternativeAddress@schule-sh.de';
+        const givenName: string = faker.person.firstName();
+        const sn: string = faker.person.lastName();
+        const cn: string = referrer;
+        const mailPrimaryAddress: string = faker.internet.email();
+        const mailAlternativeAddress: string = faker.internet.email();
+        const entry: Entry = getPersonEntry(dn, givenName, sn, cn, mailPrimaryAddress, mailAlternativeAddress);
+
+        describe('when bind returns error', () => {
+            it('should return falsy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.setMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    newMailAlternativeAddress,
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when fetching person-attributes finds NO PersonEntry', () => {
+            it('should log error and return', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.setMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    newMailAlternativeAddress,
+                );
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Fetching person FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                );
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                );
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapModifyEmailError(),
+                });
+            });
+        });
+
+        describe('when modifying mailAlternativeAddress fails', () => {
+            it('should log error and return error', async () => {
+                const thrownError: Error = new Error();
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+                    clientMock.modify.mockRejectedValueOnce(new Error());
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.setMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    newMailAlternativeAddress,
+                );
+
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED`,
+                    thrownError,
+                );
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                );
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapModifyEmailError(),
+                });
+            });
+        });
+
+        describe('when modifying mailAlternativeAddress succeeds', () => {
+            it('should log info and return PersonId', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.setMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    newMailAlternativeAddress,
+                );
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledTimes(0);
+                expect(result.ok).toBeTruthy();
+                expect(result).toEqual({
+                    ok: true,
+                    value: personId,
                 });
             });
         });

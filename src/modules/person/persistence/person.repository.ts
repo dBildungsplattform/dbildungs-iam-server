@@ -19,7 +19,6 @@ import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums
 import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
-import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
@@ -43,6 +42,10 @@ import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
 import { mapDefinedObjectProperties } from '../../../shared/util/object-utils.js';
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -182,7 +185,7 @@ export class PersonRepository {
         private readonly kcUserService: KeycloakUserService,
         private readonly userLockRepository: UserLockRepository,
         private readonly em: EntityManager,
-        private readonly eventService: EventService,
+        private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
         private usernameGenerator: UsernameGeneratorService,
         private logger: ClassLogger,
         config: ConfigService<ServerConfig>,
@@ -364,10 +367,26 @@ export class PersonRepository {
             removedPersonenkontexts,
             [],
         );
-        this.eventService.publish(personenkontextUpdatedEvent);
+        const kafkaPersonenkontextUpdatedEvent: KafkaPersonenkontextUpdatedEvent = new KafkaPersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                referrer: person.referrer,
+                familienname: person.familienname,
+                vorname: person.vorname,
+                email: person.email,
+            },
+            [],
+            removedPersonenkontexts,
+            [],
+        );
+
+        this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
         if (person.referrer !== undefined) {
-            this.eventService.publish(new PersonDeletedEvent(personId, person.referrer, person.email));
+            this.eventRoutingLegacyKafkaService.publish(
+                new PersonDeletedEvent(personId, person.referrer, person.email),
+                new KafkaPersonDeletedEvent(personId, person.referrer, person.email),
+            );
         }
 
         // Delete the person from the database with all their kontexte
@@ -501,8 +520,14 @@ export class PersonRepository {
         await this.em.persistAndFlush(personEntity);
 
         if (isPersonRenamedEventNecessary) {
-            this.eventService.publish(
+            this.eventRoutingLegacyKafkaService.publish(
                 PersonRenamedEvent.fromPerson(person, oldReferrer, personEntity.vorname, personEntity.familienname),
+                KafkaPersonRenamedEvent.fromPerson(
+                    person,
+                    oldReferrer,
+                    personEntity.vorname,
+                    personEntity.familienname,
+                ),
             );
             // wait for privacyIDEA to update the username
             await new Promise<void>((resolve: () => void) =>

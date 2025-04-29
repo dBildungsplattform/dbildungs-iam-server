@@ -6,7 +6,7 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import {
     PersonenkontextUpdatedData,
@@ -21,6 +21,10 @@ import { ItslearningMembershipRepo } from '../repo/itslearning-membership.repo.j
 import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 @Injectable()
 export class ItsLearningPersonsEventHandler {
@@ -34,6 +38,10 @@ export class ItsLearningPersonsEventHandler {
         private readonly itslearningPersonRepo: ItslearningPersonRepo,
         private readonly itslearningMembershipRepo: ItslearningMembershipRepo,
         configService: ConfigService<ServerConfig>,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
@@ -41,7 +49,9 @@ export class ItsLearningPersonsEventHandler {
     }
 
     @EventHandler(PersonRenamedEvent)
-    public async personRenamedEventHandler(event: PersonRenamedEvent): Promise<void> {
+    @KafkaEventHandler(KafkaPersonRenamedEvent)
+    @EnsureRequestContext()
+    public async personRenamedEventHandler(event: PersonRenamedEvent | KafkaPersonRenamedEvent): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(`[EventID: ${event.eventID}] Received PersonRenamedEvent, ${event.personId}`);
 
@@ -112,8 +122,12 @@ export class ItsLearningPersonsEventHandler {
         });
     }
 
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
-    public async updatePersonenkontexteEventHandler(event: PersonenkontextUpdatedEvent): Promise<void> {
+    @EnsureRequestContext()
+    public async updatePersonenkontexteEventHandler(
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
+    ): Promise<void> {
         await this.personUpdateMutex.runExclusive(async () => {
             this.logger.info(
                 `[EventID: ${event.eventID}] Received PersonenkontextUpdatedEvent, ${event.person.id}, ${event.person.referrer}`,

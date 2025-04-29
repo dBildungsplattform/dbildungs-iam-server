@@ -37,7 +37,9 @@
         "ADMIN_PASSWORD": "password",
         "BASE_DN": "dc=schule-sh,dc=de"
     },
-
+    "EMAIL": {
+        "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 180
+    },
     "DATA": {
         "ROOT_ORGANISATION_ID": "d39cb7cf-2f9b-45f1-849f-973661f2f057"
     },
@@ -97,6 +99,6 @@
         "GROUP_ID": "nestjs-kafka",
         "SESSION_TIMEOUT": 30000,
         "HEARTBEAT_INTERVAL": 10000,
-        "ENABLED":false
+        "ENABLED":true
     }
 }
