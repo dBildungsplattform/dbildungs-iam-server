@@ -1526,7 +1526,7 @@ describe('LDAP Client Service', () => {
                     clientMock.bind.mockRejectedValueOnce(new Error());
                     return clientMock;
                 });
-                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                     faker.internet.userName(),
                 );
 
@@ -1546,7 +1546,7 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                     faker.internet.userName(),
                 );
 
@@ -1581,7 +1581,7 @@ describe('LDAP Client Service', () => {
                     const newGivenName: string = faker.person.firstName();
                     const newSn: string = faker.person.lastName();
                     const newUid: string = faker.string.alphanumeric(6);
-                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                         oldReferrer,
                         newGivenName,
                         newSn,
@@ -1619,7 +1619,7 @@ describe('LDAP Client Service', () => {
                 });
 
                 it('Should Do nothing when called with No Attributes', async () => {
-                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                         faker.internet.userName(),
                     );
                     expect(result.ok).toBeTruthy();
@@ -1636,7 +1636,7 @@ describe('LDAP Client Service', () => {
                         error: new Error('Failed to update groups'),
                     });
 
-                    const result: Result<PersonID> = await ldapClientService.modifyPersonAttributes(
+                    const result: Result<PersonReferrer> = await ldapClientService.modifyPersonAttributes(
                         oldReferrer,
                         undefined,
                         undefined,
@@ -2047,6 +2047,133 @@ describe('LDAP Client Service', () => {
                             mailAlternativeAddress: undefined,
                         }),
                     });
+                });
+            });
+        });
+    });
+
+    describe('setMailAlternativeAddress', () => {
+        const referrer: PersonReferrer = faker.internet.userName();
+        const personId: PersonID = faker.string.uuid();
+        const dn: string = 'dn';
+        const newMailAlternativeAddress: string = 'newMailAlternativeAddress@schule-sh.de';
+        const givenName: string = faker.person.firstName();
+        const sn: string = faker.person.lastName();
+        const cn: string = referrer;
+        const mailPrimaryAddress: string = faker.internet.email();
+        const mailAlternativeAddress: string = faker.internet.email();
+        const entry: Entry = getPersonEntry(dn, givenName, sn, cn, mailPrimaryAddress, mailAlternativeAddress);
+
+        describe('when bind returns error', () => {
+            it('should return falsy result', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockRejectedValueOnce(new Error());
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.setMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    newMailAlternativeAddress,
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+        });
+
+        describe('when fetching person-attributes finds NO PersonEntry', () => {
+            it('should log error and return', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.setMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    newMailAlternativeAddress,
+                );
+
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Fetching person FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                );
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                );
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapModifyEmailError(),
+                });
+            });
+        });
+
+        describe('when modifying mailAlternativeAddress fails', () => {
+            it('should log error and return error', async () => {
+                const thrownError: Error = new Error();
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+                    clientMock.modify.mockRejectedValueOnce(new Error());
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.setMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    newMailAlternativeAddress,
+                );
+
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED`,
+                    thrownError,
+                );
+                expect(loggerMock.info).not.toHaveBeenCalledWith(
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                );
+                expect(result.ok).toBeFalsy();
+                expect(result).toEqual({
+                    ok: false,
+                    error: new LdapModifyEmailError(),
+                });
+            });
+        });
+
+        describe('when modifying mailAlternativeAddress succeeds', () => {
+            it('should log info and return PersonId', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [entry],
+                        }),
+                    );
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.setMailAlternativeAddress(
+                    personId,
+                    referrer,
+                    newMailAlternativeAddress,
+                );
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledTimes(0);
+                expect(result.ok).toBeTruthy();
+                expect(result).toEqual({
+                    ok: true,
+                    value: personId,
                 });
             });
         });
