@@ -13,7 +13,6 @@ import { SchulConnexErrorMapper } from '../../../../shared/error/schul-connex-er
 import { Permissions } from '../../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { Person } from '../../domain/person.js';
-import { PersonInfoResponse } from './person-info.response.js';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { SchulConnexValidationErrorFilter } from '../../../../shared/error/schulconnex-validation-error.filter.js';
 import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
@@ -25,6 +24,7 @@ import { PersonRepository } from '../../persistence/person.repository.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../person-email-response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
+import { PersonInfoVidisPocResponse } from './person-info-vidis-poc.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()
@@ -44,8 +44,8 @@ export class PersonInfoController {
     @Get()
     @ApiOperation({ summary: 'Info about logged in person.' })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
-    @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoResponse })
-    public async info(@Permissions() permissions: PersonPermissions): Promise<PersonInfoResponse> {
+    @ApiOkResponse({ description: 'Returns info about the person.', type: PersonInfoVidisPocResponse })
+    public async info(@Permissions() permissions: PersonPermissions): Promise<PersonInfoVidisPocResponse> {
         const personId: string = permissions.personFields.id;
         const person: Option<Person<true>> = await this.personRepo.findById(personId);
 
@@ -61,7 +61,7 @@ export class PersonInfoController {
                 this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
             ]);
 
-        return PersonInfoResponse.createNew(person, kontexteWithOrgaAndRolle, email);
+        return PersonInfoVidisPocResponse.createNew(person, kontexteWithOrgaAndRolle, email);
     }
 
     @Version('1')
