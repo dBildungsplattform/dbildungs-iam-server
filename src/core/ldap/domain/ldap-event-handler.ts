@@ -69,7 +69,7 @@ export class LdapEventHandler {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, username:${event.username}`,
         );
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.username);
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         }
@@ -177,7 +177,7 @@ export class LdapEventHandler {
         event: PersonRenamedEvent | KafkaPersonRenamedEvent,
     ): Promise<Result<unknown>> {
         this.logger.info(
-            `Received PersonRenamedEvent, personId:${event.personId}, username:${event.username}, oldReferrer:${event.oldUsername}`,
+            `Received PersonRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${event.oldUsername}`,
         );
         const modifyResult: Result<PersonReferrer> = await this.ldapClientService.modifyPersonAttributes(
             event.oldUsername,
@@ -385,7 +385,7 @@ export class LdapEventHandler {
             `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
 
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByReferrer(event.username);
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         } else {

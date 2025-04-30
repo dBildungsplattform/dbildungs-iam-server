@@ -109,62 +109,62 @@ export class LdapClientService {
         );
     }
 
-    public async isLehrerExisting(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
-        return this.executeWithRetry(() => this.isLehrerExistingInternal(referrer, domain), this.getNrOfRetries());
+    public async isLehrerExisting(username: PersonReferrer, domain: string): Promise<Result<boolean>> {
+        return this.executeWithRetry(() => this.isLehrerExistingInternal(username, domain), this.getNrOfRetries());
     }
 
     public async modifyPersonAttributes(
-        oldReferrer: PersonReferrer,
+        oldUsername: PersonReferrer,
         newGivenName?: string,
         newSn?: string,
-        newReferrer?: PersonReferrer,
+        newUsername?: PersonReferrer,
     ): Promise<Result<PersonReferrer>> {
         return this.executeWithRetry(
-            () => this.modifyPersonAttributesInternal(oldReferrer, newGivenName, newSn, newReferrer),
+            () => this.modifyPersonAttributesInternal(oldUsername, newGivenName, newSn, newUsername),
             this.getNrOfRetries(),
         );
     }
 
     public async getPersonAttributes(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         domain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.executeWithRetry(
-            () => this.getPersonAttributesInternal(personId, referrer, domain),
+            () => this.getPersonAttributesInternal(personId, username, domain),
             this.getNrOfRetries(),
         );
     }
 
     public async setMailAlternativeAddress(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         newMailAlternativeAddress: string,
     ): Promise<Result<PersonID>> {
         return this.executeWithRetry(
-            () => this.setMailAlternativeAddressInternal(personId, referrer, newMailAlternativeAddress),
+            () => this.setMailAlternativeAddressInternal(personId, username, newMailAlternativeAddress),
             this.getNrOfRetries(),
         );
     }
 
-    public async getGroupsForPerson(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
-        return this.executeWithRetry(() => this.getGroupsForPersonInternal(personId, referrer), this.getNrOfRetries());
+    public async getGroupsForPerson(personId: PersonID, username: PersonReferrer): Promise<Result<string[]>> {
+        return this.executeWithRetry(() => this.getGroupsForPersonInternal(personId, username), this.getNrOfRetries());
     }
 
     public async updateMemberDnInGroups(
-        oldReferrer: PersonReferrer,
-        newReferrer: PersonReferrer,
+        oldUsername: PersonReferrer,
+        newUsername: PersonReferrer,
         oldUid: string,
         client: Client,
     ): Promise<Result<string>> {
         return this.executeWithRetry(
-            () => this.updateMemberDnInGroupsInternal(oldReferrer, newReferrer, oldUid, client),
+            () => this.updateMemberDnInGroupsInternal(oldUsername, newUsername, oldUid, client),
             this.getNrOfRetries(),
         );
     }
 
-    public async deleteLehrerByReferrer(referrer: PersonReferrer): Promise<Result<string>> {
-        return this.executeWithRetry(() => this.deleteLehrerByReferrerInternal(referrer), this.getNrOfRetries());
+    public async deleteLehrerByUsername(username: PersonReferrer): Promise<Result<string>> {
+        return this.executeWithRetry(() => this.deleteLehrerByUsernameInternal(username), this.getNrOfRetries());
     }
 
     public async deleteLehrer(
@@ -191,62 +191,62 @@ export class LdapClientService {
 
     public async removeMailAlternativeAddress(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         address: string,
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
-            () => this.removeMailAlternativeAddressInternal(personId, referrer, address),
+            () => this.removeMailAlternativeAddressInternal(personId, username, address),
             this.getNrOfRetries(),
         );
     }
 
     public async changeEmailAddressByPersonId(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         newEmailAddress: string,
     ): Promise<Result<PersonID>> {
         return this.executeWithRetry(
-            () => this.changeEmailAddressByPersonIdInternal(personId, referrer, newEmailAddress),
+            () => this.changeEmailAddressByPersonIdInternal(personId, username, newEmailAddress),
             this.getNrOfRetries(),
         );
     }
 
     public async removePersonFromGroup(
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
-            () => this.removePersonFromGroupInternal(referrer, orgaKennung, lehrerUid),
+            () => this.removePersonFromGroupInternal(username, orgaKennung, lehrerUid),
             this.getNrOfRetries(),
         );
     }
 
     public async removePersonFromGroupByUsernameAndKennung(
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         orgaKennung: OrganisationKennung,
         domain: string,
     ): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
-        const lehrerUid: string = this.getLehrerUid(referrer, rootName.value);
+        const lehrerUid: string = this.getLehrerUid(username, rootName.value);
 
-        return this.removePersonFromGroup(referrer, orgaKennung, lehrerUid);
+        return this.removePersonFromGroup(username, orgaKennung, lehrerUid);
     }
 
-    public async changeUserPasswordByPersonId(personId: PersonID, referrer: PersonReferrer): Promise<Result<PersonID>> {
+    public async changeUserPasswordByPersonId(personId: PersonID, username: PersonReferrer): Promise<Result<PersonID>> {
         return this.executeWithRetry(
-            () => this.changeUserPasswordByPersonIdInternal(personId, referrer),
+            () => this.changeUserPasswordByPersonIdInternal(personId, username),
             this.getNrOfRetries(),
         );
     }
 
     //** BELOW ONLY PUBLIC HELPER FUNCTIONS THAT NOT OPERATE ON LDAP - MUST NOT USE THE 'executeWithRetry'/
 
-    public createNewLehrerUidFromOldUid(oldUid: string, newReferrer: PersonReferrer): string {
+    public createNewLehrerUidFromOldUid(oldUid: string, newUsername: PersonReferrer): string {
         const splitted: string[] = oldUid.split(',');
-        splitted[0] = `uid=${newReferrer}`;
+        splitted[0] = `uid=${newUsername}`;
         return splitted.join(',');
     }
 
@@ -302,8 +302,8 @@ export class LdapClientService {
         };
     }
 
-    private getLehrerUid(referrer: PersonReferrer, rootName: string): string {
-        return `uid=${referrer},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
+    private getLehrerUid(username: PersonReferrer, rootName: string): string {
+        return `uid=${username},ou=${rootName},${this.ldapInstanceConfig.BASE_DN}`;
     }
 
     private getRootNameOrError(domain: string): Result<string> {
@@ -393,7 +393,7 @@ export class LdapClientService {
         });
     }
 
-    private async isLehrerExistingInternal(referrer: PersonReferrer, domain: string): Promise<Result<boolean>> {
+    private async isLehrerExistingInternal(username: PersonReferrer, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
@@ -406,7 +406,7 @@ export class LdapClientService {
             const searchResultLehrer: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
-                    filter: `(uid=${referrer})`,
+                    filter: `(uid=${username})`,
                 },
             );
             if (searchResultLehrer.searchEntries.length > 0) {
@@ -417,10 +417,10 @@ export class LdapClientService {
     }
 
     private async modifyPersonAttributesInternal(
-        oldReferrer: PersonReferrer,
+        oldUsername: PersonReferrer,
         newGivenName?: string,
         newSn?: string,
-        newReferrer?: PersonReferrer,
+        newUsername?: PersonReferrer,
     ): Promise<Result<PersonReferrer>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: modifyPersonAttributes');
@@ -430,7 +430,7 @@ export class LdapClientService {
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
-                filter: `(uid=${oldReferrer})`,
+                filter: `(uid=${oldUsername})`,
                 attributes: [
                     LdapClientService.GIVEN_NAME,
                     LdapClientService.SUR_NAME,
@@ -440,7 +440,7 @@ export class LdapClientService {
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(`Modifying person-attributes FAILED, no entry for person:${oldReferrer}`);
+                this.logger.error(`Modifying person-attributes FAILED, no entry for person:${oldUsername}`);
                 return {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
@@ -450,13 +450,13 @@ export class LdapClientService {
             const entryDn: string = searchResult.searchEntries[0].dn;
             const modifications: Change[] = [];
 
-            if (newReferrer) {
+            if (newUsername) {
                 modifications.push(
                     new Change({
                         operation: 'replace',
                         modification: new Attribute({
                             type: LdapClientService.COMMON_NAME,
-                            values: [newReferrer],
+                            values: [newUsername],
                         }),
                     }),
                 );
@@ -485,45 +485,45 @@ export class LdapClientService {
             }
             if (modifications.length > 0) {
                 await client.modify(entryDn, modifications);
-                this.logger.info(`LDAP: Successfully modified givenName/sn attributes for person:${oldReferrer}`);
+                this.logger.info(`LDAP: Successfully modified givenName/sn attributes for person:${oldUsername}`);
             } else {
-                this.logger.info(`No givenName/sn attributes provided to modify for person:${oldReferrer}`);
+                this.logger.info(`No givenName/sn attributes provided to modify for person:${oldUsername}`);
             }
 
-            if (newReferrer && searchResult.searchEntries[0][LdapClientService.UID] !== newReferrer) {
-                const newDn: string = `uid=${newReferrer}`;
+            if (newUsername && searchResult.searchEntries[0][LdapClientService.UID] !== newUsername) {
+                const newDn: string = `uid=${newUsername}`;
                 await client.modifyDN(entryDn, newDn);
-                this.logger.info(`LDAP: Successfully updated uid for person:${oldReferrer} to ${newReferrer}`);
+                this.logger.info(`LDAP: Successfully updated uid for person:${oldUsername} to ${newUsername}`);
             }
 
-            if (newReferrer) {
+            if (newUsername) {
                 const groupUpdateResult: Result<string> = await this.updateMemberDnInGroups(
-                    oldReferrer,
-                    newReferrer,
+                    oldUsername,
+                    newUsername,
                     entryDn,
                     client,
                 );
                 if (!groupUpdateResult.ok) {
-                    this.logger.error(`LDAP: Failed to update groups for person: ${oldReferrer}`);
+                    this.logger.error(`LDAP: Failed to update groups for person: ${oldUsername}`);
                     return groupUpdateResult;
                 }
             }
 
-            return { ok: true, value: oldReferrer };
+            return { ok: true, value: oldUsername };
         });
     }
 
     /**
      * Fetches the following attributes for a person: givenName, sn, cn, mailPrimaryAddress, mailAlternativeAddress.
-     * If no entry can be found for the referrer, a new empty entry will be implicitly created via createEmptyPersonEntry
+     * If no entry can be found for the username, a new empty entry will be implicitly created via createEmptyPersonEntry
      * and the entryUUID attribute of the result will be set accordingly.
      * If creation of entry was not necessary because it already existed, entryUUID will NOT be set in the result.
      * Failures during fetch of single attributes result in logging warnings but not as an error as result.
-     * An error as method result is intended when both, fetching entry for referrer and necessary creation of missing entry fail.
+     * An error as method result is intended when both, fetching entry for username and necessary creation of missing entry fail.
      */
     private async getPersonAttributesInternal(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         emailDomain: string,
     ): Promise<Result<LdapPersonAttributes>> {
         return this.mutex.runExclusive(async () => {
@@ -534,7 +534,7 @@ export class LdapClientService {
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
-                filter: `(uid=${referrer})`,
+                filter: `(uid=${username})`,
                 attributes: [
                     LdapClientService.DN,
                     LdapClientService.UID,
@@ -548,15 +548,15 @@ export class LdapClientService {
             });
             if (!searchResult.searchEntries[0]) {
                 this.logger.warning(
-                    `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                    `Fetching person-attributes FAILED, no entry for username:${username}, personId:${personId}`,
                 );
-                const creationResult: Result<string> = await this.createEmptyPersonEntry(referrer, emailDomain);
+                const creationResult: Result<string> = await this.createEmptyPersonEntry(username, emailDomain);
                 if (!creationResult.ok) return creationResult;
 
-                const entryUUIDResult: Result<string> = await this.getEntryUUID(client, personId, referrer);
+                const entryUUIDResult: Result<string> = await this.getEntryUUID(client, personId, username);
                 if (!entryUUIDResult.ok) {
                     this.logger.error(
-                        `Could not fetch entryUUID after creation of empty PersonEntry, personId:${personId}, referrer:${referrer}`,
+                        `Could not fetch entryUUID after creation of empty PersonEntry, personId:${personId}, username:${username}`,
                     );
                 }
 
@@ -572,43 +572,43 @@ export class LdapClientService {
             const givenName: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
                 LdapClientService.GIVEN_NAME,
-                referrer,
+                username,
                 personId,
             );
             if (!givenName.ok) {
-                this.logger.warning(`GivenName was undefined, referrer:${referrer}, personId:${personId}`);
+                this.logger.warning(`GivenName was undefined, username:${username}, personId:${personId}`);
             }
             const surName: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
                 LdapClientService.SUR_NAME,
-                referrer,
+                username,
                 personId,
             );
             if (!surName.ok) {
-                this.logger.warning(`Surname was undefined, referrer:${referrer}, personId:${personId}`);
+                this.logger.warning(`Surname was undefined, username:${username}, personId:${personId}`);
             }
             const cn: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
                 LdapClientService.COMMON_NAME,
-                referrer,
+                username,
                 personId,
             );
             if (!cn.ok) {
-                this.logger.warning(`CN was undefined, referrer:${referrer}, personId:${personId}`);
+                this.logger.warning(`CN was undefined, username:${username}, personId:${personId}`);
             }
             const mailPrimaryAddress: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
                 LdapClientService.MAIL_PRIMARY_ADDRESS,
-                referrer,
+                username,
                 personId,
             );
             if (!mailPrimaryAddress.ok) {
-                this.logger.warning(`MailPrimaryAddress was undefined, referrer:${referrer}, personId:${personId}`);
+                this.logger.warning(`MailPrimaryAddress was undefined, username:${username}, personId:${personId}`);
             }
             const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
                 LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
-                referrer,
+                username,
                 personId,
             );
 
@@ -628,7 +628,7 @@ export class LdapClientService {
     private getAttributeAsStringOrError(
         entry: Entry,
         attributeName: string,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         personId: PersonID,
     ): Result<string> {
         const attributeValue: unknown = entry[attributeName];
@@ -638,20 +638,20 @@ export class LdapClientService {
                 value: attributeValue,
             };
         }
-        this.logger.error(`Could not fetch attribute:${attributeName}, personId:${personId}, referrer:${referrer}`);
+        this.logger.error(`Could not fetch attribute:${attributeName}, personId:${personId}, username:${username}`);
 
         return {
             ok: false,
-            error: new LdapFetchAttributeError(attributeName, referrer, personId),
+            error: new LdapFetchAttributeError(attributeName, username, personId),
         };
     }
 
     /**
-     * Creates a new PersonEntry and sets uid and cn to referrer value. Other person related attributes are set to 'empty'.
+     * Creates a new PersonEntry and sets uid and cn to username value. Other person related attributes are set to 'empty'.
      * Returns the DN of the created PersonEntry or an Error.
      * For fetching the EntryUUID of an Entry use getEntryUUID.
      */
-    private async createEmptyPersonEntry(referrer: PersonReferrer, domain: string): Promise<Result<string>> {
+    private async createEmptyPersonEntry(username: PersonReferrer, domain: string): Promise<Result<string>> {
         this.logger.info('LDAP: createEmptyPersonEntry');
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
@@ -660,14 +660,14 @@ export class LdapClientService {
         const rootName: Result<string> = this.getRootNameOrError(domain);
         if (!rootName.ok) return rootName;
 
-        const lehrerUid: string = this.getLehrerUid(referrer, rootName.value);
+        const lehrerUid: string = this.getLehrerUid(username, rootName.value);
 
         const entry: LdapPersonEntry = {
-            uid: referrer,
+            uid: username,
             uidNumber: LdapClientService.UID_NUMBER,
             gidNumber: LdapClientService.GID_NUMBER,
             homeDirectory: LdapClientService.HOME_DIRECTORY,
-            cn: referrer,
+            cn: username,
             givenName: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
             sn: LdapClientService.ATTRIBUTE_VALUE_EMPTY,
             objectclass: ['inetOrgPerson', 'univentionMail', 'posixAccount'],
@@ -687,10 +687,10 @@ export class LdapClientService {
         }
     }
 
-    private async getEntryUUID(client: Client, personId: PersonID, referrer: PersonReferrer): Promise<Result<string>> {
+    private async getEntryUUID(client: Client, personId: PersonID, username: PersonReferrer): Promise<Result<string>> {
         const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
             scope: 'sub',
-            filter: `(uid=${referrer})`,
+            filter: `(uid=${username})`,
             attributes: [LdapClientService.ENTRY_UUID],
             returnAttributeValues: true,
         });
@@ -698,7 +698,7 @@ export class LdapClientService {
         const entryUUID: unknown = searchResult.searchEntries[0]?.[LdapClientService.ENTRY_UUID];
 
         if (typeof entryUUID !== 'string') {
-            this.logger.error(`Could not get EntryUUID for referrer:${referrer}, personId:${personId}`);
+            this.logger.error(`Could not get EntryUUID for username:${username}, personId:${personId}`);
             return {
                 ok: false,
                 error: new LdapCreateLehrerError(),
@@ -713,7 +713,7 @@ export class LdapClientService {
 
     private async setMailAlternativeAddressInternal(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         newMailAlternativeAddress: string,
     ): Promise<Result<PersonID>> {
         return this.mutex.runExclusive(async () => {
@@ -724,12 +724,12 @@ export class LdapClientService {
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
-                filter: `(uid=${referrer})`,
+                filter: `(uid=${username})`,
                 attributes: [LdapClientService.DN, LdapClientService.MAIL_ALTERNATIVE_ADDRESS],
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
-                this.logger.error(`Fetching person FAILED, no entry for referrer:${referrer}, personId:${personId}`);
+                this.logger.error(`Fetching person FAILED, no entry for username:${username}, personId:${personId}`);
                 return { ok: false, error: new LdapModifyEmailError() };
             }
 
@@ -744,7 +744,7 @@ export class LdapClientService {
                     }),
                 ]);
                 this.logger.info(
-                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, username:${username}`,
                 );
 
                 return { ok: true, value: personId };
@@ -759,7 +759,7 @@ export class LdapClientService {
         });
     }
 
-    private async getGroupsForPersonInternal(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
+    private async getGroupsForPersonInternal(personId: PersonID, username: PersonReferrer): Promise<Result<string[]>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: getGroupsForPerson');
             const client: Client = this.ldapClient.getClient();
@@ -768,10 +768,10 @@ export class LdapClientService {
 
             const personSearchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
-                filter: `(uid=${referrer})`,
+                filter: `(uid=${username})`,
             });
             if (!personSearchResult.searchEntries[0]) {
-                this.logger.error(`LDAP: No entry for uid:${referrer}, referrer:${referrer}, personId:${personId}`);
+                this.logger.error(`LDAP: No entry for uid:${username}, username:${username}, personId:${personId}`);
                 return {
                     ok: false,
                     error: new LdapSearchError(LdapEntityType.LEHRER),
@@ -788,13 +788,13 @@ export class LdapClientService {
             const groupEntries: Entry[] | undefined = searchResult.searchEntries;
 
             if (!groupEntries) {
-                const errMsg: string = `LDAP: Fetching groups failed, personId:${personId}, referrer:${referrer}`;
+                const errMsg: string = `LDAP: Fetching groups failed, personId:${personId}, username:${username}`;
                 this.logger.error(errMsg);
                 return { ok: false, error: new Error(errMsg) };
             }
 
             if (groupEntries.length === 0) {
-                this.logger.info(`LDAP: No groups found for person, personId:${personId}, referrer:${referrer}`);
+                this.logger.info(`LDAP: No groups found for person, personId:${personId}, username:${username}`);
                 return { ok: true, value: [] };
             }
 
@@ -808,13 +808,13 @@ export class LdapClientService {
     }
 
     private async updateMemberDnInGroupsInternal(
-        oldReferrer: PersonReferrer,
-        newReferrer: PersonReferrer,
+        oldUsername: PersonReferrer,
+        newUsername: PersonReferrer,
         oldUid: string,
         client: Client,
     ): Promise<Result<string>> {
         const oldLehrerUid: string = oldUid;
-        const newLehrerUid: string = this.createNewLehrerUidFromOldUid(oldUid, newReferrer);
+        const newLehrerUid: string = this.createNewLehrerUidFromOldUid(oldUid, newUsername);
 
         const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
             scope: 'sub',
@@ -826,14 +826,14 @@ export class LdapClientService {
         const groupEntries: Entry[] | undefined = searchResult.searchEntries;
 
         if (!groupEntries) {
-            const errMsg: string = `LDAP: Error while searching for groups for person: ${oldReferrer}`;
+            const errMsg: string = `LDAP: Error while searching for groups for person: ${oldUsername}`;
             this.logger.error(errMsg);
             return { ok: false, error: new Error(errMsg) };
         }
 
         if (groupEntries.length === 0) {
-            this.logger.info(`LDAP: No groups found for person:${oldReferrer}`);
-            return { ok: true, value: `No groups found for person:${oldReferrer}` };
+            this.logger.info(`LDAP: No groups found for person:${oldUsername}`);
+            return { ok: true, value: `No groups found for person:${oldUsername}` };
         }
 
         await Promise.allSettled(
@@ -883,16 +883,16 @@ export class LdapClientService {
         return { ok: true, value: `Updated member data for ${groupEntries.length} groups.` };
     }
 
-    private async deleteLehrerByReferrerInternal(referrer: PersonReferrer): Promise<Result<string>> {
+    private async deleteLehrerByUsernameInternal(username: PersonReferrer): Promise<Result<string>> {
         return this.mutex.runExclusive(async () => {
-            this.logger.info('LDAP: deleteLehrer by referrer');
+            this.logger.info('LDAP: deleteLehrerByUsernameInternal');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
 
             const searchResultLehrer: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
-                filter: `(uid=${referrer})`,
+                filter: `(uid=${username})`,
             });
             if (!searchResultLehrer.searchEntries[0]) {
                 return {
@@ -901,9 +901,9 @@ export class LdapClientService {
                 };
             }
             await client.del(searchResultLehrer.searchEntries[0].dn);
-            this.logger.info(`LDAP: Successfully deleted lehrer by referrer:${referrer}`);
+            this.logger.info(`LDAP: Successfully deleted lehrer by username:${username}`);
 
-            return { ok: true, value: referrer };
+            return { ok: true, value: username };
         });
     }
 
@@ -956,7 +956,7 @@ export class LdapClientService {
 
     private async changeEmailAddressByPersonIdInternal(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         newEmailAddress: string,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
@@ -981,14 +981,14 @@ export class LdapClientService {
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
                     scope: 'sub',
-                    filter: `(uid=${referrer})`,
+                    filter: `(uid=${username})`,
                     attributes: [LdapClientService.MAIL_PRIMARY_ADDRESS, LdapClientService.MAIL_ALTERNATIVE_ADDRESS],
                     returnAttributeValues: true,
                 },
             );
             if (!searchResult.searchEntries[0]) {
                 this.logger.error(
-                    `Changing email-address in LDAP FAILED, no entry for personId:${personId}, referrer:${referrer}`,
+                    `Changing email-address in LDAP FAILED, no entry for personId:${personId}, username:${username}`,
                 );
                 return {
                     ok: false,
@@ -1027,7 +1027,7 @@ export class LdapClientService {
                     }),
                 ]);
                 this.logger.info(
-                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, username:${username}`,
                 );
                 this.eventService.publish(
                     new LdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
@@ -1047,7 +1047,7 @@ export class LdapClientService {
 
     private async removeMailAlternativeAddressInternal(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         address: string,
     ): Promise<Result<boolean>> {
         return this.mutex.runExclusive(async () => {
@@ -1070,7 +1070,7 @@ export class LdapClientService {
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
-                filter: `(uid=${referrer})`,
+                filter: `(uid=${username})`,
                 attributes: [
                     LdapClientService.DN,
                     LdapClientService.UID,
@@ -1081,7 +1081,7 @@ export class LdapClientService {
             });
             if (!searchResult.searchEntries[0]) {
                 this.logger.error(
-                    `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                    `Fetching person-attributes FAILED, no entry for username:${username}, personId:${personId}`,
                 );
                 return {
                     ok: false,
@@ -1092,16 +1092,16 @@ export class LdapClientService {
             const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
                 searchResult.searchEntries[0],
                 LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
-                referrer,
+                username,
                 personId,
             );
             if (!mailAlternativeAddress.ok) {
-                this.logger.error(`MailAlternativeAddress was undefined, referrer:${referrer}, personId:${personId}`);
+                this.logger.error(`MailAlternativeAddress was undefined, username:${username}, personId:${personId}`);
                 return { ok: false, error: new LdapModifyEmailError() };
             }
             if (mailAlternativeAddress.value !== address) {
                 this.logger.info(
-                    `MailAlternativeAddress:${mailAlternativeAddress.value} deletion not necessary, address:${address}, referrer:${referrer}, personId:${personId}`,
+                    `MailAlternativeAddress:${mailAlternativeAddress.value} deletion not necessary, address:${address}, username:${username}, personId:${personId}`,
                 );
                 return { ok: true, value: false };
             }
@@ -1116,7 +1116,7 @@ export class LdapClientService {
                     }),
                 ]);
                 this.logger.info(
-                    `LDAP: Successfully deleted mailPrimaryAddress:${address} for personId:${personId}, referrer:${referrer}`,
+                    `LDAP: Successfully deleted mailPrimaryAddress:${address} for personId:${personId}, username:${username}`,
                 );
                 this.eventService.publish(new LdapPersonEntryChangedEvent(personId));
                 return { ok: true, value: true };
@@ -1210,12 +1210,12 @@ export class LdapClientService {
     }
 
     private async removePersonFromGroupInternal(
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
         const groupId: string = 'lehrer-' + orgaKennung;
-        this.logger.info(`LDAP: Removing person ${referrer} from group ${groupId}`);
+        this.logger.info(`LDAP: Removing person ${username} from group ${groupId}`);
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
         if (!bindResult.ok) return bindResult;
@@ -1233,14 +1233,14 @@ export class LdapClientService {
         }
 
         if (!this.isPersonInSearchResult(searchResultOrgUnit.searchEntries[0], lehrerUid)) {
-            this.logger.info(`LDAP: Person ${referrer} is not in group ${groupId}`);
-            return { ok: false, error: new Error(`Person ${referrer} is not in group ${groupId}`) };
+            this.logger.info(`LDAP: Person ${username} is not in group ${groupId}`);
+            return { ok: false, error: new Error(`Person ${username} is not in group ${groupId}`) };
         }
         const groupDn: string = searchResultOrgUnit.searchEntries[0].dn;
         try {
             if (typeof searchResultOrgUnit.searchEntries[0][LdapClientService.MEMBER] === 'string') {
                 await client.del(groupDn);
-                this.logger.info(`LDAP: Successfully removed person ${referrer} from group ${groupId}`);
+                this.logger.info(`LDAP: Successfully removed person ${username} from group ${groupId}`);
                 this.logger.info(`LDAP: Successfully deleted group ${groupId}`);
                 return { ok: true, value: true };
             }
@@ -1253,7 +1253,7 @@ export class LdapClientService {
                     }),
                 }),
             ]);
-            this.logger.info(`LDAP: Successfully removed person ${referrer} from group ${groupId}`);
+            this.logger.info(`LDAP: Successfully removed person ${username} from group ${groupId}`);
             return { ok: true, value: true };
         } catch (err) {
             const errMsg: string = `LDAP: Failed to remove person from group ${groupId}, errMsg: ${String(err)}`;
@@ -1287,7 +1287,7 @@ export class LdapClientService {
 
     private async changeUserPasswordByPersonIdInternal(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
     ): Promise<Result<PersonID>> {
         // Converted to avoid PersonRepository-ref, UEM-password-generation
         const userPassword: string = generatePassword();
@@ -1300,13 +1300,13 @@ export class LdapClientService {
 
             const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
                 scope: 'sub',
-                filter: `(uid=${referrer})`,
+                filter: `(uid=${username})`,
                 attributes: [LdapClientService.USER_PASSWORD],
                 returnAttributeValues: true,
             });
             if (!searchResult.searchEntries[0]) {
                 this.logger.error(
-                    `Modifying user-password FAILED, no entry for personId:${personId}, referrer:${referrer}`,
+                    `Modifying user-password FAILED, no entry for personId:${personId}, username:${username}`,
                 );
                 return {
                     ok: false,
@@ -1325,14 +1325,14 @@ export class LdapClientService {
                     }),
                 ]);
                 this.logger.info(
-                    `LDAP: Successfully modified userPassword (UEM) for personId:${personId}, referrer:${referrer}`,
+                    `LDAP: Successfully modified userPassword (UEM) for personId:${personId}, username:${username}`,
                 );
                 this.eventService.publish(new LdapPersonEntryChangedEvent(personId, undefined, undefined, true));
 
                 return { ok: true, value: userPassword };
             } catch (err) {
                 this.logger.logUnknownAsError(
-                    `LDAP: Modifying userPassword (UEM) FAILED for personId:${personId}, referrer:${referrer}`,
+                    `LDAP: Modifying userPassword (UEM) FAILED for personId:${personId}, username:${username}`,
                     err,
                 );
 

@@ -346,7 +346,7 @@ describe('LDAP Event Handler', () => {
                     ok: true,
                     value: faker.string.uuid(),
                 };
-                ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce(deletionResult);
+                ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
 
@@ -361,7 +361,7 @@ describe('LDAP Event Handler', () => {
                     ok: false,
                     error: error,
                 };
-                ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce(deletionResult);
+                ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
 
@@ -1077,7 +1077,7 @@ describe('LDAP Event Handler', () => {
                 username,
                 faker.string.numeric(),
             );
-            ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce({
+            ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce({
                 ok: true,
                 value: personId,
             });
@@ -1086,7 +1086,7 @@ describe('LDAP Event Handler', () => {
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
             );
-            expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(1);
             expect(eventServiceMock.publish).toHaveBeenCalledWith(
                 expect.objectContaining({
                     personId: personId,
@@ -1102,7 +1102,7 @@ describe('LDAP Event Handler', () => {
                 username,
                 faker.string.numeric(),
             );
-            ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce({
+            ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce({
                 ok: false,
                 error: error,
             });
@@ -1111,7 +1111,7 @@ describe('LDAP Event Handler', () => {
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
             );
-            expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(error.message);
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });

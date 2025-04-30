@@ -84,15 +84,15 @@ describe('EmailAddressDeletionHandler', () => {
     ): void {
         if (event instanceof LdapEmailAddressDeletedEvent) {
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+                `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
             );
         } else {
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `Received OxEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
+                `Received OxEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
             );
         }
         expect(loggerMock.info).toHaveBeenCalledWith(
-            `New EmailAddressStatus is:${status}, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+            `New EmailAddressStatus is:${status}, personId:${event.personId}, username:${event.username}, address:${event.address}`,
         );
     }
 
@@ -115,10 +115,10 @@ describe('EmailAddressDeletionHandler', () => {
                 await sut.handleLdapEmailAddressDeletedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+                    `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not process LdapEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+                    `Could not process LdapEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, username:${event.username}, address:${event.address}`,
                 );
             });
         });
@@ -135,7 +135,7 @@ describe('EmailAddressDeletionHandler', () => {
 
                         expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED_LDAP);
                         expect(loggerMock.error).toHaveBeenCalledWith(
-                            `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                            `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
                         );
                         expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
@@ -152,7 +152,7 @@ describe('EmailAddressDeletionHandler', () => {
 
                         expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED_LDAP);
                         expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
                         );
                         expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
@@ -173,7 +173,7 @@ describe('EmailAddressDeletionHandler', () => {
 
                         expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED);
                         expect(loggerMock.error).toHaveBeenCalledWith(
-                            `Deletion of EmailAddress failed, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                            `Deletion of EmailAddress failed, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
                         );
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(1);
                     });
@@ -187,7 +187,7 @@ describe('EmailAddressDeletionHandler', () => {
 
                         expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED);
                         expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Successfully deleted EmailAddress, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                            `Successfully deleted EmailAddress, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
                         );
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(1);
                     });
@@ -221,10 +221,10 @@ describe('EmailAddressDeletionHandler', () => {
                 await sut.handleOxEmailAddressDeletedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Received OxEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
+                    `Received OxEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not process OxEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+                    `Could not process OxEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, username:${event.username}, address:${event.address}`,
                 );
             });
         });
@@ -241,7 +241,7 @@ describe('EmailAddressDeletionHandler', () => {
 
                         expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED_OX);
                         expect(loggerMock.error).toHaveBeenCalledWith(
-                            `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                            `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
                         );
                         expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
@@ -258,7 +258,7 @@ describe('EmailAddressDeletionHandler', () => {
 
                         expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED_OX);
                         expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
                         );
                         expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(0);
@@ -279,7 +279,7 @@ describe('EmailAddressDeletionHandler', () => {
 
                         expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED);
                         expect(loggerMock.error).toHaveBeenCalledWith(
-                            `Deletion of EmailAddress failed, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                            `Deletion of EmailAddress failed, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
                         );
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(1);
                     });
@@ -293,7 +293,7 @@ describe('EmailAddressDeletionHandler', () => {
 
                         expectReceivedEventLogAndStatusChangeLog(event, EmailAddressStatus.DELETED);
                         expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Successfully deleted EmailAddress, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                            `Successfully deleted EmailAddress, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
                         );
                         expect(emailRepoMock.deleteById).toHaveBeenCalledTimes(1);
                     });

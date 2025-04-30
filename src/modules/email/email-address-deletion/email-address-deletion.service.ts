@@ -49,7 +49,7 @@ export class EmailAddressDeletionService {
             }
             if (!ea.oxUserID) {
                 this.logger.error(
-                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}, referrer:${username}`,
+                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}, username:${username}`,
                 );
                 continue;
             }
@@ -68,19 +68,19 @@ export class EmailAddressDeletionService {
         }
         if (!person.referrer) {
             return this.logger.error(
-                `Would not be able to create EmailAddressesPurgedEvent, no referrer found for personId:${personId}`,
+                `Would not be able to create EmailAddressesPurgedEvent, no username found for personId:${personId}`,
             );
         }
         const allEmailAddressesForPerson: EmailAddress<true>[] =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
         if (allEmailAddressesForPerson.length == 0) {
             this.logger.info(
-                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${person.referrer}`,
+                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
             );
             return this.eventService.publish(new EmailAddressesPurgedEvent(personId, person.referrer, oxUserId));
         }
         this.logger.info(
-            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${person.referrer}`,
+            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
         );
     }
 }

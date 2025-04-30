@@ -165,10 +165,10 @@ describe('EmailEventHandler', () => {
         serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
     }
 
-    describe('test private methods: createOrEnableEmail, createNewEmail, changeEmail, createNewDisabledEmail, getPersonReferrerOrError', () => {
+    describe('test private methods: createOrEnableEmail, createNewEmail, changeEmail, createNewDisabledEmail, getPersonUsernameOrError', () => {
         let fakePersonId: PersonID;
-        let fakeReferrer: PersonReferrer;
-        let fakeOldReferrer: PersonReferrer;
+        let fakeUsername: PersonReferrer;
+        let fakeOldUsername: PersonReferrer;
         let fakeRolleId: RolleID;
         let fakeOrgaId: string;
         let fakeEmailAddress: string;
@@ -186,8 +186,8 @@ describe('EmailEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             fakePersonId = faker.string.uuid();
-            fakeReferrer = faker.internet.userName();
-            fakeOldReferrer = faker.internet.userName();
+            fakeUsername = faker.internet.userName();
+            fakeOldUsername = faker.internet.userName();
             fakeRolleId = faker.string.uuid();
             fakeOrgaId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
@@ -201,10 +201,10 @@ describe('EmailEventHandler', () => {
                 fakePersonId,
                 faker.person.firstName(),
                 faker.person.lastName(),
-                fakeReferrer,
+                fakeUsername,
                 faker.person.firstName(),
                 faker.person.lastName(),
-                fakeOldReferrer,
+                fakeOldUsername,
             );
             personenkontext = createMock<Personenkontext<true>>({ rolleId: fakeRolleId, organisationId: fakeOrgaId });
             personenkontexte = [personenkontext];
@@ -300,10 +300,10 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(personRenamedEvent);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${fakeReferrer}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, username:${fakeUsername}, oldUsername:${fakeOldUsername}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `DISABLED and saved address:${emailAddress.address}, personId:${personRenamedEvent.personId}, referrer:${fakeReferrer}`,
+                        `DISABLED and saved address:${emailAddress.address}, personId:${personRenamedEvent.personId}, username:${fakeUsername}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         `Could not retrieve orgaKennung, orgaId:${fakeOrgaId}`,
@@ -312,32 +312,32 @@ describe('EmailEventHandler', () => {
             });
         });
 
-        describe('getPersonReferrerOrError', () => {
-            describe('when personReferrer is NOT defined', () => {
+        describe('getPersonUsernameOrError', () => {
+            describe('when personUsername is NOT defined', () => {
                 it('should log matching error', async () => {
                     mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined); //no existing email is found
                     organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
-                    //mock person without referrer is found
+                    //mock person without username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
                         createMock<Person<true>>({ id: fakePersonId, referrer: undefined }),
                     );
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(personRenamedEvent);
 
                     expect(loggerMock.error).toHaveBeenCalledWith(
-                        `Referrer Could Not Be Found For personId:${fakePersonId}`,
+                        `Username Could Not Be Found For personId:${fakePersonId}`,
                     );
                 });
             });
         });
 
         describe('createNewDisabledEmail', () => {
-            describe('when getting personReferrer fails', () => {
+            describe('when getting personUsername fails', () => {
                 it('should NOT call emailFactory and log error accordingly', async () => {
                     mockRepositoryFindMethods([personenkontext], rolleMap, new Map<string, ServiceProvider<true>>());
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([emailAddress]); //mock: deactivated email-address found
 
-                    //mock person with referrer is NOT found in getPersonReferrerOrError
+                    //mock person with username is NOT found in getPersonUsernameOrError
                     personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(personRenamedEvent);
@@ -346,7 +346,7 @@ describe('EmailEventHandler', () => {
                     expect(emailFactoryMock.createNewFromPersonIdAndDomain).toHaveBeenCalledTimes(0);
                     expect(emailRepoMock.save).toHaveBeenCalledTimes(0);
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.username}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, username:${personRenamedEvent.username}, oldUsername:${fakeOldUsername}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
                         `Person Could Not Be Found For personId:${fakePersonId}`,
@@ -359,9 +359,9 @@ describe('EmailEventHandler', () => {
                     mockRepositoryFindMethods([personenkontext], rolleMap, new Map<string, ServiceProvider<true>>());
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([emailAddress]); //mock: deactivated email-address found
 
-                    //mock person with referrer is found in getPersonReferrerOrError
+                    //mock person with username is found in getPersonUsernameOrError
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: fakePersonId, referrer: fakeReferrer }),
+                        createMock<Person<true>>({ id: fakePersonId, referrer: fakeUsername }),
                     );
 
                     const fakeErrorMessage: string = 'Lise Meitner kann nichts dafuer';
@@ -381,10 +381,10 @@ describe('EmailEventHandler', () => {
                     expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                     expect(emailFactoryMock.createNewFromPersonIdAndDomain).toHaveBeenCalledTimes(1);
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.username}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, username:${personRenamedEvent.username}, oldUsername:${fakeOldUsername}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
-                        `Could not create new and DISABLED email for personId:${fakePersonId}, referrer:${fakeReferrer}, error:${fakeErrorMessage}`,
+                        `Could not create new and DISABLED email for personId:${fakePersonId}, username:${fakeUsername}, error:${fakeErrorMessage}`,
                     );
                 });
             });
@@ -394,9 +394,9 @@ describe('EmailEventHandler', () => {
                     mockRepositoryFindMethods([personenkontext], rolleMap, new Map<string, ServiceProvider<true>>());
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([emailAddress]); //mock: deactivated email-address found
 
-                    //mock person with referrer is found in getPersonReferrerOrError
+                    //mock person with username is found in getPersonUsernameOrError
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: fakePersonId, referrer: fakeReferrer }),
+                        createMock<Person<true>>({ id: fakePersonId, referrer: fakeUsername }),
                     );
 
                     const factoryResult: Result<EmailAddress<false>> = {
@@ -418,10 +418,10 @@ describe('EmailEventHandler', () => {
                     expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                     expect(emailFactoryMock.createNewFromPersonIdAndDomain).toHaveBeenCalledTimes(1);
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, referrer:${personRenamedEvent.username}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${personRenamedEvent.personId}, username:${personRenamedEvent.username}, oldUsername:${fakeOldUsername}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
-                        `Could not persist email for personId:${fakePersonId}, referrer:${fakeReferrer}, error:EmailAddress could not be created`,
+                        `Could not persist email for personId:${fakePersonId}, username:${fakeUsername}, error:EmailAddress could not be created`,
                     );
                 });
             });
@@ -430,7 +430,7 @@ describe('EmailEventHandler', () => {
 
     describe('handlePersonenkontextUpdatedEvent', () => {
         let fakePersonId: PersonID;
-        let fakeReferrer: PersonReferrer;
+        let fakeUsername: PersonReferrer;
         let fakeRolleId: RolleID;
         let fakePKId: PersonenkontextID;
         let fakeEmailAddressString: string;
@@ -444,13 +444,13 @@ describe('EmailEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             fakePersonId = faker.string.uuid();
-            fakeReferrer = faker.internet.userName();
+            fakeUsername = faker.internet.userName();
             fakeRolleId = faker.string.uuid();
             fakePKId = faker.string.uuid();
             fakeEmailAddressString = faker.internet.email();
 
             event = createMock<PersonenkontextUpdatedEvent>({
-                person: { id: fakePersonId, username: fakeReferrer },
+                person: { id: fakePersonId, username: fakeUsername },
                 removedKontexte: [],
                 newKontexte: [],
             });
@@ -468,7 +468,7 @@ describe('EmailEventHandler', () => {
             organisationRepositoryMock.findById.mockResolvedValue(createMock<Organisation<true>>());
         });
 
-        describe('when email exists, person with referrer can be found and is enabled', () => {
+        describe('when email exists, person with username can be found and is enabled', () => {
             it('should log matching info', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
 
@@ -484,21 +484,21 @@ describe('EmailEventHandler', () => {
                     ),
                 ]);
 
-                //mock person with referrer is found
+                //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeReferrer }),
+                    createMock<Person<true>>({ referrer: fakeUsername }),
                 );
 
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Existing email for personId:${fakePersonId}, referrer:${fakeReferrer} already ENABLED`,
+                    `Existing email for personId:${fakePersonId}, username:${fakeUsername} already ENABLED`,
                 );
             });
         });
 
-        //test case to cover case: getPersonReferrerOrError is returning error
-        describe('when email exists, person WITHOUT referrer is found and is enabled', () => {
+        //test case to cover case: getPersonUsernameOrError is returning error
+        describe('when email exists, person WITHOUT username is found and is enabled', () => {
             it('should log matching info', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
 
@@ -514,13 +514,13 @@ describe('EmailEventHandler', () => {
                     ),
                 ]);
 
-                //mock person with referrer is found
+                //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(createMock<Person<true>>({ referrer: undefined }));
 
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Referrer Could Not Be Found For personId:${fakePersonId}`,
+                    `Username Could Not Be Found For personId:${fakePersonId}`,
                 );
                 expect(loggerMock.info).not.toHaveBeenCalledWith(
                     `Existing email for personId:${fakePersonId} already enabled`,
@@ -532,9 +532,9 @@ describe('EmailEventHandler', () => {
             it('should log matching info', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
 
-                //mock person with referrer is found
+                //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeReferrer }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -555,7 +555,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Set REQUESTED status and persisted address:${persistedEmail.currentAddress}, personId:${fakePersonId}, referrer:${fakeReferrer}`,
+                    `Set REQUESTED status and persisted address:${persistedEmail.currentAddress}, personId:${fakePersonId}, username:${fakeUsername}`,
                 );
             });
         });
@@ -564,9 +564,9 @@ describe('EmailEventHandler', () => {
             it('should log matching error', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
 
-                //mock person with referrer is found
+                //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeReferrer }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -586,7 +586,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not ENABLE email for personId:${fakePersonId}, referrer:${fakeReferrer}, error:requested EmailAddress with the address:${fakeEmailAddressString} was not found`,
+                    `Could not ENABLE email for personId:${fakePersonId}, username:${fakeUsername}, error:requested EmailAddress with the address:${fakeEmailAddressString} was not found`,
                 );
             });
         });
@@ -595,9 +595,9 @@ describe('EmailEventHandler', () => {
             it('should log matching info', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
-                //mock person with referrer is found
+                //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeReferrer }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
                 );
 
                 const persistenceResult: EmailAddress<true> = getEmail();
@@ -622,7 +622,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Successfully persisted email with REQUEST status for address:${persistenceResult.currentAddress}, personId:${fakePersonId}, referrer:${fakeReferrer}`,
+                    `Successfully persisted email with REQUEST status for address:${persistenceResult.currentAddress}, personId:${fakePersonId}, username:${fakeUsername}`,
                 );
             });
         });
@@ -631,9 +631,9 @@ describe('EmailEventHandler', () => {
             it('should log matching info', async () => {
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
-                //mock person with referrer is found
+                //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeReferrer }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
                 );
 
                 // eslint-disable-next-line @typescript-eslint/require-await
@@ -659,7 +659,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not create new email for personId:${fakePersonId}, referrer:${fakeReferrer}, error:requested Person with the following ID ${fakePersonId} was not found`,
+                    `Could not create new email for personId:${fakePersonId}, username:${fakeUsername}, error:requested Person with the following ID ${fakePersonId} was not found`,
                 );
             });
         });
@@ -668,16 +668,16 @@ describe('EmailEventHandler', () => {
         describe('createAndPersistFailedEmailAddress', () => {
             describe('when persisting EmailAddress with Failed status fails', () => {
                 it('should log matching info', async () => {
-                    //mock getting referrer (used for logging)
+                    //mock getting username (used for logging)
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ referrer: fakeReferrer }),
+                        createMock<Person<true>>({ referrer: fakeUsername }),
                     );
                     mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
 
                     emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
-                    //mock person with referrer is found
+                    //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValue(
-                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeReferrer }),
+                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
                     );
 
                     // eslint-disable-next-line @typescript-eslint/require-await
@@ -694,7 +694,7 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                     expect(loggerMock.error).toHaveBeenCalledWith(
-                        `Could not create new email for personId:${fakePersonId}, referrer:${fakeReferrer}, error:requested Person with the following ID ${fakePersonId} was not found`,
+                        `Could not create new email for personId:${fakePersonId}, username:${fakeUsername}, error:requested Person with the following ID ${fakePersonId} was not found`,
                     );
                 });
             });
@@ -702,15 +702,15 @@ describe('EmailEventHandler', () => {
 
         describe('when email does NOT exist and error occurs during persisting', () => {
             it('should log matching info', async () => {
-                //mock getting referrer (used for logging)
+                //mock getting username (used for logging)
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeReferrer }),
+                    createMock<Person<true>>({ referrer: fakeUsername }),
                 );
                 mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]); //no existing email is found
-                //mock person with referrer is found
+                //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValue(
-                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeReferrer }),
+                    createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
                 );
 
                 emailRepoMock.save.mockResolvedValueOnce(new EmailAddressNotFoundError(fakeEmailAddressString)); //mock: error during saving the entity
@@ -732,16 +732,16 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not persist email for personId:${fakePersonId}, referrer:${fakeReferrer}, error:requested EmailAddress with the address:${fakeEmailAddressString} was not found`,
+                    `Could not persist email for personId:${fakePersonId}, username:${fakeUsername}, error:requested EmailAddress with the address:${fakeEmailAddressString} was not found`,
                 );
             });
         });
 
         describe('when lehrer does not have any PK, email is enabled, disable email and error occurs during persisting', () => {
             it('should log matching info', async () => {
-                //mock getting referrer (used for logging)
+                //mock getting username (used for logging)
                 personRepositoryMock.findById.mockResolvedValueOnce(
-                    createMock<Person<true>>({ referrer: fakeReferrer }),
+                    createMock<Person<true>>({ referrer: fakeUsername }),
                 );
                 mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
 
@@ -754,7 +754,7 @@ describe('EmailEventHandler', () => {
                     expect.stringContaining('Existing email found for personId'),
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could not DISABLE email, personId:${fakePersonId}, referrer:${fakeReferrer}, error:requested EmailAddress with the address:${fakeEmailAddressString} was not found`,
+                    `Could not DISABLE email, personId:${fakePersonId}, username:${fakeUsername}, error:requested EmailAddress with the address:${fakeEmailAddressString} was not found`,
                 );
             });
         });
@@ -766,14 +766,14 @@ describe('EmailEventHandler', () => {
         ].forEach(({ status }: { status: EmailAddressStatus }) => {
             describe(`when lehrer does not have any PK, email is ${status}, disable email is successful`, () => {
                 it('should log matching info', async () => {
-                    //mock getting referrer (used for logging)
+                    //mock getting username (used for logging)
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ referrer: fakeReferrer }),
+                        createMock<Person<true>>({ referrer: fakeUsername }),
                     );
                     mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
 
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ referrer: fakeReferrer }),
+                        createMock<Person<true>>({ referrer: fakeUsername }),
                     );
 
                     const emailAddress: EmailAddress<true> = EmailAddress.construct(
@@ -803,7 +803,7 @@ describe('EmailEventHandler', () => {
                         expect.stringContaining('Existing email found for personId'),
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `DISABLED and saved address:${emailAddress.address}, personId:${fakePersonId}, referrer:${fakeReferrer}`,
+                        `DISABLED and saved address:${emailAddress.address}, personId:${fakePersonId}, username:${fakeUsername}`,
                     );
                 });
             });
@@ -842,7 +842,7 @@ describe('EmailEventHandler', () => {
                     expect.stringContaining('Existing email found for personId'),
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `DISABLED and saved address:${emailAddress.address}, personId:${fakePersonId}, referrer:${fakeReferrer}`,
+                    `DISABLED and saved address:${emailAddress.address}, personId:${fakePersonId}, username:${fakeUsername}`,
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could not publish EmailAddressDisabledEvent, personId:${fakePersonId} has no username`,
@@ -866,7 +866,7 @@ describe('EmailEventHandler', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(new Map<string, Rolle<true>>());
                 serviceProviderRepoMock.findByIds.mockResolvedValueOnce(spMap);
 
-                //mock person with referrer is found
+                //mock person with username is found
                 personRepositoryMock.findById.mockResolvedValueOnce(
                     createMock<Person<true>>({ id: faker.string.uuid(), referrer: faker.internet.userName() }),
                 );
@@ -985,8 +985,8 @@ describe('EmailEventHandler', () => {
 
     describe('handleLdapPersonEntryRenamedEvent', () => {
         let fakePersonId: PersonID;
-        let fakeReferrer: PersonReferrer;
-        let fakeOldReferrer: PersonReferrer;
+        let fakeUsername: PersonReferrer;
+        let fakeOldUsername: PersonReferrer;
         let fakeRolleId: RolleID;
         let fakeEmailAddress: string;
         let fakeNewEmailAddress: string;
@@ -1000,8 +1000,8 @@ describe('EmailEventHandler', () => {
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
-            fakeReferrer = faker.internet.userName();
-            fakeOldReferrer = faker.internet.userName();
+            fakeUsername = faker.internet.userName();
+            fakeOldUsername = faker.internet.userName();
             fakeRolleId = faker.string.uuid();
             fakeEmailAddress = faker.internet.email();
             fakeNewEmailAddress = faker.internet.email();
@@ -1009,10 +1009,10 @@ describe('EmailEventHandler', () => {
                 fakePersonId,
                 faker.person.firstName(),
                 faker.person.lastName(),
-                fakeReferrer,
+                fakeUsername,
                 faker.person.firstName(),
                 faker.person.lastName(),
-                fakeOldReferrer,
+                fakeOldUsername,
             );
             personenkontext = createMock<Personenkontext<true>>({ rolleId: fakeRolleId });
             rolle = createMock<Rolle<true>>({ id: fakeRolleId });
@@ -1041,7 +1041,7 @@ describe('EmailEventHandler', () => {
                 it('should log info only', async () => {
                     mockRepositoryFindMethods([personenkontext], rollenMap, spMap);
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
-                    //mock person with referrer is found
+                    //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
                         createMock<Person<true>>({ id: faker.string.uuid(), referrer: faker.internet.userName() }),
                     );
@@ -1057,10 +1057,10 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${fakeOldUsername}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.username}`,
+                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, username:${event.username}`,
                     );
                 });
             });
@@ -1069,9 +1069,9 @@ describe('EmailEventHandler', () => {
                 it('should log error', async () => {
                     mockRepositoryFindMethods([personenkontext], rollenMap, spMap);
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
-                    //mock person with referrer is found
+                    //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeReferrer }),
+                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1088,13 +1088,13 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${fakeOldUsername}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.username}`,
+                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, username:${event.username}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
-                        `Could not create change-email for personId:${event.personId}, referrer:${fakeReferrer}, error:EmailAddress could not be created`,
+                        `Could not create change-email for personId:${event.personId}, username:${fakeUsername}, error:EmailAddress could not be created`,
                     );
                 });
             });
@@ -1103,9 +1103,9 @@ describe('EmailEventHandler', () => {
                 it('should log error', async () => {
                     mockRepositoryFindMethods([personenkontext], rollenMap, spMap);
                     emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(emailAddress);
-                    //mock person with referrer is found
+                    //mock person with username is found
                     personRepositoryMock.findById.mockResolvedValueOnce(
-                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeReferrer }),
+                        createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
                     );
 
                     emailRepoMock.save.mockResolvedValueOnce(emailAddress);
@@ -1119,13 +1119,13 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${fakeOldUsername}`,
                     );
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, referrer:${event.username}`,
+                        `DISABLED and saved address:${emailAddress.address}, personId:${event.personId}, username:${event.username}`,
                     );
                     expect(loggerMock.error).toHaveBeenLastCalledWith(
-                        `Could not persist change-email for personId:${event.personId}, referrer:${fakeReferrer}, error:EmailAddress could not be created`,
+                        `Could not persist change-email for personId:${event.personId}, username:${fakeUsername}, error:EmailAddress could not be created`,
                     );
                 });
             });
@@ -1146,7 +1146,7 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${fakeOldUsername}`,
                     );
                 });
             });
@@ -1166,10 +1166,10 @@ describe('EmailEventHandler', () => {
                         expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                         expect(emailRepoMock.save).toHaveBeenCalledTimes(0);
                         expect(loggerMock.info).toHaveBeenCalledWith(
-                            `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
+                            `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${fakeOldUsername}`,
                         );
                         expect(loggerMock.info).toHaveBeenLastCalledWith(
-                            `Renamed person with personId:${event.personId}, referrer:${event.username} has no SP with Email and no existing DISABLED addresses, nothing to do`,
+                            `Renamed person with personId:${event.personId}, username:${event.username} has no SP with Email and no existing DISABLED addresses, nothing to do`,
                         );
                     });
                 });
@@ -1196,10 +1196,10 @@ describe('EmailEventHandler', () => {
                             expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                             expect(emailRepoMock.save).toHaveBeenCalledTimes(0);
                             expect(loggerMock.info).toHaveBeenCalledWith(
-                                `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
+                                `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${fakeOldUsername}`,
                             );
                             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                                `Could not extract domain from existing DISABLED email-address, personId:${event.personId}, referrer:${event.username}`,
+                                `Could not extract domain from existing DISABLED email-address, personId:${event.personId}, username:${event.username}`,
                             );
                         });
                     });
@@ -1223,9 +1223,9 @@ describe('EmailEventHandler', () => {
 
                             emailFactoryMock.createNewFromPersonIdAndDomain.mockResolvedValue(factoryResult);
                             emailRepoMock.save.mockResolvedValue(getEmail(fakeNewEmailAddress));
-                            //mock person with referrer is found in getPersonReferrerOrError
+                            //mock person with username is found in getPersonUsernameOrError
                             personRepositoryMock.findById.mockResolvedValueOnce(
-                                createMock<Person<true>>({ id: fakePersonId, referrer: fakeReferrer }),
+                                createMock<Person<true>>({ id: fakePersonId, referrer: fakeUsername }),
                             );
 
                             await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
@@ -1233,10 +1233,10 @@ describe('EmailEventHandler', () => {
                             expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(1);
                             expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
                             expect(loggerMock.info).toHaveBeenCalledWith(
-                                `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
+                                `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${fakeOldUsername}`,
                             );
                             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                                `Successfully persisted new email with DISABLED status for address:${fakeNewEmailAddress}, personId:${event.personId}, referrer:${event.username}`,
+                                `Successfully persisted new email with DISABLED status for address:${fakeNewEmailAddress}, personId:${event.personId}, username:${event.username}`,
                             );
                         });
                     });
@@ -1259,10 +1259,10 @@ describe('EmailEventHandler', () => {
                     await emailEventHandler.handleLdapPersonEntryRenamedEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.username}, oldReferrer:${fakeOldReferrer}`,
+                        `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, username:${event.username}, oldUsername:${fakeOldUsername}`,
                     );
                     expect(loggerMock.error).toHaveBeenCalledWith(
-                        `Could not DISABLE email, personId:${event.personId}, referrer:${event.username}, error:requested EmailAddress with the address:${fakeEmailAddress} was not found`,
+                        `Could not DISABLE email, personId:${event.personId}, username:${event.username}, error:requested EmailAddress with the address:${fakeEmailAddress} was not found`,
                     );
                 });
             });
@@ -1271,15 +1271,15 @@ describe('EmailEventHandler', () => {
 
     describe('handlePersonDeletedEvent', () => {
         let personId: string;
-        let referrer: PersonReferrer;
+        let username: PersonReferrer;
         let emailAddress: string;
         let event: PersonDeletedEvent;
 
         beforeEach(() => {
             personId = faker.string.uuid();
-            referrer = faker.string.alpha();
+            username = faker.string.alpha();
             emailAddress = faker.internet.email();
-            event = new PersonDeletedEvent(personId, referrer, emailAddress);
+            event = new PersonDeletedEvent(personId, username, emailAddress);
         });
 
         describe('when deletion is successful', () => {
@@ -1287,18 +1287,18 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Successfully deactivated email-address:${emailAddress}, personId:${event.personId}, referrer:${event.username}`,
+                    `Successfully deactivated email-address:${emailAddress}, personId:${event.personId}, username:${event.username}`,
                 );
             });
         });
 
         describe('when event does not provide email-address', () => {
             it('should log info about that', async () => {
-                event = new PersonDeletedEvent(personId, referrer, undefined);
+                event = new PersonDeletedEvent(personId, username, undefined);
                 await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Cannot deactivate email-address, personId:${event.personId}, referrer:${event.username}, person did not have an email-address`,
+                    `Cannot deactivate email-address, personId:${event.personId}, username:${event.username}, person did not have an email-address`,
                 );
             });
         });
@@ -1309,7 +1309,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Deactivation of email-address:${event.emailAddress} failed, personId:${event.personId}, referrer:${event.username}`,
+                    `Deactivation of email-address:${event.emailAddress} failed, personId:${event.personId}, username:${event.username}`,
                 );
             });
         });
@@ -1408,7 +1408,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
-                    `Cannot find REQUESTED email-address for person with personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}, enabling not necessary`,
+                    `Cannot find REQUESTED email-address for person with personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${fakeOXUserId}, enabling not necessary`,
                 );
             });
         });
@@ -1429,10 +1429,10 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(
-                    `Mismatch between REQUESTED(${emailAddress}) and received(${event.emailAddress}) address from OX, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
+                    `Mismatch between REQUESTED(${emailAddress}) and received(${event.emailAddress}) address from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
                 );
                 expect(loggerMock.warning).toHaveBeenLastCalledWith(
-                    `Overriding ${emailAddress} with ${event.emailAddress}) from OX, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
+                    `Overriding ${emailAddress} with ${event.emailAddress}) from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
                 );
             });
         });
@@ -1452,7 +1452,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `Could not ENABLE email for personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}, error:EmailAddress with ID 1 could not be updated`,
+                    `Could not ENABLE email for personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${fakeOXUserId}, error:EmailAddress with ID 1 could not be updated`,
                 );
             });
         });
@@ -1471,7 +1471,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
-                    `Changed email-address:${fakeEmail} from REQUESTED to ENABLED, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
+                    `Changed email-address:${fakeEmail} from REQUESTED to ENABLED, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
                 );
             });
         });
@@ -1513,7 +1513,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handleDisabledOxUserChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `Cannot find REQUESTED email-address for person with personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, DISABLING not possible`,
+                    `Cannot find REQUESTED email-address for person with personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, DISABLING not possible`,
                 );
             });
         });
@@ -1533,7 +1533,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handleDisabledOxUserChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
-                    `Could not DISABLE email for personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}, error:EmailAddress with ID 1 could not be updated`,
+                    `Could not DISABLE email for personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${fakeOXUserId}, error:EmailAddress with ID 1 could not be updated`,
                 );
             });
         });
@@ -1553,7 +1553,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handleDisabledOxUserChangedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
-                    `Changed email-address:${fakeEmail} from REQUESTED to DISABLED, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+                    `Changed email-address:${fakeEmail} from REQUESTED to DISABLED, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
                 );
             });
         });
