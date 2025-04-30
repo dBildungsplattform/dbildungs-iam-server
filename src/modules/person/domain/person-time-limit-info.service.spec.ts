@@ -8,12 +8,12 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { TimeLimitOccasion } from '../domain/time-limit-occasion.enums.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonTimeLimitInfo } from './person-time-limit-info.js';
-import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from './person-time-limit.js';
+import { KONTEXT_EXPIRES_IN_DAYS, KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from './person-time-limit.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 
-describe('PersonTimeLimitService', () => {
+describe('PersonTimeLimitInfoService', () => {
     let module: TestingModule;
     let sut: PersonTimeLimitService;
     let personRepoMock: DeepMocked<PersonRepository>;
@@ -68,8 +68,11 @@ describe('PersonTimeLimitService', () => {
 
             const org: Organisation<true> = DoFactory.createOrganisation(true, { name: 'Testschule' });
             const rolle: Rolle<true> = DoFactory.createRolle(true, { name: 'Testrolle' });
+
+            const kontextExpiresDate: Date = new Date();
+            kontextExpiresDate.setDate(kontextExpiresDate.getDate() + KONTEXT_EXPIRES_IN_DAYS);
             const expriringPersonenKontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
-                befristung: new Date('2024-01-01'),
+                befristung: kontextExpiresDate,
                 organisationId: org.id,
                 getOrganisation: () => Promise.resolve(org),
                 getRolle: () => Promise.resolve(rolle),
@@ -95,7 +98,7 @@ describe('PersonTimeLimitService', () => {
                 },
                 {
                     occasion: TimeLimitOccasion.PERSONENKONTEXT_EXPIRES,
-                    deadline: new Date('2024-01-01'),
+                    deadline: kontextExpiresDate,
                     school: 'Testschule',
                     rolle: 'Testrolle',
                 },

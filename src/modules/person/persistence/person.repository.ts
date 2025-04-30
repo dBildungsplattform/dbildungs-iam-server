@@ -19,7 +19,6 @@ import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums
 import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
-import { EventService } from '../../../core/eventbus/index.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
@@ -27,7 +26,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -41,6 +40,12 @@ import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
+import { mapDefinedObjectProperties } from '../../../shared/util/object-utils.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -63,6 +68,15 @@ export function getOxUserId(entity: PersonEntity): string | undefined {
 }
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
+    const externalIds: RequiredEntityData<PersonExternalIdMappingEntity>[] = mapDefinedObjectProperties(
+        person.externalIds,
+        (type: PersonExternalIdType, externalId: string) => ({
+            person: person.id,
+            type,
+            externalId,
+        }),
+    );
+
     return {
         keycloakUserId: person.keycloakUserId!,
         referrer: person.referrer,
@@ -89,10 +103,19 @@ export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<
         personalnummer: person.personalnummer,
         orgUnassignmentDate: person.orgUnassignmentDate,
         istTechnisch: person.istTechnisch,
+        externalIds,
     };
 }
 
 export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
+    const externalIds: Partial<Record<PersonExternalIdType, string>> = entity.externalIds.reduce(
+        (aggr: Partial<Record<PersonExternalIdType, string>>, externalId: PersonExternalIdMappingEntity) => {
+            aggr[externalId.type] = externalId.externalId;
+            return aggr;
+        },
+        {} as Partial<Record<PersonExternalIdType, string>>,
+    );
+
     return Person.construct(
         entity.id,
         entity.createdAt,
@@ -125,6 +148,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         getEnabledOrAlternativeEmailAddress(entity),
         getOxUserId(entity),
         entity.istTechnisch,
+        externalIds,
     );
 }
 
@@ -161,7 +185,7 @@ export class PersonRepository {
         private readonly kcUserService: KeycloakUserService,
         private readonly userLockRepository: UserLockRepository,
         private readonly em: EntityManager,
-        private readonly eventService: EventService,
+        private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
         private usernameGenerator: UsernameGeneratorService,
         private logger: ClassLogger,
         config: ConfigService<ServerConfig>,
@@ -343,10 +367,26 @@ export class PersonRepository {
             removedPersonenkontexts,
             [],
         );
-        this.eventService.publish(personenkontextUpdatedEvent);
+        const kafkaPersonenkontextUpdatedEvent: KafkaPersonenkontextUpdatedEvent = new KafkaPersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                referrer: person.referrer,
+                familienname: person.familienname,
+                vorname: person.vorname,
+                email: person.email,
+            },
+            [],
+            removedPersonenkontexts,
+            [],
+        );
+
+        this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
         if (person.referrer !== undefined) {
-            this.eventService.publish(new PersonDeletedEvent(personId, person.referrer, person.email));
+            this.eventRoutingLegacyKafkaService.publish(
+                new PersonDeletedEvent(personId, person.referrer, person.email),
+                new KafkaPersonDeletedEvent(personId, person.referrer, person.email),
+            );
         }
 
         // Delete the person from the database with all their kontexte
@@ -480,8 +520,14 @@ export class PersonRepository {
         await this.em.persistAndFlush(personEntity);
 
         if (isPersonRenamedEventNecessary) {
-            this.eventService.publish(
+            this.eventRoutingLegacyKafkaService.publish(
                 PersonRenamedEvent.fromPerson(person, oldReferrer, personEntity.vorname, personEntity.familienname),
+                KafkaPersonRenamedEvent.fromPerson(
+                    person,
+                    oldReferrer,
+                    personEntity.vorname,
+                    personEntity.familienname,
+                ),
             );
             // wait for privacyIDEA to update the username
             await new Promise<void>((resolve: () => void) =>
@@ -582,6 +628,12 @@ export class PersonRepository {
         return [persons, total];
     }
 
+    private readonly SORT_CRITERIA: Partial<Record<SortFieldPersonFrontend, SortFieldPersonFrontend[]>> = {
+        [SortFieldPersonFrontend.VORNAME]: [SortFieldPersonFrontend.FAMILIENNAME, SortFieldPersonFrontend.REFERRER],
+        [SortFieldPersonFrontend.FAMILIENNAME]: [SortFieldPersonFrontend.VORNAME, SortFieldPersonFrontend.REFERRER],
+        [SortFieldPersonFrontend.PERSONALNUMMER]: [SortFieldPersonFrontend.REFERRER],
+    };
+
     public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
         const scope: PersonScope = new PersonScope()
             .setScopeWhereOperator(ScopeOperator.AND)
@@ -596,13 +648,29 @@ export class PersonRepository {
 
         const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
-        scope.sortBy(raw(`lower(${sortField})`), sortOrder);
+
+        this.addSortCriteria(scope, sortField, sortOrder);
+        for (const c of this.SORT_CRITERIA[sortField] ?? []) {
+            this.addSortCriteria(scope, c);
+        }
 
         if (queryParams.suchFilter) {
             scope.findBySearchString(queryParams.suchFilter);
         }
 
         return scope;
+    }
+
+    private addSortCriteria(
+        scope: PersonScope,
+        criteria: SortFieldPersonFrontend,
+        order: ScopeOrder = ScopeOrder.ASC,
+    ): void {
+        if (criteria === SortFieldPersonFrontend.REFERRER) {
+            scope.sortBy(criteria, order);
+        } else {
+            scope.sortBy(raw(`lower(${criteria})`), order);
+        }
     }
 
     public async isPersonalnummerAlreadayAssigned(personalnummer: string): Promise<boolean> {
@@ -751,6 +819,8 @@ export class PersonRepository {
             personFound.orgUnassignmentDate,
             personFound.isLocked,
             personFound.email,
+            personFound.istTechnisch,
+            personFound.externalIds,
         );
         if (error instanceof DomainError) {
             return error;

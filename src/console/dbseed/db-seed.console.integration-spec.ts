@@ -20,12 +20,16 @@ import { ServiceProviderModule } from '../../modules/service-provider/service-pr
 import { DbSeedModule } from './db-seed.module.js';
 import { PersonenKontextModule } from '../../modules/personenkontext/personenkontext.module.js';
 import { OxUserBlacklistRepo } from '../../modules/person/persistence/ox-user-blacklist.repo.js';
+import { EntityAggregateMapper } from '../../modules/person/mapper/entity-aggregate.mapper.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 describe('DbSeedConsoleIntegration', () => {
     let module: TestingModule;
     let sut: DbSeedConsole;
     let orm: MikroORM;
     let dbSeedService: DbSeedService;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -42,14 +46,17 @@ describe('DbSeedConsoleIntegration', () => {
                 ServiceProviderModule,
                 PersonenKontextModule,
             ],
-            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo, OxUserBlacklistRepo],
+            providers: [UsernameGeneratorService, DBiamPersonenkontextRepo, OxUserBlacklistRepo, EntityAggregateMapper],
         })
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
             .compile();
         sut = module.get(DbSeedConsole);
         orm = module.get(MikroORM);
         dbSeedService = module.get(DbSeedService);
+        loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
     }, 10000000);
@@ -80,13 +87,15 @@ describe('DbSeedConsoleIntegration', () => {
             });
         });
 
-        describe('skips files if seeding already happened', () => {
-            it('should NOT fail', async () => {
+        describe('when repo returns TRUE for existsSeeding', () => {
+            it('should log error and abort seeding process', async () => {
+                //create seeding data
                 const params: string[] = ['seeding-integration-test/all'];
-
-                await sut.run(params);
-
                 await expect(sut.run(params)).resolves.not.toThrow();
+
+                //try to run seeding again
+                await expect(sut.run(params)).resolves.not.toThrow();
+                expect(loggerMock.error).toHaveBeenCalledWith('Seeding data has already been created in database!');
             });
         });
 

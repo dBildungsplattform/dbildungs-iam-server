@@ -12,7 +12,7 @@ import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError }
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
-import { OrganisationID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -47,6 +47,7 @@ import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -125,6 +126,10 @@ describe('PersonController', () => {
                 {
                     provide: LdapClientService,
                     useValue: createMock<LdapClientService>(),
+                },
+                {
+                    provide: LdapSyncEventHandler,
+                    useValue: createMock<LdapSyncEventHandler>(),
                 },
             ],
         }).compile();
@@ -424,7 +429,7 @@ describe('PersonController', () => {
             faker.date.past(),
             faker.date.recent(),
             faker.person.lastName(),
-            faker.person.firstName(),
+            'Paul',
             '1',
             faker.lorem.word(),
             faker.lorem.word(),
@@ -448,12 +453,20 @@ describe('PersonController', () => {
             expect(result.items.at(0)?.person.name.vorname).toEqual('Moritz');
         });
 
-        it('should get all persons when organisationIds is found and is ROOT', async () => {
+        it('should get all persons inclusive enabled EAs when organisationIds is found and is ROOT', async () => {
             personRepositoryMock.findBy.mockResolvedValueOnce([[person1, person2], 2]);
             personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
                 all: false,
                 orgaIds: [personController.ROOT_ORGANISATION_ID],
             });
+            const map: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
+            const emailResponsePerson1: PersonEmailResponse = new PersonEmailResponse(
+                EmailAddressStatus.ENABLED,
+                faker.internet.email(),
+            );
+            map.set(person1.id, emailResponsePerson1);
+            emailRepoMock.getEmailAddressAndStatusForPersonIds.mockResolvedValueOnce(map);
+
             const result: PagedResponse<PersonendatensatzResponse> = await personController.findPersons(
                 queryParams,
                 personPermissionsMock,
@@ -464,6 +477,9 @@ describe('PersonController', () => {
             expect(result.offset).toEqual(0);
             expect(result.items.length).toEqual(2);
             expect(result.items.at(0)?.person.name.vorname).toEqual('Moritz');
+            expect(result.items.at(0)?.person.email).toEqual(emailResponsePerson1);
+            expect(result.items.at(1)?.person.name.vorname).toEqual('Paul');
+            expect(result.items.at(1)?.person.email).toBeUndefined();
         });
     });
 

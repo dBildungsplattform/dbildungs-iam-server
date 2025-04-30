@@ -1,23 +1,29 @@
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/index.js';
-import { PersonPermissionsRepo } from './person-permission.repo.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Person } from '../../person/domain/person.js';
-import { PermittedOrgas, PersonFields, PersonPermissions } from './person-permissions.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { RolleID } from '../../../shared/types/index.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextRolleFieldsResponse } from '../api/personen-kontext-rolle-fields.response.js';
 import { RollenSystemRechtServiceProviderIDResponse } from '../api/rolle-systemrechte-serviceproviderid.response.js';
-import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { PersonPermissionsRepo } from './person-permission.repo.js';
+import {
+    PermittedOrgas,
+    PersonenkontextRolleWithOrganisation,
+    PersonFields,
+    PersonPermissions,
+} from './person-permissions.js';
 
 function createPerson(): Person<true> {
     return Person.construct(
@@ -283,13 +289,19 @@ describe('PersonPermissions', () => {
         });
     });
 
-    describe('getPersonenkontextewithRoles', () => {
+    describe('getPersonenkontexteWithRoles', () => {
         it('should return person context with system rights and service provider ids in an object roles', async () => {
             const person: Person<true> = createPerson();
             const personenkontexte: Personenkontext<true>[] = [createPersonenkontext()];
+            const expectedOrganisation: Organisation<true> = createMock<Organisation<true>>({
+                id: personenkontexte[0]!.organisationId,
+            });
             const expectedRolle: Rolle<true> = createMock<Rolle<true>>({ hasSystemRecht: () => true });
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte);
             rolleRepoMock.findByIds.mockResolvedValueOnce(new Map([['1', expectedRolle]]));
+            organisationRepoMock.findByIds.mockResolvedValueOnce(
+                new Map([[expectedOrganisation.id, expectedOrganisation]]),
+            );
 
             const personPermissions: PersonPermissions = new PersonPermissions(
                 dbiamPersonenkontextRepoMock,
@@ -297,17 +309,18 @@ describe('PersonPermissions', () => {
                 rolleRepoMock,
                 person,
             );
-            const result: PersonenkontextRolleFieldsResponse[] = await personPermissions.getPersonenkontextewithRoles();
+            const result: PersonenkontextRolleWithOrganisation[] =
+                await personPermissions.getPersonenkontexteWithRolesAndOrgs();
 
-            const expected: PersonenkontextRolleFieldsResponse[] = personenkontexte.map(
-                (pk: Personenkontext<true>) => ({
-                    organisationsId: pk.organisationId,
+            const expected: PersonenkontextRolleWithOrganisation[] = [
+                {
+                    organisation: expectedOrganisation,
                     rolle: {
                         systemrechte: expectedRolle.systemrechte,
                         serviceProviderIds: expectedRolle.serviceProviderIds,
                     },
-                }),
-            );
+                },
+            ];
 
             expect(result).toEqual(expected);
         });
@@ -317,12 +330,15 @@ describe('PersonPermissions', () => {
         it('should create a valid PersonenkontextRolleFieldsResponse object', () => {
             const rollenSystemRechtServiceProviderID: RollenSystemRechtServiceProviderIDResponse =
                 new RollenSystemRechtServiceProviderIDResponse(['right1', 'right2'], ['service1', 'service2']);
+            const organisationResponse: OrganisationResponse = new OrganisationResponse(
+                createMock<Organisation<true>>({ id: 'testOrgId' }),
+            );
             const response: PersonenkontextRolleFieldsResponse = new PersonenkontextRolleFieldsResponse(
-                'testOrgId',
+                organisationResponse,
                 rollenSystemRechtServiceProviderID,
             );
 
-            expect(response.organisationsId).toEqual('testOrgId');
+            expect(response.organisation.id).toEqual('testOrgId');
             expect(response.rolle.systemrechte).toEqual(['right1', 'right2']);
             expect(response.rolle.serviceProviderIds).toEqual(['service1', 'service2']);
         });
@@ -586,6 +602,27 @@ describe('PersonPermissions', () => {
                 person.id,
                 organisationRepoMock.ROOT_ORGANISATION_ID,
                 RollenSystemRecht.SCHULEN_VERWALTEN,
+            );
+        });
+
+        it('should return true if person has SCHULTRAEGER_VERWALTEN Recht at the root organisation', async () => {
+            const person: Person<true> = createPerson();
+            dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                person,
+            );
+
+            const result: boolean = await personPermissions.hasOrgVerwaltenRechtAtOrga(OrganisationsTyp.TRAEGER);
+
+            expect(result).toBe(true);
+            expect(dbiamPersonenkontextRepoMock.hasSystemrechtAtOrganisation).toHaveBeenCalledWith(
+                person.id,
+                organisationRepoMock.ROOT_ORGANISATION_ID,
+                RollenSystemRecht.SCHULTRAEGER_VERWALTEN,
             );
         });
 

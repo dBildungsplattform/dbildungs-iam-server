@@ -17,6 +17,7 @@ import {
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
+    ApiBody,
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
@@ -25,6 +26,7 @@ import {
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
+    ApiParam,
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -60,6 +62,7 @@ import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -101,13 +104,9 @@ export class OrganisationController {
                 ),
             );
         }
-
-        const [oeffentlich]: [Organisation<true> | undefined, Organisation<true> | undefined] =
-            await this.organisationRepository.findRootDirectChildren();
-
         const organisation: Organisation<false> | DomainError = Organisation.createNew(
-            params.administriertVon ?? oeffentlich?.id,
-            params.zugehoerigZu ?? oeffentlich?.id,
+            params.administriertVon,
+            params.zugehoerigZu,
             params.kennung,
             params.name,
             params.namensergaenzung,
@@ -355,30 +354,9 @@ export class OrganisationController {
         });
     }
 
-    @Post(':organisationId/administriert')
-    @UseGuards(StepUpGuard)
-    @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
-    @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
-    @ApiForbiddenResponse({ description: 'Not permitted to modify the organisation.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while modifying the organisation.' })
-    public async addAdministrierteOrganisation(
-        @Param() params: OrganisationByIdParams,
-        @Body() body: OrganisationByIdBodyParams,
-    ): Promise<void> {
-        const res: Result<void, OrganisationSpecificationError | DomainError> =
-            await this.organisationService.setAdministriertVon(params.organisationId, body.organisationId);
-
-        if (!res.ok) {
-            // Avoid passing OrganisationSpecificationError to SchulConnexErrorMapper
-            if (res.error instanceof OrganisationSpecificationError) {
-                throw res.error;
-            }
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(res.error),
-            );
-        }
-    }
+    // This endpoint will be added again in the future, but for now it is not needed and needs to be rewritten anyways
+    // @Post(':organisationId/administriert')
+    // public addAdministrierteOrganisation(): void
 
     @Get(':organisationId/zugehoerig')
     @ApiOkResponse({
@@ -422,6 +400,15 @@ export class OrganisationController {
 
     @Post(':organisationId/zugehoerig')
     @UseGuards(StepUpGuard)
+    @ApiParam({
+        name: 'organisationId',
+        description: 'The ID of the parent organisation to which another organisation will be added as a subordinate.',
+        type: OrganisationByIdParams,
+    })
+    @ApiBody({
+        description: 'The ID of the child organisation that will be assigned to the parent organisation.',
+        type: OrganisationByIdBodyParams,
+    })
     @ApiCreatedResponse({ description: 'The organisation was successfully updated.' })
     @ApiBadRequestResponse({ description: 'The organisation could not be modified.', type: DbiamOrganisationError })
     @ApiUnauthorizedResponse({ description: 'Not authorized to modify the organisation.' })
@@ -430,10 +417,12 @@ export class OrganisationController {
     public async addZugehoerigeOrganisation(
         @Param() params: OrganisationByIdParams,
         @Body() body: OrganisationByIdBodyParams,
+        @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
         const res: Result<void, DomainError> = await this.organisationService.setZugehoerigZu(
             params.organisationId,
             body.organisationId,
+            permissions,
         );
 
         if (!res.ok) {
@@ -459,6 +448,19 @@ export class OrganisationController {
         @Param() params: OrganisationByIdParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<void> {
+        if (
+            !(await permissions.hasSystemrechtAtOrganisation(
+                params.organisationId,
+                RollenSystemRecht.KLASSEN_VERWALTEN,
+            ))
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Not authorized to manage this organisation'),
+                ),
+            );
+        }
+
         if (await this.dBiamPersonenkontextRepo.isOrganisationAlreadyAssigned(params.organisationId)) {
             throw new OrganisationIstBereitsZugewiesenError();
         }
@@ -490,7 +492,20 @@ export class OrganisationController {
         @Body() body: OrganisationByNameBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<OrganisationResponse | DomainError> {
-        const result: DomainError | Organisation<true> = await this.organisationRepository.updateKlassenname(
+        if (
+            !(await permissions.hasSystemrechtAtOrganisation(
+                params.organisationId,
+                RollenSystemRecht.KLASSEN_VERWALTEN,
+            ))
+        ) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new MissingPermissionsError('Not authorized to manage this organisation'),
+                ),
+            );
+        }
+
+        const result: DomainError | Organisation<true> = await this.organisationRepository.updateOrganisationName(
             params.organisationId,
             body.name,
             body.version,

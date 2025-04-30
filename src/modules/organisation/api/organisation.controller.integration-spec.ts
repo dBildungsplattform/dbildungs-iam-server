@@ -14,7 +14,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { OrganisationEntity } from '../persistence/organisation.entity.js';
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Observable } from 'rxjs';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { PassportUser } from '../../authentication/types/user.js';
@@ -35,6 +35,7 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 
 describe('Organisation API', () => {
     let app: INestApplication;
@@ -45,6 +46,9 @@ describe('Organisation API', () => {
     let dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personenkontextFactory: PersonenkontextFactory;
     let personFactory: PersonFactory;
+
+    let personpermissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
+    let permissionsMock: DeepMocked<PersonPermissions>;
 
     function createPersonenkontext<WasPersisted extends boolean>(
         this: void,
@@ -86,7 +90,7 @@ describe('Organisation API', () => {
                             const req: Request = context.switchToHttp().getRequest();
                             req.passportUser = createMock<PassportUser>({
                                 async personPermissions() {
-                                    return createMock<PersonPermissionsRepo>().loadPersonPermissions('');
+                                    return personpermissionsRepoMock.loadPersonPermissions('');
                                 },
                             });
                             return next.handle();
@@ -128,6 +132,7 @@ describe('Organisation API', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         dBiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personFactory = module.get(PersonFactory);
+        personpermissionsRepoMock = module.get(PersonPermissionsRepo);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
@@ -140,12 +145,26 @@ describe('Organisation API', () => {
     });
 
     beforeEach(async () => {
+        permissionsMock = createMock<PersonPermissions>();
+        personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(permissionsMock);
         await DatabaseTestModule.clearDatabase(orm);
     });
 
     describe('/DELETE organisationId', () => {
         describe('should return error', () => {
+            it('if user is missing permissions', async () => {
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .delete(`/organisationen/${faker.string.uuid()}/klasse`)
+                    .send();
+
+                expect(response.status).toBe(404);
+            });
+
             it('if Organisation does NOT exist', async () => {
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
                 const response: Response = await request(app.getHttpServer() as App)
                     .delete(`/organisationen/${faker.string.uuid()}/klasse`)
                     .send();
@@ -154,6 +173,8 @@ describe('Organisation API', () => {
             });
 
             it('if Organisation is not a class', async () => {
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.SCHULE;
                 await em.persistAndFlush(organisation);
@@ -167,6 +188,8 @@ describe('Organisation API', () => {
             });
 
             it('if organisation is already assigned to a Personenkontext', async () => {
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
                 const personData: Person<false> | DomainError = await personFactory.createNew({
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
@@ -216,6 +239,8 @@ describe('Organisation API', () => {
 
         describe('should succeed', () => {
             it('if all conditions are passed', async () => {
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
                 const parentOrganisation: OrganisationEntity = new OrganisationEntity();
                 parentOrganisation.name = 'Parent Organisation';
                 await em.persistAndFlush(parentOrganisation);

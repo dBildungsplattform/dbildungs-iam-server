@@ -6,6 +6,7 @@ import {
     ConfigTestModule,
     DatabaseTestModule,
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
+    DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
@@ -13,7 +14,7 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 import { LdapModule } from '../ldap.module.js';
 import { LdapEventHandler } from './ldap-event-handler.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { LdapClientService } from './ldap-client.service.js';
+import { LdapClientService, PersonData } from './ldap-client.service.js';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
 import { faker } from '@faker-js/faker';
@@ -23,11 +24,11 @@ import { DBiamPersonenkontextRepo } from '../../../modules/personenkontext/persi
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email-address-generated.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
@@ -35,7 +36,11 @@ import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email-address-changed.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
+import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
+import { EventService } from '../../eventbus/services/event.service.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -44,6 +49,8 @@ describe('LDAP Event Handler', () => {
     let ldapEventHandler: LdapEventHandler;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
+    let personRepositoryMock: DeepMocked<PersonRepository>;
+    let eventServiceMock: DeepMocked<EventService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -75,17 +82,17 @@ describe('LDAP Event Handler', () => {
             .useValue(createMock<DBiamPersonenkontextRepo>())
             .overrideProvider(OrganisationRepository)
             .useValue(createMock<OrganisationRepository>())
-            .overrideProvider(ClassLogger)
-            .useValue(createMock<ClassLogger>())
+            .overrideProvider(EventService)
+            .useValue(createMock<EventService>())
             .compile();
 
         orm = module.get(MikroORM);
 
-        loggerMock = module.get(ClassLogger);
-
         ldapEventHandler = module.get(LdapEventHandler);
         ldapClientServiceMock = module.get(LdapClientService);
         organisationRepositoryMock = module.get(OrganisationRepository);
+        personRepositoryMock = module.get(PersonRepository);
+        eventServiceMock = module.get(EventService);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -367,16 +374,16 @@ describe('LDAP Event Handler', () => {
     describe('handlePersonRenamedEvent', () => {
         describe('when calling LdapClientService.modifyPersonAttributes is successful', () => {
             it('should NOT log errors', async () => {
-                const modifyResult: Result<PersonID> = {
+                const modifyResult: Result<PersonReferrer> = {
                     ok: true,
-                    value: faker.string.uuid(),
+                    value: faker.internet.userName(),
                 };
                 ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
                 await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());
                 expect(loggerMock.error).toHaveBeenCalledTimes(0);
             });
         });
-        describe('when calling LdapClientService.modifyPersonAttributes is not successfull', () => {
+        describe('when calling LdapClientService.modifyPersonAttributes is not successful', () => {
             it('should log errors', async () => {
                 const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
                 const modifyResult: Result<PersonID> = {
@@ -385,7 +392,7 @@ describe('LDAP Event Handler', () => {
                 };
                 ldapClientServiceMock.modifyPersonAttributes.mockResolvedValueOnce(modifyResult);
                 await ldapEventHandler.personRenamedEventHandler(createMock<PersonRenamedEvent>());
-                expect(loggerMock.error).toHaveBeenCalledTimes(1);
+                expect(loggerMock.error).toHaveBeenCalledWith(error.message);
             });
         });
     });
@@ -885,6 +892,107 @@ describe('LDAP Event Handler', () => {
                 expect.stringContaining('Error in getEmailDomainForOrganisationId:'),
             );
         });
+
+        it('should persist entryUUID to database', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+                [],
+            );
+
+            const entryUUID: string = faker.string.uuid();
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+            ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
+                ok: true,
+                value: createMock<PersonData>({
+                    ldapEntryUUID: entryUUID,
+                }),
+            });
+
+            personRepositoryMock.findById.mockResolvedValueOnce(DoFactory.createPerson(true));
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(personRepositoryMock.save).toHaveBeenCalledTimes(1);
+        });
+
+        it('should log error if person can not be found', async () => {
+            const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+                {
+                    id: faker.string.uuid(),
+                    vorname: faker.person.firstName(),
+                    familienname: faker.person.lastName(),
+                    referrer: faker.internet.userName(),
+                },
+                [
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.EXTERN,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: faker.string.numeric(7),
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
+                [],
+                [],
+            );
+
+            const entryUUID: string = faker.string.uuid();
+
+            organisationRepositoryMock.findEmailDomainForOrganisation.mockResolvedValueOnce('schule-sh.de');
+            ldapClientServiceMock.createLehrer.mockResolvedValueOnce({
+                ok: true,
+                value: createMock<PersonData>({
+                    ldapEntryUUID: entryUUID,
+                }),
+            });
+
+            personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+
+            await ldapEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+            expect(personRepositoryMock.save).toHaveBeenCalledTimes(0);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.referrer}`,
+            );
+        });
     });
 
     describe('handleEmailAddressGeneratedEvent', () => {
@@ -908,7 +1016,7 @@ describe('LDAP Event Handler', () => {
     });
 
     describe('handleEmailAddressChangedEvent', () => {
-        it('should call ldap client changeEmailAddressByPersonId', async () => {
+        it('should call LdapClientService changeEmailAddressByPersonId', async () => {
             const event: EmailAddressChangedEvent = new EmailAddressChangedEvent(
                 faker.string.uuid(),
                 faker.internet.userName(),
@@ -922,9 +1030,90 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handleEmailAddressChangedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress: ${event.newAddress}, oldEmailAddress: ${event.oldAddress}`,
+                `Received EmailAddressChangedEvent, personId:${event.personId}, newEmailAddress:${event.newAddress}, oldEmailAddress:${event.oldAddress}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('handleEmailAddressDeletedEvent', () => {
+        const personId: PersonID = faker.string.uuid();
+        const username: PersonReferrer = faker.internet.userName();
+        const address: string = faker.internet.email();
+
+        it('should call LdapClientService removeMailAlternativeAddress', async () => {
+            const event: EmailAddressDeletedEvent = new EmailAddressDeletedEvent(
+                personId,
+                username,
+                faker.string.numeric(),
+                faker.string.uuid(),
+                EmailAddressStatus.ENABLED,
+                address,
+            );
+
+            await ldapEventHandler.handleEmailAddressDeletedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+            );
+            expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(1);
+            expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    personId: personId,
+                    username: username,
+                    address: address,
+                }),
+            );
+        });
+    });
+
+    describe('EmailAddressesPurgedEvent', () => {
+        const personId: PersonID = faker.string.uuid();
+        const username: PersonReferrer = faker.internet.userName();
+
+        it('should call LdapClientService deleteLehrerByReferrer', async () => {
+            const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
+                personId,
+                username,
+                faker.string.numeric(),
+            );
+            ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce({
+                ok: true,
+                value: personId,
+            });
+            await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+            expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
+            expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    personId: personId,
+                    username: username,
+                }),
+            );
+        });
+
+        it('should call LdapClientService deleteLehrerByReferrer and log error if result is NOT ok', async () => {
+            const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
+            const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
+                personId,
+                username,
+                faker.string.numeric(),
+            );
+            ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce({
+                ok: false,
+                error: error,
+            });
+            await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+            expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
+            expect(loggerMock.error).toHaveBeenLastCalledWith(error.message);
+            expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });
     });
 });

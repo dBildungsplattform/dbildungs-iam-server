@@ -53,14 +53,12 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                         if (e instanceof Error) {
                             this.logger.warning(e.message);
                         } else {
-                            this.logger.warning(JSON.stringify(e));
+                            this.logger.warning('Refreshing Token Failed With Unknown Catch', e);
                         }
                     }
                 } else {
                     req.logout((err: unknown) => {
-                        if (err) {
-                            this.logger.error(JSON.stringify(err));
-                        }
+                        this.logger.logUnknownAsError('Logout Failed', err, false);
                     });
                 }
         }

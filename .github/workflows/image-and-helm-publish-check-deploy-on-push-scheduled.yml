@@ -219,5 +219,19 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
     with:
       image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
-      fail_on_vulnerabilites: false
+      fail_on_vulnerabilites: true
       report_location: "Dockerfile"
+      trivyignores: '.trivyignore'
+
+  trivy_scan_rocketchat_notification:
+    if: github.event_name == 'schedule' && failure()
+    needs:
+    - scheduled_trivy_scan
+    runs-on: 'ubuntu-latest'
+    steps:
+    - name: Send Notification to Rocket Chat
+      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
+      with:
+        type: failure
+        job_name: 'Daily nightly image check failed - CVEs found so check'
+        url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}

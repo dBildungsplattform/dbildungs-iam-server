@@ -3,7 +3,7 @@ import { Subject, Subscription } from 'rxjs';
 
 import { BaseEvent } from '../../../shared/events/index.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { Constructor, EventHandlerType } from '../types/util.types.js';
+import { Constructor, EventHandlerType, MaybePromise } from '../types/util.types.js';
 
 type EventInfo<Event> = {
     subject: Subject<Event>;
@@ -31,9 +31,10 @@ export class EventService {
             subject.subscribe({
                 next: (event: Event) => {
                     try {
-                        handler(event)?.catch((err: unknown) => {
-                            this.logHandlerError(err);
-                        });
+                        const result: MaybePromise<void | Result<unknown, Error>> = handler(event);
+                        if (result instanceof Promise) {
+                            result.catch((err: unknown) => this.logHandlerError(err));
+                        }
                     } catch (err) {
                         this.logHandlerError(err);
                     }

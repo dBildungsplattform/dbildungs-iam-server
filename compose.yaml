@@ -3,14 +3,18 @@ version: '3'
 services:
   db:
     image: postgres:15.3-alpine
+    container_name: db
     ports:
       - 5432:5432
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=dbildungs-iam-server
+
   keycloak:
     image: ghcr.io/dbildungsplattform/dbildungs-iam-keycloak:latest
+    container_name: keycloak
+    hostname: keycloak
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
@@ -25,6 +29,10 @@ services:
       - '--db=dev-file'
       # No caching
       - '--cache=local'
+      # External communication happens here
+      - "--hostname=http://localhost:8080"
+      # Internal communication happens under a different name
+      - "--hostname-backchannel-dynamic=true"
       # We have no way of checking for the health probe so we might just as well turn it off
       - '--health-enabled=false'
       # Import SPSH-Realm
@@ -35,8 +43,28 @@ services:
     volumes:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
 
+  keycloak-db-microservice:
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    profiles:
+      - kc-service
+    build:
+      context: .
+    depends_on:
+      - keycloak
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/apps/kc-db-microservice/main.js']
+    ports:
+      - 3000:3000
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+
   redis:
     image: redis:7.2.2
+    container_name: redis
     healthcheck:
       test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
     ports:
@@ -45,10 +73,11 @@ services:
 
   backend:
     profiles:
-      - full-backend
+      - backend
     image: ghcr.io/dbildungsplattform/dbildungs-iam-server
-    build:
-      context: .
+    container_name: spsh-backend
+    # build:
+    #   context: .
     depends_on:
       keycloak:
         condition: service_started
@@ -56,21 +85,28 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
-      kafka-init:
-        condition: service_completed_successfully
+      # kafka:
+      #   condition: service_healthy
+      # kafka-init:
+      #   condition: service_completed_successfully
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
-    network_mode: host
+    restart: unless-stopped
+    ports:
+      - 9090:9090
     volumes:
       - source: 'config'
         target: '/app/config'
         type: bind
+      - source: 'config/docker-config.json'
+        target: '/app/config/config.json'
+        type: bind
+
   db-init:
     profiles:
       - db-init
+      - db-seed
     image: ghcr.io/dbildungsplattform/dbildungs-iam-server
     build:
       context: .
@@ -84,9 +120,78 @@ services:
       - source: 'config'
         target: '/app/config'
         type: bind
+      - source: 'config/docker-config.json'
+        target: '/app/config/config.json'
+        type: bind
+
+  db-seed:
+    profiles:
+      - db-seed
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      db:
+        condition: service_started
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev']
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+      - source: 'config/docker-config.json'
+        target: '/app/config/config.json'
+        type: bind
+
+  db-migrate:
+    profiles:
+      - db-migrate
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/console/main.js', 'db', 'migration-apply']
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+      - source: 'config/docker-config.json'
+        target: '/app/config/config.json'
+        type: bind
+
+  keycloak-client-update:
+    profiles:
+      - keycloak-client-update
+    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    build:
+      context: .
+    depends_on:
+      - db
+      - keycloak
+    environment:
+      NODE_ENV: dev
+      DEPLOY_STAGE: dev
+    command: ['node', 'dist/src/console/main.js', 'keycloak', 'update-clients', 'dev']
+    volumes:
+      - source: 'config'
+        target: '/app/config'
+        type: bind
+      - source: 'config/docker-config.json'
+        target: '/app/config/config.json'
+        type: bind
 
   kafka:
     image: bitnami/kafka:3.9.0
+    profiles:
+      - third-party
     ports:
       - '9094:9094'
     environment:
@@ -106,6 +211,8 @@ services:
 
   kafka-init:
     image: bitnami/kafka:3.9.0
+    profiles:
+      - third-party
     depends_on:
       kafka:
         condition: service_healthy
@@ -125,6 +232,8 @@ services:
   openldap:
     image: osixia/openldap:1.5.0
     container_name: openldap
+    profiles:
+      - third-party
     command: --copy-service --loglevel debug
     ports:
       - 389:389
@@ -140,9 +249,12 @@ services:
       - LDAP_RFC2307BIS_SCHEMA=true
       - LDAP_REMOVE_CONFIG_AFTER_SETUP=true
       - LDAP_TLS_VERIFY_CLIENT=never
+
   openldap-admin:
     image: osixia/phpldapadmin:0.9.0
     container_name: ldap-admin
+    profiles:
+      - third-party
     restart: 'no'
     environment:
       PHPLDAPADMIN_LDAP_HOSTS: openldap
@@ -156,6 +268,8 @@ services:
   privacy-idea:
     image: khalibre/privacyidea:latest
     container_name: privacy-idea
+    profiles:
+      - third-party
     ports:
       - 5000:8080
     environment:
@@ -184,6 +298,8 @@ services:
   maria-db:
     image: mariadb:latest
     container_name: mariadb
+    profiles:
+      - third-party
     ports:
       - 3306:3306
     environment:
@@ -203,6 +319,8 @@ services:
 
   cron-service:
     build: ./charts/dbildungs-iam-server/cron
+    profiles:
+      - third-party
     environment:
       - KC_CLIENT_ID=spsh-service
       - KC_TOKEN_URL=http://keycloak:8080/realms/SPSH/protocol/openid-connect/token
@@ -214,6 +332,40 @@ services:
       - ./charts/dbildungs-iam-server/cron/keys/dummy_jwks.json:/keys/jwks.json:ro
     depends_on:
       - keycloak
+
+  frontend:
+    container_name: spsh-frontend
+    image: ghcr.io/dbildungsplattform/schulportal-client:latest
+    profiles:
+      - frontend
+
+  ingress:
+    image: nginx:stable-alpine
+    ports:
+      - 8099:443
+    profiles:
+      - frontend
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    volumes:
+      - source: 'nginx/default.conf'
+        target: '/etc/nginx/conf.d/default.conf'
+        type: bind
+      # SSL configuration
+      - source: 'nginx/snippets/'
+        target: '/etc/nginx/snippets/'
+        type: bind
+      - source: 'nginx/ssl/nginx-selfsigned.key'
+        target: '/etc/ssl/private/nginx-selfsigned.key'
+        type: bind
+      - source: 'nginx/ssl/nginx-selfsigned.crt'
+        target: '/etc/ssl/certs/nginx-selfsigned.crt'
+        type: bind
+      - source: 'nginx/ssl/dhparam.pem'
+        target: '/etc/ssl/certs/dhparam.pem'
+        type: bind
 
 volumes:
   db-data:

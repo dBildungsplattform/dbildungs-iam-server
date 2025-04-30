@@ -3,9 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { KeycloakUserService } from '../domain/keycloak-user.service.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
 import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
@@ -13,7 +13,12 @@ import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OXContextName } from '../../../shared/types/ox-ids.types.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 
 @Injectable()
 export class KeycloakEventHandler {
@@ -24,14 +29,20 @@ export class KeycloakEventHandler {
         private readonly kcUserService: KeycloakUserService,
         private readonly eventService: EventService,
         configService: ConfigService<ServerConfig>,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
         this.contextName = oxConfig.CONTEXT_NAME;
     }
 
     @EventHandler(PersonenkontextCreatedMigrationEvent)
+    @KafkaEventHandler(KafkaPersonCreatedEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent,
+        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
     ): Promise<void> {
         this.logger.info(
             `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
@@ -104,12 +115,31 @@ export class KeycloakEventHandler {
 
         if (updateResult.ok) {
             this.logger.info(
-                `Removed OX access for personId:${event.personId} & username:${event.username} in Keycloak`,
+                `Removed OX access for personId:${event.personId}, username:${event.username} in Keycloak`,
             );
         } else {
             this.logger.error(
                 `Updating user in Keycloak FAILED for EmailAddressDisabledEvent, personId:${event.personId}, username:${event.username}`,
             );
         }
+    }
+
+    @KafkaEventHandler(KafkaEmailAddressesPurgedEvent)
+    @EventHandler(EmailAddressesPurgedEvent)
+    public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressesPurgedEvent personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+
+        const updateResult: Result<void> = await this.kcUserService.removeOXUserAttributes(event.username);
+
+        if (updateResult.ok) {
+            return this.logger.info(
+                `Removed OX access for personId:${event.personId}, username:${event.username} in Keycloak`,
+            );
+        }
+        return this.logger.error(
+            `Updating user in Keycloak FAILED for EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}`,
+        );
     }
 }

@@ -21,7 +21,7 @@ import { LoginGuard } from './login.guard.js';
 import { RedirectQueryParams } from './redirect.query.params.js';
 import { UserinfoExtension, UserinfoResponse } from './userinfo.response.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonPermissions, PersonenkontextRolleFields } from '../domain/person-permissions.js';
+import { PersonPermissions, PersonenkontextRolleWithOrganisation } from '../domain/person-permissions.js';
 import { Permissions } from './permissions.decorator.js';
 import { Public } from './public.decorator.js';
 import { RolleID } from '../../../shared/types/index.js';
@@ -35,6 +35,7 @@ import { PersonTimeLimitInfo } from '../../person/domain/person-time-limit-info.
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
 import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];
@@ -124,11 +125,12 @@ export class AuthenticationController {
         const roleIds: RolleID[] = await permissions.getRoleIds();
         this.logger.info('Roles: ' + roleIds.toString());
         this.logger.info('User: ' + JSON.stringify(permissions.personFields));
-        const rolleFields: PersonenkontextRolleFields[] = await permissions.getPersonenkontextewithRoles();
+        const rolleFields: PersonenkontextRolleWithOrganisation[] =
+            await permissions.getPersonenkontexteWithRolesAndOrgs();
         const rolleFieldsResponse: PersonenkontextRolleFieldsResponse[] = rolleFields.map(
-            (field: PersonenkontextRolleFields) =>
+            (field: PersonenkontextRolleWithOrganisation) =>
                 new PersonenkontextRolleFieldsResponse(
-                    field.organisationsId,
+                    new OrganisationResponse(field.organisation),
                     new RollenSystemRechtServiceProviderIDResponse(
                         field.rolle.systemrechte,
                         field.rolle.serviceProviderIds,

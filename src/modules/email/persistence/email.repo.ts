@@ -1,6 +1,6 @@
-import { EntityManager, QueryOrder, ref, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, Loaded, QueryOrder, ref, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
-import { PersonID } from '../../../shared/types/index.js';
+import { EmailAddressID, PersonID } from '../../../shared/types/index.js';
 import { EmailAddressEntity } from './email-address.entity.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
@@ -10,6 +10,13 @@ import { PersonEntity } from '../../person/persistence/person.entity.js';
 import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-already-has-enabled-email-address.error.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
+import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
+import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
+import { EmailInstanceConfig } from '../email-instance-config.js';
+
+export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT: number = 180;
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
     const oxUserIdStr: string | undefined = emailAddress.oxUserID ? emailAddress.oxUserID + '' : undefined;
@@ -39,6 +46,8 @@ function mapEntityToAggregate(entity: EmailAddressEntity): EmailAddress<boolean>
 export class EmailRepo {
     public constructor(
         private readonly em: EntityManager,
+        private readonly eventService: EventService,
+        private readonly emailInstanceConfig: EmailInstanceConfig,
         private readonly logger: ClassLogger,
     ) {}
 
@@ -104,6 +113,23 @@ export class EmailRepo {
         return emails;
     }
 
+    /**
+     * Returns all ENABLED EmailAddresses for a list of personIds.
+     * The result is ordered by personId ascending and updatedAt descending.
+     * @param personIds
+     */
+    public async findEnabledByPersonIdsSortedByUpdatedAtDesc(personIds: PersonID[]): Promise<EmailAddress<true>[]> {
+        const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
+            EmailAddressEntity,
+            {
+                $and: [{ status: EmailAddressStatus.ENABLED }, { personId: { $in: personIds } }],
+            },
+            { orderBy: [{ personId: QueryOrder.ASC }, { updatedAt: QueryOrder.ASC }] },
+        );
+
+        return emailAddressEntities.map((entity: EmailAddressEntity) => mapEntityToAggregate(entity));
+    }
+
     public async findByAddress(address: string): Promise<Option<EmailAddress<true>>> {
         const emailAddressEntity: Option<EmailAddressEntity> = await this.em.findOne(
             EmailAddressEntity,
@@ -116,6 +142,35 @@ export class EmailRepo {
         if (!emailAddressEntity) return undefined;
 
         return mapEntityToAggregate(emailAddressEntity);
+    }
+
+    /**
+     * Returns all EmailAddresses with status DELETED_LDAP, DELETED_OX and DELETE or
+     * which have an updatedAt that exceeds the deadline (180 days) and are not ENABLED.
+     * The result is ordered by updatedAt descending.
+     */
+    public async getByDeletedStatusOrUpdatedAtExceedsDeadline(): Promise<EmailAddress<true>[]> {
+        const daysAgo: Date = new Date();
+        const deadlineInDays: number = this.getDeadlineInDaysForNonEnabledEmailAddresses();
+        this.logger.info(`Fetching EmailAddressing For Deletion, deadlineInDays:${deadlineInDays}`);
+        daysAgo.setDate(daysAgo.getDate() - deadlineInDays);
+
+        const emailAddressEntities: EmailAddressEntity[] = await this.em.find(
+            EmailAddressEntity,
+            {
+                $or: [
+                    { status: EmailAddressStatus.DELETED_LDAP },
+                    { status: EmailAddressStatus.DELETED_OX },
+                    { status: EmailAddressStatus.DELETED },
+                    {
+                        $and: [{ status: { $ne: EmailAddressStatus.ENABLED } }, { updatedAt: { $lt: daysAgo } }],
+                    },
+                ],
+            },
+            { orderBy: { updatedAt: QueryOrder.DESC } },
+        );
+
+        return emailAddressEntities.map(mapEntityToAggregate);
     }
 
     public async existsEmailAddress(address: string): Promise<boolean> {
@@ -151,6 +206,35 @@ export class EmailRepo {
         if (!emailAddresses || !emailAddresses[0]) return undefined;
 
         return new PersonEmailResponse(emailAddresses[0].status, emailAddresses[0].address);
+    }
+
+    /**
+     * Returns a map with key-value pairs personId -> PersonEmailResponse.
+     * NOTE: The value for a key is not a list of PersonEmailResponse but a single PersonEmailResponse, regardless how many ENABLED
+     * EmailAddresses were found per personID in DB. The most recent one (based on updatedAt) will always override the last value in the map
+     * for the specified personId.
+     * Only enabled addresses will be part of the response, so the resulting map can return UNDEFINED for a personId
+     * when either no email-addresses could be found for that person or only email-addresses with status other than ENABLED.
+     * @param personIds
+     */
+    public async getEmailAddressAndStatusForPersonIds(
+        personIds: PersonID[],
+    ): Promise<Map<PersonID, PersonEmailResponse>> {
+        let lastUsedPersonId: PersonID;
+        const addresses: EmailAddress<true>[] = await this.findEnabledByPersonIdsSortedByUpdatedAtDesc(personIds);
+        const responseMap: Map<PersonID, PersonEmailResponse> = new Map<PersonID, PersonEmailResponse>();
+
+        addresses.map((ea: EmailAddress<true>) => {
+            if (lastUsedPersonId === ea.personId) {
+                this.logger.error(
+                    `Found multiple ENABLED EmailAddresses, treating ${ea.address} as latest address, personId:${ea.personId}`,
+                );
+            }
+            responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
+            lastUsedPersonId = ea.personId;
+        });
+
+        return responseMap;
     }
 
     /**
@@ -197,5 +281,45 @@ export class EmailRepo {
         }
 
         return mapEntityToAggregate(emailAddressEntity);
+    }
+
+    /**
+     * Deletes an EmailAddress by its ID. Returns a Defined Error on failure or Undefined on success.
+     * @param id
+     */
+    public async deleteById(id: EmailAddressID): Promise<Option<DomainError>> {
+        try {
+            const emailAddressEntity: Loaded<EmailAddressEntity> = await this.em.findOneOrFail(EmailAddressEntity, {
+                id,
+            });
+            const emailAddress: EmailAddress<true> = mapEntityToAggregate(emailAddressEntity);
+            await this.em.removeAndFlush(emailAddressEntity);
+
+            if (!emailAddress.oxUserID) {
+                return new EmailAddressMissingOxUserIdError(emailAddress.id, emailAddress.address);
+            }
+            this.eventService.publish(
+                new EmailAddressDeletedInDatabaseEvent(
+                    emailAddress.personId,
+                    emailAddress.oxUserID,
+                    emailAddress.id,
+                    emailAddress.status,
+                    emailAddress.address,
+                ),
+            );
+
+            return undefined;
+        } catch (err) {
+            this.logger.logUnknownAsError('Error during deletion of EmailAddress', err);
+
+            return new EmailAddressDeletionError(id);
+        }
+    }
+
+    private getDeadlineInDaysForNonEnabledEmailAddresses(): number {
+        return (
+            this.emailInstanceConfig.NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS ??
+            NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT
+        );
     }
 }

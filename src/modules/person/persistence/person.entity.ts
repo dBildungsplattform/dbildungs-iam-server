@@ -1,7 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import {
     ArrayType,
-    Cascade,
     Collection,
     DateTimeType,
     Entity,
@@ -18,6 +17,7 @@ import { Geschlecht, Vertrauensstufe } from '../domain/person.enums.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { UserLockEntity } from '../../keycloak-administration/entity/user-lock.entity.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 
 @Entity({ tableName: 'person' })
 export class PersonEntity extends TimestampedEntity {
@@ -149,8 +149,6 @@ export class PersonEntity extends TimestampedEntity {
     @OneToMany({
         entity: () => PersonenkontextEntity,
         mappedBy: 'personId',
-        cascade: [Cascade.REMOVE],
-        orphanRemoval: true,
     })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
 
@@ -171,12 +169,18 @@ export class PersonEntity extends TimestampedEntity {
     @OneToMany({
         entity: () => UserLockEntity,
         mappedBy: 'person',
-        cascade: [Cascade.REMOVE],
-        orphanRemoval: true,
     })
     public userLocks: Collection<UserLockEntity> = new Collection<UserLockEntity>(this);
 
     @AutoMap()
     @Property({ nullable: false, default: false })
     public istTechnisch!: boolean;
+
+    @OneToMany({
+        entity: () => PersonExternalIdMappingEntity,
+        mappedBy: 'person',
+        orphanRemoval: true,
+        eager: true, // Always populate this relation
+    })
+    public externalIds: Collection<PersonExternalIdMappingEntity> = new Collection<PersonExternalIdMappingEntity>(this);
 }

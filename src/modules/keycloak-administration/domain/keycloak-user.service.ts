@@ -78,7 +78,7 @@ export class KeycloakUserService {
 
             return { ok: true, value: response.id };
         } catch (err) {
-            this.logger.error(`Could not create user, message: ${JSON.stringify(err)} `);
+            this.logger.logUnknownAsError('Could not create User', err);
             return { ok: false, error: new KeycloakClientError('Could not create user') };
         }
     }
@@ -168,7 +168,7 @@ export class KeycloakUserService {
 
             return { ok: true, value: response.id };
         } catch (err) {
-            this.logger.error(`Could not create user, message: ${JSON.stringify(err)} `);
+            this.logger.logUnknownAsError('Could not create User', err);
             return { ok: false, error: new KeycloakClientError('Could not create user') };
         }
     }
@@ -208,7 +208,7 @@ export class KeycloakUserService {
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Could not update user-attributes, message: ${JSON.stringify(err)}`);
+            this.logger.logUnknownAsError('Could not update user-attributes', err);
 
             return { ok: false, error: new KeycloakClientError('Could not update user-attributes') };
         }
@@ -363,7 +363,7 @@ export class KeycloakUserService {
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Could not update username, message: ${JSON.stringify(err)}`);
+            this.logger.logUnknownAsError('Could not update username', err);
 
             return { ok: false, error: new KeycloakClientError('Could not update username') };
         }
@@ -400,9 +400,9 @@ export class KeycloakUserService {
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Could not update user-attributes, message: ${JSON.stringify(err)}`);
+            this.logger.logUnknownAsError('Could not remove ID_OX from user-attributes', err);
 
-            return { ok: false, error: new KeycloakClientError('Could not update user-attributes') };
+            return { ok: false, error: new KeycloakClientError('Could not remove ID_OX from user-attributes') };
         }
     }
 
@@ -512,7 +512,7 @@ export class KeycloakUserService {
             /* eslint-disable no-await-in-loop */
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Failed to ${action} groups for user ${userId}: ${JSON.stringify(err)}`);
+            this.logger.error(`Failed to ${action} groups for user ${userId}`, err);
             return { ok: false, error: new KeycloakClientError(`Failed to ${action} groups`) };
         }
     }
@@ -579,7 +579,7 @@ export class KeycloakUserService {
             }
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.error(`Could not update user status or database, message: ${JSON.stringify(err)}`);
+            this.logger.logUnknownAsError('Could not update user status or database', err);
             return {
                 ok: false,
                 error: new KeycloakClientError('Could not update user status or database'),
@@ -598,7 +598,7 @@ export class KeycloakUserService {
             const user: UserRepresentation | undefined = await kcAdminClient.users.findOne({ id: userId });
             return user;
         } catch (err) {
-            this.logger.error(`Could not load keycloak userdata, message: ${JSON.stringify(err)}`);
+            this.logger.logUnknownAsError('Could not load keycloak userdata', err);
             return undefined;
         }
     }

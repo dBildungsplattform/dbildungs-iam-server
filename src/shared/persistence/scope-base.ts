@@ -40,7 +40,6 @@ export abstract class ScopeBase<T extends AnyEntity> {
             .orderBy(this.queryOrderMaps)
             .offset(this.offset ?? undefined)
             .limit(this.limit ?? undefined);
-        //.getResultAndCount();
 
         return result;
     }

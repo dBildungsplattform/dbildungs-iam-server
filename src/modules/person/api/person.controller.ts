@@ -82,6 +82,7 @@ import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
+import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -328,11 +329,18 @@ export class PersonController {
 
         const [persons, total]: Counted<Person<true>> = await this.personRepository.findBy(scope);
 
+        const personIds: PersonID[] = persons.map((p: Person<true>) => p.id);
+        const personEmailResponseMap: Map<PersonID, PersonEmailResponse> =
+            await this.emailRepo.getEmailAddressAndStatusForPersonIds(personIds);
+
         const response: PagedResponse<PersonendatensatzResponse> = new PagedResponse({
             offset: queryParams.offset ?? 0,
             limit: queryParams.limit ?? total,
             total: total,
-            items: persons.map((person: Person<true>) => new PersonendatensatzResponse(person, false)),
+            items: persons.map(
+                (person: Person<true>) =>
+                    new PersonendatensatzResponse(person, false, personEmailResponseMap.get(person.id)),
+            ),
         });
 
         return response;
@@ -659,6 +667,7 @@ export class PersonController {
             personResult.value.id,
             personResult.value.referrer,
         );
+        this.eventService.publish(new PersonLdapSyncEvent(personResult.value.id));
 
         if (!changeUserPasswordResult.ok) {
             throw new PersonUserPasswordModificationError(personResult.value.id);
@@ -691,6 +700,7 @@ export class PersonController {
             id,
             username,
         );
+        this.eventService.publish(new PersonLdapSyncEvent(id));
 
         if (!changeUserPasswordResult.ok) {
             throw new PersonUserPasswordModificationError(id);

@@ -12,6 +12,7 @@ import { faker } from '@faker-js/faker';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { Rolle } from '../rolle/domain/rolle.js';
 import { DoFactory } from '../../../test/utils/do-factory.js';
+import { ConfigTestModule, DatabaseTestModule, LoggingTestModule } from '../../../test/utils/index.js';
 
 describe('KeycloackServiceProviderHandler', () => {
     let module: TestingModule;
@@ -21,6 +22,7 @@ describe('KeycloackServiceProviderHandler', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 KeycloackServiceProviderHandler,
                 {

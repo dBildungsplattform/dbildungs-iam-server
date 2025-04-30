@@ -40,7 +40,6 @@ import { ConfigService } from '@nestjs/config';
 import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
@@ -50,7 +49,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
@@ -69,6 +68,10 @@ import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -79,6 +82,7 @@ describe('PersonRepository Integration', () => {
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let eventServiceMock: DeepMocked<EventService>;
+    let eventRoutingLegacyKafkaService: DeepMocked<EventRoutingLegacyKafkaService>;
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
@@ -97,7 +101,6 @@ describe('PersonRepository Integration', () => {
             providers: [
                 PersonRepository,
                 OrganisationRepository,
-
                 ConfigService,
                 {
                     provide: EmailRepo,
@@ -107,6 +110,10 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: EventService,
                     useValue: createMock<EventService>(),
+                },
+                {
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: UsernameGeneratorService,
@@ -140,6 +147,7 @@ describe('PersonRepository Integration', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
+        eventRoutingLegacyKafkaService = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -161,9 +169,12 @@ describe('PersonRepository Integration', () => {
     type SavedPersonProps = { keycloackID: string };
     async function savePerson(
         withPersonalnummer: boolean = false,
-        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string }> = {},
+        props: Partial<SavedPersonProps & { vorname?: string; familienname?: string; referrer?: string }> = {},
     ): Promise<Person<true>> {
-        usernameGeneratorService.generateUsername.mockResolvedValueOnce({ ok: true, value: 'testusername' });
+        usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+            ok: true,
+            value: props.referrer ?? 'testusername',
+        });
         const defaultProps: SavedPersonProps = {
             keycloackID: faker.string.uuid(),
         };
@@ -754,7 +765,11 @@ describe('PersonRepository Integration', () => {
                     if (result instanceof DomainError) {
                         return;
                     }
-                    expect(eventServiceMock.publish).toHaveBeenCalledWith(expect.any(PersonRenamedEvent));
+                    expect(eventServiceMock.publish).not.toHaveBeenCalled();
+                    expect(eventRoutingLegacyKafkaService.publish).toHaveBeenCalledWith(
+                        expect.any(PersonRenamedEvent),
+                        expect.any(KafkaPersonRenamedEvent),
+                    );
                     expect(result.vorname).toEqual(person.vorname);
                     expect(result.familienname).not.toEqual(person.familienname);
                 });
@@ -1089,6 +1104,8 @@ describe('PersonRepository Integration', () => {
                 faker.string.uuid(),
             );
 
+            person.externalIds.LDAP = faker.string.uuid();
+
             const expectedProperties: string[] = [
                 'keycloakUserId',
                 'referrer',
@@ -1120,6 +1137,8 @@ describe('PersonRepository Integration', () => {
             expectedProperties.forEach((prop: string) => {
                 expect(result).toHaveProperty(prop);
             });
+
+            expect(result.externalIds).toHaveLength(1);
         });
     });
 
@@ -1129,9 +1148,16 @@ describe('PersonRepository Integration', () => {
                 PersonEntity,
                 mapAggregateToData(DoFactory.createPerson(true, { keycloakUserId: faker.string.uuid() })),
             );
+            personEntity.externalIds.add(
+                em.create(PersonExternalIdMappingEntity, {
+                    externalId: faker.string.uuid(),
+                    type: PersonExternalIdType.LDAP,
+                }),
+            );
             const person: Person<true> = mapEntityToAggregate(personEntity);
 
             expect(person).toBeInstanceOf(Person);
+            expect(person.externalIds.LDAP).toBeDefined();
         });
     });
 
@@ -1578,7 +1604,10 @@ describe('PersonRepository Integration', () => {
                         removedPersonenkontexts,
                     );
 
-                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect(eventRoutingLegacyKafkaService.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            emailAddress: emailAddress.address,
+                        }),
                         expect.objectContaining({
                             emailAddress: emailAddress.address,
                         }),
@@ -1591,7 +1620,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<true> = DoFactory.createPerson(true);
                 personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
 
-                await em.persistAndFlush(new PersonEntity().assign(mapAggregateToData(person1)));
+                await em.persistAndFlush(em.create(PersonEntity, mapAggregateToData(person1)));
 
                 const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
                 const result: Result<void, DomainError> = await sut.deletePerson(
@@ -1705,6 +1734,59 @@ describe('PersonRepository Integration', () => {
                 }
                 expect(result.vorname).toEqual(updatedPerson.vorname);
                 expect(result.familienname).toEqual(updatedPerson.familienname);
+            });
+
+            it('should correctly set and unset external systems', async () => {
+                const existingPerson: Person<true> = await savePerson();
+
+                const updatedPerson: Person<true> = Person.construct(
+                    existingPerson.id,
+                    existingPerson.createdAt,
+                    existingPerson.updatedAt,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    existingPerson.mandant,
+                    existingPerson.stammorganisation,
+                    existingPerson.keycloakUserId,
+                    existingPerson.referrer,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined, //istTechnisch
+                    {
+                        LDAP: faker.string.uuid(), //externalIds
+                    },
+                );
+
+                let result: Person<true> | DomainError = await sut.save(updatedPerson);
+                if (result instanceof DomainError) throw result;
+
+                expect(result.externalIds.LDAP).toEqual(updatedPerson.externalIds.LDAP);
+
+                updatedPerson.externalIds.LDAP = undefined;
+
+                result = await sut.save(updatedPerson);
+                if (result instanceof DomainError) throw result;
+
+                expect(result.externalIds.LDAP).toBeUndefined();
             });
 
             describe('when person does not have an id', () => {
@@ -1869,6 +1951,97 @@ describe('PersonRepository Integration', () => {
             expect(persons[1]?.vorname).toBe('Bob');
             expect(persons[2]?.vorname).toBe('Charlie');
         });
+
+        it('should apply sort criteria correctly for VORNAME', async () => {
+            await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
+            await savePerson(false, { vorname: 'Anna', familienname: 'Johnson' });
+            const person1: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Brown' });
+            const person2: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Brown' });
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.VORNAME,
+                sortOrder: ScopeOrder.ASC,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+
+            expect(total).toBe(4);
+            expect(persons[0]?.familienname).toBe('Brown');
+            expect(persons[1]?.familienname).toBe('Brown');
+            expect(persons[0]?.referrer).toBe(person1.referrer);
+            expect(persons[1]?.referrer).toBe(person2.referrer);
+            expect(persons[2]?.familienname).toBe('Johnson');
+            expect(persons[3]?.familienname).toBe('Smith');
+        });
+
+        it('should apply sort criteria correctly for FAMILIENNAME', async () => {
+            await savePerson(false, { vorname: 'Charlie', familienname: 'Smith' });
+            await savePerson(false, { vorname: 'Bob', familienname: 'Smith' });
+            const person1: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
+            const person2: Person<true> = await savePerson(false, { vorname: 'Anna', familienname: 'Smith' });
+
+            const permittedOrgas: PermittedOrgas = { all: true };
+
+            const queryParams: PersonenQueryParams = {
+                offset: 0,
+                limit: 10,
+                sortField: SortFieldPersonFrontend.FAMILIENNAME,
+                sortOrder: ScopeOrder.ASC,
+            };
+
+            const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+            expect(result).toBeDefined();
+
+            const [persons, total]: [Person<true>[], number] = result;
+
+            expect(total).toBe(4);
+
+            expect(persons[0]?.vorname).toBe('Anna');
+            expect(persons[1]?.vorname).toBe('Anna');
+            expect(persons[0]?.referrer).toBe(person1.referrer);
+            expect(persons[1]?.referrer).toBe(person2.referrer);
+            expect(persons[2]?.vorname).toBe('Bob');
+            expect(persons[3]?.vorname).toBe('Charlie');
+        });
+
+        it.each([SortFieldPersonFrontend.PERSONALNUMMER, SortFieldPersonFrontend.REFERRER])(
+            'should apply sort criteria correctly for %s',
+            async (sortField: SortFieldPersonFrontend) => {
+                await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', referrer: 'csmith' });
+                await savePerson(false, { vorname: 'Bob', familienname: 'Smith', referrer: 'bsmith' });
+                await savePerson(false, { vorname: 'Anna', familienname: 'Smith', referrer: 'asmith' });
+
+                const permittedOrgas: PermittedOrgas = { all: true };
+
+                const queryParams: PersonenQueryParams = {
+                    offset: 0,
+                    limit: 10,
+                    sortField: sortField,
+                    sortOrder: ScopeOrder.ASC,
+                };
+
+                const result: Counted<Person<true>> = await sut.findbyPersonFrontend(queryParams, permittedOrgas);
+
+                expect(result).toBeDefined();
+
+                const [persons, total]: [Person<true>[], number] = result;
+
+                expect(total).toBe(3);
+
+                expect(persons[0]?.referrer).toBe('asmith');
+                expect(persons[1]?.referrer).toBe('bsmith');
+                expect(persons[2]?.referrer).toBe('csmith');
+            },
+        );
     });
 
     describe('findByIds', () => {

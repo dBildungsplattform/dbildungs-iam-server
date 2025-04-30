@@ -23,6 +23,13 @@ import { ServiceProviderService } from '../service-provider/domain/service-provi
 import { HttpException } from '@nestjs/common';
 import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
 import { DomainError } from '../../shared/error/domain.error.js';
+import { EmailAddressDeletionService } from '../email/email-address-deletion/email-address-deletion.service.js';
+
+class UnknownError extends DomainError {
+    public constructor(message: string) {
+        super(message, '');
+    }
+}
 
 describe('CronController', () => {
     let cronController: CronController;
@@ -35,6 +42,7 @@ describe('CronController', () => {
     let personenkontextWorkflowMock: DeepMocked<PersonenkontextWorkflowAggregate>;
     let userLockRepositoryMock: DeepMocked<UserLockRepository>;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
+    let emailAddressDeletionServiceMock: DeepMocked<EmailAddressDeletionService>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -51,6 +59,10 @@ describe('CronController', () => {
                 {
                     provide: PersonDeleteService,
                     useValue: createMock<PersonDeleteService>(),
+                },
+                {
+                    provide: EmailAddressDeletionService,
+                    useValue: createMock<EmailAddressDeletionService>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
@@ -86,6 +98,7 @@ describe('CronController', () => {
         userLockRepositoryMock = module.get(UserLockRepository);
         permissionsMock = createMock<PersonPermissions>();
         serviceProviderServiceMock = module.get(ServiceProviderService);
+        emailAddressDeletionServiceMock = module.get(EmailAddressDeletionService);
     });
 
     beforeEach(() => {
@@ -632,11 +645,6 @@ describe('CronController', () => {
         describe(`when is authorized user but ServiceProvider update throws an Error`, () => {
             it(`should throw the error`, async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-                class UnknownError extends DomainError {
-                    public constructor(message: string) {
-                        super(message, '');
-                    }
-                }
                 serviceProviderServiceMock.updateServiceProvidersForVidis.mockImplementationOnce(() => {
                     throw new UnknownError('Internal error when trying to update ServiceProviders for VIDIS Angebote');
                 });
@@ -644,6 +652,39 @@ describe('CronController', () => {
                 await expect(cronController.updateServiceProvidersForVidisAngebote(permissionsMock)).rejects.toThrow(
                     'Internal error when trying to update ServiceProviders for VIDIS Angebote',
                 );
+            });
+        });
+    });
+
+    describe('/DELETE cron/email-addresses-delete', () => {
+        describe(`when is authorized user`, () => {
+            it(`should delete non-enabled EmailAddresses which exceed deadline`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+                emailAddressDeletionServiceMock.deleteEmailAddresses.mockResolvedValue();
+
+                await cronController.emailAddressesDelete(permissionsMock);
+
+                expect(emailAddressDeletionServiceMock.deleteEmailAddresses).toHaveBeenCalledTimes(1);
+            });
+        });
+        describe(`when is not authorized user`, () => {
+            it(`should NOT delete non-enabled EmailAddresses which exceed deadline and throw an error`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
+
+                await expect(cronController.emailAddressesDelete(permissionsMock)).rejects.toThrow(HttpException);
+                expect(emailAddressDeletionServiceMock.deleteEmailAddresses).toHaveBeenCalledTimes(0);
+            });
+        });
+        describe(`when is authorized user but EmailAddressDeleteService throws an Error`, () => {
+            it(`should throw the error`, async () => {
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
+                const errorMessage: string =
+                    'Internal error when trying deleting non-enabled EmailAddresses which exceeded deadline';
+                emailAddressDeletionServiceMock.deleteEmailAddresses.mockImplementationOnce(() => {
+                    throw new UnknownError(errorMessage);
+                });
+
+                await expect(cronController.emailAddressesDelete(permissionsMock)).rejects.toThrow(errorMessage);
             });
         });
     });
