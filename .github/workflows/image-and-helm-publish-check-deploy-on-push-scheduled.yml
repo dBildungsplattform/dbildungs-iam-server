@@ -12,7 +12,7 @@ on:
   delete:
 
 concurrency:
-  group: dbildungs-iam-server-${{ github.event.ref }}
+  group: erwin-portal-server-${{ github.event.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -97,7 +97,7 @@ jobs:
       contents: read
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
     with:
-      image_name: "dbildungs-iam-server"
+      image_name: "erwin-portal-server"
       run_trivy_scan: true
       image_tag_generation: ${{ github.ref_name == 'main' && 'commit_hash' || 'specified' }}
       image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
@@ -140,7 +140,7 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
     secrets: inherit
     with:
-      chart_name: dbildungs-iam-server
+      chart_name: erwin-portal-server
       image_tag_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_IMAGE_TAG_GENERATION }}
       image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
       helm_chart_version_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERSION_GENERATION }}
@@ -218,7 +218,7 @@ jobs:
       security-events: write
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
     with:
-      image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
+      image_ref: 'ghcr.io/${{ github.repository_owner }}/erwin-portal-server:latest'
       fail_on_vulnerabilites: true
       report_location: "Dockerfile"
       trivyignores: '.trivyignore'
