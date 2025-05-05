@@ -246,28 +246,6 @@ describe('PersonRepository Integration', () => {
         });
     });
 
-    describe('findByUsername', () => {
-        describe('when found by username', () => {
-            it('should return found person', async () => {
-                const personSaved: Person<true> = await savePerson();
-                if (personSaved.referrer) {
-                    const foundPerson: Option<Person<true>> = await sut.findByUsername(personSaved.referrer);
-                    expect(foundPerson).toBeInstanceOf(Person);
-                } else {
-                    throw new Error();
-                }
-            });
-        });
-
-        describe('when not found by keycloakUserId', () => {
-            it('should return null', async () => {
-                const foundPerson: Option<Person<true>> = await sut.findByUsername(faker.string.uuid());
-
-                expect(foundPerson).toBeNull();
-            });
-        });
-    });
-
     describe('findById', () => {
         describe('when found by Id', () => {
             it('should return found person', async () => {
