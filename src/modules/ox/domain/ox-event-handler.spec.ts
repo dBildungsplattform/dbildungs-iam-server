@@ -1650,6 +1650,7 @@ describe('OxEventHandler', () => {
                 },
                 [],
                 [
+                    //removed PKs
                     {
                         id: faker.string.uuid(),
                         orgaId: faker.string.uuid(),
@@ -1669,7 +1670,18 @@ describe('OxEventHandler', () => {
                         serviceProviderExternalSystems: [],
                     },
                 ],
-                [],
+                [
+                    //current PKs
+                    {
+                        id: faker.string.uuid(),
+                        orgaId: faker.string.uuid(),
+                        rolle: RollenArt.LEHR,
+                        rolleId: faker.string.uuid(),
+                        orgaKennung: rollenArtLehrPKOrgaKennung,
+                        isItslearningOrga: false,
+                        serviceProviderExternalSystems: [],
+                    },
+                ],
             );
         });
         describe('when handler is disabled', () => {
