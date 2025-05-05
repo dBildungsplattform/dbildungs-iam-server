@@ -139,7 +139,6 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                             err,
                         );
 
-                        console.log('kafkaevent:' + JSON.stringify(kafkaEvent));
                         return {
                             ok: false,
                             error: new Error('Unexpected handler error'),
