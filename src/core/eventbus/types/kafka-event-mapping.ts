@@ -2,14 +2,12 @@ import { BaseEvent } from '../../../shared/events/index.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
 import { KafkaEvent } from '../../../shared/events/kafka-event.js';
-import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { Constructor } from './util.types.js';
 
 export type KafkaEventKey =
-    | 'user.created'
     | 'user.created.email'
     | 'user.deleted'
     | 'user.modified.name'
@@ -25,11 +23,6 @@ export interface KafkaEventMappingEntry {
 }
 
 export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = {
-    'user.created': {
-        eventClass: KafkaPersonCreatedEvent, // CHECKED
-        topic: 'user-topic',
-        topicDlq: 'user-dlq-topic',
-    },
     'user.created.email': {
         eventClass: KafkaEmailAddressGeneratedEvent, // CHECKED
         topic: 'user-topic',

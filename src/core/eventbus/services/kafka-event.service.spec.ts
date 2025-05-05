@@ -16,7 +16,6 @@ import {
     ConsumerRunConfig,
     EachMessagePayload,
 } from 'kafkajs';
-import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
 import { inspect } from 'util';
@@ -51,7 +50,7 @@ describe('KafkaEventService', () => {
         ENABLED: true,
     };
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         configService = createMock<ConfigService>();
         configService.getOrThrow.mockReturnValue({ ...defaultKafkaConfig } satisfies KafkaConfig);
 
@@ -112,16 +111,16 @@ describe('KafkaEventService', () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(new TestEvent())),
-            headers: { eventKey: 'user.created' },
+            headers: { eventKey: 'user.deleted' },
         });
 
         const handler: jest.Mock = jest.fn();
-        sut.subscribe(KafkaPersonCreatedEvent, handler);
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
 
         await sut.handleMessage(message);
 
         expect(handler).toHaveBeenCalled();
-        expect(logger.info).toHaveBeenCalledWith('Handling event: KafkaPersonCreatedEvent for test with 1 handlers');
+        expect(logger.info).toHaveBeenCalledWith('Handling event: KafkaPersonDeletedEvent for test with 1 handlers');
     });
 
     it('should log error if event type header is missing', async () => {
@@ -152,7 +151,7 @@ describe('KafkaEventService', () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify([{ invalid: 'invalid' }])),
-            headers: { eventKey: 'user.created' },
+            headers: { eventKey: 'user.deleted' },
         });
 
         await sut.handleMessage(message);
@@ -164,7 +163,7 @@ describe('KafkaEventService', () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from('{ invalidJson: '),
-            headers: { eventKey: 'user.created' },
+            headers: { eventKey: 'user.deleted' },
         });
 
         await sut.handleMessage(message);
@@ -179,11 +178,11 @@ describe('KafkaEventService', () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
             value: Buffer.from(JSON.stringify(new TestEvent())),
-            headers: { eventKey: 'user.created' },
+            headers: { eventKey: 'user.deleted' },
         });
 
         const handler: jest.Mock = jest.fn().mockRejectedValue(new Error('Handler error'));
-        sut.subscribe(KafkaPersonCreatedEvent, handler);
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
 
         await sut.handleMessage(message);
 
@@ -194,11 +193,11 @@ describe('KafkaEventService', () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
             value: undefined,
-            headers: { eventKey: 'user.created' },
+            headers: { eventKey: 'user.deleted' },
         });
 
         const handler: jest.Mock = jest.fn();
-        sut.subscribe(KafkaPersonCreatedEvent, handler);
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
 
         await sut.handleMessage(message);
 
