@@ -122,7 +122,7 @@ export class PersonController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonendatensatzResponse> {
         const isMigrationUser: boolean = await permissions.hasSystemrechteAtRootOrganisation([
-            RollenSystemRecht.MIGRATION_DURCHFUEHREN,
+            RollenSystemRecht.PERSONEN_ANLEGEN, //TODO
         ]);
         if (!isMigrationUser) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
