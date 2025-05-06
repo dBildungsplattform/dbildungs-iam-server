@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { Attribute, Change, Client, Control, Entry, SearchResult } from 'ldapts';
+import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
 import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
@@ -35,7 +35,7 @@ export type PersonData = {
     familienname: string;
     id: string;
     referrer?: string;
-    ldapEntryUUID?: string; // When this field is set, it will use the relax operator. Only use during migration.
+    ldapEntryUUID?: string;
 };
 
 @Injectable()
@@ -79,8 +79,6 @@ export class LdapClientService {
     public static readonly HOME_DIRECTORY: string = 'none'; //highlight it's a dummy value
 
     public static readonly ATTRIBUTE_VALUE_EMPTY: string = 'empty';
-
-    private static readonly RELAX_OID: string = '1.3.6.1.4.1.4203.666.5.12'; // Relax Control
 
     private static readonly GROUPS: string = 'groups';
 
@@ -369,14 +367,8 @@ export class LdapClientService {
                 mailAlternativeAddress: mail ?? ``,
             };
 
-            const controls: Control[] = [];
-            if (person.ldapEntryUUID) {
-                entry.entryUUID = person.ldapEntryUUID;
-                controls.push(new Control(LdapClientService.RELAX_OID));
-            }
-
             try {
-                await client.add(lehrerUid, entry, controls);
+                await client.add(lehrerUid, entry);
 
                 const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, referrer);
                 if (!entryUUIDResult.ok) return entryUUIDResult;
