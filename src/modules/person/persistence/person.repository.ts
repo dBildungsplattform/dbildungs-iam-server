@@ -559,11 +559,7 @@ export class PersonRepository {
         }
 
         person.referrer = person.username;
-        const userDo: User<false> = User.createNew(person.username, undefined, {
-            ID_NEXTCLOUD: [person.id],
-            ID_ITSLEARNING: [person.id],
-            ID_OX: [person.id],
-        });
+        const userDo: User<false> = User.createNew(person.username, undefined);
 
         const creationResult: Result<string, DomainError> = await kcUserService.create(userDo);
         if (!creationResult.ok) {
@@ -600,9 +596,7 @@ export class PersonRepository {
             return new EntityCouldNotBeCreated('Person');
         }
         person.referrer = person.username;
-        const userDo: User<false> = User.createNew(person.username, undefined, {
-            ID_ITSLEARNING: [person.id],
-        });
+        const userDo: User<false> = User.createNew(person.username, undefined);
 
         const creationResult: Result<string, DomainError> = await kcUserService.createWithHashedPassword(
             userDo,

@@ -12,7 +12,7 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
-import { ExternalSystemIDs, User } from './user.js';
+import { User } from './user.js';
 import { UserLockRepository } from '../repository/user-lock.repository.js';
 import { UserLock } from './user-lock.js';
 import { PersonLockOccasion } from '../../person/domain/person.enums.js';
@@ -61,8 +61,7 @@ export class KeycloakUserService {
         try {
             const userRepresentation: UserRepresentation = {
                 username: user.username,
-                enabled: true,
-                attributes: user.externalSystemIDs,
+                enabled: true
             };
 
             if (user.email) {
@@ -159,8 +158,7 @@ export class KeycloakUserService {
                         type: 'password',
                         temporary: true,
                     },
-                ],
-                attributes: user.externalSystemIDs,
+                ]
             };
 
             const response: { id: string } = await kcAdminClientResult.value.users.create(userRepresentation);
@@ -344,21 +342,12 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Response is invalid') };
         }
 
-        const externalSystemIDs: ExternalSystemIDs = {};
-        if (userReprDto.attributes) {
-            externalSystemIDs.ID_NEXTCLOUD = userReprDto.attributes['ID_NEXTCLOUD'] as string[];
-            externalSystemIDs.ID_ITSLEARNING = userReprDto.attributes['ID_ITSLEARNING'] as string[];
-            externalSystemIDs.ID_OX = userReprDto.attributes['ID_OX'] as string[];
-        }
-
         const userDo: User<true> = User.construct<true>(
             userReprDto.id,
             userReprDto.username,
             userReprDto.email,
             new Date(userReprDto.createdTimestamp),
-            {}, // UserAttributes
             userReprDto.enabled,
-            userReprDto.attributes,
         );
 
         return { ok: true, value: userDo };
