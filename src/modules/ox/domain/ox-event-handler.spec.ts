@@ -31,6 +31,7 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -167,6 +168,71 @@ describe('OxEventHandler', () => {
         };
     }
 
+    /**
+     * Returns an instance of Person. Fake values are used for any non-defined optional parameter.
+     * @param id
+     * @param username
+     * @param oxUserId
+     * @param email
+     */
+    function getPerson(id?: PersonID, username?: PersonReferrer, oxUserId?: OXUserID, email?: string): Person<true> {
+        return createMock<Person<true>>({
+            id: id ?? faker.string.uuid(),
+            referrer: username ?? faker.internet.userName(),
+            oxUserId: oxUserId ?? faker.string.numeric(),
+            email: email ?? faker.internet.email(),
+        });
+    }
+
+    /**
+     * Returns an instance of PersonenkontextUpdatedEvent. RemovedKontexte contains two PersonenkontextEventKontextData, one with rollenArt LEHR and one with EXTERN.
+     * @param personId
+     * @param rollenArtLehrPKOrgaKennung
+     * @param withRemainingCurrentPK true: add one PersonenkontextEventKontextData with rollenArt LEHR to currentKontexte, false: set empty currentKontexte
+     */
+    function getPersonenkontextUpdatedEvent(
+        personId: PersonID,
+        rollenArtLehrPKOrgaKennung: string,
+        withRemainingCurrentPK: boolean,
+    ): PersonenkontextUpdatedEvent {
+        const pkEventDataRollenartLehr: PersonenkontextEventKontextData = {
+            id: faker.string.uuid(),
+            orgaId: faker.string.uuid(),
+            rolle: RollenArt.LEHR,
+            rolleId: faker.string.uuid(),
+            orgaKennung: rollenArtLehrPKOrgaKennung,
+            isItslearningOrga: false,
+            serviceProviderExternalSystems: [],
+        };
+        const currentKontexte: PersonenkontextEventKontextData[] = [];
+        if (withRemainingCurrentPK) {
+            currentKontexte.push(pkEventDataRollenartLehr);
+        }
+        const event: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                vorname: faker.person.firstName(),
+                familienname: faker.person.lastName(),
+                username: faker.internet.userName(),
+            },
+            [],
+            [
+                //removed PKs
+                pkEventDataRollenartLehr,
+                {
+                    id: faker.string.uuid(),
+                    orgaId: faker.string.uuid(),
+                    rolle: RollenArt.EXTERN,
+                    rolleId: faker.string.uuid(),
+                    orgaKennung: faker.string.numeric(7),
+                    isItslearningOrga: false,
+                    serviceProviderExternalSystems: [],
+                },
+            ],
+            currentKontexte,
+        );
+        return event;
+    }
     afterAll(async () => {
         await module.close();
     });
@@ -1641,48 +1707,7 @@ describe('OxEventHandler', () => {
             rollenArtLehrPKOrgaKennung = faker.string.numeric(7);
             oxUserId = faker.string.numeric();
             oxGroupId = faker.string.numeric();
-            event = new PersonenkontextUpdatedEvent(
-                {
-                    id: personId,
-                    vorname: faker.person.firstName(),
-                    familienname: faker.person.lastName(),
-                    username: faker.internet.userName(),
-                },
-                [],
-                [
-                    //removed PKs
-                    {
-                        id: faker.string.uuid(),
-                        orgaId: faker.string.uuid(),
-                        rolle: RollenArt.LEHR,
-                        rolleId: faker.string.uuid(),
-                        orgaKennung: rollenArtLehrPKOrgaKennung,
-                        isItslearningOrga: false,
-                        serviceProviderExternalSystems: [],
-                    },
-                    {
-                        id: faker.string.uuid(),
-                        orgaId: faker.string.uuid(),
-                        rolle: RollenArt.EXTERN,
-                        rolleId: faker.string.uuid(),
-                        orgaKennung: faker.string.numeric(7),
-                        isItslearningOrga: false,
-                        serviceProviderExternalSystems: [],
-                    },
-                ],
-                [
-                    //current PKs
-                    {
-                        id: faker.string.uuid(),
-                        orgaId: faker.string.uuid(),
-                        rolle: RollenArt.LEHR,
-                        rolleId: faker.string.uuid(),
-                        orgaKennung: rollenArtLehrPKOrgaKennung,
-                        isItslearningOrga: false,
-                        serviceProviderExternalSystems: [],
-                    },
-                ],
-            );
+            event = getPersonenkontextUpdatedEvent(personId, rollenArtLehrPKOrgaKennung, true);
         });
         describe('when handler is disabled', () => {
             it('should log and skip processing when not enabled', async () => {
@@ -1712,11 +1737,7 @@ describe('OxEventHandler', () => {
         });
         describe('when getting oxGroupId by oxGroupName fails', () => {
             it('should log error about that', async () => {
-                person = createMock<Person<true>>({
-                    email: faker.internet.email(),
-                    referrer: username,
-                    oxUserId: faker.string.numeric(),
-                });
+                person = getPerson(personId, username, oxUserId);
                 //mock Ox-getOxGroupByName-request results in an error
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
@@ -1731,11 +1752,7 @@ describe('OxEventHandler', () => {
         });
         describe('when removing user as member from oxGroup is successful', () => {
             it('should log info about that', async () => {
-                person = createMock<Person<true>>({
-                    email: faker.internet.email(),
-                    referrer: username,
-                    oxUserId: oxUserId,
-                });
+                person = getPerson(personId, username, oxUserId);
                 personRepositoryMock.findById.mockResolvedValue(person);
                 // Mock group retrieval successfully
                 mockGroupRetrievalRequestSuccessful(oxUserId, oxGroupId);
@@ -1753,6 +1770,74 @@ describe('OxEventHandler', () => {
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
                 );
+            });
+        });
+        describe('when user has no remaining PKs with rollenArt LEHR in currentKontexte', () => {
+            describe('should change username in OX to personId, when change fails', () => {
+                it('should log error', async () => {
+                    event = getPersonenkontextUpdatedEvent(personId, rollenArtLehrPKOrgaKennung, false);
+                    person = getPerson(personId, username, oxUserId);
+                    personRepositoryMock.findById.mockResolvedValue(person);
+                    // Mock group retrieval successfully
+                    mockGroupRetrievalRequestSuccessful(oxUserId, oxGroupId);
+                    //mock Ox-removeOxUserFromOxGroup-request is successful
+                    oxServiceMock.send.mockResolvedValueOnce({
+                        ok: true,
+                        value: {
+                            status: {
+                                code: 'success',
+                            },
+                            data: undefined,
+                        },
+                    });
+                    const oxError: OxError = new OxError();
+                    //mock Ox-changeUser-request fails
+                    oxServiceMock.send.mockResolvedValueOnce({
+                        ok: false,
+                        error: oxError,
+                    });
+
+                    await sut.handlePersonenkontextUpdatedEvent(event);
+
+                    expect(loggerMock.error).toHaveBeenCalledWith(
+                        `Could Not Change OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonenkontextUpdatedEvent, error:${oxError.message}`,
+                    );
+                });
+            });
+            describe('should change username in OX to personId, when change succeeds', () => {
+                it('should log info', async () => {
+                    event = getPersonenkontextUpdatedEvent(personId, rollenArtLehrPKOrgaKennung, false);
+                    person = getPerson(personId, username, oxUserId);
+                    personRepositoryMock.findById.mockResolvedValue(person);
+                    // Mock group retrieval successfully
+                    mockGroupRetrievalRequestSuccessful(oxUserId, oxGroupId);
+                    //mock Ox-removeOxUserFromOxGroup-request is successful
+                    oxServiceMock.send.mockResolvedValueOnce({
+                        ok: true,
+                        value: {
+                            status: {
+                                code: 'success',
+                            },
+                            data: undefined,
+                        },
+                    });
+                    //mock Ox-changeUser-request is successful
+                    oxServiceMock.send.mockResolvedValueOnce({
+                        ok: true,
+                        value: {
+                            status: {
+                                code: 'success',
+                            },
+                            data: undefined,
+                        },
+                    });
+
+                    await sut.handlePersonenkontextUpdatedEvent(event);
+
+                    expect(loggerMock.info).toHaveBeenCalledWith(
+                        `Successfully Changed OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonenkontextUpdatedEvent`,
+                    );
+                });
             });
         });
     });
