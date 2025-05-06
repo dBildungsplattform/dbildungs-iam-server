@@ -27,7 +27,7 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 import { Person } from '../../person/domain/person.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -62,8 +62,8 @@ describe('ImportVorgangRepository', () => {
                 PersonRepository,
                 UsernameGeneratorService,
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: ClassLogger,

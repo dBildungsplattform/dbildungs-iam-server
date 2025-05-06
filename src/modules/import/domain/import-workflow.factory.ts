@@ -4,7 +4,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { ImportWorkflow } from './import-workflow.js';
 import { ImportDataRepository } from '../persistence/import-data.repository.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 import { ConfigService } from '@nestjs/config';
@@ -18,7 +18,7 @@ export class ImportWorkflowFactory {
         private readonly importDataRepository: ImportDataRepository,
         private readonly importVorgangRepository: ImportVorgangRepository,
         private readonly importPasswordEncryptor: ImportPasswordEncryptor,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         private readonly logger: ClassLogger,
         private readonly config: ConfigService<ServerConfig>,
     ) {}

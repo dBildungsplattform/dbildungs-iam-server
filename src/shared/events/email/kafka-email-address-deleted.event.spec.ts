@@ -24,6 +24,6 @@ describe('KafkaEmailAddressDeletedEvent', () => {
         );
 
         expect(event).toBeInstanceOf(KafkaEmailAddressDeletedEvent);
-        expect(event.kafkaKeyPersonId).toBe(personId);
+        expect(event.kafkaKey).toBe(personId);
     });
 });
