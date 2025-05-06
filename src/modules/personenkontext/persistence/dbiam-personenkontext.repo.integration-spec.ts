@@ -710,4 +710,60 @@ describe('dbiam Personenkontext Repo', () => {
             }
         });
     });
+
+    describe('hasPersonASystemrechtAtAnyKontextOfPersonB', () => {
+        it('should return true if person A has the required systemrecht at any kontext of person B', async () => {
+            const personA: Person<true> = await createPerson();
+            const personB: Person<true> = await createPerson();
+
+            const rootOrga: OrganisationID = (await createAndPersistRootOrganisation(em, organisationRepository)).id;
+
+            const rolleA: Rolle<true> = await createRolle(rootOrga, RollenArt.SYSADMIN, [
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            ]);
+            const rolleB: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, { personId: personA.id, organisationId: rootOrga, rolleId: rolleA.id }),
+            );
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, { personId: personB.id, organisationId: rootOrga, rolleId: rolleB.id }),
+            );
+
+            const result: boolean = await sut.hasPersonASystemrechtAtAnyKontextOfPersonB(
+                personA.id,
+                personB.id,
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            );
+
+            expect(result).toBe(true);
+        });
+
+        it('should return false if person A does not have the required systemrecht at any kontext of person B', async () => {
+            const personA: Person<true> = await createPerson();
+            const personB: Person<true> = await createPerson();
+
+            const rootOrga: OrganisationID = (await createAndPersistRootOrganisation(em, organisationRepository)).id;
+
+            const rolleA: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+            const rolleB: Rolle<true> = await createRolle(rootOrga, RollenArt.LEHR, []);
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, { personId: personA.id, organisationId: rootOrga, rolleId: rolleA.id }),
+            );
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, { personId: personB.id, organisationId: rootOrga, rolleId: rolleB.id }),
+            );
+
+            const result: boolean = await sut.hasPersonASystemrechtAtAnyKontextOfPersonB(
+                personA.id,
+                personB.id,
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            );
+
+            expect(result).toBe(false);
+        });
+    });
 });
