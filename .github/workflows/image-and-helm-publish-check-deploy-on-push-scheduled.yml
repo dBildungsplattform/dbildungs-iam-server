@@ -179,7 +179,7 @@ jobs:
       erwin_portal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       erwin_portal_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
-      database_recreation: "false" # to prevent database recreation this has to be set to false
+      database_recreation: "true" # to prevent database recreation this has to be set to false
     secrets: inherit
 
   # On Delete
