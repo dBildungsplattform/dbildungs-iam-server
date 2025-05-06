@@ -357,16 +357,27 @@ describe('CronController', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock2);
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
-                personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
-                personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
-                personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
+                personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
 
                 const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
 
                 expect(result).toBe(true);
-                expect(personDeleteServiceMock.deletePerson).toHaveBeenCalled();
-                expect(personDeleteServiceMock.deletePerson).toHaveBeenCalledTimes(mockUserIds.length);
+                expect(personDeleteServiceMock.deletePersonAfterDeadlineExceeded).toHaveBeenCalled();
+                expect(personDeleteServiceMock.deletePersonAfterDeadlineExceeded).toHaveBeenCalledTimes(
+                    mockUserIds.length,
+                );
             });
         });
 
@@ -406,7 +417,9 @@ describe('CronController', () => {
 
                 expect(result).toBe(false);
                 expect(personRepositoryMock.getPersonWithoutOrgDeleteList).toHaveBeenCalled();
-                expect(personDeleteServiceMock.deletePerson).toHaveBeenCalledTimes(mockUserIds.length);
+                expect(personDeleteServiceMock.deletePersonAfterDeadlineExceeded).toHaveBeenCalledTimes(
+                    mockUserIds.length,
+                );
             });
         });
 

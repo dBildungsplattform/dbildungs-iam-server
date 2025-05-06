@@ -46,6 +46,8 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
+import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -326,6 +328,13 @@ export class PersonRepository {
         return { ok: true, value: person };
     }
 
+    /**
+     * Use this method to publish events to inform listeners/handlers about an immediate deletion of person (not as a result of an exceeded deadline).
+     * Publishes PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent, PersonDeletedEvent and KafkaPersonDeletedEvent.
+     * @param personId
+     * @param permissions
+     * @param removedPersonenkontexts
+     */
     public async deletePerson(
         personId: string,
         permissions: PersonPermissions,
@@ -386,6 +395,82 @@ export class PersonRepository {
             this.eventRoutingLegacyKafkaService.publish(
                 new PersonDeletedEvent(personId, person.referrer, person.email),
                 new KafkaPersonDeletedEvent(personId, person.referrer, person.email),
+            );
+        }
+
+        // Delete the person from the database with all their kontexte
+        await this.em.nativeDelete(PersonEntity, person.id);
+
+        return { ok: true, value: undefined };
+    }
+
+    /**
+     * Use this method to publish events to inform listeners/handlers about a deletion of person as result of exceeded deadline.
+     * Publishes PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent, PersonDeletedAfterDeadlineExceededEvent and KafkaPersonDeletedAfterDeadlineExceededEvent.
+     * @param personId
+     * @param permissions
+     * @param removedPersonenkontexts
+     */
+    public async deletePersonAfterDeadlineExceeded(
+        personId: string,
+        permissions: PersonPermissions,
+        removedPersonenkontexts: PersonenkontextEventKontextData[],
+    ): Promise<Result<void, DomainError>> {
+        // First check if the user has permission to view the person
+        const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
+
+        if (!personResult.ok) {
+            return { ok: false, error: new EntityNotFoundError('Person') };
+        }
+
+        // Now check if the user has the permission to delete immediately
+        const deletePermissionResult: Result<Person<true>> = await this.checkIfDeleteIsAllowed(personId, permissions);
+
+        if (!deletePermissionResult.ok) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
+        }
+
+        const person: Person<true> = deletePermissionResult.value;
+
+        // Check if the person has a keycloakUserId
+        if (!person.keycloakUserId) {
+            throw new PersonHasNoKeycloakId(person.id);
+        }
+
+        // Delete the person from Keycloak
+        await this.kcUserService.delete(person.keycloakUserId);
+
+        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                username: person.referrer,
+                familienname: person.familienname,
+                vorname: person.vorname,
+                email: person.email,
+            },
+            [],
+            removedPersonenkontexts,
+            [],
+        );
+        const kafkaPersonenkontextUpdatedEvent: KafkaPersonenkontextUpdatedEvent = new KafkaPersonenkontextUpdatedEvent(
+            {
+                id: personId,
+                username: person.referrer,
+                familienname: person.familienname,
+                vorname: person.vorname,
+                email: person.email,
+            },
+            [],
+            removedPersonenkontexts,
+            [],
+        );
+
+        this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
+
+        if (person.referrer !== undefined) {
+            this.eventRoutingLegacyKafkaService.publish(
+                new PersonDeletedAfterDeadlineExceededEvent(personId, person.referrer, person.email),
+                new KafkaPersonDeletedAfterDeadlineExceededEvent(personId, person.referrer, person.email),
             );
         }
 

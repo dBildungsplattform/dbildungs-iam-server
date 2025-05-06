@@ -284,10 +284,8 @@ export class CronController {
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
                 personIds.map(async (id: string) => {
                     const person: Option<Person<true>> = await this.personRepository.findById(id);
-                    const deleteResult: Result<void, DomainError> = await this.personDeleteService.deletePerson(
-                        id,
-                        permissions,
-                    );
+                    const deleteResult: Result<void, DomainError> =
+                        await this.personDeleteService.deletePersonAfterDeadlineExceeded(id, permissions);
                     if (deleteResult.ok) {
                         this.logger.info(
                             `System hat ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung gelöscht.`,
