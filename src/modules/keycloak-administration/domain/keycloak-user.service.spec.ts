@@ -1383,6 +1383,41 @@ describe('KeycloakUserService', () => {
             newUsername = faker.internet.userName();
         });
 
+        describe('when user list is empty', () => {
+            it('should return EntityNotFoundError', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([]);
+
+                const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
+
+                expect(res.ok).toBe(false);
+                expect(res).toMatchObject({
+                    ok: false,
+                    error: new EntityNotFoundError('Keycloak User could not be found'),
+                });
+                expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
+            });
+        });
+
+        describe('when user is found but has no id', () => {
+            it('should return EntityNotFoundError', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.internet.userName(),
+                        email: faker.internet.email(),
+                        id: undefined,
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+                const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
+                expect(res.ok).toBe(false);
+                expect(res).toMatchObject({
+                    ok: false,
+                    error: new EntityNotFoundError('Keycloak User has no id'),
+                });
+                expect(kcUsersMock.find).toHaveBeenCalledWith({ username: username, exact: true });
+            });
+        });
+
         describe('when updating user is successful', () => {
             it('should return undefined and no errors', async () => {
                 const kcId: string = faker.string.uuid();
