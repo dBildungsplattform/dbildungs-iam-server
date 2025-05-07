@@ -406,8 +406,11 @@ describe('CronController', () => {
 
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
                 personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
-                personDeleteServiceMock.deletePerson.mockResolvedValueOnce({ ok: true, value: undefined });
-                personDeleteServiceMock.deletePerson.mockResolvedValueOnce({
+                personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+                personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
                     ok: false,
                     error: new MissingPermissionsError(''),
                 });

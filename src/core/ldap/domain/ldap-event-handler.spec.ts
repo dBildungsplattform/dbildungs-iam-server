@@ -41,6 +41,7 @@ import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-add
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 import { EventService } from '../../eventbus/services/event.service.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 
 describe('LDAP Event Handler', () => {
     let app: INestApplication;
@@ -340,7 +341,7 @@ describe('LDAP Event Handler', () => {
     });
 
     describe('handlePersonDeletedEvent', () => {
-        describe('when calling LdapClientService.deleteLehrerByPersonId is successful', () => {
+        describe('when calling LdapClientService.deleteLehrerByUsername is successful', () => {
             it('should NOT log errors', async () => {
                 const deletionResult: Result<PersonID> = {
                     ok: true,
@@ -354,7 +355,7 @@ describe('LDAP Event Handler', () => {
             });
         });
 
-        describe('when calling LdapClientService.deleteLehrerByPersonId is return error', () => {
+        describe('when calling LdapClientService.deleteLehrerByUsername is return error', () => {
             it('should log errors', async () => {
                 const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
                 const deletionResult: Result<PersonID> = {
@@ -364,6 +365,42 @@ describe('LDAP Event Handler', () => {
                 ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
+
+                expect(loggerMock.error).toHaveBeenCalledTimes(1);
+                expect(loggerMock.error).toHaveBeenCalledWith(error.message);
+            });
+        });
+    });
+
+    describe('handlePersonDeletedAfterDeadlineExceededEvent', () => {
+        describe('when calling LdapClientService.deleteLehrerByUsername is successful', () => {
+            it('should NOT log errors', async () => {
+                const deletionResult: Result<PersonID> = {
+                    ok: true,
+                    value: faker.string.uuid(),
+                };
+                ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
+
+                await ldapEventHandler.handlePersonDeletedAfterDeadlineExceededEvent(
+                    createMock<PersonDeletedAfterDeadlineExceededEvent>(),
+                );
+
+                expect(loggerMock.error).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when calling LdapClientService.deleteLehrerByUsername is return error', () => {
+            it('should log errors', async () => {
+                const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
+                const deletionResult: Result<PersonID> = {
+                    ok: false,
+                    error: error,
+                };
+                ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
+
+                await ldapEventHandler.handlePersonDeletedAfterDeadlineExceededEvent(
+                    createMock<PersonDeletedAfterDeadlineExceededEvent>(),
+                );
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(error.message);
