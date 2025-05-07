@@ -61,7 +61,7 @@ export class KeycloakUserService {
         try {
             const userRepresentation: UserRepresentation = {
                 username: user.username,
-                enabled: true
+                enabled: true,
             };
 
             if (user.email) {
@@ -158,7 +158,7 @@ export class KeycloakUserService {
                         type: 'password',
                         temporary: true,
                     },
-                ]
+                ],
             };
 
             const response: { id: string } = await kcAdminClientResult.value.users.create(userRepresentation);
