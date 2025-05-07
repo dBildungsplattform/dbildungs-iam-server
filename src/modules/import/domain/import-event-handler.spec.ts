@@ -25,6 +25,7 @@ import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/speci
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 
 describe('ImportEventHandler', () => {
     let module: TestingModule;
@@ -38,7 +39,7 @@ describe('ImportEventHandler', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [LoggingTestModule, DatabaseTestModule.forRoot()],
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 ImportEventHandler,
                 {
