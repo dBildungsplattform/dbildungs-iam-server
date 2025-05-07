@@ -80,7 +80,7 @@ describe('PersonRepository Integration', () => {
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
-    let eventRoutingLegacyKafkaService: DeepMocked<EventRoutingLegacyKafkaService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
@@ -139,7 +139,7 @@ describe('PersonRepository Integration', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
-        eventRoutingLegacyKafkaService = module.get(EventRoutingLegacyKafkaService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -757,7 +757,7 @@ describe('PersonRepository Integration', () => {
                     if (result instanceof DomainError) {
                         return;
                     }
-                    expect(eventRoutingLegacyKafkaService.publish).toHaveBeenCalledWith(
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.any(PersonRenamedEvent),
                         expect.any(KafkaPersonRenamedEvent),
                     );
@@ -1595,7 +1595,7 @@ describe('PersonRepository Integration', () => {
                         removedPersonenkontexts,
                     );
 
-                    expect(eventRoutingLegacyKafkaService.publish).toHaveBeenCalledWith(
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.objectContaining({
                             emailAddress: emailAddress.address,
                         }),

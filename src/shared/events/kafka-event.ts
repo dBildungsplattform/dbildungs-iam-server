@@ -1,3 +1,3 @@
 export interface KafkaEvent {
-    kafkaKey: string | undefined;
+    kafkaKey: string;
 }

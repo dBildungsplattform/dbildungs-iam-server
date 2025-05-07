@@ -42,17 +42,17 @@ export type KafkaEventKey =
     | 'user.modified.email'
     | 'user.modified.personenkontexte'
     | 'user.synced'
-    | 'user.syncedldap'
     | 'user.email.disabled_generated'
     | 'user.email.already_exists'
     | 'user.email.deleted_in_database'
     | 'user.email.deleted'
-    | 'user.email.deleted_ldap'
     | 'user.email.disabled'
     | 'user.email.purged'
+    | 'user.ldap.synced'
     | 'user.ldap.entry_deleted'
     | 'user.ldap.entry_changed'
     | 'user.ldap.entry_renamed'
+    | 'user.ldap.email_deleted'
     | 'user.ox.disabled_changed'
     | 'user.ox.deleted'
     | 'user.ox.email_deleted'
@@ -114,7 +114,7 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
-    'user.syncedldap': {
+    'user.ldap.synced': {
         eventClass: KafkaPersonLdapSyncEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
@@ -180,7 +180,7 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
-    'user.email.deleted_ldap': {
+    'user.ldap.email_deleted': {
         eventClass: KafkaLdapEmailAddressDeletedEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
