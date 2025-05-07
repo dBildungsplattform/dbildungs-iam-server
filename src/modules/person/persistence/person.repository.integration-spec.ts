@@ -1232,8 +1232,6 @@ describe('PersonRepository Integration', () => {
                         enabled: true,
                         email: faker.internet.email(),
                         createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1285,8 +1283,6 @@ describe('PersonRepository Integration', () => {
                         enabled: true,
                         email: faker.internet.email(),
                         createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1342,8 +1338,6 @@ describe('PersonRepository Integration', () => {
                     enabled: true,
                     email: faker.internet.email(),
                     createdDate: new Date(),
-                    externalSystemIDs: {},
-                    attributes: {},
                 },
             });
 
@@ -1376,8 +1370,6 @@ describe('PersonRepository Integration', () => {
                         enabled: true,
                         email: faker.internet.email(),
                         createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1456,8 +1448,6 @@ describe('PersonRepository Integration', () => {
                         enabled: true,
                         email: faker.internet.email(),
                         createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1492,8 +1482,6 @@ describe('PersonRepository Integration', () => {
                         enabled: true,
                         email: faker.internet.email(),
                         createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1525,8 +1513,6 @@ describe('PersonRepository Integration', () => {
                         enabled: true,
                         email: faker.internet.email(),
                         createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1592,8 +1578,6 @@ describe('PersonRepository Integration', () => {
                             enabled: true,
                             email: faker.internet.email(),
                             createdDate: new Date(),
-                            externalSystemIDs: {},
-                            attributes: {},
                         },
                     });
 
@@ -1652,8 +1636,6 @@ describe('PersonRepository Integration', () => {
                         enabled: true,
                         email: faker.internet.email(),
                         createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1685,8 +1667,6 @@ describe('PersonRepository Integration', () => {
                         enabled: true,
                         email: faker.internet.email(),
                         createdDate: new Date(),
-                        externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
