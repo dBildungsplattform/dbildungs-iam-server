@@ -9,6 +9,6 @@ describe('KafkaGroupAndRoleCreatedEvent', () => {
         const event: KafkaGroupAndRoleCreatedEvent = new KafkaGroupAndRoleCreatedEvent(groupName, roleName);
 
         expect(event).toBeInstanceOf(KafkaGroupAndRoleCreatedEvent);
-        expect(event.kafkaKey).toBeUndefined();
+        expect(event.kafkaKey).toBe(`${groupName}:${roleName}`);
     });
 });
