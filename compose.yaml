@@ -225,7 +225,7 @@ services:
     volumes:
       - ./charts/dbildungs-iam-server/kafka/scripts:/init/scripts:ro
       - type: bind
-        source: ./config/kafka-topics.txt
+        source: ./charts/dbildungs-iam-server/config/kafka-topics.txt
         target: /init-data/kafka-topics.txt
         read_only: true
 
