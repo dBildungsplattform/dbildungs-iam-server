@@ -56,7 +56,6 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
-import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
@@ -67,6 +66,8 @@ import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-a
 import { OxAccountDeletedEvent } from '../../../shared/events/ox/ox-account-deleted.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
+import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
+import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -290,12 +291,10 @@ export class OxEventHandler {
         await this.removeOxUserFromAllItsOxGroups(person.oxUserId, person.id);
     }
 
-    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
-    @EnsureRequestContext()
-    public async handlePersonenkontextUpdatedEvent(
-        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
-    ): Promise<void> {
+    //@KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
+    //@EnsureRequestContext()
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
@@ -327,13 +326,39 @@ export class OxEventHandler {
             //Logging is done in removeOxUserFromOxGroup
             await this.removeOxUserFromOxGroup(oxGroupId, person.oxUserId);
         }
-        if (event.currentKontexte.some((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)) {
+        /* if (event.currentKontexte.some((pk: PersonenkontextEventKontextData) => pk.rolle === RollenArt.LEHR)) {
             return this.logger.info(
                 `Person still has PKs with rollenart LEHR, skipping change of OxUsername, personId:${event.person.id}, username:${person.referrer}`,
             );
         } else {
             await this.handlePersonHasNotAnyPKWithRollenartLehr(person.id, person.referrer, person.oxUserId);
+        }*/
+    }
+
+    @EventHandler(PersonDeletedAfterDeadlineExceededEvent)
+    @KafkaEventHandler(KafkaPersonDeletedAfterDeadlineExceededEvent)
+    @EnsureRequestContext()
+    public async handlePersonDeletedAfterDeadlineExceededEvent(
+        event: PersonDeletedAfterDeadlineExceededEvent | KafkaPersonDeletedAfterDeadlineExceededEvent,
+    ): Promise<void> {
+        this.logger.info(
+            `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
+        );
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
         }
+        const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
+        if (!person) {
+            return this.logger.error(
+                `Could Not Find Person, Cannot Handle PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
+            );
+        }
+        if (!person.oxUserId) {
+            return this.logger.error(
+                `OxUserId Not Defined, Cannot Handle PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
+            );
+        }
+        await this.handlePersonHasNotAnyPKWithRollenartLehr(person.id, person.referrer, person.oxUserId);
     }
 
     public async handlePersonHasNotAnyPKWithRollenartLehr(
@@ -358,12 +383,12 @@ export class OxEventHandler {
 
         if (!result.ok) {
             return this.logger.error(
-                `Could Not Change OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonenkontextUpdatedEvent, error:${result.error.message}`,
+                `Could Not Change OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonDeletedAfterDeadlineExceededEvent, error:${result.error.message}`,
             );
         }
 
         return this.logger.info(
-            `Successfully Changed OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonenkontextUpdatedEvent`,
+            `Successfully Changed OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonDeletedAfterDeadlineExceededEvent`,
         );
     }
 

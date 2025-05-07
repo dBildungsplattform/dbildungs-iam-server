@@ -401,7 +401,10 @@ export class PersonRepository {
         // Delete the person from the database with all their kontexte
         await this.em.nativeDelete(PersonEntity, person.id);
 
-        return { ok: true, value: undefined };
+        return {
+            ok: true,
+            value: undefined,
+        };
     }
 
     /**

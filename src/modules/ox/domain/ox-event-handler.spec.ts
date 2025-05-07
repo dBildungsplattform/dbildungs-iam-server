@@ -32,6 +32,7 @@ import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -1694,7 +1695,7 @@ describe('OxEventHandler', () => {
 
     describe('handlePersonenkontextUpdatedEvent', () => {
         let personId: PersonID;
-        let username: string;
+        let username: PersonReferrer;
         let oxUserId: OXUserID;
         let oxGroupId: OXGroupID;
         let rollenArtLehrPKOrgaKennung: OrganisationKennung;
@@ -1772,24 +1773,61 @@ describe('OxEventHandler', () => {
                 );
             });
         });
+    });
+
+    describe('handlePersonDeletedAfterDeadlineExceededEvent', () => {
+        let personId: PersonID;
+        let username: PersonReferrer;
+        let oxUserId: OXUserID;
+        let event: PersonDeletedAfterDeadlineExceededEvent;
+        let person: Person<true>;
+        beforeEach(() => {
+            jest.resetAllMocks();
+            personId = faker.string.uuid();
+            username = faker.internet.userName();
+            oxUserId = faker.string.numeric();
+            event = new PersonDeletedAfterDeadlineExceededEvent(personId, username, faker.internet.email(), oxUserId);
+        });
+
+        describe('when handler is disabled', () => {
+            it('should log and skip processing when not enabled', async () => {
+                sut.ENABLED = false;
+                await sut.handlePersonDeletedAfterDeadlineExceededEvent(event);
+                expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            });
+        });
+
+        describe('when person CANNOT be found', () => {
+            it('should log error and return', async () => {
+                personRepositoryMock.findById.mockResolvedValue(undefined);
+                await sut.handlePersonDeletedAfterDeadlineExceededEvent(event);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `Could Not Find Person, Cannot Handle PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
+                );
+            });
+        });
+
+        describe('when person has NO oxUserId', () => {
+            it('should log error and return', async () => {
+                person = createMock<Person<true>>({
+                    id: personId,
+                    referrer: username,
+                    oxUserId: undefined,
+                    email: faker.internet.email(),
+                });
+                personRepositoryMock.findById.mockResolvedValue(person);
+                await sut.handlePersonDeletedAfterDeadlineExceededEvent(event);
+                expect(loggerMock.error).toHaveBeenCalledWith(
+                    `OxUserId Not Defined, Cannot Handle PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
+                );
+            });
+        });
+
         describe('when user has no remaining PKs with rollenArt LEHR in currentKontexte', () => {
             describe('should change username in OX to personId, when change fails', () => {
                 it('should log error', async () => {
-                    event = getPersonenkontextUpdatedEvent(personId, rollenArtLehrPKOrgaKennung, false);
                     person = getPerson(personId, username, oxUserId);
                     personRepositoryMock.findById.mockResolvedValue(person);
-                    // Mock group retrieval successfully
-                    mockGroupRetrievalRequestSuccessful(oxUserId, oxGroupId);
-                    //mock Ox-removeOxUserFromOxGroup-request is successful
-                    oxServiceMock.send.mockResolvedValueOnce({
-                        ok: true,
-                        value: {
-                            status: {
-                                code: 'success',
-                            },
-                            data: undefined,
-                        },
-                    });
                     const oxError: OxError = new OxError();
                     //mock Ox-changeUser-request fails
                     oxServiceMock.send.mockResolvedValueOnce({
@@ -1797,30 +1835,17 @@ describe('OxEventHandler', () => {
                         error: oxError,
                     });
 
-                    await sut.handlePersonenkontextUpdatedEvent(event);
+                    await sut.handlePersonDeletedAfterDeadlineExceededEvent(event);
 
                     expect(loggerMock.error).toHaveBeenCalledWith(
-                        `Could Not Change OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonenkontextUpdatedEvent, error:${oxError.message}`,
+                        `Could Not Change OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonDeletedAfterDeadlineExceededEvent, error:${oxError.message}`,
                     );
                 });
             });
             describe('should change username in OX to personId, when change succeeds', () => {
                 it('should log info', async () => {
-                    event = getPersonenkontextUpdatedEvent(personId, rollenArtLehrPKOrgaKennung, false);
                     person = getPerson(personId, username, oxUserId);
                     personRepositoryMock.findById.mockResolvedValue(person);
-                    // Mock group retrieval successfully
-                    mockGroupRetrievalRequestSuccessful(oxUserId, oxGroupId);
-                    //mock Ox-removeOxUserFromOxGroup-request is successful
-                    oxServiceMock.send.mockResolvedValueOnce({
-                        ok: true,
-                        value: {
-                            status: {
-                                code: 'success',
-                            },
-                            data: undefined,
-                        },
-                    });
                     //mock Ox-changeUser-request is successful
                     oxServiceMock.send.mockResolvedValueOnce({
                         ok: true,
@@ -1832,10 +1857,10 @@ describe('OxEventHandler', () => {
                         },
                     });
 
-                    await sut.handlePersonenkontextUpdatedEvent(event);
+                    await sut.handlePersonDeletedAfterDeadlineExceededEvent(event);
 
                     expect(loggerMock.info).toHaveBeenCalledWith(
-                        `Successfully Changed OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonenkontextUpdatedEvent`,
+                        `Successfully Changed OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonDeletedAfterDeadlineExceededEvent`,
                     );
                 });
             });

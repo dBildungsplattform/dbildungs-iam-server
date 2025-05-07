@@ -7,11 +7,13 @@ import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-del
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { Constructor } from './util.types.js';
+import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 
 export type KafkaEventKey =
     | 'user.created'
     | 'user.created.email'
     | 'user.deleted'
+    | 'user.deleted_deadline'
     | 'user.modified.name'
     | 'user.modified.email'
     | 'user.modified.personenkontexte';
@@ -37,6 +39,11 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
     },
     'user.deleted': {
         eventClass: KafkaPersonDeletedEvent, // CHECKED
+        topic: 'user-topic',
+        topicDlq: 'user-dlq-topic',
+    },
+    'user.deleted_deadline': {
+        eventClass: KafkaPersonDeletedAfterDeadlineExceededEvent, // CHECKED
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },

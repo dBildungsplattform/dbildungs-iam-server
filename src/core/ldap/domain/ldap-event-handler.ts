@@ -33,6 +33,7 @@ import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-ad
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 import { LdapEntryDeletedEvent } from '../../../shared/events/ldap/ldap-entry-deleted.event.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
+import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -68,6 +69,23 @@ export class LdapEventHandler {
     ): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonenkontextDeletedEvent, personId:${event.personId}, username:${event.username}`,
+        );
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
+        if (!deletionResult.ok) {
+            this.logger.error(deletionResult.error.message);
+        }
+
+        return deletionResult;
+    }
+
+    @EventHandler(PersonDeletedAfterDeadlineExceededEvent)
+    //@KafkaEventHandler(KafkaPersonDeletedEvent)
+    //@EnsureRequestContext()
+    public async handlePersonDeletedAfterDeadlineExceededEvent(
+        event: PersonDeletedAfterDeadlineExceededEvent,
+    ): Promise<Result<unknown>> {
+        this.logger.info(
+            `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
         );
         const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
         if (!deletionResult.ok) {
