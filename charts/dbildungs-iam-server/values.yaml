@@ -78,6 +78,8 @@ auth:
   ox_password: ''
   basic_auth_password: ''
   redis_password: ''
+  kafka_username: ''
+  kafka_password: ''
 
 ox:
   enabled: false
@@ -186,6 +188,15 @@ backend:
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
 
+kafka:
+  url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
+  enabled: false
+  initEnabled: true
+  initImage:
+    repository: docker.io/bitnami/kafka
+    tag: '3.9.0'
+    pullPolicy: Always
+
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -244,6 +255,3 @@ import:
 
 featureFlags:
   befristungBearbeiten: true
-
-kafka:
-  enabled: false
