@@ -20,6 +20,8 @@ import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-ad
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
+import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 
 @Injectable()
 export class KeycloakEventHandler {
@@ -75,7 +77,9 @@ export class KeycloakEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaOxUserChangedEvent)
     @EventHandler(OxUserChangedEvent)
+    @EnsureRequestContext()
     public async handleOxUserChangedEvent(event: OxUserChangedEvent): Promise<void> {
         this.logger.info(
             `Received OxUserChangedEvent personId:${event.personId}, userId:${event.oxUserId}, userName:${event.oxUserName} contextId:${event.oxContextId}, contextName:${event.oxContextName}, primaryEmail:${event.primaryEmail}`,
@@ -116,7 +120,9 @@ export class KeycloakEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaEmailAddressDisabledEvent)
     @EventHandler(EmailAddressDisabledEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressDisabledEvent(event: EmailAddressDisabledEvent): Promise<void> {
         this.logger.info(`Received EmailAddressDisabledEvent personId:${event.personId}, username:${event.username}`);
 

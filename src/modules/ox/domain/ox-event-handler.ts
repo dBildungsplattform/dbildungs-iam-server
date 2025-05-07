@@ -71,6 +71,11 @@ import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user
 import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
 import { KafkaOxAccountDeletedEvent } from '../../../shared/events/ox/kafka-ox-account-deleted.event.js';
 import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
+import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/email/kafka-email-address-deleted.event.js';
+import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
+import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
+import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-disabled-email-address-generated.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -214,7 +219,9 @@ export class OxEventHandler {
         await this.createOxUser(event.personId, event.referrer, event.orgaKennung);
     }
 
+    @KafkaEventHandler(KafkaDisabledEmailAddressGeneratedEvent)
     @EventHandler(DisabledEmailAddressGeneratedEvent)
+    @EnsureRequestContext()
     public async handleDisabledEmailAddressGeneratedEvent(event: DisabledEmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressGeneratedAndDisabledEvent, personId:${event.personId}, referrer:${event.referrer}, address:${event.address}, domain:${event.domain}`,
@@ -227,7 +234,9 @@ export class OxEventHandler {
         await this.changeOxUser(event.personId, event.referrer, generateDisabledOxUserChangedEvent);
     }
 
+    @KafkaEventHandler(KafkaEmailAddressAlreadyExistsEvent)
     @EventHandler(EmailAddressAlreadyExistsEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressAlreadyExistsEvent(event: EmailAddressAlreadyExistsEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressAlreadyExistsEvent, personId:${event.personId}, orgaKennung:${event.orgaKennung}`,
@@ -306,7 +315,9 @@ export class OxEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaEmailAddressDisabledEvent)
     @EventHandler(EmailAddressDisabledEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressDisabledEvent(event: EmailAddressDisabledEvent): Promise<void> {
         this.logger.info(`Received EmailAddressDisabledEvent, personId:${event.personId}, username:${event.username}`);
         if (!this.ENABLED) {
@@ -420,7 +431,9 @@ export class OxEventHandler {
         );
     }
 
+    @KafkaEventHandler(KafkaEmailAddressDeletedEvent)
     @EventHandler(EmailAddressDeletedEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressDeletedEvent(event: EmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
@@ -492,7 +505,9 @@ export class OxEventHandler {
         );
     }
 
+    @KafkaEventHandler(KafkaEmailAddressesPurgedEvent)
     @EventHandler(EmailAddressesPurgedEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,

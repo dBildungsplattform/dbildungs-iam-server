@@ -46,6 +46,10 @@ import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafk
 import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
 import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
 import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-disabled-email-address-generated.event.js';
+import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
+import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
+import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
+import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -74,8 +78,9 @@ export class EmailEventHandler {
      * Method 'handlePersonRenamedEvent' is replaced by 'handleLdapPersonEntryRenamedEvent' to handle the operations regarding person-renaming synchronously after each other,
      * first in LdapEventHandler then here in EmailEventHandler.
      */
-
+    @KafkaEventHandler(KafkaLdapPersonEntryRenamedEvent)
     @EventHandler(LdapPersonEntryRenamedEvent)
+    @EnsureRequestContext()
     public async handleLdapPersonEntryRenamedEvent(event: LdapPersonEntryRenamedEvent): Promise<void> {
         this.logger.info(
             `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
@@ -277,8 +282,9 @@ export class EmailEventHandler {
         return undefined;
     }
 
+    @KafkaEventHandler(KafkaRolleUpdatedEvent)
     @EventHandler(RolleUpdatedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
+    @EnsureRequestContext()
     public async handleRolleUpdatedEvent(event: RolleUpdatedEvent): Promise<void> {
         this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.rolleId}, rollenArt:${event.rollenart}`);
 
@@ -308,7 +314,9 @@ export class EmailEventHandler {
         await Promise.all(handlePersonPromises);
     }
 
+    @KafkaEventHandler(KafkaOxMetadataInKeycloakChangedEvent)
     @EventHandler(OxMetadataInKeycloakChangedEvent)
+    @EnsureRequestContext()
     public async handleOxMetadataInKeycloakChangedEvent(event: OxMetadataInKeycloakChangedEvent): Promise<void> {
         this.logger.info(
             `Received OxMetadataInKeycloakChangedEvent personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.emailAddress}`,
@@ -346,7 +354,9 @@ export class EmailEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaDisabledOxUserChangedEvent)
     @EventHandler(DisabledOxUserChangedEvent)
+    @EnsureRequestContext()
     public async handleDisabledOxUserChangedEvent(event: DisabledOxUserChangedEvent): Promise<void> {
         this.logger.info(
             `Received DisabledOxUserChangedEvent personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.primaryEmail}`,
