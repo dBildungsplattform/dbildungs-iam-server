@@ -441,12 +441,7 @@ describe('DbSeedService', () => {
                     'testusername',
                     'test@example.com',
                     faker.date.recent(),
-                    {
-                        ID_NEXTCLOUD: [faker.string.uuid()],
-                        ID_ITSLEARNING: [faker.string.uuid()],
-                    },
                     true,
-                    {},
                 );
 
                 kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });
