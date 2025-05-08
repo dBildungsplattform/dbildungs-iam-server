@@ -39,7 +39,7 @@ export function createPersonenkontext(
     return personenkontext;
 }
 
-export async function createAndPersistPersonenkontext (
+export async function createAndPersistPersonenkontext(
     em: EntityManager,
     personId: string,
     rolleId: string,

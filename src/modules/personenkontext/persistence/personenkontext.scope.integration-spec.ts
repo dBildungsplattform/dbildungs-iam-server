@@ -79,7 +79,6 @@ describe('PersonenkontextScope', () => {
                 // if (rolle instanceof DomainError) throw Error();
                 // await createAndPersistPersonenkontext(em, person.id, organisation1.id, rolle.id);
 
-
                 for (let i: number = 0; i < 30; i++) {
                     const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
                     if (rolle instanceof DomainError) throw Error();
