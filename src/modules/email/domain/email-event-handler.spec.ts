@@ -19,7 +19,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { EventModule, EventService } from '../../../core/eventbus/index.js';
+import { EventModule } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailFactory } from './email.factory.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailRepo } from '../persistence/email.repo.js';
@@ -102,8 +103,8 @@ describe('EmailEventHandler', () => {
             .useValue(createMock<DBiamPersonenkontextRepo>())
             .overrideProvider(EmailEventHandler)
             .useClass(EmailEventHandler)
-            .overrideProvider(EventService)
-            .useClass(EventService)
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useClass(EventRoutingLegacyKafkaService)
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();

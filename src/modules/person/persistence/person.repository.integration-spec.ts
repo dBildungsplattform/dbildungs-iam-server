@@ -37,7 +37,6 @@ import {
 } from '../../../shared/error/index.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
-import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
@@ -81,8 +80,7 @@ describe('PersonRepository Integration', () => {
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
-    let eventServiceMock: DeepMocked<EventService>;
-    let eventRoutingLegacyKafkaService: DeepMocked<EventRoutingLegacyKafkaService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
@@ -105,11 +103,6 @@ describe('PersonRepository Integration', () => {
                 {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
-                },
-
-                {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
                 },
                 {
                     provide: EventRoutingLegacyKafkaService,
@@ -140,14 +133,13 @@ describe('PersonRepository Integration', () => {
 
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        eventServiceMock = module.get(EventService);
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
         dbiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
-        eventRoutingLegacyKafkaService = module.get(EventRoutingLegacyKafkaService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -743,8 +735,7 @@ describe('PersonRepository Integration', () => {
                     if (result instanceof DomainError) {
                         return;
                     }
-                    expect(eventServiceMock.publish).not.toHaveBeenCalled();
-                    expect(eventRoutingLegacyKafkaService.publish).toHaveBeenCalledWith(
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.any(PersonRenamedEvent),
                         expect.any(KafkaPersonRenamedEvent),
                     );
@@ -1582,7 +1573,7 @@ describe('PersonRepository Integration', () => {
                         removedPersonenkontexts,
                     );
 
-                    expect(eventRoutingLegacyKafkaService.publish).toHaveBeenCalledWith(
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
                         expect.objectContaining({
                             emailAddress: emailAddress.address,
                         }),

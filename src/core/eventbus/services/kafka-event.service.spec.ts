@@ -25,7 +25,7 @@ class TestEvent extends BaseEvent implements KafkaEvent {
         super();
     }
 
-    public get kafkaKeyPersonId(): string {
+    public get kafkaKey(): string {
         return 'test';
     }
 }

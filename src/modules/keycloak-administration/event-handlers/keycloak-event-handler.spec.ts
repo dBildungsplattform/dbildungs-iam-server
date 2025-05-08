@@ -7,7 +7,7 @@ import { KeycloakEventHandler } from './keycloak-event-handler.js';
 import { faker } from '@faker-js/faker';
 import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
@@ -25,7 +25,7 @@ describe('KeycloakEventHandler', () => {
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 KeycloakEventHandler,
-                EventService,
+                { provide: EventRoutingLegacyKafkaService, useValue: createMock<EventRoutingLegacyKafkaService>() },
                 {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>(),

@@ -33,7 +33,7 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
@@ -80,6 +80,8 @@ import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
+import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ldap-sync.event.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -99,7 +101,7 @@ export class PersonController {
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly ldapClientService: LdapClientService,
         private readonly personApiMapper: PersonApiMapper,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
@@ -515,7 +517,10 @@ export class PersonController {
             throw error;
         }
 
-        this.eventService.publish(new PersonExternalSystemsSyncEvent(personId));
+        this.eventService.publish(
+            new PersonExternalSystemsSyncEvent(personId),
+            new KafkaPersonExternalSystemsSyncEvent(personId),
+        );
         this.logger.info(
             `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id} hat für Benutzer ${personResult.value.referrer} (BenutzerId: ${personResult.value.id}) eine Synchronisation durchgeführt.`,
         );
@@ -613,7 +618,10 @@ export class PersonController {
             personResult.value.id,
             personResult.value.referrer,
         );
-        this.eventService.publish(new PersonLdapSyncEvent(personResult.value.id));
+        this.eventService.publish(
+            new PersonLdapSyncEvent(personResult.value.id),
+            new KafkaPersonLdapSyncEvent(personResult.value.id),
+        );
 
         if (!changeUserPasswordResult.ok) {
             throw new PersonUserPasswordModificationError(personResult.value.id);
@@ -646,7 +654,7 @@ export class PersonController {
             id,
             username,
         );
-        this.eventService.publish(new PersonLdapSyncEvent(id));
+        this.eventService.publish(new PersonLdapSyncEvent(id), new KafkaPersonLdapSyncEvent(id));
 
         if (!changeUserPasswordResult.ok) {
             throw new PersonUserPasswordModificationError(id);

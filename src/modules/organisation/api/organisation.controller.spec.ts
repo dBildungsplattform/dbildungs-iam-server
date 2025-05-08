@@ -17,7 +17,7 @@ import { OrganisationRepository } from '../persistence/organisation.repository.j
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
@@ -62,8 +62,8 @@ describe('OrganisationController', () => {
                     useValue: createMock<OrganisationRepository>(),
                 },
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,

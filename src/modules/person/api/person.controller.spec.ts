@@ -4,7 +4,7 @@ import { HttpException, NotImplementedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
@@ -47,6 +47,7 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -59,7 +60,7 @@ describe('PersonController', () => {
     let personDeleteServiceMock: DeepMocked<PersonDeleteService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
 
     beforeAll(async () => {
@@ -114,8 +115,8 @@ describe('PersonController', () => {
                     useValue: createMock<ClassLogger>(),
                 },
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: EmailRepo,
@@ -139,7 +140,7 @@ describe('PersonController', () => {
         personDeleteServiceMock = module.get(PersonDeleteService);
         keycloakUserService = module.get(KeycloakUserService);
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         ldapClientServiceMock = module.get(LdapClientService);
     });
 
@@ -779,7 +780,10 @@ describe('PersonController', () => {
                 await personController.syncPerson(params.personId, personPermissionsMock);
 
                 expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
-                expect(eventServiceMock.publish).toHaveBeenCalledWith(expect.any(PersonExternalSystemsSyncEvent));
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.any(PersonExternalSystemsSyncEvent),
+                    expect.any(KafkaPersonExternalSystemsSyncEvent),
+                );
             });
         });
 

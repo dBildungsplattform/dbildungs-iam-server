@@ -6,10 +6,12 @@ import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/email/kafka-email-address-deleted.event.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 
 @Injectable()
 export class EmailAddressDeletionService {
@@ -17,7 +19,7 @@ export class EmailAddressDeletionService {
         private readonly logger: ClassLogger,
         private readonly emailRepo: EmailRepo,
         private readonly personRepository: PersonRepository,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
     ) {}
 
     public async deleteEmailAddresses(permissions: PersonPermissions): Promise<void> {
@@ -55,6 +57,7 @@ export class EmailAddressDeletionService {
             }
             this.eventService.publish(
                 new EmailAddressDeletedEvent(ea.personId, username, ea.oxUserID, ea.id, ea.status, ea.address),
+                new KafkaEmailAddressDeletedEvent(ea.personId, username, ea.oxUserID, ea.id, ea.status, ea.address),
             );
         }
     }
@@ -77,7 +80,10 @@ export class EmailAddressDeletionService {
             this.logger.info(
                 `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${person.referrer}`,
             );
-            return this.eventService.publish(new EmailAddressesPurgedEvent(personId, person.referrer, oxUserId));
+            return this.eventService.publish(
+                new EmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
+                new KafkaEmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
+            );
         }
         this.logger.info(
             `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${person.referrer}`,
