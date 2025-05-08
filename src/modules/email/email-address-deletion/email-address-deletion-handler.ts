@@ -9,6 +9,11 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
+import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
 
 @Injectable()
 export class EmailAddressDeletionHandler {
@@ -16,9 +21,15 @@ export class EmailAddressDeletionHandler {
         private readonly logger: ClassLogger,
         private readonly emailRepo: EmailRepo,
         private readonly emailAddressDeletionService: EmailAddressDeletionService,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {}
 
+    @KafkaEventHandler(KafkaLdapEmailAddressDeletedEvent)
     @EventHandler(LdapEmailAddressDeletedEvent)
+    @EnsureRequestContext()
     public async handleLdapEmailAddressDeletedEvent(event: LdapEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
@@ -34,7 +45,9 @@ export class EmailAddressDeletionHandler {
         await this.processNewStatus(newStatus, emailAddress, event.username);
     }
 
+    @KafkaEventHandler(KafkaOxEmailAddressDeletedEvent)
     @EventHandler(OxEmailAddressDeletedEvent)
+    @EnsureRequestContext()
     public async handleOxEmailAddressDeletedEvent(event: OxEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received OxEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
@@ -50,7 +63,9 @@ export class EmailAddressDeletionHandler {
         await this.processNewStatus(newStatus, emailAddress, event.username);
     }
 
+    @KafkaEventHandler(KafkaEmailAddressDeletedInDatabaseEvent)
     @EventHandler(EmailAddressDeletedInDatabaseEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressDeletedInDatabaseEvent(event: EmailAddressDeletedInDatabaseEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.emailAddressId}, status:${event.status}, address:${event.address}`,

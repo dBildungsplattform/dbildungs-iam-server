@@ -15,7 +15,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { Person } from '../../person/domain/person.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { ExistsUserAction } from '../actions/user/exists-user.action.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
@@ -42,7 +42,7 @@ describe('OxEventHandler', () => {
     let loggerMock: DeepMocked<ClassLogger>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -74,8 +74,8 @@ describe('OxEventHandler', () => {
                     useValue: createMock<OxService>(),
                 },
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
             ],
         }).compile();
@@ -86,7 +86,7 @@ describe('OxEventHandler', () => {
 
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
     });
 
     function getRequestedEmailAddresses(address?: string): EmailAddress<true>[] {
@@ -1010,6 +1010,15 @@ describe('OxEventHandler', () => {
                     oxContextName: contextName,
                     primaryEmail: email,
                 }),
+                expect.objectContaining({
+                    personId: personId,
+                    keycloakUsername: username,
+                    oxUserId: oxUserId,
+                    oxUserName: username, //this is the new OxUserName, it's changed on renaming in SPSH
+                    oxContextId: contextId,
+                    oxContextName: contextName,
+                    primaryEmail: email,
+                }),
             );
         });
     });
@@ -1080,6 +1089,15 @@ describe('OxEventHandler', () => {
                 `Changed primary email-address in OX for user, personId:${personId}, username:${username}, oxUserId:${oxUserId}, oxUsername:${username}, new email-address:${email}`,
             );
             expect(eventServiceMock.publish).toHaveBeenLastCalledWith(
+                expect.objectContaining({
+                    personId: personId,
+                    keycloakUsername: username,
+                    oxUserId: oxUserId,
+                    oxUserName: username, //this is the new OxUserName, it's changed on renaming in SPSH
+                    oxContextId: contextId,
+                    oxContextName: contextName,
+                    primaryEmail: email,
+                }),
                 expect.objectContaining({
                     personId: personId,
                     keycloakUsername: username,
@@ -1466,6 +1484,14 @@ describe('OxEventHandler', () => {
                         oxContextId: contextId,
                         oxContextName: contextName,
                     }),
+                    expect.objectContaining({
+                        personId: event.personId,
+                        oxUserId: event.oxUserId,
+                        username: event.username,
+                        address: event.address,
+                        oxContextId: contextId,
+                        oxContextName: contextName,
+                    }),
                 );
             });
         });
@@ -1575,6 +1601,11 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressesPurgedEvent(event);
 
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: personId,
+                        username: username,
+                        oxUserId: oxUserId,
+                    }),
                     expect.objectContaining({
                         personId: personId,
                         username: username,

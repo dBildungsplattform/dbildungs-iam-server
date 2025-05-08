@@ -11,6 +11,6 @@ describe('KafkaPersonDeletedAfterDeadlineExceededEvent', () => {
         );
 
         expect(event).toBeInstanceOf(KafkaPersonDeletedAfterDeadlineExceededEvent);
-        expect(event.kafkaKeyPersonId).toBe(personId);
+        expect(event.kafkaKey).toBe(personId);
     });
 });

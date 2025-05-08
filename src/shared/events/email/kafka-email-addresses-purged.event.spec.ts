@@ -13,6 +13,6 @@ describe('KafkaEmailAddressesPurgedEvent', () => {
         const event: KafkaEmailAddressesPurgedEvent = new KafkaEmailAddressesPurgedEvent(personId, username, oxUserId);
 
         expect(event).toBeInstanceOf(KafkaEmailAddressesPurgedEvent);
-        expect(event.kafkaKeyPersonId).toBe(personId);
+        expect(event.kafkaKey).toBe(personId);
     });
 });

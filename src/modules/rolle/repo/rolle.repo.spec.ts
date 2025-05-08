@@ -15,7 +15,7 @@ import { RolleRepo } from './rolle.repo.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
@@ -42,8 +42,17 @@ describe('RolleRepo', () => {
                 DatabaseTestModule.forRoot({ isDatabaseRequired: true }),
                 MapperTestModule,
             ],
-            providers: [RolleRepo, RolleFactory, ServiceProviderRepo, OrganisationRepository, EventService],
-        }).compile();
+            providers: [
+                RolleRepo,
+                RolleFactory,
+                ServiceProviderRepo,
+                OrganisationRepository,
+                EventRoutingLegacyKafkaService,
+            ],
+        })
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
+            .compile();
 
         sut = module.get(RolleRepo);
         orm = module.get(MikroORM);

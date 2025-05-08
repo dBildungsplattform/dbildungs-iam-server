@@ -24,6 +24,8 @@ import { ImportExecutedEvent } from '../../../shared/events/import-executed.even
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
+import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 
 describe('ImportEventHandler', () => {
     let module: TestingModule;
@@ -37,7 +39,7 @@ describe('ImportEventHandler', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [LoggingTestModule],
+            imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 ImportEventHandler,
                 {

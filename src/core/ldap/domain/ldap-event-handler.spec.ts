@@ -39,7 +39,7 @@ import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
-import { EventService } from '../../eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 
@@ -51,7 +51,7 @@ describe('LDAP Event Handler', () => {
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -83,8 +83,8 @@ describe('LDAP Event Handler', () => {
             .useValue(createMock<DBiamPersonenkontextRepo>())
             .overrideProvider(OrganisationRepository)
             .useValue(createMock<OrganisationRepository>())
-            .overrideProvider(EventService)
-            .useValue(createMock<EventService>())
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
             .compile();
 
         orm = module.get(MikroORM);
@@ -93,7 +93,7 @@ describe('LDAP Event Handler', () => {
         ldapClientServiceMock = module.get(LdapClientService);
         organisationRepositoryMock = module.get(OrganisationRepository);
         personRepositoryMock = module.get(PersonRepository);
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -1100,6 +1100,11 @@ describe('LDAP Event Handler', () => {
                     username: username,
                     address: address,
                 }),
+                expect.objectContaining({
+                    personId: personId,
+                    username: username,
+                    address: address,
+                }),
             );
         });
     });
@@ -1125,6 +1130,10 @@ describe('LDAP Event Handler', () => {
             );
             expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(1);
             expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    personId: personId,
+                    username: username,
+                }),
                 expect.objectContaining({
                     personId: personId,
                     username: username,

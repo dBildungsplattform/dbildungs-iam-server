@@ -7,7 +7,8 @@ import {
 } from '../../../../test/utils/index.js';
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { EventModule, EventService } from '../../../core/eventbus/index.js';
+import { EventModule } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonID, PersonReferrer } from '../../../shared/types/index.js';
@@ -63,8 +64,8 @@ describe('EmailAddressDeletionHandler', () => {
             .useValue(createMock<EmailRepo>())
             .overrideProvider(EmailAddressDeletionHandler)
             .useClass(EmailAddressDeletionHandler)
-            .overrideProvider(EventService)
-            .useValue(createMock<EventService>())
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
             .overrideProvider(EmailAddressDeletionService)
             .useValue(createMock<EmailAddressDeletionService>())
             .overrideProvider(ClassLogger)

@@ -5,7 +5,7 @@ export class KafkaPersonDeletedAfterDeadlineExceededEvent
     extends PersonDeletedAfterDeadlineExceededEvent
     implements KafkaEvent
 {
-    public get kafkaKeyPersonId(): string {
+    public get kafkaKey(): string {
         return this.personId;
     }
 }

@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
 import { EmailRepo } from '../persistence/email.repo.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
 import { faker } from '@faker-js/faker';
@@ -19,7 +19,7 @@ describe('EmailAddressDeletionService', () => {
 
     let emailRepoMock: DeepMocked<EmailRepo>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
@@ -39,8 +39,8 @@ describe('EmailAddressDeletionService', () => {
                     useValue: createMock<EmailRepo>(),
                 },
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
             ],
         }).compile();
@@ -49,7 +49,7 @@ describe('EmailAddressDeletionService', () => {
 
         emailRepoMock = module.get(EmailRepo);
         personRepositoryMock = module.get(PersonRepository);
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
     });
 

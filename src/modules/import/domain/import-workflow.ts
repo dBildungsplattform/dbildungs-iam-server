@@ -26,7 +26,7 @@ import { ImportDataItem } from './import-data-item.js';
 import { ImportVorgang } from './import-vorgang.js';
 import { ImportVorgangRepository } from '../persistence/import-vorgang.repository.js';
 import { ImportExecutedEvent } from '../../../shared/events/import-executed.event.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ImportStatus } from './import.enums.js';
 import { ImportDomainError } from './import-domain.error.js';
 import { ImportPasswordEncryptor } from './import-password-encryptor.js';
@@ -37,6 +37,7 @@ import { ImportCSVFileMaxUsersError } from './import-csv-file-max-users.error.js
 import { ImportCSVFileContainsNoUsersError } from './import-csv-file-contains-no-users.error.js';
 import { ImportResultMaxUsersError } from './import-result-max-users.error.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
+import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
 
 export type ImportUploadResultFields = {
     importVorgangId: string;
@@ -82,7 +83,7 @@ export class ImportWorkflow {
         private readonly importDataRepository: ImportDataRepository,
         private readonly importVorgangRepository: ImportVorgangRepository,
         private readonly importPasswordEncryptor: ImportPasswordEncryptor,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         private readonly logger: ClassLogger,
         private readonly config: ConfigService<ServerConfig>,
     ) {
@@ -95,7 +96,7 @@ export class ImportWorkflow {
         importDataRepository: ImportDataRepository,
         importVorgangRepository: ImportVorgangRepository,
         importPasswordEncryptor: ImportPasswordEncryptor,
-        eventService: EventService,
+        eventService: EventRoutingLegacyKafkaService,
         logger: ClassLogger,
         config: ConfigService<ServerConfig>,
     ): ImportWorkflow {
@@ -271,6 +272,12 @@ export class ImportWorkflow {
 
         this.eventService.publish(
             new ImportExecutedEvent(
+                importvorgangId,
+                importVorgang.organisationId!,
+                importVorgang.rolleId!,
+                permissions,
+            ),
+            new KafkaImportExecutedEvent(
                 importvorgangId,
                 importVorgang.organisationId!,
                 importVorgang.rolleId!,
