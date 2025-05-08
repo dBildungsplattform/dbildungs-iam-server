@@ -4,10 +4,11 @@ import { Injectable } from '@nestjs/common';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -61,7 +62,7 @@ type ServiceProviderFindOptions = {
 export class ServiceProviderRepo {
     public constructor(
         private readonly em: EntityManager,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
     ) {}
 
     public async findById(id: string, options?: ServiceProviderFindOptions): Promise<Option<ServiceProvider<true>>> {
@@ -150,6 +151,10 @@ export class ServiceProviderRepo {
         if (serviceProviderEntity.keycloakGroup && serviceProviderEntity.keycloakRole) {
             this.eventService.publish(
                 new GroupAndRoleCreatedEvent(serviceProviderEntity.keycloakGroup, serviceProviderEntity.keycloakRole),
+                new KafkaGroupAndRoleCreatedEvent(
+                    serviceProviderEntity.keycloakGroup,
+                    serviceProviderEntity.keycloakRole,
+                ),
             );
         }
 

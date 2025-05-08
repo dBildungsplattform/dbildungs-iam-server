@@ -19,7 +19,7 @@ import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
 
@@ -28,6 +28,7 @@ import { ServiceProviderEntity } from '../../service-provider/repo/service-provi
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
+import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
@@ -116,7 +117,7 @@ export class RolleRepo {
 
     public constructor(
         protected readonly rolleFactory: RolleFactory,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         protected readonly em: EntityManager,
     ) {}
 
@@ -327,6 +328,7 @@ export class RolleRepo {
         }
         this.eventService.publish(
             new RolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
+            new KafkaRolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
         );
 
         return result;

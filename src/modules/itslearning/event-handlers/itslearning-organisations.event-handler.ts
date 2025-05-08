@@ -17,6 +17,12 @@ import { UpdateGroupParams } from '../actions/update-group.action.js';
 import { ItslearningGroupRepo } from '../repo/itslearning-group.repo.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
 import { ItslearningGroupLengthLimits } from '../types/groups.enum.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
+import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
+import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
 
 const SAFE_NAME_LIMIT: number = Math.floor(ItslearningGroupLengthLimits.SHORT_DESC * 0.75);
 
@@ -31,6 +37,10 @@ export class ItsLearningOrganisationsEventHandler {
         private readonly organisationRepo: OrganisationRepository,
         private readonly itslearningGroupRepo: ItslearningGroupRepo,
         configService: ConfigService<ServerConfig>,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
@@ -39,7 +49,9 @@ export class ItsLearningOrganisationsEventHandler {
         this.ROOT_OEFFENTLICH = itsLearningConfig.ROOT_OEFFENTLICH;
     }
 
+    @KafkaEventHandler(KafkaKlasseCreatedEvent)
     @EventHandler(KlasseCreatedEvent)
+    @EnsureRequestContext()
     public async createKlasseEventHandler(event: KlasseCreatedEvent): Promise<void> {
         this.logger.info(`[EventID: ${event.eventID}] Received KlasseCreatedEvent, ID: ${event.id}`);
 
@@ -87,7 +99,9 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(`[EventID: ${event.eventID}] Klasse with ID ${event.id} created.`);
     }
 
+    @KafkaEventHandler(KafkaKlasseUpdatedEvent)
     @EventHandler(KlasseUpdatedEvent)
+    @EnsureRequestContext()
     public async updatedKlasseEventHandler(event: KlasseUpdatedEvent): Promise<void> {
         this.logger.info(
             `[EventID: ${event.eventID}] Received KlasseUpdatedEvent, ID: ${event.organisationId}, new name: ${event.name}`,
@@ -137,7 +151,9 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(`[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was updated.`);
     }
 
+    @KafkaEventHandler(KafkaKlasseDeletedEvent)
     @EventHandler(KlasseDeletedEvent)
+    @EnsureRequestContext()
     public async deletedKlasseEventHandler(event: KlasseDeletedEvent): Promise<void> {
         this.logger.info(`[EventID: ${event.eventID}] Received KlasseUpdatedEvent, ID: ${event.organisationId}`);
 
@@ -160,7 +176,9 @@ export class ItsLearningOrganisationsEventHandler {
         this.logger.info(`[EventID: ${event.eventID}] Klasse with ID ${event.organisationId} was deleted.`);
     }
 
+    @KafkaEventHandler(KafkaSchuleItslearningEnabledEvent)
     @EventHandler(SchuleItslearningEnabledEvent)
+    @EnsureRequestContext()
     public async schuleItslearningEnabledEventHandler(event: SchuleItslearningEnabledEvent): Promise<void> {
         this.logger.info(
             `[EventID: ${event.eventID}] Received EnableSchuleItslearningEvent, ID: ${event.organisationId}`,

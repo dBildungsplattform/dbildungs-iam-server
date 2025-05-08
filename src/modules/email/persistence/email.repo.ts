@@ -11,10 +11,11 @@ import { PersonAlreadyHasEnabledEmailAddressError } from '../error/person-alread
 import { Person } from '../../person/domain/person.js';
 import { PersonEmailResponse } from '../../person/api/person-email-response.js';
 import { EmailAddressDeletionError } from '../error/email-address-deletion.error.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 import { EmailInstanceConfig } from '../email-instance-config.js';
+import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
 
 export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT: number = 180;
 
@@ -46,7 +47,7 @@ function mapEntityToAggregate(entity: EmailAddressEntity): EmailAddress<boolean>
 export class EmailRepo {
     public constructor(
         private readonly em: EntityManager,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         private readonly emailInstanceConfig: EmailInstanceConfig,
         private readonly logger: ClassLogger,
     ) {}
@@ -300,6 +301,13 @@ export class EmailRepo {
             }
             this.eventService.publish(
                 new EmailAddressDeletedInDatabaseEvent(
+                    emailAddress.personId,
+                    emailAddress.oxUserID,
+                    emailAddress.id,
+                    emailAddress.status,
+                    emailAddress.address,
+                ),
+                new KafkaEmailAddressDeletedInDatabaseEvent(
                     emailAddress.personId,
                     emailAddress.oxUserID,
                     emailAddress.id,

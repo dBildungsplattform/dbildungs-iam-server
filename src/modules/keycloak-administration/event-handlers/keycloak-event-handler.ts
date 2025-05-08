@@ -4,7 +4,7 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { KeycloakUserService } from '../domain/keycloak-user.service.js';
 import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -19,6 +19,9 @@ import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-ad
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
+import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
+import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 
 @Injectable()
 export class KeycloakEventHandler {
@@ -27,7 +30,7 @@ export class KeycloakEventHandler {
     public constructor(
         private readonly logger: ClassLogger,
         private readonly kcUserService: KeycloakUserService,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
@@ -74,7 +77,9 @@ export class KeycloakEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaOxUserChangedEvent)
     @EventHandler(OxUserChangedEvent)
+    @EnsureRequestContext()
     public async handleOxUserChangedEvent(event: OxUserChangedEvent): Promise<void> {
         this.logger.info(
             `Received OxUserChangedEvent personId:${event.personId}, userId:${event.oxUserId}, userName:${event.oxUserName} contextId:${event.oxContextId}, contextName:${event.oxContextName}, primaryEmail:${event.primaryEmail}`,
@@ -96,6 +101,14 @@ export class KeycloakEventHandler {
                     event.oxContextName,
                     event.primaryEmail,
                 ),
+                new KafkaOxMetadataInKeycloakChangedEvent(
+                    event.personId,
+                    event.keycloakUsername,
+                    event.oxUserId,
+                    event.oxUserName,
+                    event.oxContextName,
+                    event.primaryEmail,
+                ),
             );
         } else {
             this.logger.error(
@@ -107,7 +120,9 @@ export class KeycloakEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaEmailAddressDisabledEvent)
     @EventHandler(EmailAddressDisabledEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressDisabledEvent(event: EmailAddressDisabledEvent): Promise<void> {
         this.logger.info(`Received EmailAddressDisabledEvent personId:${event.personId}, username:${event.username}`);
 
