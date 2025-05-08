@@ -24,13 +24,13 @@ restartPolicy: Always
 environment: dev
 
 database:
-  name: 'dbildungs_iam_server'
+  name: 'erwin_portal_server'
   host: ''
   password: ''
-  username: 'dbildungs_iam_server'
+  username: 'erwin_portal_server'
 
 ldap:
-  url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
+  url: ldap://erwin-portal-ldap.spsh-xxx.svc.cluster.local
   oeffentlicheSchulenDomain: schule-sh.de
   ersatzschulenDomain: ersatzschule-sh.de
   base_dn: dc=schule-sh,dc=de
@@ -102,7 +102,7 @@ backend:
   maxUnavailable: '50%'
   maxSurge: '50%'
   image:
-    repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    repository: ghcr.io/dbildungsplattform/erwin-portal-server
     tag: ''
     pullPolicy: Always
   containerPorts:
