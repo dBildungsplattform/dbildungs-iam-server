@@ -2219,89 +2219,91 @@ describe('OrganisationRepository', () => {
             expect(result[2]).toBe(2); // pageTotal should also be 2 since it's less than the limit
         });
 
-        let organisations: OrganisationEntity[] = [];
-        beforeEach(async () => {
-            organisations = [];
-            for (let i: number = 0; i < 5; i++) {
-                const orga: Organisation<false> | DomainError = Organisation.createNew(
-                    sut.ROOT_ORGANISATION_ID,
-                    sut.ROOT_ORGANISATION_ID,
-                    faker.string.numeric(6),
-                    `Organisation ${5 - i}`, // Reverse order for testing sorting
-                );
-                if (orga instanceof DomainError) {
-                    fail('Could not create Organisation');
+        describe('Sorting', () => {
+            let organisations: OrganisationEntity[] = [];
+            beforeEach(async () => {
+                organisations = [];
+                for (let i: number = 0; i < 5; i++) {
+                    const orga: Organisation<false> | DomainError = Organisation.createNew(
+                        sut.ROOT_ORGANISATION_ID,
+                        sut.ROOT_ORGANISATION_ID,
+                        faker.string.numeric(6),
+                        `Organisation ${5 - i}`, // Reverse order for testing sorting
+                    );
+                    if (orga instanceof DomainError) {
+                        fail('Could not create Organisation');
+                    }
+                    const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
+                    await em.persistAndFlush(mappedOrga);
+                    organisations.push(mappedOrga);
                 }
-                const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
-                await em.persistAndFlush(mappedOrga);
-                organisations.push(mappedOrga);
-            }
-        });
+            });
 
-        it('should return organisations sorted by name in ascending order', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            it('should return organisations sorted by name in ascending order', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
-                personPermissions,
-                [RollenSystemRecht.SCHULEN_VERWALTEN],
-                { sortField: SortFieldOrganisation.NAME, sortOrder: ScopeOrder.ASC },
-            );
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { sortField: SortFieldOrganisation.NAME, sortOrder: ScopeOrder.ASC },
+                );
 
-            expect(result[0].map((org: Organisation<true>) => org.name)).toEqual(
-                organisations.map((org: OrganisationEntity) => org.name).sort(),
-            );
-        });
+                expect(result[0].map((org: Organisation<true>) => org.name)).toEqual(
+                    organisations.map((org: OrganisationEntity) => org.name).sort(),
+                );
+            });
 
-        it('should return organisations sorted by name in descending order', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            it('should return organisations sorted by name in descending order', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
-                personPermissions,
-                [RollenSystemRecht.SCHULEN_VERWALTEN],
-                { sortField: SortFieldOrganisation.NAME, sortOrder: ScopeOrder.DESC },
-            );
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { sortField: SortFieldOrganisation.NAME, sortOrder: ScopeOrder.DESC },
+                );
 
-            expect(result[0].map((org: Organisation<true>) => org.name)).toEqual(
-                organisations
-                    .map((org: OrganisationEntity) => org.name)
-                    .sort()
-                    .reverse(),
-            );
-        });
+                expect(result[0].map((org: Organisation<true>) => org.name)).toEqual(
+                    organisations
+                        .map((org: OrganisationEntity) => org.name)
+                        .sort()
+                        .reverse(),
+                );
+            });
 
-        it('should return organisations sorted by kennung in ascending order', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            it('should return organisations sorted by kennung in ascending order', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
-                personPermissions,
-                [RollenSystemRecht.SCHULEN_VERWALTEN],
-                { sortField: SortFieldOrganisation.KENNUNG, sortOrder: ScopeOrder.ASC },
-            );
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { sortField: SortFieldOrganisation.KENNUNG, sortOrder: ScopeOrder.ASC },
+                );
 
-            expect(result[0].map((org: Organisation<true>) => org.kennung)).toEqual(
-                organisations.map((org: OrganisationEntity) => org.kennung).sort(),
-            );
-        });
+                expect(result[0].map((org: Organisation<true>) => org.kennung)).toEqual(
+                    organisations.map((org: OrganisationEntity) => org.kennung).sort(),
+                );
+            });
 
-        it('should return organisations sorted by kennung in descending order', async () => {
-            const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            it('should return organisations sorted by kennung in descending order', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
 
-            const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
-                personPermissions,
-                [RollenSystemRecht.SCHULEN_VERWALTEN],
-                { sortField: SortFieldOrganisation.KENNUNG, sortOrder: ScopeOrder.DESC },
-            );
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { sortField: SortFieldOrganisation.KENNUNG, sortOrder: ScopeOrder.DESC },
+                );
 
-            expect(result[0].map((org: Organisation<true>) => org.kennung)).toEqual(
-                organisations
-                    .map((org: OrganisationEntity) => org.kennung)
-                    .sort()
-                    .reverse(),
-            );
+                expect(result[0].map((org: Organisation<true>) => org.kennung)).toEqual(
+                    organisations
+                        .map((org: OrganisationEntity) => org.kennung)
+                        .sort()
+                        .reverse(),
+                );
+            });
         });
     });
 
