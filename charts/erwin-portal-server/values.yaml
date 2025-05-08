@@ -3,9 +3,9 @@ fullnameOverride: ''
 namespaceOverride: ''
 
 backendHostname: ''
-#keycloakHostname: 
+keycloakHostname: 'http://dbildungs-iam-keycloak'
 keycloak2ndHostname: ""
-#keycloakExternalHostname: ''
+keycloakExternalHostname: 'spsh-xxx-keycloak.dev.spsh.dbildungsplattform.de'
 backend2ndHostname: ""
 
 containerSecurityContext:
@@ -24,11 +24,30 @@ restartPolicy: Always
 environment: dev
 
 database:
-  name: 'erwin_portal_server'
+  name: 'dbildungs_iam_server'
   host: ''
   password: ''
-  username: 'erwin_portal_server'
+  username: 'dbildungs_iam_server'
 
+ldap:
+  url: ldap://dbildungs-iam-ldap.spsh-xxx.svc.cluster.local
+  oeffentlicheSchulenDomain: schule-sh.de
+  ersatzschulenDomain: ersatzschule-sh.de
+  base_dn: dc=schule-sh,dc=de
+  retryWrapperDefaultRetries: 3
+
+itslearning:
+  enabled: false
+  endpoint: https://enterprise.itslintegrations.com/WCFServiceLibrary/ImsEnterpriseServicesPort.svc
+  root: sh
+  rootOeffentlich: oeffentlich
+  rootErsatz: ersatz
+
+privacyidea:
+  url: https://privacyidea.dev.spsh.dbildungsplattform.de
+  renameWaitingTime: 5
+  realm: ucs_users
+  userResolver: ucs_users
 
 system:
   rename_waiting_time_in_seconds: 2
@@ -38,7 +57,7 @@ system:
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
   existingSecret: ''
-  secretName: erwin-portal-server
+  secretName: dbildungs-iam-server
   keycloak_adminSecret: ''
   keycloak_clientSecret: ''
   service_account_private_jwks: ''
@@ -59,15 +78,31 @@ auth:
   ox_password: ''
   basic_auth_password: ''
   redis_password: ''
+  kafka_username: ''
+  kafka_password: ''
 
+ox:
+  enabled: false
+  username: 'oxadmin'
+  endpoint: 'https://webmail.example.com'
+  contextId: '10'
+  contextName: '10'
 
+email:
+  nonEnabledEmailAddressesDeadlineInDays: 180
+
+vidis:
+  url: 'https://service-stage.vidis.schule'
+  regionName: 'test-region'
+  keycloakGroup: 'VIDIS-service'
+  keycloakRole: 'VIDIS-user'
 
 backend:
   replicaCount: 1
   maxUnavailable: '50%'
   maxSurge: '50%'
   image:
-    repository: ghcr.io/dbildungsplattform/erwin-portal-server
+    repository: ghcr.io/dbildungsplattform/dbildungs-iam-server
     tag: ''
     pullPolicy: Always
   containerPorts:
@@ -153,6 +188,15 @@ backend:
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
 
+kafka:
+  url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
+  enabled: false
+  initEnabled: true
+  initImage:
+    repository: docker.io/bitnami/kafka
+    tag: '3.9.0'
+    pullPolicy: Always
+
 autoscaling:
   enabled: false
   minReplicas: 1
@@ -163,45 +207,47 @@ podDisruptionBudget:
   enabled: true
   minAvailable: "60%"
 
+status:
+  url: 'https://status.dev.spsh.dbildungsplattform.de/'
 
-# cronjobs:
-#   enabled: true
-#   image:
-#     tag: '1.1.0'
-#     repository: docker.io/schulcloud/cron-tools
-#     pullPolicy: IfNotPresent
-#   port: 5656
-#   keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
-#   keycloakClientId: spsh-service
-#   jwksFilePath: /keys/jwks.json
-#   backendHostname: '{{ $.Values.frontendHostname }}'
-#   scriptDir: scripts
-#   jobs:
-#     cron-trigger-1:
-#       schedule: 20 0 * * *
-#       endpoint: '/api/cron/kopers-lock'
-#       httpMethod: 'PUT'
-#       script: 'cron_trigger.sh'
-#     cron-trigger-2:
-#       schedule: 40 0 * * *
-#       endpoint: '/api/cron/kontext-expired'
-#       httpMethod: 'PUT'
-#       script: 'cron_trigger.sh'
-#     cron-trigger-3:
-#       schedule: 50 0 * * *
-#       endpoint: '/api/cron/person-without-org'
-#       httpMethod: 'PUT'
-#       script: 'cron_trigger.sh'
-#     cron-trigger-4:
-#       schedule: 10 0 * * *
-#       endpoint: '/api/cron/unlock'
-#       httpMethod: 'PUT'
-#       script: 'cron_trigger.sh'
-#     cron-trigger-5:
-#       schedule: 30 0 * * *
-#       endpoint: '/api/cron/vidis-angebote'
-#       httpMethod: 'PUT'
-#       script: 'cron_trigger.sh'
+cronjobs:
+  enabled: true
+  image:
+    tag: '1.1.0'
+    repository: docker.io/schulcloud/cron-tools
+    pullPolicy: IfNotPresent
+  port: 5656
+  keycloakTokenUrl: '/realms/SPSH/protocol/openid-connect/token'
+  keycloakClientId: spsh-service
+  jwksFilePath: /keys/jwks.json
+  backendHostname: '{{ $.Values.frontendHostname }}'
+  scriptDir: scripts
+  jobs:
+    cron-trigger-1:
+      schedule: 20 0 * * *
+      endpoint: '/api/cron/kopers-lock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-2:
+      schedule: 40 0 * * *
+      endpoint: '/api/cron/kontext-expired'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-3:
+      schedule: 50 0 * * *
+      endpoint: '/api/cron/person-without-org'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-4:
+      schedule: 10 0 * * *
+      endpoint: '/api/cron/unlock'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
+    cron-trigger-5:
+      schedule: 30 0 * * *
+      endpoint: '/api/cron/vidis-angebote'
+      httpMethod: 'PUT'
+      script: 'cron_trigger.sh'
 
 import:
   csvFileMaxSizeInMB: 10
