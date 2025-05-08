@@ -86,10 +86,6 @@ describe('Import API', () => {
                     },
                 },
                 {
-                    provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
-                },
-                {
                     provide: KeycloakUserService,
                     useValue: createMock<KeycloakUserService>({
                         create: () =>
@@ -116,6 +112,8 @@ describe('Import API', () => {
                 },
             ],
         })
+            .overrideProvider(PersonPermissionsRepo)
+            .useValue(createMock<PersonPermissionsRepo>())
             .overrideModule(KeycloakConfigModule)
             .useModule(KeycloakConfigTestModule.forRoot({ isKeycloakRequired: true }))
             .compile();

@@ -10,7 +10,7 @@ import {
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -31,6 +31,11 @@ import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
+import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
+import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
+import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
+import { KafkaSchuleCreatedEvent } from '../../../shared/events/kafka-schule-created.event.js';
+import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
 
 export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -88,7 +93,7 @@ export class OrganisationRepository {
 
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
     ) {
@@ -462,7 +467,10 @@ export class OrganisationRepository {
         }
 
         await this.em.removeAndFlush(organisationEntity);
-        this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
+        this.eventService.publish(
+            new KlasseDeletedEvent(organisationEntity.id),
+            new KafkaKlasseDeletedEvent(organisationEntity.id),
+        );
 
         if (organisationEntity.zugehoerigZu) {
             this.logger.info(
@@ -560,7 +568,10 @@ export class OrganisationRepository {
 
         if (organisationFound.typ === OrganisationsTyp.KLASSE) {
             // This is to update the new Klasse in itsLearning
-            this.eventService.publish(new KlasseUpdatedEvent(id, newName, parentId));
+            this.eventService.publish(
+                new KlasseUpdatedEvent(id, newName, parentId),
+                new KafkaKlasseUpdatedEvent(id, newName, parentId),
+            );
         }
         this.logger.info(
             `Admin: ${permissions.personFields.id}) hat den Namen einer Organisation geändert: ${organisationFound.name} (${parentName}).`,
@@ -605,6 +616,12 @@ export class OrganisationRepository {
                 organisationEntity.kennung,
                 organisationEntity.name,
             ),
+            new KafkaSchuleItslearningEnabledEvent(
+                organisationEntity.id,
+                organisationEntity.typ,
+                organisationEntity.kennung,
+                organisationEntity.name,
+            ),
         );
 
         return mapOrgaEntityToAggregate(organisationEntity);
@@ -633,10 +650,21 @@ export class OrganisationRepository {
                     organisationEntity.name,
                     orgaBaumZuordnung,
                 ),
+                new KafkaSchuleCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.kennung,
+                    organisationEntity.name,
+                    orgaBaumZuordnung,
+                ),
             );
         } else if (organisationEntity.typ === OrganisationsTyp.KLASSE) {
             this.eventService.publish(
                 new KlasseCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.name,
+                    organisationEntity.administriertVon,
+                ),
+                new KafkaKlasseCreatedEvent(
                     organisationEntity.id,
                     organisationEntity.name,
                     organisationEntity.administriertVon,

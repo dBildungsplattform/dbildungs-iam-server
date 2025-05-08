@@ -24,17 +24,15 @@ describe('KafkaPersonenkontextUpdatedEvent', () => {
             Organisation<true>,
             Rolle<true>,
         ][];
-        const ldapEntryUUID: string = 'test-uuid';
 
         const event: KafkaPersonenkontextUpdatedEvent = KafkaPersonenkontextUpdatedEvent.fromPersonenkontexte(
             person,
             newKontexte,
             removedKontexte,
             currentKontexte,
-            ldapEntryUUID,
         );
 
         expect(event).toBeInstanceOf(KafkaPersonenkontextUpdatedEvent);
-        expect(event.kafkaKeyPersonId).toBe(person.id);
+        expect(event.kafkaKey).toBe(person.id);
     });
 });

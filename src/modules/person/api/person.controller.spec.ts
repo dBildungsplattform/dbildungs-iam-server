@@ -4,7 +4,7 @@ import { HttpException, NotImplementedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
@@ -12,7 +12,7 @@ import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError }
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
-import { OrganisationID, PersonID } from '../../../shared/types/index.js';
+import { PersonID } from '../../../shared/types/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
@@ -37,7 +37,6 @@ import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-t
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
-import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonEmailResponse } from './person-email-response.js';
@@ -48,20 +47,20 @@ import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
     let personController: PersonController;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
-    let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personenkontextServiceMock: DeepMocked<PersonenkontextService>;
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let keycloakUserService: DeepMocked<KeycloakUserService>;
     let personDeleteServiceMock: DeepMocked<PersonDeleteService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let ldapClientServiceMock: DeepMocked<LdapClientService>;
 
     beforeAll(async () => {
@@ -116,8 +115,8 @@ describe('PersonController', () => {
                     useValue: createMock<ClassLogger>(),
                 },
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: EmailRepo,
@@ -136,13 +135,12 @@ describe('PersonController', () => {
         personController = module.get(PersonController);
         personRepositoryMock = module.get(PersonRepository);
         emailRepoMock = module.get(EmailRepo);
-        usernameGeneratorService = module.get(UsernameGeneratorService);
         personenkontextServiceMock = module.get(PersonenkontextService);
         rolleRepoMock = module.get(RolleRepo);
         personDeleteServiceMock = module.get(PersonDeleteService);
         keycloakUserService = module.get(KeycloakUserService);
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         ldapClientServiceMock = module.get(LdapClientService);
     });
 
@@ -199,122 +197,6 @@ describe('PersonController', () => {
 
     it('should be defined', () => {
         expect(personController).toBeDefined();
-    });
-
-    describe('createPersonMigration', () => {
-        describe('when is authorized migration user', () => {
-            it('should return PersonendatensatzResponse', async () => {
-                const person: Person<true> = getPerson();
-                const params: CreatePersonMigrationBodyParams = {
-                    personId: faker.string.uuid(),
-                    familienname: person.familienname,
-                    vorname: person.vorname,
-                    username: 'fixedusername',
-                    hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
-                };
-                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-                personRepositoryMock.create.mockResolvedValue(person);
-                await expect(
-                    personController.createPersonMigration(params, personPermissionsMock),
-                ).resolves.toBeInstanceOf(PersonendatensatzResponse);
-                expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
-                const result: PersonendatensatzResponse = await personController.createPersonMigration(
-                    params,
-                    personPermissionsMock,
-                );
-                expect(result.person.name.vorname).toEqual(person.vorname);
-                expect(result.person.name.familienname).toEqual(person.familienname);
-            });
-        });
-        describe('when is not authorized migration user', () => {
-            it('should return error', async () => {
-                const person: Person<true> = getPerson();
-                const params: CreatePersonMigrationBodyParams = {
-                    personId: faker.string.uuid(),
-                    familienname: person.familienname,
-                    vorname: person.vorname,
-                    username: 'fixedusername',
-                    hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
-                };
-                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(false);
-                personRepositoryMock.create.mockResolvedValue(person);
-                await expect(personController.createPersonMigration(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-            });
-        });
-        describe('when creating a person is successful', () => {
-            it('should return PersonendatensatzResponse', async () => {
-                const person: Person<true> = getPerson();
-                const params: CreatePersonMigrationBodyParams = {
-                    personId: faker.string.uuid(),
-                    familienname: person.familienname,
-                    vorname: person.vorname,
-                    username: 'fixedusername',
-                    hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
-                };
-                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-                personRepositoryMock.create.mockResolvedValue(person);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                await expect(
-                    personController.createPersonMigration(params, personPermissionsMock),
-                ).resolves.toBeInstanceOf(PersonendatensatzResponse);
-                expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
-                const result: PersonendatensatzResponse = await personController.createPersonMigration(
-                    params,
-                    personPermissionsMock,
-                );
-                expect(result.person.name.vorname).toEqual(person.vorname);
-                expect(result.person.name.familienname).toEqual(person.familienname);
-            });
-        });
-
-        describe('when creating a person is not successful', () => {
-            personPermissionsMock = createMock<PersonPermissions>();
-
-            const params: CreatePersonMigrationBodyParams = {
-                personId: faker.string.uuid(),
-                familienname: faker.person.firstName(),
-                vorname: faker.person.lastName(),
-                username: 'fixedusername',
-                hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
-            };
-
-            it('should throw HttpException when create operation fails', async () => {
-                const person: Person<true> = getPerson();
-                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-                const orgaId: OrganisationID[] = [faker.string.uuid()];
-                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
-                    all: false,
-                    orgaIds: orgaId,
-                });
-                usernameGeneratorService.generateUsername.mockResolvedValue({ ok: true, value: '' });
-                personRepositoryMock.create.mockResolvedValue(new KeycloakClientError(''));
-                await expect(personController.createPersonMigration(params, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-                expect(personRepositoryMock.create).toHaveBeenCalledTimes(1);
-            });
-
-            it('should throw HttpException when familienname has trailing space', async () => {
-                const person: Person<true> = getPerson();
-                const bodyParams: CreatePersonMigrationBodyParams = {
-                    personId: faker.string.uuid(),
-                    familienname: 'familienname ',
-                    vorname: faker.person.lastName(),
-                    username: 'fixedusername',
-                    hashedPassword: '{crypt}$6$TDByqqy.tqrqUUE0$px4z5v4gOTKY',
-                };
-                personPermissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValue(true);
-                personRepositoryMock.getPersonIfAllowed.mockResolvedValueOnce({ ok: true, value: person });
-
-                await expect(personController.createPersonMigration(bodyParams, personPermissionsMock)).rejects.toThrow(
-                    HttpException,
-                );
-                expect(personRepositoryMock.create).toHaveBeenCalledTimes(0);
-            });
-        });
     });
 
     describe('deletePerson', () => {
@@ -898,7 +780,10 @@ describe('PersonController', () => {
                 await personController.syncPerson(params.personId, personPermissionsMock);
 
                 expect(personRepositoryMock.getPersonIfAllowed).toHaveBeenCalledTimes(1);
-                expect(eventServiceMock.publish).toHaveBeenCalledWith(expect.any(PersonExternalSystemsSyncEvent));
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.any(PersonExternalSystemsSyncEvent),
+                    expect.any(KafkaPersonExternalSystemsSyncEvent),
+                );
             });
         });
 

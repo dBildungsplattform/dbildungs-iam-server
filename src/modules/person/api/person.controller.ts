@@ -22,7 +22,6 @@ import {
     ApiBadGatewayResponse,
     ApiBadRequestResponse,
     ApiBearerAuth,
-    ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiNoContentResponse,
@@ -34,12 +33,12 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
@@ -65,13 +64,11 @@ import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
-import { PersonFactory } from '../domain/person.factory.js';
 import { Person } from '../domain/person.js';
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { PersonScope } from '../persistence/person.scope.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
-import { CreatePersonMigrationBodyParams } from './create-person.body.params.js';
 import { DbiamPersonError } from './dbiam-person.error.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
@@ -83,6 +80,8 @@ import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
+import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ldap-sync.event.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -95,7 +94,6 @@ export class PersonController {
     public constructor(
         private readonly personRepository: PersonRepository,
         private readonly emailRepo: EmailRepo,
-        private readonly personFactory: PersonFactory,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
         private readonly logger: ClassLogger,
@@ -103,60 +101,10 @@ export class PersonController {
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
         private readonly ldapClientService: LdapClientService,
         private readonly personApiMapper: PersonApiMapper,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
-    }
-
-    @Post()
-    @HttpCode(HttpStatus.CREATED)
-    @ApiCreatedResponse({ description: 'The person was successfully created.', type: PersonendatensatzResponse })
-    @ApiBadRequestResponse({ description: 'A username was given. Creation with username is not supported.' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to create the person.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the person.' })
-    @ApiNotFoundResponse({ description: 'Insufficient permissions to create the person.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the person.' })
-    public async createPersonMigration(
-        @Body() params: CreatePersonMigrationBodyParams,
-        @Permissions() permissions: PersonPermissions,
-    ): Promise<PersonendatensatzResponse> {
-        const isMigrationUser: boolean = await permissions.hasSystemrechteAtRootOrganisation([
-            RollenSystemRecht.MIGRATION_DURCHFUEHREN,
-        ]);
-        if (!isMigrationUser) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new MissingPermissionsError('Migrationsrecht Required For This Endpoint'),
-                ),
-            );
-        }
-        const person: Person<false> | DomainError = await this.personFactory.createNew({
-            vorname: params.vorname,
-            familienname: params.familienname,
-            username: params.username,
-            personalnummer: params.personalnummer,
-        });
-        if (person instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(person),
-            );
-        }
-
-        const result: Person<true> | DomainError = await this.personRepository.create(
-            person,
-            params.hashedPassword,
-            params.personId,
-        );
-        if (result instanceof DomainError) {
-            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
-                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(result),
-            );
-        }
-        this.logger.info(
-            `MIGRATION: Create Person Operation / personId: ${params.personId} / Successfully Created Person`,
-        );
-        return new PersonendatensatzResponse(result, false);
     }
 
     @Delete(':personId')
@@ -569,7 +517,10 @@ export class PersonController {
             throw error;
         }
 
-        this.eventService.publish(new PersonExternalSystemsSyncEvent(personId));
+        this.eventService.publish(
+            new PersonExternalSystemsSyncEvent(personId),
+            new KafkaPersonExternalSystemsSyncEvent(personId),
+        );
         this.logger.info(
             `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id} hat für Benutzer ${personResult.value.referrer} (BenutzerId: ${personResult.value.id}) eine Synchronisation durchgeführt.`,
         );
@@ -667,7 +618,10 @@ export class PersonController {
             personResult.value.id,
             personResult.value.referrer,
         );
-        this.eventService.publish(new PersonLdapSyncEvent(personResult.value.id));
+        this.eventService.publish(
+            new PersonLdapSyncEvent(personResult.value.id),
+            new KafkaPersonLdapSyncEvent(personResult.value.id),
+        );
 
         if (!changeUserPasswordResult.ok) {
             throw new PersonUserPasswordModificationError(personResult.value.id);
@@ -700,7 +654,7 @@ export class PersonController {
             id,
             username,
         );
-        this.eventService.publish(new PersonLdapSyncEvent(id));
+        this.eventService.publish(new PersonLdapSyncEvent(id), new KafkaPersonLdapSyncEvent(id));
 
         if (!changeUserPasswordResult.ok) {
             throw new PersonUserPasswordModificationError(id);

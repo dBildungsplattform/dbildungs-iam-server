@@ -8,6 +8,6 @@ describe('KafkaPersonDeletedEvent', () => {
         const event: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent(personId, referrer);
 
         expect(event).toBeInstanceOf(KafkaPersonDeletedEvent);
-        expect(event.kafkaKeyPersonId).toBe(personId);
+        expect(event.kafkaKey).toBe(personId);
     });
 });

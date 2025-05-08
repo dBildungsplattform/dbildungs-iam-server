@@ -140,33 +140,6 @@ export class DBiamPersonenkontextRepo {
         });
     }
 
-    /**
-     *
-     * @param personId
-     * @param permissions
-     * @returns
-     *
-     * Should return all kontexts of a given person, if the caller has the systemrecht PERSONEN_VERWALTEN at at least one node of the target persons kontexts
-     */
-    public async findByPersonAuthorized(
-        personId: PersonID,
-        permissions: PersonPermissions,
-    ): Promise<Result<Personenkontext<true>[], DomainError>> {
-        const canSeeKontexts: boolean = await permissions.canModifyPerson(personId);
-        if (canSeeKontexts) {
-            const allKontextsForTargetPerson: Personenkontext<true>[] = await this.findByPerson(personId);
-            return {
-                ok: true,
-                value: allKontextsForTargetPerson,
-            };
-        }
-
-        return {
-            ok: false,
-            error: new MissingPermissionsError('Not allowed to view the requested personenkontexte'),
-        };
-    }
-
     public async findBy(scope: PersonenkontextScope): Promise<Counted<Personenkontext<true>>> {
         const [entities, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(this.em);
         const kontexte: Personenkontext<true>[] = entities.map((entity: PersonenkontextEntity) =>
@@ -223,20 +196,6 @@ export class DBiamPersonenkontextRepo {
         }
 
         return null;
-    }
-
-    public async exists(personId: PersonID, organisationId: OrganisationID, rolleId: RolleID): Promise<boolean> {
-        const personenKontext: Option<Loaded<PersonenkontextEntity, never, 'id', never>> = await this.em.findOne(
-            PersonenkontextEntity,
-            {
-                personId,
-                rolleId,
-                organisationId,
-            },
-            { fields: ['id'] as const },
-        );
-
-        return !!personenKontext;
     }
 
     public async findExternalPkData(personId: PersonID): Promise<ExternalPkData[]> {
