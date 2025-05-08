@@ -9,6 +9,7 @@ import { ImportVorgangRepository } from './persistence/import-vorgang.repository
 import { ImportEventHandler } from './domain/import-event-handler.js';
 import { EventModule } from '../../core/eventbus/event.module.js';
 import { ImportPasswordEncryptor } from './domain/import-password-encryptor.js';
+import { AuthenticationApiModule } from '../authentication/authentication-api.module.js';
 
 @Module({
     imports: [
@@ -17,6 +18,7 @@ import { ImportPasswordEncryptor } from './domain/import-password-encryptor.js';
         PersonenKontextModule,
         LoggerModule.register(ImportModule.name),
         EventModule,
+        AuthenticationApiModule,
     ],
     providers: [
         ImportWorkflowFactory,
