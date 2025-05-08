@@ -72,6 +72,7 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -1795,56 +1796,89 @@ describe('PersonRepository Integration', () => {
                 expect(result.ok).toBeTruthy();
             });
 
-            describe('Delete the person and all kontexte and trigger event to delete email', () => {
-                it('should delete the person and trigger PersonDeletedEvent', async () => {
-                    const person: Person<true> = DoFactory.createPerson(true);
-                    const personEntity: PersonEntity = new PersonEntity();
-                    await em.persistAndFlush(personEntity.assign(mapAggregateToData(person)));
-                    person.id = personEntity.id;
-                    personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            it('should delete the person as admin of organisation and publish events when referrer and oxUserId are defined', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                const personEntity: PersonEntity = new PersonEntity();
+                person1.referrer = faker.internet.userName();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
 
-                    await em.persistAndFlush(personEntity);
+                const emailAddress: EmailAddressEntity = new EmailAddressEntity();
+                const oxUserId: OXUserID = faker.string.numeric();
+                emailAddress.address = faker.internet.email();
+                emailAddress.personId = ref(PersonEntity, personEntity.id);
+                emailAddress.status = EmailAddressStatus.ENABLED;
+                emailAddress.oxUserId = oxUserId;
 
-                    const emailAddress: EmailAddressEntity = new EmailAddressEntity();
-                    emailAddress.address = faker.internet.email();
-                    emailAddress.personId = ref(PersonEntity, person.id);
-                    emailAddress.status = EmailAddressStatus.ENABLED;
+                const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
+                await em.persistAndFlush(pp);
 
-                    const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
-                    await em.persistAndFlush(pp);
+                personEntity.emailAddresses.add(emailAddress);
+                await em.persistAndFlush(personEntity);
 
-                    personEntity.emailAddresses.add(emailAddress);
-                    await em.persistAndFlush(personEntity);
-                    kcUserServiceMock.findById.mockResolvedValue({
-                        ok: true,
-                        value: {
-                            id: person.keycloakUserId!,
-                            username: person.username ?? '',
-                            enabled: true,
-                            email: faker.internet.email(),
-                            createdDate: new Date(),
-                            externalSystemIDs: {},
-                            attributes: {},
-                        },
-                    });
+                const organisation: OrganisationEntity = await createAndPersistOrganisation(
+                    em,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
 
-                    const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
-                    const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
-                        person.id,
-                        personPermissionsMock,
-                        removedPersonenkontexts,
-                    );
-
-                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
-                        expect.objectContaining({
-                            emailAddress: emailAddress.address,
-                        }),
-                        expect.objectContaining({
-                            emailAddress: emailAddress.address,
-                        }),
-                    );
-                    expect(result.ok).toBeTruthy();
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
                 });
+
+                const rolleData: RequiredEntityData<RolleEntity> = {
+                    name: 'Testrolle',
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.ORGADMIN,
+                    istTechnisch: false,
+                };
+
+                const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
+                await em.persistAndFlush(rolleEntity);
+
+                const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
+                    organisationId: organisation.id,
+                    personId: person1.id,
+                    rolleId: rolleEntity.id,
+                };
+                const personenkontextEntity: PersonenkontextEntity = em.create(
+                    PersonenkontextEntity,
+                    personenkontextData,
+                );
+                await em.persistAndFlush(personenkontextEntity);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
+                expect(result.ok).toBeTruthy();
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: person1.id,
+                        username: person1.referrer,
+                        oxUserId: oxUserId,
+                    }),
+                    expect.objectContaining({
+                        personId: person1.id,
+                        username: person1.referrer,
+                        oxUserId: oxUserId,
+                    }),
+                );
             });
 
             it('should not delete the person because of unsufficient permissions to find the person', async () => {

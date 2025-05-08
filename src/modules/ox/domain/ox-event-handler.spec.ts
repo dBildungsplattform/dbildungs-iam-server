@@ -1817,7 +1817,7 @@ describe('OxEventHandler', () => {
             personId = faker.string.uuid();
             username = faker.internet.userName();
             oxUserId = faker.string.numeric();
-            event = new PersonDeletedAfterDeadlineExceededEvent(personId, username, faker.internet.email(), oxUserId);
+            event = new PersonDeletedAfterDeadlineExceededEvent(personId, username, oxUserId);
         });
 
         describe('when handler is disabled', () => {
@@ -1825,32 +1825,6 @@ describe('OxEventHandler', () => {
                 sut.ENABLED = false;
                 await sut.handlePersonDeletedAfterDeadlineExceededEvent(event);
                 expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
-            });
-        });
-
-        describe('when person CANNOT be found', () => {
-            it('should log error and return', async () => {
-                personRepositoryMock.findById.mockResolvedValue(undefined);
-                await sut.handlePersonDeletedAfterDeadlineExceededEvent(event);
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Find Person, Cannot Handle PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
-                );
-            });
-        });
-
-        describe('when person has NO oxUserId', () => {
-            it('should log error and return', async () => {
-                person = createMock<Person<true>>({
-                    id: personId,
-                    referrer: username,
-                    oxUserId: undefined,
-                    email: faker.internet.email(),
-                });
-                personRepositoryMock.findById.mockResolvedValue(person);
-                await sut.handlePersonDeletedAfterDeadlineExceededEvent(event);
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `OxUserId Not Defined, Cannot Handle PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
-                );
             });
         });
 

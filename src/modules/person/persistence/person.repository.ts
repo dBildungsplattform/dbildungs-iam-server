@@ -470,10 +470,20 @@ export class PersonRepository {
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
-        if (person.referrer !== undefined) {
+        if (!person.referrer) {
+            this.logger.error(
+                `Could not create PersonDeletedAfterDeadlineExceededEvent, username UNDEFINED, personId:${personId}`,
+            );
+        }
+        if (!person.oxUserId) {
+            this.logger.error(
+                `Could not create PersonDeletedAfterDeadlineExceededEvent, oxUserId UNDEFINED, personId:${personId}`,
+            );
+        }
+        if (person.referrer && person.oxUserId) {
             this.eventRoutingLegacyKafkaService.publish(
-                new PersonDeletedAfterDeadlineExceededEvent(personId, person.referrer, person.email),
-                new KafkaPersonDeletedAfterDeadlineExceededEvent(personId, person.referrer, person.email),
+                new PersonDeletedAfterDeadlineExceededEvent(personId, person.referrer, person.oxUserId),
+                new KafkaPersonDeletedAfterDeadlineExceededEvent(personId, person.referrer, person.oxUserId),
             );
         }
 

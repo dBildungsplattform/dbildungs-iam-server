@@ -388,23 +388,23 @@ export class OxEventHandler {
         event: PersonDeletedAfterDeadlineExceededEvent | KafkaPersonDeletedAfterDeadlineExceededEvent,
     ): Promise<void> {
         this.logger.info(
-            `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
+            `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
-        const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
+        /* const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
         if (!person) {
             return this.logger.error(
                 `Could Not Find Person, Cannot Handle PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
             );
-        }
-        if (!person.oxUserId) {
+        }*/
+        /*if (!person.oxUserId) {
             return this.logger.error(
                 `OxUserId Not Defined, Cannot Handle PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
             );
-        }
-        await this.handlePersonHasNotAnyPKWithRollenartLehr(person.id, person.referrer, person.oxUserId);
+        }*/
+        await this.handlePersonHasNotAnyPKWithRollenartLehr(event.personId, event.username, event.oxUserId);
     }
 
     public async handlePersonHasNotAnyPKWithRollenartLehr(

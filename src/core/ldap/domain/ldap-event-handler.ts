@@ -89,7 +89,7 @@ export class LdapEventHandler {
         event: PersonDeletedAfterDeadlineExceededEvent | KafkaPersonDeletedAfterDeadlineExceededEvent,
     ): Promise<Result<unknown>> {
         this.logger.info(
-            `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, email:${event.emailAddress}, oxUserId:${event.oxUserId}`,
+            `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
         const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
         if (!deletionResult.ok) {

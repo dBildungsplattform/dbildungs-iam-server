@@ -6,8 +6,7 @@ export class PersonDeletedAfterDeadlineExceededEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
         public readonly username: PersonReferrer,
-        public readonly emailAddress?: string,
-        public readonly oxUserId?: OXUserID,
+        public readonly oxUserId: OXUserID,
     ) {
         super();
     }
