@@ -275,13 +275,13 @@ export class ImportWorkflow {
                 importvorgangId,
                 importVorgang.organisationId!,
                 importVorgang.rolleId!,
-                permissions,
+                permissions.personFields.keycloakUserId!,
             ),
             new KafkaImportExecutedEvent(
                 importvorgangId,
                 importVorgang.organisationId!,
                 importVorgang.rolleId!,
-                permissions,
+                permissions.personFields.keycloakUserId!,
             ),
         );
 

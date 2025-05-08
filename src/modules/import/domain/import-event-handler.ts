@@ -23,6 +23,8 @@ import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaImportExecutedEvent } from '../../../shared/events/kafka-import-executed.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
+
 @Injectable()
 export class ImportEventHandler {
     public selectedOrganisationId!: string;
@@ -35,6 +37,7 @@ export class ImportEventHandler {
         private readonly personenkontextCreationService: PersonenkontextCreationService,
         private readonly importVorgangRepository: ImportVorgangRepository,
         private readonly importPasswordEncryptor: ImportPasswordEncryptor,
+        private readonly permissionsRepo: PersonPermissionsRepo,
         private readonly logger: ClassLogger,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
@@ -77,9 +80,14 @@ export class ImportEventHandler {
 
         let allItemsFailed: boolean = true;
 
+        // Load fresh permissions because we can't serialize the permissions object when using kafka
+        const permissions: PersonPermissions = await this.permissionsRepo.loadPersonPermissions(
+            event.importerKeycloakId,
+        );
+
         for (const dataItem of importDataItems) {
             // eslint-disable-next-line no-await-in-loop
-            await this.savePersonWithPersonenkontext(dataItem, klassenByIDandName, event.permissions);
+            await this.savePersonWithPersonenkontext(dataItem, klassenByIDandName, permissions);
 
             if (dataItem.status === ImportDataItemStatus.SUCCESS) {
                 allItemsFailed = false; // if at least one item succeeded then the import process won't fail
