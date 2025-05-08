@@ -57,16 +57,16 @@ describe('ImportEventHandler', () => {
                     useValue: createMock<PersonenkontextCreationService>(),
                 },
                 {
-                    provide: PersonPermissionsRepo,
-                    useValue: createMock<PersonPermissionsRepo>(),
-                },
-                {
                     provide: ImportVorgangRepository,
                     useValue: createMock<ImportVorgangRepository>(),
                 },
                 {
                     provide: ImportPasswordEncryptor,
                     useValue: createMock<ImportPasswordEncryptor>(),
+                },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
                 },
             ],
         }).compile();
