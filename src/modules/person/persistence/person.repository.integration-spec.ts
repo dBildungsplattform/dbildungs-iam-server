@@ -84,7 +84,6 @@ describe('PersonRepository Integration', () => {
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let eventServiceMock: DeepMocked<EventService>;
     let eventRoutingLegacyKafkaService: DeepMocked<EventRoutingLegacyKafkaService>;
-    //let loggerMock: DeepMocked<ClassLogger>;
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
@@ -117,10 +116,6 @@ describe('PersonRepository Integration', () => {
                     provide: EventRoutingLegacyKafkaService,
                     useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
-                /*  {
-                    provide: ClassLogger,
-                    useValue: createMock<ClassLogger>(),
-                },*/
                 {
                     provide: UsernameGeneratorService,
                     useValue: createMock<UsernameGeneratorService>(),
@@ -157,7 +152,6 @@ describe('PersonRepository Integration', () => {
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
         eventRoutingLegacyKafkaService = module.get(EventRoutingLegacyKafkaService);
-        //loggerMock = module.get(ClassLogger);
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
