@@ -5,7 +5,7 @@ export class LdapFetchAttributeError extends DomainError {
     public constructor(
         attributeName: string,
         username: PersonReferrer,
-        personId: PersonID,
+        personId: PersonID | undefined,
         details?: unknown[] | Record<string, unknown>,
     ) {
         super(

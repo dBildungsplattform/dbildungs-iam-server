@@ -5,7 +5,7 @@ import { OXUserID } from '../../types/ox-ids.types.js';
 
 export class EmailAddressDeletedEvent extends BaseEvent {
     public constructor(
-        public readonly personId: PersonID,
+        public readonly personId: PersonID | undefined,
         public readonly username: PersonReferrer,
         public readonly oxUserId: OXUserID,
         public readonly emailAddressId: EmailAddressID,

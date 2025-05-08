@@ -146,6 +146,12 @@ export class KeycloakEventHandler {
             `Received EmailAddressesPurgedEvent personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
 
+        if (!event.username) {
+            return this.logger.info(
+                'EmailAddressesPurgedEvent had UNDEFINED username, skipping removeOXUserAttributes',
+            );
+        }
+
         const updateResult: Result<void> = await this.kcUserService.removeOXUserAttributes(event.username);
 
         if (updateResult.ok) {

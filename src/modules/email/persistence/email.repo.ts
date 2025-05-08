@@ -36,7 +36,7 @@ function mapEntityToAggregate(entity: EmailAddressEntity): EmailAddress<boolean>
         entity.id,
         entity.createdAt,
         entity.updatedAt,
-        entity.personId.id,
+        entity.personId?.id,
         entity.address,
         entity.status,
         entity.oxUserId,
@@ -231,8 +231,12 @@ export class EmailRepo {
                     `Found multiple ENABLED EmailAddresses, treating ${ea.address} as latest address, personId:${ea.personId}`,
                 );
             }
-            responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
-            lastUsedPersonId = ea.personId;
+            if (!ea.personId) {
+                this.logger.error(`Will not add EmailAddress, personId is UNDEFINED, address:${ea.address}`);
+            } else {
+                responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
+                lastUsedPersonId = ea.personId;
+            }
         });
 
         return responseMap;
@@ -244,7 +248,7 @@ export class EmailRepo {
      * @param emailAddress
      */
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
-        if (emailAddress.enabledOrRequested) {
+        if (emailAddress.enabledOrRequested && emailAddress.personId) {
             const enabledEmailAddressExists: Option<EmailAddress<true>> = await this.findEnabledByPerson(
                 emailAddress.personId,
             );

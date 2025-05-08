@@ -2314,7 +2314,7 @@ describe('LDAP Client Service', () => {
 
     describe('changeEmailAddressByPersonId', () => {
         const fakeUsername: PersonReferrer = faker.internet.userName();
-        const fakePersonID: string = faker.string.uuid();
+        const fakePersonID: PersonID = faker.string.uuid();
         const fakeDN: string = faker.string.alpha();
         const newEmailAddress: string = 'new-address@schule-sh.de';
         const currentEmailAddress: string = 'current-address@schule-sh.de';

@@ -38,6 +38,7 @@ import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/ev
 import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 import { KafkaLdapEntryDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-entry-deleted.event.js';
+import { LdapDeleteLehrerError } from '../error/ldap-delete-lehrer.error.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -412,6 +413,14 @@ export class LdapEventHandler {
         this.logger.info(
             `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
+
+        if (!event.username) {
+            this.logger.error(`Cannot delete lehrer by username, username is UNDEFINED, oxUserId:${event.oxUserId}`);
+            return {
+                ok: false,
+                error: new LdapDeleteLehrerError(),
+            };
+        }
 
         const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
         if (!deletionResult.ok) {

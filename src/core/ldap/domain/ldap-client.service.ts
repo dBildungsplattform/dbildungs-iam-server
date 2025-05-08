@@ -191,7 +191,7 @@ export class LdapClientService {
     }
 
     public async removeMailAlternativeAddress(
-        personId: PersonID,
+        personId: PersonID | undefined,
         username: PersonReferrer,
         address: string,
     ): Promise<Result<boolean>> {
@@ -630,7 +630,7 @@ export class LdapClientService {
         entry: Entry,
         attributeName: string,
         username: PersonReferrer,
-        personId: PersonID,
+        personId: PersonID | undefined,
     ): Result<string> {
         const attributeValue: unknown = entry[attributeName];
         if (typeof attributeValue === 'string') {
@@ -1031,8 +1031,8 @@ export class LdapClientService {
                     `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, username:${username}`,
                 );
                 this.eventService.publish(
-                    new LdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
-                    new KafkaLdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
+                    new LdapPersonEntryChangedEvent(personId, username, newEmailAddress, currentEmailAddress),
+                    new KafkaLdapPersonEntryChangedEvent(personId, username, newEmailAddress, currentEmailAddress),
                 );
 
                 return { ok: true, value: personId };
@@ -1048,7 +1048,7 @@ export class LdapClientService {
     }
 
     private async removeMailAlternativeAddressInternal(
-        personId: PersonID,
+        personId: PersonID | undefined,
         username: PersonReferrer,
         address: string,
     ): Promise<Result<boolean>> {
@@ -1121,8 +1121,8 @@ export class LdapClientService {
                     `LDAP: Successfully deleted mailPrimaryAddress:${address} for personId:${personId}, username:${username}`,
                 );
                 this.eventService.publish(
-                    new LdapPersonEntryChangedEvent(personId),
-                    new KafkaLdapPersonEntryChangedEvent(personId),
+                    new LdapPersonEntryChangedEvent(personId, username),
+                    new KafkaLdapPersonEntryChangedEvent(personId, username),
                 );
 
                 return { ok: true, value: true };
@@ -1334,8 +1334,8 @@ export class LdapClientService {
                     `LDAP: Successfully modified userPassword (UEM) for personId:${personId}, username:${username}`,
                 );
                 this.eventService.publish(
-                    new LdapPersonEntryChangedEvent(personId, undefined, undefined, true),
-                    new KafkaLdapPersonEntryChangedEvent(personId, undefined, undefined, true),
+                    new LdapPersonEntryChangedEvent(personId, username, undefined, undefined, true),
+                    new KafkaLdapPersonEntryChangedEvent(personId, username, undefined, undefined, true),
                 );
 
                 return { ok: true, value: userPassword };

@@ -564,8 +564,8 @@ export class OxEventHandler {
     }
 
     private async removeOxUserFromAllItsGroupsAndDeleteOxAccount(
-        personId: PersonID,
-        username: PersonReferrer,
+        personId: PersonID | undefined,
+        username: PersonReferrer | undefined,
         oxUserId: OXUserID,
     ): Promise<void> {
         this.logger.info(
@@ -600,7 +600,7 @@ export class OxEventHandler {
         return this.logger.info(`Successfully Deleted OxAccount For oxUserId:${oxUserId}`);
     }
 
-    private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID): Promise<void> {
+    private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID | undefined): Promise<void> {
         const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
             await this.getOxGroupsForOxUserId(oxUserId);
         if (!listGroupsForUserResponse.ok) {
@@ -859,7 +859,9 @@ export class OxEventHandler {
         if (!oxGroupId.ok) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
-            return;
+            return this.logger.error(
+                `Failed getting existing OxGroup by name or create new OxGroup if necessary, personId:${personId}, username:${username}`,
+            );
         }
 
         const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
@@ -869,7 +871,7 @@ export class OxEventHandler {
         if (!addUserToGroupResult.ok) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
-            return;
+            return this.logger.error(`Failed adding user to OXGroup, personId:${personId}, username:${username}`);
         }
 
         //adjust user infostore and globalAddressBook

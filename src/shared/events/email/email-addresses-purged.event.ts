@@ -7,8 +7,8 @@ import { OXUserID } from '../../types/ox-ids.types.js';
  */
 export class EmailAddressesPurgedEvent extends BaseEvent {
     public constructor(
-        public readonly personId: PersonID,
-        public readonly username: PersonReferrer,
+        public readonly personId: PersonID | undefined,
+        public readonly username: PersonReferrer | undefined,
         public readonly oxUserId: OXUserID,
     ) {
         super();
