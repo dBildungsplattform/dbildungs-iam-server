@@ -1,5 +1,4 @@
-import { Mapper } from '@automapper/core';
-import { getMapperToken } from '@automapper/nestjs';
+/* eslint-disable no-await-in-loop */
 import { MikroORM } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -12,8 +11,6 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonenkontextDo } from '../domain/personenkontext.do.js';
-import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
 import { PersonenkontextEntity } from './personenkontext.entity.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonEntity } from '../../person/persistence/person.entity.js';
@@ -27,12 +24,12 @@ import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { createAndPersistPersonenkontext } from '../../../../test/utils/personenkontext-test-helper.js';
 
 describe('PersonenkontextScope', () => {
     let module: TestingModule;
     let orm: MikroORM;
     let em: EntityManager;
-    let mapper: Mapper;
     let rolleRepo: RolleRepo;
     let organisationRepo: OrganisationRepository;
 
@@ -51,17 +48,10 @@ describe('PersonenkontextScope', () => {
                 EventModule,
                 LoggingTestModule,
             ],
-            providers: [
-                PersonPersistenceMapperProfile,
-                RolleFactory,
-                RolleRepo,
-                ServiceProviderRepo,
-                OrganisationRepository,
-            ],
+            providers: [RolleFactory, RolleRepo, ServiceProviderRepo, OrganisationRepository],
         }).compile();
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
-        mapper = module.get(getMapperToken());
         rolleRepo = module.get(RolleRepo);
         organisationRepo = module.get(OrganisationRepository);
 
@@ -81,33 +71,20 @@ describe('PersonenkontextScope', () => {
         describe('when filtering for personenkontexte', () => {
             beforeEach(async () => {
                 const person: PersonEntity = createPersonEntity();
+                await em.persistAndFlush(person);
                 const organisation1: Organisation<true> = await organisationRepo.save(
                     DoFactory.createOrganisation(false),
                 );
+                // const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+                // if (rolle instanceof DomainError) throw Error();
+                // await createAndPersistPersonenkontext(em, person.id, organisation1.id, rolle.id);
 
-                await em.persistAndFlush(person);
 
-                const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
-                    30,
-                    false,
-                    DoFactory.createPersonenkontextDo,
-                    { personId: person.id, organisationId: organisation1.id },
-                );
-                /* eslint-disable no-await-in-loop */
-                for (const doObj of dos) {
+                for (let i: number = 0; i < 30; i++) {
                     const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
                     if (rolle instanceof DomainError) throw Error();
-
-                    doObj.rolleId = rolle.id;
+                    await createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
                 }
-                /* eslint-disable no-await-in-loop */
-
-                await em.persistAndFlush(
-                    // Don't use mapArray, because beforeMap does not get called
-                    dos.map((pkDo: PersonenkontextDo<false>) =>
-                        mapper.map(pkDo, PersonenkontextDo, PersonenkontextEntity),
-                    ),
-                );
             });
 
             it('should return found personenkontexte', async () => {
@@ -135,25 +112,17 @@ describe('PersonenkontextScope', () => {
                 );
                 orgaId = organisation1.id;
 
-                const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
-                    30,
-                    false,
-                    DoFactory.createPersonenkontextDo,
-                    { personId: person.id, organisationId: orgaId },
-                );
-                for (const doObj of dos) {
-                    const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                    if (rolle instanceof DomainError) throw Error();
-
-                    doObj.rolleId = rolle.id;
+                const personenkontextPromises: Promise<PersonenkontextEntity>[] = [];
+                for (let i: number = 0; i < 30; i++) {
+                    personenkontextPromises.push(
+                        // eslint-disable-next-line @typescript-eslint/no-loop-func
+                        rolleRepo.save(DoFactory.createRolle(false)).then((rolle: Rolle<true> | DomainError) => {
+                            if (rolle instanceof DomainError) throw Error();
+                            return createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
+                        }),
+                    );
                 }
-
-                await em.persistAndFlush(
-                    // Don't use mapArray, because beforeMap does not get called
-                    dos.map((pkDo: PersonenkontextDo<false>) =>
-                        mapper.map(pkDo, PersonenkontextDo, PersonenkontextEntity),
-                    ),
-                );
+                await Promise.all(personenkontextPromises);
             });
 
             it('should return found personenkontexte', async () => {
@@ -182,27 +151,19 @@ describe('PersonenkontextScope', () => {
                     const person: PersonEntity = createPersonEntity();
                     await em.persistAndFlush(person);
 
-                    const dos: PersonenkontextDo<false>[] = DoFactory.createMany<PersonenkontextDo<false>>(
-                        10,
-                        false,
-                        DoFactory.createPersonenkontextDo,
-                        { personId: person.id, organisationId: organisation1.id },
-                    );
-                    for (const doObj of dos) {
-                        const rolle: Rolle<true> | DomainError = await rolleRepo.save(
-                            DoFactory.createRolle(false, { rollenart: rolleArt }),
+                    const personenkontextPromises: Promise<PersonenkontextEntity>[] = [];
+                    for (let i: number = 0; i < 10; i++) {
+                        personenkontextPromises.push(
+                            rolleRepo
+                                .save(DoFactory.createRolle(false, { rollenart: rolleArt }))
+                                // eslint-disable-next-line @typescript-eslint/no-loop-func
+                                .then((rolle: Rolle<true> | DomainError) => {
+                                    if (rolle instanceof DomainError) throw Error();
+                                    return createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
+                                }),
                         );
-                        if (rolle instanceof DomainError) throw Error();
-                        doObj.rolleId = rolle.id;
                     }
-
-                    await em.persistAndFlush(
-                        // Don't use mapArray, because beforeMap does not get called
-                        // eslint-disable-next-line @typescript-eslint/no-loop-func
-                        dos.map((pkDo: PersonenkontextDo<false>) =>
-                            mapper.map(pkDo, PersonenkontextDo, PersonenkontextEntity),
-                        ),
-                    );
+                    await Promise.all(personenkontextPromises);
                 }
             });
 
