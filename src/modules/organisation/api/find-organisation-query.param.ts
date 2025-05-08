@@ -3,7 +3,8 @@ import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validat
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { RollenSystemRecht, RollenSystemRechtTypName } from '../../rolle/domain/rolle.enums.js';
-import { OrganisationsTyp, OrganisationsTypName } from '../domain/organisation.enums.js';
+import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @IsString()
@@ -102,4 +103,24 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
             'Liefert Organisationen mit den angegebenen IDs, selbst wenn andere Filterkriterien nicht zutreffen (ODER-verknüpft mit anderen Kriterien).',
     })
     public readonly organisationIds?: string[];
+
+    @IsOptional()
+    @IsEnum(ScopeOrder)
+    @ApiProperty({
+        enum: ScopeOrder,
+        required: false,
+        nullable: true,
+        description: 'Order to sort by.',
+    })
+    public readonly sortOrder?: ScopeOrder;
+
+    @IsOptional()
+    @IsEnum(SortFieldOrganisation)
+    @ApiProperty({
+        enum: SortFieldOrganisation,
+        required: false,
+        nullable: true,
+        description: 'Field to sort by.',
+    })
+    public readonly sortField?: SortFieldOrganisation;
 }
