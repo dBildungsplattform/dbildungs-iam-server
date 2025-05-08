@@ -10,7 +10,6 @@ export type PersonenkontextEventPersonData = {
     referrer?: string;
     keycloakUserId?: string;
     email?: string;
-    ldapEntryUUID?: string;
 };
 
 export type PersonenkontextEventKontextData = {

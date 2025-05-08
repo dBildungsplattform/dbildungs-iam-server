@@ -306,8 +306,7 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
-    public async update(ldapEntryUUID?: string): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
-        //If first lehrer kontext is created and a UUID is passed as ldapEntryUUID it is used as internal LDAP entryUUID (needed for migration, can be build back afterwards)
+    public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
@@ -367,7 +366,7 @@ export class PersonenkontexteUpdate {
             }
         }
 
-        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate, ldapEntryUUID);
+        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate);
 
         return existingPKsAfterUpdate;
     }
@@ -376,7 +375,6 @@ export class PersonenkontexteUpdate {
         deletedPKs: Personenkontext<true>[],
         createdPKs: Personenkontext<true>[],
         existingPKs: Personenkontext<true>[],
-        ldapEntryUUID?: string,
     ): Promise<void> {
         const deletedRollenIDs: RolleID[] = deletedPKs.map((pk: Personenkontext<true>) => pk.rolleId);
         const createdRollenIDs: RolleID[] = createdPKs.map((pk: Personenkontext<true>) => pk.rolleId);
@@ -418,8 +416,8 @@ export class PersonenkontexteUpdate {
         );
 
         this.eventRoutingLegacyKafkaService.publish(
-            PersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing, ldapEntryUUID),
-            KafkaPersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing, ldapEntryUUID),
+            PersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing),
+            KafkaPersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing),
         );
     }
 }
