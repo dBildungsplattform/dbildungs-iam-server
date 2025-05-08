@@ -26,12 +26,14 @@ import { ImportPasswordEncryptor } from './import-password-encryptor.js';
 import { ImportDataItemStatus } from './importDataItem.enum.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
+import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 
 describe('ImportEventHandler', () => {
     let module: TestingModule;
     let sut: ImportEventHandler;
 
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
+    let permissionsRepoMock: DeepMocked<PersonPermissionsRepo>;
     let importDataRepositoryMock: DeepMocked<ImportDataRepository>;
     let personenkontextCreationServiceMock: DeepMocked<PersonenkontextCreationService>;
     let importVorgangRepositoryMock: DeepMocked<ImportVorgangRepository>;
@@ -55,10 +57,6 @@ describe('ImportEventHandler', () => {
                     useValue: createMock<PersonenkontextCreationService>(),
                 },
                 {
-                    provide: PersonPermissions,
-                    useValue: createMock<PersonPermissions>(),
-                },
-                {
                     provide: ImportVorgangRepository,
                     useValue: createMock<ImportVorgangRepository>(),
                 },
@@ -66,11 +64,16 @@ describe('ImportEventHandler', () => {
                     provide: ImportPasswordEncryptor,
                     useValue: createMock<ImportPasswordEncryptor>(),
                 },
+                {
+                    provide: PersonPermissionsRepo,
+                    useValue: createMock<PersonPermissionsRepo>(),
+                },
             ],
         }).compile();
 
         sut = module.get(ImportEventHandler);
         organisationRepoMock = module.get(OrganisationRepository);
+        permissionsRepoMock = module.get(PersonPermissionsRepo);
         importDataRepositoryMock = module.get(ImportDataRepository);
         personenkontextCreationServiceMock = module.get(PersonenkontextCreationService);
         importVorgangRepositoryMock = module.get(ImportVorgangRepository);
@@ -83,6 +86,7 @@ describe('ImportEventHandler', () => {
 
     beforeEach(() => {
         jest.resetAllMocks();
+        permissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(createMock<PersonPermissions>());
     });
 
     it('should be defined', () => {

@@ -1124,6 +1124,7 @@ export class LdapClientService {
                     new LdapPersonEntryChangedEvent(personId),
                     new KafkaLdapPersonEntryChangedEvent(personId),
                 );
+
                 return { ok: true, value: true };
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Deletion of mailAlternativeAddress FAILED`, err);
