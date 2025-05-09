@@ -719,13 +719,13 @@ export class OxEventHandler {
 
     private async createOxUser(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         orgaKennung: OrganisationKennung,
     ): Promise<void> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
-            return this.logger.error(`Person not found for personId:${personId}, referrer:${referrer}`);
+            return this.logger.error(`Person not found for personId:${personId}, username:${username}`);
         }
         if (!person.referrer) {
             return this.logger.error(`Person with personId:${personId} has no referrer: cannot create OXEmailAddress`);
@@ -776,12 +776,12 @@ export class OxEventHandler {
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
 
             return this.logger.error(
-                `Could not create user in OX, personId:${personId}, referrer:${referrer}, error:${createUserResult.error.message}`,
+                `Could not create user in OX, personId:${personId}, username:${username}, error:${createUserResult.error.message}`,
             );
         }
 
         this.logger.info(
-            `User created in OX, oxUserId:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}, personId:${personId}, referrer:${referrer}`,
+            `User created in OX, oxUserId:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}, personId:${personId}, username:${username}`,
         );
 
         mostRecentRequestedEmailAddress.oxUserID = createUserResult.value.id;
@@ -792,7 +792,7 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
             return this.logger.error(
-                `Persisting oxUserId on emailAddress failed, personId:${personId}, referrer:${referrer}`,
+                `Persisting oxUserId on emailAddress failed, personId:${personId}, username:${username}`,
             );
         }
 
@@ -803,7 +803,9 @@ export class OxEventHandler {
         if (!oxGroupId.ok) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
-            return;
+            return this.logger.error(
+                `Failed getting existing OxGroup by name or create new OxGroup if necessary, personId:${personId}, username:${username}`,
+            );
         }
 
         const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
@@ -813,7 +815,7 @@ export class OxEventHandler {
         if (!addUserToGroupResult.ok) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
-            return;
+            return this.logger.error(`Failed adding user to OXGroup, personId:${personId}, username:${username}`);
         }
 
         //adjust user infostore and globalAddressBook
@@ -834,7 +836,7 @@ export class OxEventHandler {
         if (!changeByModuleAccessResult.ok) {
             //only log error, do not set email-address status = FAILED, the ChangeByModuleAccessAction won't work against OX-DEV
             this.logger.error(
-                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${createUserResult.value.id}, personId:${personId}, referrer:${referrer}, error:${changeByModuleAccessResult.error.message}`,
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${createUserResult.value.id}, personId:${personId}, username:${username}, error:${changeByModuleAccessResult.error.message}`,
             );
         }
 
