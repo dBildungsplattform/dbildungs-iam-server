@@ -52,8 +52,8 @@ describe('PrivacyIdeaAdministrationServiceHandler', () => {
 
             expect(loggerMock.info).toHaveBeenCalledWith(`Received PersonRenamedEvent, personId:${event.personId}`);
             expect(privacyIdeaAdministrationServiceMock.updateUsername).toHaveBeenCalledWith(
-                event.oldReferrer,
-                event.referrer,
+                event.oldUsername,
+                event.username,
             );
         });
 

@@ -1,11 +1,12 @@
 import { BaseEvent } from './base-event.js';
 import { PersonID, PersonReferrer } from '../types/index.js';
+import { OXUserID } from '../types/ox-ids.types.js';
 
-export class PersonDeletedEvent extends BaseEvent {
+export class PersonDeletedAfterDeadlineExceededEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
         public readonly username: PersonReferrer,
-        public readonly emailAddress?: string,
+        public readonly oxUserId: OXUserID,
     ) {
         super();
     }

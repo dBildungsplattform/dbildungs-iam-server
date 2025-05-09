@@ -28,8 +28,13 @@ export class EmailAddressDeletionService {
         const nonPrimaryEmailAddresses: EmailAddress<true>[] = emailAddresses.filter(
             (ea: EmailAddress<true>) => ea.status !== EmailAddressStatus.ENABLED,
         );
-        const affectedPersonIds: PersonID[] = nonPrimaryEmailAddresses.map((ea: EmailAddress<true>) => ea.personId);
-        const uniqueAffectedPersonIdSet: Set<PersonID> = new Set(affectedPersonIds);
+        const affectedPersonIds: (PersonID | undefined)[] = nonPrimaryEmailAddresses.map(
+            (ea: EmailAddress<true>) => ea.personId,
+        );
+        const affectedPersonIdsFiltered: PersonID[] = affectedPersonIds.filter(
+            (apid: PersonID | undefined) => apid !== undefined,
+        );
+        const uniqueAffectedPersonIdSet: Set<PersonID> = new Set(affectedPersonIdsFiltered);
         const uniqueAffectedPersonIds: PersonID[] = Array.from(uniqueAffectedPersonIdSet);
 
         const affectedPersons: Person<true>[] = await this.personRepository.findByIds(
@@ -42,6 +47,12 @@ export class EmailAddressDeletionService {
         });
 
         for (const ea of nonPrimaryEmailAddresses) {
+            if (!ea.personId) {
+                this.logger.error(
+                    `Could NOT get information about EmailAddress when generating EmailAddressDeletedEvent because personId was UNDEFINED, address:${ea.address}`,
+                );
+                continue;
+            }
             const username: string | undefined = personMap.get(ea.personId)?.referrer;
             if (!username) {
                 this.logger.error(
@@ -51,7 +62,7 @@ export class EmailAddressDeletionService {
             }
             if (!ea.oxUserID) {
                 this.logger.error(
-                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}, referrer:${username}`,
+                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}, username:${username}`,
                 );
                 continue;
             }
@@ -62,7 +73,19 @@ export class EmailAddressDeletionService {
         }
     }
 
-    public async checkRemainingEmailAddressesByPersonId(personId: PersonID, oxUserId: OXUserID): Promise<void> {
+    public async checkRemainingEmailAddressesByPersonId(
+        personId: PersonID | undefined,
+        oxUserId: OXUserID,
+    ): Promise<void> {
+        if (!personId) {
+            this.logger.info(
+                `PersonId UNDEFINED when checking remaining EmailAddresses for person, oxUserId:${oxUserId}`,
+            );
+            return this.eventService.publish(
+                new EmailAddressesPurgedEvent(personId, undefined, oxUserId),
+                new KafkaEmailAddressesPurgedEvent(personId, undefined, oxUserId),
+            );
+        }
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
         if (!person) {
             return this.logger.error(
@@ -71,14 +94,14 @@ export class EmailAddressDeletionService {
         }
         if (!person.referrer) {
             return this.logger.error(
-                `Would not be able to create EmailAddressesPurgedEvent, no referrer found for personId:${personId}`,
+                `Would not be able to create EmailAddressesPurgedEvent, no username found for personId:${personId}`,
             );
         }
         const allEmailAddressesForPerson: EmailAddress<true>[] =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
         if (allEmailAddressesForPerson.length == 0) {
             this.logger.info(
-                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${person.referrer}`,
+                `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
             );
             return this.eventService.publish(
                 new EmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
@@ -86,7 +109,7 @@ export class EmailAddressDeletionService {
             );
         }
         this.logger.info(
-            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${person.referrer}`,
+            `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${person.referrer}`,
         );
     }
 }

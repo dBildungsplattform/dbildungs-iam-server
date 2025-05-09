@@ -144,7 +144,7 @@ describe('EmailAddressDeletionService', () => {
     });
 
     describe('deleteEmailAddresses', () => {
-        describe('when an EmailAddress referrers to a personId that does NOT exist', () => {
+        describe('when an EmailAddress refers to a personId that does NOT exist', () => {
             it('should log error about that', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =
                     createPersonsAndEmailAddresses();
@@ -189,7 +189,7 @@ describe('EmailAddressDeletionService', () => {
                 expect(emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${emailAddressWithoutOxUserId.personId}, referrer:${persons[0].referrer}`,
+                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${emailAddressWithoutOxUserId.personId}, username:${persons[0].referrer}`,
                 );
             });
         });
@@ -202,6 +202,28 @@ describe('EmailAddressDeletionService', () => {
         beforeEach(() => {
             personId = faker.string.uuid();
             oxUserId = faker.string.numeric();
+        });
+
+        describe('when personId is UNDEFINED in event', () => {
+            it('should publish EmailAddressesPurgedEvent and KafkaEmailAddressesPurgedEvent', async () => {
+                await sut.checkRemainingEmailAddressesByPersonId(undefined, oxUserId);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `PersonId UNDEFINED when checking remaining EmailAddresses for person, oxUserId:${oxUserId}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: undefined,
+                        username: undefined,
+                        oxUserId: oxUserId,
+                    }),
+                    expect.objectContaining({
+                        personId: undefined,
+                        username: undefined,
+                        oxUserId: oxUserId,
+                    }),
+                );
+            });
         });
 
         describe('when Person CANNOT be found', () => {
@@ -217,7 +239,7 @@ describe('EmailAddressDeletionService', () => {
             });
         });
 
-        describe('when person can be found BUT has no referrer', () => {
+        describe('when person can be found BUT has no username', () => {
             it('should log error about that and return', async () => {
                 const person: Person<true> = createMock<Person<true>>({
                     id: personId,
@@ -228,7 +250,7 @@ describe('EmailAddressDeletionService', () => {
                 await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Would not be able to create EmailAddressesPurgedEvent, no referrer found for personId:${personId}`,
+                    `Would not be able to create EmailAddressesPurgedEvent, no username found for personId:${personId}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
@@ -245,7 +267,7 @@ describe('EmailAddressDeletionService', () => {
                 await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${persons[0].referrer}`,
+                    `Person has remaining EmailAddresses, WON'T publish EmailAddressesPurgedEvent, personId:${personId}, username:${persons[0].referrer}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
@@ -261,7 +283,7 @@ describe('EmailAddressDeletionService', () => {
                 await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, referrer:${persons[0].referrer}`,
+                    `No remaining EmailAddresses for Person, publish EmailAddressesPurgedEvent, personId:${personId}, username:${persons[0].referrer}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
             });

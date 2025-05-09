@@ -16,7 +16,7 @@ export class EmailAddressEntity extends TimestampedEntity {
     @Index({
         name: 'email_address_person_id_index',
     })
-    public personId!: Ref<PersonEntity>;
+    public personId?: Ref<PersonEntity>;
 
     @Property({ primary: true, nullable: false, unique: true })
     public address!: string;

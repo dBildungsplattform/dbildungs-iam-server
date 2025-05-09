@@ -4,12 +4,12 @@ import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.ty
 export class LdapFetchAttributeError extends DomainError {
     public constructor(
         attributeName: string,
-        referrer: PersonReferrer,
-        personId: PersonID,
+        username: PersonReferrer,
+        personId: PersonID | undefined,
         details?: unknown[] | Record<string, unknown>,
     ) {
         super(
-            `Error while fetching attribute:${attributeName}, referrer:${referrer}, personId:${personId}`,
+            `Error while fetching attribute:${attributeName}, username:${username}, personId:${personId}`,
             'LDAP_FETCH_ATTRIBUTE_ERROR',
             details,
         );
