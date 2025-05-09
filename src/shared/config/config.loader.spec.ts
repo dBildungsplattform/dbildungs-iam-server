@@ -90,6 +90,9 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                 },
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
+                },
                 IMPORT: {
                     CSV_FILE_MAX_SIZE_IN_MB: 10,
                     CSV_MAX_NUMBER_OF_USERS: 2001,
@@ -103,6 +106,16 @@ describe('configloader', () => {
                 },
                 HEADER_API_KEY: {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
+                },
+                KAFKA: {
+                    BROKER: 'localhost:9094',
+                    TOPIC_PREFIX: 'local.',
+                    USER_TOPIC: 'spsh-user-topic',
+                    USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
+                    GROUP_ID: 'nestjs-kafka',
+                    SESSION_TIMEOUT: 30000,
+                    HEARTBEAT_INTERVAL: 10000,
+                    ENABLED: true,
                 },
             };
 
@@ -236,6 +249,9 @@ describe('configloader', () => {
                     USERNAME: 'username',
                     PASSWORD: 'password',
                 },
+                EMAIL: {
+                    NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
+                },
                 IMPORT: {
                     CSV_FILE_MAX_SIZE_IN_MB: 10,
                     CSV_MAX_NUMBER_OF_USERS: 2001,
@@ -249,6 +265,16 @@ describe('configloader', () => {
                 },
                 HEADER_API_KEY: {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
+                },
+                KAFKA: {
+                    BROKER: 'localhost:9094',
+                    TOPIC_PREFIX: 'local.',
+                    USER_TOPIC: 'spsh-user-topic',
+                    USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
+                    GROUP_ID: 'nestjs-kafka',
+                    SESSION_TIMEOUT: 30000,
+                    HEARTBEAT_INTERVAL: 10000,
+                    ENABLED: true,
                 },
             };
 

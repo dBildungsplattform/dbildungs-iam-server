@@ -27,6 +27,32 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
+        {{- if .Values.kafka.initEnabled }}
+        - name: "{{ template "common.names.name" . }}-kafka-topics-create"
+          image: "{{ .Values.kafka.initImage.repository }}:{{ .Values.kafka.initImage.tag }}"
+          imagePullPolicy: {{ .Values.kafka.initImage.pullPolicy | default "Always" }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: [ "sh", "/init/create_topics.sh", "/init/topics.txt" ]
+          envFrom:
+            - configMapRef:
+                name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
+          env:
+            - name: KAFKA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: dbildungs-iam-server
+                  key: kafka-username
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dbildungs-iam-server
+                  key: kafka-password
+          volumeMounts:
+          - name: kafka-init-volume
+            mountPath: /init
+            readOnly: true
+          resources: {{- toYaml .Values.backend.resources | nindent 12 }}
+        {{ end }}
         {{- if .Values.backend.dbmigration.enabled }}
         - name: "{{ template "common.names.name" . }}-db-migration-apply"
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
@@ -111,13 +137,19 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        {{if .Values.kafka.initEnabled }}
+        - name: kafka-init-volume
+          configMap:
+            name: {{ template "common.names.name" $ }}-kafka-init-configmap
+            defaultMode: 0555
+        {{- end }}
         - name: migration-volume
           configMap:
             name: {{ template "common.names.name" . }}-backend-migration
         - name: keycloak-migration-volume
           configMap:
             name: {{ template "common.names.name" . }}-backend-keycloak-migration
-        {{if .Values.backend.dbseeding.enabled }}
+        {{ if .Values.backend.dbseeding.enabled }}
         - name: seeding-volume
           configMap:
             name: {{ template "common.names.name" . }}-backend-seeding

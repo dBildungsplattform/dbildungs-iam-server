@@ -1,4 +1,0 @@
-user.created
-user.deleted
-user.locked
-user.modified

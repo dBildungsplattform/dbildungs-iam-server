@@ -7,7 +7,6 @@ import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.j
 import { UpdatePersonIdMismatchError } from './error/update-person-id-mismatch.error.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontextFactory } from './personenkontext.factory.js';
-import { EventService } from '../../../core/eventbus/index.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -26,10 +25,12 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
 import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
-        private readonly eventService: EventService,
+        private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
         private readonly logger: ClassLogger,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
@@ -46,7 +47,7 @@ export class PersonenkontexteUpdate {
     ) {}
 
     public static createNew(
-        eventService: EventService,
+        eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
         logger: ClassLogger,
         dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         dBiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal,
@@ -62,7 +63,7 @@ export class PersonenkontexteUpdate {
         personalnummer?: string,
     ): PersonenkontexteUpdate {
         return new PersonenkontexteUpdate(
-            eventService,
+            eventRoutingLegacyKafkaService,
             logger,
             dBiamPersonenkontextRepo,
             dBiamPersonenkontextRepoInternal,
@@ -305,8 +306,7 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
-    public async update(ldapEntryUUID?: string): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
-        //If first lehrer kontext is created and a UUID is passed as ldapEntryUUID it is used as internal LDAP entryUUID (needed for migration, can be build back afterwards)
+    public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
@@ -366,7 +366,7 @@ export class PersonenkontexteUpdate {
             }
         }
 
-        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate, ldapEntryUUID);
+        await this.publishEvent(deletedPKs, createdPKs, existingPKsAfterUpdate);
 
         return existingPKsAfterUpdate;
     }
@@ -375,7 +375,6 @@ export class PersonenkontexteUpdate {
         deletedPKs: Personenkontext<true>[],
         createdPKs: Personenkontext<true>[],
         existingPKs: Personenkontext<true>[],
-        ldapEntryUUID?: string,
     ): Promise<void> {
         const deletedRollenIDs: RolleID[] = deletedPKs.map((pk: Personenkontext<true>) => pk.rolleId);
         const createdRollenIDs: RolleID[] = createdPKs.map((pk: Personenkontext<true>) => pk.rolleId);
@@ -404,26 +403,21 @@ export class PersonenkontexteUpdate {
             return; // Person can not be found
         }
 
-        this.eventService.publish(
-            PersonenkontextUpdatedEvent.fromPersonenkontexte(
-                person,
-                createdPKs.map((pk: Personenkontext<true>) => [
-                    pk,
-                    orgas.get(pk.organisationId)!,
-                    rollen.get(pk.rolleId)!,
-                ]),
-                deletedPKs.map((pk: Personenkontext<true>) => [
-                    pk,
-                    orgas.get(pk.organisationId)!,
-                    rollen.get(pk.rolleId)!,
-                ]),
-                existingPKs.map((pk: Personenkontext<true>) => [
-                    pk,
-                    orgas.get(pk.organisationId)!,
-                    rollen.get(pk.rolleId)!,
-                ]),
-                ldapEntryUUID,
-            ),
+        const created: [Personenkontext<true>, Organisation<true>, Rolle<true>][] = createdPKs.map(
+            (pk: Personenkontext<true>) => [pk, orgas.get(pk.organisationId)!, rollen.get(pk.rolleId)!],
+        );
+
+        const deleted: [Personenkontext<true>, Organisation<true>, Rolle<true>][] = deletedPKs.map(
+            (pk: Personenkontext<true>) => [pk, orgas.get(pk.organisationId)!, rollen.get(pk.rolleId)!],
+        );
+
+        const existing: [Personenkontext<true>, Organisation<true>, Rolle<true>][] = existingPKs.map(
+            (pk: Personenkontext<true>) => [pk, orgas.get(pk.organisationId)!, rollen.get(pk.rolleId)!],
+        );
+
+        this.eventRoutingLegacyKafkaService.publish(
+            PersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing),
+            KafkaPersonenkontextUpdatedEvent.fromPersonenkontexte(person, created, deleted, existing),
         );
     }
 }

@@ -3,34 +3,11 @@ import { NS2_SCHEMA, NS6_SCHEMA, TNS_SCHEMA } from '../../schemas.js';
 import { OxBaseAction } from '../ox-base-action.js';
 import { UserIdParams } from './ox-user.types.js';
 
-export type DeleteUserResponse = {
-    id: string;
-    firstname: string;
-    lastname: string;
-    username: string;
-    primaryEmail: string;
-    mailenabled: boolean;
-};
-
 export type DeleteUserResponseBody = {
-    deleteResponse: {
-        return: {
-            id: string;
-            aliases: [];
-            email1: string;
-            email2: string;
-            email3: string;
-            primaryEmail: string;
-
-            name: string;
-            given_name: string;
-            sur_name: string;
-            mailenabled: boolean;
-        };
-    };
+    body: undefined;
 };
 
-export class DeleteUserAction extends OxBaseAction<DeleteUserResponseBody, DeleteUserResponse> {
+export class DeleteUserAction extends OxBaseAction<DeleteUserResponseBody, void> {
     public override action: string = 'http://soap.admin.openexchange.com/delete';
 
     public override soapServiceName: string = 'OXUserService';
@@ -62,17 +39,10 @@ export class DeleteUserAction extends OxBaseAction<DeleteUserResponseBody, Delet
         };
     }
 
-    public override parseBody(body: DeleteUserResponseBody): Result<DeleteUserResponse, DomainError> {
+    public override parseBody(): Result<void, DomainError> {
         return {
             ok: true,
-            value: {
-                id: body.deleteResponse.return.id,
-                firstname: body.deleteResponse.return.given_name,
-                lastname: body.deleteResponse.return.sur_name,
-                username: body.deleteResponse.return.name,
-                primaryEmail: body.deleteResponse.return.primaryEmail,
-                mailenabled: body.deleteResponse.return.mailenabled,
-            },
+            value: undefined,
         };
     }
 }

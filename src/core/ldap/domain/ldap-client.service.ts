@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { Attribute, Change, Client, Control, Entry, SearchResult } from 'ldapts';
+import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
 import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
@@ -8,8 +8,8 @@ import { UsernameRequiredError } from '../../../modules/person/domain/username-r
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
-import { EventService } from '../../eventbus/services/event.service.js';
-import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap-person-entry-changed.event.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap/ldap-person-entry-changed.event.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
@@ -19,6 +19,7 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
+import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -35,7 +36,7 @@ export type PersonData = {
     familienname: string;
     id: string;
     referrer?: string;
-    ldapEntryUUID?: string; // When this field is set, it will use the relax operator. Only use during migration.
+    ldapEntryUUID?: string;
 };
 
 @Injectable()
@@ -80,8 +81,6 @@ export class LdapClientService {
 
     public static readonly ATTRIBUTE_VALUE_EMPTY: string = 'empty';
 
-    private static readonly RELAX_OID: string = '1.3.6.1.4.1.4203.666.5.12'; // Relax Control
-
     private static readonly GROUPS: string = 'groups';
 
     private mutex: Mutex;
@@ -90,7 +89,7 @@ export class LdapClientService {
         private readonly ldapClient: LdapClient,
         private readonly ldapInstanceConfig: LdapInstanceConfig,
         private readonly logger: ClassLogger,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
     ) {
         this.mutex = new Mutex();
     }
@@ -118,7 +117,7 @@ export class LdapClientService {
         newGivenName?: string,
         newSn?: string,
         newReferrer?: PersonReferrer,
-    ): Promise<Result<string>> {
+    ): Promise<Result<PersonReferrer>> {
         return this.executeWithRetry(
             () => this.modifyPersonAttributesInternal(oldReferrer, newGivenName, newSn, newReferrer),
             this.getNrOfRetries(),
@@ -132,6 +131,17 @@ export class LdapClientService {
     ): Promise<Result<LdapPersonAttributes>> {
         return this.executeWithRetry(
             () => this.getPersonAttributesInternal(personId, referrer, domain),
+            this.getNrOfRetries(),
+        );
+    }
+
+    public async setMailAlternativeAddress(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        newMailAlternativeAddress: string,
+    ): Promise<Result<PersonID>> {
+        return this.executeWithRetry(
+            () => this.setMailAlternativeAddressInternal(personId, referrer, newMailAlternativeAddress),
             this.getNrOfRetries(),
         );
     }
@@ -174,6 +184,17 @@ export class LdapClientService {
     ): Promise<Result<boolean>> {
         return this.executeWithRetry(
             () => this.addPersonToGroupInternal(personUid, orgaKennung, lehrerUid),
+            this.getNrOfRetries(),
+        );
+    }
+
+    public async removeMailAlternativeAddress(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        address: string,
+    ): Promise<Result<boolean>> {
+        return this.executeWithRetry(
+            () => this.removeMailAlternativeAddressInternal(personId, referrer, address),
             this.getNrOfRetries(),
         );
     }
@@ -347,14 +368,8 @@ export class LdapClientService {
                 mailAlternativeAddress: mail ?? ``,
             };
 
-            const controls: Control[] = [];
-            if (person.ldapEntryUUID) {
-                entry.entryUUID = person.ldapEntryUUID;
-                controls.push(new Control(LdapClientService.RELAX_OID));
-            }
-
             try {
-                await client.add(lehrerUid, entry, controls);
+                await client.add(lehrerUid, entry);
 
                 const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, referrer);
                 if (!entryUUIDResult.ok) return entryUUIDResult;
@@ -399,7 +414,7 @@ export class LdapClientService {
         newGivenName?: string,
         newSn?: string,
         newReferrer?: PersonReferrer,
-    ): Promise<Result<string>> {
+    ): Promise<Result<PersonReferrer>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: modifyPersonAttributes');
             const client: Client = this.ldapClient.getClient();
@@ -689,6 +704,54 @@ export class LdapClientService {
         };
     }
 
+    private async setMailAlternativeAddressInternal(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        newMailAlternativeAddress: string,
+    ): Promise<Result<PersonID>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: setMailAlternativeAddress');
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+                scope: 'sub',
+                filter: `(uid=${referrer})`,
+                attributes: [LdapClientService.DN, LdapClientService.MAIL_ALTERNATIVE_ADDRESS],
+                returnAttributeValues: true,
+            });
+            if (!searchResult.searchEntries[0]) {
+                this.logger.error(`Fetching person FAILED, no entry for referrer:${referrer}, personId:${personId}`);
+                return { ok: false, error: new LdapModifyEmailError() };
+            }
+
+            try {
+                await client.modify(searchResult.searchEntries[0].dn, [
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                            values: [newMailAlternativeAddress],
+                        }),
+                    }),
+                ]);
+                this.logger.info(
+                    `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${personId}, referrer:${referrer}`,
+                );
+
+                return { ok: true, value: personId };
+            } catch (err) {
+                this.logger.logUnknownAsError(
+                    `LDAP: Modifying mailPrimaryAddress and mailAlternativeAddress FAILED`,
+                    err,
+                );
+
+                return { ok: false, error: new LdapModifyEmailError() };
+            }
+        });
+    }
+
     private async getGroupsForPersonInternal(personId: PersonID, referrer: PersonReferrer): Promise<Result<string[]>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: getGroupsForPerson');
@@ -961,6 +1024,7 @@ export class LdapClientService {
                 );
                 this.eventService.publish(
                     new LdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
+                    new KafkaLdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
                 );
 
                 return { ok: true, value: personId };
@@ -970,6 +1034,91 @@ export class LdapClientService {
                     err,
                 );
 
+                return { ok: false, error: new LdapModifyEmailError() };
+            }
+        });
+    }
+
+    private async removeMailAlternativeAddressInternal(
+        personId: PersonID,
+        referrer: PersonReferrer,
+        address: string,
+    ): Promise<Result<boolean>> {
+        return this.mutex.runExclusive(async () => {
+            this.logger.info('LDAP: removeMailAlternativeAddress');
+            const splitted: string[] = address.split('@');
+            if (!splitted || !splitted[1]) {
+                this.logger.error(`LDAP: Invalid email-address:${address}`);
+
+                return {
+                    ok: false,
+                    error: new LdapEmailAddressError(),
+                };
+            }
+            const domain: string = splitted[1];
+            const rootName: Result<string> = this.getRootNameOrError(domain);
+            if (!rootName.ok) return rootName;
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+
+            const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+                scope: 'sub',
+                filter: `(uid=${referrer})`,
+                attributes: [
+                    LdapClientService.DN,
+                    LdapClientService.UID,
+                    LdapClientService.MAIL_PRIMARY_ADDRESS,
+                    LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                ],
+                returnAttributeValues: true,
+            });
+            if (!searchResult.searchEntries[0]) {
+                this.logger.error(
+                    `Fetching person-attributes FAILED, no entry for referrer:${referrer}, personId:${personId}`,
+                );
+                return {
+                    ok: false,
+                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                };
+            }
+
+            const mailAlternativeAddress: Result<string> = this.getAttributeAsStringOrError(
+                searchResult.searchEntries[0],
+                LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                referrer,
+                personId,
+            );
+            if (!mailAlternativeAddress.ok) {
+                this.logger.error(`MailAlternativeAddress was undefined, referrer:${referrer}, personId:${personId}`);
+                return { ok: false, error: new LdapModifyEmailError() };
+            }
+            if (mailAlternativeAddress.value !== address) {
+                this.logger.info(
+                    `MailAlternativeAddress:${mailAlternativeAddress.value} deletion not necessary, address:${address}, referrer:${referrer}, personId:${personId}`,
+                );
+                return { ok: true, value: false };
+            }
+            try {
+                await client.modify(searchResult.searchEntries[0].dn, [
+                    new Change({
+                        operation: 'replace',
+                        modification: new Attribute({
+                            type: LdapClientService.MAIL_ALTERNATIVE_ADDRESS,
+                            values: [''],
+                        }),
+                    }),
+                ]);
+                this.logger.info(
+                    `LDAP: Successfully deleted mailPrimaryAddress:${address} for personId:${personId}, referrer:${referrer}`,
+                );
+                this.eventService.publish(
+                    new LdapPersonEntryChangedEvent(personId),
+                    new KafkaLdapPersonEntryChangedEvent(personId),
+                );
+                return { ok: true, value: true };
+            } catch (err) {
+                this.logger.logUnknownAsError(`LDAP: Deletion of mailAlternativeAddress FAILED`, err);
                 return { ok: false, error: new LdapModifyEmailError() };
             }
         });
@@ -1175,7 +1324,10 @@ export class LdapClientService {
                 this.logger.info(
                     `LDAP: Successfully modified userPassword (UEM) for personId:${personId}, referrer:${referrer}`,
                 );
-                this.eventService.publish(new LdapPersonEntryChangedEvent(personId, undefined, undefined, true));
+                this.eventService.publish(
+                    new LdapPersonEntryChangedEvent(personId, undefined, undefined, true),
+                    new KafkaLdapPersonEntryChangedEvent(personId, undefined, undefined, true),
+                );
 
                 return { ok: true, value: userPassword };
             } catch (err) {
@@ -1216,7 +1368,7 @@ export class LdapClientService {
                 );
 
                 // eslint-disable-next-line no-await-in-loop
-                await this.sleep(currentDelay);
+                if (currentAttempt < retries) await this.sleep(currentDelay);
             }
             currentAttempt++;
         }

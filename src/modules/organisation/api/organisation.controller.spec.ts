@@ -17,7 +17,7 @@ import { OrganisationRepository } from '../persistence/organisation.repository.j
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationResponse } from './organisation.response.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { OrganisationRootChildrenResponse } from './organisation.root-children.response.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationByNameBodyParams } from './organisation-by-name.body.params.js';
@@ -62,8 +62,8 @@ describe('OrganisationController', () => {
                     useValue: createMock<OrganisationRepository>(),
                 },
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,
@@ -790,12 +790,30 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                     version: faker.number.int(),
                 };
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(oeffentlich);
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
                 ).resolves.not.toThrow();
+            });
+        });
+
+        describe('when user is missing permissions', () => {
+            it('should throw a HttpException', async () => {
+                const params: OrganisationByIdParams = {
+                    organisationId: faker.string.uuid(),
+                };
+                const body: OrganisationByNameBodyParams = {
+                    name: faker.company.name(),
+                    version: faker.number.int(),
+                };
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+
+                await expect(
+                    organisationController.updateOrganisationName(params, body, permissionsMock),
+                ).rejects.toThrow(HttpException);
             });
         });
 
@@ -811,6 +829,7 @@ describe('OrganisationController', () => {
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(
                     new NameRequiredForKlasseError(),
                 );
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
@@ -827,6 +846,7 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                     version: faker.number.int(),
                 };
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(new EntityNotFoundError());
 
@@ -861,6 +881,7 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                     version: faker.number.int(),
                 };
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(oeffentlich);
 
@@ -882,6 +903,7 @@ describe('OrganisationController', () => {
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(
                     new NameRequiredForKlasseError(),
                 );
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 await expect(
                     organisationController.updateOrganisationName(params, body, permissionsMock),
@@ -898,6 +920,7 @@ describe('OrganisationController', () => {
                     name: faker.company.name(),
                     version: faker.number.int(),
                 };
+                permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
 
                 organisationRepositoryMock.updateOrganisationName.mockResolvedValueOnce(new EntityNotFoundError());
 

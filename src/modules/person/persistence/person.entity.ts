@@ -1,7 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import {
     ArrayType,
-    Cascade,
     Collection,
     DateTimeType,
     Entity,
@@ -150,8 +149,6 @@ export class PersonEntity extends TimestampedEntity {
     @OneToMany({
         entity: () => PersonenkontextEntity,
         mappedBy: 'personId',
-        cascade: [Cascade.REMOVE],
-        orphanRemoval: true,
     })
     public personenKontexte: Collection<PersonenkontextEntity> = new Collection<PersonenkontextEntity>(this);
 
@@ -172,8 +169,6 @@ export class PersonEntity extends TimestampedEntity {
     @OneToMany({
         entity: () => UserLockEntity,
         mappedBy: 'person',
-        cascade: [Cascade.REMOVE],
-        orphanRemoval: true,
     })
     public userLocks: Collection<UserLockEntity> = new Collection<UserLockEntity>(this);
 
@@ -184,7 +179,6 @@ export class PersonEntity extends TimestampedEntity {
     @OneToMany({
         entity: () => PersonExternalIdMappingEntity,
         mappedBy: 'person',
-        cascade: [Cascade.REMOVE, Cascade.PERSIST],
         orphanRemoval: true,
         eager: true, // Always populate this relation
     })

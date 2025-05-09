@@ -20,6 +20,10 @@ import { RollenArt } from '../../../modules/rolle/domain/rolle.enums.js';
 import { LdapGroupKennungExtractionError } from '../error/ldap-group-kennung-extraction.error.js';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
+import { KafkaEventHandler } from '../../eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ldap-sync.event.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -54,9 +58,15 @@ export class LdapSyncEventHandler {
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly emailRepo: EmailRepo,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {}
 
+    @KafkaEventHandler(KafkaPersonExternalSystemsSyncEvent)
     @EventHandler(PersonExternalSystemsSyncEvent)
+    @EnsureRequestContext()
     public async personExternalSystemSyncEventHandler(event: PersonExternalSystemsSyncEvent): Promise<void> {
         this.logger.info(
             `[EventID: ${event.eventID}] Received PersonExternalSystemsSyncEvent, personId:${event.personId}`,
@@ -69,7 +79,9 @@ export class LdapSyncEventHandler {
      * This event-handler-method is implemented to make fetchDataAndSync() callable indirectly and also avoid the usage without await.
      * Otherwise, method calls to fetchDataAndSync() had to be possible without await and would force usage floating-promises.
      **/
+    @KafkaEventHandler(KafkaPersonLdapSyncEvent)
     @EventHandler(PersonLdapSyncEvent)
+    @EnsureRequestContext()
     public async personLdapSyncEventHandler(event: PersonLdapSyncEvent): Promise<void> {
         this.logger.info(`[EventID: ${event.eventID}] Received PersonLdapSyncEvent, personId:${event.personId}`);
 
@@ -226,6 +238,7 @@ export class LdapSyncEventHandler {
         this.logger.info(
             `Syncing data to LDAP for personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
         );
+
         // Check and sync EmailAddress
         const currentMailPrimaryAddress: string | undefined = personAttributes.mailPrimaryAddress;
         if (ldapSyncData.enabledEmailAddress !== currentMailPrimaryAddress) {
@@ -264,6 +277,25 @@ export class LdapSyncEventHandler {
                 } else {
                     return this.logger.crit(
                         `COULD NOT find ${currentMailPrimaryAddress} in DISABLED addresses, Overwriting ABORTED, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                    );
+                }
+            }
+        }
+
+        const currentMailAlternativeAddress: string | undefined = personAttributes.mailAlternativeAddress;
+
+        // if mailPrimaryAddress also is overwritten in LDAP before, the async writing process may also overwrite mailAlternativeAddress
+        // but a second executing can successfully set mailAlternativeAddress
+        if (ldapSyncData.disabledEmailAddresses[0]) {
+            if (ldapSyncData.disabledEmailAddresses[0] !== currentMailAlternativeAddress) {
+                this.logger.info(
+                    `Mismatch mailAlternativeAddress, person:${ldapSyncData.enabledEmailAddress}, LDAP:${currentMailAlternativeAddress}, personId:${ldapSyncData.personId}, referrer:${ldapSyncData.referrer}`,
+                );
+                if (ldapSyncData.disabledEmailAddresses[0]) {
+                    await this.ldapClientService.setMailAlternativeAddress(
+                        ldapSyncData.personId,
+                        ldapSyncData.referrer,
+                        ldapSyncData.disabledEmailAddresses[0],
                     );
                 }
             }

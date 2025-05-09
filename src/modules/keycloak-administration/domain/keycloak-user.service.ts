@@ -400,9 +400,9 @@ export class KeycloakUserService {
 
             return { ok: true, value: undefined };
         } catch (err) {
-            this.logger.logUnknownAsError('Could not update  user-attributes', err);
+            this.logger.logUnknownAsError('Could not remove ID_OX from user-attributes', err);
 
-            return { ok: false, error: new KeycloakClientError('Could not update user-attributes') };
+            return { ok: false, error: new KeycloakClientError('Could not remove ID_OX from user-attributes') };
         }
     }
 

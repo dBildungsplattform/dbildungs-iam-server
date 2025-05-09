@@ -1,0 +1,12 @@
+spsh-user-topic
+spsh-user-dlq-topic
+spsh-import-topic
+spsh-import-dlq-topic
+spsh-group-role-topic
+spsh-group-role-dlq-topic
+spsh-klasse-topic
+spsh-klasse-dlq-topic
+spsh-rolle-topic
+spsh-rolle-dlq-topic
+spsh-schule-topic
+spsh-schule-dlq-topic

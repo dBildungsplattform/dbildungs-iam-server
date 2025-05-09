@@ -17,7 +17,6 @@ import { PersonenkontextFactory } from './personenkontext.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { EventService } from '../../../core/eventbus/index.js';
 import { UpdatePersonNotFoundError } from './error/update-person-not-found.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
@@ -28,6 +27,7 @@ import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';
 import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -91,7 +91,10 @@ describe('PersonenkontexteUpdate', () => {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
                 },
-                EventService,
+                {
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
+                },
                 DbiamPersonenkontextFactory,
                 PersonenkontextFactory,
             ],

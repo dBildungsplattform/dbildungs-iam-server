@@ -3,67 +3,33 @@ import { Injectable } from '@nestjs/common';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { KeycloakUserService } from '../domain/keycloak-user.service.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox-metadata-in-keycloak-changed.event.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox-user-changed.event.js';
-import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
-import { ConfigService } from '@nestjs/config';
-import { ServerConfig } from '../../../shared/config/server.config.js';
-import { OXContextName } from '../../../shared/types/ox-ids.types.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email-address-disabled.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
+import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
+import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
+import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 
 @Injectable()
 export class KeycloakEventHandler {
-    private readonly contextName: OXContextName;
-
     public constructor(
         private readonly logger: ClassLogger,
         private readonly kcUserService: KeycloakUserService,
-        private readonly eventService: EventService,
-        configService: ConfigService<ServerConfig>,
-    ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
-        this.contextName = oxConfig.CONTEXT_NAME;
-    }
+        private readonly eventService: EventRoutingLegacyKafkaService,
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
+    ) {}
 
-    @EventHandler(PersonenkontextCreatedMigrationEvent)
-    public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent,
-    ): Promise<void> {
-        this.logger.info(
-            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
-        );
-        if (
-            event.email &&
-            event.createdKontextPerson.referrer &&
-            event.createdKontextRolle.rollenart == RollenArt.LEHR &&
-            event.migrationRunType === PersonenkontextMigrationRuntype.STANDARD
-        ) {
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / UpdateOXUserAttributes criteria fulfilled, trying to updateOXUserAttributes`,
-            );
-
-            const updateResult: Result<void> = await this.kcUserService.updateOXUserAttributes(
-                event.createdKontextPerson.referrer,
-                event.createdKontextPerson.referrer,
-                this.contextName,
-            );
-            if (!updateResult.ok) {
-                this.logger.error(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Updating user in keycloak failed for OxUserChangedEvent`,
-                );
-            }
-        } else {
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / UpdateOXUserAttributes criteria not fulfilled, no action taken`,
-            );
-        }
-    }
-
+    @KafkaEventHandler(KafkaOxUserChangedEvent)
     @EventHandler(OxUserChangedEvent)
+    @EnsureRequestContext()
     public async handleOxUserChangedEvent(event: OxUserChangedEvent): Promise<void> {
         this.logger.info(
             `Received OxUserChangedEvent personId:${event.personId}, userId:${event.oxUserId}, userName:${event.oxUserName} contextId:${event.oxContextId}, contextName:${event.oxContextName}, primaryEmail:${event.primaryEmail}`,
@@ -85,6 +51,14 @@ export class KeycloakEventHandler {
                     event.oxContextName,
                     event.primaryEmail,
                 ),
+                new KafkaOxMetadataInKeycloakChangedEvent(
+                    event.personId,
+                    event.keycloakUsername,
+                    event.oxUserId,
+                    event.oxUserName,
+                    event.oxContextName,
+                    event.primaryEmail,
+                ),
             );
         } else {
             this.logger.error(
@@ -96,7 +70,9 @@ export class KeycloakEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaEmailAddressDisabledEvent)
     @EventHandler(EmailAddressDisabledEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressDisabledEvent(event: EmailAddressDisabledEvent): Promise<void> {
         this.logger.info(`Received EmailAddressDisabledEvent personId:${event.personId}, username:${event.username}`);
 
@@ -104,12 +80,31 @@ export class KeycloakEventHandler {
 
         if (updateResult.ok) {
             this.logger.info(
-                `Removed OX access for personId:${event.personId} & username:${event.username} in Keycloak`,
+                `Removed OX access for personId:${event.personId}, username:${event.username} in Keycloak`,
             );
         } else {
             this.logger.error(
                 `Updating user in Keycloak FAILED for EmailAddressDisabledEvent, personId:${event.personId}, username:${event.username}`,
             );
         }
+    }
+
+    @KafkaEventHandler(KafkaEmailAddressesPurgedEvent)
+    @EventHandler(EmailAddressesPurgedEvent)
+    public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressesPurgedEvent personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+
+        const updateResult: Result<void> = await this.kcUserService.removeOXUserAttributes(event.username);
+
+        if (updateResult.ok) {
+            return this.logger.info(
+                `Removed OX access for personId:${event.personId}, username:${event.username} in Keycloak`,
+            );
+        }
+        return this.logger.error(
+            `Updating user in Keycloak FAILED for EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}`,
+        );
     }
 }

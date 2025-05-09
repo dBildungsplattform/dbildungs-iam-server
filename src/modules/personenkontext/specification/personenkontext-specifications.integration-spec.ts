@@ -25,7 +25,7 @@ import { UsernameGeneratorService } from '../../person/domain/username-generator
 import { KeycloakConfigModule } from '../../keycloak-administration/keycloak-config.module.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
@@ -84,8 +84,8 @@ describe('PersonenkontextSpecifications Integration', () => {
                     useValue: createMock<EmailRepo>(),
                 },
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: DBiamPersonenkontextRepo,

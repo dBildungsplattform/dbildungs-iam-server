@@ -12,7 +12,6 @@ import { OrganisationsTyp } from '../domain/organisation.enums.js';
 import { OrganisationPersistenceMapperProfile } from '../persistence/organisation-persistence.mapper.profile.js';
 import { NurKlasseKursUnterSchule } from './nur-klasse-kurs-unter-schule.js';
 import { SchuleUnterTraeger } from './schule-unter-traeger.js';
-import { TraegerInTraeger } from './traeger-in-traeger.js';
 import { ZyklusInOrganisationen } from './zyklus-in-organisationen.js';
 import { KlasseNurVonSchuleAdministriert } from './klasse-nur-von-schule-administriert.js';
 import { KlassenNameAnSchuleEindeutig } from './klassen-name-an-schule-eindeutig.js';
@@ -183,23 +182,6 @@ describe('OrganisationSpecificationTests', () => {
         it('should not be satisfied when typ is SCHULE and zugehoerigZu is SCHULE', async () => {
             const schuleUnterTraeger: SchuleUnterTraeger = new SchuleUnterTraeger(repo);
             expect(await schuleUnterTraeger.isSatisfiedBy(schule2)).toBeFalsy();
-        });
-    });
-
-    describe('traeger-in-traeger', () => {
-        it('should be satisfied when typ is TRAEGER and administriertVon and zugehoerigZu is TRAEGER ', async () => {
-            const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(repo);
-            expect(await traegerInTraeger.isSatisfiedBy(traeger2)).toBeTruthy();
-        });
-        it('should not be satisfied when typ is TRAEGER and administriertVon is not TRAEGER', async () => {
-            const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(repo);
-            traeger2.administriertVon = schule1.id;
-            expect(await traegerInTraeger.isSatisfiedBy(traeger2)).toBeFalsy();
-        });
-        it('should not be satisfied when typ is TRAEGER and zugehoerigZu is not TRAEGER', async () => {
-            const traegerInTraeger: TraegerInTraeger = new TraegerInTraeger(repo);
-            traeger2.zugehoerigZu = schule1.id;
-            expect(await traegerInTraeger.isSatisfiedBy(traeger2)).toBeFalsy();
         });
     });
 

@@ -37,10 +37,8 @@ import {
 } from '../../../shared/error/index.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { ConfigService } from '@nestjs/config';
-import { EventService } from '../../../core/eventbus/index.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
@@ -70,6 +68,9 @@ import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -79,7 +80,7 @@ describe('PersonRepository Integration', () => {
     let kcUserServiceMock: DeepMocked<KeycloakUserService>;
     let usernameGeneratorService: DeepMocked<UsernameGeneratorService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let rolleFactory: RolleFactory;
     let rolleRepo: RolleRepo;
     let dbiamPersonenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
@@ -98,16 +99,14 @@ describe('PersonRepository Integration', () => {
             providers: [
                 PersonRepository,
                 OrganisationRepository,
-
                 ConfigService,
                 {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
-
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: UsernameGeneratorService,
@@ -134,13 +133,13 @@ describe('PersonRepository Integration', () => {
 
         kcUserServiceMock = module.get(KeycloakUserService);
         usernameGeneratorService = module.get(UsernameGeneratorService);
-        eventServiceMock = module.get(EventService);
         rolleFactory = module.get(RolleFactory);
         rolleRepo = module.get(RolleRepo);
         dbiamPersonenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -233,28 +232,6 @@ describe('PersonRepository Integration', () => {
         describe('when not found by keycloakUserId', () => {
             it('should return null', async () => {
                 const foundPerson: Option<Person<true>> = await sut.findByKeycloakUserId(faker.string.uuid());
-
-                expect(foundPerson).toBeNull();
-            });
-        });
-    });
-
-    describe('findByUsername', () => {
-        describe('when found by username', () => {
-            it('should return found person', async () => {
-                const personSaved: Person<true> = await savePerson();
-                if (personSaved.referrer) {
-                    const foundPerson: Option<Person<true>> = await sut.findByUsername(personSaved.referrer);
-                    expect(foundPerson).toBeInstanceOf(Person);
-                } else {
-                    throw new Error();
-                }
-            });
-        });
-
-        describe('when not found by keycloakUserId', () => {
-            it('should return null', async () => {
-                const foundPerson: Option<Person<true>> = await sut.findByUsername(faker.string.uuid());
 
                 expect(foundPerson).toBeNull();
             });
@@ -758,7 +735,10 @@ describe('PersonRepository Integration', () => {
                     if (result instanceof DomainError) {
                         return;
                     }
-                    expect(eventServiceMock.publish).toHaveBeenCalledWith(expect.any(PersonRenamedEvent));
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                        expect.any(PersonRenamedEvent),
+                        expect.any(KafkaPersonRenamedEvent),
+                    );
                     expect(result.vorname).toEqual(person.vorname);
                     expect(result.familienname).not.toEqual(person.familienname);
                 });
@@ -1597,6 +1577,9 @@ describe('PersonRepository Integration', () => {
                         expect.objectContaining({
                             emailAddress: emailAddress.address,
                         }),
+                        expect.objectContaining({
+                            emailAddress: emailAddress.address,
+                        }),
                     );
                     expect(result.ok).toBeTruthy();
                 });
@@ -1720,6 +1703,59 @@ describe('PersonRepository Integration', () => {
                 }
                 expect(result.vorname).toEqual(updatedPerson.vorname);
                 expect(result.familienname).toEqual(updatedPerson.familienname);
+            });
+
+            it('should correctly set and unset external systems', async () => {
+                const existingPerson: Person<true> = await savePerson();
+
+                const updatedPerson: Person<true> = Person.construct(
+                    existingPerson.id,
+                    existingPerson.createdAt,
+                    existingPerson.updatedAt,
+                    faker.person.lastName(),
+                    faker.person.firstName(),
+                    existingPerson.mandant,
+                    existingPerson.stammorganisation,
+                    existingPerson.keycloakUserId,
+                    existingPerson.referrer,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined, //istTechnisch
+                    {
+                        LDAP: faker.string.uuid(), //externalIds
+                    },
+                );
+
+                let result: Person<true> | DomainError = await sut.save(updatedPerson);
+                if (result instanceof DomainError) throw result;
+
+                expect(result.externalIds.LDAP).toEqual(updatedPerson.externalIds.LDAP);
+
+                updatedPerson.externalIds.LDAP = undefined;
+
+                result = await sut.save(updatedPerson);
+                if (result instanceof DomainError) throw result;
+
+                expect(result.externalIds.LDAP).toBeUndefined();
             });
 
             describe('when person does not have an id', () => {

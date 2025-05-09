@@ -78,6 +78,8 @@ auth:
   basic_auth_password: ''
   vidis_client_id: ''
   vidis_client_secret: ''
+  kafka_username: ''
+  kafka_password: ''
 
 ox:
   enabled: false
@@ -85,6 +87,9 @@ ox:
   endpoint: 'https://webmail.example.com'
   contextId: '10'
   contextName: '10'
+
+email:
+  nonEnabledEmailAddressesDeadlineInDays: 180
 
 vidis:
   url: 'https://service-stage.vidis.schule'
@@ -182,6 +187,15 @@ backend:
     stepUpTimeoutInSeconds: 900
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
+
+kafka:
+  url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
+  enabled: false
+  initEnabled: true
+  initImage:
+    repository: docker.io/bitnami/kafka
+    tag: '3.9.0'
+    pullPolicy: Always
 
 autoscaling:
   enabled: false
