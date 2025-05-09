@@ -8,7 +8,7 @@ import { UsernameRequiredError } from '../../../modules/person/domain/username-r
 import { Mutex } from 'async-mutex';
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
-import { EventService } from '../../eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapPersonEntryChangedEvent } from '../../../shared/events/ldap/ldap-person-entry-changed.event.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
@@ -19,6 +19,7 @@ import { generatePassword } from '../../../shared/util/password-generator.js';
 import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.error.js';
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 import { LdapFetchAttributeError } from '../error/ldap-fetch-attribute.error.js';
+import { KafkaLdapPersonEntryChangedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-changed.event.js';
 
 export type LdapPersonAttributes = {
     entryUUID?: string;
@@ -90,7 +91,7 @@ export class LdapClientService {
         private readonly ldapClient: LdapClient,
         private readonly ldapInstanceConfig: LdapInstanceConfig,
         private readonly logger: ClassLogger,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
     ) {
         this.mutex = new Mutex();
     }
@@ -1031,6 +1032,7 @@ export class LdapClientService {
                 );
                 this.eventService.publish(
                     new LdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
+                    new KafkaLdapPersonEntryChangedEvent(personId, newEmailAddress, currentEmailAddress),
                 );
 
                 return { ok: true, value: personId };
@@ -1118,7 +1120,10 @@ export class LdapClientService {
                 this.logger.info(
                     `LDAP: Successfully deleted mailPrimaryAddress:${address} for personId:${personId}, referrer:${referrer}`,
                 );
-                this.eventService.publish(new LdapPersonEntryChangedEvent(personId));
+                this.eventService.publish(
+                    new LdapPersonEntryChangedEvent(personId),
+                    new KafkaLdapPersonEntryChangedEvent(personId),
+                );
                 return { ok: true, value: true };
             } catch (err) {
                 this.logger.logUnknownAsError(`LDAP: Deletion of mailAlternativeAddress FAILED`, err);
@@ -1327,7 +1332,10 @@ export class LdapClientService {
                 this.logger.info(
                     `LDAP: Successfully modified userPassword (UEM) for personId:${personId}, referrer:${referrer}`,
                 );
-                this.eventService.publish(new LdapPersonEntryChangedEvent(personId, undefined, undefined, true));
+                this.eventService.publish(
+                    new LdapPersonEntryChangedEvent(personId, undefined, undefined, true),
+                    new KafkaLdapPersonEntryChangedEvent(personId, undefined, undefined, true),
+                );
 
                 return { ok: true, value: userPassword };
             } catch (err) {

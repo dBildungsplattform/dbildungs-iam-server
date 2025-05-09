@@ -25,6 +25,7 @@ import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 
 @Injectable()
 export class ItsLearningPersonsEventHandler {
@@ -97,7 +98,9 @@ export class ItsLearningPersonsEventHandler {
         });
     }
 
+    @KafkaEventHandler(KafkaOxUserChangedEvent)
     @EventHandler(OxUserChangedEvent)
+    @EnsureRequestContext()
     public async oxUserChangedEventHandler(event: OxUserChangedEvent): Promise<void> {
         if (!this.ENABLED) {
             return this.logger.info(`[EventID: ${event.eventID}] Not enabled, ignoring email update.`);

@@ -12,7 +12,7 @@ import { OrganisationRepository } from '../../../modules/organisation/persistenc
 import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
-import { EventService } from '../../eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
@@ -33,6 +33,9 @@ import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-ad
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 import { LdapEntryDeletedEvent } from '../../../shared/events/ldap/ldap-entry-deleted.event.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
+import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
+import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
+import { KafkaLdapEntryDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-entry-deleted.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -41,7 +44,7 @@ export class LdapEventHandler {
         private readonly ldapClientService: LdapClientService,
         private readonly organisationRepository: OrganisationRepository,
         private readonly personRepo: PersonRepository,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
@@ -191,7 +194,10 @@ export class LdapEventHandler {
         }
 
         this.logger.info(`Successfully modified person attributes in LDAP for personId:${event.personId}`);
-        this.eventService.publish(LdapPersonEntryRenamedEvent.fromPersonRenamedEvent(event));
+        this.eventService.publish(
+            LdapPersonEntryRenamedEvent.fromPersonRenamedEvent(event),
+            KafkaLdapPersonEntryRenamedEvent.fromPersonRenamedEvent(event),
+        );
 
         return modifyResult;
     }
@@ -372,7 +378,10 @@ export class LdapEventHandler {
         );
 
         if (result.ok) {
-            this.eventService.publish(new LdapEmailAddressDeletedEvent(event.personId, event.username, event.address));
+            this.eventService.publish(
+                new LdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
+                new KafkaLdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
+            );
         }
 
         return result;
@@ -389,7 +398,10 @@ export class LdapEventHandler {
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         } else {
-            this.eventService.publish(new LdapEntryDeletedEvent(event.personId, event.username));
+            this.eventService.publish(
+                new LdapEntryDeletedEvent(event.personId, event.username),
+                new KafkaLdapEntryDeletedEvent(event.personId, event.username),
+            );
         }
 
         return deletionResult;

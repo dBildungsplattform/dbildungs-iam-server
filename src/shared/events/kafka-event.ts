@@ -1,3 +1,3 @@
 export interface KafkaEvent {
-    kafkaKeyPersonId: string;
+    kafkaKey: string;
 }

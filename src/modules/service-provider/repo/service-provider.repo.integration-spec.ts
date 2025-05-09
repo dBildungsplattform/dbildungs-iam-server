@@ -10,7 +10,7 @@ import {
 } from '../../../../test/utils/index.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
-import { EventService } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { createMock } from '@golevelup/ts-jest';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -38,8 +38,8 @@ describe('ServiceProviderRepo', () => {
                 OrganisationRepository,
 
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
                 {
                     provide: RolleFactory,
@@ -95,7 +95,8 @@ describe('ServiceProviderRepo', () => {
             serviceProvider.keycloakGroup = 'someGroup';
             serviceProvider.keycloakRole = 'someRole';
 
-            const mockEventService: EventService = module.get<EventService>(EventService);
+            const mockEventService: EventRoutingLegacyKafkaService =
+                module.get<EventRoutingLegacyKafkaService>(EventRoutingLegacyKafkaService);
 
             await sut.save(serviceProvider);
 

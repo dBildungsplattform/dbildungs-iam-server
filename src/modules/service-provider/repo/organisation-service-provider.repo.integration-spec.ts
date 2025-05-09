@@ -12,7 +12,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { createMock } from '@golevelup/ts-jest';
 
 describe('OrganisationServiceProviderRepo', () => {
@@ -32,8 +32,8 @@ describe('OrganisationServiceProviderRepo', () => {
                 OrganisationRepository,
                 ServiceProviderRepo,
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
             ],
         }).compile();

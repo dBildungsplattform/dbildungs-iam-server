@@ -22,7 +22,7 @@ import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.ty
 import { LdapSearchError } from '../error/ldap-search.error.js';
 import { LdapEntityType } from './ldap.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { EventService } from '../../eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { LdapEmailAddressError } from '../error/ldap-email-address.error.js';
 import { LdapCreateLehrerError } from '../error/ldap-create-lehrer.error.js';
@@ -41,7 +41,7 @@ describe('LDAP Client Service', () => {
     let ldapClientService: LdapClientService;
     let ldapClientMock: DeepMocked<LdapClient>;
     let loggerMock: DeepMocked<ClassLogger>;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let clientMock: DeepMocked<Client>;
     let instanceConfig: LdapInstanceConfig;
 
@@ -166,8 +166,8 @@ describe('LDAP Client Service', () => {
             .useValue(createMock<LdapClient>())
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
-            .overrideProvider(EventService)
-            .useValue(createMock<EventService>())
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
             .overrideProvider(LdapInstanceConfig)
             .useValue(mockLdapInstanceConfig)
             .compile();
@@ -177,7 +177,7 @@ describe('LDAP Client Service', () => {
         ldapClientService = module.get(LdapClientService);
         ldapClientMock = module.get(LdapClient);
         loggerMock = module.get(ClassLogger);
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         clientMock = createMock<Client>();
         instanceConfig = module.get(LdapInstanceConfig);
 
@@ -2477,6 +2477,11 @@ describe('LDAP Client Service', () => {
                             mailPrimaryAddress: newEmailAddress,
                             mailAlternativeAddress: currentEmailAddress,
                         }),
+                        expect.objectContaining({
+                            personId: fakePersonID,
+                            mailPrimaryAddress: newEmailAddress,
+                            mailAlternativeAddress: currentEmailAddress,
+                        }),
                     );
                 });
             });
@@ -2516,6 +2521,11 @@ describe('LDAP Client Service', () => {
                                 mailPrimaryAddress: newEmailAddress,
                                 mailAlternativeAddress: currentEmailAddress,
                             }),
+                            expect.objectContaining({
+                                personId: fakePersonID,
+                                mailPrimaryAddress: newEmailAddress,
+                                mailAlternativeAddress: currentEmailAddress,
+                            }),
                         );
                     });
                 });
@@ -2550,6 +2560,11 @@ describe('LDAP Client Service', () => {
                         `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${fakePersonID}, referrer:${fakeReferrer}`,
                     );
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            personId: fakePersonID,
+                            mailPrimaryAddress: newEmailAddress,
+                            mailAlternativeAddress: newEmailAddress,
+                        }),
                         expect.objectContaining({
                             personId: fakePersonID,
                             mailPrimaryAddress: newEmailAddress,
