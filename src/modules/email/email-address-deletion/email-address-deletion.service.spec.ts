@@ -204,6 +204,28 @@ describe('EmailAddressDeletionService', () => {
             oxUserId = faker.string.numeric();
         });
 
+        describe('when personId is UNDEFINED in event', () => {
+            it('should publish EmailAddressesPurgedEvent and KafkaEmailAddressesPurgedEvent', async () => {
+                await sut.checkRemainingEmailAddressesByPersonId(undefined, oxUserId);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `PersonId UNDEFINED when checking remaining EmailAddresses for person, oxUserId:${oxUserId}`,
+                );
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: undefined,
+                        username: undefined,
+                        oxUserId: oxUserId,
+                    }),
+                    expect.objectContaining({
+                        personId: undefined,
+                        username: undefined,
+                        oxUserId: oxUserId,
+                    }),
+                );
+            });
+        });
+
         describe('when Person CANNOT be found', () => {
             it('should log error about that and return', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);

@@ -31,10 +31,10 @@ export class EmailAddressDeletionService {
         const affectedPersonIds: (PersonID | undefined)[] = nonPrimaryEmailAddresses.map(
             (ea: EmailAddress<true>) => ea.personId,
         );
-        const affectedPersonIdsFilterred: PersonID[] = affectedPersonIds.filter(
+        const affectedPersonIdsFiltered: PersonID[] = affectedPersonIds.filter(
             (apid: PersonID | undefined) => apid !== undefined,
         );
-        const uniqueAffectedPersonIdSet: Set<PersonID> = new Set(affectedPersonIdsFilterred);
+        const uniqueAffectedPersonIdSet: Set<PersonID> = new Set(affectedPersonIdsFiltered);
         const uniqueAffectedPersonIds: PersonID[] = Array.from(uniqueAffectedPersonIdSet);
 
         const affectedPersons: Person<true>[] = await this.personRepository.findByIds(
@@ -78,6 +78,9 @@ export class EmailAddressDeletionService {
         oxUserId: OXUserID,
     ): Promise<void> {
         if (!personId) {
+            this.logger.info(
+                `PersonId UNDEFINED when checking remaining EmailAddresses for person, oxUserId:${oxUserId}`,
+            );
             return this.eventService.publish(
                 new EmailAddressesPurgedEvent(personId, undefined, oxUserId),
                 new KafkaEmailAddressesPurgedEvent(personId, undefined, oxUserId),

@@ -148,7 +148,7 @@ export class KeycloakEventHandler {
 
         if (!event.username) {
             return this.logger.info(
-                'EmailAddressesPurgedEvent had UNDEFINED username, skipping removeOXUserAttributes',
+                `EmailAddressesPurgedEvent had UNDEFINED username, skipping removeOXUserAttributes, oxUserId:${event.oxUserId}`,
             );
         }
 

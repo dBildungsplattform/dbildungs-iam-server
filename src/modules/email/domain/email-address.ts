@@ -27,7 +27,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         id: string,
         createdAt: Date,
         updatedAt: Date,
-        personId: PersonID,
+        personId: PersonID | undefined,
         address: string,
         status: EmailAddressStatus,
         oxUserId?: string,
@@ -36,7 +36,7 @@ export class EmailAddress<WasPersisted extends boolean> {
     }
 
     public static createNew(
-        personId: PersonID,
+        personId: PersonID | undefined,
         address: string,
         status: EmailAddressStatus,
         oxUserId?: string,

@@ -274,6 +274,19 @@ describe('KeycloakEventHandler', () => {
             event = new EmailAddressesPurgedEvent(fakePersonID, fakeUsername, fakeOxUserID);
         });
 
+        describe('when username is UNDEFINED in event', () => {
+            it('should log info about that and return without calling removeOXUserAttributes', async () => {
+                event = new EmailAddressesPurgedEvent(fakePersonID, undefined, fakeOxUserID);
+
+                await sut.handleEmailAddressesPurgedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `EmailAddressesPurgedEvent had UNDEFINED username, skipping removeOXUserAttributes, oxUserId:${event.oxUserId}`,
+                );
+                expect(keycloakUserServiceMock.removeOXUserAttributes).toHaveBeenCalledTimes(0);
+            });
+        });
+
         describe('when updating user-attributes fails', () => {
             it('should log error about failure', async () => {
                 keycloakUserServiceMock.removeOXUserAttributes.mockResolvedValueOnce({

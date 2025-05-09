@@ -16,6 +16,7 @@ import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 import { EmailInstanceConfig } from '../email-instance-config.js';
 import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
+import assert from 'assert';
 
 export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT: number = 180;
 
@@ -231,12 +232,12 @@ export class EmailRepo {
                     `Found multiple ENABLED EmailAddresses, treating ${ea.address} as latest address, personId:${ea.personId}`,
                 );
             }
-            if (!ea.personId) {
+            assert(ea.personId); //EmailAddresses fetch via findEnabledByPersonIdsSortedByUpdatedAtDesc MUST HAVE a personId
+            /*if (!ea.personId) {
                 this.logger.error(`Will not add EmailAddress, personId is UNDEFINED, address:${ea.address}`);
-            } else {
-                responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
-                lastUsedPersonId = ea.personId;
-            }
+            } else {*/
+            responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
+            lastUsedPersonId = ea.personId;
         });
 
         return responseMap;
