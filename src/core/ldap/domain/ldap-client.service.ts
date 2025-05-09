@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../logging/class-logger.js';
-import { Attribute, Change, Client, Control, Entry, SearchResult } from 'ldapts';
+import { Attribute, Change, Client, Entry, SearchResult } from 'ldapts';
 import { LdapEntityType, LdapPersonEntry } from './ldap.types.js';
 import { LdapClient } from './ldap-client.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
@@ -35,8 +35,8 @@ export type PersonData = {
     vorname: string;
     familienname: string;
     id: string;
-    username?: string;
-    ldapEntryUUID?: string; // When this field is set, it will use the relax operator. Only use during migration.
+    referrer?: string;
+    ldapEntryUUID?: string;
 };
 
 @Injectable()
@@ -80,8 +80,6 @@ export class LdapClientService {
     public static readonly HOME_DIRECTORY: string = 'none'; //highlight it's a dummy value
 
     public static readonly ATTRIBUTE_VALUE_EMPTY: string = 'empty';
-
-    private static readonly RELAX_OID: string = '1.3.6.1.4.1.4203.666.5.12'; // Relax Control
 
     private static readonly GROUPS: string = 'groups';
 
@@ -321,7 +319,7 @@ export class LdapClientService {
         schulId: string,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
     ): Promise<Result<PersonData>> {
-        const username: PersonReferrer | undefined = person.username;
+        const username: PersonReferrer | undefined = person.referrer;
         if (!username) {
             return {
                 ok: false,
@@ -349,7 +347,7 @@ export class LdapClientService {
             const searchResultLehrer: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
-                    filter: `(uid=${person.username})`,
+                    filter: `(uid=${person.referrer})`,
                 },
             );
             if (searchResultLehrer.searchEntries.length > 0) {
@@ -370,14 +368,8 @@ export class LdapClientService {
                 mailAlternativeAddress: mail ?? ``,
             };
 
-            const controls: Control[] = [];
-            if (person.ldapEntryUUID) {
-                entry.entryUUID = person.ldapEntryUUID;
-                controls.push(new Control(LdapClientService.RELAX_OID));
-            }
-
             try {
-                await client.add(lehrerUid, entry, controls);
+                await client.add(lehrerUid, entry);
 
                 const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, username);
                 if (!entryUUIDResult.ok) return entryUUIDResult;
@@ -921,7 +913,7 @@ export class LdapClientService {
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            if (!person.username) {
+            if (!person.referrer) {
                 return {
                     ok: false,
                     error: new UsernameRequiredError(
@@ -929,13 +921,13 @@ export class LdapClientService {
                     ),
                 };
             }
-            const lehrerUid: string = this.getLehrerUid(person.username, rootName.value);
-            await this.removePersonFromGroup(person.username, orgaKennung, lehrerUid);
+            const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
+            await this.removePersonFromGroup(person.referrer, orgaKennung, lehrerUid);
             try {
                 const searchResultLehrer: SearchResult = await client.search(
                     `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                     {
-                        filter: `(uid=${person.username})`,
+                        filter: `(uid=${person.referrer})`,
                     },
                 );
                 if (!searchResultLehrer.searchEntries[0]) {

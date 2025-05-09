@@ -2,7 +2,6 @@ export const PersonenstatusTypName: string = 'Personenstatus';
 export const JahrgangsstufeTypName: string = 'Jahrgangsstufe';
 export const RolleTypName: string = 'Rolle';
 export const SichtfreigabeTypName: string = 'Sichtfreigabe';
-export const PersonenkontextMigrationRuntypeTypName: string = 'PersonenkontextMigrationRuntype';
 
 export enum Personenstatus {
     AKTIV = 'AKTIV',
@@ -33,9 +32,4 @@ export enum Rolle {
 export enum SichtfreigabeType {
     JA = 'ja',
     NEIN = 'nein',
-}
-
-export enum PersonenkontextMigrationRuntype {
-    ITSLEARNING = 'ITSLEARNING',
-    STANDARD = 'STANDARD',
 }

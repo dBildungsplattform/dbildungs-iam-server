@@ -8,7 +8,6 @@ import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-g
 import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
 import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
 import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
-import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ldap-sync.event.js';
@@ -36,7 +35,6 @@ import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 
 export type KafkaEventKey =
-    | 'user.created'
     | 'user.created.email'
     | 'user.deleted'
     | 'user.deleted_deadline'
@@ -81,11 +79,6 @@ export interface KafkaEventMappingEntry {
 }
 
 export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = {
-    'user.created': {
-        eventClass: KafkaPersonCreatedEvent,
-        topic: 'user-topic',
-        topicDlq: 'user-dlq-topic',
-    },
     'user.created.email': {
         eventClass: KafkaEmailAddressGeneratedEvent,
         topic: 'user-topic',

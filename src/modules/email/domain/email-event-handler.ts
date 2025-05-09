@@ -21,9 +21,6 @@ import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-a
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
-import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
@@ -34,7 +31,6 @@ import { PersonDomainError } from '../../person/domain/person-domain.error.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
-import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
@@ -169,64 +165,6 @@ export class EmailEventHandler {
         });
 
         return resMap;
-    }
-
-    @KafkaEventHandler(KafkaPersonCreatedEvent)
-    @EventHandler(PersonenkontextCreatedMigrationEvent)
-    @EnsureRequestContext()
-    public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
-    ): Promise<void> {
-        this.logger.info(
-            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
-        );
-        if (
-            event.email &&
-            event.createdKontextRolle.rollenart == RollenArt.LEHR &&
-            event.migrationRunType === PersonenkontextMigrationRuntype.STANDARD
-        ) {
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Rollenart is LEHR, trying to persist Email`,
-            );
-            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(
-                event.createdKontext.personId,
-            );
-            if (!existingEmail) {
-                const newEmail: EmailAddress<false> = EmailAddress.createNew(
-                    event.createdKontext.personId,
-                    event.email,
-                    EmailAddressStatus.ENABLED,
-                );
-                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(newEmail);
-
-                if (persistenceResult instanceof DomainError) {
-                    return this.logger.error(
-                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Could not persist existing email, error:${persistenceResult.message}`,
-                    );
-                } else {
-                    return this.logger.info(
-                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Successfully persisted Email ${persistenceResult.address}`,
-                    );
-                }
-            } else {
-                return this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting persist Email Operation, Email already exists`,
-                );
-            }
-        } else {
-            if (event.migrationRunType !== PersonenkontextMigrationRuntype.STANDARD) {
-                this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / No Action because PersonenkontextMigrationRuntype is Not STANDARD`,
-                );
-                return;
-            }
-            if (event.createdKontextRolle.rollenart !== RollenArt.LEHR) {
-                this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / No Action because Rollenart is Not LEHR`,
-                );
-                return;
-            }
-        }
     }
 
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
