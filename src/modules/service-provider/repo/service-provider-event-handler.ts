@@ -4,6 +4,8 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { KeycloakGroupRoleService } from '../../keycloak-administration/domain/keycloak-group-role.service.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
 
 @Injectable()
 export class CreateGroupAndRoleHandler {
@@ -12,6 +14,7 @@ export class CreateGroupAndRoleHandler {
         private readonly logger: ClassLogger,
     ) {}
 
+    @KafkaEventHandler(KafkaGroupAndRoleCreatedEvent)
     @EventHandler(GroupAndRoleCreatedEvent)
     public async handleCreateGroupAndRoleEvent(event: GroupAndRoleCreatedEvent): Promise<void> {
         this.logger.info(`Received GroupAndRoleCreatedEvent, groupName: ${event.groupName}`);

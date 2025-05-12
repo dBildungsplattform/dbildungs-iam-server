@@ -138,6 +138,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                             `Handler ${handler.name} failed for event ${eventClass.name}`,
                             err,
                         );
+
                         return {
                             ok: false,
                             error: new Error('Unexpected handler error'),
@@ -181,7 +182,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         try {
             await this.producer?.send({
                 topic,
-                messages: [{ key: event.kafkaKeyPersonId, value: JSON.stringify(event), headers }],
+                messages: [{ key: event.kafkaKey, value: JSON.stringify(event), headers }],
             });
         } catch (err) {
             this.logger.error(`Error publishing event to Kafka on topic ${topic}`, util.inspect(err));

@@ -27,6 +27,9 @@ import {
 import { ItslearningPersonRepo } from '../repo/itslearning-person.repo.js';
 import { determineHighestRollenart, rollenartToIMSESInstitutionRole } from '../repo/role-utils.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 
 @Injectable()
 export class ItsLearningSyncEventHandler {
@@ -43,13 +46,20 @@ export class ItsLearningSyncEventHandler {
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepo: OrganisationRepository,
         configService: ConfigService<ServerConfig>,
+
+        // @ts-expect-error used by EnsureRequestContext decorator
+        // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
+        // to create the request-bound EntityManager context. Removing it would break context creation.
+        private readonly em: EntityManager,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
 
         this.ENABLED = itsLearningConfig.ENABLED;
     }
 
+    @KafkaEventHandler(KafkaPersonExternalSystemsSyncEvent)
     @EventHandler(PersonExternalSystemsSyncEvent)
+    @EnsureRequestContext()
     public async personExternalSystemSyncEventHandler(event: PersonExternalSystemsSyncEvent): Promise<void> {
         this.logger.info(`[EventID: ${event.eventID}] Received PersonExternalSystemsSyncEvent, ${event.personId}`);
 

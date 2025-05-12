@@ -11,7 +11,7 @@ import {
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DataConfig } from '../../../shared/config/index.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -38,7 +38,7 @@ describe('OrganisationRepository', () => {
     let em: EntityManager;
     let config: ConfigService<ServerConfig>;
     let ROOT_ORGANISATION_ID: string;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -52,8 +52,8 @@ describe('OrganisationRepository', () => {
                 OrganisationPersistenceMapperProfile,
                 OrganisationRepository,
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
             ],
         }).compile();
@@ -61,7 +61,7 @@ describe('OrganisationRepository', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         config = module.get(ConfigService<ServerConfig>);
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -1412,6 +1412,12 @@ describe('OrganisationRepository', () => {
                         name: result.name,
                         rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
                     }),
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
+                    }),
                 );
             });
 
@@ -1436,6 +1442,12 @@ describe('OrganisationRepository', () => {
                         name: result.name,
                         rootDirectChildrenZuordnung: RootDirectChildrenType.ERSATZ,
                     }),
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.ERSATZ,
+                    }),
                 );
             });
 
@@ -1449,6 +1461,12 @@ describe('OrganisationRepository', () => {
 
                 expect(result).toBeInstanceOf(Organisation);
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
+                    }),
                     expect.objectContaining({
                         organisationId: result.id,
                         kennung: result.kennung,
