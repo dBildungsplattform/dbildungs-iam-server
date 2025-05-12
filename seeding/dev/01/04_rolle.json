@@ -178,24 +178,6 @@
             "istTechnisch": true
         },
         {
-            "id": 101,
-            "administeredBySchulstrukturknoten": 0,
-            "name": "Migration",
-            "rollenart": "SYSADMIN",
-            "merkmale": [],
-            "systemrechte": [
-                "ROLLEN_VERWALTEN",
-                "PERSONEN_VERWALTEN",
-                "SCHULEN_VERWALTEN",
-                "KLASSEN_VERWALTEN",
-                "SCHULTRAEGER_VERWALTEN",
-                "MIGRATION_DURCHFUEHREN",
-                "PERSON_SYNCHRONISIEREN"
-            ],
-            "serviceProviderIds": [],
-            "istTechnisch": true
-        },
-        {
             "id": 102,
             "administeredBySchulstrukturknoten": 0,
             "name": "Technical User NextCloud",
@@ -212,10 +194,7 @@
             "rollenart": "LEHR",
             "merkmale": [],
             "systemrechte": [],
-            "serviceProviderIds": [
-                13,
-                14
-            ]
+            "serviceProviderIds": [13, 14]
         },
         {
             "id": 201,
@@ -224,10 +203,7 @@
             "rollenart": "SYSADMIN",
             "merkmale": [],
             "systemrechte": [],
-            "serviceProviderIds": [
-                13,
-                14
-            ]
+            "serviceProviderIds": [13, 14]
         }
     ]
 }

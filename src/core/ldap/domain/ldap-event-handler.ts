@@ -7,16 +7,13 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { OrganisationID, PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
-import { PersonenkontextMigrationRuntype } from '../../../modules/personenkontext/domain/personenkontext.enums.js';
 import { LdapEmailDomainError } from '../error/ldap-email-domain.error.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
-import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { KafkaEventHandler } from '../../eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
@@ -78,99 +75,6 @@ export class LdapEventHandler {
         }
 
         return deletionResult;
-    }
-
-    @KafkaEventHandler(KafkaPersonCreatedEvent)
-    @EventHandler(PersonenkontextCreatedMigrationEvent)
-    @EnsureRequestContext()
-    public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
-    ): Promise<Result<unknown>> {
-        this.logger.info(
-            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
-        );
-
-        if (
-            event.createdKontextRolle.rollenart == RollenArt.LEHR &&
-            event.migrationRunType === PersonenkontextMigrationRuntype.STANDARD
-        ) {
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / RollenArt is LEHR, trying to create Lehrer`,
-            );
-            if (!event.createdKontextPerson.referrer) {
-                this.logger.error(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Username missing`,
-                );
-                return { ok: false, error: new Error('Username missing') };
-            }
-            if (!event.createdKontextOrga.kennung) {
-                this.logger.error(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Orga Kennung missing`,
-                );
-                return { ok: false, error: new Error('Orga Kennung missing') };
-            }
-            const emailDomain: Result<string> = await this.getEmailDomainForOrganisationId(event.createdKontextOrga.id);
-            if (!emailDomain.ok) {
-                this.logger.error(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting createLehrer Operation, No valid emailDomain for organisation`,
-                );
-                return { ok: false, error: emailDomain.error };
-            }
-            const isLehrerExistingResult: Result<boolean> = await this.ldapClientService.isLehrerExisting(
-                event.createdKontextPerson.referrer,
-                emailDomain.value,
-            );
-            if (!isLehrerExistingResult.ok) {
-                this.logger.error(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Check Lehrer existing call failed: ${isLehrerExistingResult.error.message}`,
-                );
-                return { ok: false, error: isLehrerExistingResult.error };
-            }
-
-            if (isLehrerExistingResult.value == true) {
-                this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting createLehrer Operation, LDAP Entry already exists`,
-                );
-                return { ok: true, value: null };
-            }
-
-            const personData: PersonData = {
-                id: event.createdKontextPerson.id,
-                vorname: event.createdKontextPerson.vorname,
-                familienname: event.createdKontextPerson.familienname,
-                referrer: event.createdKontextPerson.referrer,
-                ldapEntryUUID: event.createdKontextPerson.id, //Matches The legacy ldapEntryUUID
-            };
-
-            const creationResult: Result<PersonData> = await this.ldapClientService.createLehrer(
-                personData,
-                emailDomain.value,
-                event.createdKontextOrga.kennung,
-                event.email,
-            );
-            if (!creationResult.ok) {
-                this.logger.error(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Create Lehrer Operation failed: ${creationResult.error.message}`,
-                );
-                return { ok: false, error: creationResult.error };
-            }
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Successfully created LDAP Entry Lehrer`,
-            );
-            return { ok: true, value: null };
-        } else {
-            if (event.migrationRunType !== PersonenkontextMigrationRuntype.STANDARD) {
-                this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Do Nothing because PersonenkontextMigrationRuntype is Not STANDARD`,
-                );
-            } else if (event.createdKontextRolle.rollenart !== RollenArt.LEHR) {
-                this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Do Nothing because Rollenart is Not LEHR`,
-                );
-            }
-
-            return { ok: true, value: null };
-        }
     }
 
     @KafkaEventHandler(KafkaPersonRenamedEvent)

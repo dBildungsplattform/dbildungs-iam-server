@@ -6,14 +6,6 @@ import { KeycloakUserService } from '../domain/keycloak-user.service.js';
 import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
-import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
-import { ConfigService } from '@nestjs/config';
-import { ServerConfig } from '../../../shared/config/server.config.js';
-import { OXContextName } from '../../../shared/types/ox-ids.types.js';
-import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
@@ -25,57 +17,15 @@ import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user
 
 @Injectable()
 export class KeycloakEventHandler {
-    private readonly contextName: OXContextName;
-
     public constructor(
         private readonly logger: ClassLogger,
         private readonly kcUserService: KeycloakUserService,
         private readonly eventService: EventRoutingLegacyKafkaService,
-        configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
-    ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
-        this.contextName = oxConfig.CONTEXT_NAME;
-    }
-
-    @EventHandler(PersonenkontextCreatedMigrationEvent)
-    @KafkaEventHandler(KafkaPersonCreatedEvent)
-    @EnsureRequestContext()
-    public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
-    ): Promise<void> {
-        this.logger.info(
-            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
-        );
-        if (
-            event.email &&
-            event.createdKontextPerson.referrer &&
-            event.createdKontextRolle.rollenart == RollenArt.LEHR &&
-            event.migrationRunType === PersonenkontextMigrationRuntype.STANDARD
-        ) {
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / UpdateOXUserAttributes criteria fulfilled, trying to updateOXUserAttributes`,
-            );
-
-            const updateResult: Result<void> = await this.kcUserService.updateOXUserAttributes(
-                event.createdKontextPerson.referrer,
-                event.createdKontextPerson.referrer,
-                this.contextName,
-            );
-            if (!updateResult.ok) {
-                this.logger.error(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Updating user in keycloak failed for OxUserChangedEvent`,
-                );
-            }
-        } else {
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / UpdateOXUserAttributes criteria not fulfilled, no action taken`,
-            );
-        }
-    }
+    ) {}
 
     @KafkaEventHandler(KafkaOxUserChangedEvent)
     @EventHandler(OxUserChangedEvent)
