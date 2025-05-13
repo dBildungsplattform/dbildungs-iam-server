@@ -22,5 +22,5 @@ export class OxConfig {
     @Min(0)
     @IsInt()
     @IsOptional()
-    public readonly NUMBER_OF_RETRIES: number = 3;
+    public readonly NUMBER_OF_RETRIES?: number;
 }

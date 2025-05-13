@@ -39,6 +39,8 @@ function isOxErrorType(err: unknown): err is OxErrorType {
 
 @Injectable()
 export class OxService {
+    private static MAX_RETRIES_DEFAULT: number = 3;
+
     private readonly endpoint: string;
 
     private readonly username: string;
@@ -106,7 +108,7 @@ export class OxService {
         this.username = oxConfig.USERNAME;
         this.password = oxConfig.PASSWORD;
 
-        this.max_retries = oxConfig.NUMBER_OF_RETRIES;
+        this.max_retries = oxConfig.NUMBER_OF_RETRIES ?? OxService.MAX_RETRIES_DEFAULT;
     }
 
     public async send<ResponseBody, ResultType>(
