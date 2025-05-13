@@ -197,7 +197,7 @@ describe('OxService', () => {
 
             const result: Result<string, DomainError> = await sut.send(mockAction);
 
-            expect(loggerMock.error).toHaveBeenCalledWith(`OX-response could not be parsed, after error occurred`);
+            expect(loggerMock.error).toHaveBeenCalledWith(`OX-response could not be parsed after error occurred`);
             expect(result).toEqual({
                 ok: false,
                 error: new OxError('OX-Response Could Not Be Parsed'),

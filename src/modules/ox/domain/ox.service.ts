@@ -39,7 +39,7 @@ function isOxErrorType(err: unknown): err is OxErrorType {
 
 @Injectable()
 export class OxService {
-    private static MAX_RETRIES_DEFAULT: number = 3;
+    private static readonly MAX_RETRIES_DEFAULT: number = 3;
 
     private readonly endpoint: string;
 
@@ -140,7 +140,7 @@ export class OxService {
                 const oxResponse: unknown = this.xmlParser.parse(err.response.data);
 
                 if (!isOxErrorResponse(oxResponse)) {
-                    this.logger.error(`OX-response could not be parsed, after error occurred`);
+                    this.logger.error(`OX-response could not be parsed after error occurred`);
 
                     return {
                         ok: false,
