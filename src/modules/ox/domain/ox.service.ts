@@ -52,6 +52,49 @@ export class OxService {
         removeNSPrefix: true,
     });
 
+    private readonly max_retries: number;
+
+    private async withRetry<R>(
+        cb: () => Promise<Result<R, DomainError>>,
+        initDelay: number = 1000,
+    ): Promise<Result<R, DomainError>> {
+        let failCounter: number = 0;
+
+        let result: Result<R, DomainError> = {
+            ok: false,
+            error: new OxError('OX retry-error default fallback'),
+        };
+
+        while (failCounter <= this.max_retries) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                result = await cb();
+
+                if (result.ok) {
+                    return result;
+                } else {
+                    throw new Error(`Function returned error: ${result.error.message}`);
+                }
+            } catch (error) {
+                if (failCounter < this.max_retries) {
+                    const currentDelay: number = initDelay * Math.pow(failCounter + 1, 3);
+                    this.logger.warning(
+                        `Attempt ${failCounter + 1} failed. Retrying in ${currentDelay}ms... Remaining retries: ${this.max_retries - failCounter}`,
+                    );
+
+                    // eslint-disable-next-line no-await-in-loop
+                    await new Promise<void>((resolve: () => void) => setTimeout(resolve, currentDelay));
+                }
+            }
+
+            failCounter++;
+        }
+
+        this.logger.error(`All ${this.max_retries + 1} attempts failed. Exiting with failure.`);
+
+        return result;
+    }
+
     public constructor(
         private readonly httpService: HttpService,
         private readonly logger: ClassLogger,
@@ -62,9 +105,17 @@ export class OxService {
         this.endpoint = oxConfig.ENDPOINT;
         this.username = oxConfig.USERNAME;
         this.password = oxConfig.PASSWORD;
+
+        this.max_retries = oxConfig.NUMBER_OF_RETRIES;
     }
 
     public async send<ResponseBody, ResultType>(
+        action: OxBaseAction<ResponseBody, ResultType>,
+    ): Promise<Result<ResultType, DomainError>> {
+        return this.withRetry(() => this.internalSend(action));
+    }
+
+    private async internalSend<ResponseBody, ResultType>(
         action: OxBaseAction<ResponseBody, ResultType>,
     ): Promise<Result<ResultType, DomainError>> {
         const body: object = action.buildRequest();
