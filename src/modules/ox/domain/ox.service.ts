@@ -75,13 +75,14 @@ export class OxService {
                 if (result.ok) {
                     return result;
                 } else {
-                    throw new Error(`Function returned error: ${result.error.message}`);
+                    throw result.error;
                 }
             } catch (error) {
                 if (failCounter < this.max_retries) {
                     const currentDelay: number = initDelay * Math.pow(failCounter + 1, 3);
-                    this.logger.warning(
+                    this.logger.logUnknownAsError(
                         `Attempt ${failCounter + 1} failed. Retrying in ${currentDelay}ms... Remaining retries: ${this.max_retries - failCounter}`,
+                        error,
                     );
 
                     // eslint-disable-next-line no-await-in-loop

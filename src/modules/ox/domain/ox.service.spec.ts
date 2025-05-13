@@ -114,8 +114,9 @@ describe('OxService', () => {
 
             const result: Result<string, DomainError> = await sut.send(mockAction);
 
-            expect(loggerMock.warning).toHaveBeenCalledWith(
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                 'Attempt 1 failed. Retrying in 1000ms... Remaining retries: 1',
+                expect.any(Error),
             );
             expect(result).toEqual({
                 ok: true,
