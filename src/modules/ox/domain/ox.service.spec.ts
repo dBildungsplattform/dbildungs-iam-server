@@ -11,6 +11,20 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { faker } from '@faker-js/faker';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OxPrimaryMailNotEqualEmail1Error } from '../error/ox-primary-mail-not-equal-email1.error.js';
+import { ConfigService } from '@nestjs/config';
+
+describe('OxServiceConstructor', () => {
+    it('should set default retries', () => {
+        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>({
+            getOrThrow: () => ({}), // Empty OX config
+        });
+
+        const sut: OxService = new OxService(createMock(), createMock(), configServiceMock);
+
+        expect(configServiceMock.getOrThrow).toHaveBeenCalledTimes(1);
+        expect((sut as unknown as { max_retries: number }).max_retries).toBe(3);
+    });
+});
 
 describe('OxService', () => {
     let module: TestingModule;
