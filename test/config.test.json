@@ -79,7 +79,8 @@
         "USERNAME": "username",
         "PASSWORD": "password",
         "CONTEXT_ID": "10",
-        "CONTEXT_NAME": "testContext"
+        "CONTEXT_NAME": "testContext",
+        "NUMBER_OF_RETRIES": 1
     },
     "EMAIL": {
         "NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS": 180
