@@ -96,6 +96,7 @@ export default (): Config => ({
         PASSWORD: process.env['OX_PASSWORD'],
         CONTEXT_ID: process.env['OX_CONTEXT_ID'],
         CONTEXT_NAME: process.env['OX_CONTEXT_NAME'],
+        NUMBER_OF_RETRIES: envToOptionalInteger('OX_NUMBER_OF_RETRIES'),
     },
     SYSTEM: {
         RENAME_WAITING_TIME_IN_SECONDS: envToOptionalInteger('SYSTEM_RENAME_WAITING_TIME_IN_SECONDS'),
