@@ -35,7 +35,7 @@ export type PersonData = {
     vorname: string;
     familienname: string;
     id: string;
-    referrer?: string;
+    username?: string;
     ldapEntryUUID?: string;
 };
 
@@ -319,7 +319,7 @@ export class LdapClientService {
         schulId: string,
         mail?: string, //Wird hier erstmal seperat mit reingegeben bis die Umstellung auf primary/alternative erfolgt
     ): Promise<Result<PersonData>> {
-        const username: PersonReferrer | undefined = person.referrer;
+        const username: PersonReferrer | undefined = person.username;
         if (!username) {
             return {
                 ok: false,
@@ -347,7 +347,7 @@ export class LdapClientService {
             const searchResultLehrer: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
-                    filter: `(uid=${person.referrer})`,
+                    filter: `(uid=${person.username})`,
                 },
             );
             if (searchResultLehrer.searchEntries.length > 0) {
@@ -913,7 +913,7 @@ export class LdapClientService {
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
             if (!bindResult.ok) return bindResult;
-            if (!person.referrer) {
+            if (!person.username) {
                 return {
                     ok: false,
                     error: new UsernameRequiredError(
@@ -921,13 +921,13 @@ export class LdapClientService {
                     ),
                 };
             }
-            const lehrerUid: string = this.getLehrerUid(person.referrer, rootName.value);
-            await this.removePersonFromGroup(person.referrer, orgaKennung, lehrerUid);
+            const lehrerUid: string = this.getLehrerUid(person.username, rootName.value);
+            await this.removePersonFromGroup(person.username, orgaKennung, lehrerUid);
             try {
                 const searchResultLehrer: SearchResult = await client.search(
                     `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                     {
-                        filter: `(uid=${person.referrer})`,
+                        filter: `(uid=${person.username})`,
                     },
                 );
                 if (!searchResultLehrer.searchEntries[0]) {
