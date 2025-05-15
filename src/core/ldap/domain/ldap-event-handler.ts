@@ -295,6 +295,12 @@ export class LdapEventHandler {
         this.logger.info(
             `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
         );
+        if (!event.username) {
+            this.logger.info(
+                `Username UNDEFINED in EmailAddressDeletedEvent, skipping removal of MailAlternativeAddress in LDAP, oxUserId:${event.oxUserId}`,
+            );
+            return { ok: true, value: undefined };
+        }
         const result: Result<boolean> = await this.ldapClientService.removeMailAlternativeAddress(
             event.personId,
             event.username,

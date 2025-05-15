@@ -47,9 +47,26 @@ export class EmailAddressDeletionService {
         });
 
         for (const ea of nonPrimaryEmailAddresses) {
+            if (!ea.oxUserID) {
+                this.logger.error(
+                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}`,
+                );
+                continue;
+            }
             if (!ea.personId) {
                 this.logger.error(
                     `Could NOT get information about EmailAddress when generating EmailAddressDeletedEvent because personId was UNDEFINED, address:${ea.address}`,
+                );
+                this.eventService.publish(
+                    new EmailAddressDeletedEvent(ea.personId, undefined, ea.oxUserID, ea.id, ea.status, ea.address),
+                    new KafkaEmailAddressDeletedEvent(
+                        ea.personId,
+                        undefined,
+                        ea.oxUserID,
+                        ea.id,
+                        ea.status,
+                        ea.address,
+                    ),
                 );
                 continue;
             }
@@ -57,12 +74,6 @@ export class EmailAddressDeletionService {
             if (!username) {
                 this.logger.error(
                     `Could NOT get username when generating EmailAddressDeletedEvent, personId:${ea.personId}`,
-                );
-                continue;
-            }
-            if (!ea.oxUserID) {
-                this.logger.error(
-                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${ea.personId}, username:${username}`,
                 );
                 continue;
             }

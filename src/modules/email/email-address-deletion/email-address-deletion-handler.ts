@@ -77,7 +77,7 @@ export class EmailAddressDeletionHandler {
     private async processNewStatus(
         newStatus: EmailAddressStatus,
         emailAddress: EmailAddress<true>,
-        username: PersonReferrer,
+        username: PersonReferrer | undefined,
     ): Promise<void> {
         this.logger.info(
             `New EmailAddressStatus is:${newStatus}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
@@ -91,7 +91,7 @@ export class EmailAddressDeletionHandler {
 
     private async deleteEmailAddressInDatabase(
         emailAddress: EmailAddress<true>,
-        username: PersonReferrer,
+        username: PersonReferrer | undefined,
     ): Promise<void> {
         const deletionError: Option<DomainError> = await this.emailRepo.deleteById(emailAddress.id);
         if (deletionError) {
@@ -105,7 +105,10 @@ export class EmailAddressDeletionHandler {
         );
     }
 
-    private async saveChangedStatus(emailAddress: EmailAddress<true>, username: PersonReferrer): Promise<void> {
+    private async saveChangedStatus(
+        emailAddress: EmailAddress<true>,
+        username: PersonReferrer | undefined,
+    ): Promise<void> {
         const result: EmailAddress<true> | DomainError = await this.emailRepo.save(emailAddress);
         if (result instanceof DomainError) {
             return this.logger.error(
