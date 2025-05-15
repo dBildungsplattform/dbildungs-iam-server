@@ -3,7 +3,7 @@ fullnameOverride: ''
 namespaceOverride: ''
 
 backendHostname: ''
-keycloakHostname: 'http://dbildungs-iam-keycloak'
+keycloakHostname: 'http://erwin-portal-keycloak'
 keycloak2ndHostname: ""
 keycloakExternalHostname: 'spsh-xxx-keycloak.dev.spsh.dbildungsplattform.de'
 backend2ndHostname: ""
@@ -57,7 +57,7 @@ system:
 auth:
   # existingSecret: Refers to a secret already present in the cluster, which is required.
   existingSecret: ''
-  secretName: dbildungs-iam-server
+  secretName: erwin-portal-server
   keycloak_adminSecret: ''
   keycloak_clientSecret: ''
   service_account_private_jwks: ''
