@@ -803,8 +803,9 @@ export class OxEventHandler {
         if (!oxGroupId.ok) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
-            return this.logger.error(
+            return this.logger.logUnknownAsError(
                 `Failed getting existing OxGroup by name or create new OxGroup if necessary, personId:${personId}, username:${username}`,
+                oxGroupId.error,
             );
         }
 
@@ -815,7 +816,10 @@ export class OxEventHandler {
         if (!addUserToGroupResult.ok) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
-            return this.logger.error(`Failed adding user to OXGroup, personId:${personId}, username:${username}`);
+            return this.logger.logUnknownAsError(
+                `Failed adding user to OXGroup, personId:${personId}, username:${username}`,
+                addUserToGroupResult.error,
+            );
         }
 
         //adjust user infostore and globalAddressBook
