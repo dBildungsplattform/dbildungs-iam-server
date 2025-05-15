@@ -874,9 +874,27 @@ describe('LDAP Event Handler', () => {
         });
     });
 
-    describe('EmailAddressesPurgedEvent', () => {
+    describe('handleEmailAddressesPurgedEvent', () => {
         const personId: PersonID = faker.string.uuid();
         const username: PersonReferrer = faker.internet.userName();
+
+        it('should log error when username is UNDEFINED in event', async () => {
+            const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
+                personId,
+                undefined,
+                faker.string.numeric(),
+            );
+            await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+            expect(loggerMock.error).toHaveBeenLastCalledWith(
+                `Cannot delete lehrer by username, username is UNDEFINED, oxUserId:${event.oxUserId}`,
+            );
+            expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(0);
+            expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+        });
 
         it('should call LdapClientService deleteLehrerByReferrer', async () => {
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
