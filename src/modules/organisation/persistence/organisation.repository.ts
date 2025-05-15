@@ -21,12 +21,12 @@ import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
-import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
+import { OrganisationsTyp, RootDirectChildrenType, SortFieldOrganisation } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationEntity } from './organisation.entity.js';
@@ -85,6 +85,8 @@ export type OrganisationSeachOptions = {
     readonly zugehoerigZu?: string[];
     readonly offset?: number;
     readonly limit?: number;
+    readonly sortField?: SortFieldOrganisation;
+    readonly sortOrder?: ScopeOrder;
 };
 
 @Injectable()
@@ -342,6 +344,18 @@ export class OrganisationRepository {
         let entitiesForIds: OrganisationEntity[] = [];
         const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
 
+        // Extract sort logic to variables
+        const sortBy: SortFieldOrganisation = searchOptions.sortField || SortFieldOrganisation.KENNUNG;
+        const secondSortBy: SortFieldOrganisation =
+            sortBy === SortFieldOrganisation.KENNUNG ? SortFieldOrganisation.NAME : SortFieldOrganisation.KENNUNG;
+        const sortOrder: ScopeOrder = searchOptions.sortOrder || ScopeOrder.ASC;
+        const order: QueryOrder =
+            sortOrder === ScopeOrder.ASC ? QueryOrder.ASC_NULLS_FIRST : QueryOrder.DESC_NULLS_FIRST;
+        const orderBy: { [key: string]: QueryOrder }[] = [
+            { [sortBy]: order },
+            { [secondSortBy]: QueryOrder.ASC_NULLS_FIRST },
+        ];
+
         if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
             const organisationIds: string[] = permittedOrgas.all
                 ? searchOptions.organisationIds
@@ -349,7 +363,7 @@ export class OrganisationRepository {
             const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
                 .select('*')
                 .where({ id: { $in: organisationIds } })
-                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }]);
+                .orderBy(orderBy);
             entitiesForIds = (await queryForIds.getResultAndCount())[0];
         }
 
@@ -393,7 +407,7 @@ export class OrganisationRepository {
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
-            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
+            .orderBy(orderBy)
             .limit(searchOptions.limit);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
