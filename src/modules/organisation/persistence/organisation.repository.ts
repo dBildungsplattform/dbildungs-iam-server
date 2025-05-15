@@ -344,6 +344,18 @@ export class OrganisationRepository {
         let entitiesForIds: OrganisationEntity[] = [];
         const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
 
+        // Extract sort logic to variables
+        const sortBy: SortFieldOrganisation = searchOptions.sortField || SortFieldOrganisation.KENNUNG;
+        const secondSortBy: SortFieldOrganisation =
+            sortBy === SortFieldOrganisation.KENNUNG ? SortFieldOrganisation.NAME : SortFieldOrganisation.KENNUNG;
+        const sortOrder: ScopeOrder = searchOptions.sortOrder || ScopeOrder.ASC;
+        const order: QueryOrder =
+            sortOrder === ScopeOrder.ASC ? QueryOrder.ASC_NULLS_FIRST : QueryOrder.DESC_NULLS_FIRST;
+        const orderBy: { [key: string]: QueryOrder }[] = [
+            { [sortBy]: order },
+            { [secondSortBy]: QueryOrder.ASC_NULLS_FIRST },
+        ];
+
         if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
             const organisationIds: string[] = permittedOrgas.all
                 ? searchOptions.organisationIds
@@ -351,7 +363,7 @@ export class OrganisationRepository {
             const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
                 .select('*')
                 .where({ id: { $in: organisationIds } })
-                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }]);
+                .orderBy(orderBy);
             entitiesForIds = (await queryForIds.getResultAndCount())[0];
         }
 
@@ -391,19 +403,11 @@ export class OrganisationRepository {
             whereClause = { $and: [whereClause, { id: { $in: permittedOrgas.orgaIds } }] };
         }
 
-        const sortBy: SortFieldOrganisation = searchOptions.sortField || SortFieldOrganisation.KENNUNG;
-        const secondSortBy: SortFieldOrganisation =
-            sortBy === SortFieldOrganisation.KENNUNG ? SortFieldOrganisation.NAME : SortFieldOrganisation.KENNUNG;
-
-        const sortOrder: ScopeOrder = searchOptions.sortOrder || ScopeOrder.ASC;
-        const order: QueryOrder =
-            sortOrder === ScopeOrder.ASC ? QueryOrder.ASC_NULLS_FIRST : QueryOrder.DESC_NULLS_FIRST;
-
         const query: SelectQueryBuilder<OrganisationEntity> = qb
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
-            .orderBy([{ [sortBy]: order }, { [secondSortBy]: QueryOrder.ASC_NULLS_FIRST }])
+            .orderBy(orderBy)
             .limit(searchOptions.limit);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
