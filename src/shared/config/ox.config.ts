@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumberString, IsString } from 'class-validator';
+import { IsBoolean, IsInt, IsNumberString, IsOptional, IsString, Min } from 'class-validator';
 
 export class OxConfig {
     @IsBoolean()
@@ -18,4 +18,9 @@ export class OxConfig {
 
     @IsString()
     public readonly PASSWORD!: string;
+
+    @Min(0)
+    @IsInt()
+    @IsOptional()
+    public readonly NUMBER_OF_RETRIES?: number;
 }
