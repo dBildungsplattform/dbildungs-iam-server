@@ -233,9 +233,6 @@ export class EmailRepo {
                 );
             }
             assert(ea.personId); //EmailAddresses fetch via findEnabledByPersonIdsSortedByUpdatedAtDesc MUST HAVE a personId
-            /*if (!ea.personId) {
-                this.logger.error(`Will not add EmailAddress, personId is UNDEFINED, address:${ea.address}`);
-            } else {*/
             responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
             lastUsedPersonId = ea.personId;
         });

@@ -17,7 +17,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         public id: Persisted<string, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
         public readonly updatedAt: Persisted<Date, WasPersisted>,
-        private addressPersonId: PersonID | undefined,
+        private readonly addressPersonId: PersonID | undefined,
         private addressAddress: string,
         private addressStatus: EmailAddressStatus,
         private oxUserId?: string,
