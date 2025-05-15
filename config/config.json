@@ -17,7 +17,7 @@
     },
     "DB": {
         "CLIENT_URL": "postgres://localhost:5432",
-        "DB_NAME": "dbildungs-iam-server",
+        "DB_NAME": "erwin-portal-server",
         "USERNAME": "admin",
         "PASSWORD": "password",
         "USE_SSL": false
