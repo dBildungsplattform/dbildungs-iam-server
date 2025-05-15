@@ -6,7 +6,7 @@ Seeding of data for all environments is done via JSON files per entity-type or a
 
 - files for integration tests and unit-tests of the seeding mechanism itself are stored in `seeding/seeding-integration-test`
 
-- files for seeding in the different Kubernetes environments are stored in `charts/dbildungs-iam-server/seeding/dev`
+- files for seeding in the different Kubernetes environments are stored in `charts/erwin-portal-server/seeding/dev`
 
 ## Referencing
 

@@ -25,11 +25,11 @@ The execution of migration-init can cause following error with current configura
 
 ```bash
 ...
-[Error: ENOENT: no such file or directory, open '.../dbildungs-iam-server/migrations/.snapshot-dbildungs-iam-server.json'] {
+[Error: ENOENT: no such file or directory, open '.../erwin-portal-server/migrations/.snapshot-erwin-portal-server.json'] {
   errno: -2,
   code: 'ENOENT',
   syscall: 'open',
-  path: '...dbildungs-iam-server/migrations/.snapshot-dbildungs-iam-server.json'
+  path: '...erwin-portal-server/migrations/.snapshot-erwin-portal-server.json'
 }
 ```
 

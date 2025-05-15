@@ -7,7 +7,7 @@
         "SECURE_COOKIE": true,
         "SESSION_SECRET": "SessionSecretForDevelopment",
         "SESSION_TTL_MS": 3600000,
-        "BACKEND_ADDRESS": "http://dbildungs-iam-server-backend:80",
+        "BACKEND_ADDRESS": "http://erwin-portal-server-backend:80",
         "DEFAULT_AUTH_REDIRECT": "/",
         "TRUST_PROXY": 1,
         "ERROR_PAGE_REDIRECT": "/login-error"
@@ -24,7 +24,7 @@
         "SERVICE_CLIENT_ID": "spsh-service"
     },
     "REDIS": {
-        "HOST": "dbildungs-iam-redis-master.spsh.svc.cluster.local",
+        "HOST": "erwin-portal-redis-master.spsh.svc.cluster.local",
         "PORT": 6379,
         "USERNAME": "default",
         "PASSWORD": "",

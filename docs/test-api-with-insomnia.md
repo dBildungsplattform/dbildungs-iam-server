@@ -35,7 +35,7 @@ Lokal muss man hierzu das **gesamte** Backend (inkl. Keycloak, Redis und DB) und
 Informationen zum Starten dieser Komponenten in den jeweiligen GitHub Projekten nachlesen:
 
 - [Backend](https://github.com/dBildungsplattform/schulportal-client)
-- [Frontend](https://github.com/dBildungsplattform/dbildungs-iam-server)
+- [Frontend](https://github.com/dBildungsplattform/erwin-portal-server)
 
 Starten des gesamten Backends samt Keycloak, Datenbank und Redis ist auch möglich über
 
