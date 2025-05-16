@@ -210,7 +210,7 @@ describe('EmailAddressDeletionService', () => {
                 expect(emailRepoMock.getByDeletedStatusOrUpdatedAtExceedsDeadline).toHaveBeenCalledTimes(1);
                 expect(personRepositoryMock.findByIds).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${emailAddressWithoutOxUserId.personId}, username:${persons[0].referrer}`,
+                    `Could NOT get oxUserId when generating EmailAddressDeletedEvent, personId:${emailAddressWithoutOxUserId.personId}`,
                 );
             });
         });
