@@ -25,3 +25,8 @@ export enum RootDirectChildrenType {
     ERSATZ = 'ERSATZ',
     OEFFENTLICH = 'OEFFENTLICH',
 }
+
+export enum SortFieldOrganisation {
+    NAME = 'name',
+    KENNUNG = 'kennung',
+}

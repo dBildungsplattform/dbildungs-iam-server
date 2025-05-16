@@ -11,6 +11,20 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { faker } from '@faker-js/faker';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OxPrimaryMailNotEqualEmail1Error } from '../error/ox-primary-mail-not-equal-email1.error.js';
+import { ConfigService } from '@nestjs/config';
+
+describe('OxServiceConstructor', () => {
+    it('should set default retries', () => {
+        const configServiceMock: DeepMocked<ConfigService<unknown>> = createMock<ConfigService>({
+            getOrThrow: () => ({}), // Empty OX config
+        });
+
+        const sut: OxService = new OxService(createMock(), createMock(), configServiceMock);
+
+        expect(configServiceMock.getOrThrow).toHaveBeenCalledTimes(1);
+        expect((sut as unknown as { max_retries: number }).max_retries).toBe(3);
+    });
+});
 
 describe('OxService', () => {
     let module: TestingModule;
@@ -87,10 +101,34 @@ describe('OxService', () => {
             });
         });
 
+        it('should return result if a retry succeeds', async () => {
+            const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
+            mockAction.buildRequest.mockReturnValueOnce({});
+            mockAction.parseResponse.mockReturnValueOnce({ ok: true, value: 'TestResult' });
+            mockAction.action = 'testAction';
+            mockAction.soapServiceName = 'TestService';
+
+            const error: Error = new Error('AxiosError');
+            httpServiceMock.post.mockReturnValueOnce(throwError(() => error)); // Fail first
+            httpServiceMock.post.mockReturnValueOnce(of({} as AxiosResponse)); // Succeed on retry
+
+            const result: Result<string, DomainError> = await sut.send(mockAction);
+
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                'Attempt 1 failed. Retrying in 1000ms... Remaining retries: 1',
+                expect.any(Error),
+            );
+            expect(result).toEqual({
+                ok: true,
+                value: 'TestResult',
+            });
+        });
+
         it('should return OxError if request failed and response is NOT a specific OX-Error-response', async () => {
             const error: Error = new Error('AxiosError');
             const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
             httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
+            httpServiceMock.post.mockReturnValueOnce(throwError(() => error)); // Retry
 
             const result: Result<string, DomainError> = await sut.send(mockAction);
 
@@ -124,10 +162,11 @@ describe('OxService', () => {
 
             const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
             httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
+            httpServiceMock.post.mockReturnValueOnce(throwError(() => error)); // Retry
 
             const result: Result<string, DomainError> = await sut.send(mockAction);
 
-            expect(loggerMock.error).toHaveBeenLastCalledWith('OX_PRIMARY_MAIL_NOT_EQUAL_EMAIL1_ERROR');
+            expect(loggerMock.error).toHaveBeenCalledWith('OX_PRIMARY_MAIL_NOT_EQUAL_EMAIL1_ERROR');
             expect(result).toEqual({
                 ok: false,
                 error: new OxPrimaryMailNotEqualEmail1Error(faultString),
@@ -154,10 +193,11 @@ describe('OxService', () => {
 
             const mockAction: DeepMocked<OxBaseAction<unknown, string>> = createMock<OxBaseAction<unknown, string>>();
             httpServiceMock.post.mockReturnValueOnce(throwError(() => faultyErrorWithMissingFaultString));
+            httpServiceMock.post.mockReturnValueOnce(throwError(() => faultyErrorWithMissingFaultString)); // Retry
 
             const result: Result<string, DomainError> = await sut.send(mockAction);
 
-            expect(loggerMock.error).toHaveBeenLastCalledWith(`OX-response could not be parsed, after error occurred`);
+            expect(loggerMock.error).toHaveBeenCalledWith(`OX-response could not be parsed after error occurred`);
             expect(result).toEqual({
                 ok: false,
                 error: new OxError('OX-Response Could Not Be Parsed'),
