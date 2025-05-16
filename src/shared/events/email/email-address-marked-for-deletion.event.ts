@@ -3,7 +3,7 @@ import { BaseEvent } from '../base-event.js';
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 import { OXUserID } from '../../types/ox-ids.types.js';
 
-export class EmailAddressDeletedEvent extends BaseEvent {
+export class EmailAddressMarkedForDeletionEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID | undefined,
         public readonly username: PersonReferrer | undefined,

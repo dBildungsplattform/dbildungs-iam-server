@@ -31,13 +31,13 @@ import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-a
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
-import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 
-describe('LDAP Event Handler', () => {
+describe('LdapEventHandler', () => {
     let app: INestApplication;
     let orm: MikroORM;
 
@@ -844,7 +844,7 @@ describe('LDAP Event Handler', () => {
         const address: string = faker.internet.email();
 
         it('should call LdapClientService removeMailAlternativeAddress', async () => {
-            const event: EmailAddressDeletedEvent = new EmailAddressDeletedEvent(
+            const event: EmailAddressMarkedForDeletionEvent = new EmailAddressMarkedForDeletionEvent(
                 personId,
                 username,
                 faker.string.numeric(),
@@ -886,10 +886,10 @@ describe('LDAP Event Handler', () => {
             );
             await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
 
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
+            expect(loggerMock.info).toHaveBeenCalledWith(
                 `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
             );
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Cannot delete lehrer by username, username is UNDEFINED, oxUserId:${event.oxUserId}`,
             );
             expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(0);

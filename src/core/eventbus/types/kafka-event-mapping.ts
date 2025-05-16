@@ -19,7 +19,7 @@ import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka
 import { Constructor } from './util.types.js';
 import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
-import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/email/kafka-email-address-deleted.event.js';
+import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
@@ -171,7 +171,7 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topicDlq: 'user-dlq-topic',
     },
     'user.email.deleted': {
-        eventClass: KafkaEmailAddressDeletedEvent,
+        eventClass: KafkaEmailAddressMarkedForDeletionEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },

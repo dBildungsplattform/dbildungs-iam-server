@@ -30,7 +30,7 @@ import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkont
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
-import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 
@@ -1404,7 +1404,7 @@ describe('OxEventHandler', () => {
         let emailAddressId: EmailAddressID;
         let status: EmailAddressStatus;
         let address: string;
-        let event: EmailAddressDeletedEvent;
+        let event: EmailAddressMarkedForDeletionEvent;
 
         beforeEach(() => {
             jest.resetAllMocks();
@@ -1414,7 +1414,14 @@ describe('OxEventHandler', () => {
             emailAddressId = faker.string.uuid();
             status = EmailAddressStatus.DISABLED;
             address = faker.internet.email();
-            event = new EmailAddressDeletedEvent(personId, username, oxUserId, emailAddressId, status, address);
+            event = new EmailAddressMarkedForDeletionEvent(
+                personId,
+                username,
+                oxUserId,
+                emailAddressId,
+                status,
+                address,
+            );
         });
 
         describe('when handler is disabled', () => {
@@ -1474,7 +1481,6 @@ describe('OxEventHandler', () => {
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
                 );
-                //kap
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(
                     expect.objectContaining({
                         personId: event.personId,
@@ -1484,14 +1490,14 @@ describe('OxEventHandler', () => {
                         oxContextId: contextId,
                         oxContextName: contextName,
                     }),
-                    expect.objectContaining({
+                    /*expect.objectContaining({
                         personId: event.personId,
                         oxUserId: event.oxUserId,
                         username: event.username,
                         address: event.address,
                         oxContextId: contextId,
                         oxContextName: contextName,
-                    }),
+                    }),*/
                 );
             });
         });

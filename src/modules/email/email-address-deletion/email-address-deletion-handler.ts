@@ -12,8 +12,6 @@ import { EmailAddressDeletionService } from './email-address-deletion.service.js
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
-import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
-import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
 
 @Injectable()
 export class EmailAddressDeletionHandler {
@@ -45,9 +43,9 @@ export class EmailAddressDeletionHandler {
         await this.processNewStatus(newStatus, emailAddress, event.username);
     }
 
-    @KafkaEventHandler(KafkaOxEmailAddressDeletedEvent)
+    //@KafkaEventHandler(KafkaOxEmailAddressDeletedEvent)
     @EventHandler(OxEmailAddressDeletedEvent)
-    @EnsureRequestContext()
+    //@EnsureRequestContext()
     public async handleOxEmailAddressDeletedEvent(event: OxEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received OxEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
@@ -63,9 +61,9 @@ export class EmailAddressDeletionHandler {
         await this.processNewStatus(newStatus, emailAddress, event.username);
     }
 
-    @KafkaEventHandler(KafkaEmailAddressDeletedInDatabaseEvent)
+    //@KafkaEventHandler(KafkaEmailAddressDeletedInDatabaseEvent)
     @EventHandler(EmailAddressDeletedInDatabaseEvent)
-    @EnsureRequestContext()
+    //@EnsureRequestContext()
     public async handleEmailAddressDeletedInDatabaseEvent(event: EmailAddressDeletedInDatabaseEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.emailAddressId}, status:${event.status}, address:${event.address}`,

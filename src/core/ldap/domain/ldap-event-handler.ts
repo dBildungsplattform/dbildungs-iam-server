@@ -23,8 +23,8 @@ import { inspect } from 'util';
 import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
 import { Person } from '../../../modules/person/domain/person.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
-import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
-import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/email/kafka-email-address-deleted.event.js';
+import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
+import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-email-address-deleted.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
@@ -289,9 +289,9 @@ export class LdapEventHandler {
         return result;
     }
 
-    @KafkaEventHandler(KafkaEmailAddressDeletedEvent)
-    @EventHandler(EmailAddressDeletedEvent)
-    public async handleEmailAddressDeletedEvent(event: EmailAddressDeletedEvent): Promise<Result<unknown>> {
+    @KafkaEventHandler(KafkaEmailAddressMarkedForDeletionEvent)
+    @EventHandler(EmailAddressMarkedForDeletionEvent)
+    public async handleEmailAddressDeletedEvent(event: EmailAddressMarkedForDeletionEvent): Promise<Result<unknown>> {
         this.logger.info(
             `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
         );
@@ -325,7 +325,7 @@ export class LdapEventHandler {
         );
 
         if (!event.username) {
-            this.logger.error(`Cannot delete lehrer by username, username is UNDEFINED, oxUserId:${event.oxUserId}`);
+            this.logger.info(`Cannot delete lehrer by username, username is UNDEFINED, oxUserId:${event.oxUserId}`);
             return {
                 ok: false,
                 error: new LdapDeleteLehrerError(),

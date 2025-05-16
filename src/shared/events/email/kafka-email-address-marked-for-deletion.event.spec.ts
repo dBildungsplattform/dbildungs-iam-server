@@ -1,11 +1,11 @@
 import { faker } from '@faker-js/faker';
 
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
-import { KafkaEmailAddressDeletedEvent } from './kafka-email-address-deleted.event.js';
+import { KafkaEmailAddressMarkedForDeletionEvent } from './kafka-email-address-marked-for-deletion.event.js';
 import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-ids.types.js';
 import { OXUserID } from '../../types/ox-ids.types.js';
 
-describe('KafkaEmailAddressDeletedEvent', () => {
+describe('KafkaEmailAddressMarkedForDeletionEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const personId: PersonID = faker.string.uuid();
         const username: PersonReferrer = 'test-username';
@@ -14,7 +14,7 @@ describe('KafkaEmailAddressDeletedEvent', () => {
         const emailStatus: EmailAddressStatus = EmailAddressStatus.ENABLED;
         const emailAddress: string = faker.internet.userName();
 
-        const event: KafkaEmailAddressDeletedEvent = new KafkaEmailAddressDeletedEvent(
+        const event: KafkaEmailAddressMarkedForDeletionEvent = new KafkaEmailAddressMarkedForDeletionEvent(
             personId,
             username,
             oxUserId,
@@ -23,7 +23,7 @@ describe('KafkaEmailAddressDeletedEvent', () => {
             emailAddress,
         );
 
-        expect(event).toBeInstanceOf(KafkaEmailAddressDeletedEvent);
+        expect(event).toBeInstanceOf(KafkaEmailAddressMarkedForDeletionEvent);
         expect(event.kafkaKey).toBe(personId);
     });
 });
