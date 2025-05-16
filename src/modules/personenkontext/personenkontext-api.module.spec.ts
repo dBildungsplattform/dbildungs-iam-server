@@ -8,7 +8,6 @@ import {
 import { PersonenKontextApiModule } from './personenkontext-api.module.js';
 import { PersonenkontextController } from './api/personenkontext.controller.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
-import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 import { RolleRepo } from '../rolle/repo/rolle.repo.js';
 import { createMock } from '@golevelup/ts-jest';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
@@ -53,10 +52,6 @@ describe('PersonenKontextApiModule', () => {
 
         it('should resolve PersonenkontextService', () => {
             expect(module.get(PersonenkontextService)).toBeInstanceOf(PersonenkontextService);
-        });
-
-        it('should resolve PersonenkontextRepo', () => {
-            expect(module.get(PersonenkontextRepo)).toBeInstanceOf(PersonenkontextRepo);
         });
     });
 });
