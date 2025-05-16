@@ -151,7 +151,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -234,10 +237,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -408,7 +412,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -491,10 +498,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -687,7 +695,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -770,10 +781,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -958,7 +970,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -1041,10 +1056,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -1221,7 +1237,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -1304,10 +1323,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -1513,7 +1533,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -1596,10 +1619,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -1920,7 +1944,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -2003,10 +2030,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -2204,7 +2232,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -2287,10 +2318,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -2784,7 +2816,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -2867,10 +2902,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -2982,7 +3018,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ],
           "mappedType": "enum"
         }
@@ -3119,7 +3158,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -3202,10 +3244,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -3393,7 +3436,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -3476,10 +3522,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -3706,7 +3753,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -3789,10 +3839,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -4166,7 +4217,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -4249,10 +4303,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -4546,7 +4601,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -4629,10 +4687,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -4905,7 +4964,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -4988,10 +5050,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -5180,7 +5243,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -5263,10 +5329,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -5331,10 +5398,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -5468,7 +5536,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -5551,10 +5622,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -5821,7 +5893,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -5904,10 +5979,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -6206,7 +6282,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -6289,10 +6368,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -6478,7 +6558,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -6561,10 +6644,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -6750,7 +6834,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -6833,10 +6920,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -7069,7 +7157,10 @@
             "ENABLED",
             "DISABLED",
             "REQUESTED",
-            "FAILED"
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
           ]
         },
         "external_id_enum": {
@@ -7152,10 +7243,11 @@
             "ROLLEN_VERWALTEN",
             "PERSONEN_SOFORT_LOESCHEN",
             "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
             "SCHULEN_VERWALTEN",
             "KLASSEN_VERWALTEN",
             "SCHULTRAEGER_VERWALTEN",
-            "MIGRATION_DURCHFUEHREN",
             "PERSON_SYNCHRONISIEREN",
             "CRON_DURCHFUEHREN",
             "PERSONEN_ANLEGEN",
@@ -7279,7 +7371,10 @@
         "ENABLED",
         "DISABLED",
         "REQUESTED",
-        "FAILED"
+        "FAILED",
+        "DELETED_LDAP",
+        "DELETED_OX",
+        "DELETED"
       ]
     },
     "external_id_enum": {
@@ -7362,10 +7457,11 @@
         "ROLLEN_VERWALTEN",
         "PERSONEN_SOFORT_LOESCHEN",
         "PERSONEN_VERWALTEN",
+        "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+        "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
         "SCHULEN_VERWALTEN",
         "KLASSEN_VERWALTEN",
         "SCHULTRAEGER_VERWALTEN",
-        "MIGRATION_DURCHFUEHREN",
         "PERSON_SYNCHRONISIEREN",
         "CRON_DURCHFUEHREN",
         "PERSONEN_ANLEGEN",
