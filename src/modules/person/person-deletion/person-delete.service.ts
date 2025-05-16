@@ -33,6 +33,24 @@ export class PersonDeleteService {
         return this.personRepository.deletePerson(personId, personPermissions, removedPersonenkontextsResult.value);
     }
 
+    public async deletePersonAfterDeadlineExceeded(
+        personId: string,
+        personPermissions: PersonPermissions,
+    ): Promise<Result<void, DomainError>> {
+        this.logger.info(`Deleting person with id ${personId} after deadline exceeded`);
+        const removedPersonenkontextsResult: Result<PersonenkontextEventKontextData[], EntityCouldNotBeDeleted> =
+            await this.getPersonkontextData(personId);
+        if (!removedPersonenkontextsResult.ok) {
+            return removedPersonenkontextsResult;
+        }
+
+        return this.personRepository.deletePersonAfterDeadlineExceeded(
+            personId,
+            personPermissions,
+            removedPersonenkontextsResult.value,
+        );
+    }
+
     private async getPersonkontextData(
         personId: PersonID,
     ): Promise<Result<PersonenkontextEventKontextData[], EntityCouldNotBeDeleted>> {

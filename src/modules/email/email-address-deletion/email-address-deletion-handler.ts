@@ -12,8 +12,6 @@ import { EmailAddressDeletionService } from './email-address-deletion.service.js
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
-import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
-import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
 
 @Injectable()
 export class EmailAddressDeletionHandler {
@@ -32,40 +30,40 @@ export class EmailAddressDeletionHandler {
     @EnsureRequestContext()
     public async handleLdapEmailAddressDeletedEvent(event: LdapEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
-            `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+            `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
         );
 
         const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(event.address);
         if (!emailAddress) {
             return this.logger.error(
-                `Could not process LdapEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+                `Could not process LdapEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, username:${event.username}, address:${event.address}`,
             );
         }
         const newStatus: EmailAddressStatus = emailAddress.deletedFromLdap();
         await this.processNewStatus(newStatus, emailAddress, event.username);
     }
 
-    @KafkaEventHandler(KafkaOxEmailAddressDeletedEvent)
+    //@KafkaEventHandler(KafkaOxEmailAddressDeletedEvent)
     @EventHandler(OxEmailAddressDeletedEvent)
-    @EnsureRequestContext()
+    //@EnsureRequestContext()
     public async handleOxEmailAddressDeletedEvent(event: OxEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
-            `Received OxEmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
+            `Received OxEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
         );
 
         const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(event.address);
         if (!emailAddress) {
             return this.logger.error(
-                `Could not process OxEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
+                `Could not process OxEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, username:${event.username}, address:${event.address}`,
             );
         }
         const newStatus: EmailAddressStatus = emailAddress.deletedFromOx();
         await this.processNewStatus(newStatus, emailAddress, event.username);
     }
 
-    @KafkaEventHandler(KafkaEmailAddressDeletedInDatabaseEvent)
+    //@KafkaEventHandler(KafkaEmailAddressDeletedInDatabaseEvent)
     @EventHandler(EmailAddressDeletedInDatabaseEvent)
-    @EnsureRequestContext()
+    //@EnsureRequestContext()
     public async handleEmailAddressDeletedInDatabaseEvent(event: EmailAddressDeletedInDatabaseEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.emailAddressId}, status:${event.status}, address:${event.address}`,
@@ -77,10 +75,10 @@ export class EmailAddressDeletionHandler {
     private async processNewStatus(
         newStatus: EmailAddressStatus,
         emailAddress: EmailAddress<true>,
-        username: PersonReferrer,
+        username: PersonReferrer | undefined,
     ): Promise<void> {
         this.logger.info(
-            `New EmailAddressStatus is:${newStatus}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+            `New EmailAddressStatus is:${newStatus}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
         );
         if (newStatus === EmailAddressStatus.DELETED) {
             await this.deleteEmailAddressInDatabase(emailAddress, username);
@@ -91,30 +89,33 @@ export class EmailAddressDeletionHandler {
 
     private async deleteEmailAddressInDatabase(
         emailAddress: EmailAddress<true>,
-        username: PersonReferrer,
+        username: PersonReferrer | undefined,
     ): Promise<void> {
         const deletionError: Option<DomainError> = await this.emailRepo.deleteById(emailAddress.id);
         if (deletionError) {
             return this.logger.error(
-                `Deletion of EmailAddress failed, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                `Deletion of EmailAddress failed, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
             );
         }
 
         return this.logger.info(
-            `Successfully deleted EmailAddress, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+            `Successfully deleted EmailAddress, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
         );
     }
 
-    private async saveChangedStatus(emailAddress: EmailAddress<true>, username: PersonReferrer): Promise<void> {
+    private async saveChangedStatus(
+        emailAddress: EmailAddress<true>,
+        username: PersonReferrer | undefined,
+    ): Promise<void> {
         const result: EmailAddress<true> | DomainError = await this.emailRepo.save(emailAddress);
         if (result instanceof DomainError) {
             return this.logger.error(
-                `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+                `Failed persisting changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
             );
         }
 
         return this.logger.info(
-            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, referrer:${username}, address:${emailAddress.address}`,
+            `Successfully persisted changed EmailAddressStatus:${emailAddress.status}, personId:${emailAddress.personId}, username:${username}, address:${emailAddress.address}`,
         );
     }
 }

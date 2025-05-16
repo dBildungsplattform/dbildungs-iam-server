@@ -10,7 +10,7 @@ export class KafkaPersonRenamedEvent extends PersonRenamedEvent implements Kafka
 
     public static override fromPerson(
         person: Person<true>,
-        oldReferrer: PersonReferrer,
+        oldUsername: PersonReferrer,
         oldVorname: string,
         oldFamilienname: string,
     ): KafkaPersonRenamedEvent {
@@ -21,7 +21,7 @@ export class KafkaPersonRenamedEvent extends PersonRenamedEvent implements Kafka
             person.referrer,
             oldVorname,
             oldFamilienname,
-            oldReferrer,
+            oldUsername,
         );
     }
 }

@@ -7,7 +7,7 @@ import { LdapPersonEntryRenamedEvent } from './ldap-person-entry-renamed.event.j
  * of renaming a user are executed after each other rather than in parallel.
  */
 export class KafkaLdapPersonEntryRenamedEvent extends LdapPersonEntryRenamedEvent implements KafkaEvent {
-    public get kafkaKey(): string {
+    public get kafkaKey(): string | undefined {
         return this.personId;
     }
 
@@ -18,8 +18,8 @@ export class KafkaLdapPersonEntryRenamedEvent extends LdapPersonEntryRenamedEven
             personRenamedEvent.personId,
             personRenamedEvent.vorname,
             personRenamedEvent.familienname,
-            personRenamedEvent.referrer,
-            personRenamedEvent.oldReferrer,
+            personRenamedEvent.username,
+            personRenamedEvent.oldUsername,
             personRenamedEvent.oldVorname,
             personRenamedEvent.oldFamilienname,
         );

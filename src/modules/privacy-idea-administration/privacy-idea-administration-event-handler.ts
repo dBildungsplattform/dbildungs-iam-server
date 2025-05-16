@@ -25,22 +25,22 @@ export class PrivacyIdeaAdministrationEventHandler {
     public async handlePersonDeletedEvent(event: PersonDeletedEvent | KafkaPersonDeletedEvent): Promise<void> {
         this.logger.info(`Received PersonDeletedEvent, personId:${event.personId}`);
         const userTokens: PrivacyIdeaToken[] = await this.privacyIdeaAdministrationService.getUserTokens(
-            event.referrer,
+            event.username,
         );
         if (userTokens.length > 0) {
             try {
-                await this.privacyIdeaAdministrationService.resetToken(event.referrer);
+                await this.privacyIdeaAdministrationService.resetToken(event.username);
                 this.logger.info(
-                    `System hat für Benutzer  ${event.referrer} (BenutzerId: ${event.personId}) den 2FA Token zurückgesetzt.`,
+                    `System hat für Benutzer  ${event.username} (BenutzerId: ${event.personId}) den 2FA Token zurückgesetzt.`,
                 );
             } catch (error) {
                 this.logger.error(
-                    `System hat versucht den 2FA Token von Benutzer ${event.referrer} (BenutzerId: ${event.personId}) zurückzusetzen.`,
+                    `System hat versucht den 2FA Token von Benutzer ${event.username} (BenutzerId: ${event.personId}) zurückzusetzen.`,
                     error,
                 );
                 throw error;
             }
         }
-        await this.privacyIdeaAdministrationService.deleteUserWrapper(event.referrer);
+        await this.privacyIdeaAdministrationService.deleteUserWrapper(event.username);
     }
 }

@@ -8,17 +8,17 @@ export class PersonRenamedEvent extends BaseEvent {
         public readonly personId: PersonID,
         public readonly vorname: string,
         public readonly familienname: string,
-        public readonly referrer: PersonReferrer | undefined,
+        public readonly username: PersonReferrer | undefined,
         public readonly oldVorname: string,
         public readonly oldFamilienname: string,
-        public readonly oldReferrer: PersonReferrer,
+        public readonly oldUsername: PersonReferrer,
     ) {
         super();
     }
 
     public static fromPerson(
         person: Person<true>,
-        oldReferrer: PersonReferrer,
+        oldUsername: PersonReferrer,
         oldVorname: string,
         oldFamilienname: string,
     ): PersonRenamedEvent {
@@ -29,7 +29,7 @@ export class PersonRenamedEvent extends BaseEvent {
             person.referrer,
             oldVorname,
             oldFamilienname,
-            oldReferrer,
+            oldUsername,
         );
     }
 }

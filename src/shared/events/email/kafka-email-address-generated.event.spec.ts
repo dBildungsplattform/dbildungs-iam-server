@@ -3,7 +3,7 @@ import { KafkaEmailAddressGeneratedEvent } from './kafka-email-address-generated
 describe('KafkaEmailAddressGeneratedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const personId: string = 'test-person-id';
-        const referrer: string = 'test-referrer';
+        const username: string = 'test-username';
         const EmailAddressId: string = 'email-address-id';
         const EmailAddress: string = 'email-address';
         const enabled: boolean = true;
@@ -11,7 +11,7 @@ describe('KafkaEmailAddressGeneratedEvent', () => {
 
         const event: KafkaEmailAddressGeneratedEvent = new KafkaEmailAddressGeneratedEvent(
             personId,
-            referrer,
+            username,
             EmailAddressId,
             EmailAddress,
             enabled,
