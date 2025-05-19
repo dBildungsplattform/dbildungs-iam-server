@@ -16,7 +16,6 @@ import {
     RollenCount,
 } from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
-import { PersonPersistenceMapperProfile } from '../../person/persistence/person-persistence.mapper.profile.js';
 import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
@@ -97,7 +96,6 @@ describe('dbiam Personenkontext Repo', () => {
             providers: [
                 DBiamPersonenkontextRepo,
                 DBiamPersonenkontextRepoInternal,
-                PersonPersistenceMapperProfile,
                 PersonFactory,
                 PersonRepository,
                 UsernameGeneratorService,
