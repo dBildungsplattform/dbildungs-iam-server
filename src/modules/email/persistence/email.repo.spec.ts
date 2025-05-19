@@ -828,7 +828,7 @@ describe('EmailRepo', () => {
                             emailAddressId: addressId,
                             address: address,
                         }),
-                       /* expect.objectContaining({
+                        /* expect.objectContaining({
                             personId: person.id,
                             oxUserId: oxUserId,
                             emailAddressId: addressId,

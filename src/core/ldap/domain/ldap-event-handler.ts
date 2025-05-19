@@ -24,7 +24,6 @@ import { PersonRepository } from '../../../modules/person/persistence/person.rep
 import { Person } from '../../../modules/person/domain/person.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
-import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { LdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/ldap-email-address-deleted.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
@@ -33,7 +32,6 @@ import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-a
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
-import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 import { KafkaLdapEntryDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-entry-deleted.event.js';
 import { LdapDeleteLehrerError } from '../error/ldap-delete-lehrer.error.js';
 
@@ -289,15 +287,22 @@ export class LdapEventHandler {
         return result;
     }
 
-    @KafkaEventHandler(KafkaEmailAddressMarkedForDeletionEvent)
+    //@KafkaEventHandler(KafkaEmailAddressMarkedForDeletionEvent)
     @EventHandler(EmailAddressMarkedForDeletionEvent)
-    public async handleEmailAddressDeletedEvent(event: EmailAddressMarkedForDeletionEvent): Promise<Result<unknown>> {
+    public async handleEmailAddressMarkedForDeletionEvent(
+        event: EmailAddressMarkedForDeletionEvent,
+    ): Promise<Result<unknown>> {
         this.logger.info(
             `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
         );
         if (!event.username) {
             this.logger.info(
                 `Username UNDEFINED in EmailAddressDeletedEvent, skipping removal of MailAlternativeAddress in LDAP, oxUserId:${event.oxUserId}`,
+            );
+            // publish event to satisfy event-chain (necessary: DELETED_LDAP + DELETED_OX = DELETED -> remove EmailAddress from DB)
+            this.eventService.publish(
+                new LdapEmailAddressDeletedEvent(event.personId, undefined, event.address),
+                //new KafkaLdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
             );
             return { ok: true, value: undefined };
         }
@@ -310,7 +315,7 @@ export class LdapEventHandler {
         if (result.ok) {
             this.eventService.publish(
                 new LdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
-                new KafkaLdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
+                //new KafkaLdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
             );
         }
 

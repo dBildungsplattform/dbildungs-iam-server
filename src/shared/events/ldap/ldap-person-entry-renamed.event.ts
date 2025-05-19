@@ -11,9 +11,9 @@ export class LdapPersonEntryRenamedEvent extends PersonRenamedEvent {
             personRenamedEvent.vorname,
             personRenamedEvent.familienname,
             personRenamedEvent.username,
-            personRenamedEvent.oldUsername,
             personRenamedEvent.oldVorname,
             personRenamedEvent.oldFamilienname,
+            personRenamedEvent.oldUsername,
         );
     }
 }

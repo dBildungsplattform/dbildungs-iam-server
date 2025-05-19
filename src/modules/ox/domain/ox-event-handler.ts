@@ -456,7 +456,7 @@ export class OxEventHandler {
     //@KafkaEventHandler(KafkaEmailAddressDeletedEvent)
     @EventHandler(EmailAddressMarkedForDeletionEvent)
     @EnsureRequestContext()
-    public async handleEmailAddressDeletedEvent(event: EmailAddressMarkedForDeletionEvent): Promise<void> {
+    public async handleEmailAddressMarkedForDeletionEvent(event: EmailAddressMarkedForDeletionEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );

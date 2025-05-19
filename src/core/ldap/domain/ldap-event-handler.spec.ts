@@ -838,39 +838,81 @@ describe('LdapEventHandler', () => {
         });
     });
 
-    describe('handleEmailAddressDeletedEvent', () => {
-        const personId: PersonID = faker.string.uuid();
-        const username: PersonReferrer = faker.internet.userName();
-        const address: string = faker.internet.email();
+    describe('handleEmailAddressMarkedForDeletionEvent', () => {
+        let personId: PersonID;
+        let username: PersonReferrer;
+        let address: string;
 
-        it('should call LdapClientService removeMailAlternativeAddress', async () => {
-            const event: EmailAddressMarkedForDeletionEvent = new EmailAddressMarkedForDeletionEvent(
-                personId,
-                username,
-                faker.string.numeric(),
-                faker.string.uuid(),
-                EmailAddressStatus.ENABLED,
-                address,
-            );
+        beforeEach(() => {
+            personId = faker.string.uuid();
+            username = faker.internet.userName();
+            address = faker.internet.email();
+        });
+        describe('when username is UNDEFINED in event', () => {
+            it('should NOT call LdapClientService removeMailAlternativeAddress and instead publish LdapEmailAddressDeletedEvent directly', async () => {
+                const event: EmailAddressMarkedForDeletionEvent = new EmailAddressMarkedForDeletionEvent(
+                    personId,
+                    undefined,
+                    faker.string.numeric(),
+                    faker.string.uuid(),
+                    EmailAddressStatus.DISABLED,
+                    address,
+                );
 
-            await ldapEventHandler.handleEmailAddressDeletedEvent(event);
+                await ldapEventHandler.handleEmailAddressMarkedForDeletionEvent(event);
 
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
-            );
-            expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(1);
-            expect(eventServiceMock.publish).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    personId: personId,
-                    username: username,
-                    address: address,
-                }),
-                expect.objectContaining({
-                    personId: personId,
-                    username: username,
-                    address: address,
-                }),
-            );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Username UNDEFINED in EmailAddressDeletedEvent, skipping removal of MailAlternativeAddress in LDAP, oxUserId:${event.oxUserId}`,
+                );
+                expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(0);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: personId,
+                        username: undefined,
+                        address: address,
+                    }),
+                    /*  expect.objectContaining({
+                        personId: personId,
+                        username: undefined,
+                        address: address,
+                    }),*/
+                );
+            });
+        });
+
+        describe('when username is defined in event', () => {
+            it('should call LdapClientService removeMailAlternativeAddress', async () => {
+                const event: EmailAddressMarkedForDeletionEvent = new EmailAddressMarkedForDeletionEvent(
+                    personId,
+                    username,
+                    faker.string.numeric(),
+                    faker.string.uuid(),
+                    EmailAddressStatus.DISABLED,
+                    address,
+                );
+                ldapClientServiceMock.removeMailAlternativeAddress.mockResolvedValueOnce({ ok: true, value: true });
+                await ldapEventHandler.handleEmailAddressMarkedForDeletionEvent(event);
+
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
+                );
+                expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(1);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: personId,
+                        username: username,
+                        address: address,
+                    }),
+                    /*  expect.objectContaining({
+                        personId: personId,
+                        username: username,
+                        address: address,
+                    }),*/
+                );
+            });
         });
     });
 

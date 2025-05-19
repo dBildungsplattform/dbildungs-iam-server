@@ -9,9 +9,8 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
-import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
-import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
-import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+
+import { EntityManager } from '@mikro-orm/core';
 
 @Injectable()
 export class EmailAddressDeletionHandler {
@@ -25,9 +24,9 @@ export class EmailAddressDeletionHandler {
         private readonly em: EntityManager,
     ) {}
 
-    @KafkaEventHandler(KafkaLdapEmailAddressDeletedEvent)
+    //@KafkaEventHandler(KafkaLdapEmailAddressDeletedEvent)
     @EventHandler(LdapEmailAddressDeletedEvent)
-    @EnsureRequestContext()
+    //@EnsureRequestContext()
     public async handleLdapEmailAddressDeletedEvent(event: LdapEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,

@@ -1394,7 +1394,7 @@ describe('OxEventHandler', () => {
         });
     });
 
-    describe('handleEmailAddressDeletedEvent', () => {
+    describe('handleEmailAddressMarkedForDeletionEvent', () => {
         const contextId: OXContextID = '10';
         const contextName: OXContextName = 'testContext';
 
@@ -1427,7 +1427,7 @@ describe('OxEventHandler', () => {
         describe('when handler is disabled', () => {
             it('should log and skip processing when not enabled', async () => {
                 sut.ENABLED = false;
-                await sut.handleEmailAddressDeletedEvent(event);
+                await sut.handleEmailAddressMarkedForDeletionEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
@@ -1443,7 +1443,7 @@ describe('OxEventHandler', () => {
                     ok: false,
                     error: new OxError(),
                 });
-                await sut.handleEmailAddressDeletedEvent(event);
+                await sut.handleEmailAddressMarkedForDeletionEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Cannot get data for oxUsername:${event.username} from OX, Aborting Email-Address Removal, personId:${event.personId}, username:${event.username}`,
@@ -1470,7 +1470,7 @@ describe('OxEventHandler', () => {
                     ok: true,
                     value: undefined,
                 });
-                await sut.handleEmailAddressDeletedEvent(event);
+                await sut.handleEmailAddressMarkedForDeletionEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Found Current aliases:${JSON.stringify(aliases)}, personId:${event.personId}, username:${event.username}`,
@@ -1516,7 +1516,7 @@ describe('OxEventHandler', () => {
                     ok: false,
                     error: oxError,
                 });
-                await sut.handleEmailAddressDeletedEvent(event);
+                await sut.handleEmailAddressMarkedForDeletionEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Could Not Remove EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, error:${oxError.message}`,
