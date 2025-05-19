@@ -18,7 +18,6 @@ import {
 import { Person } from '../../src/modules/person/domain/person.js';
 import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
 import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
-import { PersonenkontextDo } from '../../src/modules/personenkontext/domain/personenkontext.do.js';
 import { ImportDataItem } from '../../src/modules/import/domain/import-data-item.js';
 import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js';
 import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
@@ -183,33 +182,6 @@ export class DoFactory {
             revision: 1,
         };
         return Object.assign(Object.create(Meldung.prototype) as Meldung<boolean>, meldung, props);
-    }
-
-    /**
-     * @deprecated Remove this when PersonenkontextDo is removed or set to deprecated
-     */
-    public static createPersonenkontextDo<WasPersisted extends boolean>(
-        this: void,
-        withId: WasPersisted,
-        params: Partial<PersonenkontextDo<boolean>> = {},
-    ): PersonenkontextDo<WasPersisted> {
-        const personenkontext: PersonenkontextDo<false> = {
-            id: withId ? faker.string.uuid() : undefined,
-            mandant: faker.string.uuid(),
-            personId: faker.string.uuid(),
-            createdAt: withId ? faker.date.past() : undefined,
-            updatedAt: withId ? faker.date.recent() : undefined,
-            organisationId: faker.string.uuid(),
-            revision: '1',
-            rolleId: faker.string.uuid(),
-            jahrgangsstufe: Jahrgangsstufe.JAHRGANGSSTUFE_1,
-            personenstatus: Personenstatus.AKTIV,
-            referrer: 'referrer',
-            sichtfreigabe: SichtfreigabeType.JA,
-            loeschungZeitpunkt: faker.date.anytime(),
-        };
-
-        return Object.assign(new PersonenkontextDo<WasPersisted>(), personenkontext, params);
     }
 
     public static createOrganisationAggregate<WasPersisted extends boolean>(

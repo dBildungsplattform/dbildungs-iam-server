@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { LoggerModule } from '../../core/logging/logger.module.js';
-import { PersonenkontextRepo } from '../personenkontext/persistence/personenkontext.repo.js';
 import { PersonenkontextService } from '../personenkontext/domain/personenkontext.service.js';
 import { PersonModule } from '../person/person.module.js';
 import { DBiamPersonenkontextRepo } from './persistence/dbiam-personenkontext.repo.js';
@@ -24,7 +23,6 @@ import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.
         LoggerModule.register(PersonenKontextModule.name),
     ],
     providers: [
-        PersonenkontextRepo,
         PersonenkontextService,
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
@@ -37,7 +35,6 @@ import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.
     ],
     exports: [
         PersonenkontextService,
-        PersonenkontextRepo,
         DBiamPersonenkontextService,
         DBiamPersonenkontextRepo,
         DbiamPersonenkontextFactory,
