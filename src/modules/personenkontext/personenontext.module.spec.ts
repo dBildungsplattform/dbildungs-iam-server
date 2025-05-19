@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DatabaseTestModule, MapperTestModule } from '../../../test/utils/index.js';
 import { PersonenKontextModule } from './personenkontext.module.js';
-import { PersonenkontextRepo } from './persistence/personenkontext.repo.js';
 import { PersonenkontextService } from './domain/personenkontext.service.js';
 
 describe('PersonKontextModule', () => {
@@ -22,10 +21,6 @@ describe('PersonKontextModule', () => {
     });
 
     describe('when module is initialized', () => {
-        it('should resolve PersonenkontextRepo', () => {
-            expect(module.get(PersonenkontextRepo)).toBeInstanceOf(PersonenkontextRepo);
-        });
-
         it('should resolve PersonenkontextService', () => {
             expect(module.get(PersonenkontextService)).toBeInstanceOf(PersonenkontextService);
         });
