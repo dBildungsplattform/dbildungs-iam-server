@@ -124,11 +124,6 @@ export class EmailAddressDeletionService {
                 `Could not check for remaining EmailAddresses, no Person found for personId:${personId}`,
             );
         }
-        /*       if (!person.referrer) {
-            return this.logger.error(
-                `Would not be able to create EmailAddressesPurgedEvent, no username found for personId:${personId}`,
-            );
-        }*/
         const allEmailAddressesForPerson: EmailAddress<true>[] =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
         if (allEmailAddressesForPerson.length == 0) {
