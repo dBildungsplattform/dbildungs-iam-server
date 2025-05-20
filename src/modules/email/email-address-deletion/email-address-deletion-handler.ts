@@ -10,7 +10,11 @@ import { PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressDeletionService } from './email-address-deletion.service.js';
 
-import { EntityManager } from '@mikro-orm/core';
+import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
+import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
+import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 
 @Injectable()
 export class EmailAddressDeletionHandler {
@@ -24,9 +28,9 @@ export class EmailAddressDeletionHandler {
         private readonly em: EntityManager,
     ) {}
 
-    //@KafkaEventHandler(KafkaLdapEmailAddressDeletedEvent)
+    @KafkaEventHandler(KafkaLdapEmailAddressDeletedEvent)
     @EventHandler(LdapEmailAddressDeletedEvent)
-    //@EnsureRequestContext()
+    @EnsureRequestContext()
     public async handleLdapEmailAddressDeletedEvent(event: LdapEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
@@ -34,7 +38,7 @@ export class EmailAddressDeletionHandler {
 
         const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(event.address);
         if (!emailAddress) {
-            return this.logger.error(
+            return this.logger.info(
                 `Could not process LdapEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, username:${event.username}, address:${event.address}`,
             );
         }
@@ -42,9 +46,9 @@ export class EmailAddressDeletionHandler {
         await this.processNewStatus(newStatus, emailAddress, event.username);
     }
 
-    //@KafkaEventHandler(KafkaOxEmailAddressDeletedEvent)
+    @KafkaEventHandler(KafkaOxEmailAddressDeletedEvent)
     @EventHandler(OxEmailAddressDeletedEvent)
-    //@EnsureRequestContext()
+    @EnsureRequestContext()
     public async handleOxEmailAddressDeletedEvent(event: OxEmailAddressDeletedEvent): Promise<void> {
         this.logger.info(
             `Received OxEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
@@ -52,7 +56,7 @@ export class EmailAddressDeletionHandler {
 
         const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(event.address);
         if (!emailAddress) {
-            return this.logger.error(
+            return this.logger.info(
                 `Could not process OxEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, username:${event.username}, address:${event.address}`,
             );
         }
@@ -60,9 +64,9 @@ export class EmailAddressDeletionHandler {
         await this.processNewStatus(newStatus, emailAddress, event.username);
     }
 
-    //@KafkaEventHandler(KafkaEmailAddressDeletedInDatabaseEvent)
+    @KafkaEventHandler(KafkaEmailAddressDeletedInDatabaseEvent)
     @EventHandler(EmailAddressDeletedInDatabaseEvent)
-    //@EnsureRequestContext()
+    @EnsureRequestContext()
     public async handleEmailAddressDeletedInDatabaseEvent(event: EmailAddressDeletedInDatabaseEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressDeletedInDatabaseEvent, personId:${event.personId}, oxUserId:${event.oxUserId}, id:${event.emailAddressId}, status:${event.status}, address:${event.address}`,

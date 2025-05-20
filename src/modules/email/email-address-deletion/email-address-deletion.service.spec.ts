@@ -238,11 +238,11 @@ describe('EmailAddressDeletionService', () => {
                         username: undefined,
                         oxUserId: oxUserId,
                     }),
-                    /* expect.objectContaining({
+                    expect.objectContaining({
                         personId: undefined,
                         username: undefined,
                         oxUserId: oxUserId,
-                    }),*/
+                    }),
                 );
             });
         });

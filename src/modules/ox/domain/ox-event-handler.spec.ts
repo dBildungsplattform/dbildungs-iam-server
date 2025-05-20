@@ -1490,14 +1490,14 @@ describe('OxEventHandler', () => {
                         oxContextId: contextId,
                         oxContextName: contextName,
                     }),
-                    /*expect.objectContaining({
+                    expect.objectContaining({
                         personId: event.personId,
                         oxUserId: event.oxUserId,
                         username: event.username,
                         address: event.address,
                         oxContextId: contextId,
                         oxContextName: contextName,
-                    }),*/
+                    }),
                 );
             });
         });

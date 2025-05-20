@@ -118,7 +118,7 @@ describe('EmailAddressDeletionHandler', () => {
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Received LdapEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
                 );
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                expect(loggerMock.info).toHaveBeenCalledWith(
                     `Could not process LdapEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, username:${event.username}, address:${event.address}`,
                 );
             });
@@ -224,7 +224,7 @@ describe('EmailAddressDeletionHandler', () => {
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Received OxEmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, address:${event.address}`,
                 );
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                expect(loggerMock.info).toHaveBeenCalledWith(
                     `Could not process OxEmailAddressDeletedEvent, EmailAddress could not be fetched by address, personId:${event.personId}, username:${event.username}, address:${event.address}`,
                 );
             });

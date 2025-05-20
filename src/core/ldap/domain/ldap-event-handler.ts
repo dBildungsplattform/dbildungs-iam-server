@@ -34,6 +34,8 @@ import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/ev
 import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
 import { KafkaLdapEntryDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-entry-deleted.event.js';
 import { LdapDeleteLehrerError } from '../error/ldap-delete-lehrer.error.js';
+import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
+import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 
 @Injectable()
 export class LdapEventHandler {
@@ -287,8 +289,9 @@ export class LdapEventHandler {
         return result;
     }
 
-    //@KafkaEventHandler(KafkaEmailAddressMarkedForDeletionEvent)
+    @KafkaEventHandler(KafkaEmailAddressMarkedForDeletionEvent)
     @EventHandler(EmailAddressMarkedForDeletionEvent)
+    @EnsureRequestContext()
     public async handleEmailAddressMarkedForDeletionEvent(
         event: EmailAddressMarkedForDeletionEvent,
     ): Promise<Result<unknown>> {
@@ -302,7 +305,7 @@ export class LdapEventHandler {
             // publish event to satisfy event-chain (necessary: DELETED_LDAP + DELETED_OX = DELETED -> remove EmailAddress from DB)
             this.eventService.publish(
                 new LdapEmailAddressDeletedEvent(event.personId, undefined, event.address),
-                //new KafkaLdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
+                new KafkaLdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
             );
             return { ok: true, value: undefined };
         }
@@ -315,7 +318,7 @@ export class LdapEventHandler {
         if (result.ok) {
             this.eventService.publish(
                 new LdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
-                //new KafkaLdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
+                new KafkaLdapEmailAddressDeletedEvent(event.personId, event.username, event.address),
             );
         }
 

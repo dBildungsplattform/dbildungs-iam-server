@@ -16,6 +16,7 @@ import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 import { EmailInstanceConfig } from '../email-instance-config.js';
 import assert from 'assert';
+import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
 
 export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT: number = 180;
 
@@ -308,13 +309,13 @@ export class EmailRepo {
                     emailAddress.status,
                     emailAddress.address,
                 ),
-                /*new KafkaEmailAddressDeletedInDatabaseEvent(
+                new KafkaEmailAddressDeletedInDatabaseEvent(
                     emailAddress.personId,
                     emailAddress.oxUserID,
                     emailAddress.id,
                     emailAddress.status,
                     emailAddress.address,
-                ),*/
+                ),
             );
 
             return undefined;

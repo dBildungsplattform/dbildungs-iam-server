@@ -74,6 +74,9 @@ import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka
 import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
 import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
 import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-disabled-email-address-generated.event.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
+import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
+import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -453,7 +456,7 @@ export class OxEventHandler {
         );
     }
 
-    //@KafkaEventHandler(KafkaEmailAddressDeletedEvent)
+    @KafkaEventHandler(KafkaEmailAddressMarkedForDeletionEvent)
     @EventHandler(EmailAddressMarkedForDeletionEvent)
     @EnsureRequestContext()
     public async handleEmailAddressMarkedForDeletionEvent(event: EmailAddressMarkedForDeletionEvent): Promise<void> {
@@ -513,23 +516,23 @@ export class OxEventHandler {
                 this.contextID,
                 this.contextName,
             ),
-            /*    new KafkaOxEmailAddressDeletedEvent(
+            new KafkaOxEmailAddressDeletedEvent(
                 event.personId,
                 event.oxUserId,
                 event.username,
                 event.address,
                 this.contextID,
                 this.contextName,
-            ),*/
+            ),
         );
         return this.logger.info(
             `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
     }
 
-    //@KafkaEventHandler(KafkaEmailAddressesPurgedEvent)
+    @KafkaEventHandler(KafkaEmailAddressesPurgedEvent)
     @EventHandler(EmailAddressesPurgedEvent)
-    // @EnsureRequestContext()
+    @EnsureRequestContext()
     public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<void> {
         this.logger.info(
             `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,

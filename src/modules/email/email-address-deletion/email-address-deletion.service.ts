@@ -10,6 +10,8 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 
 @Injectable()
 export class EmailAddressDeletionService {
@@ -64,14 +66,14 @@ export class EmailAddressDeletionService {
                         ea.status,
                         ea.address,
                     ),
-                    /*new KafkaEmailAddressDeletedEvent(
+                    new KafkaEmailAddressMarkedForDeletionEvent(
                         ea.personId,
                         undefined,
                         ea.oxUserID,
                         ea.id,
                         ea.status,
                         ea.address,
-                    ),*/
+                    ),
                 );
                 continue;
             }
@@ -91,7 +93,14 @@ export class EmailAddressDeletionService {
                     ea.status,
                     ea.address,
                 ),
-                //new KafkaEmailAddressDeletedEvent(ea.personId, username, ea.oxUserID, ea.id, ea.status, ea.address),
+                new KafkaEmailAddressMarkedForDeletionEvent(
+                    ea.personId,
+                    username,
+                    ea.oxUserID,
+                    ea.id,
+                    ea.status,
+                    ea.address,
+                ),
             );
         }
     }
@@ -106,7 +115,7 @@ export class EmailAddressDeletionService {
             );
             return this.eventService.publish(
                 new EmailAddressesPurgedEvent(personId, undefined, oxUserId),
-                //new KafkaEmailAddressesPurgedEvent(personId, undefined, oxUserId),
+                new KafkaEmailAddressesPurgedEvent(personId, undefined, oxUserId),
             );
         }
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
@@ -128,7 +137,7 @@ export class EmailAddressDeletionService {
             );
             return this.eventService.publish(
                 new EmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
-                //new KafkaEmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
+                new KafkaEmailAddressesPurgedEvent(personId, person.referrer, oxUserId),
             );
         }
         this.logger.info(

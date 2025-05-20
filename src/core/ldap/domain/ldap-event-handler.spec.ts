@@ -874,11 +874,11 @@ describe('LdapEventHandler', () => {
                         username: undefined,
                         address: address,
                     }),
-                    /*  expect.objectContaining({
+                    expect.objectContaining({
                         personId: personId,
                         username: undefined,
                         address: address,
-                    }),*/
+                    }),
                 );
             });
         });
@@ -906,11 +906,11 @@ describe('LdapEventHandler', () => {
                         username: username,
                         address: address,
                     }),
-                    /*  expect.objectContaining({
+                    expect.objectContaining({
                         personId: personId,
                         username: username,
                         address: address,
-                    }),*/
+                    }),
                 );
             });
         });
