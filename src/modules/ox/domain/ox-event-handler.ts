@@ -77,6 +77,7 @@ import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/
 import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
 import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -338,8 +339,8 @@ export class OxEventHandler {
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
-    //@KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
-    //@EnsureRequestContext()
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
+    @EnsureRequestContext()
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,

@@ -154,27 +154,6 @@ describe('EmailRepo', () => {
         return savedEmail;
     }
 
-    /*async function createEmailAddressWithoutPerson(
-        status: EmailAddressStatus,
-        address: string,
-        oxUserId?: OXUserID,
-    ): Promise<EmailAddress<true>> {
-        const email: EmailAddress<false> = EmailAddress.createNew(undefined, address, EmailAddressStatus.ENABLED, oxUserId);
-
-        switch (status) {
-            case EmailAddressStatus.ENABLED:
-                email.enable();
-                break;
-            case EmailAddressStatus.REQUESTED:
-                email.request();
-                break;
-        }
-        const savedEmail: EmailAddress<true> | DomainError = await sut.save(email);
-        assert(savedEmail instanceof EmailAddress);
-
-        return savedEmail;
-    }*/
-
     async function createPersonAndOrganisationAndEmailAddress(
         status: EmailAddressStatus,
     ): Promise<[Person<true>, Organisation<true>, EmailAddress<true>]> {
