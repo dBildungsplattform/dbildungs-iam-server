@@ -11,6 +11,8 @@ import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
 import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
+import { LandesbediensteterSearchNoPersonFoundError } from '../domain/landesbediensteter-search-no-person-found.error.js';
+import { LandesbediensteterSearchMultiplePersonsFoundError } from '../domain/landesbediensteter-search-multiple-persons-found.error.js';
 
 @Catch(PersonDomainError, DuplicatePersonalnummerError)
 export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError> {
@@ -69,6 +71,20 @@ export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError>
             new DbiamPersonError({
                 code: 500,
                 i18nKey: PersonErrorI18nTypes.PERSON_UEM_PASSWORD_MODIFICATION_ERROR,
+            }),
+        ],
+        [
+            LandesbediensteterSearchNoPersonFoundError.name,
+            new DbiamPersonError({
+                code: 400,
+                i18nKey: PersonErrorI18nTypes.LANDESBEDIENSTETER_SEARCH_NO_PERSON_FOUND,
+            }),
+        ],
+        [
+            LandesbediensteterSearchMultiplePersonsFoundError.name,
+            new DbiamPersonError({
+                code: 400,
+                i18nKey: PersonErrorI18nTypes.LANDESBEDIENSTETER_SEARCH_MULTIPLE_PERSONS_FOUND,
             }),
         ],
     ]);

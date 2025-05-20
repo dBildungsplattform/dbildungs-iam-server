@@ -112,7 +112,7 @@ export class PersonController {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
     }
 
-    @Get()
+    @Get('landesbediensteter')
     @ApiOkResponse({
         description: 'The landesbediensteter was successfully returned.',
         type: [PersonendatensatzResponse],
