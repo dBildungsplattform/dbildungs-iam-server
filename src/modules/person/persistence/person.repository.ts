@@ -162,9 +162,6 @@ export function mapEntityToAggregateInplace(entity: PersonEntity, person: Person
     return person;
 }
 
-export type PersonEventPayload = {
-    personenkontexte: [{ id: string; organisationId: string; rolleId: string }];
-};
 export type PersonenQueryParams = {
     vorname?: string;
     familienname?: string;
@@ -294,7 +291,7 @@ export class PersonRepository {
             return person;
         }
         person.userLock = await this.userLockRepository.findByPersonId(person.id);
-        person.isLocked = keyCloakUserDataResponse.value.enabled === false;
+        person.isLocked = !keyCloakUserDataResponse.value.enabled;
         return person;
     }
 
@@ -354,30 +351,10 @@ export class PersonRepository {
         // Delete the person from Keycloak
         await this.kcUserService.delete(person.keycloakUserId);
 
-        const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
-            {
-                id: personId,
-                username: person.referrer,
-                familienname: person.familienname,
-                vorname: person.vorname,
-                email: person.email,
-            },
-            [],
-            removedPersonenkontexts,
-            [],
-        );
-        const kafkaPersonenkontextUpdatedEvent: KafkaPersonenkontextUpdatedEvent = new KafkaPersonenkontextUpdatedEvent(
-            {
-                id: personId,
-                username: person.referrer,
-                familienname: person.familienname,
-                vorname: person.vorname,
-                email: person.email,
-            },
-            [],
-            removedPersonenkontexts,
-            [],
-        );
+        const [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent]: [
+            PersonenkontextUpdatedEvent,
+            KafkaPersonenkontextUpdatedEvent,
+        ] = this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
 
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
@@ -397,42 +374,11 @@ export class PersonRepository {
         };
     }
 
-    /**
-     * Use this method to publish events to inform listeners/handlers about a deletion of person as result of exceeded deadline.
-     * Publishes PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent, PersonDeletedAfterDeadlineExceededEvent and KafkaPersonDeletedAfterDeadlineExceededEvent.
-     * @param personId
-     * @param permissions
-     * @param removedPersonenkontexts
-     */
-    public async deletePersonAfterDeadlineExceeded(
-        personId: string,
-        permissions: PersonPermissions,
+    private createPersonenkontextUpdatedEvents(
+        personId: PersonID,
+        person: Person<true>,
         removedPersonenkontexts: PersonenkontextEventKontextData[],
-    ): Promise<Result<void, DomainError>> {
-        // First check if the user has permission to view the person
-        const personResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
-
-        if (!personResult.ok) {
-            return { ok: false, error: new EntityNotFoundError('Person') };
-        }
-
-        // Now check if the user has the permission to delete immediately
-        const deletePermissionResult: Result<Person<true>> = await this.checkIfDeleteIsAllowed(personId, permissions);
-
-        if (!deletePermissionResult.ok) {
-            return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
-        }
-
-        const person: Person<true> = deletePermissionResult.value;
-
-        // Check if the person has a keycloakUserId
-        if (!person.keycloakUserId) {
-            throw new PersonHasNoKeycloakId(person.id);
-        }
-
-        // Delete the person from Keycloak
-        await this.kcUserService.delete(person.keycloakUserId);
-
+    ): [PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent] {
         const personenkontextUpdatedEvent: PersonenkontextUpdatedEvent = new PersonenkontextUpdatedEvent(
             {
                 id: personId,
@@ -458,16 +404,60 @@ export class PersonRepository {
             [],
         );
 
+        return [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent];
+    }
+
+    /**
+     * Use this method for publishing events to inform listeners/handlers about a deletion of person as result of exceeded deadline.
+     * Publishes PersonenkontextUpdatedEvent, KafkaPersonenkontextUpdatedEvent, PersonDeletedAfterDeadlineExceededEvent, KafkaPersonDeletedAfterDeadlineExceededEvent.
+     * @param personId
+     * @param permissions
+     * @param removedPersonenkontexts
+     */
+    public async deletePersonAfterDeadlineExceeded(
+        personId: string,
+        permissions: PersonPermissions,
+        removedPersonenkontexts: PersonenkontextEventKontextData[],
+    ): Promise<Result<void, DomainError>> {
+        // First check if the user has permission to view the person
+        const pResult: Result<Person<true>> = await this.getPersonIfAllowed(personId, permissions);
+
+        if (!pResult.ok) {
+            return { ok: false, error: new EntityNotFoundError('Person') };
+        }
+
+        // Now check if the user has the permission to delete immediately
+        const dpResult: Result<Person<true>> = await this.checkIfDeleteIsAllowed(personId, permissions);
+
+        if (!dpResult.ok) {
+            return { ok: false, error: new EntityCouldNotBeDeleted('Person', personId) };
+        }
+
+        const person: Person<true> = dpResult.value;
+
+        // Check if the person has a keycloakUserId
+        if (!person.keycloakUserId) {
+            throw new PersonHasNoKeycloakId(person.id);
+        }
+
+        // Delete the person from Keycloak
+        await this.kcUserService.delete(person.keycloakUserId);
+
+        const [personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent]: [
+            PersonenkontextUpdatedEvent,
+            KafkaPersonenkontextUpdatedEvent,
+        ] = this.createPersonenkontextUpdatedEvents(personId, person, removedPersonenkontexts);
+
         this.eventRoutingLegacyKafkaService.publish(personenkontextUpdatedEvent, kafkaPersonenkontextUpdatedEvent);
 
         if (!person.referrer) {
             this.logger.error(
-                `Could not create PersonDeletedAfterDeadlineExceededEvent, username UNDEFINED, personId:${personId}`,
+                `Failure during creation of PersonDeletedAfterDeadlineExceededEvent, username UNDEFINED, personId:${personId}`,
             );
         }
         if (!person.oxUserId) {
             this.logger.error(
-                `Could not create PersonDeletedAfterDeadlineExceededEvent, oxUserId UNDEFINED, personId:${personId}`,
+                `Failure during creation of PersonDeletedAfterDeadlineExceededEvent, oxUserId UNDEFINED, personId:${personId}`,
             );
         }
         if (person.referrer && person.oxUserId) {
@@ -847,7 +837,7 @@ export class PersonRepository {
                         koperslock,
                         false,
                     );
-                    if (!lockResult.ok && lockResult.error instanceof DomainError) {
+                    if (!lockResult.ok) {
                         const keyCloakUpdateError: DownstreamKeycloakError = new DownstreamKeycloakError(
                             lockResult.error.message,
                             personId,
