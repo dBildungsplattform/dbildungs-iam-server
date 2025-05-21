@@ -503,23 +503,23 @@ describe('OxEventHandler', () => {
 
     describe('handleEmailAddressGeneratedEvent', () => {
         let personId: PersonID;
-        let referrer: PersonReferrer;
+        let username: PersonReferrer;
         let event: EmailAddressGeneratedEvent;
         let person: Person<true>;
 
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            referrer = faker.internet.userName();
+            username = faker.internet.userName();
             event = new EmailAddressGeneratedEvent(
                 personId,
-                referrer,
+                username,
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
                 faker.string.numeric(),
             );
-            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: referrer });
+            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: username });
         });
 
         it('should skip event, if not enabled', async () => {
@@ -552,7 +552,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Person not found for personId:${personId}, referrer:${referrer}`,
+                `Person not found for personId:${personId}, username:${username}`,
             );
         });
 
@@ -624,7 +624,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, referrer:${referrer}`,
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, username:${username}`,
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
                 `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}`,
@@ -676,7 +676,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, personId:${personId}, referrer:${referrer}, error:Unknown OX-error`,
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, personId:${personId}, username:${username}, error:Unknown OX-error`,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
@@ -735,10 +735,10 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, referrer:${referrer}`,
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, username:${username}`,
             );
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Persisting oxUserId on emailAddress failed, personId:${personId}, referrer:${referrer}`,
+                `Persisting oxUserId on emailAddress failed, personId:${personId}, username:${username}`,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });
@@ -762,7 +762,7 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
             expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could not create user in OX, personId:${personId}, referrer:${referrer}, error:Request failed`,
+                `Could not create user in OX, personId:${personId}, username:${username}, error:Request failed`,
             );
         });
     });

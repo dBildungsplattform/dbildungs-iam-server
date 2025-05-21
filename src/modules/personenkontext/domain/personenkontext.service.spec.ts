@@ -6,7 +6,6 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { Paged } from '../../../shared/paging/paged.js';
-import { PersonenkontextRepo } from '../persistence/personenkontext.repo.js';
 import { PersonenkontextService } from './personenkontext.service.js';
 import { MismatchedRevisionError } from '../../../shared/error/mismatched-revision.error.js';
 import { EntityCouldNotBeDeleted } from '../../../shared/error/index.js';
@@ -34,10 +33,6 @@ describe('PersonenkontextService', () => {
             providers: [
                 PersonenkontextService,
                 PersonenkontextFactory,
-                {
-                    provide: PersonenkontextRepo,
-                    useValue: createMock<PersonenkontextRepo>(),
-                },
                 {
                     provide: PersonRepository,
                     useValue: createMock<PersonRepository>(),
