@@ -33,7 +33,6 @@ import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { PersonenkontextID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/index.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
 import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { Person } from '../../person/domain/person.js';
@@ -42,6 +41,7 @@ import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 
 function getEmail(address?: string, status?: EmailAddressStatus): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
@@ -1286,14 +1286,15 @@ describe('EmailEventHandler', () => {
         });
     });
 
-    describe('handleOxMetadataInKeycloakChangedEvent', () => {
+    describe('handleOxUserChangedEvent', () => {
         let fakePersonId: string;
         let fakeKeycloakUsername: string;
         let fakeOXUserId: OXUserID;
         let fakeOXUserName: OXUserName;
         let fakeOXContextName: OXContextName;
+        let fakeOXContextId: OXContextID;
         let fakeEmail: string;
-        let event: OxMetadataInKeycloakChangedEvent;
+        let event: OxUserChangedEvent;
 
         beforeEach(() => {
             fakePersonId = faker.string.uuid();
@@ -1301,12 +1302,14 @@ describe('EmailEventHandler', () => {
             fakeOXUserId = faker.string.numeric();
             fakeOXUserName = fakeKeycloakUsername;
             fakeOXContextName = 'context1';
+            fakeOXContextId = 'contextId1';
             fakeEmail = faker.internet.email();
-            event = new OxMetadataInKeycloakChangedEvent(
+            event = new OxUserChangedEvent(
                 fakePersonId,
                 fakeKeycloakUsername,
                 fakeOXUserId,
                 fakeOXUserName,
+                fakeOXContextId,
                 fakeOXContextName,
                 fakeEmail,
             );
@@ -1316,7 +1319,7 @@ describe('EmailEventHandler', () => {
             it('should log error', async () => {
                 emailRepoMock.findRequestedByPerson.mockResolvedValueOnce(undefined);
 
-                await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
+                await emailEventHandler.handleOxUserChangedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
                     `Cannot find REQUESTED email-address for person with personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}, enabling not necessary`,
@@ -1337,13 +1340,13 @@ describe('EmailEventHandler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>({}));
 
-                await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
+                await emailEventHandler.handleOxUserChangedEvent(event);
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(
-                    `Mismatch between REQUESTED(${emailAddress}) and received(${event.emailAddress}) address from OX, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
+                    `Mismatch between REQUESTED(${emailAddress}) and received(${event.primaryEmail}) address from OX, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
                 );
                 expect(loggerMock.warning).toHaveBeenLastCalledWith(
-                    `Overriding ${emailAddress} with ${event.emailAddress}) from OX, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
+                    `Overriding ${emailAddress} with ${event.primaryEmail}) from OX, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
                 );
             });
         });
@@ -1360,7 +1363,7 @@ describe('EmailEventHandler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeUpdated('EmailAddress', '1'));
 
-                await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
+                await emailEventHandler.handleOxUserChangedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenLastCalledWith(
                     `Could not ENABLE email for personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}, error:EmailAddress with ID 1 could not be updated`,
@@ -1379,7 +1382,7 @@ describe('EmailEventHandler', () => {
 
                 emailRepoMock.save.mockResolvedValueOnce(emailMock);
 
-                await emailEventHandler.handleOxMetadataInKeycloakChangedEvent(event);
+                await emailEventHandler.handleOxUserChangedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenLastCalledWith(
                     `Changed email-address:${fakeEmail} from REQUESTED to ENABLED, personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${fakeOXUserId}`,
