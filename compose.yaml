@@ -9,10 +9,10 @@ services:
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=dbildungs-iam-server
+      - POSTGRES_DB=erwin-portal-server
 
   keycloak:
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-keycloak:latest
+    image: ghcr.io/dbildungsplattform/erwin-portal-keycloak:latest
     container_name: keycloak
     hostname: keycloak
     environment:
@@ -44,7 +44,7 @@ services:
       - ./config/dev-realm-spsh.json:/opt/keycloak/data/import/realm.json
 
   keycloak-db-microservice:
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/erwin-portal-server
     profiles:
       - kc-service
     build:
@@ -74,7 +74,7 @@ services:
   backend:
     profiles:
       - backend
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/erwin-portal-server
     container_name: spsh-backend
     # build:
     #   context: .
@@ -107,7 +107,7 @@ services:
     profiles:
       - db-init
       - db-seed
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/erwin-portal-server
     build:
       context: .
     depends_on:
@@ -127,7 +127,7 @@ services:
   db-seed:
     profiles:
       - db-seed
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/erwin-portal-server
     build:
       context: .
     depends_on:
@@ -150,7 +150,7 @@ services:
   db-migrate:
     profiles:
       - db-migrate
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/erwin-portal-server
     build:
       context: .
     depends_on:
@@ -170,7 +170,7 @@ services:
   keycloak-client-update:
     profiles:
       - keycloak-client-update
-    image: ghcr.io/dbildungsplattform/dbildungs-iam-server
+    image: ghcr.io/dbildungsplattform/erwin-portal-server
     build:
       context: .
     depends_on:
@@ -223,7 +223,7 @@ services:
       - KAFKA_TOPIC_PARTITIONS=1
       - KAFKA_REPLICATION_FACTOR=1
     volumes:
-      - ./charts/dbildungs-iam-server/kafka/scripts:/init/scripts:ro
+      - ./charts/erwin-portal-server/kafka/scripts:/init/scripts:ro
       - type: bind
         source: ./config/kafka-topics.txt
         target: /init-data/kafka-topics.txt
@@ -318,7 +318,7 @@ services:
       - ./privacyidea/dump.sql:/docker-entrypoint-initdb.d/dump.sql
 
   cron-service:
-    build: ./charts/dbildungs-iam-server/cron
+    build: ./charts/erwin-portal-server/cron
     profiles:
       - third-party
     environment:
@@ -328,8 +328,8 @@ services:
       - HTTP_METHOD=PUT
       - JWKS_FILE_PATH=/keys/jwks.json
     volumes:
-      - ./charts/dbildungs-iam-server/cron/scripts:/scripts
-      - ./charts/dbildungs-iam-server/cron/keys/dummy_jwks.json:/keys/jwks.json:ro
+      - ./charts/erwin-portal-server/cron/scripts:/scripts
+      - ./charts/erwin-portal-server/cron/keys/dummy_jwks.json:/keys/jwks.json:ro
     depends_on:
       - keycloak
 

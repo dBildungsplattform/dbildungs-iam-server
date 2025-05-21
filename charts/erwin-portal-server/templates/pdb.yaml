@@ -13,5 +13,5 @@ spec:
   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: dbildungs-iam-server
+      app.kubernetes.io/name: erwin-portal-server
 {{- end }}

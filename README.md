@@ -114,7 +114,7 @@ Similarly you may use
 
 If you push a tag upstream a container will be created for you. (Check Github under Packages)
 
-ghcr.io/dbildungsplattform/dbildungs-iam-server:_tag_
+ghcr.io/dbildungsplattform/erwin-portal-server:_tag_
 
 ## License
 

@@ -6,7 +6,7 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 concurrency:
-  group: dbildungs-iam-server-image-helm-chart
+  group: erwin-portal-server-image-helm-chart
   cancel-in-progress: true
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
       contents: read
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
     with:
-      image_name: "dbildungs-iam-server"
+      image_name: "erwin-portal-server"
       run_trivy_scan: true
       image_tag_generation: version_git_tag
       container_registry: "ghcr.io"
@@ -37,7 +37,7 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
     secrets: inherit
     with:
-      chart_name: "dbildungs-iam-server"
+      chart_name: "erwin-portal-server"
       helm_chart_version_generation: specified
       image_tag_generation: specified
       helm_chart_version: "${{ github.ref_name }}"

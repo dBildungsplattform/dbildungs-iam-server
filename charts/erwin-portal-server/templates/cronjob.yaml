@@ -78,7 +78,7 @@ spec:
               defaultMode: 0555
           - name: secret-volume-jwks
             secret:
-              secretName: dbildungs-iam-server
+              secretName: erwin-portal-server
               items:
               - key: service-account-private-jwks
                 path: jwks.json

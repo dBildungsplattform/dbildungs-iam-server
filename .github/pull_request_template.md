@@ -15,7 +15,7 @@
 ## Links to Tickets or other pull requests
 <!--
 Base links to copy
-- https://github.com/dBildungsplattform/dbildungs-iam-server/pulls
+- https://github.com/dBildungsplattform/erwin-portal-server/pulls
 - https://ticketsystem.dbildungscloud.de/browse/SPSH-???
 - https://ticketsystem.dbildungscloud.de/browse/EW-???
 -->

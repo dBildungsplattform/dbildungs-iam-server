@@ -1,6 +1,0 @@
-apiVersion: v2
-name: dbildungs-iam-server
-version: 0.2.0
-description: dBildungs-IAM-server
-type: application
-appVersion: ""

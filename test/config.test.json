@@ -15,7 +15,7 @@
     },
     "DB": {
         "CLIENT_URL": "postgres://127.0.0.1:5432",
-        "DB_NAME": "dbildungs-iam-server",
+        "DB_NAME": "erwin-portal-server",
         "USE_SSL": true
     },
     "KEYCLOAK": {

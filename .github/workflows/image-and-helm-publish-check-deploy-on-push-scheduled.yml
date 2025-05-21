@@ -12,7 +12,7 @@ on:
   delete:
 
 concurrency:
-  group: dbildungs-iam-server-${{ github.event.ref }}
+  group: erwin-portal-server-${{ github.event.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -97,7 +97,7 @@ jobs:
       contents: read
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/image-publish-trivy.yaml@7
     with:
-      image_name: "dbildungs-iam-server"
+      image_name: "erwin-portal-server"
       run_trivy_scan: true
       image_tag_generation: ${{ github.ref_name == 'main' && 'commit_hash' || 'specified' }}
       image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
@@ -140,7 +140,7 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
     secrets: inherit
     with:
-      chart_name: dbildungs-iam-server
+      chart_name: erwin-portal-server
       image_tag_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_IMAGE_TAG_GENERATION }}
       image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
       helm_chart_version_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERSION_GENERATION }}
@@ -156,13 +156,13 @@ jobs:
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@6
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/get-branch-meta.yml@1
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
       - branch_meta
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/convert-branch-name.yml@1
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
 
@@ -173,12 +173,12 @@ jobs:
       - create_branch_identifier
       - wait_for_helm_chart_to_get_published
       - build_image_on_push
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@7
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/deploy.yml@1
     with:
-      dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
-      schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
-      dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
-      dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
+      erwin_portal_server_branch: ${{ needs.branch_meta.outputs.ticket }}
+      erwin_portal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
+      erwin_portal_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
+      erwin_portal_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
       database_recreation: "true" # to prevent database recreation this has to be set to false
     secrets: inherit
@@ -186,7 +186,7 @@ jobs:
   # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/convert-branch-name.yml@1
     with:
       branch: ${{ github.event.ref }}
 
@@ -194,11 +194,11 @@ jobs:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
     needs:
       - create_branch_identifier_for_deletion
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@5
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/delete-namespace.yml@1
     with:
       namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:
-      SPSH_DEV_KUBECONFIG: ${{ secrets.SPSH_DEV_KUBECONFIG }}
+      ERW_DEV_KUBECONFIG: ${{ secrets.ERW_DEV_KUBECONFIG }}
 
   delete_successful:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
@@ -218,7 +218,7 @@ jobs:
       security-events: write
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-trivy.yaml@7
     with:
-      image_ref: 'ghcr.io/${{ github.repository_owner }}/dbildungs-iam-server:latest'
+      image_ref: 'ghcr.io/${{ github.repository_owner }}/erwin-portal-server:latest'
       fail_on_vulnerabilites: true
       report_location: "Dockerfile"
       trivyignores: '.trivyignore'

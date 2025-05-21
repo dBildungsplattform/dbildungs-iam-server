@@ -13,7 +13,7 @@ on:
         required: true
 
 concurrency:
-  group: dbildungs-iam-server-chart-manual
+  group: erwin-portal-server-chart-manual
   cancel-in-progress: true
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
     uses: dBildungsplattform/dbp-github-workflows/.github/workflows/chart-release.yaml@7
     secrets: inherit
     with:
-      chart_name: dbildungs-iam-server
+      chart_name: erwin-portal-server
       helm_chart_version_generation: specified 
       image_tag_generation: specified 
       helm_chart_version: ${{ inputs.chart_version }}

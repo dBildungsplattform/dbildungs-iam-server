@@ -1,4 +1,4 @@
-{{- define "dbildungs-iam-server-backend-envs" }}
+{{- define "erwin-portal-server-backend-envs" }}
 - name: DB_SECRET
   valueFrom:
     secretKeyRef:

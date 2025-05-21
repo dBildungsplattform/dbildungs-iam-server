@@ -1,6 +1,6 @@
 # Logging
 
-> This site explains how logging is implemented in dBildungs-IAM-server
+> This site explains how logging is implemented in erwin-portal-server
 > and how it should be used by developers.
 > Our logging is based on the [winston](https://www.npmjs.com/package/winston) library.
 >

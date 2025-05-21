@@ -34,7 +34,7 @@ spec:
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: {{ .Values.backend.dbmigration.command | toJson }}
           env:
-            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+            {{- include "erwin-portal-server-backend-envs" . | indent  12 }}
               {{- if .Values.backend.extraEnvVars }}
               {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
               {{- end }}
@@ -52,7 +52,7 @@ spec:
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: {{ .Values.backend.keycloakdatamigration.command | toJson }}
           env:
-            {{- include "dbildungs-iam-server-backend-envs" . | indent  12 }}
+            {{- include "erwin-portal-server-backend-envs" . | indent  12 }}
             {{- if .Values.backend.extraEnvVars }}
             {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
             {{- end }}
@@ -72,7 +72,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
-          env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
+          env: {{- include "erwin-portal-server-backend-envs" . | indent  12}}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
@@ -87,7 +87,7 @@ spec:
               containerPort: {{ .Values.backend.containerPorts.http }}
               protocol: TCP
           env:
-            {{- include "dbildungs-iam-server-backend-envs" . | nindent 12 }}
+            {{- include "erwin-portal-server-backend-envs" . | nindent 12 }}
             {{- if .Values.backend.extraEnvVars }}
             {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
             {{- end }}
