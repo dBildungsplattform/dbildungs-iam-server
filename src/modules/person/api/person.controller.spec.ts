@@ -48,6 +48,7 @@ import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
+import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -58,6 +59,7 @@ describe('PersonController', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let keycloakUserService: DeepMocked<KeycloakUserService>;
     let personDeleteServiceMock: DeepMocked<PersonDeleteService>;
+    let personLandesbediensteterSearchServiceMock: DeepMocked<PersonLandesbediensteterSearchService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
@@ -81,6 +83,10 @@ describe('PersonController', () => {
                 {
                     provide: PersonDeleteService,
                     useValue: createMock<PersonDeleteService>(),
+                },
+                {
+                    provide: PersonLandesbediensteterSearchService,
+                    useValue: createMock<PersonLandesbediensteterSearchService>(),
                 },
                 {
                     provide: PersonRepository,
@@ -142,6 +148,7 @@ describe('PersonController', () => {
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         ldapClientServiceMock = module.get(LdapClientService);
+        personLandesbediensteterSearchServiceMock = module.get(PersonLandesbediensteterSearchService);
     });
 
     function getPerson(): Person<true> {
@@ -197,6 +204,7 @@ describe('PersonController', () => {
 
     it('should be defined', () => {
         expect(personController).toBeDefined();
+        expect(personLandesbediensteterSearchServiceMock).toBeDefined();
     });
 
     describe('deletePerson', () => {
