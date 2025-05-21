@@ -156,13 +156,13 @@ jobs:
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/get-branch-meta.yml@DBP-1438-deploy
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/get-branch-meta.yml@1
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
       - branch_meta
-    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1438-deploy
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/convert-branch-name.yml@1
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
 
@@ -173,7 +173,7 @@ jobs:
       - create_branch_identifier
       - wait_for_helm_chart_to_get_published
       - build_image_on_push
-    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/deploy.yml@DBP-1438-deploy
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/deploy.yml@1
     with:
       erwin_portal_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       erwin_portal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
@@ -186,7 +186,7 @@ jobs:
   # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/convert-branch-name.yml@DBP-1438-deploy
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/convert-branch-name.yml@1
     with:
       branch: ${{ github.event.ref }}
 
@@ -194,7 +194,7 @@ jobs:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
     needs:
       - create_branch_identifier_for_deletion
-    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/delete-namespace.yml@DBP-1438-deploy
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/delete-namespace.yml@1
     with:
       namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:
