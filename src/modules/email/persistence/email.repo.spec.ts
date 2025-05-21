@@ -13,7 +13,6 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonFactory } from '../../person/domain/person.factory.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { EventService } from '../../../core/eventbus/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
 import { EmailAddressEntity } from './email-address.entity.js';
@@ -46,7 +45,7 @@ describe('EmailRepo', () => {
     let orm: MikroORM;
     let em: EntityManager;
 
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     const mockEmailInstanceConfig: EmailInstanceConfig = {
@@ -65,8 +64,8 @@ describe('EmailRepo', () => {
         })
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
-            .overrideProvider(EventService)
-            .useValue(createMock<EventService>())
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
             .overrideProvider(EventRoutingLegacyKafkaService)
             .useValue(createMock<EventRoutingLegacyKafkaService>())
             .overrideProvider(EmailInstanceConfig)
@@ -97,7 +96,7 @@ describe('EmailRepo', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
 
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -802,6 +801,12 @@ describe('EmailRepo', () => {
                     expect(deletionResult1).toBeUndefined();
                     expect(emailAddress).toBeUndefined();
                     expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            personId: person.id,
+                            oxUserId: oxUserId,
+                            emailAddressId: addressId,
+                            address: address,
+                        }),
                         expect.objectContaining({
                             personId: person.id,
                             oxUserId: oxUserId,

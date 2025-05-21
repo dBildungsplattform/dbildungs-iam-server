@@ -158,15 +158,6 @@
             "familienname": "Heinzmann"
         },
         {
-            "id": 20,
-            "username": "migration",
-            "password": "Migration1!",
-            "vorname": "migration",
-            "familienname": "migration",
-            "personalnummer": "9999999",
-            "istTechnisch": true
-        },
-        {
             "id": 21,
             "username": "fmeiera",
             "password": "SPSHtest1!",

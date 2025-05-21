@@ -17,13 +17,9 @@ import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
-import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
@@ -34,7 +30,6 @@ import { PersonDomainError } from '../../person/domain/person-domain.error.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
-import { KafkaPersonCreatedEvent } from '../../../shared/events/kafka-person-created.event.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
@@ -44,6 +39,12 @@ import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-pe
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
+import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
+import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
+import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-disabled-email-address-generated.event.js';
+import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
+import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
+import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -61,8 +62,7 @@ export class EmailEventHandler {
         private readonly dbiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly personRepository: PersonRepository,
-        private readonly eventService: EventService,
-        private readonly eventRoutingLegacyKafkaService: EventRoutingLegacyKafkaService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
@@ -73,8 +73,9 @@ export class EmailEventHandler {
      * Method 'handlePersonRenamedEvent' is replaced by 'handleLdapPersonEntryRenamedEvent' to handle the operations regarding person-renaming synchronously after each other,
      * first in LdapEventHandler then here in EmailEventHandler.
      */
-
+    @KafkaEventHandler(KafkaLdapPersonEntryRenamedEvent)
     @EventHandler(LdapPersonEntryRenamedEvent)
+    @EnsureRequestContext()
     public async handleLdapPersonEntryRenamedEvent(event: LdapPersonEntryRenamedEvent): Promise<void> {
         this.logger.info(
             `Received LdapPersonEntryRenamedEvent, personId:${event.personId}, referrer:${event.referrer}, oldReferrer:${event.oldReferrer}`,
@@ -165,64 +166,6 @@ export class EmailEventHandler {
         return resMap;
     }
 
-    @KafkaEventHandler(KafkaPersonCreatedEvent)
-    @EventHandler(PersonenkontextCreatedMigrationEvent)
-    @EnsureRequestContext()
-    public async handlePersonenkontextCreatedMigrationEvent(
-        event: PersonenkontextCreatedMigrationEvent | KafkaPersonCreatedEvent,
-    ): Promise<void> {
-        this.logger.info(
-            `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Received PersonenkontextCreatedMigrationEvent`,
-        );
-        if (
-            event.email &&
-            event.createdKontextRolle.rollenart == RollenArt.LEHR &&
-            event.migrationRunType === PersonenkontextMigrationRuntype.STANDARD
-        ) {
-            this.logger.info(
-                `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Rollenart is LEHR, trying to persist Email`,
-            );
-            const existingEmail: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(
-                event.createdKontext.personId,
-            );
-            if (!existingEmail) {
-                const newEmail: EmailAddress<false> = EmailAddress.createNew(
-                    event.createdKontext.personId,
-                    event.email,
-                    EmailAddressStatus.ENABLED,
-                );
-                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(newEmail);
-
-                if (persistenceResult instanceof DomainError) {
-                    return this.logger.error(
-                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Could not persist existing email, error:${persistenceResult.message}`,
-                    );
-                } else {
-                    return this.logger.info(
-                        `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Successfully persisted Email ${persistenceResult.address}`,
-                    );
-                }
-            } else {
-                return this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / Aborting persist Email Operation, Email already exists`,
-                );
-            }
-        } else {
-            if (event.migrationRunType !== PersonenkontextMigrationRuntype.STANDARD) {
-                this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / No Action because PersonenkontextMigrationRuntype is Not STANDARD`,
-                );
-                return;
-            }
-            if (event.createdKontextRolle.rollenart !== RollenArt.LEHR) {
-                this.logger.info(
-                    `MIGRATION: Create Kontext Operation / personId: ${event.createdKontextPerson.id} ;  orgaId: ${event.createdKontextOrga.id} ;  rolleId: ${event.createdKontextRolle.id} / No Action because Rollenart is Not LEHR`,
-                );
-                return;
-            }
-        }
-    }
-
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
@@ -276,8 +219,9 @@ export class EmailEventHandler {
         return undefined;
     }
 
+    @KafkaEventHandler(KafkaRolleUpdatedEvent)
     @EventHandler(RolleUpdatedEvent)
-    // eslint-disable-next-line @typescript-eslint/require-await
+    @EnsureRequestContext()
     public async handleRolleUpdatedEvent(event: RolleUpdatedEvent): Promise<void> {
         this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.rolleId}, rollenArt:${event.rollenart}`);
 
@@ -345,7 +289,9 @@ export class EmailEventHandler {
         }
     }
 
+    @KafkaEventHandler(KafkaDisabledOxUserChangedEvent)
     @EventHandler(DisabledOxUserChangedEvent)
+    @EnsureRequestContext()
     public async handleDisabledOxUserChangedEvent(event: DisabledOxUserChangedEvent): Promise<void> {
         this.logger.info(
             `Received DisabledOxUserChangedEvent personId:${event.personId}, referrer:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.primaryEmail}`,
@@ -526,7 +472,10 @@ export class EmailEventHandler {
                         `Could not publish EmailAddressDisabledEvent, personId:${personId} has no username`,
                     );
                 } else {
-                    this.eventService.publish(new EmailAddressDisabledEvent(personId, person.referrer));
+                    this.eventService.publish(
+                        new EmailAddressDisabledEvent(personId, person.referrer),
+                        new KafkaEmailAddressDisabledEvent(personId, person.referrer),
+                    );
                 }
             }
         }
@@ -556,7 +505,10 @@ export class EmailEventHandler {
         if (existingEmails.length > 0) {
             // Publish the EmailAddressAlreadyExistsEvent as the User already has an email.
             // The status of the email is not relevant to adding the user in the OX group.
-            this.eventService.publish(new EmailAddressAlreadyExistsEvent(personId, organisationKennung.value));
+            this.eventService.publish(
+                new EmailAddressAlreadyExistsEvent(personId, organisationKennung.value),
+                new KafkaEmailAddressAlreadyExistsEvent(personId, organisationKennung.value),
+            );
         }
 
         const personReferrer: Result<string> = await this.getPersonReferrerOrError(personId);
@@ -580,7 +532,7 @@ export class EmailEventHandler {
                         `Set REQUESTED status and persisted address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
                     );
                     // eslint-disable-next-line no-await-in-loop
-                    this.eventRoutingLegacyKafkaService.publish(
+                    this.eventService.publish(
                         new EmailAddressGeneratedEvent(
                             personId,
                             personReferrer.value,
@@ -656,7 +608,7 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
-            this.eventRoutingLegacyKafkaService.publish(
+            this.eventService.publish(
                 new EmailAddressGeneratedEvent(
                     personId,
                     personReferrer.value,
@@ -710,6 +662,13 @@ export class EmailEventHandler {
                     persistenceResult.address,
                     emailDomain,
                 ),
+                new KafkaDisabledEmailAddressGeneratedEvent(
+                    personId,
+                    personReferrer.value,
+                    persistenceResult.id,
+                    persistenceResult.address,
+                    emailDomain,
+                ),
             );
         } else {
             this.logger.error(
@@ -743,7 +702,7 @@ export class EmailEventHandler {
             this.logger.info(
                 `Successfully persisted change-email with REQUEST status for address:${persistenceResult.address}, personId:${personId}, referrer:${personReferrer.value}`,
             );
-            this.eventRoutingLegacyKafkaService.publish(
+            this.eventService.publish(
                 new EmailAddressChangedEvent(
                     personId,
                     personReferrer.value,

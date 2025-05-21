@@ -19,7 +19,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { EventModule, EventService } from '../../../core/eventbus/index.js';
+import { EventModule } from '../../../core/eventbus/index.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailFactory } from './email.factory.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailRepo } from '../persistence/email.repo.js';
@@ -34,11 +35,9 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
-import { PersonenkontextCreatedMigrationEvent } from '../../../shared/events/personenkontext-created-migration.event.js';
 import { Person } from '../../person/domain/person.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
-import { PersonenkontextMigrationRuntype } from '../../personenkontext/domain/personenkontext.enums.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
@@ -104,8 +103,8 @@ describe('EmailEventHandler', () => {
             .useValue(createMock<DBiamPersonenkontextRepo>())
             .overrideProvider(EmailEventHandler)
             .useClass(EmailEventHandler)
-            .overrideProvider(EventService)
-            .useClass(EventService)
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useClass(EventRoutingLegacyKafkaService)
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
@@ -890,94 +889,6 @@ describe('EmailEventHandler', () => {
 
                 expect(loggerMock.info).not.toHaveBeenCalledWith(
                     `Person with id:${fakePersonId} needs an email, creating or enabling address`,
-                );
-            });
-        });
-    });
-
-    describe('handlePersonenkontextCreatedMigrationEvent', () => {
-        const inputEmailAdress: string = 'test@schule-spsh.de';
-        let personenkontext: Personenkontext<true>;
-        let person: Person<true>;
-        let rolle: Rolle<true>;
-        let orga: Organisation<true>;
-        let event: PersonenkontextCreatedMigrationEvent;
-
-        beforeEach(() => {
-            personenkontext = createMock<Personenkontext<true>>();
-            person = createMock<Person<true>>();
-            rolle = createMock<Rolle<true>>();
-            orga = createMock<Organisation<true>>();
-            event = new PersonenkontextCreatedMigrationEvent(
-                PersonenkontextMigrationRuntype.STANDARD,
-                personenkontext,
-                person,
-                rolle,
-                orga,
-                inputEmailAdress,
-            );
-        });
-
-        describe('MigrationRunType: STANDARD', () => {
-            it('should do nothing when rolle is not LEHR', async () => {
-                await emailEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    expect.stringContaining('No Action because Rollenart is Not LEHR'),
-                );
-            });
-            it('should Create Email When None Exists and Rollenart is LEHR', async () => {
-                rolle.rollenart = RollenArt.LEHR;
-
-                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
-                emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>());
-
-                await emailEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-                expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('Successfully persisted Email'));
-            });
-            it('should Log Error When Email persisting Operation fails', async () => {
-                rolle.rollenart = RollenArt.LEHR;
-
-                // eslint-disable-next-line @typescript-eslint/require-await
-                emailRepoMock.findEnabledByPerson.mockImplementationOnce(async () => {
-                    return undefined;
-                });
-                emailRepoMock.save.mockResolvedValueOnce(new EntityCouldNotBeCreated(''));
-
-                await emailEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining('Could not persist existing email, error:'),
-                );
-            });
-            it('should Abort When email is already persisted', async () => {
-                rolle.rollenart = RollenArt.LEHR;
-
-                // eslint-disable-next-line @typescript-eslint/require-await
-                emailRepoMock.findEnabledByPerson.mockImplementationOnce(async () => {
-                    return createMock<EmailAddress<true>>();
-                });
-                emailRepoMock.save.mockResolvedValueOnce(createMock<EmailAddress<true>>());
-
-                await emailEventHandler.handlePersonenkontextCreatedMigrationEvent(event);
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    expect.stringContaining('Aborting persist Email Operation, Email already exists'),
-                );
-            });
-        });
-        describe('MigrationRunType: ITSLEARNING', () => {
-            it('should do nothing', async () => {
-                const itsLearningTypeEvent: PersonenkontextCreatedMigrationEvent =
-                    new PersonenkontextCreatedMigrationEvent(
-                        PersonenkontextMigrationRuntype.ITSLEARNING,
-                        personenkontext,
-                        person,
-                        rolle,
-                        orga,
-                        'test@schule-spsh.de',
-                    );
-
-                await emailEventHandler.handlePersonenkontextCreatedMigrationEvent(itsLearningTypeEvent);
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    expect.stringContaining('No Action because PersonenkontextMigrationRuntype is Not STANDARD'),
                 );
             });
         });

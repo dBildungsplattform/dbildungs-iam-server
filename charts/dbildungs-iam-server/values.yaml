@@ -87,6 +87,7 @@ ox:
   endpoint: 'https://webmail.example.com'
   contextId: '10'
   contextName: '10'
+  numberOfRetries: 3
 
 email:
   nonEnabledEmailAddressesDeadlineInDays: 180

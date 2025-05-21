@@ -10,7 +10,7 @@ import {
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -21,16 +21,21 @@ import { KlasseDeletedEvent } from '../../../shared/events/klasse-deleted.event.
 import { KlasseUpdatedEvent } from '../../../shared/events/klasse-updated.event.js';
 import { SchuleCreatedEvent } from '../../../shared/events/schule-created.event.js';
 import { SchuleItslearningEnabledEvent } from '../../../shared/events/schule-itslearning-enabled.event.js';
-import { ScopeOperator } from '../../../shared/persistence/scope.enums.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
-import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
+import { OrganisationsTyp, RootDirectChildrenType, SortFieldOrganisation } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { OrganisationEntity } from './organisation.entity.js';
 import { OrganisationScope } from './organisation.scope.js';
+import { KafkaKlasseDeletedEvent } from '../../../shared/events/kafka-klasse-deleted.event.js';
+import { KafkaKlasseUpdatedEvent } from '../../../shared/events/kafka-klasse-updated.event.js';
+import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
+import { KafkaSchuleCreatedEvent } from '../../../shared/events/kafka-schule-created.event.js';
+import { KafkaKlasseCreatedEvent } from '../../../shared/events/kafka-klasse-created.event.js';
 
 export function mapOrgaAggregateToData(organisation: Organisation<boolean>): RequiredEntityData<OrganisationEntity> {
     return {
@@ -80,6 +85,8 @@ export type OrganisationSeachOptions = {
     readonly zugehoerigZu?: string[];
     readonly offset?: number;
     readonly limit?: number;
+    readonly sortField?: SortFieldOrganisation;
+    readonly sortOrder?: ScopeOrder;
 };
 
 @Injectable()
@@ -88,7 +95,7 @@ export class OrganisationRepository {
 
     public constructor(
         private readonly logger: ClassLogger,
-        private readonly eventService: EventService,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         private readonly em: EntityManager,
         config: ConfigService<ServerConfig>,
     ) {
@@ -337,6 +344,18 @@ export class OrganisationRepository {
         let entitiesForIds: OrganisationEntity[] = [];
         const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
 
+        // Extract sort logic to variables
+        const sortBy: SortFieldOrganisation = searchOptions.sortField || SortFieldOrganisation.KENNUNG;
+        const secondSortBy: SortFieldOrganisation =
+            sortBy === SortFieldOrganisation.KENNUNG ? SortFieldOrganisation.NAME : SortFieldOrganisation.KENNUNG;
+        const sortOrder: ScopeOrder = searchOptions.sortOrder || ScopeOrder.ASC;
+        const order: QueryOrder =
+            sortOrder === ScopeOrder.ASC ? QueryOrder.ASC_NULLS_FIRST : QueryOrder.DESC_NULLS_FIRST;
+        const orderBy: { [key: string]: QueryOrder }[] = [
+            { [sortBy]: order },
+            { [secondSortBy]: QueryOrder.ASC_NULLS_FIRST },
+        ];
+
         if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
             const organisationIds: string[] = permittedOrgas.all
                 ? searchOptions.organisationIds
@@ -344,7 +363,7 @@ export class OrganisationRepository {
             const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
                 .select('*')
                 .where({ id: { $in: organisationIds } })
-                .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }]);
+                .orderBy(orderBy);
             entitiesForIds = (await queryForIds.getResultAndCount())[0];
         }
 
@@ -388,7 +407,7 @@ export class OrganisationRepository {
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
-            .orderBy([{ kennung: QueryOrder.ASC_NULLS_FIRST }, { name: QueryOrder.ASC_NULLS_FIRST }])
+            .orderBy(orderBy)
             .limit(searchOptions.limit);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
@@ -462,7 +481,10 @@ export class OrganisationRepository {
         }
 
         await this.em.removeAndFlush(organisationEntity);
-        this.eventService.publish(new KlasseDeletedEvent(organisationEntity.id));
+        this.eventService.publish(
+            new KlasseDeletedEvent(organisationEntity.id),
+            new KafkaKlasseDeletedEvent(organisationEntity.id),
+        );
 
         if (organisationEntity.zugehoerigZu) {
             this.logger.info(
@@ -560,7 +582,10 @@ export class OrganisationRepository {
 
         if (organisationFound.typ === OrganisationsTyp.KLASSE) {
             // This is to update the new Klasse in itsLearning
-            this.eventService.publish(new KlasseUpdatedEvent(id, newName, parentId));
+            this.eventService.publish(
+                new KlasseUpdatedEvent(id, newName, parentId),
+                new KafkaKlasseUpdatedEvent(id, newName, parentId),
+            );
         }
         this.logger.info(
             `Admin: ${permissions.personFields.id}) hat den Namen einer Organisation geändert: ${organisationFound.name} (${parentName}).`,
@@ -605,6 +630,12 @@ export class OrganisationRepository {
                 organisationEntity.kennung,
                 organisationEntity.name,
             ),
+            new KafkaSchuleItslearningEnabledEvent(
+                organisationEntity.id,
+                organisationEntity.typ,
+                organisationEntity.kennung,
+                organisationEntity.name,
+            ),
         );
 
         return mapOrgaEntityToAggregate(organisationEntity);
@@ -633,10 +664,21 @@ export class OrganisationRepository {
                     organisationEntity.name,
                     orgaBaumZuordnung,
                 ),
+                new KafkaSchuleCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.kennung,
+                    organisationEntity.name,
+                    orgaBaumZuordnung,
+                ),
             );
         } else if (organisationEntity.typ === OrganisationsTyp.KLASSE) {
             this.eventService.publish(
                 new KlasseCreatedEvent(
+                    organisationEntity.id,
+                    organisationEntity.name,
+                    organisationEntity.administriertVon,
+                ),
+                new KafkaKlasseCreatedEvent(
                     organisationEntity.id,
                     organisationEntity.name,
                     organisationEntity.administriertVon,

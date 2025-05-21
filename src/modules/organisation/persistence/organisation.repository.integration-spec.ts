@@ -11,17 +11,17 @@ import {
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { EventService } from '../../../core/eventbus/services/event.service.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DataConfig } from '../../../shared/config/index.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { ScopeOperator } from '../../../shared/persistence/index.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/index.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationUpdateOutdatedError } from '../domain/orga-update-outdated.error.js';
-import { OrganisationsTyp, RootDirectChildrenType } from '../domain/organisation.enums.js';
+import { OrganisationsTyp, RootDirectChildrenType, SortFieldOrganisation } from '../domain/organisation.enums.js';
 import { Organisation } from '../domain/organisation.js';
 import { OrganisationSpecificationError } from '../specification/error/organisation-specification.error.js';
 import { SchultraegerNameEindeutigError } from '../specification/error/SchultraegerNameEindeutigError.js';
@@ -38,7 +38,7 @@ describe('OrganisationRepository', () => {
     let em: EntityManager;
     let config: ConfigService<ServerConfig>;
     let ROOT_ORGANISATION_ID: string;
-    let eventServiceMock: DeepMocked<EventService>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -52,8 +52,8 @@ describe('OrganisationRepository', () => {
                 OrganisationPersistenceMapperProfile,
                 OrganisationRepository,
                 {
-                    provide: EventService,
-                    useValue: createMock<EventService>(),
+                    provide: EventRoutingLegacyKafkaService,
+                    useValue: createMock<EventRoutingLegacyKafkaService>(),
                 },
             ],
         }).compile();
@@ -61,7 +61,7 @@ describe('OrganisationRepository', () => {
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
         config = module.get(ConfigService<ServerConfig>);
-        eventServiceMock = module.get(EventService);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -1412,6 +1412,12 @@ describe('OrganisationRepository', () => {
                         name: result.name,
                         rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
                     }),
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
+                    }),
                 );
             });
 
@@ -1436,6 +1442,12 @@ describe('OrganisationRepository', () => {
                         name: result.name,
                         rootDirectChildrenZuordnung: RootDirectChildrenType.ERSATZ,
                     }),
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.ERSATZ,
+                    }),
                 );
             });
 
@@ -1449,6 +1461,12 @@ describe('OrganisationRepository', () => {
 
                 expect(result).toBeInstanceOf(Organisation);
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        organisationId: result.id,
+                        kennung: result.kennung,
+                        name: result.name,
+                        rootDirectChildrenZuordnung: RootDirectChildrenType.OEFFENTLICH,
+                    }),
                     expect.objectContaining({
                         organisationId: result.id,
                         kennung: result.kennung,
@@ -2217,6 +2235,93 @@ describe('OrganisationRepository', () => {
 
             expect(result[1]).toBe(2); // total matched organisations
             expect(result[2]).toBe(2); // pageTotal should also be 2 since it's less than the limit
+        });
+
+        describe('Sorting', () => {
+            let organisations: OrganisationEntity[] = [];
+            beforeEach(async () => {
+                organisations = [];
+                for (let i: number = 0; i < 5; i++) {
+                    const orga: Organisation<false> | DomainError = Organisation.createNew(
+                        sut.ROOT_ORGANISATION_ID,
+                        sut.ROOT_ORGANISATION_ID,
+                        faker.string.numeric(6),
+                        `Organisation ${5 - i}`, // Reverse order for testing sorting
+                    );
+                    if (orga instanceof DomainError) {
+                        fail('Could not create Organisation');
+                    }
+                    const mappedOrga: OrganisationEntity = em.create(OrganisationEntity, mapOrgaAggregateToData(orga));
+                    await em.persistAndFlush(mappedOrga);
+                    organisations.push(mappedOrga);
+                }
+            });
+
+            it('should return organisations sorted by name in ascending order', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { sortField: SortFieldOrganisation.NAME, sortOrder: ScopeOrder.ASC },
+                );
+
+                expect(result[0].map((org: Organisation<true>) => org.name)).toEqual(
+                    organisations.map((org: OrganisationEntity) => org.name).sort(),
+                );
+            });
+
+            it('should return organisations sorted by name in descending order', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { sortField: SortFieldOrganisation.NAME, sortOrder: ScopeOrder.DESC },
+                );
+
+                expect(result[0].map((org: Organisation<true>) => org.name)).toEqual(
+                    organisations
+                        .map((org: OrganisationEntity) => org.name)
+                        .sort()
+                        .reverse(),
+                );
+            });
+
+            it('should return organisations sorted by kennung in ascending order', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { sortField: SortFieldOrganisation.KENNUNG, sortOrder: ScopeOrder.ASC },
+                );
+
+                expect(result[0].map((org: Organisation<true>) => org.kennung)).toEqual(
+                    organisations.map((org: OrganisationEntity) => org.kennung).sort(),
+                );
+            });
+
+            it('should return organisations sorted by kennung in descending order', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                personPermissions.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+
+                const result: [Organisation<true>[], number, number] = await sut.findAuthorized(
+                    personPermissions,
+                    [RollenSystemRecht.SCHULEN_VERWALTEN],
+                    { sortField: SortFieldOrganisation.KENNUNG, sortOrder: ScopeOrder.DESC },
+                );
+
+                expect(result[0].map((org: Organisation<true>) => org.kennung)).toEqual(
+                    organisations
+                        .map((org: OrganisationEntity) => org.kennung)
+                        .sort()
+                        .reverse(),
+                );
+            });
         });
     });
 
