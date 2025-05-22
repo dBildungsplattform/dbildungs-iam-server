@@ -19,9 +19,9 @@ export class KafkaLdapPersonEntryRenamedEvent extends LdapPersonEntryRenamedEven
             personRenamedEvent.vorname,
             personRenamedEvent.familienname,
             personRenamedEvent.referrer,
-            personRenamedEvent.oldReferrer,
             personRenamedEvent.oldVorname,
             personRenamedEvent.oldFamilienname,
+            personRenamedEvent.oldReferrer,
         );
     }
 }
