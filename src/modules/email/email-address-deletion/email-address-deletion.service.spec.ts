@@ -260,23 +260,6 @@ describe('EmailAddressDeletionService', () => {
             });
         });
 
-        /*describe('when person can be found BUT has no username', () => {
-            it('should log error about that and return', async () => {
-                const person: Person<true> = createMock<Person<true>>({
-                    id: personId,
-                    referrer: undefined,
-                });
-                personRepositoryMock.findById.mockResolvedValueOnce(person);
-
-                await sut.checkRemainingEmailAddressesByPersonId(personId, oxUserId);
-
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Would not be able to create EmailAddressesPurgedEvent, no username found for personId:${personId}`,
-                );
-                expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
-            });
-        });*/
-
         describe('when person has remaining EmailAddresses', () => {
             it('should not log info about NOT publishing event', async () => {
                 const [persons, emailAddresses]: [Person<true>[], EmailAddress<true>[]] =

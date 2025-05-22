@@ -396,8 +396,6 @@ export class OxEventHandler {
         username: PersonReferrer | undefined,
         oxUserId: OXUserID,
     ): Promise<void> {
-        //removing oxUser as member from all its oxGroups should have been done in the calling method already
-
         //change oxUserName to avoid conflicts for future OX-createUser-requests
         const params: ChangeUserParams = {
             contextId: this.contextID,
