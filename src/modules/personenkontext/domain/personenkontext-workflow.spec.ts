@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { DoFactory } from '../../../../test/utils/index.js';
+import { ConfigTestModule, DoFactory } from '../../../../test/utils/index.js';
 import { Personenkontext } from './personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { faker } from '@faker-js/faker';
@@ -31,6 +31,7 @@ describe('PersonenkontextWorkflow', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [ConfigTestModule],
             providers: [
                 PersonenkontextWorkflowFactory,
                 PersonenkontextFactory,
@@ -530,7 +531,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(false);
+            permissions.hasSystemrechteAtOrganisation.mockResolvedValue(false);
 
             anlage.initialize('organisation-id');
 
@@ -564,7 +565,7 @@ describe('PersonenkontextWorkflow', () => {
             rolleRepoMock.find.mockResolvedValue(rollen);
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            permissions.hasSystemrechteAtOrganisation.mockResolvedValue(true);
 
             anlage.initialize(organisation.id);
 
