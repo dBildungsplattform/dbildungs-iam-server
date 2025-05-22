@@ -1,3 +1,5 @@
+import { RollenArt } from '../../modules/rolle/domain/rolle.enums.js';
+
 /**
  * Reads the environment variable and returns an optional boolean.
  * Depending on the input:
@@ -50,4 +52,21 @@ export function envToOptionalInteger(key: string): number | undefined {
     }
 
     return parsed;
+}
+
+export function envToStringArray(key: string): string[] | undefined {
+    const value: string | undefined = process.env[key];
+    if (!value) {
+        return undefined;
+    }
+
+    return value.split(',').map((item: string) => item.trim()) || undefined;
+}
+
+export function mapStringsToRollenArt(rollenarten: string[]): RollenArt[] | undefined {
+    return (
+        rollenarten
+            .filter((rollenart: string) => Object.values(RollenArt).includes(rollenart as RollenArt))
+            .map((rollenart: string) => rollenart as RollenArt) || undefined
+    );
 }

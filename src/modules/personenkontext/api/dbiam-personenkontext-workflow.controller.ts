@@ -55,6 +55,11 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { ConfigService } from '@nestjs/config';
+import { ServerConfig } from '../../../shared/config/index.js';
+import { PortalConfig } from '../../../shared/config/portal.config.js';
+import { mapStringsToRollenArt as mapStringsToRollenArt } from '../../../shared/config/utils.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
@@ -71,6 +76,7 @@ export class DbiamPersonenkontextWorkflowController {
         private readonly personenkontextWorkflowFactory: PersonenkontextWorkflowFactory,
         private readonly personenkontextCreationService: PersonenkontextCreationService,
         private readonly logger: ClassLogger,
+        private readonly configService: ConfigService<ServerConfig>,
     ) {}
 
     @Get('step')
@@ -105,9 +111,17 @@ export class DbiamPersonenkontextWorkflowController {
             params.limit,
         );
 
+        // filter rollenarten
+        let rollenarten: RollenArt[] | undefined = undefined;
+        if (params.requestedWithSystemrecht === RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN) {
+            const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
+
+            rollenarten = mapStringsToRollenArt(portalConfig.LIMITED_ROLLENART_ALLOWLIST || []);
+        }
+
         // Find all possible roles under the selected Organisation
         const rollen: Rolle<true>[] = params.organisationId
-            ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit)
+            ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit, rollenarten)
             : [];
 
         const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
