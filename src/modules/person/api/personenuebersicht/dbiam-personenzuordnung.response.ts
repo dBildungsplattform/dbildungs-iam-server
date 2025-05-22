@@ -16,8 +16,8 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: String })
     public readonly sskName: string;
 
-    @ApiProperty({ type: String })
-    public readonly sskDstNr: string;
+    @ApiProperty({ type: String, nullable: true })
+    public readonly sskDstNr?: string;
 
     @ApiProperty({ type: String })
     public readonly rolle: string;
@@ -34,13 +34,13 @@ export class DBiamPersonenzuordnungResponse {
     @ApiProperty({ type: Boolean })
     public readonly editable: boolean;
 
-    @ApiProperty({ type: Date })
+    @ApiProperty({ type: Date, nullable: true })
     public readonly befristung?: Date;
 
-    @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, nullable: true })
-    public readonly merkmale?: RollenMerkmal[];
+    @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, isArray: true })
+    public readonly merkmale: RollenMerkmal[];
 
-    @ApiProperty({ type: [String] })
+    @ApiProperty({ type: String, isArray: true, nullable: true })
     public readonly admins?: string[];
 
     public constructor(
@@ -54,7 +54,7 @@ export class DBiamPersonenzuordnungResponse {
         this.sskId = personenkontext.organisationId;
         this.rolleId = personenkontext.rolleId;
         this.sskName = organisation.name!;
-        this.sskDstNr = organisation.kennung!;
+        this.sskDstNr = organisation.kennung;
         this.rolle = rolle.name;
         this.rollenArt = rolle.rollenart;
         this.administriertVon = organisation.administriertVon;
