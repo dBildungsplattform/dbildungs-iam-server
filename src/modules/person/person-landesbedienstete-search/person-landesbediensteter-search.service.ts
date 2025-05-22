@@ -46,7 +46,7 @@ export class PersonLandesbediensteterSearchService {
         if (personalnummer) {
             persons = await this.personRepository.findByPersonalnummer(personalnummer.trim());
         } else if (primaryEmailAddress) {
-            persons = await this.personRepository.findByPrimaryEmailAddress(primaryEmailAddress.trim());
+            persons = await this.personRepository.findByEmailAddress(primaryEmailAddress.trim());
         } else if (username) {
             persons = await this.personRepository.findByUsername(username.trim());
         } else if (fullname) {

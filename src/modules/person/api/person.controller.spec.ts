@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { HttpException, NotImplementedException } from '@nestjs/common';
+import { HttpException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
@@ -49,6 +49,8 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
+import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
+import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -283,6 +285,53 @@ describe('PersonController', () => {
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });
+        });
+    });
+
+    describe('findLandesbediensteter', () => {
+        const queryParams: PersonLandesbediensteterSearchQueryParams = {
+            personalnummer: '1234567',
+            primaryEmailAddress: 'test@example.com',
+            username: 'tester',
+            fullname: 'Tester Max',
+        };
+
+        beforeEach(() => {
+            personPermissionsMock = createMock<PersonPermissions>();
+        });
+
+        it('should return search result when permissions are sufficient', async () => {
+            const responseMock: PersonLandesbediensteterSearchResponse =
+                createMock<PersonLandesbediensteterSearchResponse>();
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
+
+            personLandesbediensteterSearchServiceMock.findLandesbediensteter.mockResolvedValueOnce(responseMock);
+
+            const result: PersonLandesbediensteterSearchResponse = await personController.findLandesbediensteter(
+                queryParams,
+                personPermissionsMock,
+            );
+
+            expect(result).toBe(responseMock);
+            expect(personLandesbediensteterSearchServiceMock.findLandesbediensteter).toHaveBeenCalledWith(
+                queryParams.personalnummer,
+                queryParams.primaryEmailAddress,
+                queryParams.username,
+                queryParams.fullname,
+            );
+        });
+
+        it('should throw UnauthorizedException if no permitted orgas are found', async () => {
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [],
+            });
+
+            await expect(personController.findLandesbediensteter(queryParams, personPermissionsMock)).rejects.toThrow(
+                UnauthorizedException,
+            );
         });
     });
 

@@ -210,10 +210,13 @@ export class PersonRepository {
             .setScopeWhereOperator(ScopeOperator.AND);
     }
 
-    public async findByPrimaryEmailAddress(email: string): Promise<Person<true>[]> {
-        const entities: PersonEntity[] = await this.em.find(PersonEntity, {
-            emailAddresses: { $some: { address: email } },
-        });
+    public async findByEmailAddress(email: string): Promise<Person<true>[]> {
+        const entities: PersonEntity[] = await this.em
+            .createQueryBuilder(PersonEntity, 'p')
+            .leftJoinAndSelect('p.emailAddresses', 'e')
+            .where({ 'e.address': email })
+            .getResultList();
+
         return entities.map(mapEntityToAggregate);
     }
 
@@ -235,7 +238,6 @@ export class PersonRepository {
 
         return entities.map(mapEntityToAggregate);
     }
-
 
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
         const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);

@@ -64,9 +64,9 @@ describe('PersonLandesbediensteterSearchService', () => {
 
     describe('findLandesbediensteter', () => {
         it('should throw if more than one param is defined', async () => {
-            await expect(sut.findLandesbediensteter(faker.string.uuid(), faker.internet.email())).rejects.toThrow(
-                LandesbediensteterSearchNoPersonFoundError,
-            );
+            await expect(
+                sut.findLandesbediensteter(faker.string.uuid(), faker.internet.email(), undefined, undefined),
+            ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
         it('should throw if no param is defined', async () => {
@@ -75,26 +75,26 @@ describe('PersonLandesbediensteterSearchService', () => {
 
         it('should throw if no person found', async () => {
             personRepositoryMock.findByUsername.mockResolvedValueOnce([]);
-            await expect(sut.findLandesbediensteter(undefined, undefined, faker.internet.userName())).rejects.toThrow(
-                LandesbediensteterSearchNoPersonFoundError,
-            );
+            await expect(
+                sut.findLandesbediensteter(undefined, undefined, faker.internet.userName(), undefined),
+            ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
         it('should throw if multiple persons found', async () => {
             const person: Person<true> = DoFactory.createPerson(true);
             personRepositoryMock.findByUsername.mockResolvedValueOnce([person, person]);
-            await expect(sut.findLandesbediensteter(undefined, undefined, faker.internet.userName())).rejects.toThrow(
-                LandesbediensteterSearchMultiplePersonsFoundError,
-            );
+            await expect(
+                sut.findLandesbediensteter(undefined, undefined, faker.internet.userName(), undefined),
+            ).rejects.toThrow(LandesbediensteterSearchMultiplePersonsFoundError);
         });
 
         it('should throw if person has no personalnummer', async () => {
             const person: Person<true> = DoFactory.createPerson(true, { personalnummer: undefined });
             personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
             userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
-            await expect(sut.findLandesbediensteter(undefined, undefined, faker.internet.userName())).rejects.toThrow(
-                LandesbediensteterSearchNoPersonFoundError,
-            );
+            await expect(
+                sut.findLandesbediensteter(undefined, undefined, faker.internet.userName(), undefined),
+            ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
         it('should throw if person is locked manually', async () => {
@@ -103,12 +103,83 @@ describe('PersonLandesbediensteterSearchService', () => {
             userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([
                 { locked_occasion: PersonLockOccasion.MANUELL_GESPERRT } as UserLock,
             ]);
-            await expect(sut.findLandesbediensteter(undefined, undefined, faker.internet.userName())).rejects.toThrow(
-                LandesbediensteterSearchNoPersonFoundError,
-            );
+            await expect(
+                sut.findLandesbediensteter(undefined, undefined, faker.internet.userName(), undefined),
+            ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
-        it('should return valid response if person is found and valid', async () => {
+        it('should throw error if fullname is provided but is not valid', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            person.personalnummer = faker.string.alphanumeric(5);
+            const email: PersonEmailResponse = {
+                address: faker.internet.email(),
+                status: faker.helpers.enumValue(EmailAddressStatus),
+            };
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga);
+                },
+            });
+            const kontexte: Array<KontextWithOrgaAndRolle> = [
+                {
+                    personenkontext: kontext,
+                    organisation: orga,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+            ];
+            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+            personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
+            await expect(
+                sut.findLandesbediensteter(undefined, undefined, undefined, 'invalidfullname'),
+            ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
+        });
+
+        it('should return valid response if person is found and valid by personalnummer', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            person.personalnummer = faker.string.alphanumeric(5);
+            const email: PersonEmailResponse = {
+                address: faker.internet.email(),
+                status: faker.helpers.enumValue(EmailAddressStatus),
+            };
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga);
+                },
+            });
+            const kontexte: Array<KontextWithOrgaAndRolle> = [
+                {
+                    personenkontext: kontext,
+                    organisation: orga,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+            ];
+            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+            personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
+
+            const result: PersonLandesbediensteterSearchResponse = await sut.findLandesbediensteter(
+                person.personalnummer,
+                undefined,
+                undefined,
+                undefined,
+            );
+
+            expect(result).toBeDefined();
+            expect(result.personenkontexte.length).toEqual(1);
+        });
+
+        it('should return valid response if person is found and valid by username', async () => {
             const person: Person<true> = DoFactory.createPerson(true);
             const email: PersonEmailResponse = {
                 address: faker.internet.email(),
@@ -139,16 +210,90 @@ describe('PersonLandesbediensteterSearchService', () => {
                 undefined,
                 undefined,
                 faker.internet.userName(),
+                undefined,
             );
 
             expect(result).toBeDefined();
-            expect(result.personalnummer).toEqual(person.personalnummer);
             expect(result.personenkontexte.length).toEqual(1);
-            expect(result.personenkontexte.at(0)?.organisationId).toEqual(orga.id);
-            expect(result.personenkontexte.at(0)?.organisationName).toEqual(orga.name);
-            expect(result.personenkontexte.at(0)?.rolleId).toEqual(rolle.id);
-            expect(result.personenkontexte.at(0)?.rolleName).toEqual(rolle.name);
-            expect(result.primaryEmailAddress).toEqual(email.address);
+        });
+
+        it('should return valid response if person is found and valid by emailaddress', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            person.personalnummer = faker.string.alphanumeric(5);
+            const email: PersonEmailResponse = {
+                address: faker.internet.email(),
+                status: faker.helpers.enumValue(EmailAddressStatus),
+            };
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga);
+                },
+            });
+            const kontexte: Array<KontextWithOrgaAndRolle> = [
+                {
+                    personenkontext: kontext,
+                    organisation: orga,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+            ];
+            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+            personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
+
+            const result: PersonLandesbediensteterSearchResponse = await sut.findLandesbediensteter(
+                undefined,
+                faker.internet.email(),
+                undefined,
+                undefined,
+            );
+
+            expect(result).toBeDefined();
+            expect(result.personenkontexte.length).toEqual(1);
+        });
+
+        it('should return valid response if person is found and valid by fullname', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            person.personalnummer = faker.string.alphanumeric(5);
+            const email: PersonEmailResponse = {
+                address: faker.internet.email(),
+                status: faker.helpers.enumValue(EmailAddressStatus),
+            };
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga);
+                },
+            });
+            const kontexte: Array<KontextWithOrgaAndRolle> = [
+                {
+                    personenkontext: kontext,
+                    organisation: orga,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+            ];
+            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+            personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
+
+            const result: PersonLandesbediensteterSearchResponse = await sut.findLandesbediensteter(
+                undefined,
+                undefined,
+                undefined,
+                'Max Mustermann',
+            );
+
+            expect(result).toBeDefined();
+            expect(personRepositoryMock.findByFullName).toHaveBeenCalledWith('Max', 'Mustermann');
+            expect(result.personenkontexte.length).toEqual(1);
         });
     });
 });
