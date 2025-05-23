@@ -1245,7 +1245,6 @@ describe('PersonRepository Integration', () => {
         });
     });
 
-
     describe('getPersonIfAllowed', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should return person', async () => {
