@@ -28,13 +28,14 @@ export class PersonLandesbediensteterSearchService {
         personalnummer?: string,
         primaryEmailAddress?: string,
         username?: string,
-        fullname?: string,
+        vorname?: string,
+        familienname?: string,
     ): Promise<PersonLandesbediensteterSearchResponse> {
         const definedParams: boolean[] = [
             personalnummer !== undefined,
             primaryEmailAddress !== undefined,
             username !== undefined,
-            fullname !== undefined,
+            vorname !== undefined && familienname !== undefined,
         ].filter(Boolean);
 
         if (definedParams.length !== 1) {
@@ -49,12 +50,7 @@ export class PersonLandesbediensteterSearchService {
             persons = await this.personRepository.findByEmailAddress(primaryEmailAddress.trim());
         } else if (username) {
             persons = await this.personRepository.findByUsername(username.trim());
-        } else if (fullname) {
-            const [vorname, ...rest]: string[] = fullname.trim().split(/\s+/);
-            if (!vorname || rest.length === 0) {
-                throw new LandesbediensteterSearchNoPersonFoundError();
-            }
-            const familienname: string = rest.join(' ');
+        } else if (vorname && familienname) {
             persons = await this.personRepository.findByFullName(vorname, familienname);
         }
 

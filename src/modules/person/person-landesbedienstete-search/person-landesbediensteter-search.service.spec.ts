@@ -108,7 +108,39 @@ describe('PersonLandesbediensteterSearchService', () => {
             ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
-        it('should throw error if fullname is provided but is not valid', async () => {
+        it('should throw error if fullname is provided but is not valid because only vorname provided', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            person.personalnummer = faker.string.alphanumeric(5);
+            const email: PersonEmailResponse = {
+                address: faker.internet.email(),
+                status: faker.helpers.enumValue(EmailAddressStatus),
+            };
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle: Rolle<true> = DoFactory.createRolle(true);
+            const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                loeschungZeitpunkt: new Date(),
+                getRolle: () => Promise.resolve(rolle),
+                getOrganisation() {
+                    return Promise.resolve(orga);
+                },
+            });
+            const kontexte: Array<KontextWithOrgaAndRolle> = [
+                {
+                    personenkontext: kontext,
+                    organisation: orga,
+                    rolle: rolle,
+                } satisfies KontextWithOrgaAndRolle,
+            ];
+            personRepositoryMock.findByUsername.mockResolvedValueOnce([person]);
+            userLockRepositoryMock.findByPersonId.mockResolvedValueOnce([]);
+            emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
+            personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
+            await expect(sut.findLandesbediensteter(undefined, undefined, undefined, 'onlyvorname')).rejects.toThrow(
+                LandesbediensteterSearchNoPersonFoundError,
+            );
+        });
+
+        it('should throw error if fullname is provided but is not valid because only familienname provided', async () => {
             const person: Person<true> = DoFactory.createPerson(true);
             person.personalnummer = faker.string.alphanumeric(5);
             const email: PersonEmailResponse = {
@@ -136,7 +168,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
             await expect(
-                sut.findLandesbediensteter(undefined, undefined, undefined, 'invalidfullname'),
+                sut.findLandesbediensteter(undefined, undefined, undefined, undefined, 'onlyfamilienname'),
             ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
@@ -288,7 +320,8 @@ describe('PersonLandesbediensteterSearchService', () => {
                 undefined,
                 undefined,
                 undefined,
-                'Max Mustermann',
+                'Max',
+                'Mustermann',
             );
 
             expect(result).toBeDefined();

@@ -138,7 +138,8 @@ export class PersonController {
             queryParams.personalnummer,
             queryParams.primaryEmailAddress,
             queryParams.username,
-            queryParams.fullname,
+            queryParams.vorname,
+            queryParams.familienname,
         );
     }
 

@@ -32,5 +32,13 @@ export class PersonLandesbediensteterSearchQueryParams {
         required: false,
         nullable: true,
     })
-    public readonly fullname?: string;
+    public readonly vorname?: string;
+
+    @IsOptional()
+    @IsString()
+    @ApiProperty({
+        required: false,
+        nullable: true,
+    })
+    public readonly familienname?: string;
 }

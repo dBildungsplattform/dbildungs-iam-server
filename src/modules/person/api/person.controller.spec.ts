@@ -293,7 +293,8 @@ describe('PersonController', () => {
             personalnummer: '1234567',
             primaryEmailAddress: 'test@example.com',
             username: 'tester',
-            fullname: 'Tester Max',
+            vorname: 'Tester',
+            familienname: 'Testis',
         };
 
         beforeEach(() => {
@@ -319,7 +320,8 @@ describe('PersonController', () => {
                 queryParams.personalnummer,
                 queryParams.primaryEmailAddress,
                 queryParams.username,
-                queryParams.fullname,
+                queryParams.vorname,
+                queryParams.familienname,
             );
         });
 
