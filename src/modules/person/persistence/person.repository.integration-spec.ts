@@ -71,6 +71,8 @@ import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js'
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -125,7 +127,10 @@ describe('PersonRepository Integration', () => {
                 PersonenkontextFactory,
                 UserLockRepository,
             ],
-        }).compile();
+        })
+            .overrideProvider(ClassLogger)
+            .useValue(createMock<ClassLogger>())
+            .compile();
         sut = module.get(PersonRepository);
         orm = module.get(MikroORM);
         em = module.get(EntityManager);
@@ -1039,7 +1044,93 @@ describe('PersonRepository Integration', () => {
             });
         });
 
-        describe('when only failed emailAddresses are in collection', () => {
+        describe('when no enabled but an disabled emailAddress is in collection', () => {
+            it('should return address of (first found) disabled address', () => {
+                const disabledEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.DISABLED);
+                const deletedLdapEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.DELETED_LDAP,
+                );
+                const deletedOxEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.DELETED_OX,
+                );
+                const deletedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.DELETED);
+                const failedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
+                const requestedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                );
+
+                personEntity.emailAddresses.add(disabledEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedLdapEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedOxEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedEmailAddressEntity);
+                personEntity.emailAddresses.add(failedEmailAddressEntity);
+                personEntity.emailAddresses.add(requestedEmailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toStrictEqual(disabledEmailAddressEntity.oxUserId);
+            });
+        });
+
+        describe('when emailAddress with DELETED_OX, DEELETED_LDAP or DELETED is highest status in collection', () => {
+            it('should return address of emailAddress with status DELETED_OX', () => {
+                const deletedLdapEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.DELETED_LDAP,
+                );
+                const deletedOxEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.DELETED_OX,
+                );
+                const deletedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.DELETED);
+                const failedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
+                const requestedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                );
+
+                // opposite order is intentionally, implicitly checking order by date
+                personEntity.emailAddresses.add(requestedEmailAddressEntity);
+                personEntity.emailAddresses.add(failedEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedLdapEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedOxEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedEmailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toStrictEqual(deletedLdapEmailAddressEntity.oxUserId);
+            });
+        });
+
+        describe('when emailAddress with FAILED is highest status in collection', () => {
+            it('should return address of emailAddress with status FAILED', () => {
+                const failedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
+                const requestedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                );
+
+                // opposite order is intentionally, implicitly checking order by date
+                personEntity.emailAddresses.add(requestedEmailAddressEntity);
+                personEntity.emailAddresses.add(failedEmailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toStrictEqual(failedEmailAddressEntity.oxUserId);
+            });
+        });
+
+        describe('when emailAddress with REQUESTED is highest status in collection', () => {
+            it('should return address of emailAddress with status REQUESTED', () => {
+                const requestedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                );
+
+                personEntity.emailAddresses.add(requestedEmailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toStrictEqual(requestedEmailAddressEntity.oxUserId);
+            });
+        });
+
+        /* describe('when only failed emailAddresses are in collection', () => {
             it('should return undefined', () => {
                 const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
@@ -1048,7 +1139,7 @@ describe('PersonRepository Integration', () => {
 
                 expect(result).toBeUndefined();
             });
-        });
+        });*/
 
         describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {
@@ -1676,6 +1767,280 @@ describe('PersonRepository Integration', () => {
             });
         });
     });
+
+    describe('deletePersonAfterDeadlineExceeded', () => {
+        describe('Delete the person and all kontexte', () => {
+            afterEach(() => {
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockReset();
+            });
+
+            it('should delete the person as root', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
+                expect(result.ok).toBeTruthy();
+            });
+
+            it('should delete the person as admin of organisation', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+                const organisation: OrganisationEntity = await createAndPersistOrganisation(
+                    em,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
+
+                const rolleData: RequiredEntityData<RolleEntity> = {
+                    name: 'Testrolle',
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.ORGADMIN,
+                    istTechnisch: false,
+                };
+
+                const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
+                await em.persistAndFlush(rolleEntity);
+
+                const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
+                    organisationId: organisation.id,
+                    personId: person1.id,
+                    rolleId: rolleEntity.id,
+                };
+                const personenkontextEntity: PersonenkontextEntity = em.create(
+                    PersonenkontextEntity,
+                    personenkontextData,
+                );
+                await em.persistAndFlush(personenkontextEntity);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
+                expect(result.ok).toBeTruthy();
+            });
+
+            it('should delete the person as admin of organisation and publish events when referrer and oxUserId are defined', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                const personEntity: PersonEntity = new PersonEntity();
+                person1.referrer = faker.internet.userName();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+
+                const emailAddress: EmailAddressEntity = new EmailAddressEntity();
+                const oxUserId: OXUserID = faker.string.numeric();
+                emailAddress.address = faker.internet.email();
+                emailAddress.personId = ref(PersonEntity, personEntity.id);
+                emailAddress.status = EmailAddressStatus.ENABLED;
+                emailAddress.oxUserId = oxUserId;
+
+                const pp: EmailAddressEntity = em.create(EmailAddressEntity, emailAddress);
+                await em.persistAndFlush(pp);
+
+                personEntity.emailAddresses.add(emailAddress);
+                await em.persistAndFlush(personEntity);
+
+                const organisation: OrganisationEntity = await createAndPersistOrganisation(
+                    em,
+                    undefined,
+                    OrganisationsTyp.SCHULE,
+                );
+
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
+
+                const rolleData: RequiredEntityData<RolleEntity> = {
+                    name: 'Testrolle',
+                    administeredBySchulstrukturknoten: organisation.id,
+                    rollenart: RollenArt.ORGADMIN,
+                    istTechnisch: false,
+                };
+
+                const rolleEntity: RolleEntity = em.create(RolleEntity, rolleData);
+                await em.persistAndFlush(rolleEntity);
+
+                const personenkontextData: RequiredEntityData<PersonenkontextEntity> = {
+                    organisationId: organisation.id,
+                    personId: person1.id,
+                    rolleId: rolleEntity.id,
+                };
+                const personenkontextEntity: PersonenkontextEntity = em.create(
+                    PersonenkontextEntity,
+                    personenkontextData,
+                );
+                await em.persistAndFlush(personenkontextEntity);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({
+                    all: false,
+                    orgaIds: [organisation.id],
+                });
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
+                expect(result.ok).toBeTruthy();
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: person1.id,
+                        username: person1.referrer,
+                        oxUserId: oxUserId,
+                    }),
+                    expect.objectContaining({
+                        personId: person1.id,
+                        username: person1.referrer,
+                        oxUserId: oxUserId,
+                    }),
+                );
+            });
+
+            it('should not delete the person because of unsufficient permissions to find the person', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: false, orgaIds: [] });
+
+                await em.persistAndFlush(em.create(PersonEntity, mapAggregateToData(person1)));
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
+
+                expect(result.ok).toBeFalsy();
+            });
+            it('should not delete the person because of unsufficient permissions to delete the person', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockImplementation(
+                    (systemRechte: RollenSystemRecht[]) => {
+                        if (systemRechte.length === 1 && systemRechte[0] === RollenSystemRecht.PERSONEN_VERWALTEN) {
+                            return Promise.resolve({ all: true });
+                        }
+                        return Promise.resolve({ all: false, orgaIds: [] });
+                    },
+                );
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId!,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                const result: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    person1.id,
+                    personPermissionsMock,
+                    removedPersonenkontexts,
+                );
+
+                expect(result.ok).toBeFalsy();
+                if (!result.ok) {
+                    expect(result.error).toBeInstanceOf(EntityCouldNotBeDeleted);
+                }
+            });
+            it('should not delete the person because it has no keycloakId', async () => {
+                const person1: Person<true> = DoFactory.createPerson(true);
+                person1.keycloakUserId = '';
+                personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+                const personEntity: PersonEntity = new PersonEntity();
+                await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+                person1.id = personEntity.id;
+
+                kcUserServiceMock.findById.mockResolvedValue({
+                    ok: true,
+                    value: {
+                        id: person1.keycloakUserId,
+                        username: person1.username ?? '',
+                        enabled: true,
+                        email: faker.internet.email(),
+                        createdDate: new Date(),
+                        externalSystemIDs: {},
+                        attributes: {},
+                    },
+                });
+
+                await sut.getPersonIfAllowed(person1.id, personPermissionsMock);
+                const personGetAllowed: Result<Person<true>> = await sut.getPersonIfAllowed(
+                    person1.id,
+                    personPermissionsMock,
+                );
+
+                if (!personGetAllowed.ok) {
+                    throw new EntityNotFoundError('Person', person1.id);
+                }
+
+                const removedPersonenkontexts: PersonenkontextEventKontextData[] = [];
+                await expect(
+                    sut.deletePersonAfterDeadlineExceeded(
+                        personGetAllowed.value.id,
+                        personPermissionsMock,
+                        removedPersonenkontexts,
+                    ),
+                ).rejects.toThrow(PersonHasNoKeycloakId);
+            });
+        });
+    });
+
     describe('save', () => {
         beforeEach(() => {
             jest.restoreAllMocks();

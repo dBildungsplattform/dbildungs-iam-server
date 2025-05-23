@@ -31,12 +31,13 @@ import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-a
 import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
-import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
+import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 
-describe('LDAP Event Handler', () => {
+describe('LdapEventHandler', () => {
     let app: INestApplication;
     let orm: MikroORM;
 
@@ -105,13 +106,13 @@ describe('LDAP Event Handler', () => {
     });
 
     describe('handlePersonDeletedEvent', () => {
-        describe('when calling LdapClientService.deleteLehrerByPersonId is successful', () => {
+        describe('when calling LdapClientService.deleteLehrerByUsername is successful', () => {
             it('should NOT log errors', async () => {
                 const deletionResult: Result<PersonID> = {
                     ok: true,
                     value: faker.string.uuid(),
                 };
-                ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce(deletionResult);
+                ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
 
@@ -119,16 +120,52 @@ describe('LDAP Event Handler', () => {
             });
         });
 
-        describe('when calling LdapClientService.deleteLehrerByPersonId is return error', () => {
+        describe('when calling LdapClientService.deleteLehrerByUsername is return error', () => {
             it('should log errors', async () => {
                 const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
                 const deletionResult: Result<PersonID> = {
                     ok: false,
                     error: error,
                 };
-                ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce(deletionResult);
+                ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
 
                 await ldapEventHandler.handlePersonDeletedEvent(createMock<PersonDeletedEvent>());
+
+                expect(loggerMock.error).toHaveBeenCalledTimes(1);
+                expect(loggerMock.error).toHaveBeenCalledWith(error.message);
+            });
+        });
+    });
+
+    describe('handlePersonDeletedAfterDeadlineExceededEvent', () => {
+        describe('when calling LdapClientService.deleteLehrerByUsername is successful', () => {
+            it('should NOT log errors', async () => {
+                const deletionResult: Result<PersonID> = {
+                    ok: true,
+                    value: faker.string.uuid(),
+                };
+                ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
+
+                await ldapEventHandler.handlePersonDeletedAfterDeadlineExceededEvent(
+                    createMock<PersonDeletedAfterDeadlineExceededEvent>(),
+                );
+
+                expect(loggerMock.error).toHaveBeenCalledTimes(0);
+            });
+        });
+
+        describe('when calling LdapClientService.deleteLehrerByUsername is return error', () => {
+            it('should log errors', async () => {
+                const error: LdapSearchError = new LdapSearchError(LdapEntityType.LEHRER);
+                const deletionResult: Result<PersonID> = {
+                    ok: false,
+                    error: error,
+                };
+                ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce(deletionResult);
+
+                await ldapEventHandler.handlePersonDeletedAfterDeadlineExceededEvent(
+                    createMock<PersonDeletedAfterDeadlineExceededEvent>(),
+                );
 
                 expect(loggerMock.error).toHaveBeenCalledTimes(1);
                 expect(loggerMock.error).toHaveBeenCalledWith(error.message);
@@ -169,7 +206,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -209,7 +246,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -251,7 +288,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -291,7 +328,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -330,7 +367,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -373,7 +410,7 @@ describe('LDAP Event Handler', () => {
                         id: faker.string.uuid(),
                         vorname: faker.person.firstName(),
                         familienname: faker.person.lastName(),
-                        referrer: faker.internet.userName(),
+                        username: faker.internet.userName(),
                     },
                     [
                         {
@@ -405,7 +442,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -439,7 +476,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -467,7 +504,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -496,7 +533,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -539,7 +576,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [],
                 [
@@ -581,7 +618,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -622,7 +659,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -664,7 +701,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -713,7 +750,7 @@ describe('LDAP Event Handler', () => {
                     id: faker.string.uuid(),
                     vorname: faker.person.firstName(),
                     familienname: faker.person.lastName(),
-                    referrer: faker.internet.userName(),
+                    username: faker.internet.userName(),
                 },
                 [
                     {
@@ -755,7 +792,7 @@ describe('LDAP Event Handler', () => {
 
             expect(personRepositoryMock.save).toHaveBeenCalledTimes(0);
             expect(loggerMock.error).toHaveBeenCalledWith(
-                `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.referrer}`,
+                `LdapClientService createLehrer could not find person with id:${event.person.id}, ref:${event.person.username}`,
             );
         });
     });
@@ -774,7 +811,7 @@ describe('LDAP Event Handler', () => {
             await ldapEventHandler.handleEmailAddressGeneratedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddress:${event.address}`,
+                `Received EmailAddressGeneratedEvent, personId:${event.personId}, username:${event.username}, emailAddress:${event.address}`,
             );
             expect(ldapClientServiceMock.changeEmailAddressByPersonId).toHaveBeenCalledTimes(1);
         });
@@ -801,45 +838,105 @@ describe('LDAP Event Handler', () => {
         });
     });
 
-    describe('handleEmailAddressDeletedEvent', () => {
-        const personId: PersonID = faker.string.uuid();
-        const username: PersonReferrer = faker.internet.userName();
-        const address: string = faker.internet.email();
+    describe('handleEmailAddressMarkedForDeletionEvent', () => {
+        let personId: PersonID;
+        let username: PersonReferrer;
+        let address: string;
 
-        it('should call LdapClientService removeMailAlternativeAddress', async () => {
-            const event: EmailAddressDeletedEvent = new EmailAddressDeletedEvent(
-                personId,
-                username,
-                faker.string.numeric(),
-                faker.string.uuid(),
-                EmailAddressStatus.ENABLED,
-                address,
-            );
+        beforeEach(() => {
+            personId = faker.string.uuid();
+            username = faker.internet.userName();
+            address = faker.internet.email();
+        });
+        describe('when username is UNDEFINED in event', () => {
+            it('should NOT call LdapClientService removeMailAlternativeAddress and instead publish LdapEmailAddressDeletedEvent directly', async () => {
+                const event: EmailAddressMarkedForDeletionEvent = new EmailAddressMarkedForDeletionEvent(
+                    personId,
+                    undefined,
+                    faker.string.numeric(),
+                    faker.string.uuid(),
+                    EmailAddressStatus.DISABLED,
+                    address,
+                );
 
-            await ldapEventHandler.handleEmailAddressDeletedEvent(event);
+                await ldapEventHandler.handleEmailAddressMarkedForDeletionEvent(event);
 
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, address:${event.address}`,
-            );
-            expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(1);
-            expect(eventServiceMock.publish).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    personId: personId,
-                    username: username,
-                    address: address,
-                }),
-                expect.objectContaining({
-                    personId: personId,
-                    username: username,
-                    address: address,
-                }),
-            );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
+                );
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Username UNDEFINED in EmailAddressDeletedEvent, skipping removal of MailAlternativeAddress in LDAP, oxUserId:${event.oxUserId}`,
+                );
+                expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(0);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: personId,
+                        username: undefined,
+                        address: address,
+                    }),
+                    expect.objectContaining({
+                        personId: personId,
+                        username: undefined,
+                        address: address,
+                    }),
+                );
+            });
+        });
+
+        describe('when username is defined in event', () => {
+            it('should call LdapClientService removeMailAlternativeAddress', async () => {
+                const event: EmailAddressMarkedForDeletionEvent = new EmailAddressMarkedForDeletionEvent(
+                    personId,
+                    username,
+                    faker.string.numeric(),
+                    faker.string.uuid(),
+                    EmailAddressStatus.DISABLED,
+                    address,
+                );
+                ldapClientServiceMock.removeMailAlternativeAddress.mockResolvedValueOnce({ ok: true, value: true });
+                await ldapEventHandler.handleEmailAddressMarkedForDeletionEvent(event);
+
+                expect(loggerMock.info).toHaveBeenLastCalledWith(
+                    `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, address:${event.address}`,
+                );
+                expect(ldapClientServiceMock.removeMailAlternativeAddress).toHaveBeenCalledTimes(1);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: personId,
+                        username: username,
+                        address: address,
+                    }),
+                    expect.objectContaining({
+                        personId: personId,
+                        username: username,
+                        address: address,
+                    }),
+                );
+            });
         });
     });
 
-    describe('EmailAddressesPurgedEvent', () => {
+    describe('handleEmailAddressesPurgedEvent', () => {
         const personId: PersonID = faker.string.uuid();
         const username: PersonReferrer = faker.internet.userName();
+
+        it('should log error when username is UNDEFINED in event', async () => {
+            const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
+                personId,
+                undefined,
+                faker.string.numeric(),
+            );
+            await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(
+                `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+            );
+            expect(loggerMock.info).toHaveBeenLastCalledWith(
+                `Cannot delete lehrer by username, username is UNDEFINED, oxUserId:${event.oxUserId}`,
+            );
+            expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(0);
+            expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+        });
 
         it('should call LdapClientService deleteLehrerByReferrer', async () => {
             const event: EmailAddressesPurgedEvent = new EmailAddressesPurgedEvent(
@@ -847,16 +944,16 @@ describe('LDAP Event Handler', () => {
                 username,
                 faker.string.numeric(),
             );
-            ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce({
+            ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce({
                 ok: true,
                 value: personId,
             });
             await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+                `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
             );
-            expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(1);
             expect(eventServiceMock.publish).toHaveBeenCalledWith(
                 expect.objectContaining({
                     personId: personId,
@@ -876,16 +973,16 @@ describe('LDAP Event Handler', () => {
                 username,
                 faker.string.numeric(),
             );
-            ldapClientServiceMock.deleteLehrerByReferrer.mockResolvedValueOnce({
+            ldapClientServiceMock.deleteLehrerByUsername.mockResolvedValueOnce({
                 ok: false,
                 error: error,
             });
             await ldapEventHandler.handleEmailAddressesPurgedEvent(event);
 
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+                `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
             );
-            expect(ldapClientServiceMock.deleteLehrerByReferrer).toHaveBeenCalledTimes(1);
+            expect(ldapClientServiceMock.deleteLehrerByUsername).toHaveBeenCalledTimes(1);
             expect(loggerMock.error).toHaveBeenLastCalledWith(error.message);
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });

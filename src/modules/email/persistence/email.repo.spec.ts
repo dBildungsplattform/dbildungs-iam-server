@@ -7,7 +7,12 @@ import {
     DoFactory,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { EmailRepo, mapAggregateToData } from './email.repo.js';
+import {
+    compareEmailAddressesByUpdatedAt,
+    compareEmailAddressesByUpdatedAtDesc,
+    EmailRepo,
+    mapAggregateToData,
+} from './email.repo.js';
 import { EmailFactory } from '../domain/email.factory.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonFactory } from '../../person/domain/person.factory.js';
@@ -33,6 +38,7 @@ import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 import { EmailModule } from '../email.module.js';
 import { EmailInstanceConfig } from '../email-instance-config.js';
+import { SortOrder } from '../../../shared/persistence/repository.enums.js';
 
 describe('EmailRepo', () => {
     let module: TestingModule;
@@ -831,6 +837,151 @@ describe('EmailRepo', () => {
                     'Error during deletion of EmailAddress',
                     notFoundError,
                 );
+            });
+        });
+    });
+
+    describe('compareFunctions', () => {
+        const emailAddressUndefinedUpdatedAt: EmailAddressEntity = createMock<EmailAddressEntity>({
+            updatedAt: undefined,
+        });
+        const emailAddress1: EmailAddressEntity = createMock<EmailAddressEntity>({
+            updatedAt: faker.date.recent(),
+        });
+        const emailAddress2: EmailAddressEntity = createMock<EmailAddressEntity>({
+            updatedAt: faker.date.past(),
+        });
+        describe('compareEmailAddressesByUpdatedAt', () => {
+            describe('when sortOrder is ASC', () => {
+                describe('when first parameter updatedAt and second parameter updatedAt are equal', () => {
+                    it('should return 0', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddress1,
+                            emailAddress1,
+                            SortOrder.ASC,
+                        );
+                        expect(result).toStrictEqual(0);
+                    });
+                });
+
+                describe('when first parameter updatedAt is UNDEFINED and second parameter updatedAt is defined', () => {
+                    it('should return Number.MAX_VALUE', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddressUndefinedUpdatedAt,
+                            emailAddress2,
+                            SortOrder.ASC,
+                        );
+                        expect(result).toStrictEqual(Number.MAX_VALUE);
+                    });
+                });
+
+                describe('when first parameter is defined and second parameter updatedAt is UNDEFINED', () => {
+                    it('should return Number.MIN_VALUE', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddress1,
+                            emailAddressUndefinedUpdatedAt,
+                            SortOrder.ASC,
+                        );
+                        expect(result).toStrictEqual(Number.MIN_VALUE);
+                    });
+                });
+
+                describe('when first parameter updatedAt is more recent than second parameter updatedAt', () => {
+                    it('should return greater than 0', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddress1,
+                            emailAddress2,
+                            SortOrder.ASC,
+                        );
+                        expect(result).toBeGreaterThan(0);
+                    });
+                });
+                describe('when second parameter updatedAt is more recent than first parameter updatedAt', () => {
+                    it('should return less than 0', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddress2,
+                            emailAddress1,
+                            SortOrder.ASC,
+                        );
+                        expect(result).toBeLessThan(0);
+                    });
+                });
+            });
+
+            describe('when sortOrder is DESC', () => {
+                describe('when first parameter updatedAt and second parameter updatedAt are equal', () => {
+                    it('should return 0', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddress1,
+                            emailAddress1,
+                            SortOrder.DESC,
+                        );
+                        expect(result).toStrictEqual(0);
+                    });
+                });
+
+                describe('when first parameter updatedAt is UNDEFINED and second parameter updatedAt is defined', () => {
+                    it('should return Number.MAX_VALUE', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddress2,
+                            emailAddressUndefinedUpdatedAt,
+                            SortOrder.DESC,
+                        );
+                        expect(result).toStrictEqual(Number.MAX_VALUE);
+                    });
+                });
+
+                describe('when first parameter is defined and second parameter updatedAt is UNDEFINED', () => {
+                    it('should return Number.MIN_VALUE', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddressUndefinedUpdatedAt,
+                            emailAddress1,
+                            SortOrder.DESC,
+                        );
+                        expect(result).toStrictEqual(Number.MIN_VALUE);
+                    });
+                });
+
+                describe('when first parameter updatedAt is more recent than second parameter updatedAt', () => {
+                    it('should return greater than 0', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddress2,
+                            emailAddress1,
+                            SortOrder.DESC,
+                        );
+                        expect(result).toBeGreaterThan(0);
+                    });
+                });
+                describe('when second parameter updatedAt is more recent than first parameter updatedAt', () => {
+                    it('should return less than 0', () => {
+                        const result: number = compareEmailAddressesByUpdatedAt(
+                            emailAddress1,
+                            emailAddress2,
+                            SortOrder.DESC,
+                        );
+                        expect(result).toBeLessThan(0);
+                    });
+                });
+            });
+        });
+        describe('compareEmailAddressesByUpdatedAtDesc', () => {
+            describe('when first parameter updatedAt and second parameter updatedAt are equal', () => {
+                it('should return 0', () => {
+                    const result: number = compareEmailAddressesByUpdatedAtDesc(emailAddress1, emailAddress1);
+                    expect(result).toStrictEqual(0);
+                });
+            });
+            describe('when first parameter updatedAt greater than second parameter updatedAt', () => {
+                it('should return less than 0', () => {
+                    const result: number = compareEmailAddressesByUpdatedAtDesc(emailAddress1, emailAddress2);
+                    expect(result).toBeLessThan(0);
+                });
+            });
+            describe('when first parameter updatedAt less than second parameter updatedAt are equal', () => {
+                it('should return greater than 0', () => {
+                    const result: number = compareEmailAddressesByUpdatedAtDesc(emailAddress2, emailAddress1);
+                    expect(result).toBeGreaterThan(0);
+                });
             });
         });
     });

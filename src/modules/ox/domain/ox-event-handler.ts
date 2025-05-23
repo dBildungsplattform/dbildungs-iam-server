@@ -56,30 +56,32 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
-import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { DeleteUserAction } from '../actions/user/delete-user.action.js';
-import { EmailAddressDeletedEvent } from '../../../shared/events/email/email-address-deleted.event.js';
+import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
 import { OxAccountDeletedEvent } from '../../../shared/events/ox/ox-account-deleted.event.js';
 import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
 import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
+import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
+import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
-import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
 import { KafkaOxAccountDeletedEvent } from '../../../shared/events/ox/kafka-ox-account-deleted.event.js';
 import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
-import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
-import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/email/kafka-email-address-deleted.event.js';
 import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
 import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
 import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-disabled-email-address-generated.event.js';
+import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kafka-email-addresses-purged.event.js';
+import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
+import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
-    referrer: PersonReferrer,
+    username: PersonReferrer,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -89,7 +91,7 @@ type OxUserChangedEventCreator = (
 
 const generateOxUserChangedEvent: OxUserChangedEventCreator = (
     personId: PersonID,
-    referrer: PersonReferrer,
+    username: PersonReferrer,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -99,7 +101,7 @@ const generateOxUserChangedEvent: OxUserChangedEventCreator = (
     return [
         new OxUserChangedEvent(
             personId,
-            referrer,
+            username,
             oxUserId,
             oxUserName, //strictEquals the new OxUsername
             oxContextId,
@@ -108,7 +110,7 @@ const generateOxUserChangedEvent: OxUserChangedEventCreator = (
         ),
         new KafkaOxUserChangedEvent(
             personId,
-            referrer,
+            username,
             oxUserId,
             oxUserName, //strictEquals the new OxUsername
             oxContextId,
@@ -120,7 +122,7 @@ const generateOxUserChangedEvent: OxUserChangedEventCreator = (
 
 const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
     personId: PersonID,
-    referrer: PersonReferrer,
+    username: PersonReferrer,
     oxUserId: OXUserID,
     oxUserName: OXUserName,
     oxContextId: OXContextID,
@@ -130,7 +132,7 @@ const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
     return [
         new DisabledOxUserChangedEvent(
             personId,
-            referrer,
+            username,
             oxUserId,
             oxUserName, //strictEquals the new OxUsername
             oxContextId,
@@ -139,7 +141,7 @@ const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
         ),
         new KafkaDisabledOxUserChangedEvent(
             personId,
-            referrer,
+            username,
             oxUserId,
             oxUserName, //strictEquals the new OxUsername
             oxContextId,
@@ -192,14 +194,14 @@ export class OxEventHandler {
         event: EmailAddressChangedEvent | KafkaEmailAddressChangedEvent,
     ): Promise<void> {
         this.logger.info(
-            `Received EmailAddressChangedEvent, personId:${event.personId}, referrer:${event.referrer}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
+            `Received EmailAddressChangedEvent, personId:${event.personId}, username:${event.username}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
         );
 
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.changeOxUser(event.personId, event.referrer, generateOxUserChangedEvent);
+        await this.changeOxUser(event.personId, event.username, generateOxUserChangedEvent);
     }
 
     @EventHandler(EmailAddressGeneratedEvent)
@@ -209,14 +211,14 @@ export class OxEventHandler {
         event: EmailAddressGeneratedEvent | KafkaEmailAddressGeneratedEvent,
     ): Promise<void> {
         this.logger.info(
-            `Received EmailAddressGeneratedEvent, personId:${event.personId}, referrer:${event.referrer}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
+            `Received EmailAddressGeneratedEvent, personId:${event.personId}, username:${event.username}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
         );
 
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.createOxUser(event.personId, event.referrer, event.orgaKennung);
+        await this.createOxUser(event.personId, event.username, event.orgaKennung);
     }
 
     @KafkaEventHandler(KafkaDisabledEmailAddressGeneratedEvent)
@@ -224,14 +226,14 @@ export class OxEventHandler {
     @EnsureRequestContext()
     public async handleDisabledEmailAddressGeneratedEvent(event: DisabledEmailAddressGeneratedEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressGeneratedAndDisabledEvent, personId:${event.personId}, referrer:${event.referrer}, address:${event.address}, domain:${event.domain}`,
+            `Received EmailAddressGeneratedAndDisabledEvent, personId:${event.personId}, username:${event.username}, address:${event.address}, domain:${event.domain}`,
         );
 
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.changeOxUser(event.personId, event.referrer, generateDisabledOxUserChangedEvent);
+        await this.changeOxUser(event.personId, event.username, generateDisabledOxUserChangedEvent);
     }
 
     @KafkaEventHandler(KafkaEmailAddressAlreadyExistsEvent)
@@ -336,14 +338,12 @@ export class OxEventHandler {
         await this.removeOxUserFromAllItsOxGroups(person.oxUserId, person.id);
     }
 
-    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EventHandler(PersonenkontextUpdatedEvent)
+    @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
     @EnsureRequestContext()
-    public async handlePersonenkontextUpdatedEvent(
-        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
-    ): Promise<void> {
+    public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
-            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, referrer:${event.person.referrer}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
+            `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,
         );
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
@@ -375,6 +375,51 @@ export class OxEventHandler {
         }
     }
 
+    @EventHandler(PersonDeletedAfterDeadlineExceededEvent)
+    @KafkaEventHandler(KafkaPersonDeletedAfterDeadlineExceededEvent)
+    @EnsureRequestContext()
+    public async handlePersonDeletedAfterDeadlineExceededEvent(
+        event: PersonDeletedAfterDeadlineExceededEvent | KafkaPersonDeletedAfterDeadlineExceededEvent,
+    ): Promise<void> {
+        this.logger.info(
+            `Received PersonDeletedAfterDeadlineExceededEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        await this.handlePersonHasNotAnyPKWithRollenartLehr(event.personId, event.username, event.oxUserId);
+    }
+
+    public async handlePersonHasNotAnyPKWithRollenartLehr(
+        personId: PersonID,
+        username: PersonReferrer | undefined,
+        oxUserId: OXUserID,
+    ): Promise<void> {
+        //change oxUserName to avoid conflicts for future OX-createUser-requests
+        const params: ChangeUserParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            username: personId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: ChangeUserAction = new ChangeUserAction(params);
+
+        const result: Result<void, DomainError> = await this.oxService.send(action);
+
+        if (!result.ok) {
+            return this.logger.error(
+                `Could Not Change OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonDeletedAfterDeadlineExceededEvent, error:${result.error.message}`,
+            );
+        }
+
+        return this.logger.info(
+            `Successfully Changed OxUsername, personId:${personId}, username:${username}, oxUserId:${oxUserId} After PersonDeletedAfterDeadlineExceededEvent`,
+        );
+    }
+
     // this method cannot make use of handlePerson(personId) method, because personId is already null when event is received
     @KafkaEventHandler(KafkaPersonDeletedEvent)
     @EventHandler(PersonDeletedEvent)
@@ -388,55 +433,34 @@ export class OxEventHandler {
         }
 
         if (!event.emailAddress) {
-            return this.logger.error('Cannot Create OX-change-user-request, Email-Address Is Not Defined');
+            return this.logger.error('Cannot Create OX-delete-user-request, Email-Address Is Not Defined');
         }
 
         const emailAddress: Option<EmailAddress<true>> = await this.emailRepo.findByAddress(event.emailAddress);
         if (!emailAddress) {
             return this.logger.error(
-                `Cannot Create OX-change-user-request For address:${event.emailAddress} Could Not Be Found`,
+                `Cannot Create OX-delete-user-request For address:${event.emailAddress} Could Not Be Found`,
             );
         }
         if (!emailAddress.oxUserID) {
             return this.logger.error(
-                `Cannot Create OX-change-user-request For address:${event.emailAddress}, OxUserId Is Not Defined`,
+                `Cannot Create OX-delete-user-request For address:${event.emailAddress}, OxUserId Is Not Defined`,
             );
         }
 
-        //remove oxUser as member from all its oxGroups
-        //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
-        await this.removeOxUserFromAllItsOxGroups(emailAddress.oxUserID, event.personId);
-
-        //change oxUserName to avoid conflicts for future OX-createUser-requests
-        const params: ChangeUserParams = {
-            contextId: this.contextID,
-            userId: emailAddress.oxUserID,
-            username: emailAddress.id, //person-id is not available anymore when event is received
-            login: this.authUser,
-            password: this.authPassword,
-        };
-
-        const action: ChangeUserAction = new ChangeUserAction(params);
-
-        const result: Result<void, DomainError> = await this.oxService.send(action);
-
-        if (!result.ok) {
-            return this.logger.error(
-                `Could Not Change OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent, error:${result.error.message}`,
-            );
-        }
-
-        return this.logger.info(
-            `Successfully Changed OxUsername For oxUserId:${emailAddress.oxUserID} After PersonDeletedEvent`,
+        return this.removeOxUserFromAllItsGroupsAndDeleteOxAccount(
+            event.personId,
+            event.username,
+            emailAddress.oxUserID,
         );
     }
 
-    @KafkaEventHandler(KafkaEmailAddressDeletedEvent)
-    @EventHandler(EmailAddressDeletedEvent)
+    @KafkaEventHandler(KafkaEmailAddressMarkedForDeletionEvent)
+    @EventHandler(EmailAddressMarkedForDeletionEvent)
     @EnsureRequestContext()
-    public async handleEmailAddressDeletedEvent(event: EmailAddressDeletedEvent): Promise<void> {
+    public async handleEmailAddressMarkedForDeletionEvent(event: EmailAddressMarkedForDeletionEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressDeletedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+            `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
 
         // Check if the functionality is enabled
@@ -455,19 +479,19 @@ export class OxEventHandler {
 
         if (!getDataResult.ok) {
             return this.logger.error(
-                `Cannot get data for oxUsername:${event.username} from OX, Aborting Email-Address Removal, personId:${event.personId}, referrer:${event.username}`,
+                `Cannot get data for oxUsername:${event.username} from OX, Aborting Email-Address Removal, personId:${event.personId}, username:${event.username}`,
             );
         }
         let newAliasesArray: string[] = getDataResult.value.aliases;
         const aliasesLengthBeforeRemoval: number = newAliasesArray.length;
         this.logger.info(
-            `Found Current aliases:${JSON.stringify(newAliasesArray)}, personId:${event.personId}, referrer:${event.username}`,
+            `Found Current aliases:${JSON.stringify(newAliasesArray)}, personId:${event.personId}, username:${event.username}`,
         );
 
         newAliasesArray = newAliasesArray.filter((a: string) => a !== event.address);
         if (aliasesLengthBeforeRemoval !== newAliasesArray.length) {
             this.logger.info(
-                `Removed From alias:${event.address}, personId:${event.personId}, referrer:${event.username}`,
+                `Removed From alias:${event.address}, personId:${event.personId}, username:${event.username}`,
             );
         }
 
@@ -478,7 +502,7 @@ export class OxEventHandler {
 
         if (!result.ok) {
             return this.logger.error(
-                `Could Not Remove EmailAddress from OxAccount, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}, error:${result.error.message}`,
+                `Could Not Remove EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}, error:${result.error.message}`,
             );
         }
 
@@ -501,7 +525,7 @@ export class OxEventHandler {
             ),
         );
         return this.logger.info(
-            `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+            `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
     }
 
@@ -510,7 +534,7 @@ export class OxEventHandler {
     @EnsureRequestContext()
     public async handleEmailAddressesPurgedEvent(event: EmailAddressesPurgedEvent): Promise<void> {
         this.logger.info(
-            `Received EmailAddressesPurgedEvent, personId:${event.personId}, referrer:${event.username}, oxUserId:${event.oxUserId}`,
+            `Received EmailAddressesPurgedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
         );
 
         // Check if the functionality is enabled
@@ -518,9 +542,25 @@ export class OxEventHandler {
             return this.logger.info('Not enabled, ignoring event');
         }
 
+        return this.removeOxUserFromAllItsGroupsAndDeleteOxAccount(event.personId, event.username, event.oxUserId);
+    }
+
+    private async removeOxUserFromAllItsGroupsAndDeleteOxAccount(
+        personId: PersonID | undefined,
+        username: PersonReferrer | undefined,
+        oxUserId: OXUserID,
+    ): Promise<void> {
+        this.logger.info(
+            `Remove OxUser from all its groups and delete OxAccount, personId:${personId}, username:${username}, oxUserId:${oxUserId}`,
+        );
+
+        //remove oxUser as member from all its oxGroups
+        //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
+        await this.removeOxUserFromAllItsOxGroups(oxUserId, personId);
+
         const params: UserIdParams = {
             contextId: this.contextID,
-            userId: event.oxUserId,
+            userId: oxUserId,
             login: this.authUser,
             password: this.authPassword,
         };
@@ -531,20 +571,18 @@ export class OxEventHandler {
 
         if (!result.ok) {
             return this.logger.error(
-                `Could Not Delete OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent, error:${result.error.message}`,
+                `Could Not Delete OxAccount For oxUserId:${oxUserId}, error:${result.error.message}`,
             );
         }
         this.eventService.publish(
-            new OxAccountDeletedEvent(event.personId, event.username, event.oxUserId),
-            new KafkaOxAccountDeletedEvent(event.personId, event.username, event.oxUserId),
+            new OxAccountDeletedEvent(personId, username, oxUserId),
+            new KafkaOxAccountDeletedEvent(personId, username, oxUserId),
         );
 
-        return this.logger.info(
-            `Successfully Deleted OxAccount For oxUserId:${event.oxUserId} After EmailAddressesPurgedEvent`,
-        );
+        return this.logger.info(`Successfully Deleted OxAccount For oxUserId:${oxUserId}`);
     }
 
-    private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID): Promise<void> {
+    private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID | undefined): Promise<void> {
         const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
             await this.getOxGroupsForOxUserId(oxUserId);
         if (!listGroupsForUserResponse.ok) {
@@ -728,7 +766,7 @@ export class OxEventHandler {
             return this.logger.error(`Person not found for personId:${personId}, username:${username}`);
         }
         if (!person.referrer) {
-            return this.logger.error(`Person with personId:${personId} has no referrer: cannot create OXEmailAddress`);
+            return this.logger.error(`Person with personId:${personId} has no username: cannot create OXEmailAddress`);
         }
 
         const mostRecentRequestedEmailAddress: Option<EmailAddress<true>> =
@@ -868,21 +906,21 @@ export class OxEventHandler {
 
     private async changeOxUser(
         personId: PersonID,
-        referrer: PersonReferrer,
+        username: PersonReferrer,
         eventCreator: OxUserChangedEventCreator,
     ): Promise<void> {
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
-            return this.logger.error(`Person not found for personId:${personId}, referrer:${referrer}`);
+            return this.logger.error(`Person not found for personId:${personId}, username:${username}`);
         }
         if (!person.referrer) {
             return this.logger.error(
-                `Person with personId:${personId} has no referrer: Cannot Change Email-Address In OX`,
+                `Person with personId:${personId} has no username: Cannot Change Email-Address In OX`,
             );
         }
         if (!person.oxUserId) {
-            return this.logger.error(`Person has no OXUserId, personId:${personId}, referrer:${referrer}`);
+            return this.logger.error(`Person has no OXUserId, personId:${personId}, username:${username}`);
         }
 
         const mostRecentRequestedEmailAddress: Option<EmailAddress<true>> =
@@ -905,16 +943,16 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
             return this.logger.error(
-                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personId}, referrer:${referrer}`,
+                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personId}, username:${username}`,
             );
         }
         const newAliasesArray: string[] = getDataResult.value.aliases;
         this.logger.info(
-            `Found Current aliases:${JSON.stringify(newAliasesArray)}, personId:${personId}, referrer:${referrer}`,
+            `Found Current aliases:${JSON.stringify(newAliasesArray)}, personId:${personId}, username:${username}`,
         );
 
         newAliasesArray.push(requestedEmailAddressString);
-        this.logger.info(`Added New alias:${requestedEmailAddressString}, personId:${personId}, referrer:${referrer}`);
+        this.logger.info(`Added New alias:${requestedEmailAddressString}, personId:${personId}, username:${username}`);
 
         const params: ChangeUserParams = {
             contextId: this.contextID,
@@ -940,12 +978,12 @@ export class OxEventHandler {
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
 
             return this.logger.error(
-                `Could not change email-address for oxUserId:${person.oxUserId}, personId:${personId}, referrer:${referrer}, error:${result.error.message}`,
+                `Could not change email-address for oxUserId:${person.oxUserId}, personId:${personId}, username:${username}, error:${result.error.message}`,
             );
         }
 
         this.logger.info(
-            `Changed primary email-address in OX for user, personId:${personId}, referrer:${referrer}, oxUserId:${person.oxUserId}, oxUsername:${person.referrer}, new email-address:${requestedEmailAddressString}`,
+            `Changed primary email-address in OX for user, personId:${personId}, username:${username}, oxUserId:${person.oxUserId}, oxUsername:${person.referrer}, new email-address:${requestedEmailAddressString}`,
         );
 
         const event: [OxUserChangedEvent, KafkaOxUserChangedEvent] = eventCreator(

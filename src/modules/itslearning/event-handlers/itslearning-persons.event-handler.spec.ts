@@ -268,7 +268,7 @@ describe('ItsLearning Persons Event Handler', () => {
             id: faker.string.uuid(),
             vorname: faker.person.firstName(),
             familienname: faker.person.lastName(),
-            referrer: faker.internet.userName(),
+            username: faker.internet.userName(),
         };
 
         it('should send person to itsLearning', async () => {
@@ -283,7 +283,7 @@ describe('ItsLearning Persons Event Handler', () => {
                     id: person.id,
                     firstName: person.vorname,
                     lastName: person.familienname,
-                    username: person.referrer,
+                    username: person.username,
                     institutionRoleType: IMSESInstitutionRoleType.STUDENT,
                 },
                 eventID,
@@ -308,7 +308,7 @@ describe('ItsLearning Persons Event Handler', () => {
         describe('when person is invalid', () => {
             it('should log error, if person has no referrer', async () => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { referrer, ...personWithoutReferrer }: PersonenkontextUpdatedPersonData = person;
+                const { username, ...personWithoutReferrer }: PersonenkontextUpdatedPersonData = person;
                 const eventID: string = faker.string.uuid();
 
                 await sut.updatePerson(personWithoutReferrer, [createMock()], eventID);
