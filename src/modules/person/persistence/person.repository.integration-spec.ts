@@ -1044,7 +1044,93 @@ describe('PersonRepository Integration', () => {
             });
         });
 
-        describe('when only failed emailAddresses are in collection', () => {
+        describe('when no enabled but an disabled emailAddress is in collection', () => {
+            it('should return address of (first found) disabled address', () => {
+                const disabledEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.DISABLED);
+                const deletedLdapEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.DELETED_LDAP,
+                );
+                const deletedOxEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.DELETED_OX,
+                );
+                const deletedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.DELETED);
+                const failedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
+                const requestedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                );
+
+                personEntity.emailAddresses.add(disabledEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedLdapEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedOxEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedEmailAddressEntity);
+                personEntity.emailAddresses.add(failedEmailAddressEntity);
+                personEntity.emailAddresses.add(requestedEmailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toStrictEqual(disabledEmailAddressEntity.oxUserId);
+            });
+        });
+
+        describe('when emailAddress with DELETED_OX, DEELETED_LDAP or DELETED is highest status in collection', () => {
+            it('should return address of emailAddress with status DELETED_OX', () => {
+                const deletedLdapEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.DELETED_LDAP,
+                );
+                const deletedOxEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.DELETED_OX,
+                );
+                const deletedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.DELETED);
+                const failedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
+                const requestedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                );
+
+                // opposite order is intentionally, implicitly checking order by date
+                personEntity.emailAddresses.add(requestedEmailAddressEntity);
+                personEntity.emailAddresses.add(failedEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedLdapEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedOxEmailAddressEntity);
+                personEntity.emailAddresses.add(deletedEmailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toStrictEqual(deletedLdapEmailAddressEntity.oxUserId);
+            });
+        });
+
+        describe('when emailAddress with FAILED is highest status in collection', () => {
+            it('should return address of emailAddress with status FAILED', () => {
+                const failedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
+                const requestedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                );
+
+                // opposite order is intentionally, implicitly checking order by date
+                personEntity.emailAddresses.add(requestedEmailAddressEntity);
+                personEntity.emailAddresses.add(failedEmailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toStrictEqual(failedEmailAddressEntity.oxUserId);
+            });
+        });
+
+        describe('when emailAddress with REQUESTED is highest status in collection', () => {
+            it('should return address of emailAddress with status REQUESTED', () => {
+                const requestedEmailAddressEntity: EmailAddressEntity = getFakeEmailAddress(
+                    EmailAddressStatus.REQUESTED,
+                );
+
+                personEntity.emailAddresses.add(requestedEmailAddressEntity);
+
+                const result: string | undefined = getOxUserId(personEntity);
+
+                expect(result).toStrictEqual(requestedEmailAddressEntity.oxUserId);
+            });
+        });
+
+        /* describe('when only failed emailAddresses are in collection', () => {
             it('should return undefined', () => {
                 const emailAddressEntity: EmailAddressEntity = getFakeEmailAddress(EmailAddressStatus.FAILED);
                 personEntity.emailAddresses.add(emailAddressEntity);
@@ -1053,7 +1139,7 @@ describe('PersonRepository Integration', () => {
 
                 expect(result).toBeUndefined();
             });
-        });
+        });*/
 
         describe('when NO emailAddress at all is found in collection', () => {
             it('should return undefined', () => {

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, FilterQuery, Loaded, QBFilterQuery, RequiredEntityData, raw } from '@mikro-orm/postgresql';
+import { EntityManager, FilterQuery, Loaded, QBFilterQuery, raw, RequiredEntityData } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -48,6 +48,9 @@ import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-p
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
+import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
+import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/email.repo.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -62,11 +65,51 @@ export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): strin
     return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
 }
 
-export function getOxUserId(entity: PersonEntity): string | undefined {
-    for (const emailAddress of entity.emailAddresses) {
-        if (emailAddress.status !== EmailAddressStatus.FAILED) return emailAddress.oxUserId;
+/**
+ * Trys to find a valid OXUserID in EmailAddresses for a PersonEntity while using the status of EmailAddresses for ordering.
+ * First check whether an enabled EmailAddress can be used to return an OXUserID, otherwise check for a disabled EmailAddress to do so,
+ * then check EmailAddresses with status DELETED_LDAP, DELETED_OX or DELETED_LDAP, as fourth priority use FAILED status or fifth priority REQUESTED.
+ * If no EmailAddress could be chosen by status, the OXUserId of first element from an array sorted by updatedAt descending is returned.
+ * @param entity
+ */
+export function getOxUserId(entity: PersonEntity): OXUserID | undefined {
+    const emailAddresses: EmailAddressEntity[] = Array.from(entity.emailAddresses);
+
+    const enabledAddresses: EmailAddressEntity[] = [];
+    const disabledAddresses: EmailAddressEntity[] = [];
+    const deletedAddresses: EmailAddressEntity[] = [];
+    const failedAddresses: EmailAddressEntity[] = [];
+    const requestedAddresses: EmailAddressEntity[] = [];
+
+    for (const emailAddress of emailAddresses) {
+        switch (emailAddress.status) {
+            case EmailAddressStatus.ENABLED:
+                enabledAddresses.push(emailAddress);
+                break;
+            case EmailAddressStatus.DISABLED:
+                disabledAddresses.push(emailAddress);
+                break;
+            case EmailAddressStatus.DELETED_LDAP:
+            case EmailAddressStatus.DELETED_OX:
+            case EmailAddressStatus.DELETED:
+                deletedAddresses.push(emailAddress);
+                break;
+            case EmailAddressStatus.FAILED:
+                failedAddresses.push(emailAddress);
+                break;
+            case EmailAddressStatus.REQUESTED:
+                requestedAddresses.push(emailAddress);
+                break;
+        }
     }
-    return undefined;
+    if (enabledAddresses[0]) return enabledAddresses[0].oxUserId;
+    if (disabledAddresses[0]) return disabledAddresses[0].oxUserId;
+    if (deletedAddresses[0]) return deletedAddresses[0].oxUserId;
+    if (failedAddresses[0]) return failedAddresses[0].oxUserId;
+    if (requestedAddresses[0]) return requestedAddresses[0].oxUserId;
+    const sortedEmailAddresses: EmailAddressEntity[] = emailAddresses.sort(compareEmailAddressesByUpdatedAtDesc);
+
+    return sortedEmailAddresses[0]?.oxUserId;
 }
 
 export function mapAggregateToData(person: Person<boolean>): RequiredEntityData<PersonEntity> {
@@ -117,6 +160,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         },
         {} as Partial<Record<PersonExternalIdType, string>>,
     );
+    const oxUserId: OXUserID | undefined = getOxUserId(entity);
 
     return Person.construct(
         entity.id,
@@ -148,7 +192,7 @@ export function mapEntityToAggregate(entity: PersonEntity): Person<true> {
         undefined,
         undefined,
         getEnabledOrAlternativeEmailAddress(entity),
-        getOxUserId(entity),
+        oxUserId,
         entity.istTechnisch,
         externalIds,
     );

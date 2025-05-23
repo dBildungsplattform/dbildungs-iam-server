@@ -17,8 +17,28 @@ import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing
 import { EmailInstanceConfig } from '../email-instance-config.js';
 import assert from 'assert';
 import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
+import { SortOrder } from '../../../shared/persistence/repository.enums.js';
 
 export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT: number = 180;
+
+export function compareEmailAddressesByUpdatedAt(
+    ea1: EmailAddressEntity,
+    ea2: EmailAddressEntity,
+    order: SortOrder,
+): number {
+    if (!ea1.updatedAt && order === SortOrder.ASC) return Number.MAX_VALUE;
+    if (!ea1.updatedAt && order === SortOrder.DESC) return Number.MIN_VALUE;
+    if (!ea2.updatedAt && order === SortOrder.ASC) return Number.MIN_VALUE;
+    if (!ea2.updatedAt && order === SortOrder.DESC) return Number.MAX_VALUE;
+    if (order === SortOrder.ASC) {
+        return ea1.updatedAt.getTime() - ea2.updatedAt.getTime();
+    }
+    return ea2.updatedAt.getTime() - ea1.updatedAt.getTime();
+}
+
+export function compareEmailAddressesByUpdatedAtDesc(ea1: EmailAddressEntity, ea2: EmailAddressEntity): number {
+    return compareEmailAddressesByUpdatedAt(ea1, ea2, SortOrder.DESC);
+}
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
     const oxUserIdStr: string | undefined = emailAddress.oxUserID ? emailAddress.oxUserID + '' : undefined;

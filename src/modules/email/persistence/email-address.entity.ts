@@ -11,6 +11,7 @@ export class EmailAddressEntity extends TimestampedEntity {
         ref: true,
         nullable: true,
         deleteRule: 'set null',
+        eager: true,
         entity: () => PersonEntity,
     })
     @Index({
