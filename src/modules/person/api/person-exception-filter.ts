@@ -13,8 +13,9 @@ import { PersonalnummerRequiredError } from '../domain/personalnummer-required.e
 import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
 import { LandesbediensteterSearchNoPersonFoundError } from '../domain/landesbediensteter-search-no-person-found.error.js';
 import { LandesbediensteterSearchMultiplePersonsFoundError } from '../domain/landesbediensteter-search-multiple-persons-found.error.js';
+import { LandesbediensteterSearchError } from '../domain/landesbediensteter-search-domain.error.js';
 
-@Catch(PersonDomainError, DuplicatePersonalnummerError)
+@Catch(PersonDomainError, DuplicatePersonalnummerError, LandesbediensteterSearchError)
 export class PersonExceptionFilter implements ExceptionFilter<PersonDomainError> {
     private ERROR_MAPPINGS: Map<string, DbiamPersonError> = new Map([
         [
