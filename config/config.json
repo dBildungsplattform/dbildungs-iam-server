@@ -81,7 +81,8 @@
         "CONTEXT_ID": "1337",
         "CONTEXT_NAME": "contextname",
         "USERNAME": "username",
-        "PASSWORD": "password"
+        "PASSWORD": "password",
+        "NUMBER_OF_RETRIES": 3
     },
     "EMAIL": {
         "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 180
