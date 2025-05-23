@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { HttpException, NotImplementedException } from '@nestjs/common';
+import { HttpException, NotImplementedException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
@@ -48,6 +48,9 @@ import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
+import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
+import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
+import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 
 describe('PersonController', () => {
     let module: TestingModule;
@@ -58,6 +61,7 @@ describe('PersonController', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let keycloakUserService: DeepMocked<KeycloakUserService>;
     let personDeleteServiceMock: DeepMocked<PersonDeleteService>;
+    let personLandesbediensteterSearchServiceMock: DeepMocked<PersonLandesbediensteterSearchService>;
     let personPermissionsMock: DeepMocked<PersonPermissions>;
     let dBiamPersonenkontextServiceMock: DeepMocked<DBiamPersonenkontextService>;
     let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
@@ -81,6 +85,10 @@ describe('PersonController', () => {
                 {
                     provide: PersonDeleteService,
                     useValue: createMock<PersonDeleteService>(),
+                },
+                {
+                    provide: PersonLandesbediensteterSearchService,
+                    useValue: createMock<PersonLandesbediensteterSearchService>(),
                 },
                 {
                     provide: PersonRepository,
@@ -142,6 +150,7 @@ describe('PersonController', () => {
         dBiamPersonenkontextServiceMock = module.get(DBiamPersonenkontextService);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         ldapClientServiceMock = module.get(LdapClientService);
+        personLandesbediensteterSearchServiceMock = module.get(PersonLandesbediensteterSearchService);
     });
 
     function getPerson(): Person<true> {
@@ -197,6 +206,7 @@ describe('PersonController', () => {
 
     it('should be defined', () => {
         expect(personController).toBeDefined();
+        expect(personLandesbediensteterSearchServiceMock).toBeDefined();
     });
 
     describe('deletePerson', () => {
@@ -275,6 +285,55 @@ describe('PersonController', () => {
                 expect(personResponse.person.email.status).toStrictEqual(EmailAddressStatus.ENABLED);
                 expect(personResponse.person.email.address).toStrictEqual(fakeEmailAddress);
             });
+        });
+    });
+
+    describe('findLandesbediensteter', () => {
+        const queryParams: PersonLandesbediensteterSearchQueryParams = {
+            personalnummer: '1234567',
+            primaryEmailAddress: 'test@example.com',
+            username: 'tester',
+            vorname: 'Tester',
+            familienname: 'Testis',
+        };
+
+        beforeEach(() => {
+            personPermissionsMock = createMock<PersonPermissions>();
+        });
+
+        it('should return search result when permissions are sufficient', async () => {
+            const responseMock: PersonLandesbediensteterSearchResponse =
+                createMock<PersonLandesbediensteterSearchResponse>();
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: true,
+            });
+
+            personLandesbediensteterSearchServiceMock.findLandesbediensteter.mockResolvedValueOnce(responseMock);
+
+            const result: PersonLandesbediensteterSearchResponse = await personController.findLandesbediensteter(
+                queryParams,
+                personPermissionsMock,
+            );
+
+            expect(result).toBe(responseMock);
+            expect(personLandesbediensteterSearchServiceMock.findLandesbediensteter).toHaveBeenCalledWith(
+                queryParams.personalnummer,
+                queryParams.primaryEmailAddress,
+                queryParams.username,
+                queryParams.vorname,
+                queryParams.familienname,
+            );
+        });
+
+        it('should throw UnauthorizedException if no permitted orgas are found', async () => {
+            personPermissionsMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({
+                all: false,
+                orgaIds: [],
+            });
+
+            await expect(personController.findLandesbediensteter(queryParams, personPermissionsMock)).rejects.toThrow(
+                UnauthorizedException,
+            );
         });
     });
 

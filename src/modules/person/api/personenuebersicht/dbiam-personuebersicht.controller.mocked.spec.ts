@@ -28,6 +28,7 @@ import { Organisation } from '../../../organisation/domain/organisation.js';
 import { PersonenuebersichtBodyParams } from './personenuebersicht-body.params.js';
 import { EntityNotFoundError } from '../../../../shared/error/entity-not-found.error.js';
 import { DbiamPersonenuebersicht } from '../../domain/dbiam-personenuebersicht.js';
+import { PersonLandesbediensteterSearchService } from '../../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 
 function createPersonenkontext<WasPersisted extends boolean>(
     this: void,
@@ -96,7 +97,8 @@ describe('Personenuebersicht API Mocked', () => {
             .useValue(createMock<OrganisationRepository>())
             .overrideProvider(PersonRepository)
             .useValue(createMock<PersonRepository>())
-
+            .overrideProvider(PersonLandesbediensteterSearchService)
+            .useValue(createMock<PersonLandesbediensteterSearchService>())
             .compile();
 
         sut = module.get(DBiamPersonenuebersichtController);
