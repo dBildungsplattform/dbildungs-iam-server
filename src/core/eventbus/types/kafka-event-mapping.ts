@@ -17,8 +17,9 @@ import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updat
 import { KafkaSchuleCreatedEvent } from '../../../shared/events/kafka-schule-created.event.js';
 import { KafkaSchuleItslearningEnabledEvent } from '../../../shared/events/kafka-schule-itslearning-enabled.event.js';
 import { Constructor } from './util.types.js';
+import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
-import { KafkaEmailAddressDeletedEvent } from '../../../shared/events/email/kafka-email-address-deleted.event.js';
+import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
 import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
@@ -36,6 +37,7 @@ import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user
 export type KafkaEventKey =
     | 'user.created.email'
     | 'user.deleted'
+    | 'user.deleted_deadline'
     | 'user.modified.name'
     | 'user.modified.email'
     | 'user.modified.personenkontexte'
@@ -78,27 +80,32 @@ export interface KafkaEventMappingEntry {
 
 export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = {
     'user.created.email': {
-        eventClass: KafkaEmailAddressGeneratedEvent, // CHECKED
+        eventClass: KafkaEmailAddressGeneratedEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.deleted': {
-        eventClass: KafkaPersonDeletedEvent, // CHECKED
+        eventClass: KafkaPersonDeletedEvent,
+        topic: 'user-topic',
+        topicDlq: 'user-dlq-topic',
+    },
+    'user.deleted_deadline': {
+        eventClass: KafkaPersonDeletedAfterDeadlineExceededEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.modified.name': {
-        eventClass: KafkaPersonRenamedEvent, // CHECKED
+        eventClass: KafkaPersonRenamedEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.modified.email': {
-        eventClass: KafkaEmailAddressChangedEvent, // CHECKED
+        eventClass: KafkaEmailAddressChangedEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
     'user.modified.personenkontexte': {
-        eventClass: KafkaPersonenkontextUpdatedEvent, // CHECKED
+        eventClass: KafkaPersonenkontextUpdatedEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
@@ -164,7 +171,7 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topicDlq: 'user-dlq-topic',
     },
     'user.email.deleted': {
-        eventClass: KafkaEmailAddressDeletedEvent,
+        eventClass: KafkaEmailAddressMarkedForDeletionEvent,
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
