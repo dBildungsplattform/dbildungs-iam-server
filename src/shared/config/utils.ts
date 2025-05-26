@@ -54,6 +54,14 @@ export function envToOptionalInteger(key: string): number | undefined {
     return parsed;
 }
 
+/**
+ *  Reads the environment variable and returns an array of strings.
+ * Depending on the input:
+ * - undefined or empty string -> undefined
+ * - comma-separated string -> array of trimmed strings
+ * @param key
+ * @returns array of strings or undefined if the environment variable is not set or empty
+ */
 export function envToStringArray(key: string): string[] | undefined {
     const value: string | undefined = process.env[key];
     if (!value) {
@@ -63,6 +71,13 @@ export function envToStringArray(key: string): string[] | undefined {
     return value.split(',').map((item: string) => item.trim()) || undefined;
 }
 
+/**
+ * Maps an array of strings to an array of RollenArt enums.
+ * Filters out any strings that are not valid RollenArt values.
+ *
+ * @param rollenarten Array of strings representing RollenArt
+ * @returns Array of RollenArt enums or undefined if no valid RollenArt found
+ */
 export function mapStringsToRollenArt(rollenarten: string[]): RollenArt[] | undefined {
     return (
         rollenarten
