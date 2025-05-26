@@ -10,7 +10,7 @@ import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-
 export class EmailAddressChangedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
-        public readonly referrer: PersonReferrer,
+        public readonly username: PersonReferrer,
         public readonly oldEmailAddressId: EmailAddressID,
         public readonly oldAddress: string,
         public readonly newEmailAddressId: EmailAddressID,
