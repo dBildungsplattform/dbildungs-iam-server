@@ -208,26 +208,6 @@ export class RolleRepo {
         return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
     }
 
-    public async findByRollenarten(
-        rollenarten: RollenArt[],
-        includeTechnische: boolean = false,
-        limit?: number,
-        offset?: number,
-    ): Promise<Option<Rolle<true>[]>> {
-        const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
-        const rollen: Option<RolleEntity[]> = await this.em.find(
-            this.entityName,
-            { rollenart: { $in: rollenarten }, ...technischeQuery },
-            {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
-                exclude: ['serviceProvider.serviceProvider.logo'] as const,
-                limit: limit,
-                offset: offset,
-            },
-        );
-        return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
-    }
-
     public async find(
         includeTechnische: boolean,
         limit?: number,
