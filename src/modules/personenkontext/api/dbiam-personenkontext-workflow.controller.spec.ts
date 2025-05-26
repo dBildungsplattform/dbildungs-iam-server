@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigTestModule, DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -175,6 +175,35 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
             const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
 
             expect(response).toBeInstanceOf(PersonenkontextWorkflowResponse);
+        });
+
+        it('should limit rollenarten when requestedWithSystemrecht is set', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, { name: faker.company.name() });
+
+            const rolle: Rolle<true> = DoFactory.createRolle(true, {
+                administeredBySchulstrukturknoten: organisation.id,
+                rollenart: RollenArt.LEHR,
+            });
+
+            const personpermissions: DeepMocked<PersonPermissions> = createMock();
+
+            personenkontextWorkflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce([organisation]);
+            personenkontextWorkflowMock.findRollenForOrganisation.mockResolvedValueOnce([rolle]);
+            personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
+            const params: FindDbiamPersonenkontextWorkflowBodyParams = {
+                organisationId: organisation.id,
+                requestedWithSystemrecht: RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+            };
+
+            const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
+
+            expect(response).toBeInstanceOf(PersonenkontextWorkflowResponse);
+            expect(personenkontextWorkflowMock.findRollenForOrganisation).toHaveBeenCalledWith(
+                personpermissions,
+                undefined,
+                undefined,
+                [RollenArt.LEIT, RollenArt.LERN, RollenArt.EXTERN],
+            );
         });
     });
     describe('/PUT commit', () => {

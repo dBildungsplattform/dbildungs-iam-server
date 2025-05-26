@@ -733,6 +733,37 @@ describe('PersonenkontextWorkflow', () => {
         });
     });
 
+    describe('checkPermissions', () => {
+        it('should return true if user has limited anlegen permissions and only limited rollen are assigned', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const lehrRolle: Rolle<true> = DoFactory.createRolle(true, {
+                id: faker.string.uuid(),
+                name: 'Test Rolle',
+                rollenart: RollenArt.LERN,
+            });
+            const leitRolle: Rolle<true> = DoFactory.createRolle(true, {
+                id: faker.string.uuid(),
+                name: 'Test Rolle',
+                rollenart: RollenArt.LEIT,
+            });
+            const rolleMap: Map<string, Rolle<true>> = new Map([
+                [lehrRolle.id, lehrRolle],
+                [leitRolle.id, leitRolle],
+            ]);
+            rolleRepoMock.findByIds.mockResolvedValue(rolleMap);
+
+            const result: Option<DomainError> = await anlage.checkPermissions(permissions, 'orgId', [
+                lehrRolle.id,
+                leitRolle.id,
+            ]);
+
+            expect(result).toBe(undefined);
+        });
+    });
+
     it('should return an empty array if no personenkontexte are passed', async () => {
         const personId: string = faker.string.uuid();
         const lastModified: Date = faker.date.recent();
