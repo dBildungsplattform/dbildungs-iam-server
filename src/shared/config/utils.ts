@@ -68,7 +68,7 @@ export function envToStringArray(key: string): string[] | undefined {
         return undefined;
     }
 
-    return value.split(',').map((item: string) => item.trim()) || undefined;
+    return value.split(',').map((item: string) => item.trim());
 }
 
 /**
@@ -79,9 +79,7 @@ export function envToStringArray(key: string): string[] | undefined {
  * @returns Array of RollenArt enums or undefined if no valid RollenArt found
  */
 export function mapStringsToRollenArt(rollenarten: string[]): RollenArt[] | undefined {
-    return (
-        rollenarten
-            .filter((rollenart: string) => Object.values(RollenArt).includes(rollenart as RollenArt))
-            .map((rollenart: string) => rollenart as RollenArt) || undefined
-    );
+    return rollenarten
+        .filter((rollenart: string) => Object.values(RollenArt).includes(rollenart as RollenArt))
+        .map((rollenart: string) => rollenart as RollenArt);
 }
