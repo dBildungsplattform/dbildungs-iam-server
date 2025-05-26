@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { ConfigTestModule, DoFactory } from '../../../../test/utils/index.js';
+import { DoFactory } from '../../../../test/utils/index.js';
 import { Personenkontext } from './personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { faker } from '@faker-js/faker';
@@ -19,6 +19,7 @@ import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkonte
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { ConfigService } from '@nestjs/config';
 
 describe('PersonenkontextWorkflow', () => {
     let module: TestingModule;
@@ -28,10 +29,10 @@ describe('PersonenkontextWorkflow', () => {
     let personenkontextAnlageFactory: PersonenkontextWorkflowFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
     let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
+    let configMock: DeepMocked<ConfigService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule],
             providers: [
                 PersonenkontextWorkflowFactory,
                 PersonenkontextFactory,
@@ -59,6 +60,10 @@ describe('PersonenkontextWorkflow', () => {
                     provide: DbiamPersonenkontextFactory,
                     useValue: createMock<DbiamPersonenkontextFactory>(),
                 },
+                {
+                    provide: ConfigService,
+                    useValue: createMock<ConfigService>(),
+                },
             ],
         }).compile();
         rolleRepoMock = module.get(RolleRepo);
@@ -67,6 +72,7 @@ describe('PersonenkontextWorkflow', () => {
         personenkontextAnlageFactory = module.get(PersonenkontextWorkflowFactory);
         anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
+        configMock = module.get(ConfigService);
     });
 
     afterAll(async () => {
@@ -735,6 +741,9 @@ describe('PersonenkontextWorkflow', () => {
 
     describe('checkPermissions', () => {
         it('should return true if user has limited anlegen permissions and only limited rollen are assigned', async () => {
+            configMock.getOrThrow.mockReturnValueOnce({
+                LIMITED_ROLLENART_ALLOWLIST: [RollenArt.LERN, RollenArt.LEIT],
+            });
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
@@ -761,6 +770,26 @@ describe('PersonenkontextWorkflow', () => {
             ]);
 
             expect(result).toBe(undefined);
+        });
+
+        it('should return error if config is not set for limited rollenarten', async () => {
+            configMock.getOrThrow.mockReturnValueOnce({ LIMITED_ROLLENART_ALLOWLIST: undefined });
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const lehrRolle: Rolle<true> = DoFactory.createRolle(true, {
+                id: faker.string.uuid(),
+                name: 'Test Rolle',
+                rollenart: RollenArt.LERN,
+            });
+            const rolleMap: Map<string, Rolle<true>> = new Map([[lehrRolle.id, lehrRolle]]);
+            rolleRepoMock.findByIds.mockResolvedValue(rolleMap);
+
+            const result: Option<DomainError> = await anlage.checkPermissions(permissions, 'orgId', [lehrRolle.id]);
+
+            expect(result).toBeInstanceOf(DomainError);
         });
     });
 
