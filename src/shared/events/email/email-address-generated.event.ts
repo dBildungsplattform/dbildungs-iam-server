@@ -9,7 +9,7 @@ import { EmailAddressID, PersonID, PersonReferrer } from '../../types/aggregate-
 export class EmailAddressGeneratedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
-        public readonly referrer: PersonReferrer,
+        public readonly username: PersonReferrer,
         public readonly emailAddressId: EmailAddressID,
         public readonly address: string,
         public readonly enabled: boolean,
