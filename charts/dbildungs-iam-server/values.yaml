@@ -77,7 +77,6 @@ auth:
   import_passphrase_salt: ''
   ox_password: ''
   basic_auth_password: ''
-  redis_password: ''
   kafka_username: ''
   kafka_password: ''
 
@@ -188,6 +187,9 @@ backend:
     stepUpTimeoutInSeconds: 900
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
+
+redis: 
+  host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
   url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"

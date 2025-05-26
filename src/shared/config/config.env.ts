@@ -74,6 +74,7 @@ export default (): Config => ({
     },
     REDIS: {
         PASSWORD: process.env['REDIS_PASSWORD'],
+        HOST: process.env['REDIS_HOST'],
     },
     ITSLEARNING: {
         ENABLED: envToOptionalBoolean('ITSLEARNING_ENABLED'),
