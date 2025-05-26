@@ -1,4 +1,4 @@
-import { envToOptionalBoolean, envToOptionalInteger } from './utils.js';
+import { envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
 
 const TEST_KEY: string = 'CONFIG_UTIL_TEST_KEY';
 
@@ -45,6 +45,27 @@ describe('Config Utils', () => {
             process.env[TEST_KEY] = 'INVALID';
 
             expect(() => envToOptionalInteger(TEST_KEY)).toThrow();
+        });
+    });
+
+    describe('envToStringArray', () => {
+        it.each([
+            ['', undefined],
+            ['a,b,c', ['a', 'b', 'c']],
+            ['a, b, c', ['a', 'b', 'c']],
+        ])(
+            'when environment variable is "%s", should return %s',
+            (input: string | undefined, expected: string[] | undefined) => {
+                process.env[TEST_KEY] = input;
+
+                expect(envToStringArray(TEST_KEY)).toEqual(expected);
+            },
+        );
+
+        it('should return undefined if the environment variable is not set', () => {
+            delete process.env[TEST_KEY];
+
+            expect(envToStringArray(TEST_KEY)).toBeUndefined();
         });
     });
 });
