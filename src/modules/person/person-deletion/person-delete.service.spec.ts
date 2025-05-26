@@ -18,6 +18,7 @@ describe('PersonDeleteService', () => {
 
     let loggerMock: DeepMocked<ClassLogger>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let personRepositoryMock: DeepMocked<PersonRepository>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -41,6 +42,7 @@ describe('PersonDeleteService', () => {
         sut = module.get(PersonDeleteService);
         loggerMock = module.get(ClassLogger);
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
+        personRepositoryMock = module.get(PersonRepository);
     });
 
     afterAll(async () => {
@@ -97,7 +99,7 @@ describe('PersonDeleteService', () => {
             });
         });
 
-        describe('when gettin referenced rolle for PK is resulting in rejection of promise', () => {
+        describe('when getting referenced rolle for PK is resulting in rejection of promise', () => {
             it('should log error', async () => {
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
                     createMock<Personenkontext<true>>({
@@ -137,8 +139,6 @@ describe('PersonDeleteService', () => {
                     }),
                 ]);
 
-                // personRepositoryMock.deletePerson.mockResolvedValueOnce();
-
                 const res: Result<void, DomainError> = await sut.deletePerson(
                     faker.string.uuid(),
                     createMock<PersonPermissions>({}),
@@ -146,6 +146,52 @@ describe('PersonDeleteService', () => {
 
                 expect(res.ok).toBeTruthy();
                 expect(loggerMock.error).toHaveBeenCalledTimes(0);
+            });
+        });
+    });
+
+    describe('deletePersonAfterDeadlineExceeded', () => {
+        describe('when error during getPersonkontextData', () => {
+            it('should log error', async () => {
+                personenkontextRepoMock.findByPerson.mockRejectedValueOnce(new Error('Some error'));
+
+                const res: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    faker.string.uuid(),
+                    createMock<PersonPermissions>(),
+                );
+
+                expect(res.ok).toBeFalsy();
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    'Error while loading Kontexts of person to delete',
+                    expect.any(Error),
+                );
+            });
+        });
+
+        describe('when getPersonkontextData succeeds', () => {
+            it('should call deletePersonAfterDeadlineExceeded in PersonRepository', async () => {
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
+                    createMock<Personenkontext<true>>({
+                        // eslint-disable-next-line @typescript-eslint/require-await
+                        async getRolle(): Promise<Option<Rolle<true>>> {
+                            return DoFactory.createRolle(true, {
+                                serviceProviderData: [DoFactory.createServiceProvider(true)],
+                            });
+                        },
+                        getOrganisation(): Promise<Option<Organisation<true>>> {
+                            return Promise.resolve(DoFactory.createOrganisation(true));
+                        },
+                    }),
+                ]);
+
+                const res: Result<void, DomainError> = await sut.deletePersonAfterDeadlineExceeded(
+                    faker.string.uuid(),
+                    createMock<PersonPermissions>({}),
+                );
+
+                expect(res.ok).toBeTruthy();
+                expect(loggerMock.error).toHaveBeenCalledTimes(0);
+                expect(personRepositoryMock.deletePersonAfterDeadlineExceeded).toHaveBeenCalledTimes(1);
             });
         });
     });

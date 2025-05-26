@@ -15,9 +15,30 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { EmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/email-address-deleted-in-database.event.js';
 import { EmailAddressMissingOxUserIdError } from '../error/email-address-missing-ox-user-id.error.js';
 import { EmailInstanceConfig } from '../email-instance-config.js';
+import assert from 'assert';
 import { KafkaEmailAddressDeletedInDatabaseEvent } from '../../../shared/events/email/kafka-email-address-deleted-in-database.event.js';
+import { SortOrder } from '../../../shared/persistence/repository.enums.js';
 
 export const NON_ENABLED_EMAIL_ADDRESS_DEADLINE_IN_DAYS_DEFAULT: number = 180;
+
+export function compareEmailAddressesByUpdatedAt(
+    ea1: EmailAddressEntity,
+    ea2: EmailAddressEntity,
+    order: SortOrder,
+): number {
+    if (!ea1.updatedAt && order === SortOrder.ASC) return Number.MAX_VALUE;
+    if (!ea1.updatedAt && order === SortOrder.DESC) return Number.MIN_VALUE;
+    if (!ea2.updatedAt && order === SortOrder.ASC) return Number.MIN_VALUE;
+    if (!ea2.updatedAt && order === SortOrder.DESC) return Number.MAX_VALUE;
+    if (order === SortOrder.ASC) {
+        return ea1.updatedAt.getTime() - ea2.updatedAt.getTime();
+    }
+    return ea2.updatedAt.getTime() - ea1.updatedAt.getTime();
+}
+
+export function compareEmailAddressesByUpdatedAtDesc(ea1: EmailAddressEntity, ea2: EmailAddressEntity): number {
+    return compareEmailAddressesByUpdatedAt(ea1, ea2, SortOrder.DESC);
+}
 
 export function mapAggregateToData(emailAddress: EmailAddress<boolean>): RequiredEntityData<EmailAddressEntity> {
     const oxUserIdStr: string | undefined = emailAddress.oxUserID ? emailAddress.oxUserID + '' : undefined;
@@ -36,7 +57,7 @@ function mapEntityToAggregate(entity: EmailAddressEntity): EmailAddress<boolean>
         entity.id,
         entity.createdAt,
         entity.updatedAt,
-        entity.personId.id,
+        entity.personId?.id,
         entity.address,
         entity.status,
         entity.oxUserId,
@@ -231,6 +252,7 @@ export class EmailRepo {
                     `Found multiple ENABLED EmailAddresses, treating ${ea.address} as latest address, personId:${ea.personId}`,
                 );
             }
+            assert(ea.personId); //EmailAddresses fetch via findEnabledByPersonIdsSortedByUpdatedAtDesc MUST HAVE a personId
             responseMap.set(ea.personId, new PersonEmailResponse(ea.status, ea.address));
             lastUsedPersonId = ea.personId;
         });
@@ -244,7 +266,7 @@ export class EmailRepo {
      * @param emailAddress
      */
     public async save(emailAddress: EmailAddress<boolean>): Promise<EmailAddress<true> | DomainError> {
-        if (emailAddress.enabledOrRequested) {
+        if (emailAddress.enabledOrRequested && emailAddress.personId) {
             const enabledEmailAddressExists: Option<EmailAddress<true>> = await this.findEnabledByPerson(
                 emailAddress.personId,
             );
