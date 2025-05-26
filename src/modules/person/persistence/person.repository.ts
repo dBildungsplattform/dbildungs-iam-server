@@ -254,11 +254,12 @@ export class PersonRepository {
     }
 
     public async findByEmailAddress(email: string): Promise<Person<true>[]> {
-        const entities: PersonEntity[] = await this.em
-            .createQueryBuilder(PersonEntity, 'p')
-            .leftJoinAndSelect('p.emailAddresses', 'e')
-            .where({ 'e.address': email })
-            .getResultList();
+        const entities: PersonEntity[] = await this.em.find(PersonEntity, {
+            emailAddresses: {
+                address: email,
+                status: EmailAddressStatus.ENABLED,
+            },
+        });
 
         return entities.map(mapEntityToAggregate);
     }

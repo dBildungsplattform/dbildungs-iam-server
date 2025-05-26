@@ -20,7 +20,7 @@ export class PersonLandesbediensteterSearchResponse {
     @ApiProperty({ type: String, required: true })
     public readonly primaryEmailAddress?: string;
 
-    @ApiProperty({ type: Array<PersonLandesbediensteterSearchPersonenkontextResponse> })
+    @ApiProperty({ type: [PersonLandesbediensteterSearchPersonenkontextResponse] })
     public personenkontexte: PersonLandesbediensteterSearchPersonenkontextResponse[];
 
     protected constructor(

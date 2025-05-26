@@ -1256,14 +1256,36 @@ describe('PersonRepository Integration', () => {
             emailAddressEntity.address = 'test@example.com';
             emailAddressEntity.status = EmailAddressStatus.ENABLED;
             emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
-            await em.persistAndFlush(emailAddressEntity);
-            personEntity.emailAddresses.add(emailAddressEntity);
+            const disabledEmailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+            disabledEmailAddressEntity.address = 'test-disabled@example.com';
+            disabledEmailAddressEntity.status = EmailAddressStatus.DISABLED;
+            disabledEmailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+            await em.persistAndFlush([emailAddressEntity, disabledEmailAddressEntity]);
+            personEntity.emailAddresses.add(emailAddressEntity, disabledEmailAddressEntity);
             await em.persistAndFlush(personEntity);
 
             const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
 
             expect(result).toHaveLength(1);
             expect(result[0]?.id).toBe(person1.id);
+        });
+
+        it('should return empty list if no enabled email found', async () => {
+            const person1: Person<true> = DoFactory.createPerson(true);
+            const personEntity: PersonEntity = new PersonEntity();
+            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            person1.id = personEntity.id;
+            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+            emailAddressEntity.address = 'test@example.com';
+            emailAddressEntity.status = EmailAddressStatus.DISABLED;
+            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+            await em.persistAndFlush(emailAddressEntity);
+            personEntity.emailAddresses.add(emailAddressEntity);
+            await em.persistAndFlush(personEntity);
+
+            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
+
+            expect(result).toHaveLength(0);
         });
 
         it('should return empty list if no matching email found', async () => {

@@ -116,7 +116,6 @@ export class PersonController {
     @ApiOkResponse({
         description: 'The landesbediensteter was successfully returned.',
         type: [PersonendatensatzResponse],
-        headers: PagingHeadersObject,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get landesbedienstete.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to get landesbedienstete.' })
