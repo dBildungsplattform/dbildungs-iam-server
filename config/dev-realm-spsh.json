@@ -1223,7 +1223,7 @@
             "directAccessGrantsEnabled": true,
             "serviceAccountsEnabled": false,
             "publicClient": false,
-            "frontchannelLogout": true,
+            "frontchannelLogout": false,
             "protocol": "openid-connect",
             "attributes": {
               "oidc.ciba.grant.enabled": "false",
