@@ -1228,10 +1228,11 @@
             "attributes": {
               "oidc.ciba.grant.enabled": "false",
               "client.secret.creation.time": "1724413577",
-              "backchannel.logout.session.required": "true",
+              "backchannel.logout.session.required": "false",
+              "backchannel.logout.url": "https://aai-test.vidis.schule/auth/realms/vidis/protocol/openid-connect/logout/backchannel-logout",
               "oauth2.device.authorization.grant.enabled": "false",
               "display.on.consent.screen": "false",
-              "backchannel.logout.revoke.offline.tokens": "false"
+              "backchannel.logout.revoke.offline.tokens": "true"
             },
             "authenticationFlowBindingOverrides": {},
             "fullScopeAllowed": true,
