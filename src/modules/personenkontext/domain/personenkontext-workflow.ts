@@ -294,7 +294,7 @@ export class PersonenkontextWorkflowAggregate {
         );
 
         if (!hasLimitedCreationPermissionAtOrga) {
-            new MissingPermissionsError('Unauthorized to manage persons at the organisation');
+            return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
         }
 
         const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);

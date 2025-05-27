@@ -59,7 +59,7 @@ import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js'
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/index.js';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
-import { mapStringsToRollenArt as mapStringsToRollenArt } from '../../../shared/config/utils.js';
+import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 
 @UseFilters(
     SchulConnexValidationErrorFilter,
