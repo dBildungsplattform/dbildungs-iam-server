@@ -27,6 +27,8 @@ import { PersonenkontextBefristungRequiredError } from './error/personenkontext-
 import { DBiamPersonenkontextRepoInternal } from '../persistence/internal-dbiam-personenkontext.repo.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { LernHatKlasse } from '../specification/lern-hat-klasse.js';
+import { LernHatKeineKlasseError } from '../specification/error/lern-hat-keine-klasse.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -294,6 +296,20 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
+    private async checkLernHatKlasseSpecification(
+        sentPKs: Personenkontext<boolean>[],
+    ): Promise<Option<PersonenkontexteUpdateError>> {
+        const isSatisfied: boolean = await new LernHatKlasse(this.organisationRepo, this.rolleRepo).isSatisfiedBy(
+            sentPKs,
+        );
+
+        if (!isSatisfied) {
+            return new LernHatKeineKlasseError();
+        }
+
+        return undefined;
+    }
+
     private async checkBefristungSpecification(
         sentPKs: Personenkontext<boolean>[],
     ): Promise<Option<PersonenkontexteUpdateError>> {
@@ -318,6 +334,12 @@ export class PersonenkontexteUpdate {
             await this.checkRollenartSpecification(sentPKs);
         if (validationForLernError) {
             return validationForLernError;
+        }
+
+        const validationForLernHatKlasseError: Option<PersonenkontexteUpdateError> =
+            await this.checkLernHatKlasseSpecification(sentPKs);
+        if (validationForLernHatKlasseError) {
+            return validationForLernHatKlasseError;
         }
 
         const validationForBefristung: Option<PersonenkontexteUpdateError> =

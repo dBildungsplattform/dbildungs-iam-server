@@ -50,6 +50,7 @@ function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[
 describe('PersonenkontexteUpdate', () => {
     let module: TestingModule;
     let personRepoMock: DeepMocked<PersonRepository>;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let dBiamPersonenkontextRepoInternalMock: DeepMocked<DBiamPersonenkontextRepoInternal>;
     let dbiamPersonenkontextFactory: DbiamPersonenkontextFactory;
@@ -102,6 +103,7 @@ describe('PersonenkontexteUpdate', () => {
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         dBiamPersonenkontextRepoInternalMock = module.get(DBiamPersonenkontextRepoInternal);
         personRepoMock = module.get(PersonRepository);
+        organisationRepoMock = module.get(OrganisationRepository);
         dbiamPersonenkontextFactory = module.get(DbiamPersonenkontextFactory);
         personId = faker.string.uuid();
         lastModified = faker.date.recent();
@@ -209,6 +211,7 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(new Map()); //CheckRollenartLernSpecification
                 rolleRepoMock.findByIds.mockResolvedValueOnce(new Map()); //CheckRollenartLernSpecification
                 rolleRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                rolleRepoMock.findByIds.mockResolvedValueOnce(new Map());
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]); // mock while checking the existing PKs
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
                 const newPerson: Person<true> = createMock<Person<true>>();
@@ -280,6 +283,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -313,6 +318,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -344,6 +351,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -375,6 +384,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const updateError: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -409,6 +420,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -432,6 +445,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 expect(dBiamPersonenkontextRepoInternalMock.delete).toHaveBeenCalledTimes(0);
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
@@ -494,6 +509,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
@@ -516,6 +533,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const permissions: DeepMocked<PersonPermissions> = createMock();
                 permissions.canModifyPerson.mockResolvedValueOnce(false);
@@ -551,6 +570,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 personRepoMock.findById.mockResolvedValue(undefined);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const permissions: DeepMocked<PersonPermissions> = createMock();
                 permissions.canModifyPerson.mockResolvedValueOnce(true);
@@ -580,6 +601,8 @@ describe('PersonenkontexteUpdate', () => {
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 // Mock call before publishing the event
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
@@ -667,6 +690,8 @@ describe('PersonenkontexteUpdate', () => {
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const mapRollenExisting: Map<string, Rolle<true>> = new Map();
                 mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
@@ -696,6 +721,8 @@ describe('PersonenkontexteUpdate', () => {
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
                 rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
+                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen); // LernHatKlasse
 
                 const mapRollenExisting: Map<string, Rolle<true>> = new Map();
                 mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
@@ -733,6 +760,7 @@ describe('PersonenkontexteUpdate', () => {
                 dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
                 dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map()); // LernHatKlasse
 
                 const mapRollen: Map<string, Rolle<true>> = new Map();
                 mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LERN }));
