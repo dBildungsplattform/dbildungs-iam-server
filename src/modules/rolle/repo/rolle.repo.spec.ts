@@ -21,7 +21,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { OrganisationID } from '../../../shared/types/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenMerkmal, RollenSystemRecht, RollenArt } from '../domain/rolle.enums.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
@@ -154,6 +154,43 @@ describe('RolleRepo', () => {
 
             expect(rolleResult).toBeDefined();
             expect(rolleResult).toHaveLength(1);
+        });
+
+        it('should filter rollen by rollenarten', async () => {
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false),
+            );
+
+            await Promise.all([
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        serviceProviderIds: [serviceProvider.id],
+                        rollenart: RollenArt.LEIT,
+                    }),
+                ),
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        serviceProviderIds: [serviceProvider.id],
+                        rollenart: RollenArt.LEHR,
+                    }),
+                ),
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        serviceProviderIds: [serviceProvider.id],
+                        rollenart: RollenArt.LERN,
+                    }),
+                ),
+            ]);
+
+            const rollenResult: Rolle<true>[] = await sut.find(false, undefined, undefined, [
+                RollenArt.LEIT,
+                RollenArt.LEHR,
+            ]);
+            expect(rollenResult).toHaveLength(2);
+            const rollenarten: RollenArt[] = rollenResult.map((r: Rolle<true>) => r.rollenart);
+            expect(rollenarten).toContain(RollenArt.LEIT);
+            expect(rollenarten).toContain(RollenArt.LEHR);
+            expect(rollenarten).not.toContain(RollenArt.LERN);
         });
     });
 
@@ -435,6 +472,40 @@ describe('RolleRepo', () => {
 
             expect(rolleResult).toBeDefined();
             expect(rolleResult).toHaveLength(0);
+        });
+
+        it('should filter rollen by rollenarten', async () => {
+            await Promise.all([
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        name: 'rollenart1',
+                        rollenart: RollenArt.LEIT,
+                    }),
+                ),
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        name: 'rollenart2',
+                        rollenart: RollenArt.LEHR,
+                    }),
+                ),
+                sut.save(
+                    DoFactory.createRolle(false, {
+                        name: 'rollenart3',
+                        rollenart: RollenArt.LERN,
+                    }),
+                ),
+            ]);
+
+            const rolleResult: Option<Rolle<true>[]> = await sut.findByName('rollenart', false, 10, 0, [
+                RollenArt.LEIT,
+                RollenArt.LEHR,
+            ]);
+            expect(rolleResult).toBeDefined();
+            expect(rolleResult).toHaveLength(2);
+            const rollenarten: RollenArt[] = rolleResult!.map((r: Rolle<true>) => r.rollenart);
+            expect(rollenarten).toContain(RollenArt.LEIT);
+            expect(rollenarten).toContain(RollenArt.LEHR);
+            expect(rollenarten).not.toContain(RollenArt.LERN);
         });
     });
 

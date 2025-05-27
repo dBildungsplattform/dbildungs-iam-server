@@ -117,6 +117,9 @@ describe('configloader', () => {
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
                 },
+                PORTAL: {
+                    LIMITED_ROLLENART_ALLOWLIST: ['LEIT', 'LERN', 'EXTERN'],
+                },
             };
 
             const secrets: DeepPartial<JsonConfig> = {
@@ -275,6 +278,9 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 30000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
+                },
+                PORTAL: {
+                    LIMITED_ROLLENART_ALLOWLIST: ['LEIT', 'LERN', 'EXTERN'],
                 },
             };
 

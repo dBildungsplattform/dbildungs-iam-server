@@ -29,6 +29,7 @@ import { PersonFactory } from '../../person/domain/person.factory.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 
 describe('PersonenkontextCreationService', () => {
     let module: TestingModule;
@@ -42,6 +43,7 @@ describe('PersonenkontextCreationService', () => {
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
+            imports: [ConfigTestModule],
             providers: [
                 PersonenkontextCreationService,
                 PersonenkontextWorkflowFactory,
@@ -211,10 +213,14 @@ describe('PersonenkontextCreationService', () => {
             const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({ rollenart: RollenArt.SYSADMIN });
             rolleMock.canBeAssignedToOrga.mockResolvedValueOnce(true);
             rolleRepoMock.findById.mockResolvedValueOnce(rolleMock);
+            rolleRepoMock.findByIds.mockResolvedValueOnce(
+                new Map<string, Rolle<true>>([[faker.string.uuid(), rolleMock]]),
+            );
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
             );
-            personpermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
+            personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
+            personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
 
             const result: PersonPersonenkontext | DomainError = await sut.createPersonWithPersonenkontexte(
                 personpermissionsMock,
@@ -238,7 +244,7 @@ describe('PersonenkontextCreationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
             );
-            personpermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
+            personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             personRepositoryMock.create.mockResolvedValueOnce(
                 new KeycloakClientError('Username or email already exists'),
             );
@@ -265,7 +271,7 @@ describe('PersonenkontextCreationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
             );
-            personpermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
+            personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             personRepositoryMock.create.mockResolvedValueOnce(createMock<Person<true>>({ id: faker.string.uuid() }));
 
             const personenkontextUpdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();
@@ -296,7 +302,7 @@ describe('PersonenkontextCreationService', () => {
             organisationRepositoryMock.findById.mockResolvedValueOnce(
                 createMock<Organisation<true>>({ typ: OrganisationsTyp.LAND }),
             );
-            personpermissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(true);
+            personpermissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
             personRepositoryMock.create.mockResolvedValueOnce(createMock<Person<true>>({ id: faker.string.uuid() }));
 
             const personenkontextUpdateMock: DeepMocked<PersonenkontexteUpdate> = createMock();

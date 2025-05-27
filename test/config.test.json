@@ -112,5 +112,8 @@
         "SESSION_TIMEOUT": 30000,
         "HEARTBEAT_INTERVAL": 10000,
         "ENABLED": false
+    },
+    "PORTAL": {
+        "LIMITED_ROLLENART_ALLOWLIST": ["LEIT", "LERN", "EXTERN"]
     }
 }
