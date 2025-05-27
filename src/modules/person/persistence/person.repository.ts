@@ -253,6 +253,36 @@ export class PersonRepository {
             .setScopeWhereOperator(ScopeOperator.AND);
     }
 
+    public async findByEmailAddress(email: string): Promise<Person<true>[]> {
+        const entities: PersonEntity[] = await this.em.find(PersonEntity, {
+            emailAddresses: {
+                address: email,
+                status: EmailAddressStatus.ENABLED,
+            },
+        });
+
+        return entities.map(mapEntityToAggregate);
+    }
+
+    public async findByPersonalnummer(personalnummer: string): Promise<Person<true>[]> {
+        const entities: PersonEntity[] = await this.em.find(PersonEntity, { personalnummer });
+        return entities.map(mapEntityToAggregate);
+    }
+
+    public async findByUsername(username: string): Promise<Person<true>[]> {
+        const entities: PersonEntity[] = await this.em.find(PersonEntity, { referrer: username });
+        return entities.map(mapEntityToAggregate);
+    }
+
+    public async findByFullName(vorname: string, familienname: string): Promise<Person<true>[]> {
+        const entities: PersonEntity[] = await this.em.find(PersonEntity, {
+            vorname,
+            familienname,
+        });
+
+        return entities.map(mapEntityToAggregate);
+    }
+
     public async findBy(scope: PersonScope): Promise<Counted<Person<true>>> {
         const [entities, total]: Counted<PersonEntity> = await scope.executeQuery(this.em);
         const persons: Person<true>[] = entities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
