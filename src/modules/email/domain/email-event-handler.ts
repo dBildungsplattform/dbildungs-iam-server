@@ -46,6 +46,9 @@ import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ka
 import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
 import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
+import { ConfigService } from '@nestjs/config';
+import { OxConfig } from '../../../shared/config/ox.config.js';
+import { ServerConfig } from '../../../shared/config/server.config.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -54,6 +57,8 @@ type RolleWithPK = {
 
 @Injectable()
 export class EmailEventHandler {
+    public OX_ENABLED: boolean;
+
     public constructor(
         private readonly logger: ClassLogger,
         private readonly emailFactory: EmailFactory,
@@ -68,7 +73,11 @@ export class EmailEventHandler {
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
-    ) {}
+        configService: ConfigService<ServerConfig>,
+    ) {
+        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        this.OX_ENABLED = oxConfig.ENABLED;
+    }
 
     /*
      * Method 'handlePersonRenamedEvent' is replaced by 'handleLdapPersonEntryRenamedEvent' to handle the operations regarding person-renaming synchronously after each other,
@@ -439,6 +448,12 @@ export class EmailEventHandler {
         personId: PersonID,
         username: PersonReferrer | undefined,
     ): Promise<void> {
+        if (!this.OX_ENABLED) {
+            return this.logger.info(
+                `OX is not enabled, no email will be disabled for personId:${personId}, username:${username}`,
+            );
+        }
+
         const existingEmails: Option<EmailAddress<true>[]> =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
 
