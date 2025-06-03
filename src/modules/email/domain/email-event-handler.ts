@@ -538,7 +538,7 @@ export class EmailEventHandler {
                 return this.logger.info(
                     `Existing email for personId:${personId}, username:${personUsername.value} already ENABLED`,
                 );
-            } else if (email.disabled) {
+            } else if (email.disabled && this.OX_ENABLED) {
                 // If we find a disabled address, we just enable it again
                 email.enable();
 
