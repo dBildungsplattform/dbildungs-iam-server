@@ -153,7 +153,7 @@ jobs:
     steps:
       - name: Check for Helm chart
         run: |
-          CHART_NAME=schulportal-client
+          CHART_NAME=dbildungs-iam-server
           CHART_VERSION="${{ needs.release_helm.outputs.helm_chart_version }}"
           echo "CHART_VERSION=$CHART_VERSION"
           REPO_URL="https://dbildungsplattform.github.io/helm-charts-registry/"
