@@ -200,7 +200,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
 
-            const result: PersonLandesbediensteterSearchResponse = await sut.findLandesbediensteter(
+            const result: PersonLandesbediensteterSearchResponse[] = await sut.findLandesbediensteter(
                 person.personalnummer,
                 undefined,
                 undefined,
@@ -208,7 +208,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             );
 
             expect(result).toBeDefined();
-            expect(result.personenkontexte.length).toEqual(1);
+            expect(result[0]?.personenkontexte.length).toEqual(1);
         });
 
         it('should return valid response if person is found and valid by username', async () => {
@@ -238,7 +238,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
 
-            const result: PersonLandesbediensteterSearchResponse = await sut.findLandesbediensteter(
+            const result: PersonLandesbediensteterSearchResponse[] = await sut.findLandesbediensteter(
                 undefined,
                 undefined,
                 faker.internet.userName(),
@@ -246,7 +246,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             );
 
             expect(result).toBeDefined();
-            expect(result.personenkontexte.length).toEqual(1);
+            expect(result[0]?.personenkontexte.length).toEqual(1);
         });
 
         it('should return valid response if person is found and valid by emailaddress', async () => {
@@ -277,7 +277,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
 
-            const result: PersonLandesbediensteterSearchResponse = await sut.findLandesbediensteter(
+            const result: PersonLandesbediensteterSearchResponse[] = await sut.findLandesbediensteter(
                 undefined,
                 faker.internet.email(),
                 undefined,
@@ -285,7 +285,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             );
 
             expect(result).toBeDefined();
-            expect(result.personenkontexte.length).toEqual(1);
+            expect(result[0]?.personenkontexte.length).toEqual(1);
         });
 
         it('should return valid response if person is found and valid by fullname', async () => {
@@ -316,7 +316,7 @@ describe('PersonLandesbediensteterSearchService', () => {
             emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(email);
             personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce(kontexte);
 
-            const result: PersonLandesbediensteterSearchResponse = await sut.findLandesbediensteter(
+            const result: PersonLandesbediensteterSearchResponse[] = await sut.findLandesbediensteter(
                 undefined,
                 undefined,
                 undefined,
@@ -326,7 +326,7 @@ describe('PersonLandesbediensteterSearchService', () => {
 
             expect(result).toBeDefined();
             expect(personRepositoryMock.findByFullName).toHaveBeenCalledWith('Max', 'Mustermann');
-            expect(result.personenkontexte.length).toEqual(1);
+            expect(result[0]?.personenkontexte.length).toEqual(1);
         });
     });
 });

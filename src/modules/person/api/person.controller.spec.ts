@@ -308,9 +308,9 @@ describe('PersonController', () => {
                 all: true,
             });
 
-            personLandesbediensteterSearchServiceMock.findLandesbediensteter.mockResolvedValueOnce(responseMock);
+            personLandesbediensteterSearchServiceMock.findLandesbediensteter.mockResolvedValueOnce([responseMock]);
 
-            const result: PersonLandesbediensteterSearchResponse = await personController.findLandesbediensteter(
+            const result: PersonLandesbediensteterSearchResponse[] = await personController.findLandesbediensteter(
                 queryParams,
                 personPermissionsMock,
             );
