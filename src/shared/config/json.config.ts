@@ -18,6 +18,7 @@ import { VidisConfig } from './vidis.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
 import { KafkaConfig } from './kafka.config.js';
 import { EmailConfig } from './email.config.js';
+import { PortalConfig } from './portal.config.js';
 
 export class JsonConfig {
     @ValidateNested()
@@ -91,4 +92,8 @@ export class JsonConfig {
     @ValidateNested()
     @Type(() => KafkaConfig)
     public readonly KAFKA!: KafkaConfig;
+
+    @ValidateNested()
+    @Type(() => PortalConfig)
+    public readonly PORTAL!: PortalConfig;
 }
