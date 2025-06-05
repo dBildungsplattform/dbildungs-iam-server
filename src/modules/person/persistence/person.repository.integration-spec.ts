@@ -1245,6 +1245,119 @@ describe('PersonRepository Integration', () => {
             expect(personAfterUpdate.familienname).toEqual(person.familienname);
         });
     });
+
+    describe('findByPrimaryEmailAddress', () => {
+        it('should return persons with matching email address', async () => {
+            const person1: Person<true> = DoFactory.createPerson(true);
+            const personEntity: PersonEntity = new PersonEntity();
+            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            person1.id = personEntity.id;
+            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+            emailAddressEntity.address = 'test@example.com';
+            emailAddressEntity.status = EmailAddressStatus.ENABLED;
+            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+            const disabledEmailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+            disabledEmailAddressEntity.address = 'test-disabled@example.com';
+            disabledEmailAddressEntity.status = EmailAddressStatus.DISABLED;
+            disabledEmailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+            await em.persistAndFlush([emailAddressEntity, disabledEmailAddressEntity]);
+            personEntity.emailAddresses.add(emailAddressEntity, disabledEmailAddressEntity);
+            await em.persistAndFlush(personEntity);
+
+            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
+
+            expect(result).toHaveLength(1);
+            expect(result[0]?.id).toBe(person1.id);
+        });
+
+        it('should return empty list if no enabled email found', async () => {
+            const person1: Person<true> = DoFactory.createPerson(true);
+            const personEntity: PersonEntity = new PersonEntity();
+            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            person1.id = personEntity.id;
+            const emailAddressEntity: EmailAddressEntity = new EmailAddressEntity();
+            emailAddressEntity.address = 'test@example.com';
+            emailAddressEntity.status = EmailAddressStatus.DISABLED;
+            emailAddressEntity.personId = ref(PersonEntity, personEntity.id);
+            await em.persistAndFlush(emailAddressEntity);
+            personEntity.emailAddresses.add(emailAddressEntity);
+            await em.persistAndFlush(personEntity);
+
+            const result: Person<true>[] = await sut.findByEmailAddress('test@example.com');
+
+            expect(result).toHaveLength(0);
+        });
+
+        it('should return empty list if no matching email found', async () => {
+            const result: Person<true>[] = await sut.findByEmailAddress('nonexistent@example.com');
+            expect(result).toHaveLength(0);
+        });
+    });
+
+    describe('findByPersonalnummer', () => {
+        it('should return persons with matching personalnummer', async () => {
+            const personalnummer: string = faker.string.alphanumeric(5);
+            const person1: Person<true> = DoFactory.createPerson(true);
+            person1.personalnummer = personalnummer;
+            const personEntity: PersonEntity = new PersonEntity();
+            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            person1.id = personEntity.id;
+
+            const result: Person<true>[] = await sut.findByPersonalnummer(personalnummer);
+
+            expect(result).toHaveLength(1);
+        });
+
+        it('should return empty list if no person matches personalnummer', async () => {
+            const result: Person<true>[] = await sut.findByPersonalnummer('0000000');
+            expect(result).toHaveLength(0);
+        });
+    });
+
+    describe('findByUsername', () => {
+        it('should return persons with matching username (referrer)', async () => {
+            const username: string = faker.internet.userName();
+            const person1: Person<true> = DoFactory.createPerson(true);
+            person1.referrer = username;
+            const personEntity: PersonEntity = new PersonEntity();
+            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            person1.id = personEntity.id;
+
+            const result: Person<true>[] = await sut.findByUsername(username);
+
+            expect(result).toHaveLength(1);
+        });
+
+        it('should return empty list if no match for username (referrer)', async () => {
+            const result: Person<true>[] = await sut.findByUsername('not-existent-referrer');
+            expect(result).toHaveLength(0);
+        });
+    });
+
+    describe('findByFullName', () => {
+        it('should return persons matching both vorname and familienname', async () => {
+            const vorname: string = faker.person.firstName();
+            const familienname: string = faker.person.lastName();
+            const person1: Person<true> = DoFactory.createPerson(true);
+            person1.vorname = vorname;
+            person1.familienname = familienname;
+            const personEntity: PersonEntity = new PersonEntity();
+            await em.persistAndFlush(personEntity.assign(mapAggregateToData(person1)));
+            person1.id = personEntity.id;
+
+            const result: Person<true>[] = await sut.findByFullName(vorname, familienname);
+
+            expect(result).toHaveLength(1);
+            expect(result[0]?.vorname).toBe(vorname);
+            expect(result[0]?.familienname).toBe(familienname);
+        });
+
+        it('should return empty list if no match for vorname and familienname', async () => {
+            const result: Person<true>[] = await sut.findByFullName('Bruce', 'Wayne');
+            expect(result).toHaveLength(0);
+        });
+    });
+
     describe('getPersonIfAllowed', () => {
         describe('when person is found on any same organisations like the affected person', () => {
             it('should return person', async () => {

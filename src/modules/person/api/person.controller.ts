@@ -12,6 +12,7 @@ import {
     Post,
     Put,
     Query,
+    UnauthorizedException,
     UseFilters,
     UseGuards,
     UseInterceptors,
@@ -82,6 +83,9 @@ import { UpdatePersonBodyParams } from './update-person.body.params.js';
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ldap-sync.event.js';
+import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
+import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
+import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter(), new PersonExceptionFilter())
 @ApiTags('personen')
@@ -96,6 +100,7 @@ export class PersonController {
         private readonly emailRepo: EmailRepo,
         private readonly personenkontextService: PersonenkontextService,
         private readonly personDeleteService: PersonDeleteService,
+        private readonly personLandesbediensteterSearchService: PersonLandesbediensteterSearchService,
         private readonly logger: ClassLogger,
         private keycloakUserService: KeycloakUserService,
         private readonly dBiamPersonenkontextService: DBiamPersonenkontextService,
@@ -105,6 +110,36 @@ export class PersonController {
         config: ConfigService<ServerConfig>,
     ) {
         this.ROOT_ORGANISATION_ID = config.getOrThrow<DataConfig>('DATA').ROOT_ORGANISATION_ID;
+    }
+
+    @Get('landesbediensteter')
+    @ApiOkResponse({
+        description: 'The landesbediensteter was successfully returned.',
+        type: [PersonLandesbediensteterSearchResponse],
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to get landesbedienstete.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to get landesbedienstete.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while getting landesbedienstete.' })
+    public async findLandesbediensteter(
+        @Query() queryParams: PersonLandesbediensteterSearchQueryParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<PersonLandesbediensteterSearchResponse> {
+        // Find all organisations where user has permission
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN],
+            true,
+            false,
+        );
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+            throw new UnauthorizedException('NOT_AUTHORIZED');
+        }
+        return this.personLandesbediensteterSearchService.findLandesbediensteter(
+            queryParams.personalnummer,
+            queryParams.primaryEmailAddress,
+            queryParams.username,
+            queryParams.vorname,
+            queryParams.familienname,
+        );
     }
 
     @Delete(':personId')

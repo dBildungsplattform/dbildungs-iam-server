@@ -130,6 +130,7 @@ describe('EmailEventHandler', () => {
 
     beforeEach(() => {
         jest.resetAllMocks();
+        emailEventHandler.OX_ENABLED = true;
     });
 
     function mockEmailFactoryCreateNewReturnsEnabledEmail(fakeEmailAddress: string): void {
@@ -805,6 +806,31 @@ describe('EmailEventHandler', () => {
                         `DISABLED and saved address:${emailAddress.address}, personId:${fakePersonId}, username:${fakeUsername}`,
                     );
                 });
+            });
+        });
+
+        describe('when lehrer does not have any PK and OX is not enabled', () => {
+            it('should not disable any email and should log info about OX being disabled', async () => {
+                emailEventHandler.OX_ENABLED = false;
+                mockRepositoryFindMethods(personenkontexte, rolleMap, new Map<string, ServiceProvider<true>>());
+
+                // Provide an enabled email to check that it is not disabled
+                const enabledEmail: EmailAddress<true> = EmailAddress.construct(
+                    faker.string.uuid(),
+                    faker.date.past(),
+                    faker.date.recent(),
+                    fakePersonId,
+                    faker.internet.email(),
+                    EmailAddressStatus.ENABLED,
+                );
+                emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([enabledEmail]);
+
+                await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `OX is not enabled, no email will be disabled for personId:${fakePersonId}, username:${fakeUsername}`,
+                );
+                expect(emailRepoMock.save).not.toHaveBeenCalled();
             });
         });
 
