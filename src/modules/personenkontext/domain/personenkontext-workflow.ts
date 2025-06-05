@@ -3,7 +3,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
@@ -16,6 +16,10 @@ import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkonte
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
+import { RolleID } from '../../../shared/types/index.js';
+import { ConfigService } from '@nestjs/config';
+import { PortalConfig } from '../../../shared/config/portal.config.js';
+import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -26,14 +30,21 @@ export class PersonenkontextWorkflowAggregate {
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
+        private readonly configService: ConfigService,
     ) {}
 
     public static createNew(
         rolleRepo: RolleRepo,
         organisationRepository: OrganisationRepository,
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
+        configService: ConfigService,
     ): PersonenkontextWorkflowAggregate {
-        return new PersonenkontextWorkflowAggregate(rolleRepo, organisationRepository, dbiamPersonenkontextFactory);
+        return new PersonenkontextWorkflowAggregate(
+            rolleRepo,
+            organisationRepository,
+            dbiamPersonenkontextFactory,
+            configService,
+        );
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
@@ -110,12 +121,14 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         rolleName?: string,
         limit?: number,
+        rollenarten?: RollenArt[],
     ): Promise<Rolle<true>[]> {
         if (
             !this.selectedOrganisationId ||
-            !(await permissions.hasSystemrechtAtOrganisation(
+            !(await permissions.hasSystemrechteAtOrganisation(
                 this.selectedOrganisationId,
-                RollenSystemRecht.PERSONEN_VERWALTEN,
+                [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN],
+                false,
             ))
         ) {
             return [];
@@ -134,9 +147,9 @@ export class PersonenkontextWorkflowAggregate {
         let rollen: Option<Rolle<true>[]>;
 
         if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, false);
+            rollen = await this.rolleRepo.findByName(rolleName, false, undefined, undefined, rollenarten);
         } else {
-            rollen = await this.rolleRepo.find(false);
+            rollen = await this.rolleRepo.find(false, undefined, undefined, rollenarten);
         }
 
         if (!rollen) {
@@ -196,6 +209,7 @@ export class PersonenkontextWorkflowAggregate {
             const permissionCheckError: Option<DomainError> = await this.checkPermissions(
                 permissions,
                 this.selectedOrganisationId,
+                this.selectedRolleIds,
             );
             if (permissionCheckError) {
                 return permissionCheckError;
@@ -262,17 +276,43 @@ export class PersonenkontextWorkflowAggregate {
     public async checkPermissions(
         permissions: PersonPermissions,
         organisationId: string,
+        rolleIds: RolleID[],
     ): Promise<Option<DomainError>> {
         // Check if logged in person has permission
-        const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtOrganisation(organisationId, [
-            RollenSystemRecht.PERSONEN_VERWALTEN,
-        ]);
+        const hasAnlegenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
+            RollenSystemRecht.PERSONEN_ANLEGEN,
+        );
 
-        // Missing permission on orga
-        if (!hasPermissionAtOrga) {
+        if (hasAnlegenPermissionAtOrga) {
+            return undefined;
+        }
+
+        const hasLimitedCreationPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+            organisationId,
+            RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+        );
+
+        if (!hasLimitedCreationPermissionAtOrga) {
             return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
         }
 
-        return undefined;
+        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
+
+        const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
+
+        const allowedRollenArten: RollenArt[] | undefined = mapStringsToRollenArt(
+            portalConfig.LIMITED_ROLLENART_ALLOWLIST || [],
+        );
+
+        // Check if the selected roles match the allowed roles
+        const isAllowed: boolean = Array.from(rollen.values()).every((rolle: Rolle<true>) =>
+            allowedRollenArten?.includes(rolle.rollenart),
+        );
+        if (isAllowed) {
+            return undefined;
+        } else {
+            return new MissingPermissionsError('Unauthorized to manage rollenart at the organisation');
+        }
     }
 }
