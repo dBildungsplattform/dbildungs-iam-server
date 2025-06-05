@@ -73,11 +73,15 @@ describe('PersonLandesbediensteterSearchService', () => {
             await expect(sut.findLandesbediensteter()).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
         });
 
-        it('should throw if no person found', async () => {
+        it('should return an empty array if no person found', async () => {
             personRepositoryMock.findByUsername.mockResolvedValueOnce([]);
-            await expect(
-                sut.findLandesbediensteter(undefined, undefined, faker.internet.userName(), undefined),
-            ).rejects.toThrow(LandesbediensteterSearchNoPersonFoundError);
+            const result: PersonLandesbediensteterSearchResponse[] = await sut.findLandesbediensteter(
+                undefined,
+                undefined,
+                faker.internet.userName(),
+                undefined
+            );
+            expect(result).toEqual([]);
         });
 
         it('should throw if multiple persons found', async () => {
