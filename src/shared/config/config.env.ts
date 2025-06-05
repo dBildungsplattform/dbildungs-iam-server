@@ -9,11 +9,12 @@ import { SystemConfig } from './system.config.js';
 import { OxConfig } from './ox.config.js';
 import { RedisConfig } from './redis.config.js';
 import { FeatureFlagConfig } from './featureflag.config.js';
-import { envToOptionalBoolean, envToOptionalInteger } from './utils.js';
+import { envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
 import { ImportConfig } from './import.config.js';
 import { HeaderApiKeyConfig } from './headerapikey.config.js';
 import { KafkaConfig } from './kafka.config.js';
+import { PortalConfig } from './portal.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -31,6 +32,7 @@ export type Config = {
     IMPORT: Partial<ImportConfig>;
     HEADER_API_KEY: Partial<HeaderApiKeyConfig>;
     KAFKA: Partial<KafkaConfig>;
+    PORTAL: Partial<PortalConfig>;
 };
 
 export default (): Config => ({
@@ -130,5 +132,8 @@ export default (): Config => ({
         SESSION_TIMEOUT: envToOptionalInteger('KAFKA_SESSION_TIMEOUT'),
         HEARTBEAT_INTERVAL: envToOptionalInteger('KAFKA_HEARTBEAT_INTERVAL'),
         ENABLED: envToOptionalBoolean('KAFKA_ENABLED'),
+    },
+    PORTAL: {
+        LIMITED_ROLLENART_ALLOWLIST: envToStringArray('PORTAL_LIMITED_ROLLENART_ALLOWLIST'),
     },
 });
