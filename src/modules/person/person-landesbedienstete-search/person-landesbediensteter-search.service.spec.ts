@@ -79,7 +79,7 @@ describe('PersonLandesbediensteterSearchService', () => {
                 undefined,
                 undefined,
                 faker.internet.userName(),
-                undefined
+                undefined,
             );
             expect(result).toEqual([]);
         });
