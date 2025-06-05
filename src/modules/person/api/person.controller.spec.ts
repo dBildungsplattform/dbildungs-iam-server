@@ -315,7 +315,7 @@ describe('PersonController', () => {
                 personPermissionsMock,
             );
 
-            expect(result).toBe([responseMock]);
+            expect(result).toEqual([responseMock]);
             expect(personLandesbediensteterSearchServiceMock.findLandesbediensteter).toHaveBeenCalledWith(
                 queryParams.personalnummer,
                 queryParams.primaryEmailAddress,
