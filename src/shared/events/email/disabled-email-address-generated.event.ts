@@ -10,7 +10,7 @@ import { BaseEvent } from '../base-event.js';
 export class DisabledEmailAddressGeneratedEvent extends BaseEvent {
     public constructor(
         public readonly personId: PersonID,
-        public readonly referrer: PersonReferrer,
+        public readonly username: PersonReferrer,
         public readonly emailAddressId: EmailAddressID,
         public readonly address: string,
         public readonly domain: string,

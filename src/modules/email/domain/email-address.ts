@@ -17,7 +17,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         public id: Persisted<string, WasPersisted>,
         public readonly createdAt: Persisted<Date, WasPersisted>,
         public readonly updatedAt: Persisted<Date, WasPersisted>,
-        private addressPersonId: PersonID,
+        private readonly addressPersonId: PersonID | undefined,
         private addressAddress: string,
         private addressStatus: EmailAddressStatus,
         private oxUserId?: string,
@@ -27,7 +27,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         id: string,
         createdAt: Date,
         updatedAt: Date,
-        personId: PersonID,
+        personId: PersonID | undefined,
         address: string,
         status: EmailAddressStatus,
         oxUserId?: string,
@@ -36,7 +36,7 @@ export class EmailAddress<WasPersisted extends boolean> {
     }
 
     public static createNew(
-        personId: PersonID,
+        personId: PersonID | undefined,
         address: string,
         status: EmailAddressStatus,
         oxUserId?: string,
@@ -118,7 +118,7 @@ export class EmailAddress<WasPersisted extends boolean> {
         return this.addressStatus === EmailAddressStatus.DISABLED;
     }
 
-    public get personId(): PersonID {
+    public get personId(): PersonID | undefined {
         return this.addressPersonId;
     }
 

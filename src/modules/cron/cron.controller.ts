@@ -258,12 +258,12 @@ export class CronController {
 
     @Put('person-without-org')
     @HttpCode(HttpStatus.OK)
-    @ApiCreatedResponse({ description: 'User were successfully removed.', type: Boolean })
-    @ApiBadRequestResponse({ description: 'User are not given or not found' })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to remove user.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permissions to delete user.' })
-    @ApiNotFoundResponse({ description: 'Insufficient permissions to delete user.' })
-    @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to remove user.' })
+    @ApiCreatedResponse({ description: 'Users were successfully removed.', type: Boolean })
+    @ApiBadRequestResponse({ description: 'Users are not given or not found' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to remove users.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to delete users.' })
+    @ApiNotFoundResponse({ description: 'Insufficient permissions to delete users.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while trying to remove users.' })
     public async personWithoutOrgDelete(@Permissions() permissions: PersonPermissions): Promise<boolean> {
         try {
             const hasCronJobPermission: boolean = await permissions.hasSystemrechteAtRootOrganisation([
@@ -284,10 +284,8 @@ export class CronController {
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
                 personIds.map(async (id: string) => {
                     const person: Option<Person<true>> = await this.personRepository.findById(id);
-                    const deleteResult: Result<void, DomainError> = await this.personDeleteService.deletePerson(
-                        id,
-                        permissions,
-                    );
+                    const deleteResult: Result<void, DomainError> =
+                        await this.personDeleteService.deletePersonAfterDeadlineExceeded(id, permissions);
                     if (deleteResult.ok) {
                         this.logger.info(
                             `System hat ${person?.referrer} (${person?.id}) nach 84 Tagen ohne Schulzuordnung gelöscht.`,

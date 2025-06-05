@@ -8,7 +8,7 @@ describe('KafkaLdapEmailAddressDeletedEvent', () => {
 
         const event: KafkaLdapEmailAddressDeletedEvent = new KafkaLdapEmailAddressDeletedEvent(
             person.id,
-            person.referrer!,
+            person.referrer,
             person.email!,
         );
 
