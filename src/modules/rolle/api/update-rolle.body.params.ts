@@ -4,7 +4,7 @@ import { ArrayUnique, IsEnum, IsNotEmpty, IsNumber, MaxLength } from 'class-vali
 import {
     RollenMerkmal,
     RollenMerkmalTypName,
-    RollenSystemRecht,
+    RollenSystemRechtEnum,
     RollenSystemRechtTypName,
 } from '../domain/rolle.enums.js';
 import { IsDIN91379AEXT } from '../../../shared/util/din-91379-validation.js';
@@ -21,10 +21,10 @@ export class UpdateRolleBodyParams {
     @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, isArray: true, uniqueItems: true })
     public merkmale!: RollenMerkmal[];
 
-    @IsEnum(RollenSystemRecht, { each: true })
+    @IsEnum(RollenSystemRechtEnum, { each: true })
     @ArrayUnique()
-    @ApiProperty({ enum: RollenSystemRecht, enumName: RollenSystemRechtTypName, isArray: true, uniqueItems: true })
-    public systemrechte!: RollenSystemRecht[];
+    @ApiProperty({ enum: RollenSystemRechtEnum, enumName: RollenSystemRechtTypName, isArray: true, uniqueItems: true })
+    public systemrechte!: RollenSystemRechtEnum[];
 
     @ArrayUnique()
     @ApiProperty({ type: [String], uniqueItems: true })

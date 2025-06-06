@@ -62,7 +62,7 @@ import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtNameType } from '../../rolle/domain/rolle.enums.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),
@@ -299,7 +299,11 @@ export class OrganisationController {
         @Permissions() permissions: PersonPermissions,
     ): Promise<PagedResponse<OrganisationResponse>> {
         const [organisations, total, pageTotal]: [Organisation<true>[], number, number] =
-            await this.organisationRepository.findAuthorized(permissions, queryParams.systemrechte, queryParams);
+            await this.organisationRepository.findAuthorized(
+                permissions,
+                queryParams.systemrechte.map((value: RollenSystemRechtNameType) => RollenSystemRecht.getByName(value)),
+                queryParams,
+            );
 
         const organisationResponses: OrganisationResponse[] = organisations.map((organisation: Organisation<true>) => {
             return new OrganisationResponse(organisation);

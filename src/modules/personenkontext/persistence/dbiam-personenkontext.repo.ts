@@ -242,7 +242,7 @@ export class DBiamPersonenkontextRepo {
                         `;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht]);
+        const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht.name]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return result[0].has_systemrecht_at_orga as boolean;
     }
@@ -285,7 +285,7 @@ export class DBiamPersonenkontextRepo {
         const result: [{ has_persona_systemrecht_at_any_kontext_of_personb: boolean }] = await this.em.execute(query, [
             personIdB,
             personIdA,
-            systemrecht,
+            systemrecht.name,
         ]);
         return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
     }

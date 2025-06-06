@@ -5,7 +5,6 @@ import {
     RollenMerkmal,
     RollenMerkmalTypName,
     RollenSystemRecht,
-    RollenSystemRechtTypName,
 } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 
@@ -31,7 +30,7 @@ export class RolleResponse {
     @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, isArray: true, uniqueItems: true })
     public merkmale: RollenMerkmal[];
 
-    @ApiProperty({ enum: RollenSystemRecht, enumName: RollenSystemRechtTypName, isArray: true, uniqueItems: true })
+    @ApiProperty({ isArray: true, uniqueItems: true, type: RollenSystemRecht })
     public systemrechte: RollenSystemRecht[];
 
     @ApiProperty({ nullable: true })

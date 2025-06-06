@@ -63,6 +63,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { RollenSystemRecht, RollenSystemRechtNameType } from '../domain/rolle.enums.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -203,7 +204,7 @@ export class RolleController {
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
-            params.systemrechte,
+            params.systemrechte.map((s: RollenSystemRechtNameType) => RollenSystemRecht.getByName(s)),
             [],
             [],
             false,
@@ -244,7 +245,7 @@ export class RolleController {
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (rolle) {
-            rolle.addSystemRecht(addSystemrechtBodyParams.systemRecht);
+            rolle.addSystemRecht(RollenSystemRecht.getByName(addSystemrechtBodyParams.systemRecht));
             await this.rolleRepo.save(rolle);
         } else {
             throw new AddSystemrechtError(); //hide that rolle is not found
@@ -391,7 +392,7 @@ export class RolleController {
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
-            params.systemrechte,
+            params.systemrechte.map((s: RollenSystemRechtNameType) => RollenSystemRecht.getByName(s)),
             params.serviceProviderIds,
             params.version,
             isAlreadyAssigned,
