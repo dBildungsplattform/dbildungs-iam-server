@@ -147,22 +147,46 @@ jobs:
       helm_chart_version: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.chart_version_from_branch }}
 
   wait_for_helm_chart_to_get_published:
+    runs-on: ubuntu-latest
     needs:
       - release_helm
-    runs-on: ubuntu-latest
     steps:
-      - shell: bash
-        run: sleep 1m
+      - name: Check for Helm chart
+        run: |
+          CHART_NAME=dbildungs-iam-server
+          CHART_VERSION="${{ needs.release_helm.outputs.helm_chart_version }}"
+          echo "CHART_VERSION=$CHART_VERSION"
+          REPO_URL="https://dbildungsplattform.github.io/helm-charts-registry/"
+
+          echo "Adding Helm repository $REPO_URL"
+          helm repo add dbildungsplattform $REPO_URL
+          
+          echo "Checking for chart $CHART_NAME version $CHART_VERSION in $REPO_URL"
+
+          for i in {1..20}; do
+            echo "Attempt $i..."
+            helm repo update
+            if helm search repo dbildungsplattform/$CHART_NAME --version $CHART_VERSION | grep -qw "$CHART_VERSION"; then
+              minutes=$(echo "scale=2; $i * 30 / 60" | bc)
+              echo "Chart $CHART_NAME-$CHART_VERSION found after $minutes minutes !"
+              exit 0
+            fi
+            echo "Chart not found yet. Waiting 30 seconds..."
+            sleep 30
+          done
+
+          echo "Chart $CHART_NAME:$CHART_VERSION not found after waiting."
+          exit 1 
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@6
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/get-branch-meta.yml@7
 
   create_branch_identifier:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
     needs:
       - branch_meta
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@7
     with:
       branch: ${{ needs.branch_meta.outputs.branch }}
 
@@ -186,7 +210,7 @@ jobs:
   # On Delete
   create_branch_identifier_for_deletion:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@6
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/convert-branch-name.yml@7
     with:
       branch: ${{ github.event.ref }}
 
@@ -194,7 +218,7 @@ jobs:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch'}}
     needs:
       - create_branch_identifier_for_deletion
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@5
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/delete-namespace.yml@7
     with:
       namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:
