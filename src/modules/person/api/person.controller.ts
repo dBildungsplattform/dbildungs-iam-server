@@ -123,7 +123,7 @@ export class PersonController {
     public async findLandesbediensteter(
         @Query() queryParams: PersonLandesbediensteterSearchQueryParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<PersonLandesbediensteterSearchResponse> {
+    ): Promise<PersonLandesbediensteterSearchResponse[]> {
         // Find all organisations where user has permission
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN],

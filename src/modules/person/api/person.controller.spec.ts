@@ -308,14 +308,14 @@ describe('PersonController', () => {
                 all: true,
             });
 
-            personLandesbediensteterSearchServiceMock.findLandesbediensteter.mockResolvedValueOnce(responseMock);
+            personLandesbediensteterSearchServiceMock.findLandesbediensteter.mockResolvedValueOnce([responseMock]);
 
-            const result: PersonLandesbediensteterSearchResponse = await personController.findLandesbediensteter(
+            const result: PersonLandesbediensteterSearchResponse[] = await personController.findLandesbediensteter(
                 queryParams,
                 personPermissionsMock,
             );
 
-            expect(result).toBe(responseMock);
+            expect(result).toEqual([responseMock]);
             expect(personLandesbediensteterSearchServiceMock.findLandesbediensteter).toHaveBeenCalledWith(
                 queryParams.personalnummer,
                 queryParams.primaryEmailAddress,
