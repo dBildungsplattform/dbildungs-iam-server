@@ -359,7 +359,7 @@ describe('LandesbediensteteWorkflow', () => {
             await expect(
                 (
                     (
-                        personenkontextFactoryMock.createNewPersonenkontexteUpdate.mock.calls[0] as ReturnT[]
+                        personenkontextFactoryMock.createNewPersonenkontexteUpdate.mock.calls[0] as unknown[]
                     )[4] as IPersonPermissions
                 ).canModifyPerson(personId),
             ).resolves.toBe(true);
