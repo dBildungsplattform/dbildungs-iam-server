@@ -25,6 +25,7 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { LandesbediensteteWorkflowFactory } from './landesbedienstete-workflow.factory.js';
 import { LandesbediensteteWorkflowAggregate } from './landesbedienstete-workflow.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('LandesbediensteteWorkflow', () => {
     let module: TestingModule;
@@ -354,6 +355,14 @@ describe('LandesbediensteteWorkflow', () => {
 
             await sut.commit(personId, lastModified, count, newPersonenkontexte, permissions, personalnummer);
 
+            // Check the constructed permissions passed to the workflow
+            await expect(
+                (
+                    (
+                        personenkontextFactoryMock.createNewPersonenkontexteUpdate.mock.calls[0] as ReturnT[]
+                    )[4] as IPersonPermissions
+                ).canModifyPerson(personId),
+            ).resolves.toBe(true);
             expect(pkupdateMock.update).toHaveBeenCalled();
         });
 

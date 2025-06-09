@@ -256,10 +256,8 @@ export class LandesbediensteteWorkflowAggregate {
         // Construct permissions
         const permissionsOverride: IPersonPermissions = {
             canModifyPerson: (id: string) => Promise.resolve(id === personId), // Grant permission for that user
-            hasSystemrechtAtOrganisation: (orgaId: string, systemrecht: RollenSystemRecht) =>
-                permissions.hasSystemrechtAtOrganisation(orgaId, systemrecht), // Forward check to original permissions
-            hasSystemrechteAtOrganisation: (orgaId: string, systemrechte: RollenSystemRecht[]) =>
-                permissions.hasSystemrechteAtOrganisation(orgaId, systemrechte), // Forward check to original permissions
+            hasSystemrechtAtOrganisation: permissions.hasSystemrechtAtOrganisation.bind(permissions), // Forward check to original permissions
+            hasSystemrechteAtOrganisation: permissions.hasSystemrechteAtOrganisation.bind(permissions), // Forward check to original permissions
         };
 
         const existingPKs: DbiamPersonenkontextBodyParams[] = await this.personenkontextRepo.findByPerson(personId);
