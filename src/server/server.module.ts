@@ -43,6 +43,7 @@ import { SpshConfigModule } from '../modules/spshconfig/spshconfig.module.js';
 import { VidisModule } from '../modules/vidis/vidis.module.js';
 import { MeldungModule } from '../modules/meldung/meldung.module.js';
 import { MapperModule } from '../modules/person/mapper/mapper.module.js';
+import { LandesbediensteteModule } from '../modules/landesbedienstete/landesbedienstete.module.js';
 
 @Module({
     imports: [
@@ -108,6 +109,7 @@ import { MapperModule } from '../modules/person/mapper/mapper.module.js';
         VidisModule,
         MeldungModule,
         MapperModule,
+        LandesbediensteteModule,
     ],
     providers: [
         {

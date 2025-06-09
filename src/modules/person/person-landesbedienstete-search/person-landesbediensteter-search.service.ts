@@ -14,6 +14,8 @@ import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { PersonLockOccasion } from '../domain/person.enums.js';
 import { LandesbediensteterSearchNoPersonFoundError } from '../domain/landesbediensteter-search-no-person-found.error.js';
 import { LandesbediensteterSearchMultiplePersonsFoundError } from '../domain/landesbediensteter-search-multiple-persons-found.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 @Injectable()
 export class PersonLandesbediensteterSearchService {
@@ -62,14 +64,9 @@ export class PersonLandesbediensteterSearchService {
         }
 
         const person: Person<true> = persons.at(0)!;
-        const locks: UserLock[] = await this.userLockRepository.findByPersonId(person.id);
 
-        if (person.personalnummer == null) {
-            throw new LandesbediensteterSearchNoPersonFoundError();
-        }
-        if (locks.findIndex((lock: UserLock) => lock.locked_occasion === PersonLockOccasion.MANUELL_GESPERRT) !== -1) {
-            throw new LandesbediensteterSearchNoPersonFoundError();
-        }
+        const searchableResult: Result<void, DomainError> = await this.personIsSearchable(person);
+        if (!searchableResult.ok) throw searchableResult.error;
 
         const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
             await Promise.all([
@@ -78,5 +75,18 @@ export class PersonLandesbediensteterSearchService {
             ]);
 
         return PersonLandesbediensteterSearchResponse.createNew(person, kontexteWithOrgaAndRolle, email);
+    }
+
+    public async personIsSearchable(person: Person<true>): Promise<Result<void, DomainError>> {
+        const locks: UserLock[] = await this.userLockRepository.findByPersonId(person.id);
+
+        if (person.personalnummer == null) {
+            return Err(new LandesbediensteterSearchNoPersonFoundError());
+        }
+        if (locks.findIndex((lock: UserLock) => lock.locked_occasion === PersonLockOccasion.MANUELL_GESPERRT) !== -1) {
+            return Err(new LandesbediensteterSearchNoPersonFoundError());
+        }
+
+        return Ok(undefined);
     }
 }

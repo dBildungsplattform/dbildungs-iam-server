@@ -481,7 +481,7 @@ describe('PersonenkontextWorkflow', () => {
     describe('findRollenForOrganisation', () => {
         it('should return an empty array if no roles are found by name', async () => {
             anlage.initialize('organisation-id');
-            rolleRepoMock.findByName.mockResolvedValue(undefined);
+            rolleRepoMock.findByName.mockResolvedValue([]);
             const organisation: Organisation<true> = createMock<Organisation<true>>();
             organisationRepoMock.findById.mockResolvedValue(organisation);
 
