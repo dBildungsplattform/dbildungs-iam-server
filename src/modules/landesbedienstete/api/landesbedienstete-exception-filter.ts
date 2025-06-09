@@ -9,7 +9,7 @@ import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/
 
 @Catch(DomainError)
 export class LandesbediensteteExceptionFilter implements ExceptionFilter<DomainError> {
-    private ERROR_MAPPINGS: Map<string, LandesbediensteteError> = new Map([
+    private readonly ERROR_MAPPINGS: Map<string, LandesbediensteteError> = new Map([
         [
             MissingPermissionsError.name,
             new LandesbediensteteError({
