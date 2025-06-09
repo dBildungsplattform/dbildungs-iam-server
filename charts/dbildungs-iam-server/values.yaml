@@ -4,9 +4,9 @@ namespaceOverride: ''
 
 backendHostname: ''
 keycloakHostname: 'http://dbildungs-iam-keycloak'
-keycloak2ndHostname: ""
+keycloak2ndHostname: ''
 keycloakExternalHostname: 'spsh-xxx-keycloak.dev.spsh.dbildungsplattform.de'
-backend2ndHostname: ""
+backend2ndHostname: ''
 
 containerSecurityContext:
   enabled: true
@@ -65,7 +65,6 @@ auth:
   ldap_bind_dn: ''
   ldap_admin_password: ''
   secrets_json: ''
-  frontend_sessionSecret: ''
   itslearning_username: ''
   itslearning_password: ''
   pi_admin_user: ''
@@ -77,6 +76,8 @@ auth:
   import_passphrase_salt: ''
   ox_password: ''
   basic_auth_password: ''
+  vidis_client_id: ''
+  vidis_client_secret: ''
   kafka_username: ''
   kafka_password: ''
 
@@ -139,13 +140,13 @@ backend:
       path: '/health'
   dbseeding:
     enabled: true
-    command: [ "node", "dist/src/console/main.js", "db", "seed", "dev" ]
+    command: ['node', 'dist/src/console/main.js', 'db', 'seed', 'dev']
   dbmigration:
     enabled: true
-    command: [ "node", "dist/src/console/main.js", "db", "migration-apply" ]
+    command: ['node', 'dist/src/console/main.js', 'db', 'migration-apply']
   keycloakdatamigration:
     enabled: true
-    command: [ "node", "dist/src/console/main.js", "keycloak", "update-clients", "dev" ]
+    command: ['node', 'dist/src/console/main.js', 'keycloak', 'update-clients', 'dev']
   ingress:
     # Only enable if 2nd host name is defined
     enabled2nd: false
@@ -167,7 +168,7 @@ backend:
       http: 80
   serviceMonitor:
     enabled: true
-    path: "/metrics"
+    path: '/metrics'
     interval: 30m
     endpoints:
       - port: 'web'
@@ -188,11 +189,11 @@ backend:
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
 
-redis: 
+redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
-  url: "dbildungs-iam-kafka.spsh.svc.cluster.local:9092"
+  url: 'dbildungs-iam-kafka.spsh.svc.cluster.local:9092'
   enabled: false
   initEnabled: true
   initImage:
@@ -208,7 +209,7 @@ autoscaling:
 
 podDisruptionBudget:
   enabled: true
-  minAvailable: "60%"
+  minAvailable: '60%'
 
 status:
   url: 'https://status.dev.spsh.dbildungsplattform.de/'

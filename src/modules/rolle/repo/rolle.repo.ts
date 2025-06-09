@@ -8,7 +8,7 @@ import {
 } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
-import { RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
@@ -189,12 +189,15 @@ export class RolleRepo {
         includeTechnische: boolean,
         limit?: number,
         offset?: number,
+        rollenarten?: RollenArt[],
     ): Promise<Rolle<true>[]> {
         const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
+        const rollenartQuery: Record<string, unknown> =
+            rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
 
         const rollen: RolleEntity[] = await this.em.find(
             this.entityName,
-            { name: { $ilike: '%' + searchStr + '%' }, ...technischeQuery },
+            { name: { $ilike: '%' + searchStr + '%' }, ...rollenartQuery, ...technischeQuery },
             {
                 populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
@@ -205,13 +208,20 @@ export class RolleRepo {
         return rollen.map((rolle: RolleEntity) => mapRolleEntityToAggregate(rolle, this.rolleFactory));
     }
 
-    public async find(includeTechnische: boolean, limit?: number, offset?: number): Promise<Rolle<true>[]> {
+    public async find(
+        includeTechnische: boolean,
+        limit?: number,
+        offset?: number,
+        rollenarten?: RollenArt[],
+    ): Promise<Rolle<true>[]> {
         const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
+        const rollenartQuery: Record<string, unknown> =
+            rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
 
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
             populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
-            where: technischeQuery,
+            where: { ...technischeQuery, ...rollenartQuery },
             limit: limit,
             offset: offset,
         });

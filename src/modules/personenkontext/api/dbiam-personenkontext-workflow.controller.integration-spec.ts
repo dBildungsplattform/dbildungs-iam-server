@@ -292,7 +292,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
 
             const personpermissions: DeepMocked<PersonPermissions> = createMock();
             personpermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
-            personpermissions.hasSystemrechteAtOrganisation.mockResolvedValueOnce(false);
+            personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
             personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
 
             const response: Response = await request(app.getHttpServer() as App)
