@@ -19,7 +19,7 @@ export class PersonAdministrationService {
         rolleName?: string,
         limit?: number,
     ): Promise<Rolle<true>[]> {
-        let rollen: Option<Rolle<true>[]>;
+        let rollen: Rolle<true>[];
 
         if (rolleName) {
             rollen = await this.rolleRepo.findByName(rolleName, false);
@@ -27,7 +27,7 @@ export class PersonAdministrationService {
             rollen = await this.rolleRepo.find(false);
         }
 
-        if (!rollen) return [];
+        if (rollen.length === 0) return [];
 
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],
