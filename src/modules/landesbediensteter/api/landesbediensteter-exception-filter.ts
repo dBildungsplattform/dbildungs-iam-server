@@ -5,9 +5,8 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { LandesbediensteterError, LandesbediensteterErrorI18nTypes } from './landesbediensteter.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/personenkontexte-update.error.js';
 
-@Catch(DomainError)
+@Catch(MissingPermissionsError, EntityNotFoundError)
 export class LandesbediensteterExceptionFilter implements ExceptionFilter<DomainError> {
     private readonly ERROR_MAPPINGS: Map<string, LandesbediensteterError> = new Map([
         [
@@ -22,13 +21,6 @@ export class LandesbediensteterExceptionFilter implements ExceptionFilter<Domain
             new LandesbediensteterError({
                 code: 404,
                 i18nKey: LandesbediensteterErrorI18nTypes.NOT_FOUND,
-            }),
-        ],
-        [
-            PersonenkontexteUpdateError.name,
-            new LandesbediensteterError({
-                code: 400,
-                i18nKey: LandesbediensteterErrorI18nTypes.UPDATE_ERROR,
             }),
         ],
     ]);
