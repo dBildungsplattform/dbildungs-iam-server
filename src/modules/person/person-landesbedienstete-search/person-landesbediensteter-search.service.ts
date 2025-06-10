@@ -30,7 +30,7 @@ export class PersonLandesbediensteterSearchService {
         username?: string,
         vorname?: string,
         familienname?: string,
-    ): Promise<PersonLandesbediensteterSearchResponse> {
+    ): Promise<PersonLandesbediensteterSearchResponse[]> {
         const definedParams: boolean[] = [
             personalnummer !== undefined,
             primaryEmailAddress !== undefined,
@@ -58,7 +58,7 @@ export class PersonLandesbediensteterSearchService {
             throw new LandesbediensteterSearchMultiplePersonsFoundError();
         }
         if (persons.length === 0) {
-            throw new LandesbediensteterSearchNoPersonFoundError();
+            return [];
         }
 
         const person: Person<true> = persons.at(0)!;
@@ -77,6 +77,11 @@ export class PersonLandesbediensteterSearchService {
                 this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(person.id),
             ]);
 
-        return PersonLandesbediensteterSearchResponse.createNew(person, kontexteWithOrgaAndRolle, email);
+        const result: PersonLandesbediensteterSearchResponse = PersonLandesbediensteterSearchResponse.createNew(
+            person,
+            kontexteWithOrgaAndRolle,
+            email,
+        );
+        return [result];
     }
 }
