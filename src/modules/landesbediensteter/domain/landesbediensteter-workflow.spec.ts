@@ -23,16 +23,16 @@ import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/speci
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { LandesbediensteteWorkflowFactory } from './landesbedienstete-workflow.factory.js';
-import { LandesbediensteteWorkflowAggregate } from './landesbedienstete-workflow.js';
+import { LandesbediensteterWorkflowFactory } from './landesbediensteter-workflow.factory.js';
+import { LandesbediensteterWorkflowAggregate } from './landesbediensteter-workflow.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
-describe('LandesbediensteteWorkflow', () => {
+describe('LandesbediensteterWorkflow', () => {
     let module: TestingModule;
 
-    let sut: LandesbediensteteWorkflowAggregate;
+    let sut: LandesbediensteterWorkflowAggregate;
 
-    let factory: LandesbediensteteWorkflowFactory;
+    let factory: LandesbediensteterWorkflowFactory;
 
     const personRepoMock: DeepMocked<PersonRepository> = createMock();
     const rolleRepoMock: DeepMocked<RolleRepo> = createMock();
@@ -66,7 +66,7 @@ describe('LandesbediensteteWorkflow', () => {
     beforeAll(async () => {
         module = await Test.createTestingModule({
             providers: [
-                LandesbediensteteWorkflowFactory,
+                LandesbediensteterWorkflowFactory,
                 { provide: PersonRepository, useValue: personRepoMock },
                 { provide: RolleRepo, useValue: rolleRepoMock },
                 { provide: OrganisationRepository, useValue: organisationRepoMock },
@@ -76,7 +76,7 @@ describe('LandesbediensteteWorkflow', () => {
             ],
         }).compile();
 
-        factory = module.get(LandesbediensteteWorkflowFactory);
+        factory = module.get(LandesbediensteterWorkflowFactory);
     });
 
     afterAll(async () => {

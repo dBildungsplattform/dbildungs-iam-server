@@ -2,7 +2,7 @@ import { ArrayUnique, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 
 import { ApiProperty } from '@nestjs/swagger';
 import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
 
-export class LandesbediensteteWorkflowStepBodyParams {
+export class LandesbediensteterWorkflowStepBodyParams {
     @IsUUID()
     @IsOptional()
     @ApiProperty({

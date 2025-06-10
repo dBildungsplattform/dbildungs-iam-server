@@ -4,7 +4,7 @@ import { IsDate, IsNumber, IsOptional, IsString, ValidateNested } from 'class-va
 
 import { DbiamPersonenkontextBodyParams } from '../../../personenkontext/api/param/dbiam-personenkontext.body.params.js';
 
-export class LandesbediensteteWorkflowCommitBodyParams {
+export class LandesbediensteterWorkflowCommitBodyParams {
     @IsDate()
     @IsOptional()
     @ApiProperty({

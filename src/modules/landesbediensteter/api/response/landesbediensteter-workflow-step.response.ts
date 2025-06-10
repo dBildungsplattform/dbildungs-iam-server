@@ -5,7 +5,7 @@ import { OrganisationResponseLegacy } from '../../../organisation/api/organisati
 import { RolleResponse } from '../../../rolle/api/rolle.response.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
 
-export class LandesbediensteteWorkflowStepResponse {
+export class LandesbediensteterWorkflowStepResponse {
     @ApiProperty({
         description: 'List of available organisations.',
         type: [OrganisationResponseLegacy],

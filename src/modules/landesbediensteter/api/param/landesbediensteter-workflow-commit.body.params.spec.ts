@@ -2,11 +2,11 @@ import { faker } from '@faker-js/faker';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
-import { LandesbediensteteWorkflowCommitBodyParams } from './landesbedienstete-workflow-commit.body.params.js';
+import { LandesbediensteterWorkflowCommitBodyParams } from './landesbediensteter-workflow-commit.body.params.js';
 
-describe('LandesbediensteteWorkflowCommitBodyParams', () => {
+describe('LandesbediensteterWorkflowCommitBodyParams', () => {
     it('should parse', async () => {
-        const params: LandesbediensteteWorkflowCommitBodyParams = {
+        const params: LandesbediensteterWorkflowCommitBodyParams = {
             count: faker.number.int(10),
             newPersonenkontexte: [
                 {
@@ -17,8 +17,8 @@ describe('LandesbediensteteWorkflowCommitBodyParams', () => {
             ],
         };
 
-        const instance: LandesbediensteteWorkflowCommitBodyParams = plainToInstance(
-            LandesbediensteteWorkflowCommitBodyParams,
+        const instance: LandesbediensteterWorkflowCommitBodyParams = plainToInstance(
+            LandesbediensteterWorkflowCommitBodyParams,
             params,
         );
 

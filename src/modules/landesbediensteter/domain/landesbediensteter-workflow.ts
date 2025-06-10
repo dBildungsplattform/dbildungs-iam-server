@@ -22,7 +22,7 @@ import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
-export class LandesbediensteteWorkflowAggregate {
+export class LandesbediensteterWorkflowAggregate {
     public selectedOrganisationId?: string;
 
     public selectedRolleIds?: string[];
@@ -43,8 +43,8 @@ export class LandesbediensteteWorkflowAggregate {
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         personRepo: PersonRepository,
         landesbediensteteSearchService: PersonLandesbediensteterSearchService,
-    ): LandesbediensteteWorkflowAggregate {
-        return new LandesbediensteteWorkflowAggregate(
+    ): LandesbediensteterWorkflowAggregate {
+        return new LandesbediensteterWorkflowAggregate(
             rolleRepo,
             organisationRepository,
             personenkontextRepo,

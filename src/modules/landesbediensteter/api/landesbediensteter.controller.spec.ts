@@ -2,42 +2,42 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
-import { LandesbediensteteWorkflowFactory } from '../domain/landesbedienstete-workflow.factory.js';
-import { LandesbediensteteWorkflowAggregate } from '../domain/landesbedienstete-workflow.js';
-import { LandesbediensteteController } from './landesbedienstete.controller.js';
-import { LandesbediensteteWorkflowStepBodyParams } from './param/landesbedienstete-workflow-step.body.params.js';
+import { LandesbediensteterWorkflowFactory } from '../domain/landesbediensteter-workflow.factory.js';
+import { LandesbediensteterWorkflowAggregate } from '../domain/landesbediensteter-workflow.js';
+import { LandesbediensteterController } from './landesbediensteter.controller.js';
+import { LandesbediensteterWorkflowStepBodyParams } from './param/landesbediensteter-workflow-step.body.params.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { LandesbediensteteWorkflowStepResponse } from './response/landesbedienstete-workflow-step.response.js';
+import { LandesbediensteterWorkflowStepResponse } from './response/landesbediensteter-workflow-step.response.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { faker } from '@faker-js/faker';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { LandesbedienstetePersonIdParams } from './param/landesbedienstete-person-id.params.js';
-import { LandesbediensteteWorkflowCommitBodyParams } from './param/landesbedienstete-workflow-commit.body.params.js';
+import { LandesbediensteterPersonIdParams } from './param/landesbediensteter-person-id.params.js';
+import { LandesbediensteterWorkflowCommitBodyParams } from './param/landesbediensteter-workflow-commit.body.params.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdateResponse } from '../../personenkontext/api/response/personenkontexte-update.response.js';
 import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/personenkontexte-update.error.js';
 
-describe('LandesbediensteteController', () => {
+describe('LandesbediensteterController', () => {
     let module: TestingModule;
 
-    let sut: LandesbediensteteController;
+    let sut: LandesbediensteterController;
 
-    const landesbediensteteWorkflowFactoryMock: DeepMocked<LandesbediensteteWorkflowFactory> = createMock();
-    const workflowMock: DeepMocked<LandesbediensteteWorkflowAggregate> = createMock();
+    const landesbediensteteWorkflowFactoryMock: DeepMocked<LandesbediensteterWorkflowFactory> = createMock();
+    const workflowMock: DeepMocked<LandesbediensteterWorkflowAggregate> = createMock();
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
             imports: [MapperTestModule, LoggingTestModule],
             providers: [
-                LandesbediensteteController,
+                LandesbediensteterController,
                 {
-                    provide: LandesbediensteteWorkflowFactory,
+                    provide: LandesbediensteterWorkflowFactory,
                     useValue: landesbediensteteWorkflowFactoryMock,
                 },
             ],
         }).compile();
 
-        sut = module.get(LandesbediensteteController);
+        sut = module.get(LandesbediensteterController);
     });
 
     afterAll(async () => {
@@ -61,14 +61,14 @@ describe('LandesbediensteteController', () => {
                 DoFactory.createOrganisation(true),
             ];
 
-            const params: LandesbediensteteWorkflowStepBodyParams = {
+            const params: LandesbediensteterWorkflowStepBodyParams = {
                 organisationName: faker.string.alphanumeric(),
                 limit: faker.number.int(50),
             };
             const permissions: DeepMocked<PersonPermissions> = createMock();
             workflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce(orgas);
 
-            const result: LandesbediensteteWorkflowStepResponse = await sut.step(params, permissions);
+            const result: LandesbediensteterWorkflowStepResponse = await sut.step(params, permissions);
 
             expect(workflowMock.findAllSchulstrukturknoten).toHaveBeenCalledWith(
                 permissions,
@@ -93,7 +93,7 @@ describe('LandesbediensteteController', () => {
                 DoFactory.createRolle(true),
             ];
 
-            const params: LandesbediensteteWorkflowStepBodyParams = {
+            const params: LandesbediensteterWorkflowStepBodyParams = {
                 organisationName: faker.string.alphanumeric(),
                 organisationId: faker.string.uuid(),
                 limit: faker.number.int(50),
@@ -102,7 +102,7 @@ describe('LandesbediensteteController', () => {
             workflowMock.findAllSchulstrukturknoten.mockResolvedValueOnce(orgas);
             workflowMock.findRollenForOrganisation.mockResolvedValueOnce(rollen);
 
-            const result: LandesbediensteteWorkflowStepResponse = await sut.step(params, permissions);
+            const result: LandesbediensteterWorkflowStepResponse = await sut.step(params, permissions);
 
             expect(result.organisations).toHaveLength(3);
             expect(result.rollen).toHaveLength(3);
@@ -121,7 +121,7 @@ describe('LandesbediensteteController', () => {
                 DoFactory.createRolle(true),
             ];
 
-            const params: LandesbediensteteWorkflowStepBodyParams = {
+            const params: LandesbediensteterWorkflowStepBodyParams = {
                 organisationName: faker.string.alphanumeric(),
                 organisationId: faker.string.uuid(),
                 rollenIds: [faker.string.uuid()],
@@ -132,7 +132,7 @@ describe('LandesbediensteteController', () => {
             workflowMock.findRollenForOrganisation.mockResolvedValueOnce(rollen);
             workflowMock.canCommit.mockResolvedValueOnce({ ok: true, value: undefined });
 
-            const result: LandesbediensteteWorkflowStepResponse = await sut.step(params, permissions);
+            const result: LandesbediensteterWorkflowStepResponse = await sut.step(params, permissions);
 
             expect(result.canCommit).toBe(true);
         });
@@ -146,10 +146,10 @@ describe('LandesbediensteteController', () => {
                 DoFactory.createPersonenkontext(true),
             ];
 
-            const params: LandesbedienstetePersonIdParams = {
+            const params: LandesbediensteterPersonIdParams = {
                 personId: faker.string.uuid(),
             };
-            const body: LandesbediensteteWorkflowCommitBodyParams = {
+            const body: LandesbediensteterWorkflowCommitBodyParams = {
                 count: faker.number.int(20),
                 newPersonenkontexte: [],
                 lastModified: new Date(),
@@ -174,10 +174,10 @@ describe('LandesbediensteteController', () => {
         it('should throw error', async () => {
             const error: PersonenkontexteUpdateError = new PersonenkontexteUpdateError('Test Error');
 
-            const params: LandesbedienstetePersonIdParams = {
+            const params: LandesbediensteterPersonIdParams = {
                 personId: faker.string.uuid(),
             };
-            const body: LandesbediensteteWorkflowCommitBodyParams = {
+            const body: LandesbediensteterWorkflowCommitBodyParams = {
                 count: faker.number.int(20),
                 newPersonenkontexte: [],
                 lastModified: new Date(),

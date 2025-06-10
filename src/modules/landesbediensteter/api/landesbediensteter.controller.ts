@@ -22,22 +22,22 @@ import { PersonenkontexteUpdateResponse } from '../../personenkontext/api/respon
 import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/personenkontexte-update.error.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { LandesbediensteteWorkflowFactory } from '../domain/landesbedienstete-workflow.factory.js';
-import { LandesbediensteteWorkflowAggregate } from '../domain/landesbedienstete-workflow.js';
-import { LandesbedienstetePersonIdParams } from './param/landesbedienstete-person-id.params.js';
-import { LandesbediensteteWorkflowCommitBodyParams } from './param/landesbedienstete-workflow-commit.body.params.js';
-import { LandesbediensteteWorkflowStepBodyParams } from './param/landesbedienstete-workflow-step.body.params.js';
-import { LandesbediensteteWorkflowStepResponse } from './response/landesbedienstete-workflow-step.response.js';
-import { LandesbediensteteExceptionFilter } from './landesbedienstete-exception-filter.js';
+import { LandesbediensteterWorkflowFactory } from '../domain/landesbediensteter-workflow.factory.js';
+import { LandesbediensteterWorkflowAggregate } from '../domain/landesbediensteter-workflow.js';
+import { LandesbediensteterPersonIdParams } from './param/landesbediensteter-person-id.params.js';
+import { LandesbediensteterWorkflowCommitBodyParams } from './param/landesbediensteter-workflow-commit.body.params.js';
+import { LandesbediensteterWorkflowStepBodyParams } from './param/landesbediensteter-workflow-step.body.params.js';
+import { LandesbediensteterWorkflowStepResponse } from './response/landesbediensteter-workflow-step.response.js';
+import { LandesbediensteterExceptionFilter } from './landesbediensteter-exception-filter.js';
 
 @UseFilters()
-@ApiTags('landesbedienstete')
+@ApiTags('landesbediensteter')
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
-@Controller({ path: 'landesbedienstete' })
-@UseFilters(new LandesbediensteteExceptionFilter())
-export class LandesbediensteteController {
-    public constructor(public readonly landesbediensteteWorkflowFactory: LandesbediensteteWorkflowFactory) {}
+@Controller({ path: 'landesbediensteter' })
+@UseFilters(new LandesbediensteterExceptionFilter())
+export class LandesbediensteterController {
+    public constructor(public readonly landesbediensteteWorkflowFactory: LandesbediensteterWorkflowFactory) {}
 
     @Get('step')
     @UseGuards(StepUpGuard)
@@ -48,16 +48,16 @@ Valid combinations:
 - organisationId is provided, but rolleId is undefined: Fetch Rollen for the given organisation.
 - Both organisationId and rolleId are provided: Check if the Rolle can be committed for the organisation.
 Note: Providing rolleId without organisationId is invalid.`,
-        type: LandesbediensteteWorkflowStepResponse,
+        type: LandesbediensteterWorkflowStepResponse,
     })
     @ApiUnauthorizedResponse({ description: 'Not authorized to get available data.' })
     @ApiForbiddenResponse({ description: 'Insufficient permission to get data.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting data.' })
     public async step(
-        @Query() params: LandesbediensteteWorkflowStepBodyParams,
+        @Query() params: LandesbediensteterWorkflowStepBodyParams,
         @Permissions() permissions: PersonPermissions,
-    ): Promise<LandesbediensteteWorkflowStepResponse> {
-        const workflow: LandesbediensteteWorkflowAggregate = this.landesbediensteteWorkflowFactory.createNew();
+    ): Promise<LandesbediensteterWorkflowStepResponse> {
+        const workflow: LandesbediensteterWorkflowAggregate = this.landesbediensteteWorkflowFactory.createNew();
 
         workflow.initialize(params.organisationId, params.rollenIds);
 
@@ -80,7 +80,7 @@ Note: Providing rolleId without organisationId is invalid.`,
             }
         }
 
-        return new LandesbediensteteWorkflowStepResponse(
+        return new LandesbediensteterWorkflowStepResponse(
             organisations.map((org: Organisation<true>) => new OrganisationResponseLegacy(org)),
             rollen,
             canCommit,
@@ -105,8 +105,8 @@ Note: Providing rolleId without organisationId is invalid.`,
     @ApiForbiddenResponse({ description: 'Insufficient permission to update personenkontexte.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while updating personenkontexte.' })
     public async commit(
-        @Param() params: LandesbedienstetePersonIdParams,
-        @Body() bodyParams: LandesbediensteteWorkflowCommitBodyParams,
+        @Param() params: LandesbediensteterPersonIdParams,
+        @Body() bodyParams: LandesbediensteterWorkflowCommitBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<PersonenkontexteUpdateResponse> {
         const updateResult: Result<Personenkontext<true>[], PersonenkontexteUpdateError> =
