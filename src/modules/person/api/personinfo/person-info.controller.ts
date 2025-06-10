@@ -80,12 +80,10 @@ export class PersonInfoController {
             );
         }
 
-        const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
-            await Promise.all([
-                this.emailRepo.getEmailAddressAndStatusForPerson(person),
-                this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
-            ]);
+        const [kontexteWithOrgaAndRolle]: [Array<KontextWithOrgaAndRolle>] = await Promise.all([
+            this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
+        ]);
 
-        return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email);
+        return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle);
     }
 }

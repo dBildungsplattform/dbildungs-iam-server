@@ -1,27 +1,48 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { KontextWithOrgaAndRolle } from '../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../../../domain/person.js';
 import { LoeschungResponse } from '../../loeschung.response.js';
-import { PersonEmailResponse } from '../../person-email-response.js';
 import { PersonenInfoKontextOrganisationResponse } from '../person-info-kontext-organisation.response.js';
 import { PersonenInfoKontextResponse } from '../person-info-kontext.response.js';
-import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from '../person-info.response.js';
+import { PersonNestedInPersonInfoResponse } from '../person-info.response.js';
+import { PersonNestedInPersonInfoResponseV1 } from './person-nested-in-person-info.response.v1.js';
 
-export class PersonInfoResponseV1 extends PersonInfoResponse {
-    public static override createNew(
+export class PersonInfoResponseV1 {
+    @ApiProperty()
+    public readonly pid: string;
+
+    @ApiProperty()
+    public readonly person: PersonNestedInPersonInfoResponseV1;
+
+    @ApiProperty({ type: [PersonenInfoKontextResponse] })
+    public readonly personenkontexte: PersonenInfoKontextResponse[];
+
+    @ApiProperty({})
+    public readonly beziehungen: object[];
+
+    protected constructor(
+        pid: string,
+        kontexte: PersonenInfoKontextResponse[],
+        nestedPerson: PersonNestedInPersonInfoResponse,
+    ) {
+        this.pid = pid;
+        this.person = nestedPerson;
+        this.personenkontexte = kontexte;
+        this.beziehungen = [];
+    }
+
+    public static createNew(
         person: Person<true>,
-        kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[],
-        email: PersonEmailResponse | undefined,
+        kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[]
     ): PersonInfoResponseV1 {
         const dienststellen: string[] = kontexteWithOrgaAndRolle
             .map((k: KontextWithOrgaAndRolle) => k.organisation.kennung)
             .filter((dnr: string | undefined) => dnr != null);
-
         const nestedPerson: PersonNestedInPersonInfoResponse = PersonNestedInPersonInfoResponse.createNew(
             person,
             dienststellen,
         );
 
-        // Convert KontextWithOrgaAndRolle[] to PersonenInfoKontextResponse[]
         const kontexte: PersonenInfoKontextResponse[] = kontexteWithOrgaAndRolle.map((k: KontextWithOrgaAndRolle) => {
             return new PersonenInfoKontextResponse({
                 id: k.personenkontext.id,
@@ -44,7 +65,6 @@ export class PersonInfoResponseV1 extends PersonInfoResponse {
                 revision: k.personenkontext.revision,
             });
         });
-
-        return new PersonInfoResponseV1(person.id, kontexte, email, nestedPerson);
+        return new PersonInfoResponseV1(person.id, kontexte, nestedPerson);
     }
 }
