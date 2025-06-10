@@ -105,7 +105,7 @@ describe('PersonAdministrationService', () => {
         });
 
         it('should return empty list when no rollen exist', async () => {
-            rolleRepoMock.findByName.mockResolvedValue(undefined);
+            rolleRepoMock.findByName.mockResolvedValue([]);
 
             const result: Rolle<true>[] = await sut.findAuthorizedRollen(personpermissionsMock, 'nonexistent');
             expect(result).toEqual([]);

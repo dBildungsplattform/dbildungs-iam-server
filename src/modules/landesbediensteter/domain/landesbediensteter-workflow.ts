@@ -1,27 +1,28 @@
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { RolleNurAnPassendeOrganisationError } from '../specification/error/rolle-nur-an-passende-organisation.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
-import { Personenkontext } from './personenkontext.js';
-import { PersonenkontexteUpdate } from './personenkontexte-update.js';
-import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
-import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { RolleID } from '../../../shared/types/index.js';
-import { ConfigService } from '@nestjs/config';
-import { PortalConfig } from '../../../shared/config/portal.config.js';
-import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
+import { Err, Ok, UnionToResult } from '../../../shared/util/result.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { PersonLandesbediensteterSearchService } from '../../person/person-landesbedienstete-search/person-landesbediensteter-search.service.js';
+import { DbiamPersonenkontextBodyParams } from '../../personenkontext/api/param/dbiam-personenkontext.body.params.js';
+import { DbiamPersonenkontextFactory } from '../../personenkontext/domain/dbiam-personenkontext.factory.js';
+import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/personenkontexte-update.error.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { PersonenkontexteUpdate } from '../../personenkontext/domain/personenkontexte-update.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
+import { OrganisationMatchesRollenart } from '../../personenkontext/specification/organisation-matches-rollenart.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 
-export class PersonenkontextWorkflowAggregate {
+export class LandesbediensteterWorkflowAggregate {
     public selectedOrganisationId?: string;
 
     public selectedRolleIds?: string[];
@@ -29,21 +30,27 @@ export class PersonenkontextWorkflowAggregate {
     private constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
-        private readonly configService: ConfigService,
+        private readonly personRepo: PersonRepository,
+        private readonly landesbediensteteSearchService: PersonLandesbediensteterSearchService,
     ) {}
 
     public static createNew(
         rolleRepo: RolleRepo,
         organisationRepository: OrganisationRepository,
+        personenkontextRepo: DBiamPersonenkontextRepo,
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
-        configService: ConfigService,
-    ): PersonenkontextWorkflowAggregate {
-        return new PersonenkontextWorkflowAggregate(
+        personRepo: PersonRepository,
+        landesbediensteteSearchService: PersonLandesbediensteterSearchService,
+    ): LandesbediensteterWorkflowAggregate {
+        return new LandesbediensteterWorkflowAggregate(
             rolleRepo,
             organisationRepository,
+            personenkontextRepo,
             dbiamPersonenkontextFactory,
-            configService,
+            personRepo,
+            landesbediensteteSearchService,
         );
     }
 
@@ -61,17 +68,15 @@ export class PersonenkontextWorkflowAggregate {
         limit?: number,
     ): Promise<Organisation<true>[]> {
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
-            [RollenSystemRecht.PERSONEN_VERWALTEN],
+            [RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN],
             true,
         );
 
         // If there are no permitted orgas, return an empty array early
         if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) return [];
 
-        let allOrganisationsExceptKlassen: Organisation<true>[] = [];
-
         // Fetch organisations based on the permitted organization IDs and the search string
-        allOrganisationsExceptKlassen =
+        const allOrganisationsExceptKlassen: Organisation<true>[] =
             await this.organisationRepository.findByNameOrKennungAndExcludeByOrganisationType(
                 OrganisationsTyp.KLASSE,
                 organisationName,
@@ -121,14 +126,12 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         rolleName?: string,
         limit?: number,
-        rollenarten?: RollenArt[],
     ): Promise<Rolle<true>[]> {
         if (
             !this.selectedOrganisationId ||
-            !(await permissions.hasSystemrechteAtOrganisation(
+            !(await permissions.hasSystemrechtAtOrganisation(
                 this.selectedOrganisationId,
-                [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN],
-                false,
+                RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN,
             ))
         ) {
             return [];
@@ -147,13 +150,9 @@ export class PersonenkontextWorkflowAggregate {
         let rollen: Rolle<true>[];
 
         if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, false, undefined, undefined, rollenarten);
+            rollen = await this.rolleRepo.findByName(rolleName, false);
         } else {
-            rollen = await this.rolleRepo.find(false, undefined, undefined, rollenarten);
-        }
-
-        if (rollen.length === 0) {
-            return [];
+            rollen = await this.rolleRepo.find(false);
         }
 
         let allowedRollen: Rolle<true>[] = [];
@@ -190,7 +189,7 @@ export class PersonenkontextWorkflowAggregate {
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
     // Also verifies again if the organisationId is allowed to be assigned by the admin
-    public async canCommit(permissions: PersonPermissions): Promise<DomainError | boolean> {
+    public async canCommit(permissions: PersonPermissions): Promise<Result<void, DomainError>> {
         if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
             // Check references for all selected roles concurrently
             const referenceCheckErrors: Option<DomainError>[] = await Promise.all(
@@ -202,21 +201,19 @@ export class PersonenkontextWorkflowAggregate {
             // Find the first error if any
             const firstError: Option<DomainError> = referenceCheckErrors.find((error: Option<DomainError>) => error);
             if (firstError) {
-                return firstError;
+                return Err(firstError);
             }
 
             // Check permissions after verifying references
-            const permissionCheckError: Option<DomainError> = await this.checkPermissions(
+            const permissionCheckError: Result<void, DomainError> = await this.checkPermissions(
                 permissions,
                 this.selectedOrganisationId,
-                this.selectedRolleIds,
             );
-            if (permissionCheckError) {
-                return permissionCheckError;
-            }
+
+            if (!permissionCheckError.ok) return permissionCheckError;
         }
 
-        return true;
+        return Ok(undefined);
     }
 
     // Takes in the list of personenkontexte and decides whether to add or delete the personenkontexte for a specific PersonId
@@ -225,24 +222,57 @@ export class PersonenkontextWorkflowAggregate {
         personId: string,
         lastModified: Date | undefined,
         count: number,
-        personenkontexte: DbiamPersonenkontextBodyParams[],
+        newPersonenkontexte: DbiamPersonenkontextBodyParams[],
         permissions: IPersonPermissions,
         personalnummer?: string,
-    ): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+    ): Promise<Result<Personenkontext<true>[], DomainError>> {
+        // Check permissions
+        const hasSystemrecht: boolean = await Promise.all(
+            newPersonenkontexte.map((pk: DbiamPersonenkontextBodyParams) =>
+                permissions.hasSystemrechtAtOrganisation(
+                    pk.organisationId,
+                    RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN,
+                ),
+            ),
+        ).then((checkResult: boolean[]) => checkResult.every(Boolean));
+
+        if (!hasSystemrecht) {
+            return Err(
+                new MissingPermissionsError('Not allowed to add Landesbedienstete to the requested organisations.'),
+            );
+        }
+
+        const person: Option<Person<true>> = await this.personRepo.findById(personId);
+        if (!person) {
+            return Err(new EntityNotFoundError('Person', personId));
+        }
+
+        const searchable: Result<void, DomainError> =
+            await this.landesbediensteteSearchService.personIsSearchable(person);
+        if (!searchable.ok) {
+            return Err(new EntityNotFoundError('Person', personId));
+        }
+
+        // Construct permissions
+        const permissionsOverride: IPersonPermissions = {
+            canModifyPerson: (id: string) => Promise.resolve(id === personId), // Grant permission for that user
+            hasSystemrechtAtOrganisation: permissions.hasSystemrechtAtOrganisation.bind(permissions), // Forward check to original permissions
+            hasSystemrechteAtOrganisation: permissions.hasSystemrechteAtOrganisation.bind(permissions), // Forward check to original permissions
+        };
+
+        const existingPKs: DbiamPersonenkontextBodyParams[] = await this.personenkontextRepo.findByPerson(personId);
+
         const pkUpdate: PersonenkontexteUpdate = this.dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
             personId,
             lastModified,
             count,
-            personenkontexte,
-            permissions,
+            existingPKs.concat(newPersonenkontexte),
+            permissionsOverride,
             personalnummer,
         );
         const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await pkUpdate.update();
 
-        if (updateResult instanceof PersonenkontexteUpdateError) {
-            return updateResult;
-        }
-        return updateResult;
+        return UnionToResult(updateResult);
     }
 
     // Checks if the rolle can be assigned to the target organisation
@@ -276,43 +306,17 @@ export class PersonenkontextWorkflowAggregate {
     public async checkPermissions(
         permissions: PersonPermissions,
         organisationId: string,
-        rolleIds: RolleID[],
-    ): Promise<Option<DomainError>> {
+    ): Promise<Result<void, DomainError>> {
         // Check if logged in person has permission
-        const hasAnlegenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
-            organisationId,
-            RollenSystemRecht.PERSONEN_ANLEGEN,
-        );
+        const hasPermissionAtOrga: boolean = await permissions.hasSystemrechteAtOrganisation(organisationId, [
+            RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN,
+        ]);
 
-        if (hasAnlegenPermissionAtOrga) {
-            return undefined;
+        // Missing permission on orga
+        if (!hasPermissionAtOrga) {
+            return Err(new MissingPermissionsError('Unauthorized to add persons to the organisation'));
         }
 
-        const hasLimitedCreationPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
-            organisationId,
-            RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
-        );
-
-        if (!hasLimitedCreationPermissionAtOrga) {
-            return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
-        }
-
-        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
-
-        const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
-
-        const allowedRollenArten: RollenArt[] | undefined = mapStringsToRollenArt(
-            portalConfig.LIMITED_ROLLENART_ALLOWLIST || [],
-        );
-
-        // Check if the selected roles match the allowed roles
-        const isAllowed: boolean = Array.from(rollen.values()).every((rolle: Rolle<true>) =>
-            allowedRollenArten?.includes(rolle.rollenart),
-        );
-        if (isAllowed) {
-            return undefined;
-        } else {
-            return new MissingPermissionsError('Unauthorized to manage rollenart at the organisation');
-        }
+        return Ok(undefined);
     }
 }
