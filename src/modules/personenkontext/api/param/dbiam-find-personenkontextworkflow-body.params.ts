@@ -2,8 +2,18 @@ import { ArrayUnique, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID
 import { ApiProperty } from '@nestjs/swagger';
 import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
 import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
+import { OperationContext } from '../../domain/personenkontext.enums.js';
 
 export class FindDbiamPersonenkontextWorkflowBodyParams {
+    @IsEnum(OperationContext)
+    @ApiProperty({
+        enum: OperationContext,
+        enumName: 'OperationContext',
+        description: 'The context in which this request happens. Affects permission checks.',
+        required: true,
+    })
+    public readonly operationContext?: OperationContext;
+
     @IsUUID()
     @IsOptional()
     @ApiProperty({
