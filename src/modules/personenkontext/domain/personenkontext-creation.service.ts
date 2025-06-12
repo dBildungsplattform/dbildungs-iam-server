@@ -12,6 +12,7 @@ import { PersonenkontexteUpdateError } from './error/personenkontexte-update.err
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 import { PermissionsOverride } from '../../../shared/permissions/permissions-override.js';
 import { DbiamCreatePersonenkontextBodyParams } from '../api/param/dbiam-create-personenkontext.body.params.js';
+import { OperationContext } from './personenkontext.enums.js';
 
 export type PersonPersonenkontext = {
     person: Person<true>;
@@ -48,7 +49,10 @@ export class PersonenkontextCreationService {
         /* eslint-disable no-await-in-loop */
         for (const createPersonenkontext of createPersonenkontexte) {
             anlage.initialize(createPersonenkontext.organisationId, [createPersonenkontext.rolleId]);
-            const canCommit: DomainError | boolean = await anlage.canCommit(permissions);
+            const canCommit: DomainError | boolean = await anlage.canCommit(
+                permissions,
+                OperationContext.PERSON_ANLEGEN,
+            );
             if (canCommit instanceof DomainError) {
                 return canCommit;
             }
