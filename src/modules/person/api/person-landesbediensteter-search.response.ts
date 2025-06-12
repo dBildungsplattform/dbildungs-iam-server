@@ -3,8 +3,12 @@ import { PersonLandesbediensteterSearchPersonenkontextResponse } from './person-
 import { KontextWithOrgaAndRolle } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { Person } from '../domain/person.js';
 import { PersonEmailResponse } from './person-email-response.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 
 export class PersonLandesbediensteterSearchResponse {
+    @ApiProperty({ type: String, required: true })
+    public readonly id: string;
+
     @ApiProperty({ type: String, required: true })
     public readonly vorname: string;
 
@@ -24,6 +28,7 @@ export class PersonLandesbediensteterSearchResponse {
     public personenkontexte: PersonLandesbediensteterSearchPersonenkontextResponse[];
 
     protected constructor(
+        id: PersonID,
         vorname: string,
         familienname: string,
         username: string | undefined,
@@ -31,6 +36,7 @@ export class PersonLandesbediensteterSearchResponse {
         primaryEmailAddress: string | undefined,
         personenkontexte: PersonLandesbediensteterSearchPersonenkontextResponse[],
     ) {
+        this.id = id;
         this.vorname = vorname;
         this.familienname = familienname;
         this.username = username;
@@ -45,6 +51,7 @@ export class PersonLandesbediensteterSearchResponse {
         email: PersonEmailResponse | undefined,
     ): PersonLandesbediensteterSearchResponse {
         return new PersonLandesbediensteterSearchResponse(
+            person.id,
             person.vorname,
             person.familienname,
             person.referrer,
