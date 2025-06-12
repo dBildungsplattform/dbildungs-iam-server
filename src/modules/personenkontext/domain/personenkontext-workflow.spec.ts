@@ -741,7 +741,7 @@ describe('PersonenkontextWorkflow', () => {
     });
 
     describe('checkPermissions', () => {
-        it('should return true if user has limited anlegen permissions and only limited rollen are assigned', async () => {
+        it('should return undefined if user has limited anlegen permissions and only limited rollen are assigned', async () => {
             configMock.getOrThrow.mockReturnValueOnce({
                 LIMITED_ROLLENART_ALLOWLIST: [RollenArt.LERN, RollenArt.LEIT],
             });
@@ -770,6 +770,20 @@ describe('PersonenkontextWorkflow', () => {
                 'orgId',
                 [lehrRolle.id, leitRolle.id],
                 OperationContext.PERSON_ANLEGEN,
+            );
+
+            expect(result).toBe(undefined);
+        });
+
+        it('should return undefined if context is PERSON_BEARBEITEN and user has systemrecht PERSONEN_VERWALTEN', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+
+            const result: Option<DomainError> = await anlage.checkPermissions(
+                permissions,
+                'orgId',
+                [],
+                OperationContext.PERSON_BEARBEITEN,
             );
 
             expect(result).toBe(undefined);
