@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PersonInfoKontextV1ErreichbarkeitTyp } from './person-info-enums.v1.js';
+
 
 export class PersonInfoKontextErreichbarkeitResponseV1 {
-    @ApiProperty()
-    public readonly typ: string;
+    @ApiProperty({enum: PersonInfoKontextV1ErreichbarkeitTyp})
+    public readonly typ: PersonInfoKontextV1ErreichbarkeitTyp;
 
     @ApiProperty()
     public readonly kennung: string;

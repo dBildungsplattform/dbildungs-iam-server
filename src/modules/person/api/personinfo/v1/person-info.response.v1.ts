@@ -3,6 +3,8 @@ import { KontextWithOrgaAndRolle } from '../../../../personenkontext/persistence
 import { Person } from '../../../domain/person.js';
 import { PersonInfoPersonResponseV1 } from './person-info-person.response.v1.js';
 import { PersonInfoKontextResponseV1 } from './person-info-kontext.response.v1.js';
+import { OrganisationsTyp } from '../../../../organisation/domain/organisation.enums.js';
+import { PersonEmailResponse } from '../../person-email-response.js';
 
 export class PersonInfoResponseV1 {
     @ApiProperty()
@@ -30,9 +32,17 @@ export class PersonInfoResponseV1 {
 
     public static createNew(
         person: Person<true>,
-        kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[]
+        kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[],
+        email: Option<PersonEmailResponse>
     ): PersonInfoResponseV1 {
-        const personInfoPersonResponseV1 = PersonInfoPersonResponseV1.createNew(person);
-        return new PersonInfoResponseV1(person.id, personInfoPersonResponseV1, kontexte);
+
+        const primaryKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(kontext => kontext.organisation.typ !== OrganisationsTyp.KLASSE)
+        const klassenKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(kontext => kontext.organisation.typ === OrganisationsTyp.KLASSE)
+        const personInfoKontextResponsesV1: PersonInfoKontextResponseV1[] = []
+        primaryKontexte.forEach(primaryKontext => {
+            const associatedKlassenKontexte = klassenKontexte.filter(klassenKontext => klassenKontext.organisation.administriertVon === primaryKontext.organisation.id);
+            personInfoKontextResponsesV1.push(PersonInfoKontextResponseV1.createNew(primaryKontext, associatedKlassenKontexte,person, email ?? undefined))
+        })
+        return new PersonInfoResponseV1(person.id, PersonInfoPersonResponseV1.createNew(person), personInfoKontextResponsesV1);
     }
 }

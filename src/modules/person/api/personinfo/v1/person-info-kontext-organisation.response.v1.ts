@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-type TPersonenInfoKontextOrganisationTyp = 'Schule' | 'Anbieter' | 'Sonstige'
+import { PersonInfoKontextV1OrganisationTyp } from './person-info-enums.v1.js';
 
 export class PersonenInfoKontextOrganisationResponseV1 {
     @ApiProperty({ nullable: false })
@@ -12,8 +11,8 @@ export class PersonenInfoKontextOrganisationResponseV1 {
     @ApiProperty({ nullable: true })
     public name?: string;
 
-    @ApiProperty({ nullable: true })
-    public typ?: TPersonenInfoKontextOrganisationTyp;
+    @ApiProperty({ enum: PersonInfoKontextV1OrganisationTyp, nullable: true })
+    public typ?: PersonInfoKontextV1OrganisationTyp;
 
     public static createNew(
         props: Readonly<PersonenInfoKontextOrganisationResponseV1>,
