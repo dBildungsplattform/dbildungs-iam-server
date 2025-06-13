@@ -12,7 +12,7 @@ export class FindDbiamPersonenkontextWorkflowBodyParams {
         description: 'The context in which this request happens. Affects permission checks.',
         required: true,
     })
-    public readonly operationContext?: OperationContext;
+    public readonly operationContext!: OperationContext;
 
     @IsUUID()
     @IsOptional()

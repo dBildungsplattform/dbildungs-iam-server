@@ -193,7 +193,7 @@ export class PersonenkontextWorkflowAggregate {
     // Also verifies again if the organisationId is allowed to be assigned by the admin
     public async canCommit(
         permissions: PersonPermissions,
-        operationContext?: OperationContext,
+        operationContext: OperationContext,
     ): Promise<DomainError | boolean> {
         if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
             // Check references for all selected roles concurrently
@@ -282,12 +282,8 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         organisationId: string,
         rolleIds: RolleID[],
-        operationContext?: OperationContext,
+        operationContext: OperationContext,
     ): Promise<Option<DomainError>> {
-        if (!operationContext) {
-            return new MissingPermissionsError('Permissions could not be checked without operation context');
-        }
-
         if (operationContext === OperationContext.PERSON_ANLEGEN) {
             // Check if logged in person has permission
             const hasAnlegenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(

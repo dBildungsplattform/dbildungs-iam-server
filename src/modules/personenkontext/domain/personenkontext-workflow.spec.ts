@@ -789,23 +789,6 @@ describe('PersonenkontextWorkflow', () => {
             expect(result).toBe(undefined);
         });
 
-        it('should return an error if no operationContext is provided', async () => {
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
-            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
-
-            const lehrRolle: Rolle<true> = DoFactory.createRolle(true, {
-                id: faker.string.uuid(),
-                name: 'Test Rolle',
-                rollenart: RollenArt.LERN,
-            });
-            const rolleMap: Map<string, Rolle<true>> = new Map([[lehrRolle.id, lehrRolle]]);
-            rolleRepoMock.findByIds.mockResolvedValue(rolleMap);
-            const result: Option<DomainError> = await anlage.checkPermissions(permissions, 'orgId', [lehrRolle.id]);
-
-            expect(result).toBeInstanceOf(DomainError);
-        });
-
         describe.each([[OperationContext.PERSON_ANLEGEN], [OperationContext.PERSON_BEARBEITEN]])(
             'when context is %s',
             (operationContext: OperationContext) => {
@@ -843,6 +826,7 @@ describe('PersonenkontextWorkflow', () => {
 
                     expect(result).toBeInstanceOf(DomainError);
                 });
+
                 it('should return error if config is not set for limited rollenarten', async () => {
                     configMock.getOrThrow.mockReturnValueOnce({ LIMITED_ROLLENART_ALLOWLIST: undefined });
 
