@@ -7,7 +7,7 @@ import { EmailAddressStatus } from '../../../../email/domain/email-address.js';
 import { OrganisationsTyp } from '../../../../organisation/domain/organisation.enums.js';
 import { PersonenInfoKontextGruppeResponseV1 } from './person-info-kontext-gruppe.response.v1.js';
 import { PersonenInfoKontextOrganisationResponseV1 } from './person-info-kontext-organisation.response.v1.js';
-import { PersonInfoKontextV1ErreichbarkeitTyp, PersonInfoKontextV1Personenstatus, PersonInfoKontextV1GruppeTyp, PersonInfoKontextV1OrganisationTyp } from './person-info-enums.v1.js';
+import { PersonInfoKontextV1ErreichbarkeitTyp, PersonInfoKontextV1Personenstatus, PersonInfoKontextV1GruppeTyp, PersonInfoKontextV1OrganisationTyp, PersonInfoKontextV1Rolle, convertRollenartToPersonInfoKontextV1Rolle } from './person-info-enums.v1.js';
 
 export class PersonInfoKontextResponseV1 {
     @ApiProperty()
@@ -16,8 +16,8 @@ export class PersonInfoKontextResponseV1 {
     @ApiProperty({ type: PersonenInfoKontextOrganisationResponseV1 })
     public organisation!: PersonenInfoKontextOrganisationResponseV1;
 
-    @ApiProperty()
-    public rolle!: string;
+    @ApiProperty({enum: PersonInfoKontextV1Rolle})
+    public rolle!: PersonInfoKontextV1Rolle;
 
     @ApiProperty({ type: [PersonInfoKontextErreichbarkeitResponseV1] })
     public erreichbarkeiten!: PersonInfoKontextErreichbarkeitResponseV1 [];
@@ -25,13 +25,14 @@ export class PersonInfoKontextResponseV1 {
     @ApiProperty({enum: PersonInfoKontextV1Personenstatus})
     public personenstatus?: PersonInfoKontextV1Personenstatus;
 
-    @ApiProperty({})
-    public readonly gruppen!: object[];
+    @ApiProperty({type: [PersonenInfoKontextGruppeResponseV1]})
+    public readonly gruppen!: PersonenInfoKontextGruppeResponseV1[];
 
     protected constructor(props: Readonly<PersonInfoKontextResponseV1>) {
         this.id = props.id;
         this.organisation = props.organisation;
         this.rolle = props.rolle!;
+        this.erreichbarkeiten = props.erreichbarkeiten;
         this.personenstatus = props.personenstatus!;
         this.gruppen = props.gruppen;
     }
@@ -62,7 +63,7 @@ export class PersonInfoKontextResponseV1 {
         return new PersonInfoKontextResponseV1({
             id: primaryNonKlassenKontext.personenkontext.id,
             organisation: personenInfoKontextOrganisationResponseV1,
-            rolle: primaryNonKlassenKontext.rolle.rollenart.toString(),
+            rolle: convertRollenartToPersonInfoKontextV1Rolle(primaryNonKlassenKontext.rolle.rollenart),
             erreichbarkeiten: personInfoKontextErreichbarkeitResponseV1 ? [personInfoKontextErreichbarkeitResponseV1] : [],
             personenstatus: person.isLocked ? undefined : PersonInfoKontextV1Personenstatus.AKTIV,
             gruppen: gruppen
