@@ -1,7 +1,6 @@
 import { Controller, Get, UseFilters, Version } from '@nestjs/common';
 import {
     ApiBearerAuth,
-    ApiExcludeEndpoint,
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
@@ -65,7 +64,6 @@ export class PersonInfoController {
     }
 
     @Version('1')
-    @ApiExcludeEndpoint() //Exclude for now since it has been only created to demonstrate versioning (code blueprint)
     @Get()
     @ApiOperation({ summary: 'Info about logged in person.' })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
@@ -81,10 +79,10 @@ export class PersonInfoController {
         }
 
         const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
-            await Promise.all([
-                this.emailRepo.getEmailAddressAndStatusForPerson(person),
-                this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
-            ]);
+        await Promise.all([
+            this.emailRepo.getEmailAddressAndStatusForPerson(person),
+            this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
+        ]);
 
         return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email);
     }
