@@ -33,3 +33,8 @@ export enum SichtfreigabeType {
     JA = 'ja',
     NEIN = 'nein',
 }
+
+export enum OperationContext {
+    PERSON_ANLEGEN = 'PERSON_ANLEGEN',
+    PERSON_BEARBEITEN = 'PERSON_BEARBEITEN',
+}

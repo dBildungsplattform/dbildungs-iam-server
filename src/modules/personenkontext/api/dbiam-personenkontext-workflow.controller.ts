@@ -131,7 +131,7 @@ export class DbiamPersonenkontextWorkflowController {
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
         let canCommit: boolean = false;
         if (params.organisationId && params.rollenIds) {
-            const commitResult: DomainError | boolean = await anlage.canCommit(permissions);
+            const commitResult: DomainError | boolean = await anlage.canCommit(permissions, params.operationContext);
             if (commitResult === true) {
                 canCommit = true;
             }
@@ -227,7 +227,7 @@ export class DbiamPersonenkontextWorkflowController {
             this.logger.error(
                 `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht einen neuen Benutzer für ${params.vorname} ${params.familienname} anzulegen. Fehler:  ${savedPersonWithPersonenkontext.message}`,
             );
-            params.createPersonenkontexte.map((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
+            params.createPersonenkontexte.forEach((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
                 const rolleId: string = kontextParams.rolleId;
                 const organisationId: string = kontextParams.organisationId;
                 this.logger.error(

@@ -20,6 +20,7 @@ import { RolleID } from '../../../shared/types/index.js';
 import { ConfigService } from '@nestjs/config';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
 import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
+import { OperationContext } from './personenkontext.enums.js';
 
 export class PersonenkontextWorkflowAggregate {
     public selectedOrganisationId?: string;
@@ -190,7 +191,10 @@ export class PersonenkontextWorkflowAggregate {
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
     // Also verifies again if the organisationId is allowed to be assigned by the admin
-    public async canCommit(permissions: PersonPermissions): Promise<DomainError | boolean> {
+    public async canCommit(
+        permissions: PersonPermissions,
+        operationContext: OperationContext,
+    ): Promise<DomainError | boolean> {
         if (this.selectedOrganisationId && this.selectedRolleIds && this.selectedRolleIds.length > 0) {
             // Check references for all selected roles concurrently
             const referenceCheckErrors: Option<DomainError>[] = await Promise.all(
@@ -210,6 +214,7 @@ export class PersonenkontextWorkflowAggregate {
                 permissions,
                 this.selectedOrganisationId,
                 this.selectedRolleIds,
+                operationContext,
             );
             if (permissionCheckError) {
                 return permissionCheckError;
@@ -277,42 +282,53 @@ export class PersonenkontextWorkflowAggregate {
         permissions: PersonPermissions,
         organisationId: string,
         rolleIds: RolleID[],
+        operationContext: OperationContext,
     ): Promise<Option<DomainError>> {
-        // Check if logged in person has permission
-        const hasAnlegenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
-            organisationId,
-            RollenSystemRecht.PERSONEN_ANLEGEN,
-        );
+        if (operationContext === OperationContext.PERSON_ANLEGEN) {
+            // Check if logged in person has permission
+            const hasAnlegenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+                organisationId,
+                RollenSystemRecht.PERSONEN_ANLEGEN,
+            );
 
-        if (hasAnlegenPermissionAtOrga) {
-            return undefined;
+            if (hasAnlegenPermissionAtOrga) {
+                return undefined;
+            }
+
+            const hasLimitedCreationPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+                organisationId,
+                RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+            );
+
+            if (!hasLimitedCreationPermissionAtOrga) {
+                return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
+            }
+
+            const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
+
+            const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
+
+            const allowedRollenArten: RollenArt[] | undefined = mapStringsToRollenArt(
+                portalConfig.LIMITED_ROLLENART_ALLOWLIST || [],
+            );
+
+            // Check if the selected roles match the allowed roles
+            const isAllowed: boolean = Array.from(rollen.values()).every((rolle: Rolle<true>) =>
+                allowedRollenArten?.includes(rolle.rollenart),
+            );
+            if (isAllowed) {
+                return undefined;
+            } else {
+                return new MissingPermissionsError('Unauthorized to manage rollenart at the organisation');
+            }
+        } else if (operationContext === OperationContext.PERSON_BEARBEITEN) {
+            const hasVerwaltenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
+                organisationId,
+                RollenSystemRecht.PERSONEN_VERWALTEN,
+            );
+            if (hasVerwaltenPermissionAtOrga) return;
         }
 
-        const hasLimitedCreationPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(
-            organisationId,
-            RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
-        );
-
-        if (!hasLimitedCreationPermissionAtOrga) {
-            return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
-        }
-
-        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
-
-        const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
-
-        const allowedRollenArten: RollenArt[] | undefined = mapStringsToRollenArt(
-            portalConfig.LIMITED_ROLLENART_ALLOWLIST || [],
-        );
-
-        // Check if the selected roles match the allowed roles
-        const isAllowed: boolean = Array.from(rollen.values()).every((rolle: Rolle<true>) =>
-            allowedRollenArten?.includes(rolle.rollenart),
-        );
-        if (isAllowed) {
-            return undefined;
-        } else {
-            return new MissingPermissionsError('Unauthorized to manage rollenart at the organisation');
-        }
+        return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
     }
 }
