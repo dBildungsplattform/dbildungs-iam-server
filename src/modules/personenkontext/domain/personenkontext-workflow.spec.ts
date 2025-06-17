@@ -496,6 +496,7 @@ describe('PersonenkontextWorkflow', () => {
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(
                 createMock<PersonPermissions>(),
                 'rolle-name',
+                [],
                 10,
             );
 
@@ -638,7 +639,7 @@ describe('PersonenkontextWorkflow', () => {
 
             jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
 
-            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, 2);
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, [], 2);
 
             expect(result).toHaveLength(2);
         });

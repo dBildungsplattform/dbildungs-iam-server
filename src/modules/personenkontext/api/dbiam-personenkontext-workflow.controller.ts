@@ -121,7 +121,13 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Find all possible roles under the selected Organisation
         const rollen: Rolle<true>[] = params.organisationId
-            ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit, rollenarten)
+            ? await anlage.findRollenForOrganisation(
+                  permissions,
+                  params.rolleName,
+                  params.rollenIds,
+                  params.limit,
+                  rollenarten,
+              )
             : [];
 
         const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
@@ -227,7 +233,7 @@ export class DbiamPersonenkontextWorkflowController {
             this.logger.error(
                 `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht einen neuen Benutzer für ${params.vorname} ${params.familienname} anzulegen. Fehler:  ${savedPersonWithPersonenkontext.message}`,
             );
-            params.createPersonenkontexte.forEach((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
+            params.createPersonenkontexte.map((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
                 const rolleId: string = kontextParams.rolleId;
                 const organisationId: string = kontextParams.organisationId;
                 this.logger.error(
