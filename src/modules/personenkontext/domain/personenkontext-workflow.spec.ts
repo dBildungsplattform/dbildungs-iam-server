@@ -693,7 +693,7 @@ describe('PersonenkontextWorkflow', () => {
             expect(result[0]).toEqual(rolle2);
         });
 
-        it.only('should always include roles passed via rollenIds even if over the limit', async () => {
+        it('should always include roles passed via rollenIds even if over the limit', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.LAND,
             });
