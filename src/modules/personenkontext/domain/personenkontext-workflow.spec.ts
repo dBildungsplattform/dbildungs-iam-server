@@ -692,6 +692,47 @@ describe('PersonenkontextWorkflow', () => {
             expect(result).toHaveLength(1);
             expect(result[0]).toEqual(rolle2);
         });
+
+        it.only('should always include roles passed via rollenIds even if over the limit', async () => {
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.LAND,
+            });
+            const childOrganisation: Organisation<true> = DoFactory.createOrganisation(true, {
+                typ: OrganisationsTyp.KLASSE,
+            });
+
+            const rolle1: Rolle<true> = DoFactory.createRolle(true, { id: 'id-1', name: 'rolle1' });
+            const rolle2: Rolle<true> = DoFactory.createRolle(true, { id: 'id-2', name: 'rolle2' });
+            const rolle3: Rolle<true> = DoFactory.createRolle(true, { id: 'id-3', name: 'rolle3' }); // passed via rollenIds
+
+            const rollen: Rolle<true>[] = [rolle1, rolle2]; // only rolle1 and rolle2 returned via .find
+
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+            organisationRepoMock.findChildOrgasForIds.mockResolvedValue([childOrganisation]);
+            organisationRepoMock.findByIds.mockResolvedValue(
+                new Map([organisation, childOrganisation].map((org: Organisation<true>) => [org.id, org])),
+            );
+
+            const rolleMap: Map<string, Rolle<true>> = new Map([
+                [rolle3.id, rolle3],
+                [rolle3.id, rolle3],
+            ]);
+            rolleRepoMock.find.mockResolvedValue(rollen);
+            rolleRepoMock.findByIds.mockResolvedValue(rolleMap); // simulate lookup of passed rollenIds
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechteAtOrganisation.mockResolvedValue(true);
+
+            jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
+
+            anlage.initialize(organisation.id);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, ['id-3'], 2);
+
+            // Check that rolle3 is included even if it's outside the limit
+            expect(result.map((r: Rolle<true>) => r.id)).toEqual(expect.arrayContaining(['id-1', 'id-3']));
+            expect(result.length).toBe(2);
+        });
     });
     describe('commit', () => {
         it('should successfully commit personenkontexte', async () => {
