@@ -233,7 +233,7 @@ export class DbiamPersonenkontextWorkflowController {
             this.logger.error(
                 `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht einen neuen Benutzer für ${params.vorname} ${params.familienname} anzulegen. Fehler:  ${savedPersonWithPersonenkontext.message}`,
             );
-            params.createPersonenkontexte.map((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
+            params.createPersonenkontexte.foreach((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
                 const rolleId: string = kontextParams.rolleId;
                 const organisationId: string = kontextParams.organisationId;
                 this.logger.error(
