@@ -155,8 +155,7 @@ export class PersonenkontextWorkflowAggregate {
         // Check which roles are allowed for the organisation
         const allowedRollen: Rolle<true>[] = (
             await Promise.all(
-                rollen.map(async (rolle: Rolle<true> | null) => {
-                    if (!rolle) return null;
+                rollen.map(async (rolle: Rolle<true>) => {
                     const error: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
                     return error ? null : rolle;
                 }),
