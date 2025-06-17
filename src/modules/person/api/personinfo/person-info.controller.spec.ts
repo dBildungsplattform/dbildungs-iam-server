@@ -25,9 +25,11 @@ import { PersonBirthResponse } from '../person-birth.response.js';
 import { PersonNameResponse } from '../person-name.response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
-import { PersonInfoKontextV1OrganisationTyp, PersonInfoKontextV1Rolle } from './v1/person-info-enums.v1.js';
+import { PersonInfoKontextV1OrganisationTyp, PersonInfoKontextV1Personenstatus, PersonInfoKontextV1Rolle } from './v1/person-info-enums.v1.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
+import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
+import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
@@ -35,6 +37,7 @@ describe('PersonInfoController', () => {
     let personRepoMock: DeepMocked<PersonRepository>;
     let personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let emailRepoMock: DeepMocked<EmailRepo>;
+    let userLockRepoMock: DeepMocked<UserLockRepository>;
     let personApiMapper: DeepMocked<PersonApiMapper>;
 
     beforeAll(async () => {
@@ -58,6 +61,10 @@ describe('PersonInfoController', () => {
                     useValue: createMock<PersonRepository>(),
                 },
                 {
+                    provide: UserLockRepository,
+                    useValue: createMock<UserLockRepository>(),
+                },
+                {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
@@ -69,6 +76,7 @@ describe('PersonInfoController', () => {
         personenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         emailRepoMock = module.get(EmailRepo);
         personApiMapper = module.get(PersonApiMapper);
+        userLockRepoMock = module.get(UserLockRepository);
     });
 
     afterAll(async () => {
@@ -285,9 +293,56 @@ describe('PersonInfoController', () => {
         let orga: null | Organisation<true> = null;
         beforeEach(() => {
             person = DoFactory.createPerson(true);
-            orga = DoFactory.createOrganisation(true);
+            orga = DoFactory.createOrganisation(true, {typ: OrganisationsTyp.SCHULE});
         });
         describe('when person exists', () => {
+            it('should return person info for locked person with kontext at land', async () => {
+                const orgaLand = DoFactory.createOrganisation(true, {typ: OrganisationsTyp.LAND});
+                const permissions: PersonPermissions = {
+                    personFields: {
+                        id: faker.string.uuid(),
+                    },
+                } as PersonPermissions;
+                const rolle: Rolle<true> = DoFactory.createRolle(true, {rollenart: RollenArt.SYSADMIN});
+                const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(orgaLand);
+                    },
+                });
+                const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
+
+                userLockRepoMock.findByPersonId.mockResolvedValue([createMock<UserLock>()]);
+                personRepoMock.findById.mockResolvedValue(person);
+                personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
+                personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
+                    {
+                        personenkontext: kontext,
+                        organisation: orgaLand!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                ]);
+                emailRepoMock.getEmailAddressAndStatusForPerson.mockResolvedValueOnce(undefined);
+
+                const result: PersonInfoResponseV1 = await sut.infoV1(permissions);
+                expect(result).toBeInstanceOf(PersonInfoResponseV1);
+                expect(result.person).toBeInstanceOf(PersonInfoPersonResponseV1);
+
+                expect(result.pid).toEqual(person?.id);
+                expect(result.person.name.vorname).toEqual(person?.vorname);
+                expect(result.person.name.familiennamen).toEqual(person?.familienname);
+                expect(result.personenkontexte.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.id).toEqual(kontext.id);
+                expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orgaLand?.id);
+                expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orgaLand?.kennung);
+                expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orgaLand?.name);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SONSTIGE);
+                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(undefined);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.SYSADMIN);
+            });
             it('should return person info for Lehrer with Email with Schul-kontext and no gruppen', async () => {
                 const permissions: PersonPermissions = {
                     personFields: {
@@ -308,6 +363,7 @@ describe('PersonInfoController', () => {
                 });
                 const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
 
+                userLockRepoMock.findByPersonId.mockResolvedValue([]);
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
@@ -332,9 +388,10 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SONSTIGE);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SCHULE);
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.LEHR);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
                 expect(result.personenkontexte.at(0)?.erreichbarkeiten.at(0)?.kennung).toEqual(email.address);
             });
             it('should return person info without Email with Schul-kontext and no gruppen', async () => {
@@ -357,6 +414,7 @@ describe('PersonInfoController', () => {
                 });
                 const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
 
+                userLockRepoMock.findByPersonId.mockResolvedValue([]);
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontext]);
@@ -381,9 +439,10 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SONSTIGE);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SCHULE);
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.ORGADMIN);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
                 expect(result.personenkontexte.at(0)?.erreichbarkeiten.length).toEqual(0);
             });
             it('should return person info for Schueler with gruppen', async () => {
@@ -411,6 +470,7 @@ describe('PersonInfoController', () => {
                 });
                 const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
 
+                userLockRepoMock.findByPersonId.mockResolvedValue([]);
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontextSchule, kontextKlasse]);
@@ -440,8 +500,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SONSTIGE);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SCHULE);
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(1);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.LERN);
             });
         });

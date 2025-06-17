@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonInfoKontextErreichbarkeitResponseV1} from './person-info-kontext-erreichbarkeit.response.v1.js';
 import { KontextWithOrgaAndRolle } from '../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { Person } from '../../../domain/person.js';
 import { PersonEmailResponse } from '../../person-email-response.js';
 import { EmailAddressStatus } from '../../../../email/domain/email-address.js';
 import { OrganisationsTyp } from '../../../../organisation/domain/organisation.enums.js';
 import { PersonenInfoKontextGruppeResponseV1 } from './person-info-kontext-gruppe.response.v1.js';
 import { PersonenInfoKontextOrganisationResponseV1 } from './person-info-kontext-organisation.response.v1.js';
 import { PersonInfoKontextV1ErreichbarkeitTyp, PersonInfoKontextV1Personenstatus, PersonInfoKontextV1GruppeTyp, PersonInfoKontextV1OrganisationTyp, PersonInfoKontextV1Rolle, convertRollenartToPersonInfoKontextV1Rolle } from './person-info-enums.v1.js';
+import { UserLock } from '../../../../keycloak-administration/domain/user-lock.js';
 
 export class PersonInfoKontextResponseV1 {
     @ApiProperty()
@@ -40,8 +40,8 @@ export class PersonInfoKontextResponseV1 {
     public static createNew(
         primaryNonKlassenKontext: KontextWithOrgaAndRolle,
         associatedKlassenKontexte: KontextWithOrgaAndRolle [],
-        person: Person<true>,
-        email?: PersonEmailResponse
+        userlocks: UserLock [],
+        email?: PersonEmailResponse,
     ): PersonInfoKontextResponseV1 {
         const personenInfoKontextOrganisationResponseV1 = PersonenInfoKontextOrganisationResponseV1.createNew({
             id: primaryNonKlassenKontext.organisation.id,
@@ -65,7 +65,7 @@ export class PersonInfoKontextResponseV1 {
             organisation: personenInfoKontextOrganisationResponseV1,
             rolle: convertRollenartToPersonInfoKontextV1Rolle(primaryNonKlassenKontext.rolle.rollenart),
             erreichbarkeiten: personInfoKontextErreichbarkeitResponseV1 ? [personInfoKontextErreichbarkeitResponseV1] : [],
-            personenstatus: person.isLocked ? undefined : PersonInfoKontextV1Personenstatus.AKTIV,
+            personenstatus: userlocks.length > 0 ? undefined : PersonInfoKontextV1Personenstatus.AKTIV,
             gruppen: gruppen
         });
     }

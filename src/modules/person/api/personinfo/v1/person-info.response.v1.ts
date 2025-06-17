@@ -5,6 +5,7 @@ import { PersonInfoPersonResponseV1 } from './person-info-person.response.v1.js'
 import { PersonInfoKontextResponseV1 } from './person-info-kontext.response.v1.js';
 import { OrganisationsTyp } from '../../../../organisation/domain/organisation.enums.js';
 import { PersonEmailResponse } from '../../person-email-response.js';
+import { UserLock } from '../../../../keycloak-administration/domain/user-lock.js';
 
 export class PersonInfoResponseV1 {
     @ApiProperty()
@@ -33,7 +34,8 @@ export class PersonInfoResponseV1 {
     public static createNew(
         person: Person<true>,
         kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[],
-        email: Option<PersonEmailResponse>
+        email: Option<PersonEmailResponse>,
+        userlocks: UserLock []
     ): PersonInfoResponseV1 {
 
         const primaryKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(kontext => kontext.organisation.typ !== OrganisationsTyp.KLASSE)
@@ -41,7 +43,7 @@ export class PersonInfoResponseV1 {
         const personInfoKontextResponsesV1: PersonInfoKontextResponseV1[] = []
         primaryKontexte.forEach(primaryKontext => {
             const associatedKlassenKontexte = klassenKontexte.filter(klassenKontext => klassenKontext.organisation.administriertVon === primaryKontext.organisation.id);
-            personInfoKontextResponsesV1.push(PersonInfoKontextResponseV1.createNew(primaryKontext, associatedKlassenKontexte,person, email ?? undefined))
+            personInfoKontextResponsesV1.push(PersonInfoKontextResponseV1.createNew(primaryKontext, associatedKlassenKontexte, userlocks, email ?? undefined))
         })
         return new PersonInfoResponseV1(person.id, PersonInfoPersonResponseV1.createNew(person), personInfoKontextResponsesV1);
     }
