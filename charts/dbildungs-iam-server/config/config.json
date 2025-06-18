@@ -100,6 +100,7 @@
         "SESSION_TIMEOUT": 30000,
         "HEARTBEAT_INTERVAL": 10000,
         "ENABLED": true,
+        "SASL_ENABLED": true,
         "USERNAME": "username",
         "PASSWORD": "password"
     },
