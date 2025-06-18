@@ -35,16 +35,32 @@ export class PersonInfoResponseV1 {
         person: Person<true>,
         kontexteWithOrgaAndRolle: KontextWithOrgaAndRolle[],
         email: Option<PersonEmailResponse>,
-        userlocks: UserLock []
+        userlocks: UserLock[],
     ): PersonInfoResponseV1 {
-
-        const primaryKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(kontext => kontext.organisation.typ !== OrganisationsTyp.KLASSE)
-        const klassenKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(kontext => kontext.organisation.typ === OrganisationsTyp.KLASSE)
-        const personInfoKontextResponsesV1: PersonInfoKontextResponseV1[] = []
-        primaryKontexte.forEach(primaryKontext => {
-            const associatedKlassenKontexte = klassenKontexte.filter(klassenKontext => klassenKontext.organisation.administriertVon === primaryKontext.organisation.id);
-            personInfoKontextResponsesV1.push(PersonInfoKontextResponseV1.createNew(primaryKontext, associatedKlassenKontexte, userlocks, email ?? undefined))
-        })
-        return new PersonInfoResponseV1(person.id, PersonInfoPersonResponseV1.createNew(person), personInfoKontextResponsesV1);
+        const primaryKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(
+            (kontext) => kontext.organisation.typ !== OrganisationsTyp.KLASSE,
+        );
+        const klassenKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(
+            (kontext) => kontext.organisation.typ === OrganisationsTyp.KLASSE,
+        );
+        const personInfoKontextResponsesV1: PersonInfoKontextResponseV1[] = [];
+        primaryKontexte.forEach((primaryKontext) => {
+            const associatedKlassenKontexte = klassenKontexte.filter(
+                (klassenKontext) => klassenKontext.organisation.administriertVon === primaryKontext.organisation.id,
+            );
+            personInfoKontextResponsesV1.push(
+                PersonInfoKontextResponseV1.createNew(
+                    primaryKontext,
+                    associatedKlassenKontexte,
+                    userlocks,
+                    email ?? undefined,
+                ),
+            );
+        });
+        return new PersonInfoResponseV1(
+            person.id,
+            PersonInfoPersonResponseV1.createNew(person),
+            personInfoKontextResponsesV1,
+        );
     }
 }

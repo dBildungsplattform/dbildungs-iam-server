@@ -25,7 +25,11 @@ import { PersonBirthResponse } from '../person-birth.response.js';
 import { PersonNameResponse } from '../person-name.response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
-import { PersonInfoKontextV1OrganisationTyp, PersonInfoKontextV1Personenstatus, PersonInfoKontextV1Rolle } from './v1/person-info-enums.v1.js';
+import {
+    PersonInfoKontextV1OrganisationTyp,
+    PersonInfoKontextV1Personenstatus,
+    PersonInfoKontextV1Rolle,
+} from './v1/person-info-enums.v1.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
@@ -293,17 +297,17 @@ describe('PersonInfoController', () => {
         let orga: null | Organisation<true> = null;
         beforeEach(() => {
             person = DoFactory.createPerson(true);
-            orga = DoFactory.createOrganisation(true, {typ: OrganisationsTyp.SCHULE});
+            orga = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
         });
         describe('when person exists', () => {
             it('should return person info for locked person with kontext at land', async () => {
-                const orgaLand = DoFactory.createOrganisation(true, {typ: OrganisationsTyp.LAND});
+                const orgaLand = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
                 } as PersonPermissions;
-                const rolle: Rolle<true> = DoFactory.createRolle(true, {rollenart: RollenArt.SYSADMIN});
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.SYSADMIN });
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
                     getRolle: () => Promise.resolve(rolle),
@@ -320,7 +324,7 @@ describe('PersonInfoController', () => {
                 personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
                     {
                         personenkontext: kontext,
-                        organisation: orgaLand!,
+                        organisation: orgaLand,
                         rolle: rolle,
                     } satisfies KontextWithOrgaAndRolle,
                 ]);
@@ -338,7 +342,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orgaLand?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orgaLand?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orgaLand?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SONSTIGE);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(
+                    PersonInfoKontextV1OrganisationTyp.SONSTIGE,
+                );
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
                 expect(result.personenkontexte.at(0)?.personenstatus).toEqual(undefined);
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.SYSADMIN);
@@ -353,7 +359,7 @@ describe('PersonInfoController', () => {
                     address: faker.internet.email(),
                     status: EmailAddressStatus.ENABLED,
                 };
-                const rolle: Rolle<true> = DoFactory.createRolle(true, {rollenart: RollenArt.LEHR});
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LEHR });
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
                     getRolle: () => Promise.resolve(rolle),
@@ -388,7 +394,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SCHULE);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(
+                    PersonInfoKontextV1OrganisationTyp.SCHULE,
+                );
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.LEHR);
                 expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
@@ -404,7 +412,7 @@ describe('PersonInfoController', () => {
                     address: faker.internet.email(),
                     status: EmailAddressStatus.DISABLED,
                 };
-                const rolle: Rolle<true> = DoFactory.createRolle(true, {rollenart: RollenArt.ORGADMIN});
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.ORGADMIN });
                 const kontext: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
                     getRolle: () => Promise.resolve(rolle),
@@ -439,22 +447,33 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SCHULE);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(
+                    PersonInfoKontextV1OrganisationTyp.SCHULE,
+                );
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.ORGADMIN);
                 expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
                 expect(result.personenkontexte.at(0)?.erreichbarkeiten.length).toEqual(0);
             });
             it('should return person info for Schueler with gruppen', async () => {
-                const klasse1 = DoFactory.createOrganisation(true,{administriertVon: orga?.id, zugehoerigZu: orga?.id, typ: OrganisationsTyp.KLASSE});
-                const klasse2 = DoFactory.createOrganisation(true,{administriertVon: orga?.id, zugehoerigZu: orga?.id, typ: OrganisationsTyp.KLASSE, name: undefined});
+                const klasse1 = DoFactory.createOrganisation(true, {
+                    administriertVon: orga?.id,
+                    zugehoerigZu: orga?.id,
+                    typ: OrganisationsTyp.KLASSE,
+                });
+                const klasse2 = DoFactory.createOrganisation(true, {
+                    administriertVon: orga?.id,
+                    zugehoerigZu: orga?.id,
+                    typ: OrganisationsTyp.KLASSE,
+                    name: undefined,
+                });
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
                     },
                 } as PersonPermissions;
 
-                const rolle: Rolle<true> = DoFactory.createRolle(true, {rollenart: RollenArt.LERN});
+                const rolle: Rolle<true> = DoFactory.createRolle(true, { rollenart: RollenArt.LERN });
                 const kontextSchule: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
                     getRolle: () => Promise.resolve(rolle),
@@ -481,7 +500,11 @@ describe('PersonInfoController', () => {
                 userLockRepoMock.findByPersonId.mockResolvedValue([]);
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
-                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontextSchule, kontextKlasse1, kontextKlasse2]);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
+                    kontextSchule,
+                    kontextKlasse1,
+                    kontextKlasse2,
+                ]);
                 personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
                     {
                         personenkontext: kontextSchule,
@@ -490,12 +513,12 @@ describe('PersonInfoController', () => {
                     } satisfies KontextWithOrgaAndRolle,
                     {
                         personenkontext: kontextKlasse1,
-                        organisation: klasse1!,
+                        organisation: klasse1,
                         rolle: rolle,
                     } satisfies KontextWithOrgaAndRolle,
                     {
                         personenkontext: kontextKlasse2,
-                        organisation: klasse2!,
+                        organisation: klasse2,
                         rolle: rolle,
                     } satisfies KontextWithOrgaAndRolle,
                 ]);
@@ -513,7 +536,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SCHULE);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(
+                    PersonInfoKontextV1OrganisationTyp.SCHULE,
+                );
                 expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.LERN);
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(2);

@@ -81,11 +81,14 @@ export class PersonInfoController {
             );
         }
 
-        const [email, kontexteWithOrgaAndRolle, userLocks]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>, UserLock []] =
-        await Promise.all([
+        const [email, kontexteWithOrgaAndRolle, userLocks]: [
+            Option<PersonEmailResponse>,
+            Array<KontextWithOrgaAndRolle>,
+            UserLock[],
+        ] = await Promise.all([
             this.emailRepo.getEmailAddressAndStatusForPerson(person),
             this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
-            this.userLockRepo.findByPersonId(personId)
+            this.userLockRepo.findByPersonId(personId),
         ]);
 
         return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email, userLocks);

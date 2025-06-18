@@ -9,18 +9,14 @@ export class PersonInfoPersonResponseV1 {
     @ApiProperty({ type: PersonInfoPersonNameResponseV1 })
     public readonly name: PersonInfoPersonNameResponseV1;
 
-    protected constructor(
-        name: PersonInfoPersonNameResponseV1,
-    ) {
+    protected constructor(name: PersonInfoPersonNameResponseV1) {
         this.name = new PersonInfoPersonNameResponseV1(name);
     }
 
     public static createNew(person: Person<true>): PersonInfoPersonResponseV1 {
-        return new PersonInfoPersonResponseV1(
-            {
-                vorname: person.vorname,
-                familiennamen: person.familienname,
-            } satisfies PersonInfoPersonNameResponseV1
-        );
+        return new PersonInfoPersonResponseV1({
+            vorname: person.vorname,
+            familiennamen: person.familienname,
+        } satisfies PersonInfoPersonNameResponseV1);
     }
 }

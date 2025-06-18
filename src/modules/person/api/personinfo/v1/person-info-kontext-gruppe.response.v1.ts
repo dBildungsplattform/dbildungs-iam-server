@@ -11,9 +11,7 @@ export class PersonenInfoKontextGruppeResponseV1 {
     @ApiProperty({ enum: PersonInfoKontextV1GruppeTyp, nullable: false })
     public typ!: PersonInfoKontextV1GruppeTyp;
 
-    public static createNew(
-        props: Readonly<PersonenInfoKontextGruppeResponseV1>,
-    ): PersonenInfoKontextGruppeResponseV1 {
+    public static createNew(props: Readonly<PersonenInfoKontextGruppeResponseV1>): PersonenInfoKontextGruppeResponseV1 {
         const response: PersonenInfoKontextGruppeResponseV1 = new PersonenInfoKontextGruppeResponseV1();
 
         response.id = props.id;
