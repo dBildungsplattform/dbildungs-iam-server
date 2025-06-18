@@ -14,7 +14,14 @@ export const KafkaProvider: Provider<Kafka | null> = {
         if (kafkaConfig.ENABLED !== true) {
             return null;
         }
-        return new Kafka({ brokers: [kafkaConfig.BROKER] });
+        return new Kafka({
+            brokers: [kafkaConfig.BROKER],
+            sasl: {
+                mechanism: 'plain',
+                username: kafkaConfig.USERNAME,
+                password: kafkaConfig.PASSWORD,
+            },
+        });
     },
     inject: [ConfigService],
 };

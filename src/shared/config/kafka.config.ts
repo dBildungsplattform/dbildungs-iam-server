@@ -24,4 +24,10 @@ export class KafkaConfig {
 
     @IsBoolean()
     public readonly ENABLED!: boolean;
+
+    @IsString()
+    public readonly USERNAME!: string;
+
+    @IsString()
+    public readonly PASSWORD!: string;
 }

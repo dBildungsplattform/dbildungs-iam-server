@@ -132,6 +132,8 @@ export default (): Config => ({
         SESSION_TIMEOUT: envToOptionalInteger('KAFKA_SESSION_TIMEOUT'),
         HEARTBEAT_INTERVAL: envToOptionalInteger('KAFKA_HEARTBEAT_INTERVAL'),
         ENABLED: envToOptionalBoolean('KAFKA_ENABLED'),
+        USERNAME: process.env['KAFKA_USERNAME'],
+        PASSWORD: process.env['KAFKA_PASSWORD'],
     },
     PORTAL: {
         LIMITED_ROLLENART_ALLOWLIST: envToStringArray('PORTAL_LIMITED_ROLLENART_ALLOWLIST'),
