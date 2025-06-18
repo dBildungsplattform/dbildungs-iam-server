@@ -126,4 +126,6 @@
     secretKeyRef:
         name: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
         key: kafka-password
+- name: KAFKA_TOPIC_PREFIX
+  value: '{{ .Release.Namespace }}-'
 {{- end}}

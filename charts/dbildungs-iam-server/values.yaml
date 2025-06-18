@@ -194,7 +194,7 @@ redis:
 
 kafka:
   url: 'dbildungs-iam-kafka.spsh.svc.cluster.local:9092'
-  enabled: false
+  enabled: true
   initEnabled: true
   initImage:
     repository: docker.io/bitnami/kafka
