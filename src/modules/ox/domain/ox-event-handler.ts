@@ -278,6 +278,7 @@ export class OxEventHandler {
         const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
             oxGroupIdResult.value,
             person.oxUserId,
+            event.personId,
         );
 
         if (!addUserToGroupResult.ok) {
@@ -335,7 +336,7 @@ export class OxEventHandler {
 
         //remove oxUser as member from all its oxGroups
         //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
-        await this.removeOxUserFromAllItsOxGroups(person.oxUserId, person.id);
+        await this.removeOxUserFromAllItsOxGroups(person.oxUserId, event.personId, event.username);
     }
 
     @EventHandler(PersonenkontextUpdatedEvent)
@@ -371,7 +372,7 @@ export class OxEventHandler {
                 );
             }
             //Logging is done in removeOxUserFromOxGroup
-            await this.removeOxUserFromOxGroup(oxGroupId, person.oxUserId);
+            await this.removeOxUserFromOxGroup(oxGroupId, person.oxUserId, person.id, person.referrer);
         }
     }
 
@@ -556,7 +557,7 @@ export class OxEventHandler {
 
         //remove oxUser as member from all its oxGroups
         //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
-        await this.removeOxUserFromAllItsOxGroups(oxUserId, personId);
+        await this.removeOxUserFromAllItsOxGroups(oxUserId, personId, username);
 
         const params: UserIdParams = {
             contextId: this.contextID,
@@ -571,7 +572,7 @@ export class OxEventHandler {
 
         if (!result.ok) {
             return this.logger.error(
-                `Could Not Delete OxAccount For oxUserId:${oxUserId}, error:${result.error.message}`,
+                `Could Not Delete OxAccount For oxUserId:${oxUserId}, personId:${personId}, error:${result.error.message}`,
             );
         }
         this.eventService.publish(
@@ -579,10 +580,14 @@ export class OxEventHandler {
             new KafkaOxAccountDeletedEvent(personId, username, oxUserId),
         );
 
-        return this.logger.info(`Successfully Deleted OxAccount For oxUserId:${oxUserId}`);
+        return this.logger.info(`Successfully Deleted OxAccount For oxUserId:${oxUserId}, personId:${personId}`);
     }
 
-    private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID | undefined): Promise<void> {
+    private async removeOxUserFromAllItsOxGroups(
+        oxUserId: OXUserID,
+        personId: PersonID | undefined,
+        username: PersonReferrer | undefined,
+    ): Promise<void> {
         const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
             await this.getOxGroupsForOxUserId(oxUserId);
         if (!listGroupsForUserResponse.ok) {
@@ -594,7 +599,7 @@ export class OxEventHandler {
         /* eslint-disable no-await-in-loop */
         for (const oxGroup of oxGroups) {
             //logging of results is done in removeOxUserFromOxGroup
-            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId);
+            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId, personId, username);
         }
     }
 
@@ -606,7 +611,7 @@ export class OxEventHandler {
             return undefined;
         }
         this.logger.info(
-            `Found mostRecentRequested Email-Address:${JSON.stringify(requestedEmailAddresses[0].address)} For personId:${personId}`,
+            `Found mostRecentRequested Email-Address:${JSON.stringify(requestedEmailAddresses[0].address)} for personId:${personId}`,
         );
 
         return requestedEmailAddresses[0];
@@ -696,6 +701,8 @@ export class OxEventHandler {
     private async addOxUserToOxGroup(
         oxGroupId: OXGroupID,
         oxUserId: OXUserID,
+        personId: PersonID,
+        username?: PersonReferrer,
     ): Promise<Result<AddMemberToGroupResponse>> {
         const params: GroupMemberParams = {
             contextId: this.contextID,
@@ -709,9 +716,13 @@ export class OxEventHandler {
         const result: Result<AddMemberToGroupResponse, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
-            this.logger.error(`Could Not Add OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+            this.logger.error(
+                `Could Not Add OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}, personId:${personId}, username:${username}`,
+            );
         } else {
-            this.logger.info(`Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+            this.logger.info(
+                `Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}, personId:${personId}, username:${username}`,
+            );
         }
         return result;
     }
@@ -736,6 +747,8 @@ export class OxEventHandler {
     private async removeOxUserFromOxGroup(
         oxGroupId: OXGroupID,
         oxUserId: OXUserID,
+        personId: PersonID | undefined,
+        username: PersonReferrer | undefined,
     ): Promise<Result<RemoveMemberFromGroupResponse>> {
         const params: GroupMemberParams = {
             contextId: this.contextID,
@@ -747,9 +760,13 @@ export class OxEventHandler {
         const action: RemoveMemberFromGroupAction = new RemoveMemberFromGroupAction(params);
         const result: Result<RemoveMemberFromGroupResponse, DomainError> = await this.oxService.send(action);
         if (!result.ok) {
-            this.logger.error(`Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+            this.logger.error(
+                `Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}, personId:${personId}, username:${username}`,
+            );
         } else {
-            this.logger.info(`Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+            this.logger.info(
+                `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}, personId:${personId}, username:${username}`,
+            );
         }
 
         return result;
@@ -850,6 +867,8 @@ export class OxEventHandler {
         const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
             oxGroupId.value,
             createUserResult.value.id,
+            personId,
+            username,
         );
         if (!addUserToGroupResult.ok) {
             mostRecentRequestedEmailAddress.failed();

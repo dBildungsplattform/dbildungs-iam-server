@@ -505,6 +505,7 @@ describe('OxEventHandler', () => {
 
     describe('addOxUserToOxGroup', () => {
         let personId: PersonID;
+        let username: PersonReferrer;
         let fakeDstNr: string;
         let event: EmailAddressGeneratedEvent;
         let person: Person<true>;
@@ -512,10 +513,11 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
+            username = faker.internet.userName();
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
-                faker.internet.userName(),
+                username,
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -561,7 +563,7 @@ describe('OxEventHandler', () => {
 
                 expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Add OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOxGroupId}`,
+                    `Could Not Add OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOxGroupId}, personId:${personId}, username:${username}`,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
@@ -694,7 +696,7 @@ describe('OxEventHandler', () => {
                 `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, username:${username}`,
             );
             expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}`,
+                `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}, personId:${personId}, username:${username}`,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
@@ -990,7 +992,7 @@ describe('OxEventHandler', () => {
             expect(oxServiceMock.send).toHaveBeenCalledTimes(2);
             expect(loggerMock.error).toHaveBeenCalledTimes(0);
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `Found mostRecentRequested Email-Address:${JSON.stringify(email)} For personId:${personId}`,
+                `Found mostRecentRequested Email-Address:${JSON.stringify(email)} for personId:${personId}`,
             );
             //use regex, because strict comparison fails, local test-var currentAliases has changed by the implemented function when expect is checked here
             expect(loggerMock.info).toHaveBeenCalledWith(expect.stringMatching(/Found Current aliases:.*/));
@@ -1349,7 +1351,7 @@ describe('OxEventHandler', () => {
                 await sut.handlePersonDeletedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Delete OxAccount For oxUserId:${oxUserId}, error:Unknown OX-error`,
+                    `Could Not Delete OxAccount For oxUserId:${oxUserId}, personId:${personId}, error:Unknown OX-error`,
                 );
             });
         });
@@ -1389,7 +1391,9 @@ describe('OxEventHandler', () => {
 
                 await sut.handlePersonDeletedEvent(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(`Successfully Deleted OxAccount For oxUserId:${oxUserId}`);
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `Successfully Deleted OxAccount For oxUserId:${oxUserId}, personId:${personId}`,
+                );
             });
         });
     });
@@ -1577,7 +1581,7 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressesPurgedEvent(event);
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Delete OxAccount For oxUserId:${event.oxUserId}, error:${error.message}`,
+                    `Could Not Delete OxAccount For oxUserId:${event.oxUserId}, personId:${personId}, error:${error.message}`,
                 );
             });
         });
@@ -1619,7 +1623,7 @@ describe('OxEventHandler', () => {
                     }),
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Successfully Deleted OxAccount For oxUserId:${event.oxUserId}`,
+                    `Successfully Deleted OxAccount For oxUserId:${event.oxUserId}, personId:${personId}`,
                 );
             });
         });
@@ -1721,10 +1725,10 @@ describe('OxEventHandler', () => {
                 });
                 await sut.handleEmailAddressDisabledEvent(event);
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:group1-id`,
+                    `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:group1-id, personId:${personId}, username:${username}`,
                 );
                 expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:group2-id`,
+                    `Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:group2-id, personId:${personId}, username:${username}`,
                 );
             });
         });
@@ -1806,7 +1810,7 @@ describe('OxEventHandler', () => {
                 });
                 await sut.handlePersonenkontextUpdatedEvent(event);
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                    `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}, personId:${personId}, username:${username}`,
                 );
             });
         });
