@@ -128,4 +128,8 @@
         key: kafka-password
 - name: KAFKA_TOPIC_PREFIX
   value: '{{ .Release.Namespace }}-'
+- name: KAFKA_BROKER
+  value: {{ .Values.kafka.url }}
+- name: KAFKA_GROUP_ID
+  value: {{ .Release.Namespace }}-group
 {{- end}}
