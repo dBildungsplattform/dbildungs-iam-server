@@ -50,29 +50,32 @@ export class PersonInfoKontextResponseV1 {
         userlocks: UserLock[],
         email?: PersonEmailResponse,
     ): PersonInfoKontextResponseV1 {
-        const personenInfoKontextOrganisationResponseV1 = PersonenInfoKontextOrganisationResponseV1.createNew({
-            id: primaryNonKlassenKontext.organisation.id,
-            kennung: primaryNonKlassenKontext.organisation.kennung,
-            name: primaryNonKlassenKontext.organisation.name,
-            typ:
-                primaryNonKlassenKontext.organisation.typ === OrganisationsTyp.SCHULE
-                    ? PersonInfoKontextV1OrganisationTyp.SCHULE
-                    : PersonInfoKontextV1OrganisationTyp.SONSTIGE,
-        });
-        const personInfoKontextErreichbarkeitResponseV1 =
+        const personenInfoKontextOrganisationResponseV1: PersonenInfoKontextOrganisationResponseV1 =
+            PersonenInfoKontextOrganisationResponseV1.createNew({
+                id: primaryNonKlassenKontext.organisation.id,
+                kennung: primaryNonKlassenKontext.organisation.kennung,
+                name: primaryNonKlassenKontext.organisation.name,
+                typ:
+                    primaryNonKlassenKontext.organisation.typ === OrganisationsTyp.SCHULE
+                        ? PersonInfoKontextV1OrganisationTyp.SCHULE
+                        : PersonInfoKontextV1OrganisationTyp.SONSTIGE,
+            });
+        const personInfoKontextErreichbarkeitResponseV1: PersonInfoKontextErreichbarkeitResponseV1 | null =
             email?.status === EmailAddressStatus.ENABLED
                 ? new PersonInfoKontextErreichbarkeitResponseV1({
                       typ: PersonInfoKontextV1ErreichbarkeitTyp.EMAIL,
                       kennung: email.address,
                   })
                 : null;
-        const gruppen = associatedKlassenKontexte.map((klassenKontext) => {
-            return PersonenInfoKontextGruppeResponseV1.createNew({
-                id: klassenKontext.organisation.id,
-                bezeichnung: klassenKontext.organisation.name ?? '',
-                typ: PersonInfoKontextV1GruppeTyp.KLASSE,
-            });
-        });
+        const gruppen: PersonenInfoKontextGruppeResponseV1[] = associatedKlassenKontexte.map(
+            (klassenKontext: KontextWithOrgaAndRolle) => {
+                return PersonenInfoKontextGruppeResponseV1.createNew({
+                    id: klassenKontext.organisation.id,
+                    bezeichnung: klassenKontext.organisation.name ?? '',
+                    typ: PersonInfoKontextV1GruppeTyp.KLASSE,
+                });
+            },
+        );
         return new PersonInfoKontextResponseV1({
             id: primaryNonKlassenKontext.personenkontext.id,
             organisation: personenInfoKontextOrganisationResponseV1,

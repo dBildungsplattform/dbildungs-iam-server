@@ -301,7 +301,7 @@ describe('PersonInfoController', () => {
         });
         describe('when person exists', () => {
             it('should return person info for locked person with kontext at land', async () => {
-                const orgaLand = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
+                const orgaLand: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LAND });
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -456,12 +456,12 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.erreichbarkeiten.length).toEqual(0);
             });
             it('should return person info for Schueler with gruppen', async () => {
-                const klasse1 = DoFactory.createOrganisation(true, {
+                const klasse1: Organisation<true> = DoFactory.createOrganisation(true, {
                     administriertVon: orga?.id,
                     zugehoerigZu: orga?.id,
                     typ: OrganisationsTyp.KLASSE,
                 });
-                const klasse2 = DoFactory.createOrganisation(true, {
+                const klasse2: Organisation<true> = DoFactory.createOrganisation(true, {
                     administriertVon: orga?.id,
                     zugehoerigZu: orga?.id,
                     typ: OrganisationsTyp.KLASSE,

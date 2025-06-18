@@ -1,5 +1,5 @@
-import { convertRollenartToPersonInfoKontextV1Rolle, PersonInfoKontextV1Rolle } from './person-info-enums.v1';
-import { RollenArt } from '../../../../rolle/domain/rolle.enums';
+import { convertRollenartToPersonInfoKontextV1Rolle, PersonInfoKontextV1Rolle } from './person-info-enums.v1.js';
+import { RollenArt } from '../../../../rolle/domain/rolle.enums.js';
 
 describe('convertRollenartToPersonInfoKontextV1Rolle', () => {
     it('should convert RollenArt.LERN to PersonInfoKontextV1Rolle.LERN', () => {

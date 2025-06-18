@@ -38,15 +38,16 @@ export class PersonInfoResponseV1 {
         userlocks: UserLock[],
     ): PersonInfoResponseV1 {
         const primaryKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(
-            (kontext) => kontext.organisation.typ !== OrganisationsTyp.KLASSE,
+            (kontext: KontextWithOrgaAndRolle) => kontext.organisation.typ !== OrganisationsTyp.KLASSE,
         );
         const klassenKontexte: KontextWithOrgaAndRolle[] = kontexteWithOrgaAndRolle.filter(
-            (kontext) => kontext.organisation.typ === OrganisationsTyp.KLASSE,
+            (kontext: KontextWithOrgaAndRolle) => kontext.organisation.typ === OrganisationsTyp.KLASSE,
         );
         const personInfoKontextResponsesV1: PersonInfoKontextResponseV1[] = [];
-        primaryKontexte.forEach((primaryKontext) => {
-            const associatedKlassenKontexte = klassenKontexte.filter(
-                (klassenKontext) => klassenKontext.organisation.administriertVon === primaryKontext.organisation.id,
+        primaryKontexte.forEach((primaryKontext: KontextWithOrgaAndRolle) => {
+            const associatedKlassenKontexte: KontextWithOrgaAndRolle[] = klassenKontexte.filter(
+                (klassenKontext: KontextWithOrgaAndRolle) =>
+                    klassenKontext.organisation.administriertVon === primaryKontext.organisation.id,
             );
             personInfoKontextResponsesV1.push(
                 PersonInfoKontextResponseV1.createNew(
