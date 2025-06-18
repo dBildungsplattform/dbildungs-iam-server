@@ -446,7 +446,8 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.erreichbarkeiten.length).toEqual(0);
             });
             it('should return person info for Schueler with gruppen', async () => {
-                const klasse = DoFactory.createOrganisation(true,{administriertVon: orga?.id, zugehoerigZu: orga?.id, typ: OrganisationsTyp.KLASSE});
+                const klasse1 = DoFactory.createOrganisation(true,{administriertVon: orga?.id, zugehoerigZu: orga?.id, typ: OrganisationsTyp.KLASSE});
+                const klasse2 = DoFactory.createOrganisation(true,{administriertVon: orga?.id, zugehoerigZu: orga?.id, typ: OrganisationsTyp.KLASSE, name: undefined});
                 const permissions: PersonPermissions = {
                     personFields: {
                         id: faker.string.uuid(),
@@ -461,11 +462,18 @@ describe('PersonInfoController', () => {
                         return Promise.resolve(orga);
                     },
                 });
-                const kontextKlasse: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                const kontextKlasse1: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
                     loeschungZeitpunkt: new Date(),
                     getRolle: () => Promise.resolve(rolle),
                     getOrganisation() {
-                        return Promise.resolve(klasse);
+                        return Promise.resolve(klasse1);
+                    },
+                });
+                const kontextKlasse2: Personenkontext<true> = DoFactory.createPersonenkontext(true, {
+                    loeschungZeitpunkt: new Date(),
+                    getRolle: () => Promise.resolve(rolle),
+                    getOrganisation() {
+                        return Promise.resolve(klasse2);
                     },
                 });
                 const personenkontextResponseMock: PersonenkontextResponse = createMock<PersonenkontextResponse>();
@@ -473,7 +481,7 @@ describe('PersonInfoController', () => {
                 userLockRepoMock.findByPersonId.mockResolvedValue([]);
                 personRepoMock.findById.mockResolvedValue(person);
                 personApiMapper.mapToPersonenkontextResponse.mockResolvedValueOnce(personenkontextResponseMock);
-                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontextSchule, kontextKlasse]);
+                personenkontextRepoMock.findByPerson.mockResolvedValueOnce([kontextSchule, kontextKlasse1, kontextKlasse2]);
                 personenkontextRepoMock.findByPersonWithOrgaAndRolle.mockResolvedValueOnce([
                     {
                         personenkontext: kontextSchule,
@@ -481,8 +489,13 @@ describe('PersonInfoController', () => {
                         rolle: rolle,
                     } satisfies KontextWithOrgaAndRolle,
                     {
-                        personenkontext: kontextKlasse,
-                        organisation: klasse!,
+                        personenkontext: kontextKlasse1,
+                        organisation: klasse1!,
+                        rolle: rolle,
+                    } satisfies KontextWithOrgaAndRolle,
+                    {
+                        personenkontext: kontextKlasse2,
+                        organisation: klasse2!,
                         rolle: rolle,
                     } satisfies KontextWithOrgaAndRolle,
                 ]);
@@ -501,9 +514,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
                 expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(PersonInfoKontextV1OrganisationTyp.SCHULE);
-                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(1);
                 expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
                 expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.LERN);
+                expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(2);
             });
         });
 
