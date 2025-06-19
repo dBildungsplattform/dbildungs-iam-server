@@ -1,7 +1,6 @@
 import { Controller, Get, UseFilters, Version } from '@nestjs/common';
 import {
     ApiBearerAuth,
-    ApiExcludeEndpoint,
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
@@ -25,6 +24,8 @@ import { PersonRepository } from '../../persistence/person.repository.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../person-email-response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
+import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
+import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiBearerAuth()
@@ -36,6 +37,7 @@ export class PersonInfoController {
         private readonly logger: ClassLogger,
         private readonly personRepo: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly userLockRepo: UserLockRepository,
         private readonly emailRepo: EmailRepo,
     ) {
         this.logger.info(`Creating ${PersonInfoController.name}`);
@@ -65,7 +67,6 @@ export class PersonInfoController {
     }
 
     @Version('1')
-    @ApiExcludeEndpoint() //Exclude for now since it has been only created to demonstrate versioning (code blueprint)
     @Get()
     @ApiOperation({ summary: 'Info about logged in person.' })
     @ApiUnauthorizedResponse({ description: 'person is not logged in.' })
@@ -80,12 +81,16 @@ export class PersonInfoController {
             );
         }
 
-        const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
-            await Promise.all([
-                this.emailRepo.getEmailAddressAndStatusForPerson(person),
-                this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
-            ]);
+        const [email, kontexteWithOrgaAndRolle, userLocks]: [
+            Option<PersonEmailResponse>,
+            Array<KontextWithOrgaAndRolle>,
+            UserLock[],
+        ] = await Promise.all([
+            this.emailRepo.getEmailAddressAndStatusForPerson(person),
+            this.dBiamPersonenkontextRepo.findByPersonWithOrgaAndRolle(personId),
+            this.userLockRepo.findByPersonId(personId),
+        ]);
 
-        return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email);
+        return PersonInfoResponseV1.createNew(person, kontexteWithOrgaAndRolle, email, userLocks);
     }
 }
