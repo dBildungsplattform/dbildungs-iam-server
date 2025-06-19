@@ -185,7 +185,7 @@ export class PersonenkontextWorkflowAggregate {
             const guaranteedSelected: Rolle<true>[] = finalRollen.filter((r: Rolle<true>) => selectedIdsSet.has(r.id));
             const otherRollen: Rolle<true>[] = finalRollen
                 .filter((r: Rolle<true>) => !selectedIdsSet.has(r.id))
-                .slice(0, limit - guaranteedSelected.length);
+                .slice(0, Math.max(limit - guaranteedSelected.length, 0));
             finalRollen = [...guaranteedSelected, ...otherRollen];
         }
 
