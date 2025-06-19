@@ -18,22 +18,22 @@ import { UserLock } from '../../../../keycloak-administration/domain/user-lock.j
 
 export class PersonInfoKontextResponseV1 {
     @ApiProperty()
-    public id!: string;
+    public id: string;
 
     @ApiProperty({ type: PersonenInfoKontextOrganisationResponseV1 })
-    public organisation!: PersonenInfoKontextOrganisationResponseV1;
+    public organisation: PersonenInfoKontextOrganisationResponseV1;
 
     @ApiProperty({ enum: PersonInfoKontextV1Rolle })
-    public rolle!: PersonInfoKontextV1Rolle;
+    public rolle: PersonInfoKontextV1Rolle;
 
     @ApiProperty({ type: [PersonInfoKontextErreichbarkeitResponseV1] })
-    public erreichbarkeiten!: PersonInfoKontextErreichbarkeitResponseV1[];
+    public erreichbarkeiten: PersonInfoKontextErreichbarkeitResponseV1[];
 
-    @ApiProperty({ enum: PersonInfoKontextV1Personenstatus })
+    @ApiProperty({ enum: PersonInfoKontextV1Personenstatus, nullable: true })
     public personenstatus?: PersonInfoKontextV1Personenstatus;
 
     @ApiProperty({ type: [PersonenInfoKontextGruppeResponseV1] })
-    public readonly gruppen!: PersonenInfoKontextGruppeResponseV1[];
+    public readonly gruppen: PersonenInfoKontextGruppeResponseV1[];
 
     protected constructor(props: Readonly<PersonInfoKontextResponseV1>) {
         this.id = props.id;

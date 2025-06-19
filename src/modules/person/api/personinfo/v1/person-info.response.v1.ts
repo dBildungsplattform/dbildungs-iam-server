@@ -17,7 +17,7 @@ export class PersonInfoResponseV1 {
     @ApiProperty({ type: [PersonInfoKontextResponseV1] })
     public readonly personenkontexte: PersonInfoKontextResponseV1[];
 
-    @ApiProperty({})
+    @ApiProperty({ type: [Object] })
     public readonly beziehungen: object[];
 
     protected constructor(

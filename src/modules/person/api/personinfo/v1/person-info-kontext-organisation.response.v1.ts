@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PersonInfoKontextV1OrganisationTyp } from './person-info-enums.v1.js';
 
 export class PersonenInfoKontextOrganisationResponseV1 {
-    @ApiProperty({ nullable: false })
+    @ApiProperty()
     public id!: string;
 
     @ApiProperty({ nullable: true })

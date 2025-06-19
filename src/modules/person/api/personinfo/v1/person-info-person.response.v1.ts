@@ -3,7 +3,7 @@ import { Person } from '../../../domain/person.js';
 import { PersonInfoPersonNameResponseV1 } from './person-info-person-name.response.v1.js';
 
 export class PersonInfoPersonResponseV1 {
-    @ApiProperty()
+    @ApiProperty({nullable: true})
     public readonly stammorganisation?: object;
 
     @ApiProperty({ type: PersonInfoPersonNameResponseV1 })
