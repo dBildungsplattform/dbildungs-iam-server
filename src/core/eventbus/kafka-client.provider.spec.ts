@@ -18,6 +18,15 @@ describe('KafkaProvider', () => {
         USER_TOPIC: 'user-topic',
         USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
+        SASL_ENABLED: false,
+        USERNAME: '',
+        PASSWORD: '',
+    };
+
+    const kafkaConfigSaslEnabled: KafkaConfig = {
+        ...kafkaConfigEnabled,
+        ENABLED: true,
+        SASL_ENABLED: true,
     };
 
     const kafkaConfigDisabled: KafkaConfig = {
@@ -35,6 +44,20 @@ describe('KafkaProvider', () => {
     it('should return Kafka instance when enabled', async () => {
         configService = createMock<ConfigService>();
         configService.getOrThrow.mockReturnValue(kafkaConfigEnabled);
+
+        module = await Test.createTestingModule({
+            providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
+        }).compile();
+
+        const kafkaInstance: Kafka | null = module.get<Kafka | null>(KAFKA_INSTANCE);
+
+        expect(kafkaInstance).toBeInstanceOf(Kafka);
+        expect(configService.getOrThrow).toHaveBeenCalledWith('KAFKA');
+    });
+
+    it('should return Kafka instance when enabled', async () => {
+        configService = createMock<ConfigService>();
+        configService.getOrThrow.mockReturnValue(kafkaConfigSaslEnabled);
 
         module = await Test.createTestingModule({
             providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
