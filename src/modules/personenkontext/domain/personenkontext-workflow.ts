@@ -121,6 +121,7 @@ export class PersonenkontextWorkflowAggregate {
     public async findRollenForOrganisation(
         permissions: PersonPermissions,
         rolleName?: string,
+        rollenIds?: string[],
         limit?: number,
         rollenarten?: RollenArt[],
     ): Promise<Rolle<true>[]> {
@@ -135,58 +136,60 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
-        let organisation: Option<Organisation<true>>;
-        if (this.selectedOrganisationId) {
-            // The organisation that was selected and that will be the base for the returned roles
-            organisation = await this.organisationRepository.findById(this.selectedOrganisationId);
-        }
-        // If the organisation was not found with the provided selected Id then just return an array of empty orgas
+        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
+            this.selectedOrganisationId,
+        );
         if (!organisation) {
             return [];
         }
 
-        let rollen: Rolle<true>[];
-
-        if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, false, undefined, undefined, rollenarten);
-        } else {
-            rollen = await this.rolleRepo.find(false, undefined, undefined, rollenarten);
-        }
+        // Fetch all roles by name or all
+        const rollen: Rolle<true>[] = rolleName
+            ? await this.rolleRepo.findByName(rolleName, false, undefined, undefined, rollenarten)
+            : await this.rolleRepo.find(false, undefined, undefined, rollenarten);
 
         if (rollen.length === 0) {
             return [];
         }
 
-        let allowedRollen: Rolle<true>[] = [];
-        // If the user has rights for this specific organization or any of its children, return the filtered roles
+        // Check which roles are allowed for the organisation
+        const allowedRollen: Rolle<true>[] = (
+            await Promise.all(
+                rollen.map(async (rolle: Rolle<true>) => {
+                    const error: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
+                    return error ? null : rolle;
+                }),
+            )
+        ).filter((rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null);
 
-        const allowedRollenPromises: Promise<Rolle<true> | null>[] = rollen.map(async (rolle: Rolle<true>) => {
-            // Check if the rolle can be assigned to the target organisation
-            const referenceCheckError: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
+        // Fetch explicitly selected Rollen by ID, if provided
+        let selectedRollen: Rolle<true>[] = [];
+        if (rollenIds?.length) {
+            selectedRollen = Array.from((await this.rolleRepo.findByIds(rollenIds)).values());
+        }
 
-            // If the reference check passes and the organisation matches the role type
-            if (!referenceCheckError) {
-                return rolle;
-            }
-            return null;
+        // Merge and deduplicate by ID
+        const allRollenMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+        [...allowedRollen, ...selectedRollen].forEach((rolle: Rolle<true>) => {
+            allRollenMap.set(rolle.id, rolle);
         });
 
-        // Resolve all the promises and filter out any null values (roles that can't be assigned)
-        const resolvedRollen: Rolle<true>[] = (await Promise.all(allowedRollenPromises)).filter(
-            (rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null,
-        );
-
-        allowedRollen = resolvedRollen;
-        allowedRollen = allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
+        // Sort by name
+        let finalRollen: Rolle<true>[] = Array.from(allRollenMap.values()).sort((a: Rolle<true>, b: Rolle<true>) =>
             a.name.localeCompare(b.name, 'de', { numeric: true }),
         );
 
+        // Apply limit, but ensure selectedRollen are always present
         if (limit) {
-            allowedRollen = allowedRollen.slice(0, limit);
+            const selectedIdsSet: Set<string> = new Set(rollenIds);
+            const guaranteedSelected: Rolle<true>[] = finalRollen.filter((r: Rolle<true>) => selectedIdsSet.has(r.id));
+            const otherRollen: Rolle<true>[] = finalRollen
+                .filter((r: Rolle<true>) => !selectedIdsSet.has(r.id))
+                .slice(0, Math.max(limit - guaranteedSelected.length, 0));
+            finalRollen = [...guaranteedSelected, ...otherRollen];
         }
 
-        // Sort the Roles by name
-        return allowedRollen;
+        return finalRollen;
     }
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext

@@ -234,6 +234,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                         personpermissions,
                         undefined,
                         undefined,
+                        undefined,
                         [RollenArt.LERN, RollenArt.LEIT, RollenArt.EXTERN],
                     );
                 });
@@ -268,6 +269,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
                     expect(response).toBeInstanceOf(PersonenkontextWorkflowResponse);
                     expect(personenkontextWorkflowMock.findRollenForOrganisation).toHaveBeenCalledWith(
                         personpermissions,
+                        undefined,
                         undefined,
                         undefined,
                         [],
