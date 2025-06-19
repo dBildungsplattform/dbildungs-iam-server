@@ -48,6 +48,9 @@ describe('KafkaEventService', () => {
         USER_TOPIC: 'user-topic',
         USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
+        SASL_ENABLED: false,
+        USERNAME: 'username',
+        PASSWORD: 'password',
     };
 
     beforeEach(async () => {

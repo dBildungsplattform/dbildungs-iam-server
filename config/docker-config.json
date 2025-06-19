@@ -124,7 +124,10 @@
         "GROUP_ID": "nestjs-kafka",
         "SESSION_TIMEOUT": 30000,
         "HEARTBEAT_INTERVAL": 10000,
-        "ENABLED": true
+        "ENABLED": true,
+        "SASL_ENABLED": false,
+        "USERNAME": "",
+        "PASSWORD": ""
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LEIT", "LERN", "EXTERN"]
