@@ -116,6 +116,7 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 30000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
+                    SASL_ENABLED: true,
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LEIT', 'LERN', 'EXTERN'],
@@ -137,6 +138,10 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                 },
                 OX: {
+                    PASSWORD: 'password',
+                },
+                KAFKA: {
+                    USERNAME: 'username',
                     PASSWORD: 'password',
                 },
             };
@@ -278,6 +283,9 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 30000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
+                    SASL_ENABLED: true,
+                    USERNAME: 'username',
+                    PASSWORD: 'password',
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LEIT', 'LERN', 'EXTERN'],
