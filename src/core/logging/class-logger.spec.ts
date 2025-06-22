@@ -7,6 +7,8 @@ import { LoggerModule } from './logger.module.js';
 import { ModuleLogger } from './module-logger.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
 import { inspect } from 'util';
+import { PersonIdentifier } from './person-identifier.js';
+import { faker } from '@faker-js/faker';
 
 describe('ClassLogger', () => {
     let module: TestingModule;
@@ -51,6 +53,10 @@ describe('ClassLogger', () => {
     });
 
     describe('when a message is logged', () => {
+        const personIdentifier: PersonIdentifier = {
+            personId: faker.string.uuid(),
+            username: faker.internet.userName(),
+        };
         it('should log appropriately for level debug', () => {
             sut.debug('Blah');
 
@@ -70,6 +76,16 @@ describe('ClassLogger', () => {
 
             expect(loggerMock.log).toHaveBeenCalledTimes(1);
             expect(loggerMock.log).toHaveBeenCalledWith('info', createTestMessage('Blah'));
+        });
+
+        it('should log appropriately for level info and extend personIdentifier', () => {
+            sut.infoPersonalized('Blah', personIdentifier);
+
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith(
+                'info',
+                createTestMessage(`Blah, personId:${personIdentifier.personId}, username:${personIdentifier.username}`),
+            );
         });
 
         it('should log appropriately for level warning', () => {
@@ -93,6 +109,16 @@ describe('ClassLogger', () => {
             expect(loggerMock.log).toHaveBeenCalledWith('error', createTestMessage('Blah'));
         });
 
+        it('should log appropriately for level error and extend personIdentifier', () => {
+            sut.errorPersonalized('Blah', personIdentifier);
+
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith(
+                'error',
+                createTestMessage(`Blah, personId:${personIdentifier.personId}, username:${personIdentifier.username}`),
+            );
+        });
+
         it('should log appropriately for level crit', () => {
             sut.crit('Blah');
 
@@ -109,6 +135,11 @@ describe('ClassLogger', () => {
     });
 
     describe('when a message with a trace was logged', () => {
+        const personIdentifier: PersonIdentifier = {
+            personId: faker.string.uuid(),
+            username: faker.internet.userName(),
+        };
+
         it('should take the trace into account for level debug', () => {
             sut.debug('Blah2', 'TraceInfo');
 
@@ -131,6 +162,19 @@ describe('ClassLogger', () => {
             expect(loggerMock.log).toHaveBeenCalledWith('info', createTestMessage('Blah2', 'TraceInfo'));
         });
 
+        it('should take the trace into account for level info and extend personIdentifier', () => {
+            sut.infoPersonalized('Blah2', personIdentifier, 'TraceInfo');
+
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith(
+                'info',
+                createTestMessage(
+                    `Blah2, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+                    'TraceInfo',
+                ),
+            );
+        });
+
         it('should take the trace into account for level warning', () => {
             sut.warning('Blah2', 'TraceInfo');
 
@@ -150,6 +194,19 @@ describe('ClassLogger', () => {
 
             expect(loggerMock.log).toHaveBeenCalledTimes(1);
             expect(loggerMock.log).toHaveBeenCalledWith('error', createTestMessage('Blah2', 'TraceInfo'));
+        });
+
+        it('should take the trace into account for level error and extend personIdentifier', () => {
+            sut.errorPersonalized('Blah2', personIdentifier, 'TraceInfo');
+
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith(
+                'error',
+                createTestMessage(
+                    `Blah2, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+                    'TraceInfo',
+                ),
+            );
         });
 
         it('should take the trace into account for level crit', () => {
