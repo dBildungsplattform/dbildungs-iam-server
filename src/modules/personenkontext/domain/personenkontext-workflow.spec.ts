@@ -27,6 +27,7 @@ describe('PersonenkontextWorkflow', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let anlage: PersonenkontextWorkflowAggregate;
+    let personenkontextKontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let personenkontextAnlageFactory: PersonenkontextWorkflowFactory;
     let personpermissionsMock: DeepMocked<PersonPermissions>;
     let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
@@ -71,6 +72,7 @@ describe('PersonenkontextWorkflow', () => {
         organisationRepoMock = module.get(OrganisationRepository);
         dbiamPersonenkontextFactoryMock = module.get(DbiamPersonenkontextFactory);
         personenkontextAnlageFactory = module.get(PersonenkontextWorkflowFactory);
+        personenkontextKontextRepoMock = module.get(DBiamPersonenkontextRepo);
         anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
         configMock = module.get(ConfigService);
@@ -90,7 +92,8 @@ describe('PersonenkontextWorkflow', () => {
 
     describe('initialize', () => {
         it('should initialize the aggregate with the selected Organisation and Rolle', () => {
-            anlage.initialize('org-id', ['role-id']);
+            anlage.initialize('person-id', 'org-id', ['role-id']);
+            expect(anlage.personId).toBe('person-id');
             expect(anlage.selectedOrganisationId).toBe('org-id');
             expect(anlage.selectedRolleIds).toStrictEqual(['role-id']);
         });
@@ -488,7 +491,7 @@ describe('PersonenkontextWorkflow', () => {
 
     describe('findRollenForOrganisation', () => {
         it('should return an empty array if no roles are found by name', async () => {
-            anlage.initialize('organisation-id');
+            anlage.initialize(undefined, 'organisation-id');
             rolleRepoMock.findByName.mockResolvedValue([]);
             const organisation: Organisation<true> = createMock<Organisation<true>>();
             organisationRepoMock.findById.mockResolvedValue(organisation);
@@ -502,12 +505,23 @@ describe('PersonenkontextWorkflow', () => {
             expect(result).toEqual([]);
         });
 
+        it('should return an empty array if no personId is set but permissions are missing', async () => {
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.canModifyPerson.mockResolvedValue(false);
+
+            anlage.initialize('person-id', 'organisation-id');
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
+
+            expect(result).toEqual([]);
+        });
+
         it('should return an empty array if no organisations with system rights are found', async () => {
             rolleRepoMock.find.mockResolvedValue([createMock<Rolle<true>>()]);
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            anlage.initialize('organisation-id');
+            anlage.initialize(undefined, 'organisation-id');
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
@@ -524,7 +538,7 @@ describe('PersonenkontextWorkflow', () => {
 
             organisationRepoMock.findById.mockResolvedValue(undefined);
 
-            anlage.initialize('org-id');
+            anlage.initialize(undefined, 'org-id');
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
@@ -540,12 +554,13 @@ describe('PersonenkontextWorkflow', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValue(false);
 
-            anlage.initialize('organisation-id');
+            anlage.initialize(undefined, 'organisation-id');
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
             expect(result).toEqual([]);
         });
+
         it('should add roles to allowedRollen if user has permissions', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.LAND,
@@ -574,12 +589,59 @@ describe('PersonenkontextWorkflow', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValue(true);
 
-            anlage.initialize(organisation.id);
+            anlage.initialize(undefined, organisation.id);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
             expect(result).toHaveLength(2);
         });
+
+        it('should limit allowedRollen based on set personId', async () => {
+            rolleRepoMock.find.mockResolvedValue([]);
+
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true);
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            permissions.canModifyPerson.mockResolvedValueOnce(true);
+
+            personenkontextKontextRepoMock.findByPerson.mockResolvedValueOnce([DoFactory.createPersonenkontext(true)]);
+
+            const personRollen: Rolle<true>[] = [DoFactory.createRolle(true)];
+            rolleRepoMock.findByIds.mockResolvedValueOnce(new Map(personRollen.map((r: Rolle<true>) => [r.id, r])));
+
+            anlage.initialize('person-id', organisation.id);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
+
+            expect(result).toHaveLength(0);
+        });
+
+        it('should limit allowedRollen based on set personId when rollenarten are passed in', async () => {
+            rolleRepoMock.find.mockResolvedValue([]);
+
+            const organisation: Organisation<true> = DoFactory.createOrganisation(true);
+            organisationRepoMock.findById.mockResolvedValue(organisation);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
+            permissions.canModifyPerson.mockResolvedValueOnce(true);
+
+            personenkontextKontextRepoMock.findByPerson.mockResolvedValueOnce([DoFactory.createPersonenkontext(true)]);
+
+            const personRollen: Rolle<true>[] = [DoFactory.createRolle(true)];
+            rolleRepoMock.findByIds.mockResolvedValueOnce(new Map(personRollen.map((r: Rolle<true>) => [r.id, r])));
+
+            anlage.initialize('person-id', organisation.id);
+
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, undefined, [
+                RollenArt.LEHR,
+            ]);
+
+            expect(result).toHaveLength(0);
+        });
+
         it('should handle empty roles array', async () => {
             rolleRepoMock.find.mockResolvedValue([]);
 
@@ -589,12 +651,13 @@ describe('PersonenkontextWorkflow', () => {
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValue(true);
 
-            anlage.initialize(organisation.id);
+            anlage.initialize(undefined, organisation.id);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions);
 
             expect(result).toHaveLength(0);
         });
+
         it('should limit roles returned allowedRollen if limit is set', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.LAND,
@@ -634,7 +697,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
             rolleRepoMock.findById.mockResolvedValue(rolle1);
 
-            anlage.initialize(organisation.id);
+            anlage.initialize(undefined, organisation.id);
 
             jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
 
@@ -642,6 +705,7 @@ describe('PersonenkontextWorkflow', () => {
 
             expect(result).toHaveLength(2);
         });
+
         it('should filter out roles that do not pass the reference check', async () => {
             const organisation: Organisation<true> = DoFactory.createOrganisation(true, {
                 typ: OrganisationsTyp.LAND,
@@ -673,7 +737,7 @@ describe('PersonenkontextWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValue(organisation);
             rolleRepoMock.findById.mockResolvedValue(rolle1);
 
-            anlage.initialize(organisation.id);
+            anlage.initialize(undefined, organisation.id);
 
             const mockDomainError: DomainError = {
                 name: 'ReferenceCheckError',
@@ -767,6 +831,7 @@ describe('PersonenkontextWorkflow', () => {
 
             const result: Option<DomainError> = await anlage.checkPermissions(
                 permissions,
+                undefined,
                 'orgId',
                 [lehrRolle.id, leitRolle.id],
                 OperationContext.PERSON_ANLEGEN,
@@ -781,6 +846,7 @@ describe('PersonenkontextWorkflow', () => {
 
             const result: Option<DomainError> = await anlage.checkPermissions(
                 permissions,
+                undefined,
                 'orgId',
                 [],
                 OperationContext.PERSON_BEARBEITEN,
@@ -819,6 +885,7 @@ describe('PersonenkontextWorkflow', () => {
 
                     const result: Option<DomainError> = await anlage.checkPermissions(
                         permissions,
+                        undefined,
                         'orgId',
                         [lehrRolle.id, leitRolle.id],
                         operationContext,
@@ -844,8 +911,24 @@ describe('PersonenkontextWorkflow', () => {
 
                     const result: Option<DomainError> = await anlage.checkPermissions(
                         permissions,
+                        undefined,
                         'orgId',
                         [lehrRolle.id],
+                        operationContext,
+                    );
+
+                    expect(result).toBeInstanceOf(DomainError);
+                });
+
+                it('should return error if personid is set but user is not allowed to modify', async () => {
+                    const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                    permissions.canModifyPerson.mockResolvedValueOnce(false);
+
+                    const result: Option<DomainError> = await anlage.checkPermissions(
+                        permissions,
+                        'personId',
+                        'orgId',
+                        ['rolleId'],
                         operationContext,
                     );
 

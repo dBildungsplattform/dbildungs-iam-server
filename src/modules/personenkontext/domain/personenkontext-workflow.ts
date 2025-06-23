@@ -175,7 +175,11 @@ export class PersonenkontextWorkflowAggregate {
                     (r: Rolle<true>) => r.rollenart,
                 );
 
-                allowedRollenArten = intersection(allowedRollenArten, existingRollenarten);
+                if (allowedRollenArten) {
+                    allowedRollenArten = intersection(allowedRollenArten, existingRollenarten);
+                } else {
+                    allowedRollenArten = existingRollenarten;
+                }
             }
         }
 
@@ -246,6 +250,7 @@ export class PersonenkontextWorkflowAggregate {
             // Check permissions after verifying references
             const permissionCheckError: Option<DomainError> = await this.checkPermissions(
                 permissions,
+                this.personId,
                 this.selectedOrganisationId,
                 this.selectedRolleIds,
                 operationContext,
@@ -314,13 +319,14 @@ export class PersonenkontextWorkflowAggregate {
 
     public async checkPermissions(
         permissions: PersonPermissions,
+        personId: PersonID | undefined,
         organisationId: string,
         rolleIds: RolleID[],
         operationContext: OperationContext,
     ): Promise<Option<DomainError>> {
         // When person is given, check for permission regardless of operationContext
-        if (this.personId) {
-            const hasPersonModifyPermission: boolean = await permissions.canModifyPerson(this.personId);
+        if (personId) {
+            const hasPersonModifyPermission: boolean = await permissions.canModifyPerson(personId);
             if (!hasPersonModifyPermission) return new MissingPermissionsError('Unauthorized to manage person');
         }
 
