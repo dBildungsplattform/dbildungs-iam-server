@@ -43,6 +43,35 @@ export class UserLockRepository {
         return users.map(mapEntityToAggregate);
     }
 
+    public async findByPersonIds(personIds: PersonID[]): Promise<Map<PersonID, UserLock[]>> {
+        const result = new Map<PersonID, UserLock[]>();
+
+        if (personIds.length === 0) return result;
+
+        const userLockEntities: UserLockEntity[] = await this.em.find(UserLockEntity, {
+            person: { $in: personIds },
+        });
+
+        for (const entity of userLockEntities) {
+            const personId = entity.person.id;
+            const lock = mapEntityToAggregate(entity);
+
+            if (!result.has(personId)) {
+                result.set(personId, []);
+            }
+
+            result.get(personId)!.push(lock);
+        }
+        for (const id of personIds) {
+            if (!result.has(id)) {
+                result.set(id, []);
+            }
+        }
+
+        return result;
+    }
+
+
     public async createUserLock(userLock: UserLock): Promise<UserLock | DomainError> {
         const userLockEntity: UserLockEntity = this.em.create(UserLockEntity, mapAggregateToData(userLock));
         await this.em.persistAndFlush(userLockEntity);

@@ -1,5 +1,5 @@
 import { Loaded, QBFilterQuery } from '@mikro-orm/core';
-import { EntityManager } from '@mikro-orm/postgresql';
+import { EntityManager, QueryBuilder } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../../../shared/types/index.js';
 import { Personenkontext } from '../domain/personenkontext.js';
@@ -114,6 +114,52 @@ export class DBiamPersonenkontextRepo {
         );
     }
 
+
+    /**
+     * Finds all unique person IDs that have at least one personenkontext
+     * where the associated role is linked to one of the given service providers.
+     * Optionally filters by organisation IDs if provided.
+     *
+     * Supports consistent pagination via stable sorting on `personId`.
+     *
+     * @param serviceProviderIds - A set of service provider IDs to filter roles by.
+     * @param organisationIds - (Optional) A set of organisation IDs to filter person contexts by.
+     * @param offset - The offset for pagination (e.g., 0 for the first page).
+     * @param limit - The maximum number of results to return.
+     * @returns An array of unique `PersonID`s that match the given criteria.
+     */
+    public async findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
+        serviceProviderIds: Set<string>,
+        organisationIds: Set<string> | undefined,
+        offset: number,
+        limit: number,
+    ): Promise<PersonID[]> {
+        if (serviceProviderIds.size === 0) {
+            return [];
+        }
+
+        const qb: QueryBuilder<PersonenkontextEntity> = this.em.createQueryBuilder(PersonenkontextEntity, 'pk');
+
+        qb.select('pk.personId')
+            .distinct()
+            .join('pk.rolleId', 'rolle')
+            .join('rolle.serviceProvider', 'sp')
+            .where({ 'sp.id': { $in: Array.from(serviceProviderIds) } });
+
+        if (organisationIds && organisationIds.size > 0) {
+            qb.andWhere({ 'pk.organisationId': { $in: Array.from(organisationIds) } });
+        }
+
+        qb.orderBy({ 'pk.personId': 'asc' })
+        .offset(offset)
+        .limit(limit);
+
+        const results = await qb.getResultList();
+        return results.map((row) => row.personId.id);
+    }
+
+
+
     public async findByPersonWithOrgaAndRolle(personId: PersonID): Promise<Array<KontextWithOrgaAndRolle>> {
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(
             PersonenkontextEntity,
@@ -139,6 +185,47 @@ export class DBiamPersonenkontextRepo {
             };
         });
     }
+
+    public async findByPersonIdsWithOrgaAndRolle(
+        personIds: PersonID[],
+    ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
+        const result = new Map<PersonID, KontextWithOrgaAndRolle[]>();
+
+        if (personIds.length === 0) return result;
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(
+            PersonenkontextEntity,
+            { personId: { $in: personIds } },
+            {
+                populate: [
+                    'organisationId',
+                    'rolleId',
+                    'rolleId.merkmale',
+                    'rolleId.systemrechte',
+                    'rolleId.serviceProvider',
+                ],
+            },
+        );
+
+        for (const pk of personenKontexte) {
+            const personId = pk.personId.id;
+            const orgaEntity: OrganisationEntity = pk.organisationId.unwrap();
+            const rolleEntity: RolleEntity = pk.rolleId.unwrap();
+
+            const kontext: KontextWithOrgaAndRolle = {
+                personenkontext: mapEntityToAggregate(pk, this.personenkontextFactory),
+                organisation: this.entityAggregateMapper.mapOrganisationEntityToAggregate(orgaEntity),
+                rolle: this.entityAggregateMapper.mapRolleEntityToAggregate(rolleEntity),
+            };
+
+            if (!result.has(personId)) {
+                result.set(personId, []);
+            }
+
+            result.get(personId)!.push(kontext);
+        }
+        return result;
+    }
+
 
     public async findBy(scope: PersonenkontextScope): Promise<Counted<Personenkontext<true>>> {
         const [entities, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(this.em);
