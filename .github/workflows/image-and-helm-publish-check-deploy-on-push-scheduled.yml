@@ -198,7 +198,7 @@ jobs:
     with:
       namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:
-      ERW_DEV_KUBECONFIG: ${{ secrets.ERW_DEV_KUBECONFIG }}
+      ERWIN_DEV_KUBECONFIG: ${{ secrets.ERWIN_DEV_KUBECONFIG }}
 
   delete_successful:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
