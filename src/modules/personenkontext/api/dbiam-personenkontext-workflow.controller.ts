@@ -121,7 +121,13 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Find all possible roles under the selected Organisation
         const rollen: Rolle<true>[] = params.organisationId
-            ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit, rollenarten)
+            ? await anlage.findRollenForOrganisation(
+                  permissions,
+                  params.rolleName,
+                  params.rollenIds,
+                  params.limit,
+                  rollenarten,
+              )
             : [];
 
         const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
