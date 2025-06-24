@@ -147,12 +147,36 @@ jobs:
       helm_chart_version: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.chart_version_from_branch }}
 
   wait_for_helm_chart_to_get_published:
+    runs-on: ubuntu-latest
     needs:
       - release_helm
-    runs-on: ubuntu-latest
     steps:
-      - shell: bash
-        run: sleep 1m
+      - name: Check for Helm chart
+        run: |
+          CHART_NAME=dbildungs-iam-server
+          CHART_VERSION="${{ needs.release_helm.outputs.helm_chart_version }}"
+          echo "CHART_VERSION=$CHART_VERSION"
+          REPO_URL="https://dbildungsplattform.github.io/helm-charts-registry/"
+
+          echo "Adding Helm repository $REPO_URL"
+          helm repo add dbildungsplattform $REPO_URL
+          
+          echo "Checking for chart $CHART_NAME version $CHART_VERSION in $REPO_URL"
+
+          for i in {1..20}; do
+            echo "Attempt $i..."
+            helm repo update
+            if helm search repo dbildungsplattform/$CHART_NAME --version $CHART_VERSION | grep -qw "$CHART_VERSION"; then
+              minutes=$(echo "scale=2; $i * 30 / 60" | bc)
+              echo "Chart $CHART_NAME-$CHART_VERSION found after $minutes minutes !"
+              exit 0
+            fi
+            echo "Chart not found yet. Waiting 30 seconds..."
+            sleep 30
+          done
+
+          echo "Chart $CHART_NAME:$CHART_VERSION not found after waiting."
+          exit 1 
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
