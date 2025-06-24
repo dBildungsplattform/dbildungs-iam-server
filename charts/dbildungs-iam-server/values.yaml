@@ -209,8 +209,7 @@ autoscaling:
   targetCPUUtilizationPercentage: 60
 
 podDisruptionBudget:
-  enabled: true
-  minAvailable: '60%'
+  enabled: false
 
 status:
   url: 'https://status.dev.spsh.dbildungsplattform.de/'
