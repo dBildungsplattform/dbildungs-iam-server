@@ -396,7 +396,12 @@ export class PrivacyIdeaAdministrationService {
                 throw new TwoAuthStateError();
             }
             const serial: string = twoAuthState.serial;
-            const response: ResetTokenResponse = await this.unassignToken(serial, token);
+            let response: ResetTokenResponse;
+            if (twoAuthState.tokentype === 'hotp') {
+                response = await this.unassignToken(serial, token);
+            } else {
+                response = await this.deleteToken(serial);
+            }
             return response;
         } catch (error) {
             throw new TokenResetError();
@@ -487,7 +492,7 @@ export class PrivacyIdeaAdministrationService {
         return (await this.getUserTokens(userName)).filter((x: PrivacyIdeaToken) => x.rollout_state === 'verify')[0];
     }
 
-    private async deleteToken(serial: string): Promise<void> {
+    private async deleteToken(serial: string): Promise<ResetTokenResponse> {
         const token: string = await this.getJWTToken();
         const url: string = this.privacyIdeaConfig.ENDPOINT + `/token/${serial}`;
         const headers: { Authorization: string } = {
@@ -495,7 +500,10 @@ export class PrivacyIdeaAdministrationService {
         };
 
         try {
-            await firstValueFrom(this.httpService.delete(url, { headers: headers }));
+            const response: AxiosResponse<ResetTokenResponse> = await firstValueFrom(
+                this.httpService.delete(url, { headers: headers }),
+            );
+            return response.data;
         } catch (error) {
             if (error instanceof Error) {
                 throw new Error(`Error deleting token: ${error.message}`);
