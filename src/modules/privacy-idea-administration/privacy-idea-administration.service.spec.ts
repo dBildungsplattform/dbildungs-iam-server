@@ -549,7 +549,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     describe('resetToken', () => {
         const mockResetUser: string = 'testUser';
         const mockJWTToken: string = 'mockJWTToken';
-        const mockTwoAuthState: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ tokentype: 'hotp' });
+        const mockTwoAuthState: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'hardware' } });
         const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
         it('should reset token successfully', async () => {
             jest.spyOn(
@@ -599,7 +599,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it('should delete token on unassing if token isnt hotp', async () => {
-            const totpToken: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ tokentype: 'totp' });
+            const totpToken: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'software' } });
             jest.spyOn(
                 service as unknown as { getJWTToken: () => Promise<string> },
                 'getJWTToken',

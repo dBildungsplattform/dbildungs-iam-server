@@ -397,7 +397,7 @@ export class PrivacyIdeaAdministrationService {
             }
             const serial: string = twoAuthState.serial;
             let response: ResetTokenResponse;
-            if (twoAuthState.tokentype === 'hotp') {
+            if (twoAuthState.info.tokenkind === 'hardware') {
                 response = await this.unassignToken(serial, token);
             } else {
                 response = await this.deleteToken(serial);
