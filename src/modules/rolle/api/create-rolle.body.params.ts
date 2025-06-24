@@ -7,7 +7,7 @@ import {
     RollenMerkmal,
     RollenMerkmalTypName,
     RollenSystemRechtEnum,
-    RollenSystemRechtTypName,
+    RollenSystemRechtEnumName,
 } from '../domain/rolle.enums.js';
 import { IsDIN91379AEXT } from '../../../shared/util/din-91379-validation.js';
 
@@ -33,6 +33,6 @@ export class CreateRolleBodyParams {
 
     @IsEnum(RollenSystemRechtEnum, { each: true })
     @ArrayUnique()
-    @ApiProperty({ enum: RollenSystemRechtEnum, enumName: RollenSystemRechtTypName, isArray: true, uniqueItems: true })
+    @ApiProperty({ enum: RollenSystemRechtEnum, enumName: RollenSystemRechtEnumName, isArray: true, uniqueItems: true })
     public systemrechte!: RollenSystemRechtEnum[];
 }

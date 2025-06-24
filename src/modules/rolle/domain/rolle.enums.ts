@@ -1,6 +1,6 @@
 export const RollenArtTypName: string = 'RollenArt';
 export const RollenMerkmalTypName: string = 'RollenMerkmal';
-export const RollenSystemRechtTypName: string = 'RollenSystemRecht';
+export const RollenSystemRechtEnumName: string = 'RollenSystemRechtEnum';
 
 export enum RollenArt {
     LERN = 'LERN',
@@ -34,69 +34,17 @@ export enum RollenSystemRechtEnum {
     SCHULPORTAL_VERWALTEN = 'SCHULPORTAL_VERWALTEN',
     HINWEISE_BEARBEITEN = 'HINWEISE_BEARBEITEN',
 }
-
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const ROLLEN_VERWALTEN = 'ROLLEN_VERWALTEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const PERSONEN_SOFORT_LOESCHEN = 'PERSONEN_SOFORT_LOESCHEN'; // Implicitly requires PERSONEN_VERWALTEN to be usable in the frontend
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const PERSONEN_VERWALTEN = 'PERSONEN_VERWALTEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN = 'LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN = 'EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const SCHULEN_VERWALTEN = 'SCHULEN_VERWALTEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const KLASSEN_VERWALTEN = 'KLASSEN_VERWALTEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const SCHULTRAEGER_VERWALTEN = 'SCHULTRAEGER_VERWALTEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const PERSON_SYNCHRONISIEREN = 'PERSON_SYNCHRONISIEREN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const CRON_DURCHFUEHREN = 'CRON_DURCHFUEHREN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const PERSONEN_ANLEGEN = 'PERSONEN_ANLEGEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const IMPORT_DURCHFUEHREN = 'IMPORT_DURCHFUEHREN'; // Requires PERSONEN_VERWALTEN (later PERSONEN_ERSTELLEN !!!) to work
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const PERSONEN_LESEN = 'PERSONEN_LESEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const BULK_VERWALTEN = 'BULK_VERWALTEN'; // For Admins that can do bulk operations like adding personenkontexte to 100 users at once.
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const SCHULPORTAL_VERWALTEN = 'SCHULPORTAL_VERWALTEN';
-// // eslint-disable-next-line @typescript-eslint/typedef
-// const HINWEISE_BEARBEITEN = 'HINWEISE_BEARBEITEN';
-
-export type RollenSystemRechtNameType =
-    | typeof RollenSystemRechtEnum.ROLLEN_VERWALTEN
-    | typeof RollenSystemRechtEnum.PERSONEN_SOFORT_LOESCHEN
-    | typeof RollenSystemRechtEnum.PERSONEN_VERWALTEN
-    | typeof RollenSystemRechtEnum.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN
-    | typeof RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN
-    | typeof RollenSystemRechtEnum.SCHULEN_VERWALTEN
-    | typeof RollenSystemRechtEnum.KLASSEN_VERWALTEN
-    | typeof RollenSystemRechtEnum.SCHULTRAEGER_VERWALTEN
-    | typeof RollenSystemRechtEnum.PERSON_SYNCHRONISIEREN
-    | typeof RollenSystemRechtEnum.CRON_DURCHFUEHREN
-    | typeof RollenSystemRechtEnum.PERSONEN_ANLEGEN
-    | typeof RollenSystemRechtEnum.IMPORT_DURCHFUEHREN
-    | typeof RollenSystemRechtEnum.PERSONEN_LESEN
-    | typeof RollenSystemRechtEnum.BULK_VERWALTEN
-    | typeof RollenSystemRechtEnum.SCHULPORTAL_VERWALTEN
-    | typeof RollenSystemRechtEnum.HINWEISE_BEARBEITEN;
-
 export class RollenSystemRecht {
     private constructor(
         private technicalInternal: boolean,
-        private nameInternal: RollenSystemRechtNameType,
+        private nameInternal: RollenSystemRechtEnum,
     ) {}
 
     public get technical(): boolean {
         return this.technicalInternal;
     }
 
-    public get name(): RollenSystemRechtNameType {
+    public get name(): RollenSystemRechtEnum {
         return this.nameInternal;
     }
 
@@ -202,17 +150,11 @@ export class RollenSystemRecht {
         RollenSystemRecht.HINWEISE_BEARBEITEN,
     ];
 
-    public static get ALL_NAMES(): RollenSystemRechtNameType[] {
+    public static get ALL_NAMES(): RollenSystemRechtEnum[] {
         return RollenSystemRecht.ALL.map((systemrecht: RollenSystemRecht) => systemrecht.name);
     }
 
-    // public static getByStringName(name: string): RollenSystemRecht | undefined {
-    //     return RollenSystemRecht.ALL.find(
-    //         (systemrecht: RollenSystemRecht) => systemrecht.name === (name as RollenSystemRechtNameType),
-    //     );
-    // }
-
-    public static getByName(name: RollenSystemRechtNameType): RollenSystemRecht {
+    public static getByName(name: RollenSystemRechtEnum): RollenSystemRecht {
         switch (name) {
             case RollenSystemRechtEnum.ROLLEN_VERWALTEN:
                 return RollenSystemRecht.ROLLEN_VERWALTEN;

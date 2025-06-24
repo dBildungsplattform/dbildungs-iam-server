@@ -7,6 +7,7 @@ import {
     RollenSystemRecht,
 } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
+import { SystemRechtResponse } from './systemrecht.response.js';
 
 export class RolleResponse {
     @ApiProperty()
@@ -30,8 +31,8 @@ export class RolleResponse {
     @ApiProperty({ enum: RollenMerkmal, enumName: RollenMerkmalTypName, isArray: true, uniqueItems: true })
     public merkmale: RollenMerkmal[];
 
-    @ApiProperty({ isArray: true, uniqueItems: true, type: RollenSystemRecht })
-    public systemrechte: RollenSystemRecht[];
+    @ApiProperty({ isArray: true, uniqueItems: true, type: SystemRechtResponse })
+    public systemrechte: SystemRechtResponse[];
 
     @ApiProperty({ nullable: true })
     public administeredBySchulstrukturknotenName?: string;
@@ -54,7 +55,9 @@ export class RolleResponse {
         this.administeredBySchulstrukturknoten = rolle.administeredBySchulstrukturknoten;
         this.rollenart = rolle.rollenart;
         this.merkmale = rolle.merkmale;
-        this.systemrechte = rolle.systemrechte;
+        this.systemrechte = rolle.systemrechte.map(
+            (systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht),
+        );
         this.administeredBySchulstrukturknotenName = administeredBySchulstrukturknotenName;
         this.administeredBySchulstrukturknotenKennung = administeredBySchulstrukturknotenKennung;
         this.version = rolle.version;

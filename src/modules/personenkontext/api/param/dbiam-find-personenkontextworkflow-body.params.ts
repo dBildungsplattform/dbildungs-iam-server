@@ -1,7 +1,7 @@
 import { ArrayUnique, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
-import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
+import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../../rolle/domain/rolle.enums.js';
 
 export class FindDbiamPersonenkontextWorkflowBodyParams {
     @IsUUID()
@@ -53,14 +53,14 @@ export class FindDbiamPersonenkontextWorkflowBodyParams {
     })
     public readonly limit?: number;
 
-    @IsEnum(RollenSystemRecht)
+    @IsEnum(RollenSystemRechtEnum)
     @IsOptional()
     @ApiProperty({
-        enum: RollenSystemRecht,
-        enumName: 'RollenSystemRecht',
+        enum: RollenSystemRechtEnum,
+        enumName: RollenSystemRechtEnumName,
         description: 'The systemrecht used to filter for rollen in personenkontext.',
         required: false,
         nullable: true,
     })
-    public readonly requestedWithSystemrecht?: RollenSystemRecht;
+    public readonly requestedWithSystemrecht?: RollenSystemRechtEnum;
 }

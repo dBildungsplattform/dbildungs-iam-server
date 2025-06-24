@@ -63,7 +63,8 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { RollenSystemRecht, RollenSystemRechtNameType } from '../domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
+import { SystemRechtResponse } from './systemrecht.response.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -204,7 +205,7 @@ export class RolleController {
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
-            params.systemrechte.map((s: RollenSystemRechtNameType) => RollenSystemRecht.getByName(s)),
+            params.systemrechte.map((s: RollenSystemRechtEnum) => RollenSystemRecht.getByName(s)),
             [],
             [],
             false,
@@ -392,7 +393,7 @@ export class RolleController {
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
-            params.systemrechte.map((s: RollenSystemRechtNameType) => RollenSystemRecht.getByName(s)),
+            params.systemrechte.map((s: RollenSystemRechtEnum) => RollenSystemRecht.getByName(s)),
             params.serviceProviderIds,
             params.version,
             isAlreadyAssigned,
@@ -463,6 +464,17 @@ export class RolleController {
         }
 
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle entfernt: ${rolleName}.`);
+    }
+
+    @Get('systemrechte')
+    @ApiOperation({ description: 'Get all systemrechte for rollen.' })
+    @ApiOkResponse({
+        description: 'Returns all systemrechte for rollen.',
+    })
+    public getAllSystemrechte(@Param() includeTechnicalRights: boolean = false): SystemRechtResponse[] {
+        return RollenSystemRecht.ALL.filter(
+            (systemRecht: RollenSystemRecht) => includeTechnicalRights || !systemRecht.technical,
+        ).map((systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht));
     }
 
     private async returnRolleWithServiceProvidersResponse(
