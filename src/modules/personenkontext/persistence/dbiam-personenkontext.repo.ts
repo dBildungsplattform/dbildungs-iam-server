@@ -114,7 +114,6 @@ export class DBiamPersonenkontextRepo {
         );
     }
 
-
     /**
      * Finds all unique person IDs that have at least one personenkontext
      * where the associated role is linked to one of the given service providers.
@@ -140,25 +139,22 @@ export class DBiamPersonenkontextRepo {
 
         const qb: QueryBuilder<PersonenkontextEntity> = this.em.createQueryBuilder(PersonenkontextEntity, 'pk');
 
-        qb.select('pk.personId')
+        await qb
+            .select('pk.personId')
             .distinct()
             .join('pk.rolleId', 'rolle')
             .join('rolle.serviceProvider', 'sp')
             .where({ 'sp.id': { $in: Array.from(serviceProviderIds) } });
 
         if (organisationIds && organisationIds.size > 0) {
-            qb.andWhere({ 'pk.organisationId': { $in: Array.from(organisationIds) } });
+            await qb.andWhere({ 'pk.organisationId': { $in: Array.from(organisationIds) } });
         }
 
-        qb.orderBy({ 'pk.personId': 'asc' })
-        .offset(offset)
-        .limit(limit);
+        await qb.orderBy({ 'pk.personId': 'asc' }).offset(offset).limit(limit);
 
-        const results = await qb.getResultList();
-        return results.map((row) => row.personId.id);
+        const results: PersonenkontextEntity[] = await qb.getResultList();
+        return results.map((row: PersonenkontextEntity) => row.personId.id);
     }
-
-
 
     public async findByPersonWithOrgaAndRolle(personId: PersonID): Promise<Array<KontextWithOrgaAndRolle>> {
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(
@@ -189,7 +185,7 @@ export class DBiamPersonenkontextRepo {
     public async findByPersonIdsWithOrgaAndRolle(
         personIds: PersonID[],
     ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
-        const result = new Map<PersonID, KontextWithOrgaAndRolle[]>();
+        const result: Map<PersonID, KontextWithOrgaAndRolle[]> = new Map<PersonID, KontextWithOrgaAndRolle[]>();
 
         if (personIds.length === 0) return result;
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(
@@ -207,7 +203,7 @@ export class DBiamPersonenkontextRepo {
         );
 
         for (const pk of personenKontexte) {
-            const personId = pk.personId.id;
+            const personId: string = pk.personId.id;
             const orgaEntity: OrganisationEntity = pk.organisationId.unwrap();
             const rolleEntity: RolleEntity = pk.rolleId.unwrap();
 
@@ -225,7 +221,6 @@ export class DBiamPersonenkontextRepo {
         }
         return result;
     }
-
 
     public async findBy(scope: PersonenkontextScope): Promise<Counted<Personenkontext<true>>> {
         const [entities, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(this.em);

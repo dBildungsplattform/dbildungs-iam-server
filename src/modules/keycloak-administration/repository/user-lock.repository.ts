@@ -44,7 +44,7 @@ export class UserLockRepository {
     }
 
     public async findByPersonIds(personIds: PersonID[]): Promise<Map<PersonID, UserLock[]>> {
-        const result = new Map<PersonID, UserLock[]>();
+        const result: Map<PersonID, UserLock[]> = new Map<PersonID, UserLock[]>();
 
         if (personIds.length === 0) return result;
 
@@ -53,8 +53,8 @@ export class UserLockRepository {
         });
 
         for (const entity of userLockEntities) {
-            const personId = entity.person.id;
-            const lock = mapEntityToAggregate(entity);
+            const personId: string = entity.person.id;
+            const lock: UserLock = mapEntityToAggregate(entity);
 
             if (!result.has(personId)) {
                 result.set(personId, []);
@@ -70,7 +70,6 @@ export class UserLockRepository {
 
         return result;
     }
-
 
     public async createUserLock(userLock: UserLock): Promise<UserLock | DomainError> {
         const userLockEntity: UserLockEntity = this.em.create(UserLockEntity, mapAggregateToData(userLock));
