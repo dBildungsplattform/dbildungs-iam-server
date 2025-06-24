@@ -233,7 +233,7 @@ describe('LandesbediensteterWorkflow', () => {
 
             sut.initialize(faker.string.uuid(), []);
 
-            const result: Rolle<true>[] = await sut.findRollenForOrganisation(permissions, undefined, 25);
+            const result: Rolle<true>[] = await sut.findRollenForOrganisation(permissions, undefined, undefined, 25);
 
             expect(result).toHaveLength(0);
         });
@@ -245,7 +245,7 @@ describe('LandesbediensteterWorkflow', () => {
 
             sut.initialize(faker.string.uuid(), []);
 
-            const result: Rolle<true>[] = await sut.findRollenForOrganisation(permissions, undefined, 25);
+            const result: Rolle<true>[] = await sut.findRollenForOrganisation(permissions, undefined, undefined, 25);
 
             expect(result).toHaveLength(0);
         });
@@ -263,7 +263,7 @@ describe('LandesbediensteterWorkflow', () => {
 
             sut.initialize(faker.string.uuid(), []);
 
-            const result: Rolle<true>[] = await sut.findRollenForOrganisation(permissions, rolle.name, 25);
+            const result: Rolle<true>[] = await sut.findRollenForOrganisation(permissions, rolle.name, undefined, 25);
 
             expect(result).toHaveLength(1);
         });
@@ -288,9 +288,42 @@ describe('LandesbediensteterWorkflow', () => {
 
             sut.initialize(faker.string.uuid(), []);
 
-            const result: Rolle<true>[] = await sut.findRollenForOrganisation(permissions, undefined, 25);
+            const result: Rolle<true>[] = await sut.findRollenForOrganisation(permissions, undefined, undefined, 25);
 
             expect(result).toHaveLength(2);
+        });
+
+        it('should include rollen from rollenIds even if not allowed by reference check', async () => {
+            const orga: Organisation<true> = DoFactory.createOrganisation(true);
+
+            const allowedRolle: Rolle<true> = DoFactory.createRolle(true);
+            const explicitlySelectedRolle: Rolle<true> = DoFactory.createRolle(true);
+
+            const permissions: DeepMocked<PersonPermissions> = createMock();
+            permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+            organisationRepoMock.findById.mockResolvedValueOnce(orga);
+
+            rolleRepoMock.find.mockResolvedValueOnce([allowedRolle, explicitlySelectedRolle]);
+
+            mockCheckReferences(true);
+            mockCheckReferences(true);
+
+            rolleRepoMock.findByIds.mockResolvedValueOnce(
+                new Map([[explicitlySelectedRolle.id, explicitlySelectedRolle]]),
+            );
+
+            sut.initialize(orga.id, []);
+
+            const result: Rolle<true>[] = await sut.findRollenForOrganisation(
+                permissions,
+                undefined,
+                [explicitlySelectedRolle.id],
+                25,
+            );
+
+            // Expect both rollen to be returned, including the explicitly selected one
+            expect(result).toHaveLength(2);
+            expect(result).toEqual(expect.arrayContaining([allowedRolle, explicitlySelectedRolle]));
         });
     });
 
