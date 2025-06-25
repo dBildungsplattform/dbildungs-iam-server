@@ -19,7 +19,7 @@ import { OrganisationService } from '../../organisation/domain/organisation.serv
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
 
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -116,7 +116,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     administeredBySchulstrukturknoten: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
-                    systemrechte: [RollenSystemRecht.KLASSEN_VERWALTEN],
+                    systemrechte: [RollenSystemRechtEnum.KLASSEN_VERWALTEN],
                 };
 
                 const organisation: Organisation<true> = DoFactory.createOrganisation(true);

@@ -38,8 +38,6 @@ describe('PersonenkontextController', () => {
     let personenkontextService: DeepMocked<PersonenkontextService>;
     let personService: DeepMocked<PersonService>;
     let rolleRepo: DeepMocked<RolleRepo>;
-    let organisationRepository: DeepMocked<OrganisationRepository>;
-    let organisationService: DeepMocked<OrganisationService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -78,8 +76,6 @@ describe('PersonenkontextController', () => {
         personenkontextService = module.get(PersonenkontextService);
         personService = module.get(PersonService);
         rolleRepo = module.get(RolleRepo);
-        organisationRepository = module.get(OrganisationRepository);
-        organisationService = module.get(OrganisationService);
     });
 
     afterAll(async () => {

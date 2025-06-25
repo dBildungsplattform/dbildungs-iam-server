@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenSystemRechtEnum } from '../../rolle/domain/rolle.enums.js';
 import { PersonPermissionsRepo } from '../../authentication/domain/person-permission.repo.js';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -202,7 +202,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
             personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
             const params: FindDbiamPersonenkontextWorkflowBodyParams = {
                 organisationId: organisation.id,
-                requestedWithSystemrecht: RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+                requestedWithSystemrecht: RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
             };
 
             const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);
@@ -235,7 +235,7 @@ describe('DbiamPersonenkontextWorkflowController Test', () => {
             personenkontextWorkflowFactoryMock.createNew.mockReturnValueOnce(personenkontextWorkflowMock);
             const params: FindDbiamPersonenkontextWorkflowBodyParams = {
                 organisationId: organisation.id,
-                requestedWithSystemrecht: RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
+                requestedWithSystemrecht: RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN,
             };
 
             const response: PersonenkontextWorkflowResponse = await sut.processStep(params, personpermissions);

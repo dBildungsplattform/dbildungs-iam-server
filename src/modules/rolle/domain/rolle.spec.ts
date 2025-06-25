@@ -601,7 +601,7 @@ describe('Rolle Aggregate', () => {
                 faker.string.uuid(),
                 faker.helpers.enumValue(RollenArt),
                 [faker.helpers.enumValue(RollenMerkmal)],
-                [faker.helpers.enumValue(RollenSystemRechtEnum)],
+                [RollenSystemRecht.ROLLEN_VERWALTEN],
                 [faker.string.uuid()],
                 false,
             );
@@ -618,7 +618,7 @@ describe('Rolle Aggregate', () => {
                 faker.string.uuid(),
                 faker.helpers.enumValue(RollenArt),
                 [faker.helpers.enumValue(RollenMerkmal)],
-                [faker.helpers.enumValue(RollenSystemRecht)],
+                [RollenSystemRecht.ROLLEN_VERWALTEN],
                 [faker.string.uuid()],
                 false,
             );

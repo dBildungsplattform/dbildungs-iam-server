@@ -38,7 +38,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
@@ -203,7 +203,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -232,7 +232,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: faker.string.uuid(),
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -263,7 +263,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: 'INVALID' as RollenArt,
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -294,7 +294,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: ['INVALID' as RollenMerkmal],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -325,7 +325,7 @@ describe('Rolle API', () => {
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: faker.helpers.enumValue(RollenArt),
                 merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT, RollenMerkmal.BEFRISTUNG_PFLICHT],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
             };
 
             const response: Response = await request(app.getHttpServer() as App)
@@ -602,7 +602,7 @@ describe('Rolle API', () => {
                 if (rolle instanceof DomainError) throw Error();
 
                 const params: AddSystemrechtBodyParams = {
-                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                    systemRecht: RollenSystemRechtEnum.ROLLEN_VERWALTEN,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .patch(`/rolle/${rolle.id}`)
@@ -617,7 +617,7 @@ describe('Rolle API', () => {
                 await rolleRepo.save(DoFactory.createRolle(false));
                 const validButNonExistingUUID: string = faker.string.uuid();
                 const params: AddSystemrechtBodyParams = {
-                    systemRecht: RollenSystemRecht.ROLLEN_VERWALTEN,
+                    systemRecht: RollenSystemRechtEnum.ROLLEN_VERWALTEN,
                 };
                 const response: Response = await request(app.getHttpServer() as App)
                     .patch(`/rolle/${validButNonExistingUUID}`)
@@ -827,7 +827,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [serviceProvider.id],
                 version: 1,
             };
@@ -863,7 +863,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [],
                 version: 1,
             };
@@ -905,7 +905,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [],
                 version: 1,
             };
@@ -954,7 +954,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [],
                 version: 1,
             };
@@ -1026,7 +1026,7 @@ describe('Rolle API', () => {
                 const params: UpdateRolleBodyParams = {
                     name: faker.person.jobTitle(),
                     merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                    systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                    systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                     serviceProviderIds: [],
                     version: 1,
                 };
@@ -1073,7 +1073,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: ' newName ',
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRecht)],
+                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 serviceProviderIds: [serviceProvider.id],
                 version: 1,
             };
