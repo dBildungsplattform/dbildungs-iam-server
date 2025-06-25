@@ -636,9 +636,13 @@ describe('PersonenkontextWorkflow', () => {
 
             anlage.initialize('person-id', organisation.id);
 
-            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, undefined, [
-                RollenArt.LEHR,
-            ]);
+            const result: Rolle<true>[] = await anlage.findRollenForOrganisation(
+                permissions,
+                undefined,
+                undefined,
+                undefined,
+                [RollenArt.LEHR],
+            );
 
             expect(result).toHaveLength(0);
         });
@@ -789,7 +793,7 @@ describe('PersonenkontextWorkflow', () => {
 
             jest.spyOn(anlage, 'checkReferences').mockResolvedValue(undefined);
 
-            anlage.initialize(organisation.id);
+            anlage.initialize(undefined, organisation.id);
 
             const result: Rolle<true>[] = await anlage.findRollenForOrganisation(permissions, undefined, ['id-3'], 2);
 
