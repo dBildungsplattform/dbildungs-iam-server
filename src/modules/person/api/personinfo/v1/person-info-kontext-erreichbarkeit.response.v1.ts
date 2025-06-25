@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PersonInfoKontextV1ErreichbarkeitTyp } from './person-info-enums.v1.js';
+import { SchulconnexErreichbarkeitTyp } from '../schulconnex-enums.v1.js';
 
 export class PersonInfoKontextErreichbarkeitResponseV1 {
-    @ApiProperty({ enum: PersonInfoKontextV1ErreichbarkeitTyp })
-    public readonly typ: PersonInfoKontextV1ErreichbarkeitTyp;
+    @ApiProperty({ enum: SchulconnexErreichbarkeitTyp })
+    public readonly typ: SchulconnexErreichbarkeitTyp;
 
     @ApiProperty()
     public readonly kennung: string;

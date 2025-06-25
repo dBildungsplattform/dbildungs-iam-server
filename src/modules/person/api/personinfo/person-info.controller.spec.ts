@@ -25,11 +25,7 @@ import { PersonBirthResponse } from '../person-birth.response.js';
 import { PersonNameResponse } from '../person-name.response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
-import {
-    PersonInfoKontextV1OrganisationTyp,
-    PersonInfoKontextV1Personenstatus,
-    PersonInfoKontextV1Rolle,
-} from './v1/person-info-enums.v1.js';
+import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from './schulconnex-enums.v1.js';
 import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
@@ -342,12 +338,10 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orgaLand?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orgaLand?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orgaLand?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(
-                    PersonInfoKontextV1OrganisationTyp.SONSTIGE,
-                );
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SONSTIGE);
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
                 expect(result.personenkontexte.at(0)?.personenstatus).toEqual(undefined);
-                expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.SYSADMIN);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.SYSADMIN);
             });
             it('should return person info for Lehrer with Email with Schul-kontext and no gruppen', async () => {
                 const permissions: PersonPermissions = {
@@ -394,12 +388,10 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(
-                    PersonInfoKontextV1OrganisationTyp.SCHULE,
-                );
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SCHULE);
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
-                expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.LEHR);
-                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.LEHR);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(SchulconnexPersonenstatus.AKTIV);
                 expect(result.personenkontexte.at(0)?.erreichbarkeiten.at(0)?.kennung).toEqual(email.address);
             });
             it('should return person info without Email with Schul-kontext and no gruppen', async () => {
@@ -447,12 +439,10 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(
-                    PersonInfoKontextV1OrganisationTyp.SCHULE,
-                );
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SCHULE);
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(0);
-                expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.ORGADMIN);
-                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.ORGADMIN);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(SchulconnexPersonenstatus.AKTIV);
                 expect(result.personenkontexte.at(0)?.erreichbarkeiten.length).toEqual(0);
             });
             it('should return person info for Schueler with gruppen', async () => {
@@ -536,11 +526,9 @@ describe('PersonInfoController', () => {
                 expect(result.personenkontexte.at(0)?.organisation.id).toEqual(orga?.id);
                 expect(result.personenkontexte.at(0)?.organisation.kennung).toEqual(orga?.kennung);
                 expect(result.personenkontexte.at(0)?.organisation.name).toEqual(orga?.name);
-                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(
-                    PersonInfoKontextV1OrganisationTyp.SCHULE,
-                );
-                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(PersonInfoKontextV1Personenstatus.AKTIV);
-                expect(result.personenkontexte.at(0)?.rolle).toEqual(PersonInfoKontextV1Rolle.LERN);
+                expect(result.personenkontexte.at(0)?.organisation.typ).toEqual(SchulconnexOrganisationTyp.SCHULE);
+                expect(result.personenkontexte.at(0)?.personenstatus).toEqual(SchulconnexPersonenstatus.AKTIV);
+                expect(result.personenkontexte.at(0)?.rolle).toEqual(SchulconnexRolle.LERN);
                 expect(result.personenkontexte.at(0)?.gruppen.length).toEqual(2);
             });
         });
