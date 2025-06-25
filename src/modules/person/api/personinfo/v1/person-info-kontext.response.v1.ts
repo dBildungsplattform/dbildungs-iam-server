@@ -38,9 +38,9 @@ export class PersonInfoKontextResponseV1 {
     protected constructor(props: Readonly<PersonInfoKontextResponseV1>) {
         this.id = props.id;
         this.organisation = props.organisation;
-        this.rolle = props.rolle!;
+        this.rolle = props.rolle;
         this.erreichbarkeiten = props.erreichbarkeiten;
-        this.personenstatus = props.personenstatus!;
+        this.personenstatus = props.personenstatus;
         this.gruppen = props.gruppen;
     }
 
