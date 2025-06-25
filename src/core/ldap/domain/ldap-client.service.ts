@@ -1365,7 +1365,7 @@ export class LdapClientService {
             } catch (error) {
                 const currentDelay: number = delay * Math.pow(currentAttempt, 3);
                 this.logger.logUnknownAsError(
-                    `Attempt ${currentAttempt + 1} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
+                    `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
                     error,
                 );
 
