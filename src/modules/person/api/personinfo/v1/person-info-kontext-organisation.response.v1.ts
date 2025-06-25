@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PersonInfoKontextV1OrganisationTyp } from './person-info-enums.v1.js';
+import { SchulconnexOrganisationTyp } from '../schulconnex-enums.v1.js';
 
 export class PersonenInfoKontextOrganisationResponseV1 {
     @ApiProperty()
@@ -11,8 +11,8 @@ export class PersonenInfoKontextOrganisationResponseV1 {
     @ApiProperty({ nullable: true })
     public name?: string;
 
-    @ApiProperty({ enum: PersonInfoKontextV1OrganisationTyp, nullable: true })
-    public typ?: PersonInfoKontextV1OrganisationTyp;
+    @ApiProperty({ enum: SchulconnexOrganisationTyp, nullable: true })
+    public typ?: SchulconnexOrganisationTyp;
 
     public static createNew(
         props: Readonly<PersonenInfoKontextOrganisationResponseV1>,

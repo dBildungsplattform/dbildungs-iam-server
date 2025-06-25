@@ -7,13 +7,13 @@ import { OrganisationsTyp } from '../../../../organisation/domain/organisation.e
 import { PersonenInfoKontextGruppeResponseV1 } from './person-info-kontext-gruppe.response.v1.js';
 import { PersonenInfoKontextOrganisationResponseV1 } from './person-info-kontext-organisation.response.v1.js';
 import {
-    PersonInfoKontextV1ErreichbarkeitTyp,
-    PersonInfoKontextV1Personenstatus,
-    PersonInfoKontextV1GruppeTyp,
-    PersonInfoKontextV1OrganisationTyp,
-    PersonInfoKontextV1Rolle,
-    convertRollenartToPersonInfoKontextV1Rolle,
-} from './person-info-enums.v1.js';
+    SchulconnexErreichbarkeitTyp,
+    SchulconnexPersonenstatus,
+    SchulconnexGruppeTyp,
+    SchulconnexOrganisationTyp,
+    SchulconnexRolle,
+    convertSPSHRollenartToSchulconnexRolle,
+} from '../schulconnex-enums.v1.js';
 import { UserLock } from '../../../../keycloak-administration/domain/user-lock.js';
 
 export class PersonInfoKontextResponseV1 {
@@ -23,14 +23,14 @@ export class PersonInfoKontextResponseV1 {
     @ApiProperty({ type: PersonenInfoKontextOrganisationResponseV1 })
     public organisation: PersonenInfoKontextOrganisationResponseV1;
 
-    @ApiProperty({ enum: PersonInfoKontextV1Rolle })
-    public rolle: PersonInfoKontextV1Rolle;
+    @ApiProperty({ enum: SchulconnexRolle })
+    public rolle: SchulconnexRolle;
 
     @ApiProperty({ type: [PersonInfoKontextErreichbarkeitResponseV1] })
     public erreichbarkeiten: PersonInfoKontextErreichbarkeitResponseV1[];
 
-    @ApiProperty({ enum: PersonInfoKontextV1Personenstatus, nullable: true })
-    public personenstatus?: PersonInfoKontextV1Personenstatus;
+    @ApiProperty({ enum: SchulconnexPersonenstatus, nullable: true })
+    public personenstatus?: SchulconnexPersonenstatus;
 
     @ApiProperty({ type: [PersonenInfoKontextGruppeResponseV1] })
     public readonly gruppen: PersonenInfoKontextGruppeResponseV1[];
@@ -57,13 +57,13 @@ export class PersonInfoKontextResponseV1 {
                 name: primaryNonKlassenKontext.organisation.name,
                 typ:
                     primaryNonKlassenKontext.organisation.typ === OrganisationsTyp.SCHULE
-                        ? PersonInfoKontextV1OrganisationTyp.SCHULE
-                        : PersonInfoKontextV1OrganisationTyp.SONSTIGE,
+                        ? SchulconnexOrganisationTyp.SCHULE
+                        : SchulconnexOrganisationTyp.SONSTIGE,
             });
         const personInfoKontextErreichbarkeitResponseV1: PersonInfoKontextErreichbarkeitResponseV1 | null =
             email?.status === EmailAddressStatus.ENABLED
                 ? new PersonInfoKontextErreichbarkeitResponseV1({
-                      typ: PersonInfoKontextV1ErreichbarkeitTyp.EMAIL,
+                      typ: SchulconnexErreichbarkeitTyp.EMAIL,
                       kennung: email.address,
                   })
                 : null;
@@ -72,18 +72,18 @@ export class PersonInfoKontextResponseV1 {
                 return PersonenInfoKontextGruppeResponseV1.createNew({
                     id: klassenKontext.organisation.id,
                     bezeichnung: klassenKontext.organisation.name ?? '',
-                    typ: PersonInfoKontextV1GruppeTyp.KLASSE,
+                    typ: SchulconnexGruppeTyp.KLASSE,
                 });
             },
         );
         return new PersonInfoKontextResponseV1({
             id: primaryNonKlassenKontext.personenkontext.id,
             organisation: personenInfoKontextOrganisationResponseV1,
-            rolle: convertRollenartToPersonInfoKontextV1Rolle(primaryNonKlassenKontext.rolle.rollenart),
+            rolle: convertSPSHRollenartToSchulconnexRolle(primaryNonKlassenKontext.rolle.rollenart),
             erreichbarkeiten: personInfoKontextErreichbarkeitResponseV1
                 ? [personInfoKontextErreichbarkeitResponseV1]
                 : [],
-            personenstatus: userlocks.length > 0 ? undefined : PersonInfoKontextV1Personenstatus.AKTIV,
+            personenstatus: userlocks.length > 0 ? undefined : SchulconnexPersonenstatus.AKTIV,
             gruppen: gruppen,
         });
     }
