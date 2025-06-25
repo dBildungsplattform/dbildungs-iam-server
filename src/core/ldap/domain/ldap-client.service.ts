@@ -344,7 +344,7 @@ export class LdapClientService {
                 return groupResult;
             }
 
-            const searchResultLehrer: SearchResult = await client.search(
+            const searchResultLehrer: SearchResult = await client.search( //
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
                     filter: `(uid=${person.username})`,
