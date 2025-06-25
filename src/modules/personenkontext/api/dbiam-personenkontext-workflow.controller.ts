@@ -100,7 +100,6 @@ export class DbiamPersonenkontextWorkflowController {
         const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
 
         // Initializes the aggregate with the values of the person, the selected organisation and rolle through the UI
-        // (Person should not be undefined, the other values could be undefined when nothing was done yet)
         anlage.initialize(params.personId, params.organisationId, params.rollenIds);
 
         // Find all possible SSKs (Possibly through name if the name was given)
@@ -121,7 +120,13 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Find all possible roles under the selected Organisation
         const rollen: Rolle<true>[] = params.organisationId
-            ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit, rollenarten)
+            ? await anlage.findRollenForOrganisation(
+                  permissions,
+                  params.rolleName,
+                  params.rollenIds,
+                  params.limit,
+                  rollenarten,
+              )
             : [];
 
         const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
