@@ -470,6 +470,10 @@ export class RolleController {
     @ApiOperation({ description: 'Get all systemrechte for rollen.' })
     @ApiOkResponse({
         description: 'Returns all systemrechte for rollen.',
+        type: [SystemRechtResponse],
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error',
     })
     public getAllSystemrechte(@Param() includeTechnicalRights: boolean = false): SystemRechtResponse[] {
         return RollenSystemRecht.ALL.filter(

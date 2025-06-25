@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { DoFactory } from '../../../../test/utils/index.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from './rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht, RollenSystemRechtEnum } from './rolle.enums.js';
 import { Rolle } from './rolle.js';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
@@ -601,7 +601,7 @@ describe('Rolle Aggregate', () => {
                 faker.string.uuid(),
                 faker.helpers.enumValue(RollenArt),
                 [faker.helpers.enumValue(RollenMerkmal)],
-                [faker.helpers.enumValue(RollenSystemRecht)],
+                [faker.helpers.enumValue(RollenSystemRechtEnum)],
                 [faker.string.uuid()],
                 false,
             );
