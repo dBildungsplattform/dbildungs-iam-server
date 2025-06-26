@@ -16,7 +16,6 @@ import { PrivacyIdeaAdministrationService } from './privacy-idea-administration.
 import {
     AssignTokenResponse,
     PrivacyIdeaToken,
-    ResetTokenPayload,
     ResetTokenResponse,
     TokenOTPSerialResponse,
     TokenVerificationResponse,
@@ -548,17 +547,17 @@ describe(`PrivacyIdeaAdministrationService`, () => {
     });
 
     describe('resetToken', () => {
+        const mockResetUser: string = 'testUser';
+        const mockJWTToken: string = 'mockJWTToken';
+        const mockTwoAuthState: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'hardware' } });
+        const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
         it('should reset token successfully', async () => {
-            const mockResetUser: string = 'testUser';
-            const mockJWTToken: string = 'mockJWTToken';
-            const mockTwoAuthState: ResetTokenPayload = createMock<ResetTokenPayload>();
-            const mockResetTokenResponse: ResetTokenResponse = createMock<ResetTokenResponse>();
             jest.spyOn(
                 service as unknown as { getJWTToken: () => Promise<string> },
                 'getJWTToken',
             ).mockResolvedValueOnce(mockJWTToken);
             jest.spyOn(
-                service as unknown as { getTwoAuthState: (user: string) => Promise<ResetTokenPayload | null> },
+                service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
             ).mockResolvedValueOnce(mockTwoAuthState);
             jest.spyOn(
@@ -573,15 +572,12 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it('should throw an error if twoAuthState is not found', async () => {
-            const mockResetUser: string = 'testUser';
-            const mockJWTToken: string = 'mockJWTToken';
-
             jest.spyOn(
                 service as unknown as { getJWTToken: () => Promise<string> },
                 'getJWTToken',
             ).mockResolvedValueOnce(mockJWTToken);
             jest.spyOn(
-                service as unknown as { getTwoAuthState: (user: string) => Promise<ResetTokenPayload | null> },
+                service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
             ).mockResolvedValueOnce(null);
 
@@ -589,21 +585,40 @@ describe(`PrivacyIdeaAdministrationService`, () => {
         });
 
         it('should throw an error if unassignToken fails', async () => {
-            const mockResetUser: string = 'testUser';
-            const mockJWTToken: string = 'mockJWTToken';
-            const mockTwoAuthState: ResetTokenPayload = createMock<ResetTokenPayload>();
-
             jest.spyOn(
                 service as unknown as { getJWTToken: () => Promise<string> },
                 'getJWTToken',
             ).mockResolvedValueOnce(mockJWTToken);
             jest.spyOn(
-                service as unknown as { getTwoAuthState: (user: string) => Promise<ResetTokenPayload | null> },
+                service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
                 'getTwoAuthState',
             ).mockResolvedValueOnce(mockTwoAuthState);
             jest.spyOn(service, 'unassignToken').mockRejectedValue(new Error('unassignToken error'));
 
             await expect(service.resetToken(mockResetUser)).rejects.toThrow(new TokenResetError());
+        });
+
+        it('should delete token on unassing if token isnt hotp', async () => {
+            const totpToken: PrivacyIdeaToken = createMock<PrivacyIdeaToken>({ info: { tokenkind: 'software' } });
+            jest.spyOn(
+                service as unknown as { getJWTToken: () => Promise<string> },
+                'getJWTToken',
+            ).mockResolvedValueOnce(mockJWTToken);
+            jest.spyOn(
+                service as unknown as { getTwoAuthState: (user: string) => Promise<PrivacyIdeaToken | null> },
+                'getTwoAuthState',
+            ).mockResolvedValueOnce(totpToken);
+            const deleteSpy: jest.SpyInstance = jest
+                .spyOn(
+                    service as unknown as { deleteToken: (serial: string) => Promise<ResetTokenResponse> },
+                    'deleteToken',
+                )
+                .mockResolvedValueOnce(mockResetTokenResponse);
+
+            const response: ResetTokenResponse = await service.resetToken(mockResetUser);
+            expect(response).toEqual(mockResetTokenResponse);
+            expect(service.getTwoAuthState).toHaveBeenCalledWith(mockResetUser);
+            expect(deleteSpy).toHaveBeenCalledWith(totpToken.serial);
         });
     });
 
