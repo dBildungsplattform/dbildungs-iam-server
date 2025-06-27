@@ -93,6 +93,7 @@ export class ImportController {
             new ParseFilePipeBuilder()
                 .addFileTypeValidator({
                     fileType: 'text/csv', //added application/vnd.ms-excel for firefox compatibility with csv files
+                    skipMagicNumbersValidation: true,
                 })
                 .build({
                     errorHttpStatusCode: HttpStatus.BAD_REQUEST,
