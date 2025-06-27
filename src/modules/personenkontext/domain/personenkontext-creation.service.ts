@@ -48,7 +48,8 @@ export class PersonenkontextCreationService {
         const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
         /* eslint-disable no-await-in-loop */
         for (const createPersonenkontext of createPersonenkontexte) {
-            anlage.initialize(createPersonenkontext.organisationId, [createPersonenkontext.rolleId]);
+            // No person ID
+            anlage.initialize(undefined, createPersonenkontext.organisationId, [createPersonenkontext.rolleId]);
             const canCommit: DomainError | boolean = await anlage.canCommit(
                 permissions,
                 OperationContext.PERSON_ANLEGEN,
