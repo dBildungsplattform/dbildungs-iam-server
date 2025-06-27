@@ -1364,8 +1364,9 @@ export class LdapClientService {
                 }
             } catch (error) {
                 const currentDelay: number = delay * Math.pow(currentAttempt, 3);
-                this.logger.warning(
+                this.logger.logUnknownAsError(
                     `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
+                    error,
                 );
 
                 // eslint-disable-next-line no-await-in-loop
