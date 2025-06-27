@@ -92,7 +92,7 @@ export class ImportController {
         @UploadedFile(
             new ParseFilePipeBuilder()
                 .addFileTypeValidator({
-                    fileType: 'text/csv', //added application/vnd.ms-excel for firefox compatibility with csv files
+                    fileType: 'text/csv|application/vnd.ms-excel', //added application/vnd.ms-excel for firefox compatibility with csv files
                     skipMagicNumbersValidation: true,
                 })
                 .build({
