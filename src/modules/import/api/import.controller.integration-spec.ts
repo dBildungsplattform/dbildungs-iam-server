@@ -417,7 +417,7 @@ describe('Import API', () => {
 
             expect(response.status).toBe(400);
             expect((response.body as { message: string }).message).toEqual(
-                'Validation failed (expected type is text/csv|application/vnd.ms-excel)',
+                'Validation failed (current file type is application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, expected type is text/csv|application/vnd.ms-excel)',
             );
         });
 
