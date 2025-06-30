@@ -13,11 +13,10 @@ import { PersonLandesbediensteterSearchService } from '../../person/person-lande
 import { DbiamPersonenkontextBodyParams } from '../../personenkontext/api/param/dbiam-personenkontext.body.params.js';
 import { DbiamPersonenkontextFactory } from '../../personenkontext/domain/dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/personenkontexte-update.error.js';
+import { PersonenkontextWorkflowSharedKernel } from '../../personenkontext/domain/personenkontext-workflow-shared-kernel.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdate } from '../../personenkontext/domain/personenkontexte-update.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
-import { OrganisationMatchesRollenart } from '../../personenkontext/specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -34,6 +33,7 @@ export class LandesbediensteterWorkflowAggregate {
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         private readonly personRepo: PersonRepository,
         private readonly landesbediensteteSearchService: PersonLandesbediensteterSearchService,
+        private readonly personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
     ) {}
 
     public static createNew(
@@ -43,6 +43,7 @@ export class LandesbediensteterWorkflowAggregate {
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         personRepo: PersonRepository,
         landesbediensteteSearchService: PersonLandesbediensteterSearchService,
+        personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
     ): LandesbediensteterWorkflowAggregate {
         return new LandesbediensteterWorkflowAggregate(
             rolleRepo,
@@ -51,6 +52,7 @@ export class LandesbediensteterWorkflowAggregate {
             dbiamPersonenkontextFactory,
             personRepo,
             landesbediensteteSearchService,
+            personenkontextWorkflowSharedKernel,
         );
     }
 
@@ -280,30 +282,7 @@ export class LandesbediensteterWorkflowAggregate {
 
     // Checks if the rolle can be assigned to the target organisation
     public async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
-        const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
-            this.organisationRepository.findById(organisationId),
-            this.rolleRepo.findById(rolleId),
-        ]);
-        if (!orga) {
-            return new EntityNotFoundError('Organisation', organisationId);
-        }
-
-        if (!rolle) {
-            return new EntityNotFoundError('Rolle', rolleId);
-        }
-        // Can rolle be assigned at target orga
-        const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(organisationId);
-        if (!canAssignRolle) {
-            return new EntityNotFoundError('Rolle', rolleId); // Rolle does not exist for the chosen organisation
-        }
-
-        //The aimed organisation needs to match the type of role to be assigned
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
-            return new RolleNurAnPassendeOrganisationError();
-        }
-
-        return undefined;
+        return this.personenkontextWorkflowSharedKernel.checkReferences(organisationId, rolleId);
     }
 
     public async checkPermissions(

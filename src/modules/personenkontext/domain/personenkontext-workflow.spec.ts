@@ -21,6 +21,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ConfigService } from '@nestjs/config';
 import { OperationContext } from './personenkontext.enums.js';
+import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-shared-kernel.js';
 
 describe('PersonenkontextWorkflow', () => {
     let module: TestingModule;
@@ -31,6 +32,7 @@ describe('PersonenkontextWorkflow', () => {
     let personpermissionsMock: DeepMocked<PersonPermissions>;
     let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
     let configMock: DeepMocked<ConfigService>;
+    let personenkontextWorkflowSharedKernelMock: DeepMocked<PersonenkontextWorkflowSharedKernel>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -65,6 +67,10 @@ describe('PersonenkontextWorkflow', () => {
                     provide: ConfigService,
                     useValue: createMock<ConfigService>(),
                 },
+                {
+                    provide: PersonenkontextWorkflowSharedKernel,
+                    useValue: createMock<PersonenkontextWorkflowSharedKernel>(),
+                },
             ],
         }).compile();
         rolleRepoMock = module.get(RolleRepo);
@@ -74,6 +80,7 @@ describe('PersonenkontextWorkflow', () => {
         anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
         configMock = module.get(ConfigService);
+        personenkontextWorkflowSharedKernelMock = module.get(PersonenkontextWorkflowSharedKernel);
     });
 
     afterAll(async () => {
@@ -574,6 +581,8 @@ describe('PersonenkontextWorkflow', () => {
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValue(true);
+
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
 
             anlage.initialize(organisation.id);
 

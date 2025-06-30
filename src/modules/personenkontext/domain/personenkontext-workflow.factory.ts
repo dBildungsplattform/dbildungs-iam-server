@@ -4,6 +4,7 @@ import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js'
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { ConfigService } from '@nestjs/config';
+import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-shared-kernel.js';
 
 @Injectable()
 export class PersonenkontextWorkflowFactory {
@@ -12,6 +13,7 @@ export class PersonenkontextWorkflowFactory {
         private readonly organisationRepository: OrganisationRepository,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         private readonly configService: ConfigService,
+        private readonly personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
     ) {}
 
     public createNew(): PersonenkontextWorkflowAggregate {
@@ -20,6 +22,7 @@ export class PersonenkontextWorkflowFactory {
             this.organisationRepository,
             this.dbiamPersonenkontextFactory,
             this.configService,
+            this.personenkontextWorkflowSharedKernel,
         );
     }
 }

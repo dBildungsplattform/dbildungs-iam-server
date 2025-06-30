@@ -6,6 +6,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -16,16 +17,15 @@ import { PersonLandesbediensteterSearchService } from '../../person/person-lande
 import { DbiamPersonenkontextBodyParams } from '../../personenkontext/api/param/dbiam-personenkontext.body.params.js';
 import { DbiamPersonenkontextFactory } from '../../personenkontext/domain/dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/personenkontexte-update.error.js';
+import { PersonenkontextWorkflowSharedKernel } from '../../personenkontext/domain/personenkontext-workflow-shared-kernel.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdate } from '../../personenkontext/domain/personenkontexte-update.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { LandesbediensteterWorkflowFactory } from './landesbediensteter-workflow.factory.js';
 import { LandesbediensteterWorkflowAggregate } from './landesbediensteter-workflow.js';
-import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 
 describe('LandesbediensteterWorkflow', () => {
     let module: TestingModule;
@@ -40,27 +40,10 @@ describe('LandesbediensteterWorkflow', () => {
     const personenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo> = createMock();
     const personenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory> = createMock();
     const landesbediensteteServiceMock: DeepMocked<PersonLandesbediensteterSearchService> = createMock();
+    const personenkontextWorkflowSharedKernelMock: DeepMocked<PersonenkontextWorkflowSharedKernel> = createMock();
 
     function mockCheckPermissions(permissionsMock: DeepMocked<PersonPermissions>, success: boolean): void {
         permissionsMock.hasSystemrechteAtOrganisation.mockResolvedValueOnce(success);
-    }
-
-    function mockCheckReferences(success: boolean): void {
-        if (success) {
-            const mockOrga: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-            const mockRolle: Rolle<true> = DoFactory.createRolle(true, {
-                rollenart: RollenArt.LEHR,
-                canBeAssignedToOrga() {
-                    return Promise.resolve(true);
-                },
-            });
-
-            organisationRepoMock.findById.mockResolvedValueOnce(mockOrga);
-            rolleRepoMock.findById.mockResolvedValueOnce(mockRolle);
-        } else {
-            organisationRepoMock.findById.mockResolvedValueOnce(undefined);
-            rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-        }
     }
 
     beforeAll(async () => {
@@ -73,6 +56,7 @@ describe('LandesbediensteterWorkflow', () => {
                 { provide: DBiamPersonenkontextRepo, useValue: personenkontextRepoMock },
                 { provide: DbiamPersonenkontextFactory, useValue: personenkontextFactoryMock },
                 { provide: PersonLandesbediensteterSearchService, useValue: landesbediensteteServiceMock },
+                { provide: PersonenkontextWorkflowSharedKernel, useValue: personenkontextWorkflowSharedKernelMock },
             ],
         }).compile();
 
@@ -259,7 +243,7 @@ describe('LandesbediensteterWorkflow', () => {
             organisationRepoMock.findById.mockResolvedValueOnce(orga);
             rolleRepoMock.findByName.mockResolvedValueOnce([rolle]);
 
-            mockCheckReferences(true);
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
 
             sut.initialize(faker.string.uuid(), []);
 
@@ -282,9 +266,11 @@ describe('LandesbediensteterWorkflow', () => {
             rolleRepoMock.find.mockResolvedValueOnce(rollen);
 
             // One of the rollen is not assignable
-            mockCheckReferences(true);
-            mockCheckReferences(true);
-            mockCheckReferences(false);
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValueOnce(undefined);
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValueOnce(undefined);
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValueOnce(
+                new RolleNurAnPassendeOrganisationError(),
+            );
 
             sut.initialize(faker.string.uuid(), []);
 
@@ -305,8 +291,7 @@ describe('LandesbediensteterWorkflow', () => {
 
             rolleRepoMock.find.mockResolvedValueOnce([allowedRolle, explicitlySelectedRolle]);
 
-            mockCheckReferences(true);
-            mockCheckReferences(true);
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
 
             rolleRepoMock.findByIds.mockResolvedValueOnce(
                 new Map([[explicitlySelectedRolle.id, explicitlySelectedRolle]]),
@@ -330,7 +315,7 @@ describe('LandesbediensteterWorkflow', () => {
     describe('canCommit', () => {
         it('should return no error if checks pass', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock();
-            mockCheckReferences(true);
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
             mockCheckPermissions(permissions, true);
             sut.initialize(faker.string.uuid(), [faker.string.uuid()]);
 
@@ -341,7 +326,9 @@ describe('LandesbediensteterWorkflow', () => {
 
         it('should return error if rolle can not be assigned', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock();
-            mockCheckReferences(false);
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(
+                new RolleNurAnPassendeOrganisationError(),
+            );
             sut.initialize(faker.string.uuid(), [faker.string.uuid()]);
 
             const result: Result<void, DomainError> = await sut.canCommit(permissions);
@@ -352,7 +339,7 @@ describe('LandesbediensteterWorkflow', () => {
 
         it('should return error if permissions are missing', async () => {
             const permissions: DeepMocked<PersonPermissions> = createMock();
-            mockCheckReferences(true);
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
             mockCheckPermissions(permissions, false);
             sut.initialize(faker.string.uuid(), [faker.string.uuid()]);
 
@@ -510,71 +497,6 @@ describe('LandesbediensteterWorkflow', () => {
                 ok: false,
                 error: new EntityNotFoundError('Person', person.id),
             });
-        });
-    });
-
-    describe('checkReferences', () => {
-        it('should return error if organisation could not be found', async () => {
-            const orga: Organisation<true> = DoFactory.createOrganisation(true);
-            const rolle: Rolle<true> = DoFactory.createRolle(true);
-            organisationRepoMock.findById.mockResolvedValueOnce(undefined);
-            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-
-            const result: Option<DomainError> = await sut.checkReferences(orga.id, rolle.id);
-
-            expect(result).toEqual(new EntityNotFoundError('Organisation', orga.id));
-        });
-
-        it('should return error if rolle could not be found', async () => {
-            const orga: Organisation<true> = DoFactory.createOrganisation(true);
-            const rolle: Rolle<true> = DoFactory.createRolle(true);
-            organisationRepoMock.findById.mockResolvedValueOnce(orga);
-            rolleRepoMock.findById.mockResolvedValueOnce(undefined);
-
-            const result: Option<DomainError> = await sut.checkReferences(orga.id, rolle.id);
-
-            expect(result).toEqual(new EntityNotFoundError('Rolle', rolle.id));
-        });
-
-        it('should return error if rolle can not be assigned', async () => {
-            const orga: Organisation<true> = DoFactory.createOrganisation(true);
-            const rolle: Rolle<true> = DoFactory.createRolle(true, {
-                canBeAssignedToOrga: () => Promise.resolve(false),
-            });
-            organisationRepoMock.findById.mockResolvedValueOnce(orga);
-            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-
-            const result: Option<DomainError> = await sut.checkReferences(orga.id, rolle.id);
-
-            expect(result).toEqual(new EntityNotFoundError('Rolle', rolle.id));
-        });
-
-        it('should return error if rollenart does not match organisation', async () => {
-            const orga: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-            const rolle: Rolle<true> = DoFactory.createRolle(true, {
-                rollenart: RollenArt.SYSADMIN,
-                canBeAssignedToOrga: () => Promise.resolve(true),
-            });
-            organisationRepoMock.findById.mockResolvedValueOnce(orga);
-            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-
-            const result: Option<DomainError> = await sut.checkReferences(orga.id, rolle.id);
-
-            expect(result).toEqual(new RolleNurAnPassendeOrganisationError());
-        });
-
-        it('should return no error if everything is okay', async () => {
-            const orga: Organisation<true> = DoFactory.createOrganisation(true, { typ: OrganisationsTyp.SCHULE });
-            const rolle: Rolle<true> = DoFactory.createRolle(true, {
-                rollenart: RollenArt.LEHR,
-                canBeAssignedToOrga: () => Promise.resolve(true),
-            });
-            organisationRepoMock.findById.mockResolvedValueOnce(orga);
-            rolleRepoMock.findById.mockResolvedValueOnce(rolle);
-
-            const result: Option<DomainError> = await sut.checkReferences(orga.id, rolle.id);
-
-            expect(result).toBeUndefined();
         });
     });
 });
