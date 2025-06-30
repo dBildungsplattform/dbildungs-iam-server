@@ -16,7 +16,7 @@ import { PersonInfoResponseV1 } from '../personinfo/v1/person-info.response.v1.j
 import { OrganisationID, PersonID } from '../../../../../shared/types/index.js';
 
 @Injectable()
-export class PersonInfoService {
+export class PersonenInfoService {
     public constructor(
         private readonly personRepo: PersonRepository,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
@@ -24,7 +24,11 @@ export class PersonInfoService {
         private readonly userLockRepo: UserLockRepository,
     ) {}
 
-    public async findPersonsForPersonenInfo(permissions: PersonPermissions): Promise<PersonInfoResponseV1[]> {
+    public async findPersonsForPersonenInfo(
+        permissions: PersonPermissions,
+        offset: number,
+        limit: number,
+    ): Promise<PersonInfoResponseV1[]> {
         // 1. Ermittle alle Knoten mit PERSONEN_LESEN-Recht
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_LESEN],
@@ -56,8 +60,8 @@ export class PersonInfoService {
             await this.personenkontextRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                 permittedServiceProviderIds,
                 permittedOrgaIds ? new Set<string>(permittedOrgaIds) : undefined,
-                10,
-                10,
+                offset,
+                limit,
             );
 
         const [persons, emailsForPersons, kontexteForPersons, userLocksForPersons]: [

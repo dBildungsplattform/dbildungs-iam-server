@@ -137,23 +137,34 @@ export class DBiamPersonenkontextRepo {
             return [];
         }
 
-        const qb: QueryBuilder<PersonenkontextEntity> = this.em.createQueryBuilder(PersonenkontextEntity, 'pk');
-
-        await qb
-            .select('pk.personId')
-            .distinct()
-            .join('pk.rolleId', 'rolle')
-            .join('rolle.serviceProvider', 'sp')
-            .where({ 'sp.id': { $in: Array.from(serviceProviderIds) } });
-
+        let qb: QueryBuilder<PersonenkontextEntity>;
         if (organisationIds && organisationIds.size > 0) {
-            await qb.andWhere({ 'pk.organisationId': { $in: Array.from(organisationIds) } });
+            qb = this.em
+                .createQueryBuilder(PersonenkontextEntity, 'pk')
+                .select('pk.personId')
+                .distinct()
+                .join('pk.rolleId', 'rolle')
+                .join('rolle.serviceProvider', 'rsp')
+                .join('rsp.serviceProvider', 'sp')
+                .where({ 'sp.id': { $in: Array.from(serviceProviderIds) } })
+                .andWhere({ 'pk.organisationId': { $in: Array.from(organisationIds) } });
+        } else {
+            qb = this.em
+                .createQueryBuilder(PersonenkontextEntity, 'pk')
+                .select('pk.personId')
+                .distinct()
+                .join('pk.rolleId', 'rolle')
+                .join('rolle.serviceProvider', 'rsp')
+                .join('rsp.serviceProvider', 'sp')
+                .where({ 'sp.id': { $in: Array.from(serviceProviderIds) } });
         }
 
-        await qb.orderBy({ 'pk.personId': 'asc' }).offset(offset).limit(limit);
-
-        const results: PersonenkontextEntity[] = await qb.getResultList();
-        return results.map((row: PersonenkontextEntity) => row.personId.id);
+        const results: { personId: string }[] = await qb
+            .orderBy({ 'pk.personId': 'asc' })
+            .offset(offset)
+            .limit(limit)
+            .execute('all');
+        return results.map((r) => r.personId);
     }
 
     public async findByPersonWithOrgaAndRolle(personId: PersonID): Promise<Array<KontextWithOrgaAndRolle>> {
