@@ -183,8 +183,8 @@ export class PersonenkontextWorkflowAggregate {
 
         // Fetch all roles by name or all
         const rollen: Rolle<true>[] = rolleName
-            ? await this.rolleRepo.findByName(rolleName, false, undefined, undefined, allowedRollenArten)
-            : await this.rolleRepo.find(false, undefined, undefined, allowedRollenArten);
+            ? await this.rolleRepo.findByName(rolleName, false, undefined, undefined, rollenarten)
+            : await this.rolleRepo.find(false, undefined, undefined, rollenarten);
 
         if (rollen.length === 0) {
             return [];

@@ -323,6 +323,15 @@ export class PersonRepository {
         return personEntities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
     }
 
+    public async findByPersonIds(personIds: PersonID[]): Promise<Person<true>[]> {
+
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, {
+            id: { $in: personIds },
+        });
+
+        return personEntities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+    }
+
     public async getPersonIfAllowed(
         personId: string,
         permissions: PersonPermissions,

@@ -9,12 +9,14 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbiam-personenuebersicht.controller.js';
-import { PersonInfoController } from './api/personinfo/person-info.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
 import { PersonDeleteModule } from './person-deletion/person-delete.module.js';
 import { EmailModule } from '../email/email.module.js';
 import { LdapModule } from '../../core/ldap/ldap.module.js';
 import { PersonLandesbediensteterSearchModule } from './person-landesbedienstete-search/person-landesbediensteter-search.module.js';
+import { PersonenInfoController } from './api/personandpersoneninfo/personeninfo/personeninfo.controller.js';
+import { PersonInfoController } from './api/personandpersoneninfo/personinfo/person-info.controller.js';
+import { PersonenInfoService } from './api/personandpersoneninfo/personeninfo/personeninfo.service.js';
 
 @Module({
     imports: [
@@ -29,7 +31,13 @@ import { PersonLandesbediensteterSearchModule } from './person-landesbedienstete
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],
-    providers: [PersonApiMapper],
-    controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController, PersonInfoController],
+    providers: [PersonApiMapper, PersonenInfoService],
+    controllers: [
+        PersonController,
+        PersonFrontendController,
+        DBiamPersonenuebersichtController,
+        PersonInfoController,
+        PersonenInfoController,
+    ],
 })
 export class PersonApiModule {}

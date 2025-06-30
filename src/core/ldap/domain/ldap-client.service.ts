@@ -344,7 +344,7 @@ export class LdapClientService {
                 return groupResult;
             }
 
-            const searchResultLehrer: SearchResult = await client.search(
+            const searchResultLehrer: SearchResult = await client.search( //
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
                     filter: `(uid=${person.username})`,
@@ -1364,9 +1364,8 @@ export class LdapClientService {
                 }
             } catch (error) {
                 const currentDelay: number = delay * Math.pow(currentAttempt, 3);
-                this.logger.logUnknownAsError(
+                this.logger.warning(
                     `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
-                    error,
                 );
 
                 // eslint-disable-next-line no-await-in-loop

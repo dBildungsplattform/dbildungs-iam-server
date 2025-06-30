@@ -230,6 +230,7 @@ export class EmailRepo {
         return new PersonEmailResponse(emailAddresses[0].status, emailAddresses[0].address);
     }
 
+
     /**
      * Returns a map with key-value pairs personId -> PersonEmailResponse.
      * NOTE: The value for a key is not a list of PersonEmailResponse but a single PersonEmailResponse, regardless how many ENABLED
