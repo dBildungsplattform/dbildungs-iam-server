@@ -5,7 +5,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ClassLogger } from '../../../../core/logging/class-logger.js';
 import { PersonApiMapper } from '../../mapper/person-api.mapper.js';
 import { PersonInfoController } from './person-info.controller.js';
-import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './person-info.response.js';
 import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
 import { DoFactory } from '../../../../../test/utils/do-factory.js';
 import {
@@ -30,6 +29,7 @@ import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
 import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
+import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './v0/person-info.response.js';
 
 describe('PersonInfoController', () => {
     let module: TestingModule;
