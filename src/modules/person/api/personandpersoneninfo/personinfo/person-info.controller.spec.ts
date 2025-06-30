@@ -2,33 +2,33 @@ import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { PersonApiMapper } from '../../mapper/person-api.mapper.js';
+import { ClassLogger } from '../../../../../core/logging/class-logger.js';
+import { PersonApiMapper } from '../../../mapper/person-api.mapper.js';
 import { PersonInfoController } from './person-info.controller.js';
-import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
-import { DoFactory } from '../../../../../test/utils/do-factory.js';
+import { PersonPermissions } from '../../../../authentication/domain/person-permissions.js';
+import { DoFactory } from '../../../../../../test/utils/do-factory.js';
 import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
-} from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonRepository } from '../../persistence/person.repository.js';
-import { Person } from '../../domain/person.js';
-import { EmailRepo } from '../../../email/persistence/email.repo.js';
-import { EmailAddressStatus } from '../../../email/domain/email-address.js';
-import { PersonEmailResponse } from '../person-email-response.js';
-import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
-import { PersonenkontextResponse } from '../../../personenkontext/api/response/personenkontext.response.js';
-import { Organisation } from '../../../organisation/domain/organisation.js';
-import { Rolle } from '../../../rolle/domain/rolle.js';
-import { PersonBirthResponse } from '../person-birth.response.js';
-import { PersonNameResponse } from '../person-name.response.js';
+} from '../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonRepository } from '../../../persistence/person.repository.js';
+import { Person } from '../../../domain/person.js';
+import { EmailRepo } from '../../../../email/persistence/email.repo.js';
+import { EmailAddressStatus } from '../../../../email/domain/email-address.js';
+import { PersonEmailResponse } from '../../person-email-response.js';
+import { Personenkontext } from '../../../../personenkontext/domain/personenkontext.js';
+import { PersonenkontextResponse } from '../../../../personenkontext/api/response/personenkontext.response.js';
+import { Organisation } from '../../../../organisation/domain/organisation.js';
+import { Rolle } from '../../../../rolle/domain/rolle.js';
+import { PersonBirthResponse } from '../../person-birth.response.js';
+import { PersonNameResponse } from '../../person-name.response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
 import { PersonInfoPersonResponseV1 } from './v1/person-info-person.response.v1.js';
-import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from './schulconnex-enums.v1.js';
-import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
-import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
-import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
-import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
+import { SchulconnexOrganisationTyp, SchulconnexPersonenstatus, SchulconnexRolle } from '../schulconnex-enums.v1.js';
+import { RollenArt } from '../../../../rolle/domain/rolle.enums.js';
+import { OrganisationsTyp } from '../../../../organisation/domain/organisation.enums.js';
+import { UserLockRepository } from '../../../../keycloak-administration/repository/user-lock.repository.js';
+import { UserLock } from '../../../../keycloak-administration/domain/user-lock.js';
 import { PersonInfoResponse, PersonNestedInPersonInfoResponse } from './v0/person-info.response.js';
 
 describe('PersonInfoController', () => {

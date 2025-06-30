@@ -12,7 +12,7 @@ import { UserLock } from '../../../../keycloak-administration/domain/user-lock.j
 import { PersonRepository } from '../../../persistence/person.repository.js';
 import { Rolle } from '../../../../rolle/domain/rolle.js';
 import { Person } from '../../../domain/person.js';
-import { PersonInfoResponseV1 } from '../v1/person-info.response.v1.js';
+import { PersonInfoResponseV1 } from '../personinfo/v1/person-info.response.v1.js';
 import { OrganisationID, PersonID } from '../../../../../shared/types/index.js';
 
 @Injectable()

@@ -7,24 +7,24 @@ import {
     ApiTags,
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { EntityNotFoundError } from '../../../../shared/error/index.js';
-import { SchulConnexErrorMapper } from '../../../../shared/error/schul-connex-error.mapper.js';
-import { Permissions } from '../../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
-import { Person } from '../../domain/person.js';
-import { ClassLogger } from '../../../../core/logging/class-logger.js';
-import { SchulConnexValidationErrorFilter } from '../../../../shared/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../../authentication/api/authentication-exception-filter.js';
+import { EntityNotFoundError } from '../../../../../shared/error/index.js';
+import { SchulConnexErrorMapper } from '../../../../../shared/error/schul-connex-error.mapper.js';
+import { Permissions } from '../../../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../../../authentication/domain/person-permissions.js';
+import { Person } from '../../../domain/person.js';
+import { ClassLogger } from '../../../../../core/logging/class-logger.js';
+import { SchulConnexValidationErrorFilter } from '../../../../../shared/error/schulconnex-validation-error.filter.js';
+import { AuthenticationExceptionFilter } from '../../../../authentication/api/authentication-exception-filter.js';
 import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
-} from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonRepository } from '../../persistence/person.repository.js';
-import { EmailRepo } from '../../../email/persistence/email.repo.js';
-import { PersonEmailResponse } from '../person-email-response.js';
+} from '../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonRepository } from '../../../persistence/person.repository.js';
+import { EmailRepo } from '../../../../email/persistence/email.repo.js';
+import { PersonEmailResponse } from '../../person-email-response.js';
 import { PersonInfoResponseV1 } from './v1/person-info.response.v1.js';
-import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
-import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
+import { UserLockRepository } from '../../../../keycloak-administration/repository/user-lock.repository.js';
+import { UserLock } from '../../../../keycloak-administration/domain/user-lock.js';
 import { PersonInfoResponse } from './v0/person-info.response.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())

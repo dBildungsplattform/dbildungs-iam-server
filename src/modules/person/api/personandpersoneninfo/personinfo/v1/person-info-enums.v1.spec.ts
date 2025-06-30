@@ -1,5 +1,5 @@
-import { convertSPSHRollenartToSchulconnexRolle, SchulconnexRolle } from '../schulconnex-enums.v1.js';
-import { RollenArt } from '../../../../rolle/domain/rolle.enums.js';
+import { convertSPSHRollenartToSchulconnexRolle, SchulconnexRolle } from '../../schulconnex-enums.v1.js';
+import { RollenArt } from '../../../../../rolle/domain/rolle.enums.js';
 
 describe('convertRollenartToPersonInfoKontextV1Rolle', () => {
     it('should convert RollenArt.LERN to PersonInfoKontextV1Rolle.LERN', () => {
