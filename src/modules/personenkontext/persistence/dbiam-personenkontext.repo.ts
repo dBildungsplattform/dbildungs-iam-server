@@ -159,12 +159,8 @@ export class DBiamPersonenkontextRepo {
                 .where({ 'sp.id': { $in: Array.from(serviceProviderIds) } });
         }
 
-        const results: { personId: string }[] = await qb
-            .orderBy({ 'pk.personId': 'asc' })
-            .offset(offset)
-            .limit(limit)
-            .execute('all');
-        return results.map((r) => r.personId);
+        const results: { personId: string }[] = await qb.orderBy({ 'pk.personId': 'asc' }).execute('all');
+        return Array.from(new Set(results.map((r: { personId: string }) => r.personId))).slice(offset, offset + limit);
     }
 
     public async findByPersonWithOrgaAndRolle(personId: PersonID): Promise<Array<KontextWithOrgaAndRolle>> {
