@@ -21,6 +21,7 @@ import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-
 import { OperationContext } from './personenkontext.enums.js';
 import { Personenkontext } from './personenkontext.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
+import { findAllowedRollen } from '../../../shared/util/rollen.helper.js';
 
 export class PersonenkontextWorkflowAggregate {
     public personId?: PersonID;
@@ -134,32 +135,12 @@ export class PersonenkontextWorkflowAggregate {
         limit?: number,
         rollenarten?: RollenArt[],
     ): Promise<Rolle<true>[]> {
-        // If a person is given, make sure the user has permission to modify
         if (this.personId && !(await permissions.canModifyPerson(this.personId))) {
-            return [];
-        }
-
-        if (
-            !this.selectedOrganisationId ||
-            !(await permissions.hasSystemrechteAtOrganisation(
-                this.selectedOrganisationId,
-                [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN],
-                false,
-            ))
-        ) {
-            return [];
-        }
-
-        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
-            this.selectedOrganisationId,
-        );
-        if (!organisation) {
             return [];
         }
 
         let allowedRollenArten: RollenArt[] | undefined = rollenarten;
 
-        // If person is given, further restrict available roles
         if (this.personId) {
             const existingPKs: Personenkontext<true>[] = await this.personenkontextRepository.findByPerson(
                 this.personId,
@@ -172,62 +153,28 @@ export class PersonenkontextWorkflowAggregate {
                 const existingRollenarten: RollenArt[] = Array.from(existingRollen.values()).map(
                     (r: Rolle<true>) => r.rollenart,
                 );
-
-                if (allowedRollenArten) {
-                    allowedRollenArten = intersection(allowedRollenArten, existingRollenarten);
-                } else {
-                    allowedRollenArten = existingRollenarten;
-                }
+                allowedRollenArten = allowedRollenArten
+                    ? intersection(allowedRollenArten, existingRollenarten)
+                    : existingRollenarten;
             }
         }
 
-        // Fetch all roles by name or all
-        const rollen: Rolle<true>[] = rolleName
-            ? await this.rolleRepo.findByName(rolleName, false, undefined, undefined, allowedRollenArten)
-            : await this.rolleRepo.find(false, undefined, undefined, allowedRollenArten);
-
-        if (rollen.length === 0) {
-            return [];
-        }
-
-        // Check which roles are allowed for the organisation
-        const allowedRollen: Rolle<true>[] = (
-            await Promise.all(
-                rollen.map(async (rolle: Rolle<true>) => {
-                    const error: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
-                    return error ? null : rolle;
-                }),
-            )
-        ).filter((rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null);
-
-        // Fetch explicitly selected Rollen by ID, if provided
-        let selectedRollen: Rolle<true>[] = [];
-        if (rollenIds?.length) {
-            selectedRollen = Array.from((await this.rolleRepo.findByIds(rollenIds)).values());
-        }
-
-        // Merge and deduplicate by ID
-        const allRollenMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
-        [...allowedRollen, ...selectedRollen].forEach((rolle: Rolle<true>) => {
-            allRollenMap.set(rolle.id, rolle);
+        return findAllowedRollen({
+            organisationId: this.selectedOrganisationId,
+            permissionsCheck: () =>
+                permissions.hasSystemrechteAtOrganisation(
+                    this.selectedOrganisationId!,
+                    [RollenSystemRecht.PERSONEN_VERWALTEN, RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN],
+                    false,
+                ),
+            organisationRepository: this.organisationRepository,
+            rolleRepo: this.rolleRepo,
+            checkReferences: this.checkReferences.bind(this),
+            rolleName,
+            rollenIds,
+            limit,
+            allowedRollenArten,
         });
-
-        // Sort by name
-        let finalRollen: Rolle<true>[] = Array.from(allRollenMap.values()).sort((a: Rolle<true>, b: Rolle<true>) =>
-            a.name.localeCompare(b.name, 'de', { numeric: true }),
-        );
-
-        // Apply limit, but ensure selectedRollen are always present
-        if (limit) {
-            const selectedIdsSet: Set<string> = new Set(rollenIds);
-            const guaranteedSelected: Rolle<true>[] = finalRollen.filter((r: Rolle<true>) => selectedIdsSet.has(r.id));
-            const otherRollen: Rolle<true>[] = finalRollen
-                .filter((r: Rolle<true>) => !selectedIdsSet.has(r.id))
-                .slice(0, Math.max(limit - guaranteedSelected.length, 0));
-            finalRollen = [...guaranteedSelected, ...otherRollen];
-        }
-
-        return finalRollen;
     }
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext

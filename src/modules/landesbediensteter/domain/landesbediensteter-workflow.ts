@@ -3,6 +3,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Err, Ok, UnionToResult } from '../../../shared/util/result.js';
+import { findAllowedRollen } from '../../../shared/util/rollen.helper.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -130,66 +131,20 @@ export class LandesbediensteterWorkflowAggregate {
         rollenIds?: string[],
         limit?: number,
     ): Promise<Rolle<true>[]> {
-        if (
-            !this.selectedOrganisationId ||
-            !(await permissions.hasSystemrechtAtOrganisation(
-                this.selectedOrganisationId,
-                RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN,
-            ))
-        ) {
-            return [];
-        }
-
-        const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(
-            this.selectedOrganisationId,
-        );
-        if (!organisation) {
-            return [];
-        }
-
-        // Fetch all Rollen
-        const rollen: Rolle<true>[] = rolleName
-            ? await this.rolleRepo.findByName(rolleName, false)
-            : await this.rolleRepo.find(false);
-
-        // Check which Rollen are allowed for the organisation
-        const allowedRollen: Rolle<true>[] = (
-            await Promise.all(
-                rollen.map(async (rolle: Rolle<true>) => {
-                    const error: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
-                    return error ? null : rolle;
-                }),
-            )
-        ).filter((rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null);
-
-        // Fetch explicitly selected Rollen by ID, if provided
-        let selectedRollen: Rolle<true>[] = [];
-        if (rollenIds?.length) {
-            selectedRollen = Array.from((await this.rolleRepo.findByIds(rollenIds)).values());
-        }
-
-        // Merge and deduplicate by ID
-        const allRollenMap: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
-        [...allowedRollen, ...selectedRollen].forEach((rolle: Rolle<true>) => {
-            allRollenMap.set(rolle.id, rolle);
+        return findAllowedRollen({
+            organisationId: this.selectedOrganisationId,
+            permissionsCheck: () =>
+                permissions.hasSystemrechtAtOrganisation(
+                    this.selectedOrganisationId!,
+                    RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN,
+                ),
+            organisationRepository: this.organisationRepository,
+            rolleRepo: this.rolleRepo,
+            checkReferences: this.checkReferences.bind(this),
+            rolleName,
+            rollenIds,
+            limit,
         });
-
-        // Sort alphabetically
-        let finalRollen: Rolle<true>[] = Array.from(allRollenMap.values()).sort((a: Rolle<true>, b: Rolle<true>) =>
-            a.name.localeCompare(b.name, 'de', { numeric: true }),
-        );
-
-        // Apply limit but ensure selectedRollen are always included
-        if (limit) {
-            const selectedIds: Set<string> = new Set(rollenIds);
-            const guaranteedSelected: Rolle<true>[] = finalRollen.filter((r: Rolle<true>) => selectedIds.has(r.id));
-            const otherRollen: Rolle<true>[] = finalRollen
-                .filter((r: Rolle<true>) => !selectedIds.has(r.id))
-                .slice(0, Math.max(limit - guaranteedSelected.length, 0));
-            finalRollen = [...guaranteedSelected, ...otherRollen];
-        }
-
-        return finalRollen;
     }
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
