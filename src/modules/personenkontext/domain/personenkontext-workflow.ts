@@ -1,10 +1,11 @@
 import { ConfigService } from '@nestjs/config';
+import { intersection } from 'lodash-es';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
 import { mapStringsToRollenArt } from '../../../shared/config/utils.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { RolleID } from '../../../shared/types/index.js';
+import { PersonID, RolleID } from '../../../shared/types/index.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -13,6 +14,7 @@ import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js'
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
 import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
 import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-shared-kernel.js';
@@ -21,6 +23,8 @@ import { Personenkontext } from './personenkontext.js';
 import { PersonenkontexteUpdate } from './personenkontexte-update.js';
 
 export class PersonenkontextWorkflowAggregate {
+    public personId?: PersonID;
+
     public selectedOrganisationId?: string;
 
     public selectedRolleIds?: string[];
@@ -28,6 +32,7 @@ export class PersonenkontextWorkflowAggregate {
     private constructor(
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
+        private readonly personenkontextRepository: DBiamPersonenkontextRepo,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         private readonly configService: ConfigService,
         private readonly personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
@@ -36,6 +41,7 @@ export class PersonenkontextWorkflowAggregate {
     public static createNew(
         rolleRepo: RolleRepo,
         organisationRepository: OrganisationRepository,
+        personenkontextRepository: DBiamPersonenkontextRepo,
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         configService: ConfigService,
         personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
@@ -43,6 +49,7 @@ export class PersonenkontextWorkflowAggregate {
         return new PersonenkontextWorkflowAggregate(
             rolleRepo,
             organisationRepository,
+            personenkontextRepository,
             dbiamPersonenkontextFactory,
             configService,
             personenkontextWorkflowSharedKernel,
@@ -50,7 +57,8 @@ export class PersonenkontextWorkflowAggregate {
     }
 
     // Initialize the aggregate with the selected Organisation and Rolle
-    public initialize(organisationId?: string, rolleIds?: string[]): void {
+    public initialize(personId?: PersonID, organisationId?: string, rolleIds?: string[]): void {
+        this.personId = personId;
         this.selectedOrganisationId = organisationId;
         this.selectedRolleIds = rolleIds;
     }
@@ -126,6 +134,11 @@ export class PersonenkontextWorkflowAggregate {
         limit?: number,
         rollenarten?: RollenArt[],
     ): Promise<Rolle<true>[]> {
+        // If a person is given, make sure the user has permission to modify
+        if (this.personId && !(await permissions.canModifyPerson(this.personId))) {
+            return [];
+        }
+
         if (
             !this.selectedOrganisationId ||
             !(await permissions.hasSystemrechteAtOrganisation(
@@ -144,10 +157,34 @@ export class PersonenkontextWorkflowAggregate {
             return [];
         }
 
+        let allowedRollenArten: RollenArt[] | undefined = rollenarten;
+
+        // If person is given, further restrict available roles
+        if (this.personId) {
+            const existingPKs: Personenkontext<true>[] = await this.personenkontextRepository.findByPerson(
+                this.personId,
+            );
+            const existingRollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(
+                existingPKs.map((pk: Personenkontext<true>) => pk.rolleId),
+            );
+
+            if (existingRollen.size > 0) {
+                const existingRollenarten: RollenArt[] = Array.from(existingRollen.values()).map(
+                    (r: Rolle<true>) => r.rollenart,
+                );
+
+                if (allowedRollenArten) {
+                    allowedRollenArten = intersection(allowedRollenArten, existingRollenarten);
+                } else {
+                    allowedRollenArten = existingRollenarten;
+                }
+            }
+        }
+
         // Fetch all roles by name or all
         const rollen: Rolle<true>[] = rolleName
-            ? await this.rolleRepo.findByName(rolleName, false, undefined, undefined, rollenarten)
-            : await this.rolleRepo.find(false, undefined, undefined, rollenarten);
+            ? await this.rolleRepo.findByName(rolleName, false, undefined, undefined, allowedRollenArten)
+            : await this.rolleRepo.find(false, undefined, undefined, allowedRollenArten);
 
         if (rollen.length === 0) {
             return [];
@@ -216,6 +253,7 @@ export class PersonenkontextWorkflowAggregate {
             // Check permissions after verifying references
             const permissionCheckError: Option<DomainError> = await this.checkPermissions(
                 permissions,
+                this.personId,
                 this.selectedOrganisationId,
                 this.selectedRolleIds,
                 operationContext,
@@ -261,10 +299,17 @@ export class PersonenkontextWorkflowAggregate {
 
     public async checkPermissions(
         permissions: PersonPermissions,
+        personId: PersonID | undefined,
         organisationId: string,
         rolleIds: RolleID[],
         operationContext: OperationContext,
     ): Promise<Option<DomainError>> {
+        // When person is given, check for permission regardless of operationContext
+        if (personId) {
+            const hasPersonModifyPermission: boolean = await permissions.canModifyPerson(personId);
+            if (!hasPersonModifyPermission) return new MissingPermissionsError('Unauthorized to manage person');
+        }
+
         if (operationContext === OperationContext.PERSON_ANLEGEN) {
             // Check if logged in person has permission
             const hasAnlegenPermissionAtOrga: boolean = await permissions.hasSystemrechtAtOrganisation(

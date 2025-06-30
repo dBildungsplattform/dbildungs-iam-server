@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
 import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
 import { OperationContext } from '../../domain/personenkontext.enums.js';
+import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
 
 export class FindDbiamPersonenkontextWorkflowBodyParams {
     @IsEnum(OperationContext)
@@ -13,6 +14,15 @@ export class FindDbiamPersonenkontextWorkflowBodyParams {
         required: true,
     })
     public readonly operationContext!: OperationContext;
+
+    @IsUUID()
+    @IsOptional()
+    @ApiProperty({
+        description: 'ID of the person to be modified, will restrict the returned roles',
+        required: false,
+        nullable: true,
+    })
+    public readonly personId?: PersonID;
 
     @IsUUID()
     @IsOptional()
