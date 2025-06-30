@@ -6,7 +6,9 @@ import { RolleNurAnPassendeOrganisationError } from '../specification/error/roll
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class PersonenkontextWorkflowSharedKernel {
     public constructor(
         private readonly rolleRepo: RolleRepo,
