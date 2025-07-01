@@ -70,7 +70,7 @@ Note: Providing rolleId without organisationId is invalid.`,
         );
 
         const rollen: Rolle<true>[] = params.organisationId
-            ? await workflow.findRollenForOrganisation(permissions, params.rolleName, params.limit)
+            ? await workflow.findRollenForOrganisation(permissions, params.rolleName, params.rollenIds, params.limit)
             : [];
 
         let canCommit: boolean = false;

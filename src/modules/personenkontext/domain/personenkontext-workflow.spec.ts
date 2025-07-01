@@ -1,26 +1,27 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { DoFactory } from '../../../../test/utils/index.js';
-import { Personenkontext } from './personenkontext.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
 import { faker } from '@faker-js/faker';
-import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
-import { PersonenkontextWorkflowFactory } from './personenkontext-workflow.factory.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import { DoFactory } from '../../../../test/utils/index.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { PersonenkontextFactory } from './personenkontext.factory.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { DbiamPersonenkontextBodyParams } from '../api/param/dbiam-personenkontext.body.params.js';
+import { DBiamPersonenkontextRepo } from '../persistence/dbiam-personenkontext.repo.js';
+import { DbiamPersonenkontextFactory } from './dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from './error/personenkontexte-update.error.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { ConfigService } from '@nestjs/config';
+import { PersonenkontextWorkflowSharedKernel } from './personenkontext-workflow-shared-kernel.js';
+import { PersonenkontextWorkflowFactory } from './personenkontext-workflow.factory.js';
+import { PersonenkontextWorkflowAggregate } from './personenkontext-workflow.js';
 import { OperationContext } from './personenkontext.enums.js';
+import { PersonenkontextFactory } from './personenkontext.factory.js';
+import { Personenkontext } from './personenkontext.js';
 
 describe('PersonenkontextWorkflow', () => {
     let module: TestingModule;
@@ -32,6 +33,7 @@ describe('PersonenkontextWorkflow', () => {
     let personpermissionsMock: DeepMocked<PersonPermissions>;
     let dbiamPersonenkontextFactoryMock: DeepMocked<DbiamPersonenkontextFactory>;
     let configMock: DeepMocked<ConfigService>;
+    let personenkontextWorkflowSharedKernelMock: DeepMocked<PersonenkontextWorkflowSharedKernel>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -66,6 +68,10 @@ describe('PersonenkontextWorkflow', () => {
                     provide: ConfigService,
                     useValue: createMock<ConfigService>(),
                 },
+                {
+                    provide: PersonenkontextWorkflowSharedKernel,
+                    useValue: createMock<PersonenkontextWorkflowSharedKernel>(),
+                },
             ],
         }).compile();
         rolleRepoMock = module.get(RolleRepo);
@@ -76,6 +82,7 @@ describe('PersonenkontextWorkflow', () => {
         anlage = personenkontextAnlageFactory.createNew();
         personpermissionsMock = module.get(PersonPermissions);
         configMock = module.get(ConfigService);
+        personenkontextWorkflowSharedKernelMock = module.get(PersonenkontextWorkflowSharedKernel);
     });
 
     afterAll(async () => {
@@ -589,6 +596,8 @@ describe('PersonenkontextWorkflow', () => {
 
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechteAtOrganisation.mockResolvedValue(true);
+
+            personenkontextWorkflowSharedKernelMock.checkReferences.mockResolvedValue(undefined);
 
             anlage.initialize(undefined, organisation.id);
 
