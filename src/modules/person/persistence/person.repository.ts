@@ -521,6 +521,10 @@ export class PersonRepository {
 
         const person: Person<true> = dpResult.value;
 
+        this.logger.info(
+            `Person wird gelöscht ${person?.referrer} - (${person?.id}) - ${person.createdAt?.toISOString()} - (${person.externalIds.LDAP ?? 'kein LDAP'})`,
+        );
+
         // Check if the person has a keycloakUserId
         if (!person.keycloakUserId) {
             throw new PersonHasNoKeycloakId(person.id);
