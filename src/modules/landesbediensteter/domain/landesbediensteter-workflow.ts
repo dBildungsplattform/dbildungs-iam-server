@@ -3,6 +3,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { Err, Ok, UnionToResult } from '../../../shared/util/result.js';
+import { findAllowedRollen } from '../../../shared/util/rollen.helper.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -13,11 +14,10 @@ import { PersonLandesbediensteterSearchService } from '../../person/person-lande
 import { DbiamPersonenkontextBodyParams } from '../../personenkontext/api/param/dbiam-personenkontext.body.params.js';
 import { DbiamPersonenkontextFactory } from '../../personenkontext/domain/dbiam-personenkontext.factory.js';
 import { PersonenkontexteUpdateError } from '../../personenkontext/domain/error/personenkontexte-update.error.js';
+import { PersonenkontextWorkflowSharedKernel } from '../../personenkontext/domain/personenkontext-workflow-shared-kernel.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdate } from '../../personenkontext/domain/personenkontexte-update.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RolleNurAnPassendeOrganisationError } from '../../personenkontext/specification/error/rolle-nur-an-passende-organisation.js';
-import { OrganisationMatchesRollenart } from '../../personenkontext/specification/organisation-matches-rollenart.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -34,6 +34,7 @@ export class LandesbediensteterWorkflowAggregate {
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         private readonly personRepo: PersonRepository,
         private readonly landesbediensteteSearchService: PersonLandesbediensteterSearchService,
+        private readonly personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
     ) {}
 
     public static createNew(
@@ -43,6 +44,7 @@ export class LandesbediensteterWorkflowAggregate {
         dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         personRepo: PersonRepository,
         landesbediensteteSearchService: PersonLandesbediensteterSearchService,
+        personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
     ): LandesbediensteterWorkflowAggregate {
         return new LandesbediensteterWorkflowAggregate(
             rolleRepo,
@@ -51,6 +53,7 @@ export class LandesbediensteterWorkflowAggregate {
             dbiamPersonenkontextFactory,
             personRepo,
             landesbediensteteSearchService,
+            personenkontextWorkflowSharedKernel,
         );
     }
 
@@ -125,66 +128,23 @@ export class LandesbediensteterWorkflowAggregate {
     public async findRollenForOrganisation(
         permissions: PersonPermissions,
         rolleName?: string,
+        rollenIds?: string[],
         limit?: number,
     ): Promise<Rolle<true>[]> {
-        if (
-            !this.selectedOrganisationId ||
-            !(await permissions.hasSystemrechtAtOrganisation(
-                this.selectedOrganisationId,
-                RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN,
-            ))
-        ) {
-            return [];
-        }
-
-        let organisation: Option<Organisation<true>>;
-        if (this.selectedOrganisationId) {
-            // The organisation that was selected and that will be the base for the returned roles
-            organisation = await this.organisationRepository.findById(this.selectedOrganisationId);
-        }
-        // If the organisation was not found with the provided selected Id then just return an array of empty orgas
-        if (!organisation) {
-            return [];
-        }
-
-        let rollen: Rolle<true>[];
-
-        if (rolleName) {
-            rollen = await this.rolleRepo.findByName(rolleName, false);
-        } else {
-            rollen = await this.rolleRepo.find(false);
-        }
-
-        let allowedRollen: Rolle<true>[] = [];
-        // If the user has rights for this specific organization or any of its children, return the filtered roles
-
-        const allowedRollenPromises: Promise<Rolle<true> | null>[] = rollen.map(async (rolle: Rolle<true>) => {
-            // Check if the rolle can be assigned to the target organisation
-            const referenceCheckError: Option<DomainError> = await this.checkReferences(organisation.id, rolle.id);
-
-            // If the reference check passes and the organisation matches the role type
-            if (!referenceCheckError) {
-                return rolle;
-            }
-            return null;
+        return findAllowedRollen({
+            organisationId: this.selectedOrganisationId,
+            permissionsCheck: () =>
+                permissions.hasSystemrechtAtOrganisation(
+                    this.selectedOrganisationId!,
+                    RollenSystemRecht.LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN,
+                ),
+            organisationRepository: this.organisationRepository,
+            rolleRepo: this.rolleRepo,
+            checkReferences: this.checkReferences.bind(this),
+            rolleName,
+            rollenIds,
+            limit,
         });
-
-        // Resolve all the promises and filter out any null values (roles that can't be assigned)
-        const resolvedRollen: Rolle<true>[] = (await Promise.all(allowedRollenPromises)).filter(
-            (rolle: Rolle<true> | null): rolle is Rolle<true> => rolle !== null,
-        );
-
-        allowedRollen = resolvedRollen;
-        allowedRollen = allowedRollen.sort((a: Rolle<true>, b: Rolle<true>) =>
-            a.name.localeCompare(b.name, 'de', { numeric: true }),
-        );
-
-        if (limit) {
-            allowedRollen = allowedRollen.slice(0, limit);
-        }
-
-        // Sort the Roles by name
-        return allowedRollen;
     }
 
     // Verifies if the selected rolle and organisation can together be assigned to a kontext
@@ -277,30 +237,7 @@ export class LandesbediensteterWorkflowAggregate {
 
     // Checks if the rolle can be assigned to the target organisation
     public async checkReferences(organisationId: string, rolleId: string): Promise<Option<DomainError>> {
-        const [orga, rolle]: [Option<Organisation<true>>, Option<Rolle<true>>] = await Promise.all([
-            this.organisationRepository.findById(organisationId),
-            this.rolleRepo.findById(rolleId),
-        ]);
-        if (!orga) {
-            return new EntityNotFoundError('Organisation', organisationId);
-        }
-
-        if (!rolle) {
-            return new EntityNotFoundError('Rolle', rolleId);
-        }
-        // Can rolle be assigned at target orga
-        const canAssignRolle: boolean = await rolle.canBeAssignedToOrga(organisationId);
-        if (!canAssignRolle) {
-            return new EntityNotFoundError('Rolle', rolleId); // Rolle does not exist for the chosen organisation
-        }
-
-        //The aimed organisation needs to match the type of role to be assigned
-        const organisationMatchesRollenart: OrganisationMatchesRollenart = new OrganisationMatchesRollenart();
-        if (!organisationMatchesRollenart.isSatisfiedBy(orga, rolle)) {
-            return new RolleNurAnPassendeOrganisationError();
-        }
-
-        return undefined;
+        return this.personenkontextWorkflowSharedKernel.checkReferences(organisationId, rolleId);
     }
 
     public async checkPermissions(
