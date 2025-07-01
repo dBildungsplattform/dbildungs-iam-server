@@ -233,11 +233,9 @@ export class EmailEventHandler {
     @EventHandler(RolleUpdatedEvent)
     @EnsureRequestContext()
     public async handleRolleUpdatedEvent(event: RolleUpdatedEvent): Promise<void> {
-        this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.rolleId}, rollenArt:${event.rollenart}`);
+        this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.id}, rollenArt:${event.rollenArt}`);
 
-        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByRolle(
-            event.rolleId,
-        );
+        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByRolle(event.id);
 
         //const personIdReferrerSet: Set<[PersonID, PersonReferrer]> = new Set<[PersonID, PersonReferrer]>();
 

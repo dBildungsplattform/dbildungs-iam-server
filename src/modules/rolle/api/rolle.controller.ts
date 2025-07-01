@@ -63,6 +63,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { cloneDeep } from 'lodash-es';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -244,8 +245,9 @@ export class RolleController {
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (rolle) {
+            const oldRolle: Rolle<true> = cloneDeep(rolle);
             rolle.addSystemRecht(addSystemrechtBodyParams.systemRecht);
-            await this.rolleRepo.save(rolle);
+            await this.rolleRepo.save(rolle, oldRolle);
         } else {
             throw new AddSystemrechtError(); //hide that rolle is not found
         }
@@ -294,6 +296,8 @@ export class RolleController {
                 ),
             );
         }
+        const oldRolle: Rolle<true> = cloneDeep(rolle);
+
         const result: void | DomainError = await rolle.updateServiceProviders(spBodyParams.serviceProviderIds);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -301,7 +305,7 @@ export class RolleController {
             );
         }
         rolle.setVersionForUpdate(spBodyParams.version);
-        await this.rolleRepo.save(rolle);
+        await this.rolleRepo.save(rolle, oldRolle);
 
         const serviceProviderMap: Map<string, ServiceProvider<true>> = await this.serviceProviderRepo.findByIds(
             spBodyParams.serviceProviderIds,
@@ -352,6 +356,8 @@ export class RolleController {
                 ),
             );
         }
+        const oldRolle: Rolle<true> = cloneDeep(rolle);
+
         const result: void | DomainError = rolle.detatchServiceProvider(spBodyParams.serviceProviderIds);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -359,7 +365,7 @@ export class RolleController {
             );
         }
         rolle.setVersionForUpdate(spBodyParams.version);
-        await this.rolleRepo.save(rolle);
+        await this.rolleRepo.save(rolle, oldRolle);
     }
 
     @Put(':rolleId')
