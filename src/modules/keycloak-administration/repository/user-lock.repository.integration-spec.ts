@@ -53,6 +53,70 @@ describe('UserLockRepository', () => {
         expect(sut).toBeDefined();
     });
 
+    describe('findByPersonIds', () => {
+        it('should return a map of persons each with its user locks', async () => {
+            const personA: PersonEntity = createPersonEntity();
+            const personB: PersonEntity = createPersonEntity();
+            const personC: PersonEntity = createPersonEntity();
+            const personD: PersonEntity = createPersonEntity();
+            await em.persistAndFlush(personA);
+            await em.persistAndFlush(personB);
+            await em.persistAndFlush(personC);
+            await em.persistAndFlush(personD);
+
+            // Create multiple UserLocks for the same person to test array retrieval
+            const userLockA1: UserLock = UserLock.construct(
+                personA.id,
+                faker.string.uuid(),
+                new Date(),
+                PersonLockOccasion.MANUELL_GESPERRT,
+                new Date(),
+            );
+            const userLockA2: UserLock = UserLock.construct(
+                personA.id,
+                faker.string.uuid(),
+                new Date(),
+                PersonLockOccasion.KOPERS_GESPERRT,
+                new Date(),
+            );
+            const userLockB1: UserLock = UserLock.construct(
+                personB.id,
+                faker.string.uuid(),
+                new Date(),
+                PersonLockOccasion.KOPERS_GESPERRT,
+                new Date(),
+            );
+            const userLockC1: UserLock = UserLock.construct(
+                personC.id,
+                faker.string.uuid(),
+                new Date(),
+                PersonLockOccasion.KOPERS_GESPERRT,
+                new Date(),
+            );
+
+            await sut.createUserLock(userLockA1);
+            await sut.createUserLock(userLockA2);
+            await sut.createUserLock(userLockB1);
+            await sut.createUserLock(userLockC1);
+
+            const result: Map<PersonID, UserLock[]> = await sut.findByPersonIds([personA.id, personB.id, personD.id]);
+
+            expect(result.size).toEqual(3);
+            expect(result.get(personA.id)).toHaveLength(2);
+            expect(result.get(personB.id)).toHaveLength(1);
+            expect(result.get(personD.id)).toHaveLength(0);
+            expect(result.get(personC.id)).toEqual(undefined);
+        });
+
+        it('should return an empty array when no UserLocks are found by person', async () => {
+            const person: string = faker.string.uuid();
+            const foundUserLocks: Option<UserLock[]> = await sut.findByPersonId(person);
+
+            // Check that it returns an empty array instead of null
+            expect(foundUserLocks).toEqual([]);
+        });
+    });
+
     describe('findPersonById', () => {
         it('should return an array of UserLocks when found by person', async () => {
             const newPerson: PersonEntity = createPersonEntity();

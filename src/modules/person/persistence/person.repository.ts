@@ -324,7 +324,6 @@ export class PersonRepository {
     }
 
     public async findByPersonIds(personIds: PersonID[]): Promise<Person<true>[]> {
-
         const personEntities: PersonEntity[] = await this.em.find(PersonEntity, {
             id: { $in: personIds },
         });
