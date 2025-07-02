@@ -995,14 +995,14 @@ describe('LDAP Client Service', () => {
 
             expect(result.ok).toBeTruthy();
             expect(clientMock.bind).toHaveBeenCalledTimes(1);
-            expect(loggerMock.warning).not.toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
+            expect(loggerMock.logUnknownAsError).not.toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
         });
 
-        it('when operation fails it should automatically retry the operation with nr of fallback retries', async () => {
+        it('when operation fails it should automatically retry the operation with nr of fallback retries and log error', async () => {
             instanceConfig.RETRY_WRAPPER_DEFAULT_RETRIES = undefined;
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValue();
-                clientMock.search.mockRejectedValue(new Error());
+                clientMock.search.mockRejectedValue(new Error('testerror'));
 
                 return clientMock;
             });
@@ -1013,9 +1013,18 @@ describe('LDAP Client Service', () => {
 
             expect(result.ok).toBeFalsy();
             expect(clientMock.bind).toHaveBeenCalledTimes(3);
-            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
-            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
-            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 3 failed'));
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                expect.stringContaining('Attempt 1 failed'),
+                expect.objectContaining({ message: 'testerror' }),
+            );
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                expect.stringContaining('Attempt 2 failed'),
+                expect.objectContaining({ message: 'testerror' }),
+            );
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                expect.stringContaining('Attempt 3 failed'),
+                expect.objectContaining({ message: 'testerror' }),
+            );
             instanceConfig.RETRY_WRAPPER_DEFAULT_RETRIES = 2;
         });
 
@@ -1033,8 +1042,14 @@ describe('LDAP Client Service', () => {
 
             expect(result.ok).toBeFalsy();
             expect(clientMock.bind).toHaveBeenCalledTimes(2);
-            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
-            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                expect.stringContaining('Attempt 1 failed'),
+                expect.any(Error),
+            );
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                expect.stringContaining('Attempt 2 failed'),
+                expect.any(Error),
+            );
         });
 
         it('when operation fails and returns Error it should automatically retry the operation  with nr of retries set via env', async () => {
@@ -1051,8 +1066,14 @@ describe('LDAP Client Service', () => {
 
             expect(result.ok).toBeFalsy();
             expect(clientMock.bind).toHaveBeenCalledTimes(0);
-            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 1 failed'));
-            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining('Attempt 2 failed'));
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                expect.stringContaining('Attempt 1 failed'),
+                expect.any(Error),
+            );
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                expect.stringContaining('Attempt 2 failed'),
+                expect.any(Error),
+            );
         });
     });
 

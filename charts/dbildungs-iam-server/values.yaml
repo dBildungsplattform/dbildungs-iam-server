@@ -194,7 +194,8 @@ redis:
 
 kafka:
   url: 'dbildungs-iam-kafka.spsh.svc.cluster.local:9092'
-  enabled: false
+  enabled: true
+  saslEnabled: true
   initEnabled: true
   initImage:
     repository: docker.io/bitnami/kafka
@@ -208,8 +209,8 @@ autoscaling:
   targetCPUUtilizationPercentage: 60
 
 podDisruptionBudget:
-  enabled: true
-  minAvailable: '60%'
+  enabled: false
+  minAvailable: "60%"
 
 status:
   url: 'https://status.dev.spsh.dbildungsplattform.de/'

@@ -190,12 +190,12 @@ export class RolleRepo {
         limit?: number,
         offset?: number,
         rollenarten?: RollenArt[],
-    ): Promise<Option<Rolle<true>[]>> {
+    ): Promise<Rolle<true>[]> {
         const technischeQuery: { istTechnisch?: false } = includeTechnische ? {} : { istTechnisch: false };
         const rollenartQuery: Record<string, unknown> =
             rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
 
-        const rollen: Option<RolleEntity[]> = await this.em.find(
+        const rollen: RolleEntity[] = await this.em.find(
             this.entityName,
             { name: { $ilike: '%' + searchStr + '%' }, ...rollenartQuery, ...technischeQuery },
             {

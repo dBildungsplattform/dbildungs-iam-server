@@ -502,7 +502,7 @@ describe('RolleRepo', () => {
             ]);
             expect(rolleResult).toBeDefined();
             expect(rolleResult).toHaveLength(2);
-            const rollenarten: RollenArt[] = rolleResult!.map((r: Rolle<true>) => r.rollenart);
+            const rollenarten: RollenArt[] = rolleResult.map((r: Rolle<true>) => r.rollenart);
             expect(rollenarten).toContain(RollenArt.LEIT);
             expect(rollenarten).toContain(RollenArt.LEHR);
             expect(rollenarten).not.toContain(RollenArt.LERN);

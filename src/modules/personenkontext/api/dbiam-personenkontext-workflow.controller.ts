@@ -99,9 +99,8 @@ export class DbiamPersonenkontextWorkflowController {
         // Creates a new instance of the workflow aggregate
         const anlage: PersonenkontextWorkflowAggregate = this.personenkontextWorkflowFactory.createNew();
 
-        // Initializes the aggregate with the values of the selected organisation and rolle through the UI
-        // (Both values could be undefined when nothing was done yet)
-        anlage.initialize(params.organisationId, params.rollenIds);
+        // Initializes the aggregate with the values of the person, the selected organisation and rolle through the UI
+        anlage.initialize(params.personId, params.organisationId, params.rollenIds);
 
         // Find all possible SSKs (Possibly through name if the name was given)
         const organisations: Organisation<true>[] = await anlage.findAllSchulstrukturknoten(
@@ -121,7 +120,13 @@ export class DbiamPersonenkontextWorkflowController {
 
         // Find all possible roles under the selected Organisation
         const rollen: Rolle<true>[] = params.organisationId
-            ? await anlage.findRollenForOrganisation(permissions, params.rolleName, params.limit, rollenarten)
+            ? await anlage.findRollenForOrganisation(
+                  permissions,
+                  params.rolleName,
+                  params.rollenIds,
+                  params.limit,
+                  rollenarten,
+              )
             : [];
 
         const organisationsResponse: OrganisationResponseLegacy[] = organisations.map(
@@ -131,7 +136,7 @@ export class DbiamPersonenkontextWorkflowController {
         // Determine canCommit status, by default it's always false unless both the rolle and orga are selected
         let canCommit: boolean = false;
         if (params.organisationId && params.rollenIds) {
-            const commitResult: DomainError | boolean = await anlage.canCommit(permissions);
+            const commitResult: DomainError | boolean = await anlage.canCommit(permissions, params.operationContext);
             if (commitResult === true) {
                 canCommit = true;
             }
@@ -227,7 +232,7 @@ export class DbiamPersonenkontextWorkflowController {
             this.logger.error(
                 `Admin ${permissions.personFields.username} (AdminId: ${permissions.personFields.id}) hat versucht einen neuen Benutzer für ${params.vorname} ${params.familienname} anzulegen. Fehler:  ${savedPersonWithPersonenkontext.message}`,
             );
-            params.createPersonenkontexte.map((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
+            params.createPersonenkontexte.forEach((kontextParams: DbiamCreatePersonenkontextBodyParams) => {
                 const rolleId: string = kontextParams.rolleId;
                 const organisationId: string = kontextParams.organisationId;
                 this.logger.error(

@@ -13,6 +13,7 @@ import { DBiamPersonenkontextRepoInternal } from './persistence/internal-dbiam-p
 import { PersonenkontextCreationService } from './domain/personenkontext-creation.service.js';
 import { PersonenkontextWorkflowFactory } from './domain/personenkontext-workflow.factory.js';
 import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
+import { PersonenkontextWorkflowSharedKernel } from './domain/personenkontext-workflow-shared-kernel.js';
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.
         PersonenkontextCreationService,
         PersonenkontextWorkflowFactory,
         EntityAggregateMapper,
+        PersonenkontextWorkflowSharedKernel,
     ],
     exports: [
         PersonenkontextService,
@@ -42,6 +44,7 @@ import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.
         PersonenkontextFactory,
         PersonenkontextCreationService,
         PersonenkontextWorkflowFactory,
+        PersonenkontextWorkflowSharedKernel,
     ],
 })
 export class PersonenKontextModule {}
