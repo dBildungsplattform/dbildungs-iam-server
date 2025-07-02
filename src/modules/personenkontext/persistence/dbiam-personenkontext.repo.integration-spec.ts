@@ -416,6 +416,19 @@ describe('dbiam Personenkontext Repo', () => {
     });
 
     describe('findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations', () => {
+        it('should return empty array if serviceProviderIds is empty', async () => {
+            const organisationA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            const personIds: PersonID[] =
+                await sut.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
+                    new Set([]),
+                    new Set([organisationA.id]),
+                    0,
+                    10,
+                );
+            expect(personIds).toHaveLength(0);
+        });
         it('should return only persons at organisation with correct serviceProvider-Role', async () => {
             const personA: Person<true> = await createPerson();
             const personB: Person<true> = await createPerson();

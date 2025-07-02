@@ -108,12 +108,9 @@ describe('UserLockRepository', () => {
             expect(result.get(personC.id)).toEqual(undefined);
         });
 
-        it('should return an empty array when no UserLocks are found by person', async () => {
-            const person: string = faker.string.uuid();
-            const foundUserLocks: Option<UserLock[]> = await sut.findByPersonId(person);
-
-            // Check that it returns an empty array instead of null
-            expect(foundUserLocks).toEqual([]);
+        it('should return an empty Map', async () => {
+            const foundUserLocks: Map<PersonID, UserLock[]> = await sut.findByPersonIds([]);
+            expect(foundUserLocks).toEqual(new Map<PersonID, UserLock[]>());
         });
     });
 
