@@ -194,7 +194,6 @@ export class DBiamPersonenkontextRepo {
     ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
         const result: Map<PersonID, KontextWithOrgaAndRolle[]> = new Map<PersonID, KontextWithOrgaAndRolle[]>();
 
-        if (personIds.length === 0) return result;
         const personenKontexte: PersonenkontextEntity[] = await this.em.find(
             PersonenkontextEntity,
             { personId: { $in: personIds } },
