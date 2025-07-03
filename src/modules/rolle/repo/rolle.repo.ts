@@ -279,27 +279,12 @@ export class RolleRepo {
         return !!rolle;
     }
 
-    public async save(rolle: Rolle<boolean>, oldRolle?: Rolle<boolean>): Promise<Rolle<true> | DomainError> {
+    public async save(rolle: Rolle<boolean>): Promise<Rolle<true> | DomainError> {
         const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this, rolle.name);
         if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) return new RolleNameNotUniqueOnSskError();
 
         if (rolle.id) {
-            const updatedRolle: Rolle<true> = await this.update(rolle);
-            if (oldRolle) {
-                this.eventService.publish(
-                    RolleUpdatedEvent.fromRollen(updatedRolle, oldRolle),
-                    KafkaRolleUpdatedEvent.fromRollen(updatedRolle, oldRolle),
-                );
-            } else {
-                const oldRolleData: Option<Rolle<true>> = await this.findById(rolle.id, true);
-                if (oldRolleData)
-                    this.eventService.publish(
-                        RolleUpdatedEvent.fromRollen(updatedRolle, oldRolleData),
-                        KafkaRolleUpdatedEvent.fromRollen(updatedRolle, oldRolleData),
-                    );
-            }
-
-            return updatedRolle;
+            return this.update(rolle);
         } else {
             return this.create(rolle);
         }
@@ -347,7 +332,7 @@ export class RolleRepo {
         if (updatedRolle instanceof DomainError) {
             return updatedRolle;
         }
-        const result: Rolle<true> | DomainError = await this.save(updatedRolle, authorizedRole);
+        const result: Rolle<true> | DomainError = await this.save(updatedRolle);
         if (result instanceof DomainError) {
             return result;
         }
@@ -398,9 +383,17 @@ export class RolleRepo {
         }
         rolle.version = rolle.version + 1;
 
+        const oldRolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
+
         rolleEntity.assign(mapRolleAggregateToData(rolle), { updateNestedEntities: true });
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
+        const updatedRolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
+        this.eventService.publish(
+            RolleUpdatedEvent.fromRollen(updatedRolle, oldRolle),
+            KafkaRolleUpdatedEvent.fromRollen(updatedRolle, oldRolle),
+        );
+
+        return updatedRolle;
     }
 }
