@@ -6,13 +6,7 @@ describe('KafkaRolleUpdatedEvent', () => {
     it('should correctly initialize and implement KafkaEvent', () => {
         const rolle: Rolle<true> = DoFactory.createRolle(true);
 
-        const event: KafkaRolleUpdatedEvent = new KafkaRolleUpdatedEvent(
-            rolle.id,
-            rolle.rollenart,
-            rolle.merkmale,
-            rolle.systemrechte,
-            rolle.serviceProviderIds,
-        );
+        const event: KafkaRolleUpdatedEvent = KafkaRolleUpdatedEvent.fromRollen(rolle, rolle);
 
         expect(event).toBeInstanceOf(KafkaRolleUpdatedEvent);
         expect(event.kafkaKey).toBe(rolle.id);
