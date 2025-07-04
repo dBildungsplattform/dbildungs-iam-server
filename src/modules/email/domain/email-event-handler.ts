@@ -1,54 +1,53 @@
-import { Injectable } from '@nestjs/common';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
-import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { OrganisationID, OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
-import { EmailAddressEntity } from '../persistence/email-address.entity.js';
-import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
-import { EmailRepo } from '../persistence/email.repo.js';
-import { EmailFactory } from './email.factory.js';
-import { EmailAddress, EmailAddressStatus } from './email-address.js';
-import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
-import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
-import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
-import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { Person } from '../../person/domain/person.js';
-import { PersonDomainError } from '../../person/domain/person-domain.error.js';
-import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
-import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
-import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
-import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
-import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
-import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
-import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
-import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
-import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
-import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
-import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-disabled-email-address-generated.event.js';
-import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
-import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
-import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
-import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
+import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
+import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
+import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
+import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
+import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
+import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-disabled-email-address-generated.event.js';
+import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
+import { KafkaEmailAddressChangedEvent } from '../../../shared/events/email/kafka-email-address-changed.event.js';
+import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
+import { KafkaEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-email-address-generated.event.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
+import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/kafka-ldap-person-entry-renamed.event.js';
+import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
+import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
+import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { OrganisationID, OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonDomainError } from '../../person/domain/person-domain.error.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { EmailAddressEntity } from '../persistence/email-address.entity.js';
+import { EmailRepo } from '../persistence/email.repo.js';
+import { EmailAddress, EmailAddressStatus } from './email-address.js';
+import { EmailFactory } from './email.factory.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -229,15 +228,14 @@ export class EmailEventHandler {
         return undefined;
     }
 
-    @KafkaEventHandler(KafkaRolleUpdatedEvent)
-    @EventHandler(RolleUpdatedEvent)
+    // disabled for now, since we might run into issues (sheer volume of data) with fetching all affected personenkontexte
+    // @KafkaEventHandler(KafkaRolleUpdatedEvent)
+    // @EventHandler(RolleUpdatedEvent)
     @EnsureRequestContext()
     public async handleRolleUpdatedEvent(event: RolleUpdatedEvent): Promise<void> {
-        this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.rolleId}, rollenArt:${event.rollenart}`);
+        this.logger.info(`Received RolleUpdatedEvent, rolleId:${event.id}, rollenArt:${event.rollenArt}`);
 
-        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByRolle(
-            event.rolleId,
-        );
+        const personenkontexte: Personenkontext<true>[] = await this.dbiamPersonenkontextRepo.findByRolle(event.id);
 
         //const personIdReferrerSet: Set<[PersonID, PersonReferrer]> = new Set<[PersonID, PersonReferrer]>();
 
