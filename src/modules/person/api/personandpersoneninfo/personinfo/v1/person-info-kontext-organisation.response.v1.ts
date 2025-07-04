@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { SchulconnexOrganisationTyp } from '../schulconnex-enums.v1.js';
+import { SchulconnexOrganisationTyp } from '../../schulconnex-enums.v1.js';
 
 export class PersonenInfoKontextOrganisationResponseV1 {
     @ApiProperty()

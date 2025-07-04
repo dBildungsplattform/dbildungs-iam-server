@@ -243,6 +243,21 @@ describe('PersonRepository Integration', () => {
         });
     });
 
+    describe('findByPersonIds', () => {
+        it('should return found person', async () => {
+            const personA: Person<true> = await savePerson(false);
+            const personB: Person<true> = await savePerson(false);
+            const personC: Person<true> = await savePerson(false);
+
+            const foundPersons: Person<true>[] = await sut.findByPersonIds([personA.id, personB.id]);
+
+            expect(foundPersons.length).toEqual(2);
+            expect(foundPersons.findIndex((p: Person<true>) => p.id === personA.id)).not.toEqual(-1);
+            expect(foundPersons.findIndex((p: Person<true>) => p.id === personB.id)).not.toEqual(-1);
+            expect(foundPersons.findIndex((p: Person<true>) => p.id === personC.id)).toEqual(-1);
+        });
+    });
+
     describe('findById', () => {
         describe('when found by Id', () => {
             it('should return found person', async () => {

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { SchulconnexErreichbarkeitTyp } from '../schulconnex-enums.v1.js';
+import { SchulconnexErreichbarkeitTyp } from '../../schulconnex-enums.v1.js';
 
 export class PersonInfoKontextErreichbarkeitResponseV1 {
     @ApiProperty({ enum: SchulconnexErreichbarkeitTyp })
