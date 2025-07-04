@@ -475,10 +475,10 @@ export class RolleController {
     @ApiInternalServerErrorResponse({
         description: 'Internal server error',
     })
-    public getAllSystemrechte(@Param() includeTechnicalRights: boolean = false): SystemRechtResponse[] {
-        return RollenSystemRecht.ALL.filter(
-            (systemRecht: RollenSystemRecht) => includeTechnicalRights || !systemRecht.technical,
-        ).map((systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht));
+    public getAllSystemrechte(): SystemRechtResponse[] {
+        return RollenSystemRecht.ALL.map((systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht));
+        // filter(
+        //     (systemRecht: RollenSystemRecht) => includeTechnicalRights || !systemRecht.technical,)
     }
 
     private async returnRolleWithServiceProvidersResponse(
