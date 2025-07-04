@@ -3,10 +3,9 @@ import {
     EntityManager,
     Loaded,
     QBFilterQuery,
-    QueryBuilder,
-    QueryOrder,
+    RawQueryFragment,
     RequiredEntityData,
-    SelectQueryBuilder,
+    sql,
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -342,29 +341,36 @@ export class OrganisationRepository {
         }
 
         let entitiesForIds: OrganisationEntity[] = [];
-        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
 
         // Extract sort logic to variables
         const sortBy: SortFieldOrganisation = searchOptions.sortField || SortFieldOrganisation.KENNUNG;
         const secondSortBy: SortFieldOrganisation =
             sortBy === SortFieldOrganisation.KENNUNG ? SortFieldOrganisation.NAME : SortFieldOrganisation.KENNUNG;
         const sortOrder: ScopeOrder = searchOptions.sortOrder || ScopeOrder.ASC;
-        const order: QueryOrder =
-            sortOrder === ScopeOrder.ASC ? QueryOrder.ASC_NULLS_FIRST : QueryOrder.DESC_NULLS_FIRST;
-        const orderBy: { [key: string]: QueryOrder }[] = [
-            { [sortBy]: order },
-            { [secondSortBy]: QueryOrder.ASC_NULLS_FIRST },
-        ];
+        const orderDirection: 'ASC' | 'DESC' = sortOrder === ScopeOrder.ASC ? 'ASC' : 'DESC';
+
+        // Create custom ORDER BY using sql helper
+        const typeOrderClause: RawQueryFragment =
+            sql`CASE WHEN typ = 'ROOT' then 1 WHEN typ = 'LAND' THEN 2 WHEN typ = 'TRAEGER' THEN 3 ELSE 4 END` as RawQueryFragment;
+        const sortByField: RawQueryFragment = sql.ref(sortBy);
+        const secondSortByField: RawQueryFragment = sql.ref(secondSortBy);
 
         if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
             const organisationIds: string[] = permittedOrgas.all
                 ? searchOptions.organisationIds
                 : searchOptions.organisationIds.filter((id: string) => permittedOrgas.orgaIds.includes(id));
-            const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
-                .select('*')
-                .where({ id: { $in: organisationIds } })
-                .orderBy(orderBy);
-            entitiesForIds = (await queryForIds.getResultAndCount())[0];
+
+            entitiesForIds = await this.em.find(
+                OrganisationEntity,
+                { id: { $in: organisationIds } },
+                {
+                    orderBy: {
+                        [typeOrderClause as unknown as string]: orderDirection,
+                        [sortByField as unknown as string]: orderDirection,
+                        [secondSortByField as unknown as string]: 'ASC',
+                    },
+                },
+            );
         }
 
         let whereClause: QBFilterQuery<OrganisationEntity> = {};
@@ -403,13 +409,19 @@ export class OrganisationRepository {
             whereClause = { $and: [whereClause, { id: { $in: permittedOrgas.orgaIds } }] };
         }
 
-        const query: SelectQueryBuilder<OrganisationEntity> = qb
-            .select('*')
-            .where(whereClause)
-            .offset(searchOptions.offset)
-            .orderBy(orderBy)
-            .limit(searchOptions.limit);
-        const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
+        const [entities, total]: [OrganisationEntity[], number] = await this.em.findAndCount(
+            OrganisationEntity,
+            whereClause,
+            {
+                offset: searchOptions.offset,
+                limit: searchOptions.limit,
+                orderBy: {
+                    [typeOrderClause as unknown as string]: orderDirection,
+                    [sortByField as unknown as string]: orderDirection,
+                    [secondSortByField as unknown as string]: 'ASC',
+                },
+            },
+        );
 
         const result: OrganisationEntity[] = [...entitiesForIds];
         let duplicates: number = 0;
