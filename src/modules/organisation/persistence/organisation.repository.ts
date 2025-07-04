@@ -351,10 +351,13 @@ export class OrganisationRepository {
         const sortOrder: ScopeOrder = searchOptions.sortOrder || ScopeOrder.ASC;
         const order: QueryOrder =
             sortOrder === ScopeOrder.ASC ? QueryOrder.ASC_NULLS_FIRST : QueryOrder.DESC_NULLS_FIRST;
-        const orderBy: { [key: string]: QueryOrder }[] = [
-            { [sortBy]: order },
-            { [secondSortBy]: QueryOrder.ASC_NULLS_FIRST },
-        ];
+
+        // Create custom ORDER BY clause with type priority
+        // The order of types is defined as follows: ROOT, LAND, TRAEGER, and then all others
+        const typeOrderClause: string = `CASE WHEN typ = 'ROOT' then 1 WHEN typ = 'LAND' THEN 2 WHEN typ = 'TRAEGER' THEN 3 ELSE 4 END`;
+        const orderDirection: QueryOrder.ASC | QueryOrder.DESC =
+            order === QueryOrder.ASC_NULLS_FIRST ? QueryOrder.ASC : QueryOrder.DESC;
+        const customOrderBy: string = `${typeOrderClause}, ${sortBy} ${orderDirection}, ${secondSortBy} ASC`;
 
         if (searchOptions.organisationIds && searchOptions.organisationIds.length > 0) {
             const organisationIds: string[] = permittedOrgas.all
@@ -362,8 +365,8 @@ export class OrganisationRepository {
                 : searchOptions.organisationIds.filter((id: string) => permittedOrgas.orgaIds.includes(id));
             const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
                 .select('*')
-                .where({ id: { $in: organisationIds } })
-                .orderBy(orderBy);
+                .where({ id: { $in: organisationIds } });
+            await queryForIds.getKnexQuery().orderByRaw(customOrderBy);
             entitiesForIds = (await queryForIds.getResultAndCount())[0];
         }
 
@@ -407,8 +410,8 @@ export class OrganisationRepository {
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
-            .orderBy(orderBy)
             .limit(searchOptions.limit);
+        await query.getKnexQuery().orderByRaw(customOrderBy);
         const [entities, total]: Counted<OrganisationEntity> = await query.getResultAndCount();
 
         const result: OrganisationEntity[] = [...entitiesForIds];
