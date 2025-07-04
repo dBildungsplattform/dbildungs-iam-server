@@ -342,7 +342,6 @@ export class OrganisationRepository {
         }
 
         let entitiesForIds: OrganisationEntity[] = [];
-        const qb: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
 
         // Extract sort logic to variables
         const sortBy: SortFieldOrganisation = searchOptions.sortField || SortFieldOrganisation.KENNUNG;
@@ -363,7 +362,8 @@ export class OrganisationRepository {
             const organisationIds: string[] = permittedOrgas.all
                 ? searchOptions.organisationIds
                 : searchOptions.organisationIds.filter((id: string) => permittedOrgas.orgaIds.includes(id));
-            const queryForIds: SelectQueryBuilder<OrganisationEntity> = qb
+            const qbForIds: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
+            const queryForIds: SelectQueryBuilder<OrganisationEntity> = qbForIds
                 .select('*')
                 .where({ id: { $in: organisationIds } });
             await queryForIds.getKnexQuery().orderByRaw(customOrderBy);
@@ -406,7 +406,8 @@ export class OrganisationRepository {
             whereClause = { $and: [whereClause, { id: { $in: permittedOrgas.orgaIds } }] };
         }
 
-        const query: SelectQueryBuilder<OrganisationEntity> = qb
+        const qbMain: QueryBuilder<OrganisationEntity> = this.em.createQueryBuilder(OrganisationEntity);
+        const query: SelectQueryBuilder<OrganisationEntity> = qbMain
             .select('*')
             .where(whereClause)
             .offset(searchOptions.offset)
