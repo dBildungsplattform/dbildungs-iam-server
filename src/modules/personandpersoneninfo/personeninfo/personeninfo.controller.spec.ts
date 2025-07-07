@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonenInfoController } from './personeninfo.controller.js';
 import { PersonenInfoService } from './personeninfo.service.js';
-import { ClassLogger } from '../../../../../core/logging/class-logger.js';
-import { PersonPermissions } from '../../../../authentication/domain/person-permissions.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 
 describe('PersonenInfoController', () => {

@@ -8,11 +8,11 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Headers } from '@nestjs/common';
-import { Permissions } from '../../../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../../../authentication/domain/person-permissions.js';
-import { ClassLogger } from '../../../../../core/logging/class-logger.js';
-import { SchulConnexValidationErrorFilter } from '../../../../../shared/error/schulconnex-validation-error.filter.js';
-import { AuthenticationExceptionFilter } from '../../../../authentication/api/authentication-exception-filter.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { PersonInfoResponseV1 } from '../personinfo/v1/person-info.response.v1.js';
 import { PersonenInfoService } from './personeninfo.service.js';
 

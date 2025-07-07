@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PersonInfoKontextErreichbarkeitResponseV1 } from './person-info-kontext-erreichbarkeit.response.v1.js';
-import { KontextWithOrgaAndRolle } from '../../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonEmailResponse } from '../../../person-email-response.js';
-import { EmailAddressStatus } from '../../../../../email/domain/email-address.js';
-import { OrganisationsTyp } from '../../../../../organisation/domain/organisation.enums.js';
+import { KontextWithOrgaAndRolle } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
+import { EmailAddressStatus } from '../../../email/domain/email-address.js';
+import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { PersonenInfoKontextGruppeResponseV1 } from './person-info-kontext-gruppe.response.v1.js';
 import { PersonenInfoKontextOrganisationResponseV1 } from './person-info-kontext-organisation.response.v1.js';
 import {
@@ -14,7 +14,7 @@ import {
     SchulconnexRolle,
     convertSPSHRollenartToSchulconnexRolle,
 } from '../../schulconnex-enums.v1.js';
-import { UserLock } from '../../../../../keycloak-administration/domain/user-lock.js';
+import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
 
 export class PersonInfoKontextResponseV1 {
     @ApiProperty()

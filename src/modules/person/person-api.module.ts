@@ -14,9 +14,6 @@ import { PersonDeleteModule } from './person-deletion/person-delete.module.js';
 import { EmailModule } from '../email/email.module.js';
 import { LdapModule } from '../../core/ldap/ldap.module.js';
 import { PersonLandesbediensteterSearchModule } from './person-landesbedienstete-search/person-landesbediensteter-search.module.js';
-import { PersonenInfoController } from './api/personandpersoneninfo/personeninfo/personeninfo.controller.js';
-import { PersonInfoController } from './api/personandpersoneninfo/personinfo/person-info.controller.js';
-import { PersonenInfoService } from './api/personandpersoneninfo/personeninfo/personeninfo.service.js';
 
 @Module({
     imports: [
@@ -31,13 +28,7 @@ import { PersonenInfoService } from './api/personandpersoneninfo/personeninfo/pe
         KeycloakAdministrationModule,
         LoggerModule.register(PersonApiModule.name),
     ],
-    providers: [PersonApiMapper, PersonenInfoService],
-    controllers: [
-        PersonController,
-        PersonFrontendController,
-        DBiamPersonenuebersichtController,
-        PersonInfoController,
-        PersonenInfoController,
-    ],
+    providers: [PersonApiMapper],
+    controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController],
 })
 export class PersonApiModule {}

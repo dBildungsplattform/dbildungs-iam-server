@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { KontextWithOrgaAndRolle } from '../../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { Person } from '../../../../domain/person.js';
+import { KontextWithOrgaAndRolle } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { Person } from '../../../person/domain/person.js';
 import { PersonInfoPersonResponseV1 } from './person-info-person.response.v1.js';
 import { PersonInfoKontextResponseV1 } from './person-info-kontext.response.v1.js';
-import { OrganisationsTyp } from '../../../../../organisation/domain/organisation.enums.js';
-import { PersonEmailResponse } from '../../../person-email-response.js';
-import { UserLock } from '../../../../../keycloak-administration/domain/user-lock.js';
+import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
+import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
+import { UserLock } from '../../../keycloak-administration/domain/user-lock.js';
 
 export class PersonInfoResponseV1 {
     @ApiProperty()
