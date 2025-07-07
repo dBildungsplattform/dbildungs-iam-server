@@ -129,7 +129,7 @@ export class DBiamPersonenkontextRepo {
      */
     public async findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
         serviceProviderIds: Set<string>,
-        organisationIds: Set<string> | undefined,
+        organisationIds: Set<string> | 'all',
         offset: number,
         limit: number,
     ): Promise<PersonID[]> {
@@ -138,7 +138,7 @@ export class DBiamPersonenkontextRepo {
         }
 
         let qb: QueryBuilder<PersonenkontextEntity>;
-        if (organisationIds && organisationIds.size > 0) {
+        if (organisationIds != 'all' && organisationIds.size > 0) {
             qb = this.em
                 .createQueryBuilder(PersonenkontextEntity, 'pk')
                 .select('pk.personId')

@@ -531,7 +531,7 @@ describe('dbiam Personenkontext Repo', () => {
             const personIds: PersonID[] =
                 await sut.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                     new Set([serviceProvierA.id]),
-                    undefined,
+                    'all',
                     0,
                     10,
                 );

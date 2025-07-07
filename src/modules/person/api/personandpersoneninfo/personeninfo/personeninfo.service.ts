@@ -13,7 +13,7 @@ import { PersonRepository } from '../../../persistence/person.repository.js';
 import { Rolle } from '../../../../rolle/domain/rolle.js';
 import { Person } from '../../../domain/person.js';
 import { PersonInfoResponseV1 } from '../personinfo/v1/person-info.response.v1.js';
-import { OrganisationID, PersonID } from '../../../../../shared/types/index.js';
+import { PersonID } from '../../../../../shared/types/index.js';
 
 @Injectable()
 export class PersonenInfoService {
@@ -34,7 +34,6 @@ export class PersonenInfoService {
             [RollenSystemRecht.PERSONEN_LESEN],
             true,
         );
-        const permittedOrgaIds: OrganisationID[] | undefined = permittedOrgas.all ? undefined : permittedOrgas.orgaIds;
 
         // 2. Ermittle alle Rollen des Aufrufers mit PERSONEN_LESEN
         const aufruferKontexte: KontextWithOrgaAndRolle[] = await this.personenkontextRepo.findByPersonWithOrgaAndRolle(
@@ -59,7 +58,7 @@ export class PersonenInfoService {
         const personIds: PersonID[] =
             await this.personenkontextRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                 permittedServiceProviderIds,
-                permittedOrgaIds ? new Set<string>(permittedOrgaIds) : undefined,
+                permittedOrgas.all ? 'all' : new Set<string>(permittedOrgas.orgaIds),
                 offset,
                 limit,
             );
