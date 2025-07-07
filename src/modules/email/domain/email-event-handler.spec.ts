@@ -1,3 +1,5 @@
+import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -7,41 +9,38 @@ import {
     DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { EmailEventHandler } from './email-event-handler.js';
-import { faker } from '@faker-js/faker';
-import { EmailModule } from '../email.module.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { EventModule } from '../../../core/eventbus/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { EmailFactory } from './email.factory.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EmailRepo } from '../persistence/email.repo.js';
-import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
-import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
-import { RollenArt } from '../../rolle/domain/rolle.enums.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { EmailAddress, EmailAddressStatus } from './email-address.js';
-import { PersonenkontextID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/index.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
-import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
-import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
-import { Person } from '../../person/domain/person.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
 import { EntityCouldNotBeCreated } from '../../../shared/error/entity-could-not-be-created.error.js';
+import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-be-updated.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
+import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { PersonenkontextID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/index.js';
+import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
+import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ServiceProviderKategorie } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { EmailModule } from '../email.module.js';
+import { EmailAddressNotFoundError } from '../error/email-address-not-found.error.js';
+import { EmailRepo } from '../persistence/email.repo.js';
+import { EmailAddress, EmailAddressStatus } from './email-address.js';
+import { EmailEventHandler } from './email-event-handler.js';
+import { EmailFactory } from './email.factory.js';
 
 function getEmail(address?: string, status?: EmailAddressStatus): EmailAddress<true> {
     const fakePersonId: PersonID = faker.string.uuid();
@@ -1270,8 +1269,8 @@ describe('EmailEventHandler', () => {
                 createMock<Personenkontext<true>>({ personId: fakePersonId }),
                 createMock<Personenkontext<true>>({ personId: faker.string.uuid() }),
             ];
-            event = new RolleUpdatedEvent(fakeRolleId, faker.helpers.enumValue(RollenArt), [], [], []);
             rolle = createMock<Rolle<true>>({ serviceProviderIds: [] });
+            event = RolleUpdatedEvent.fromRollen(rolle, rolle);
             rolleMap = new Map<string, Rolle<true>>();
             rolleMap.set(fakeRolleId, rolle);
             sp = createMock<ServiceProvider<true>>({

@@ -336,10 +336,6 @@ export class RolleRepo {
         if (result instanceof DomainError) {
             return result;
         }
-        this.eventService.publish(
-            new RolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
-            new KafkaRolleUpdatedEvent(id, authorizedRole.rollenart, merkmale, systemrechte, serviceProviderIds),
-        );
 
         return result;
     }
@@ -387,9 +383,17 @@ export class RolleRepo {
         }
         rolle.version = rolle.version + 1;
 
+        const oldRolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
+
         rolleEntity.assign(mapRolleAggregateToData(rolle), { updateNestedEntities: true });
         await this.em.persistAndFlush(rolleEntity);
 
-        return mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
+        const updatedRolle: Rolle<true> = mapRolleEntityToAggregate(rolleEntity, this.rolleFactory);
+        this.eventService.publish(
+            RolleUpdatedEvent.fromRollen(updatedRolle, oldRolle),
+            KafkaRolleUpdatedEvent.fromRollen(updatedRolle, oldRolle),
+        );
+
+        return updatedRolle;
     }
 }

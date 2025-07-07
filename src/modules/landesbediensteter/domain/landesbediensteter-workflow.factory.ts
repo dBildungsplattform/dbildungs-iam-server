@@ -7,6 +7,7 @@ import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { LandesbediensteterWorkflowAggregate } from './landesbediensteter-workflow.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { PersonLandesbediensteterSearchService } from '../../person/person-landesbedienstete-search/person-landesbediensteter-search.service.js';
+import { PersonenkontextWorkflowSharedKernel } from '../../personenkontext/domain/personenkontext-workflow-shared-kernel.js';
 
 @Injectable()
 export class LandesbediensteterWorkflowFactory {
@@ -17,6 +18,7 @@ export class LandesbediensteterWorkflowFactory {
         private readonly personRepo: PersonRepository,
         private readonly dbiamPersonenkontextFactory: DbiamPersonenkontextFactory,
         private readonly landesbediensteterSearchService: PersonLandesbediensteterSearchService,
+        private readonly personenkontextWorkflowSharedKernel: PersonenkontextWorkflowSharedKernel,
     ) {}
 
     public createNew(): LandesbediensteterWorkflowAggregate {
@@ -27,6 +29,7 @@ export class LandesbediensteterWorkflowFactory {
             this.dbiamPersonenkontextFactory,
             this.personRepo,
             this.landesbediensteterSearchService,
+            this.personenkontextWorkflowSharedKernel,
         );
     }
 }
