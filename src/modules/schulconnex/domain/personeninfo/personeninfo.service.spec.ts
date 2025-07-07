@@ -19,6 +19,7 @@ import { OrganisationsTyp } from '../../../organisation/domain/organisation.enum
 import { Organisation } from '../../../organisation/domain/organisation.js';
 import { faker } from '@faker-js/faker';
 import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
+import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
 
 describe('PersonInfoService', () => {
     let module: TestingModule;
@@ -27,6 +28,7 @@ describe('PersonInfoService', () => {
     let loggerMock: DeepMocked<ClassLogger>;
     let personRepositoryMock: DeepMocked<PersonRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
+    let schulconnexRepo: DeepMocked<SchulconnexRepo>;
     let emailRepoMock: DeepMocked<EmailRepo>;
     let userLockRepoMock: DeepMocked<UserLockRepository>;
 
@@ -47,6 +49,10 @@ describe('PersonInfoService', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
+                    provide: SchulconnexRepo,
+                    useValue: createMock<SchulconnexRepo>(),
+                },
+                {
                     provide: EmailRepo,
                     useValue: createMock<EmailRepo>(),
                 },
@@ -63,6 +69,7 @@ describe('PersonInfoService', () => {
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
         emailRepoMock = module.get(EmailRepo);
         userLockRepoMock = module.get(UserLockRepository);
+        schulconnexRepo = module.get(SchulconnexRepo);
     });
 
     afterAll(async () => {
@@ -97,7 +104,7 @@ describe('PersonInfoService', () => {
             );
             expect(res.length).toEqual(0);
             expect(
-                dBiamPersonenkontextRepoMock.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).not.toHaveBeenCalled();
         });
     });
@@ -146,9 +153,10 @@ describe('PersonInfoService', () => {
 
             const personId1: string = faker.string.uuid();
             const personId2: string = faker.string.uuid();
-            dBiamPersonenkontextRepoMock.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce(
-                [personId1, personId2],
-            );
+            schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
+                personId1,
+                personId2,
+            ]);
 
             personRepositoryMock.findByPersonIds.mockResolvedValue([
                 DoFactory.createPerson(true, { id: personId1 }),
@@ -176,7 +184,7 @@ describe('PersonInfoService', () => {
             const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(permissions, 0, 10);
             expect(res).toBeDefined();
             expect(
-                dBiamPersonenkontextRepoMock.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).toHaveBeenCalled();
             expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
             expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([personId1, personId2]);
@@ -232,9 +240,10 @@ describe('PersonInfoService', () => {
 
             const personId1: string = faker.string.uuid();
             const personId2: string = faker.string.uuid();
-            dBiamPersonenkontextRepoMock.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce(
-                [personId1, personId2],
-            );
+            schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
+                personId1,
+                personId2,
+            ]);
 
             personRepositoryMock.findByPersonIds.mockResolvedValue([
                 DoFactory.createPerson(true, { id: personId1 }),
@@ -262,7 +271,7 @@ describe('PersonInfoService', () => {
             const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(permissions, 0, 10);
             expect(res).toBeDefined();
             expect(
-                dBiamPersonenkontextRepoMock.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).toHaveBeenCalled();
             expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
             expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([personId1, personId2]);
@@ -318,9 +327,10 @@ describe('PersonInfoService', () => {
 
             const personId1: string = faker.string.uuid();
             const personId2: string = faker.string.uuid();
-            dBiamPersonenkontextRepoMock.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce(
-                [personId1, personId2],
-            );
+            schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
+                personId1,
+                personId2,
+            ]);
 
             personRepositoryMock.findByPersonIds.mockResolvedValue([
                 DoFactory.createPerson(true, { id: personId1 }),
@@ -348,7 +358,7 @@ describe('PersonInfoService', () => {
             const res: PersonInfoResponseV1[] = await sut.findPersonsForPersonenInfo(permissions, 0, 10);
             expect(res).toBeDefined();
             expect(
-                dBiamPersonenkontextRepoMock.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
+                schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).toHaveBeenCalled();
             expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
             expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([personId1, personId2]);

@@ -14,11 +14,13 @@ import { Rolle } from '../../../rolle/domain/rolle.js';
 import { Person } from '../../../person/domain/person.js';
 import { PersonInfoResponseV1 } from '../../api/personinfo/v1/person-info.response.v1.js';
 import { PersonID } from '../../../../shared/types/index.js';
+import { SchulconnexRepo } from '../../persistence/schulconnex.repo.js';
 
 @Injectable()
 export class PersonenInfoService {
     public constructor(
         private readonly personRepo: PersonRepository,
+        private readonly schulconnexRepo: SchulconnexRepo,
         private readonly personenkontextRepo: DBiamPersonenkontextRepo,
         private readonly emailRepo: EmailRepo,
         private readonly userLockRepo: UserLockRepository,
@@ -56,7 +58,7 @@ export class PersonenInfoService {
         }
 
         const personIds: PersonID[] =
-            await this.personenkontextRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
+            await this.schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                 permittedServiceProviderIds,
                 permittedOrgas.all ? 'all' : new Set<string>(permittedOrgas.orgaIds),
                 offset,

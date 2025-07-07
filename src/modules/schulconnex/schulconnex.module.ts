@@ -9,6 +9,8 @@ import { PersonInfoController } from './api/personinfo/person-info.controller.js
 import { PersonenInfoService } from './domain/personeninfo/personeninfo.service.js';
 import { PersonModule } from '../person/person.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
+import { SchulconnexRepo } from './persistence/schulconnex.repo.js';
+import { EntityAggregateMapper } from '../person/mapper/entity-aggregate.mapper.js';
 
 @Module({
     imports: [
@@ -20,7 +22,7 @@ import { KeycloakAdministrationModule } from '../keycloak-administration/keycloa
         KeycloakAdministrationModule,
         LoggerModule.register(SchulconnexModule.name),
     ],
-    providers: [PersonenInfoService],
+    providers: [PersonenInfoService, SchulconnexRepo, EntityAggregateMapper],
     controllers: [PersonInfoController, PersonenInfoController],
 })
 export class SchulconnexModule {}
