@@ -1,4 +1,4 @@
-import { RollenArt } from '../rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 
 export enum SchulconnexErreichbarkeitTyp {
     EMAIL = 'E-Mail',

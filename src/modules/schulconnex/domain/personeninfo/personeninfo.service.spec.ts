@@ -1,24 +1,24 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PersonenInfoService } from './personeninfo.service.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { ClassLogger } from '../../../../core/logging/class-logger.js';
+import { PersonRepository } from '../../../person/persistence/person.repository.js';
 import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
-} from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { PersonInfoResponseV1 } from '../personinfo/v1/person-info.response.v1.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { DoFactory } from '../../../../test/utils/do-factory.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
+} from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { EmailRepo } from '../../../email/persistence/email.repo.js';
+import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';
+import { PersonPermissions } from '../../../authentication/domain/person-permissions.js';
+import { PersonInfoResponseV1 } from '../../api/personinfo/v1/person-info.response.v1.js';
+import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
+import { DoFactory } from '../../../../../test/utils/do-factory.js';
+import { Rolle } from '../../../rolle/domain/rolle.js';
+import { RollenArt, RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
+import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../../organisation/domain/organisation.js';
 import { faker } from '@faker-js/faker';
-import { PersonEmailResponse } from '../../person/api/person-email-response.js';
+import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
 
 describe('PersonInfoService', () => {
     let module: TestingModule;
