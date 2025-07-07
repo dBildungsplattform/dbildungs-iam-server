@@ -93,27 +93,29 @@ describe('Schulconnex Repo', () => {
                 ServiceProviderRepo,
                 PersonenkontextFactory,
                 EntityAggregateMapper,
-                {
-                    provide: KeycloakUserService,
-                    useValue: createMock<KeycloakUserService>({
-                        create: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.uuid(),
-                            }),
-                        setPassword: () =>
-                            Promise.resolve({
-                                ok: true,
-                                value: faker.string.alphanumeric(16),
-                            }),
-                    }),
-                },
+                KeycloakUserService,
                 {
                     provide: UserLockRepository,
                     useValue: createMock<UserLockRepository>(),
                 },
             ],
-        }).compile();
+        })
+            .overrideProvider(KeycloakUserService)
+            .useValue(
+                createMock<KeycloakUserService>({
+                    create: () =>
+                        Promise.resolve({
+                            ok: true,
+                            value: faker.string.uuid(),
+                        }),
+                    setPassword: () =>
+                        Promise.resolve({
+                            ok: true,
+                            value: faker.string.alphanumeric(16),
+                        }),
+                }),
+            )
+            .compile();
 
         sut = module.get(SchulconnexRepo);
         personenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
@@ -139,7 +141,7 @@ describe('Schulconnex Repo', () => {
         if (personResult instanceof DomainError) {
             throw personResult;
         }
-        const person: Person<true> | DomainError = await personRepo.create(personResult);
+        const person: Person<true> | DomainError = await personRepo.create(personResult); //Error
         if (person instanceof DomainError) {
             throw person;
         }
