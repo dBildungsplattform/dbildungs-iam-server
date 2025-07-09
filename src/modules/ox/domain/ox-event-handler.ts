@@ -346,8 +346,8 @@ export class OxEventHandler {
         });
     }
 
-    @EventHandler(PersonenkontextUpdatedEvent)
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
+    @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
