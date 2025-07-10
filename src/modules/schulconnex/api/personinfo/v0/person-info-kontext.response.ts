@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { LoeschungResponse } from '../../../person/api/loeschung.response.js';
-import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
+import { LoeschungResponse } from '../../../../person/api/loeschung.response.js';
+import { RollenArt } from '../../../../rolle/domain/rolle.enums.js';
 import {
     Personenstatus,
     Jahrgangsstufe,
     SichtfreigabeType,
-} from '../../../personenkontext/domain/personenkontext.enums.js';
+} from '../../../../personenkontext/domain/personenkontext.enums.js';
 import { PersonenInfoKontextOrganisationResponse } from './person-info-kontext-organisation.response.js';
 
 export class PersonenInfoKontextResponse {

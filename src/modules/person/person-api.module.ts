@@ -9,7 +9,6 @@ import { RolleModule } from '../rolle/rolle.module.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { DBiamPersonenuebersichtController } from './api/personenuebersicht/dbiam-personenuebersicht.controller.js';
-import { PersonInfoController } from './api/personinfo/person-info.controller.js';
 import { PersonApiMapper } from './mapper/person-api.mapper.js';
 import { PersonDeleteModule } from './person-deletion/person-delete.module.js';
 import { EmailModule } from '../email/email.module.js';
@@ -30,6 +29,6 @@ import { PersonLandesbediensteterSearchModule } from './person-landesbedienstete
         LoggerModule.register(PersonApiModule.name),
     ],
     providers: [PersonApiMapper],
-    controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController, PersonInfoController],
+    controllers: [PersonController, PersonFrontendController, DBiamPersonenuebersichtController],
 })
 export class PersonApiModule {}

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { SchulconnexGruppeTyp } from '../schulconnex-enums.v1.js';
+import { SchulconnexGruppeTyp } from '../../schulconnex-enums.v1.js';
 
 export class PersonenInfoKontextGruppeResponseV1 {
     @ApiProperty({ nullable: false })

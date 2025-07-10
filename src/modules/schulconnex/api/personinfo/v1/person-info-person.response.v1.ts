@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Person } from '../../../domain/person.js';
+import { Person } from '../../../../person/domain/person.js';
 import { PersonInfoPersonNameResponseV1 } from './person-info-person-name.response.v1.js';
 
 export class PersonInfoPersonResponseV1 {
