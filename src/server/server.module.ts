@@ -44,6 +44,7 @@ import { VidisModule } from '../modules/vidis/vidis.module.js';
 import { MeldungModule } from '../modules/meldung/meldung.module.js';
 import { MapperModule } from '../modules/person/mapper/mapper.module.js';
 import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbediensteter.module.js';
+import { SchulconnexModule } from '../modules/schulconnex/schulconnex.module.js';
 
 @Module({
     imports: [
@@ -110,6 +111,7 @@ import { LandesbediensteterModule } from '../modules/landesbediensteter/landesbe
         MeldungModule,
         MapperModule,
         LandesbediensteterModule,
+        SchulconnexModule,
     ],
     providers: [
         {

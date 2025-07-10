@@ -1,14 +1,14 @@
 /* eslint-disable max-classes-per-file */
 import { ApiProperty } from '@nestjs/swagger';
-import { Vertrauensstufe, VertrauensstufeTypName } from '../../domain/person.enums.js';
-import { PersonNameResponse } from '../person-name.response.js';
-import { PersonBirthResponse } from '../person-birth.response.js';
-import { PersonEmailResponse } from '../person-email-response.js';
-import { Person } from '../../domain/person.js';
+import { Vertrauensstufe, VertrauensstufeTypName } from '../../../../person/domain/person.enums.js';
+import { PersonNameResponse } from '../../../../person/api/person-name.response.js';
+import { PersonBirthResponse } from '../../../../person/api/person-birth.response.js';
+import { PersonEmailResponse } from '../../../../person/api/person-email-response.js';
+import { Person } from '../../../../person/domain/person.js';
 import { PersonenInfoKontextResponse } from './person-info-kontext.response.js';
-import { KontextWithOrgaAndRolle } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { KontextWithOrgaAndRolle } from '../../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenInfoKontextOrganisationResponse } from './person-info-kontext-organisation.response.js';
-import { LoeschungResponse } from '../loeschung.response.js';
+import { LoeschungResponse } from '../../../../person/api/loeschung.response.js';
 
 export class PersonNestedInPersonInfoResponse {
     @ApiProperty()

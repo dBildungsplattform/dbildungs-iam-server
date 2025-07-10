@@ -26,7 +26,7 @@ import { RolleModule } from '../../rolle/rolle.module.js';
 import { OrganisationModule } from '../../organisation/organisation.module.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { OrganisationID, PersonenkontextID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, PersonenkontextID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -409,6 +409,42 @@ describe('dbiam Personenkontext Repo', () => {
             expect(personenkontexte).toHaveLength(1);
             expect(personenkontexte.at(0)?.organisation.id).toEqual(organisation.id);
             expect(personenkontexte.at(0)?.rolle.id).toEqual(rolle.id);
+        });
+    });
+
+    describe('findByPersonIdsWithOrgaAndRolle', () => {
+        it('should return all personenkontexte for a person with orga and rolle', async () => {
+            const personA: Person<true> = await createPerson();
+            const personB: Person<true> = await createPerson();
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            const organisation: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
+            if (rolle instanceof DomainError) throw Error();
+
+            await Promise.all([
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personA.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personB.id,
+                        rolleId: rolle.id,
+                        organisationId: organisation.id,
+                    }),
+                ),
+            ]);
+
+            const personenkontexte: Map<PersonID, KontextWithOrgaAndRolle[]> =
+                await sut.findByPersonIdsWithOrgaAndRolle([personA.id, personB.id]);
+
+            expect(personenkontexte.size).toEqual(2);
+            expect(personenkontexte.get(personA.id)).toHaveLength(1);
+            expect(personenkontexte.get(personB.id)).toHaveLength(1);
         });
     });
 
