@@ -7,7 +7,6 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https:{{ .Values.keycloakHostname  }}"
-
 spec:
   ingressClassName: nginx-loadbalancerip
   rules:
