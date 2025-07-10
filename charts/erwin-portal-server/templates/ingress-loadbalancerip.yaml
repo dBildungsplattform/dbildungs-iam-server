@@ -1,0 +1,45 @@
+{{if .Values.backend.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "common.names.name" . }}-backend-loadbalancerip-ip
+  namespace: {{ template "common.names.namespace" . }}
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https:{{ .Values.keycloakHostname  }}"
+
+spec:
+  ingressClassName: nginx-loadbalancerip
+  rules:
+    - host: {{ .Values.backendHostname  }}  
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "common.names.name" $ }}-backend
+                port:
+                  number: 80
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "common.names.name" $ }}-backend
+                port:
+                  number: 80
+          - path: /docs-json
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "common.names.name" $ }}-backend
+                port:
+                  number: 80
+          - path: /docs-yaml
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ template "common.names.name" $ }}-backend
+                port:
+                  number: 80
+{{ end }}
