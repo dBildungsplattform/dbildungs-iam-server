@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
+import { OrganisationsTyp } from '../../../../organisation/domain/organisation.enums.js';
 
 export class PersonenInfoKontextOrganisationResponse {
     @ApiProperty({ nullable: false })
