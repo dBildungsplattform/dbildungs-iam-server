@@ -15,7 +15,7 @@ export type ListGroupsForUserResponse = {
 
 export type ListGroupsForUserResponseBody = {
     listGroupsForUserResponse: {
-        return: OXGroup[];
+        return: OXGroup | OXGroup[];
     };
 };
 
@@ -53,14 +53,25 @@ export class ListGroupsForUserAction extends OxBaseAction<ListGroupsForUserRespo
 
     public override parseBody(body: ListGroupsForUserResponseBody): Result<ListGroupsForUserResponse, DomainError> {
         const groups: OXGroup[] = [];
-        for (const ret of body.listGroupsForUserResponse.return) {
+
+        if (Array.isArray(body.listGroupsForUserResponse.return)) {
+            for (const ret of body.listGroupsForUserResponse.return) {
+                groups.push({
+                    id: ret.id,
+                    name: ret.name,
+                    displayname: ret.displayname,
+                    memberIds: ret.memberIds,
+                });
+            }
+        } else {
             groups.push({
-                id: ret.id,
-                name: ret.name,
-                displayname: ret.displayname,
-                memberIds: ret.memberIds,
+                id: body.listGroupsForUserResponse.return.id,
+                name: body.listGroupsForUserResponse.return.name,
+                displayname: body.listGroupsForUserResponse.return.displayname,
+                memberIds: body.listGroupsForUserResponse.return.memberIds,
             });
         }
+
         return {
             ok: true,
             value: {
