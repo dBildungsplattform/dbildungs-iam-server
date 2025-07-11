@@ -33,6 +33,7 @@ import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-ad
 import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
+import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -505,6 +506,8 @@ describe('OxEventHandler', () => {
 
     describe('addOxUserToOxGroup', () => {
         let personId: PersonID;
+        let username: PersonReferrer;
+        let personIdentifier: PersonIdentifier;
         let fakeDstNr: string;
         let event: EmailAddressGeneratedEvent;
         let person: Person<true>;
@@ -512,10 +515,15 @@ describe('OxEventHandler', () => {
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
+            username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
             fakeDstNr = faker.string.numeric();
             event = new EmailAddressGeneratedEvent(
                 personId,
-                faker.internet.userName(),
+                username,
                 faker.string.uuid(),
                 faker.internet.email(),
                 true,
@@ -560,8 +568,9 @@ describe('OxEventHandler', () => {
                 await sut.handleEmailAddressGeneratedEvent(event);
 
                 expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                expect(loggerMock.errorPersonalized).toHaveBeenCalledWith(
                     `Could Not Add OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOxGroupId}`,
+                    personIdentifier,
                 );
                 expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
             });
@@ -571,6 +580,7 @@ describe('OxEventHandler', () => {
     describe('handleEmailAddressGeneratedEvent', () => {
         let personId: PersonID;
         let username: PersonReferrer;
+        let personIdentifier: PersonIdentifier;
         let event: EmailAddressGeneratedEvent;
         let person: Person<true>;
 
@@ -578,6 +588,10 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
             event = new EmailAddressGeneratedEvent(
                 personId,
                 username,
@@ -607,8 +621,9 @@ describe('OxEventHandler', () => {
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(ExistsUserAction));
             expect(oxServiceMock.send).toHaveBeenCalledTimes(1);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Cannot create user in OX, username:${person.referrer} already exists, personId:${personId}`,
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(
+                `Cannot create user in OX, user already exists`,
+                personIdentifier,
             );
         });
 
@@ -618,9 +633,7 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Person not found for personId:${personId}, username:${username}`,
-            );
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(`Person not found`, personIdentifier);
         });
 
         it('should log error when person has no username set', async () => {
@@ -630,8 +643,9 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Person with personId:${personId} has no username: cannot create OXEmailAddress`,
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(
+                `Person has no username: cannot create OXEmailAddress`,
+                personIdentifier,
             );
         });
 
@@ -690,11 +704,13 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
-            expect(loggerMock.info).toHaveBeenCalledWith(
-                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, username:${username}`,
+            expect(loggerMock.infoPersonalized).toHaveBeenCalledWith(
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}`,
+                personIdentifier,
             );
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
+            expect(loggerMock.infoPersonalized).toHaveBeenLastCalledWith(
                 `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}`,
+                personIdentifier,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
@@ -742,8 +758,9 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, personId:${personId}, username:${username}, error:Unknown OX-error`,
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${fakeOXUserId}, error:Unknown OX-error`,
+                personIdentifier,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
@@ -801,11 +818,13 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}, personId:${personId}, username:${username}`,
+            expect(loggerMock.infoPersonalized).toHaveBeenLastCalledWith(
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}`,
+                personIdentifier,
             );
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Persisting oxUserId on emailAddress failed, personId:${personId}, username:${username}`,
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(
+                `Persisting oxUserId on emailAddress failed`,
+                personIdentifier,
             );
             expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
         });
@@ -828,17 +847,19 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressGeneratedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenLastCalledWith(expect.any(CreateUserAction));
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could not create user in OX, personId:${personId}, username:${username}, error:Request failed`,
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(
+                `Could not create user in OX, error:Request failed`,
+                personIdentifier,
             );
         });
     });
 
     describe('handleEmailAddressChangedEvent', () => {
         let personId: PersonID;
+        let username: PersonReferrer;
+        let personIdentifier: PersonIdentifier;
         let event: EmailAddressChangedEvent;
         let person: Person<true>;
-        let username: PersonReferrer;
         let email: string;
         let oxUserId: string;
         let oxUserName: string;
@@ -849,6 +870,10 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
             email = faker.internet.email();
             oxUserId = faker.string.numeric();
             oxUserName = faker.internet.userName();
@@ -880,9 +905,7 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressChangedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Person not found for personId:${personId}, username:${username}`,
-            );
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(`Person not found`, personIdentifier);
         });
 
         it('should log error when person has no username set', async () => {
@@ -892,8 +915,9 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressChangedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Person with personId:${personId} has no username: Cannot Change Email-Address In OX`,
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(
+                `Person has no username: Cannot Change Email-Address In OX`,
+                personIdentifier,
             );
         });
 
@@ -904,9 +928,7 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressChangedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(0);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Person has no OXUserId, personId:${personId}, username:${username}`,
-            );
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(`Person has no OXUserId`, personIdentifier);
         });
 
         it('should log error when no requestedEmailAddress is found for person', async () => {
@@ -959,8 +981,9 @@ describe('OxEventHandler', () => {
             await sut.handleEmailAddressChangedEvent(event);
 
             expect(oxServiceMock.send).toHaveBeenCalledTimes(2);
-            expect(loggerMock.error).toHaveBeenLastCalledWith(
-                `Could not change email-address for oxUserId:${person.oxUserId}, personId:${personId}, username:${username}, error:Request failed`,
+            expect(loggerMock.errorPersonalized).toHaveBeenLastCalledWith(
+                `Could not change email-address for oxUserId:${person.oxUserId}, error:Request failed`,
+                personIdentifier,
             );
         });
 
@@ -990,15 +1013,16 @@ describe('OxEventHandler', () => {
             expect(oxServiceMock.send).toHaveBeenCalledTimes(2);
             expect(loggerMock.error).toHaveBeenCalledTimes(0);
             expect(loggerMock.info).toHaveBeenCalledWith(
-                `Found mostRecentRequested Email-Address:${JSON.stringify(email)} For personId:${personId}`,
+                `Found mostRecentRequested Email-Address:${JSON.stringify(email)} for personId:${personId}`,
             );
             //use regex, because strict comparison fails, local test-var currentAliases has changed by the implemented function when expect is checked here
             expect(loggerMock.info).toHaveBeenCalledWith(expect.stringMatching(/Found Current aliases:.*/));
             expect(loggerMock.info).toHaveBeenCalledWith(
                 `Added New alias:${email}, personId:${personId}, username:${username}`,
             );
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Changed primary email-address in OX for user, personId:${personId}, username:${username}, oxUserId:${oxUserId}, oxUsername:${username}, new email-address:${email}`,
+            expect(loggerMock.infoPersonalized).toHaveBeenLastCalledWith(
+                `Changed primary email-address in OX for user, oxUserId:${oxUserId}, oxUsername:${username}, new email-address:${email}`,
+                personIdentifier,
             );
             expect(eventServiceMock.publish).toHaveBeenLastCalledWith(
                 expect.objectContaining({
@@ -1031,6 +1055,7 @@ describe('OxEventHandler', () => {
         let event: DisabledEmailAddressGeneratedEvent;
         let person: Person<true>;
         let username: PersonReferrer;
+        let personIdentifier: PersonIdentifier;
         let emailId: string;
         let email: string;
         let domain: string;
@@ -1043,6 +1068,10 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
             emailId = faker.string.uuid();
             email = faker.internet.email();
             domain = faker.internet.domainName();
@@ -1085,8 +1114,9 @@ describe('OxEventHandler', () => {
 
             await sut.handleDisabledEmailAddressGeneratedEvent(event);
 
-            expect(loggerMock.info).toHaveBeenLastCalledWith(
-                `Changed primary email-address in OX for user, personId:${personId}, username:${username}, oxUserId:${oxUserId}, oxUsername:${username}, new email-address:${email}`,
+            expect(loggerMock.infoPersonalized).toHaveBeenLastCalledWith(
+                `Changed primary email-address in OX for user, oxUserId:${oxUserId}, oxUsername:${username}, new email-address:${email}`,
+                personIdentifier,
             );
             expect(eventServiceMock.publish).toHaveBeenLastCalledWith(
                 expect.objectContaining({
@@ -1251,12 +1281,19 @@ describe('OxEventHandler', () => {
 
     describe('handlePersonDeletedEvent', () => {
         let personId: PersonID;
+        let username: PersonReferrer;
+        let personIdentifier: PersonIdentifier;
         let event: PersonDeletedEvent;
 
         beforeEach(() => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
-            event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
+            username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
+            event = new PersonDeletedEvent(personId, username, faker.internet.email());
         });
 
         describe('when handler is disabled', () => {
@@ -1270,7 +1307,7 @@ describe('OxEventHandler', () => {
 
         describe('when emailAddress is NOT defined in event', () => {
             it('should log error about missing emailAddress', async () => {
-                event = new PersonDeletedEvent(personId, faker.string.uuid(), undefined);
+                event = new PersonDeletedEvent(personId, username, undefined);
 
                 await sut.handlePersonDeletedEvent(event);
 
@@ -1282,7 +1319,7 @@ describe('OxEventHandler', () => {
 
         describe('when EmailAddress-entity CANNOT be found via address', () => {
             it('should log error about that', async () => {
-                event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
+                event = new PersonDeletedEvent(personId, username, faker.internet.email());
 
                 emailRepoMock.findByAddress.mockResolvedValueOnce(undefined);
 
@@ -1296,7 +1333,7 @@ describe('OxEventHandler', () => {
 
         describe('when oxUserId is NOT defined on found EmailAddress', () => {
             it('should log error about missing oxUserId', async () => {
-                event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
+                event = new PersonDeletedEvent(personId, username, faker.internet.email());
                 emailRepoMock.findByAddress.mockResolvedValueOnce(
                     createMock<EmailAddress<true>>({
                         get oxUserID(): Option<string> {
@@ -1315,7 +1352,7 @@ describe('OxEventHandler', () => {
 
         describe('when delete-request to OX fails', () => {
             it('should log error about failing request', async () => {
-                event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
+                event = new PersonDeletedEvent(personId, username, faker.internet.email());
                 const oxUserId: OXUserID = faker.string.numeric();
 
                 emailRepoMock.findByAddress.mockResolvedValueOnce(
@@ -1348,15 +1385,16 @@ describe('OxEventHandler', () => {
 
                 await sut.handlePersonDeletedEvent(event);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                expect(loggerMock.errorPersonalized).toHaveBeenCalledWith(
                     `Could Not Delete OxAccount For oxUserId:${oxUserId}, error:Unknown OX-error`,
+                    personIdentifier,
                 );
             });
         });
 
         describe('when delete-request to OX succeeds', () => {
             it('should log info about success', async () => {
-                event = new PersonDeletedEvent(personId, faker.string.uuid(), faker.internet.email());
+                event = new PersonDeletedEvent(personId, username, faker.internet.email());
                 const oxUserId: OXUserID = faker.string.numeric();
 
                 emailRepoMock.findByAddress.mockResolvedValueOnce(
@@ -1389,7 +1427,10 @@ describe('OxEventHandler', () => {
 
                 await sut.handlePersonDeletedEvent(event);
 
-                expect(loggerMock.info).toHaveBeenCalledWith(`Successfully Deleted OxAccount For oxUserId:${oxUserId}`);
+                expect(loggerMock.infoPersonalized).toHaveBeenCalledWith(
+                    `Successfully Deleted OxAccount For oxUserId:${oxUserId}`,
+                    personIdentifier,
+                );
             });
         });
     });
@@ -1528,6 +1569,7 @@ describe('OxEventHandler', () => {
     describe('handleEmailAddressesPurgedEvent', () => {
         let personId: PersonID;
         let username: PersonReferrer;
+        let personIdentifier: PersonIdentifier;
         let oxUserId: OXUserID;
         let event: EmailAddressesPurgedEvent;
 
@@ -1535,6 +1577,10 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
             oxUserId = faker.string.numeric();
             event = new EmailAddressesPurgedEvent(personId, username, oxUserId);
         });
@@ -1576,8 +1622,9 @@ describe('OxEventHandler', () => {
 
                 await sut.handleEmailAddressesPurgedEvent(event);
 
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                expect(loggerMock.errorPersonalized).toHaveBeenCalledWith(
                     `Could Not Delete OxAccount For oxUserId:${event.oxUserId}, error:${error.message}`,
+                    personIdentifier,
                 );
             });
         });
@@ -1618,8 +1665,9 @@ describe('OxEventHandler', () => {
                         oxUserId: oxUserId,
                     }),
                 );
-                expect(loggerMock.info).toHaveBeenCalledWith(
+                expect(loggerMock.infoPersonalized).toHaveBeenCalledWith(
                     `Successfully Deleted OxAccount For oxUserId:${event.oxUserId}`,
+                    personIdentifier,
                 );
             });
         });
@@ -1628,6 +1676,7 @@ describe('OxEventHandler', () => {
     describe('handleEmailAddressDisabledEvent', () => {
         let personId: PersonID;
         let username: string;
+        let personIdentifier: PersonIdentifier;
         let oxUserId: OXUserID;
         let event: EmailAddressDisabledEvent;
         let person: Person<true>;
@@ -1635,6 +1684,10 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
             oxUserId = faker.string.numeric();
             event = new EmailAddressDisabledEvent(personId, username);
             person = createMock<Person<true>>({
@@ -1676,8 +1729,9 @@ describe('OxEventHandler', () => {
                     error: new OxError(),
                 });
                 await sut.handleEmailAddressDisabledEvent(event);
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Retrieving OxGroups For OxUser Failed, personId:${event.personId}`,
+                expect(loggerMock.errorPersonalized).toHaveBeenCalledWith(
+                    `Retrieving OxGroups For OxUser Failed`,
+                    personIdentifier,
                 );
             });
         });
@@ -1720,11 +1774,13 @@ describe('OxEventHandler', () => {
                     error: new OxError(),
                 });
                 await sut.handleEmailAddressDisabledEvent(event);
-                expect(loggerMock.info).toHaveBeenCalledWith(
+                expect(loggerMock.infoPersonalized).toHaveBeenCalledWith(
                     `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:group1-id`,
+                    personIdentifier,
                 );
-                expect(loggerMock.error).toHaveBeenCalledWith(
+                expect(loggerMock.errorPersonalized).toHaveBeenCalledWith(
                     `Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:group2-id`,
+                    personIdentifier,
                 );
             });
         });
@@ -1733,6 +1789,7 @@ describe('OxEventHandler', () => {
     describe('handlePersonenkontextUpdatedEvent', () => {
         let personId: PersonID;
         let username: PersonReferrer;
+        let personIdentifier: PersonIdentifier;
         let oxUserId: OXUserID;
         let oxGroupId: OXGroupID;
         let rollenArtLehrPKOrgaKennung: OrganisationKennung;
@@ -1742,6 +1799,10 @@ describe('OxEventHandler', () => {
             jest.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
             rollenArtLehrPKOrgaKennung = faker.string.numeric(7);
             oxUserId = faker.string.numeric();
             oxGroupId = faker.string.numeric();
@@ -1805,8 +1866,9 @@ describe('OxEventHandler', () => {
                     },
                 });
                 await sut.handlePersonenkontextUpdatedEvent(event);
-                expect(loggerMock.info).toHaveBeenCalledWith(
+                expect(loggerMock.infoPersonalized).toHaveBeenCalledWith(
                     `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                    personIdentifier,
                 );
             });
         });
