@@ -6,9 +6,9 @@ name: "Dev Pipeline"
 on:
   push:
     branches:
-      - "**"
+      - '*'
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 6 * * 1'
   delete:
 
 concurrency:
@@ -58,7 +58,7 @@ jobs:
   codeql_analyze:
     name: "CodeQL"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-codeql.yaml@7
     permissions:
       actions: read
       contents: read
@@ -67,7 +67,7 @@ jobs:
   nest_lint:
     name: "Linting"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-lint.yaml@7
     with:
       node_version: '18'
     permissions:
@@ -76,7 +76,7 @@ jobs:
   tests_and_sonarcloud:
     name: "Tests and Sonarcloud"
     if: ${{ github.event_name == 'push' }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@7
     with:
       node_version: '18'
       deploy_stage: 'dev'
@@ -108,7 +108,7 @@ jobs:
 
   scan_helm:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
-    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@5
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-helm-kics.yaml@7
     permissions:
       contents: read
 
@@ -145,14 +145,39 @@ jobs:
       image_tag: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.image_tag_from_branch }}
       helm_chart_version_generation: ${{ needs.select_helm_version_generation_and_image_tag_generation.outputs.SELECT_HELM_VERSION_GENERATION }}
       helm_chart_version: ${{ github.ref_name == 'main' && '' || needs.create_branch_identifier.outputs.chart_version_from_branch }}
+     
 
   wait_for_helm_chart_to_get_published:
+    runs-on: ubuntu-latest
     needs:
       - release_helm
-    runs-on: ubuntu-latest
     steps:
-      - shell: bash
-        run: sleep 1m
+      - name: Check for Helm chart
+        run: |
+          CHART_NAME=erwin-portal-server
+          CHART_VERSION="${{ needs.release_helm.outputs.helm_chart_version }}"
+          echo "CHART_VERSION=$CHART_VERSION"
+          REPO_URL="https://dbildungsplattform.github.io/helm-charts-registry/"
+
+          echo "Adding Helm repository $REPO_URL"
+          helm repo add dbildungsplattform $REPO_URL
+          
+          echo "Checking for chart $CHART_NAME version $CHART_VERSION in $REPO_URL"
+
+          for i in {1..20}; do
+            echo "Attempt $i..."
+            helm repo update
+            if helm search repo dbildungsplattform/$CHART_NAME --version $CHART_VERSION | grep -qw "$CHART_VERSION"; then
+              minutes=$(echo "scale=2; $i * 30 / 60" | bc)
+              echo "Chart $CHART_NAME-$CHART_VERSION found after $minutes minutes !"
+              exit 0
+            fi
+            echo "Chart not found yet. Waiting 30 seconds..."
+            sleep 30
+          done
+
+          echo "Chart $CHART_NAME:$CHART_VERSION not found after waiting."
+          exit 1 
 
   branch_meta:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/') }}
@@ -178,7 +203,7 @@ jobs:
       erwin_portal_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       erwin_portal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       erwin_portal_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
-      erwin_portal_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
+      #erwin_portal_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
       database_recreation: "true" # to prevent database recreation this has to be set to false
     secrets: inherit
@@ -198,7 +223,7 @@ jobs:
     with:
       namespace: ${{ needs.create_branch_identifier_for_deletion.outputs.namespace_from_branch }}
     secrets:
-      ERW_DEV_KUBECONFIG: ${{ secrets.ERW_DEV_KUBECONFIG }}
+      ERWIN_DEV_KUBECONFIG: ${{ secrets.ERWIN_DEV_KUBECONFIG }}
 
   delete_successful:
     if: ${{ github.event_name == 'delete' && github.event.ref_type == 'branch' }}
@@ -230,8 +255,8 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
     - name: Send Notification to Rocket Chat
-      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@1.1.1
+      uses: RocketChat/Rocket.Chat.GitHub.Action.Notification@2966f5f2e0313a94f965a51c08700cfecf0b6572 #1.1.1
       with:
         type: failure
         job_name: 'Daily nightly image check failed - CVEs found so check'
-        url: ${{ secrets.RC_WEBHOOK_SPSH_DEVELOPER_CHANNEL }}
+        url: ${{ secrets.RC_WEBHOOK_ERWIN_DEVELOPER_CHANNEL }}
