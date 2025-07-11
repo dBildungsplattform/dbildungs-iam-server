@@ -140,6 +140,45 @@ export class DBiamPersonenkontextRepo {
         });
     }
 
+    public async findByPersonIdsWithOrgaAndRolle(
+        personIds: PersonID[],
+    ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
+        const result: Map<PersonID, KontextWithOrgaAndRolle[]> = new Map<PersonID, KontextWithOrgaAndRolle[]>();
+
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(
+            PersonenkontextEntity,
+            { personId: { $in: personIds } },
+            {
+                populate: [
+                    'organisationId',
+                    'rolleId',
+                    'rolleId.merkmale',
+                    'rolleId.systemrechte',
+                    'rolleId.serviceProvider',
+                ],
+            },
+        );
+
+        for (const pk of personenKontexte) {
+            const personId: string = pk.personId.id;
+            const orgaEntity: OrganisationEntity = pk.organisationId.unwrap();
+            const rolleEntity: RolleEntity = pk.rolleId.unwrap();
+
+            const kontext: KontextWithOrgaAndRolle = {
+                personenkontext: mapEntityToAggregate(pk, this.personenkontextFactory),
+                organisation: this.entityAggregateMapper.mapOrganisationEntityToAggregate(orgaEntity),
+                rolle: this.entityAggregateMapper.mapRolleEntityToAggregate(rolleEntity),
+            };
+
+            if (!result.has(personId)) {
+                result.set(personId, []);
+            }
+
+            result.get(personId)!.push(kontext);
+        }
+        return result;
+    }
+
     public async findBy(scope: PersonenkontextScope): Promise<Counted<Personenkontext<true>>> {
         const [entities, total]: Counted<PersonenkontextEntity> = await scope.executeQuery(this.em);
         const kontexte: Personenkontext<true>[] = entities.map((entity: PersonenkontextEntity) =>
