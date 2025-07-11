@@ -87,11 +87,11 @@ describe('KeycloakInternalController', () => {
                     kennung: faker.lorem.word(),
                 },
                 {
-                    rollenart: RollenArt.LERN,
+                    rollenart: RollenArt.LEHR,
                     kennung: faker.lorem.word(),
                 },
                 {
-                    rollenart: RollenArt.EXTERN,
+                    rollenart: RollenArt.LEHR,
                     kennung: undefined, //To Be Filtered Out
                 },
             ];
@@ -106,6 +106,11 @@ describe('KeycloakInternalController', () => {
             expect(result).toBeInstanceOf(UserExeternalDataResponse);
             expect(result.ox.id).toContain(`${person.referrer}@`);
             expect(result.itslearning.personId).toEqual(person.id);
+            expect(result.vidis.personId).toEqual(person.id);
+            expect(result.vidis.vorname).toEqual(person.vorname);
+            expect(result.vidis.nachname).toEqual(person.familienname);
+            expect(result.vidis.emailAdresse).toEqual(person.email);
+            expect(result.vidis.rollenart).toEqual(pkExternalData[0]?.rollenart);
             expect(result.vidis.dienststellenNummern.length).toEqual(2);
             expect(result.opsh.vorname).toEqual(person.vorname);
             expect(result.opsh.nachname).toEqual(person.familienname);
