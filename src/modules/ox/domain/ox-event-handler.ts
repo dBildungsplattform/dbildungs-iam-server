@@ -78,6 +78,7 @@ import { KafkaEmailAddressesPurgedEvent } from '../../../shared/events/email/kaf
 import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
+import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -278,6 +279,10 @@ export class OxEventHandler {
         const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
             oxGroupIdResult.value,
             person.oxUserId,
+            {
+                personId: event.personId,
+                username: undefined,
+            },
         );
 
         if (!addUserToGroupResult.ok) {
@@ -335,11 +340,14 @@ export class OxEventHandler {
 
         //remove oxUser as member from all its oxGroups
         //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
-        await this.removeOxUserFromAllItsOxGroups(person.oxUserId, person.id);
+        await this.removeOxUserFromAllItsOxGroups(person.oxUserId, {
+            personId: event.personId,
+            username: event.username,
+        });
     }
 
-    @EventHandler(PersonenkontextUpdatedEvent)
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)
+    @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
     public async handlePersonenkontextUpdatedEvent(event: PersonenkontextUpdatedEvent): Promise<void> {
         this.logger.info(
@@ -371,7 +379,10 @@ export class OxEventHandler {
                 );
             }
             //Logging is done in removeOxUserFromOxGroup
-            await this.removeOxUserFromOxGroup(oxGroupId, person.oxUserId);
+            await this.removeOxUserFromOxGroup(oxGroupId, person.oxUserId, {
+                personId: person.id,
+                username: person.referrer,
+            });
         }
     }
 
@@ -448,11 +459,10 @@ export class OxEventHandler {
             );
         }
 
-        return this.removeOxUserFromAllItsGroupsAndDeleteOxAccount(
-            event.personId,
-            event.username,
-            emailAddress.oxUserID,
-        );
+        return this.removeOxUserFromAllItsGroupsAndDeleteOxAccount(emailAddress.oxUserID, {
+            personId: event.personId,
+            username: event.username,
+        });
     }
 
     @KafkaEventHandler(KafkaEmailAddressMarkedForDeletionEvent)
@@ -542,21 +552,24 @@ export class OxEventHandler {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        return this.removeOxUserFromAllItsGroupsAndDeleteOxAccount(event.personId, event.username, event.oxUserId);
+        return this.removeOxUserFromAllItsGroupsAndDeleteOxAccount(event.oxUserId, {
+            personId: event.personId,
+            username: event.username,
+        });
     }
 
     private async removeOxUserFromAllItsGroupsAndDeleteOxAccount(
-        personId: PersonID | undefined,
-        username: PersonReferrer | undefined,
         oxUserId: OXUserID,
+        personIdentifier: PersonIdentifier,
     ): Promise<void> {
-        this.logger.info(
-            `Remove OxUser from all its groups and delete OxAccount, personId:${personId}, username:${username}, oxUserId:${oxUserId}`,
+        this.logger.infoPersonalized(
+            `Remove OxUser from all its groups and delete OxAccount, oxUserId:${oxUserId}`,
+            personIdentifier,
         );
 
         //remove oxUser as member from all its oxGroups
         //logging about success or errors is done inside removeOxUserFromAllItsOxGroups
-        await this.removeOxUserFromAllItsOxGroups(oxUserId, personId);
+        await this.removeOxUserFromAllItsOxGroups(oxUserId, personIdentifier);
 
         const params: UserIdParams = {
             contextId: this.contextID,
@@ -570,23 +583,30 @@ export class OxEventHandler {
         const result: Result<void, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
-            return this.logger.error(
+            return this.logger.errorPersonalized(
                 `Could Not Delete OxAccount For oxUserId:${oxUserId}, error:${result.error.message}`,
+                personIdentifier,
             );
         }
         this.eventService.publish(
-            new OxAccountDeletedEvent(personId, username, oxUserId),
-            new KafkaOxAccountDeletedEvent(personId, username, oxUserId),
+            new OxAccountDeletedEvent(personIdentifier.personId, personIdentifier.username, oxUserId),
+            new KafkaOxAccountDeletedEvent(personIdentifier.personId, personIdentifier.username, oxUserId),
         );
 
-        return this.logger.info(`Successfully Deleted OxAccount For oxUserId:${oxUserId}`);
+        return this.logger.infoPersonalized(
+            `Successfully Deleted OxAccount For oxUserId:${oxUserId}`,
+            personIdentifier,
+        );
     }
 
-    private async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personId: PersonID | undefined): Promise<void> {
+    private async removeOxUserFromAllItsOxGroups(
+        oxUserId: OXUserID,
+        personIdentifier: PersonIdentifier,
+    ): Promise<void> {
         const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
             await this.getOxGroupsForOxUserId(oxUserId);
         if (!listGroupsForUserResponse.ok) {
-            return this.logger.error(`Retrieving OxGroups For OxUser Failed, personId:${personId}`);
+            return this.logger.errorPersonalized(`Retrieving OxGroups For OxUser Failed`, personIdentifier);
         }
         //Removal from Standard-Group is possible even when user is member of other OxGroups
         const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
@@ -594,7 +614,7 @@ export class OxEventHandler {
         /* eslint-disable no-await-in-loop */
         for (const oxGroup of oxGroups) {
             //logging of results is done in removeOxUserFromOxGroup
-            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId);
+            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId, personIdentifier);
         }
     }
 
@@ -606,7 +626,7 @@ export class OxEventHandler {
             return undefined;
         }
         this.logger.info(
-            `Found mostRecentRequested Email-Address:${JSON.stringify(requestedEmailAddresses[0].address)} For personId:${personId}`,
+            `Found mostRecentRequested Email-Address:${JSON.stringify(requestedEmailAddresses[0].address)} for personId:${personId}`,
         );
 
         return requestedEmailAddresses[0];
@@ -696,6 +716,7 @@ export class OxEventHandler {
     private async addOxUserToOxGroup(
         oxGroupId: OXGroupID,
         oxUserId: OXUserID,
+        personIdentifier: PersonIdentifier,
     ): Promise<Result<AddMemberToGroupResponse>> {
         const params: GroupMemberParams = {
             contextId: this.contextID,
@@ -709,9 +730,15 @@ export class OxEventHandler {
         const result: Result<AddMemberToGroupResponse, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
-            this.logger.error(`Could Not Add OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+            this.logger.errorPersonalized(
+                `Could Not Add OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                personIdentifier,
+            );
         } else {
-            this.logger.info(`Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+            this.logger.infoPersonalized(
+                `Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                personIdentifier,
+            );
         }
         return result;
     }
@@ -736,6 +763,7 @@ export class OxEventHandler {
     private async removeOxUserFromOxGroup(
         oxGroupId: OXGroupID,
         oxUserId: OXUserID,
+        personIdentifier: PersonIdentifier,
     ): Promise<Result<RemoveMemberFromGroupResponse>> {
         const params: GroupMemberParams = {
             contextId: this.contextID,
@@ -747,9 +775,15 @@ export class OxEventHandler {
         const action: RemoveMemberFromGroupAction = new RemoveMemberFromGroupAction(params);
         const result: Result<RemoveMemberFromGroupResponse, DomainError> = await this.oxService.send(action);
         if (!result.ok) {
-            this.logger.error(`Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+            this.logger.errorPersonalized(
+                `Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                personIdentifier,
+            );
         } else {
-            this.logger.info(`Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`);
+            this.logger.infoPersonalized(
+                `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                personIdentifier,
+            );
         }
 
         return result;
@@ -760,13 +794,20 @@ export class OxEventHandler {
         username: PersonReferrer,
         orgaKennung: OrganisationKennung,
     ): Promise<void> {
+        const personIdentifier: PersonIdentifier = {
+            personId: personId,
+            username: username,
+        };
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
-            return this.logger.error(`Person not found for personId:${personId}, username:${username}`);
+            return this.logger.errorPersonalized(`Person not found`, personIdentifier);
         }
         if (!person.referrer) {
-            return this.logger.error(`Person with personId:${personId} has no username: cannot create OXEmailAddress`);
+            return this.logger.errorPersonalized(
+                `Person has no username: cannot create OXEmailAddress`,
+                personIdentifier,
+            );
         }
 
         const mostRecentRequestedEmailAddress: Option<EmailAddress<true>> =
@@ -786,9 +827,7 @@ export class OxEventHandler {
         const existsResult: Result<ExistsUserResponse, DomainError> = await this.oxService.send(existsAction);
 
         if (existsResult.ok && existsResult.value.exists) {
-            this.logger.error(
-                `Cannot create user in OX, username:${person.referrer} already exists, personId:${personId}`,
-            );
+            this.logger.errorPersonalized(`Cannot create user in OX, user already exists`, personIdentifier);
             return;
         }
 
@@ -813,13 +852,15 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
 
-            return this.logger.error(
-                `Could not create user in OX, personId:${personId}, username:${username}, error:${createUserResult.error.message}`,
+            return this.logger.errorPersonalized(
+                `Could not create user in OX, error:${createUserResult.error.message}`,
+                personIdentifier,
             );
         }
 
-        this.logger.info(
-            `User created in OX, oxUserId:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}, personId:${personId}, username:${username}`,
+        this.logger.infoPersonalized(
+            `User created in OX, oxUserId:${createUserResult.value.id}, oxEmail:${createUserResult.value.primaryEmail}`,
+            personIdentifier,
         );
 
         mostRecentRequestedEmailAddress.oxUserID = createUserResult.value.id;
@@ -829,9 +870,7 @@ export class OxEventHandler {
         if (emailAddressUpdateResult instanceof DomainError) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
-            return this.logger.error(
-                `Persisting oxUserId on emailAddress failed, personId:${personId}, username:${username}`,
-            );
+            return this.logger.errorPersonalized(`Persisting oxUserId on emailAddress failed`, personIdentifier);
         }
 
         const oxGroupId: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
@@ -842,7 +881,7 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
             return this.logger.logUnknownAsError(
-                `Failed getting existing OxGroup by name or create new OxGroup if necessary, personId:${personId}, username:${username}`,
+                `Failed getting existing OxGroup by name or create new OxGroup if necessary, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
                 oxGroupId.error,
             );
         }
@@ -850,12 +889,16 @@ export class OxEventHandler {
         const addUserToGroupResult: Result<AddMemberToGroupResponse> = await this.addOxUserToOxGroup(
             oxGroupId.value,
             createUserResult.value.id,
+            {
+                personId: personIdentifier.personId,
+                username: personIdentifier.username,
+            },
         );
         if (!addUserToGroupResult.ok) {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
             return this.logger.logUnknownAsError(
-                `Failed adding user to OXGroup, personId:${personId}, username:${username}`,
+                `Failed adding user to OXGroup, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
                 addUserToGroupResult.error,
             );
         }
@@ -877,8 +920,9 @@ export class OxEventHandler {
 
         if (!changeByModuleAccessResult.ok) {
             //only log error, do not set email-address status = FAILED, the ChangeByModuleAccessAction won't work against OX-DEV
-            this.logger.error(
-                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${createUserResult.value.id}, personId:${personId}, username:${username}, error:${changeByModuleAccessResult.error.message}`,
+            this.logger.errorPersonalized(
+                `Could Not Adjust GlobalAddressBookDisabled For oxUserId:${createUserResult.value.id}, error:${changeByModuleAccessResult.error.message}`,
+                personIdentifier,
             );
         }
 
@@ -909,18 +953,23 @@ export class OxEventHandler {
         username: PersonReferrer,
         eventCreator: OxUserChangedEventCreator,
     ): Promise<void> {
+        const personIdentifier: PersonIdentifier = {
+            personId: personId,
+            username: username,
+        };
         const person: Option<Person<true>> = await this.personRepository.findById(personId);
 
         if (!person) {
-            return this.logger.error(`Person not found for personId:${personId}, username:${username}`);
+            return this.logger.errorPersonalized(`Person not found`, personIdentifier);
         }
         if (!person.referrer) {
-            return this.logger.error(
-                `Person with personId:${personId} has no username: Cannot Change Email-Address In OX`,
+            return this.logger.errorPersonalized(
+                `Person has no username: Cannot Change Email-Address In OX`,
+                personIdentifier,
             );
         }
         if (!person.oxUserId) {
-            return this.logger.error(`Person has no OXUserId, personId:${personId}, username:${username}`);
+            return this.logger.errorPersonalized(`Person has no OXUserId`, personIdentifier);
         }
 
         const mostRecentRequestedEmailAddress: Option<EmailAddress<true>> =
@@ -943,16 +992,18 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
             return this.logger.error(
-                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personId}, username:${username}`,
+                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
             );
         }
         const newAliasesArray: string[] = getDataResult.value.aliases;
         this.logger.info(
-            `Found Current aliases:${JSON.stringify(newAliasesArray)}, personId:${personId}, username:${username}`,
+            `Found Current aliases:${JSON.stringify(newAliasesArray)}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
         );
 
         newAliasesArray.push(requestedEmailAddressString);
-        this.logger.info(`Added New alias:${requestedEmailAddressString}, personId:${personId}, username:${username}`);
+        this.logger.info(
+            `Added New alias:${requestedEmailAddressString}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+        );
 
         const params: ChangeUserParams = {
             contextId: this.contextID,
@@ -977,13 +1028,15 @@ export class OxEventHandler {
             mostRecentRequestedEmailAddress.failed();
             await this.emailRepo.save(mostRecentRequestedEmailAddress);
 
-            return this.logger.error(
-                `Could not change email-address for oxUserId:${person.oxUserId}, personId:${personId}, username:${username}, error:${result.error.message}`,
+            return this.logger.errorPersonalized(
+                `Could not change email-address for oxUserId:${person.oxUserId}, error:${result.error.message}`,
+                personIdentifier,
             );
         }
 
-        this.logger.info(
-            `Changed primary email-address in OX for user, personId:${personId}, username:${username}, oxUserId:${person.oxUserId}, oxUsername:${person.referrer}, new email-address:${requestedEmailAddressString}`,
+        this.logger.infoPersonalized(
+            `Changed primary email-address in OX for user, oxUserId:${person.oxUserId}, oxUsername:${person.referrer}, new email-address:${requestedEmailAddressString}`,
+            personIdentifier,
         );
 
         const event: [OxUserChangedEvent, KafkaOxUserChangedEvent] = eventCreator(

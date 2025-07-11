@@ -1232,7 +1232,7 @@ export class LdapClientService {
 
         if (!this.isPersonInSearchResult(searchResultOrgUnit.searchEntries[0], lehrerUid)) {
             this.logger.info(`LDAP: Person ${username} is not in group ${groupId}`);
-            return { ok: false, error: new Error(`Person ${username} is not in group ${groupId}`) };
+            return { ok: true, value: false };
         }
         const groupDn: string = searchResultOrgUnit.searchEntries[0].dn;
         try {

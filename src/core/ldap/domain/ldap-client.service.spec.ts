@@ -2739,7 +2739,7 @@ describe('LDAP Client Service', () => {
             );
         });
 
-        it('should return false when person is not in group (member as string)', async () => {
+        it('should return true when person is not in group (member as string)', async () => {
             ldapClientMock.getClient.mockImplementation(() => {
                 clientMock.bind.mockResolvedValueOnce();
                 clientMock.search.mockResolvedValueOnce({
@@ -2754,15 +2754,14 @@ describe('LDAP Client Service', () => {
                 return clientMock;
             });
 
-            const result: Result<boolean, Error> = await ldapClientService.removePersonFromGroup(
+            const result: Result<boolean> = await ldapClientService.removePersonFromGroup(
                 fakePersonUid,
                 fakeDienstStellenNummer,
                 fakeLehrerUid,
             );
 
-            assert(!result.ok);
-            expect(result.error).toBeInstanceOf(Error);
-            expect(result.error?.message).toContain(`Person ${fakePersonUid} is not in group ${fakeGroupId}`);
+            assert(result.ok);
+            expect(result.value).toStrictEqual(false);
         });
 
         it('should return true when person is in group (member as Buffer)', async () => {
