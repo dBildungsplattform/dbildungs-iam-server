@@ -1,4 +1,4 @@
-{{if .Values.backend.ingress.enabled }}
+{{ if .Values.backend.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,11 +6,17 @@ metadata:
   namespace: {{ template "common.names.namespace" . }}
   annotations:
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "https:{{ .Values.keycloakHostname  }}"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://{{ .Values.keycloakHostname }}"
 spec:
   ingressClassName: nginx-loadbalancerip
+
+  tls:
+    - hosts:
+        - {{ .Values.backendHostname }}
+      secretName: erwin-portal-default-tls
+
   rules:
-    - host: {{ .Values.backendHostname  }}  
+    - host: {{ .Values.backendHostname }}
       http:
         paths:
           - path: /api
