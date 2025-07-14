@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer, Kafka, KafkaMessage, Producer } from 'kafkajs';
 import { BaseEvent } from '../../../shared/events/index.js';
-import { Constructor, EventHandlerType } from '../types/util.types.js';
+import { Constructor, EventHandlerType, MaybePromise } from '../types/util.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import {
     isKafkaEventKey,
@@ -129,10 +129,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             const handlerPromises: Promise<Result<unknown>>[] = handlers.map(
                 async (handler: EventHandlerType<BaseEvent>) => {
                     try {
-                        const result: Result<unknown> | void = await handler(kafkaEvent);
-
-                        if (!result) return { ok: true, value: null } satisfies Result<unknown>;
-                        return result;
+                        return await this.runWithTimoutAndKeepAlive(handler, kafkaEvent, 10000);
                     } catch (err) {
                         this.logger.logUnknownAsError(
                             `Handler ${handler.name} failed for event ${eventClass.name}`,
@@ -228,5 +225,54 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             topics.add(this.kafkaConfig.TOPIC_PREFIX + topic);
         }
         return topics;
+    }
+
+    private runWithTimoutAndKeepAlive<Event extends BaseEvent>(
+        handler: EventHandlerType<BaseEvent>,
+        event: Event,
+        timoutMs: number = 10000,
+    ): Promise<Result<unknown, Error>> {
+        return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
+            let completed: boolean = false;
+
+            function onTimeout(): void {
+                if (!completed) {
+                    completed = true;
+                    resolve({
+                        ok: false,
+                        error: new Error(`Handler timed out after ${timoutMs}ms`),
+                    } satisfies Result<Error>);
+                }
+            }
+
+            let timeout: NodeJS.Timeout = setTimeout(onTimeout, timoutMs);
+
+            function keepAlive(): void {
+                if (!completed) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(onTimeout, timoutMs);
+                }
+            }
+
+            const maybePromise: MaybePromise<void | Result<unknown, Error>> = handler(event, keepAlive);
+            Promise.resolve(maybePromise)
+                .then((result: Result<unknown> | void) => {
+                    if (!completed) {
+                        clearTimeout(timeout);
+                        completed = true;
+                        resolve(result ?? ({ ok: true, value: null } satisfies Result<unknown> | void));
+                    }
+                })
+                .catch((error: Error) => {
+                    if (!completed) {
+                        clearTimeout(timeout);
+                        completed = true;
+                        resolve({
+                            ok: false,
+                            error,
+                        } satisfies Result<unknown> | void);
+                    }
+                });
+        });
     }
 }

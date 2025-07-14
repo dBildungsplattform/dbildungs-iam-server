@@ -7,7 +7,12 @@ export type MaybePromise<T> = T | Promise<T>;
 
 export type EventHandlerType<Event extends BaseEvent, TResult = unknown> = (
     event: Event,
+    keepAlive?: () => void,
 ) => MaybePromise<Result<TResult> | void>;
+
+export type FlexibleKeepAliveHandler<T extends BaseEvent> =
+    | ((event: T) => MaybePromise<void>)
+    | ((event: T, keepAlive: () => void) => void);
 
 export type TypedMethodDescriptor<T> = {
     value?: T;
