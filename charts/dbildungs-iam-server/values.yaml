@@ -76,6 +76,8 @@ auth:
   import_passphrase_salt: ''
   ox_password: ''
   basic_auth_password: ''
+  vidis_client_id: ''
+  vidis_client_secret: ''
   kafka_username: ''
   kafka_password: ''
 
