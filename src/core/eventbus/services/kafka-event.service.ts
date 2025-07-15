@@ -46,6 +46,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             groupId: this.kafkaConfig.GROUP_ID,
             sessionTimeout: this.kafkaConfig.SESSION_TIMEOUT,
             heartbeatInterval: this.kafkaConfig.HEARTBEAT_INTERVAL,
+            allowAutoTopicCreation: false,
         });
         this.producer = this.kafka.producer();
     }
@@ -65,7 +66,20 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             );
 
             await this.consumer?.run({
-                eachMessage: async ({ message }: { message: KafkaMessage }) => {
+                autoCommit: true,
+                autoCommitThreshold: 1,
+                eachMessage: async ({
+                    topic,
+                    partition,
+                    message,
+                }: {
+                    topic: string;
+                    partition: number;
+                    message: KafkaMessage;
+                }) => {
+                    this.logger.info(
+                        `Consuming message from topic: ${topic}, partition: ${partition}, offset: ${message.offset}, key: ${message.key?.toString()}`,
+                    );
                     await this.handleMessage(message);
                 },
             });
@@ -129,7 +143,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             const handlerPromises: Promise<Result<unknown>>[] = handlers.map(
                 async (handler: EventHandlerType<BaseEvent>) => {
                     try {
-                        return await this.runWithTimoutAndKeepAlive(handler, kafkaEvent, 10000);
+                        const res: Result<unknown, Error> = await this.runWithTimoutAndKeepAlive(handler, kafkaEvent);
+                        return res;
                     } catch (err) {
                         this.logger.logUnknownAsError(
                             `Handler ${handler.name} failed for event ${eventClass.name}`,
@@ -230,34 +245,43 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     private runWithTimoutAndKeepAlive<Event extends BaseEvent>(
         handler: EventHandlerType<BaseEvent>,
         event: Event,
-        timoutMs: number = 10000,
     ): Promise<Result<unknown, Error>> {
         return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
+            const timeoutMs: number = this.kafkaConfig.HEARTBEAT_INTERVAL - 5000; // 5 seconds less than the heartbeat interval to allow processing of offset commit after message
             let completed: boolean = false;
 
-            function onTimeout(): void {
+            const onTimeout = (): void => {
                 if (!completed) {
                     completed = true;
+                    this.logger.error(
+                        `Handler ${handler.name} for event ${event.constructor.name} timed out after ${timeoutMs}ms`,
+                    );
                     resolve({
                         ok: false,
-                        error: new Error(`Handler timed out after ${timoutMs}ms`),
+                        error: new Error(`Handler timed out after ${timeoutMs}ms`),
                     } satisfies Result<Error>);
                 }
-            }
+            };
 
-            let timeout: NodeJS.Timeout = setTimeout(onTimeout, timoutMs);
+            let timeout: NodeJS.Timeout = setTimeout(onTimeout, timeoutMs);
 
-            function keepAlive(): void {
+            const keepAlive = (): void => {
                 if (!completed) {
+                    this.logger.debug(
+                        `Handler ${handler.name} for event ${event.constructor.name} is still running and called keepAlive, resetting timeout`,
+                    );
                     clearTimeout(timeout);
-                    timeout = setTimeout(onTimeout, timoutMs);
+                    timeout = setTimeout(onTimeout, timeoutMs);
                 }
-            }
+            };
 
             const maybePromise: MaybePromise<void | Result<unknown, Error>> = handler(event, keepAlive);
             Promise.resolve(maybePromise)
                 .then((result: Result<unknown> | void) => {
                     if (!completed) {
+                        this.logger.debug(
+                            `Handler ${handler.name} for event ${event.constructor.name} completed successfully`,
+                        );
                         clearTimeout(timeout);
                         completed = true;
                         resolve(result ?? ({ ok: true, value: null } satisfies Result<unknown> | void));
@@ -265,6 +289,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                 })
                 .catch((error: Error) => {
                     if (!completed) {
+                        this.logger.error(`Handler ${handler.name} for event ${event.constructor.name} failed`, error);
                         clearTimeout(timeout);
                         completed = true;
                         resolve({
