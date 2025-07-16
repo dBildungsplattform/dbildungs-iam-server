@@ -208,7 +208,7 @@
         {
             "id": 202,
             "administeredBySchulstrukturknoten": 0,
-            "name": "DaZ-Schüler",
+            "name": "2P-Sek-I Schüler",
             "rollenart": "LERN",
             "merkmale": [],
             "systemrechte": [],
@@ -217,7 +217,7 @@
         {
             "id": 203,
             "administeredBySchulstrukturknoten": 0,
-            "name": "DaZ-Lehrkraft",
+            "name": "2P-Sek-I Lehrkraft",
             "rollenart": "LEHR",
             "merkmale": [],
             "systemrechte": [],
