@@ -107,7 +107,6 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     }
 
     public async handleMessage(message: KafkaMessage, heartbeat: () => Promise<void>): Promise<void> {
-        const personId: string | undefined = message.key?.toString();
         const eventKey: string | undefined = message.headers?.['eventKey']?.toString();
 
         if (!eventKey) {
@@ -144,7 +143,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         const handlers: EventHandlerType<BaseEvent>[] | undefined = this.handlerMap.get(eventClass);
 
         if (handlers?.length) {
-            this.logger.info(`Handling event: ${eventClass.name} for ${personId} with ${handlers.length} handlers`);
+            this.logger.info(`Handling event: ${eventClass.name} with ${handlers.length} handlers`);
             const handlerPromises: Promise<Result<unknown>>[] = handlers.map(
                 async (handler: EventHandlerType<BaseEvent>) => {
                     try {
@@ -156,10 +155,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
                         return res;
                     } catch (err) {
-                        this.logger.logUnknownAsError(
-                            `Handler ${handler.name} failed for event ${eventClass.name}`,
-                            err,
-                        );
+                        this.logger.logUnknownAsError(`Handler failed for event ${eventClass.name}`, err);
                         return {
                             ok: false,
                             error: new Error('Unexpected handler error'),
@@ -257,14 +253,14 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         heartbeat: () => Promise<void>,
     ): Promise<Result<unknown, Error>> {
         return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
-            const timeoutMs: number = this.kafkaConfig.HEARTBEAT_INTERVAL - 5000; // 5 seconds less than the heartbeat interval to allow processing of offset commit after message
+            const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2.5; // To allow processing of offset commit after message before client times out
             let completed: boolean = false;
 
             const onTimeout = (): void => {
                 if (!completed) {
                     completed = true;
-                    this.logger.error(
-                        `Handler ${handler.name} for event ${event.constructor.name} timed out after ${timeoutMs}ms`,
+                    this.logger.crit(
+                        `Handler for event ${event.constructor.name} with EventID: ${event.eventID} timed out after ${timeoutMs}ms`,
                     );
                     resolve({
                         ok: false,
@@ -277,8 +273,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
             const keepAlive = (): void => {
                 if (!completed) {
-                    this.logger.debug(
-                        `Handler ${handler.name} for event ${event.constructor.name} is still running and called keepAlive, resetting timeout`,
+                    this.logger.info(
+                        `Handler for event ${event.constructor.name} with EventID: ${event.eventID} is still running and called keepAlive, resetting timeout`,
                     );
                     void heartbeat();
                     clearTimeout(timeout);
@@ -290,8 +286,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             Promise.resolve(maybePromise)
                 .then((result: Result<unknown> | void) => {
                     if (!completed) {
-                        this.logger.debug(
-                            `Handler ${handler.name} for event ${event.constructor.name} completed successfully`,
+                        this.logger.info(
+                            `Handler for event ${event.constructor.name} with EventID: ${event.eventID} completed successfully`,
                         );
                         clearTimeout(timeout);
                         completed = true;
@@ -300,7 +296,10 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                 })
                 .catch((error: Error) => {
                     if (!completed) {
-                        this.logger.error(`Handler ${handler.name} for event ${event.constructor.name} failed`, error);
+                        this.logger.error(
+                            `Handler for event ${event.constructor.name} with EventID: ${event.eventID} failed`,
+                            error,
+                        );
                         clearTimeout(timeout);
                         completed = true;
                         resolve({

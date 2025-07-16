@@ -1345,7 +1345,7 @@ export class LdapClientService {
     private async executeWithRetry<T>(
         func: () => Promise<Result<T>>,
         retries: number,
-        delay: number = 1000,
+        delay: number = 15000,
     ): Promise<Result<T>> {
         let currentAttempt: number = 1;
         let result: Result<T, Error> = {
@@ -1363,14 +1363,13 @@ export class LdapClientService {
                     throw new Error(`Function returned error: ${result.error.message}`);
                 }
             } catch (error) {
-                const currentDelay: number = delay * Math.pow(currentAttempt, 3);
                 this.logger.logUnknownAsError(
-                    `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
+                    `Attempt ${currentAttempt} failed. Retrying in ${delay}ms... Remaining retries: ${retries - currentAttempt}`,
                     error,
                 );
 
                 // eslint-disable-next-line no-await-in-loop
-                if (currentAttempt < retries) await this.sleep(currentDelay);
+                if (currentAttempt < retries) await this.sleep(delay);
             }
             currentAttempt++;
         }

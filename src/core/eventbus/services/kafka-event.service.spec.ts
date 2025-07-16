@@ -42,7 +42,7 @@ describe('KafkaEventService', () => {
     const defaultKafkaConfig: KafkaConfig = {
         BROKER: 'broker',
         GROUP_ID: 'groupId',
-        SESSION_TIMEOUT: 30000,
+        SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
         TOPIC_PREFIX: 'prefix.',
         USER_TOPIC: 'user-topic',
@@ -120,7 +120,7 @@ describe('KafkaEventService', () => {
         const handler: jest.Mock = jest.fn();
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(handler).toHaveBeenCalled();
         expect(logger.info).toHaveBeenCalledWith('Handling event: KafkaPersonDeletedEvent for test with 1 handlers');
@@ -133,7 +133,7 @@ describe('KafkaEventService', () => {
             headers: {},
         });
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith('Event type header is missing');
     });
@@ -145,7 +145,7 @@ describe('KafkaEventService', () => {
             headers: { eventKey: 'UnknownEvent' },
         });
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith('Event type in header: UnknownEvent is not a valid KafkaEventKey');
     });
@@ -157,7 +157,7 @@ describe('KafkaEventService', () => {
             headers: { eventKey: 'user.deleted' },
         });
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith('Parsed Kafka message is not a valid object');
     });
@@ -169,7 +169,7 @@ describe('KafkaEventService', () => {
             headers: { eventKey: 'user.deleted' },
         });
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith(
             expect.stringContaining('Failed to parse Kafka message'),
@@ -187,7 +187,7 @@ describe('KafkaEventService', () => {
         const handler: jest.Mock = jest.fn().mockRejectedValue(new Error('Handler error'));
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.logUnknownAsError).toHaveBeenCalled();
     });
@@ -202,7 +202,7 @@ describe('KafkaEventService', () => {
         const handler: jest.Mock = jest.fn();
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith('Message value is empty or undefined');
     });
@@ -219,7 +219,7 @@ describe('KafkaEventService', () => {
         const handler: jest.Mock = jest.fn().mockReturnValue({ ok: false, error: error });
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
         expect(producer.send).toHaveBeenCalledWith({
             topic: 'prefix.user-dlq-topic',
             messages: [
