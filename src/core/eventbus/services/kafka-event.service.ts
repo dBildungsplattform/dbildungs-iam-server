@@ -72,15 +72,20 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                     topic,
                     partition,
                     message,
+                    heartbeat,
                 }: {
                     topic: string;
                     partition: number;
                     message: KafkaMessage;
+                    heartbeat: () => Promise<void>;
                 }) => {
                     this.logger.info(
                         `Consuming message from topic: ${topic}, partition: ${partition}, offset: ${message.offset}, key: ${message.key?.toString()}`,
                     );
-                    await this.handleMessage(message);
+                    // Call heartbeat before and after processing, and optionally during long processing
+                    await heartbeat();
+                    await this.handleMessage(message, heartbeat);
+                    await heartbeat();
                 },
             });
 
@@ -101,7 +106,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         this.handlerMap.set(eventType, handlers);
     }
 
-    public async handleMessage(message: KafkaMessage): Promise<void> {
+    public async handleMessage(message: KafkaMessage, heartbeat: () => Promise<void>): Promise<void> {
         const personId: string | undefined = message.key?.toString();
         const eventKey: string | undefined = message.headers?.['eventKey']?.toString();
 
@@ -143,14 +148,18 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             const handlerPromises: Promise<Result<unknown>>[] = handlers.map(
                 async (handler: EventHandlerType<BaseEvent>) => {
                     try {
-                        const res: Result<unknown, Error> = await this.runWithTimoutAndKeepAlive(handler, kafkaEvent);
+                        const res: Result<unknown, Error> = await this.runWithTimoutAndKeepAlive(
+                            handler,
+                            kafkaEvent,
+                            heartbeat,
+                        );
+
                         return res;
                     } catch (err) {
                         this.logger.logUnknownAsError(
                             `Handler ${handler.name} failed for event ${eventClass.name}`,
                             err,
                         );
-
                         return {
                             ok: false,
                             error: new Error('Unexpected handler error'),
@@ -245,6 +254,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     private runWithTimoutAndKeepAlive<Event extends BaseEvent>(
         handler: EventHandlerType<BaseEvent>,
         event: Event,
+        heartbeat: () => Promise<void>,
     ): Promise<Result<unknown, Error>> {
         return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
             const timeoutMs: number = this.kafkaConfig.HEARTBEAT_INTERVAL - 5000; // 5 seconds less than the heartbeat interval to allow processing of offset commit after message
@@ -270,6 +280,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                     this.logger.debug(
                         `Handler ${handler.name} for event ${event.constructor.name} is still running and called keepAlive, resetting timeout`,
                     );
+                    void heartbeat();
                     clearTimeout(timeout);
                     timeout = setTimeout(onTimeout, timeoutMs);
                 }
