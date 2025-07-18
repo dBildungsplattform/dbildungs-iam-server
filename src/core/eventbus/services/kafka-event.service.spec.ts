@@ -123,7 +123,13 @@ describe('KafkaEventService', () => {
         await sut.handleMessage(message, () => Promise.resolve());
 
         expect(handler).toHaveBeenCalled();
-        expect(logger.info).toHaveBeenCalledWith('Handling event: KafkaPersonDeletedEvent for test with 1 handlers');
+        expect(logger.info).toHaveBeenNthCalledWith(1, 'Handling event: KafkaPersonDeletedEvent with 1 handlers');
+        expect(logger.info).toHaveBeenNthCalledWith(
+            2,
+            expect.stringMatching(
+                /^Handler for event KafkaPersonDeletedEvent with EventID: .+ completed successfully$/,
+            ),
+        );
     });
 
     it('should log error if event type header is missing', async () => {
@@ -189,7 +195,7 @@ describe('KafkaEventService', () => {
 
         await sut.handleMessage(message, () => Promise.resolve());
 
-        expect(logger.logUnknownAsError).toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalled();
     });
 
     it('should log error if message value is invalid JSON', async () => {
@@ -231,10 +237,7 @@ describe('KafkaEventService', () => {
             ],
         });
 
-        expect(logger.info).toHaveBeenNthCalledWith(
-            1,
-            'Handling event: KafkaPersonDeletedEvent for test with 1 handlers',
-        );
+        expect(logger.info).toHaveBeenNthCalledWith(1, 'Handling event: KafkaPersonDeletedEvent with 1 handlers');
     });
 
     it('should publish event correctly', async () => {
