@@ -829,11 +829,7 @@ export class PersonRepository {
         return scope;
     }
 
-    private addSortCriteria(
-        scope: PersonScope,
-        criteria: SortFieldPerson,
-        order: ScopeOrder = ScopeOrder.ASC,
-    ): void {
+    private addSortCriteria(scope: PersonScope, criteria: SortFieldPerson, order: ScopeOrder = ScopeOrder.ASC): void {
         if (criteria === SortFieldPerson.REFERRER) {
             scope.sortBy(criteria, order);
         } else {
