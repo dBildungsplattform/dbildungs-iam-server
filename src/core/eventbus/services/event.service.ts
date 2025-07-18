@@ -31,7 +31,9 @@ export class EventService {
             subject.subscribe({
                 next: (event: Event) => {
                     try {
-                        const result: MaybePromise<void | Result<unknown, Error>> = handler(event);
+                        const result: MaybePromise<void | Result<unknown, Error>> = handler(event, () => {
+                            this.logger.warning('Calling Keep Alive for Legacy Event System is not supported');
+                        });
                         if (result instanceof Promise) {
                             result.catch((err: unknown) => this.logHandlerError(err));
                         }

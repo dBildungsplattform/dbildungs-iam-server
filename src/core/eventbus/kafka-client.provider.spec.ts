@@ -12,7 +12,7 @@ describe('KafkaProvider', () => {
     const kafkaConfigEnabled: KafkaConfig = {
         BROKER: 'localhost:9092',
         GROUP_ID: 'test-group',
-        SESSION_TIMEOUT: 30000,
+        SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
         TOPIC_PREFIX: 'test.',
         USER_TOPIC: 'user-topic',

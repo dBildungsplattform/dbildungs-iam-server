@@ -130,7 +130,7 @@ export class LdapEventHandler {
     @EventHandler(PersonenkontextUpdatedEvent)
     @EnsureRequestContext()
     public async handlePersonenkontextUpdatedEvent(
-        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent,
+        event: PersonenkontextUpdatedEvent | KafkaPersonenkontextUpdatedEvent
     ): Promise<Result<unknown>> {
         this.logger.info(
             `Received PersonenkontextUpdatedEvent, personId:${event.person.id}, username:${event.person.username}, newPKs:${event.newKontexte.length}, removedPKs:${event.removedKontexte.length}`,

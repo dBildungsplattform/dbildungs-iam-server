@@ -55,4 +55,6 @@ data:
   KAFKA_TOPIC_PREFIX: '{{ .Release.Namespace }}-'
   KAFKA_BROKER: '{{ .Values.kafka.url }}'
   KAFKA_GROUP_ID: '{{ .Release.Namespace }}-group'
+  KAFKA_SESSION_TIMEOUT: '{{ .Values.kafka.sessionTimeout }}'
+  KAFKA_HEARTBEAT_INTERVAL: '{{ .Values.kafka.heartbeatInterval }}'
   REDIS_HOST: '{{ .Values.redis.host }}'

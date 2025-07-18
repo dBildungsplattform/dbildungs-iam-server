@@ -58,7 +58,7 @@ export class OxService {
 
     private async withRetry<R>(
         cb: () => Promise<Result<R, DomainError>>,
-        initDelay: number = 1000,
+        delay: number = 15000,
     ): Promise<Result<R, DomainError>> {
         let failCounter: number = 0;
 
@@ -79,14 +79,13 @@ export class OxService {
                 }
             } catch (error) {
                 if (failCounter < this.max_retries) {
-                    const currentDelay: number = initDelay * Math.pow(failCounter + 1, 3);
                     this.logger.logUnknownAsError(
-                        `Attempt ${failCounter + 1} failed. Retrying in ${currentDelay}ms... Remaining retries: ${this.max_retries - failCounter}`,
+                        `Attempt ${failCounter + 1} failed. Retrying in ${delay}ms... Remaining retries: ${this.max_retries - failCounter}`,
                         error,
                     );
 
                     // eslint-disable-next-line no-await-in-loop
-                    await new Promise<void>((resolve: () => void) => setTimeout(resolve, currentDelay));
+                    await new Promise<void>((resolve: () => void) => setTimeout(resolve, delay));
                 }
             }
 
