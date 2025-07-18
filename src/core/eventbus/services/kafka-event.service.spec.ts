@@ -130,6 +130,44 @@ describe('KafkaEventService', () => {
         jest.useRealTimers();
     });
 
+    it('should log info and reset timeout if keepAlive is called by handler', async () => {
+        jest.useFakeTimers();
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from(JSON.stringify(new TestEvent())),
+            headers: { eventKey: 'user.deleted' },
+        });
+        let keepAliveFunction: (() => void) | undefined;
+        let resolveHandler: (() => void) | undefined;
+        // eslint-disable-next-line @typescript-eslint/typedef
+        const handler: jest.Mock = jest.fn(async (_event, { keepAlive }: { keepAlive: () => void }) => {
+            keepAliveFunction = keepAlive;
+            await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => {
+                resolveHandler = resolve;
+            });
+        });
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
+
+        const handlePromise: Promise<void> = sut.handleMessage(message, () => Promise.resolve());
+        await Promise.resolve();
+        if (keepAliveFunction) {
+            keepAliveFunction();
+        }
+        jest.advanceTimersByTime(1000);
+        if (resolveHandler) {
+            resolveHandler();
+        }
+        await handlePromise;
+
+        expect(handlePromise).toBeDefined();
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.stringContaining('Handler for event KafkaPersonDeletedEvent with EventID:'),
+        );
+        expect(logger.crit).not.toHaveBeenCalled();
+
+        jest.useRealTimers();
+    });
+
     it('should handle message correctly', async () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
