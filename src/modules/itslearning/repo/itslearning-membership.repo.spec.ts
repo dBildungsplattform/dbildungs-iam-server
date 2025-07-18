@@ -14,6 +14,21 @@ import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { Ok } from '../../../shared/util/result.js';
+import { FailureStatusInfo, MassResult } from '../actions/base-mass-action.js';
+
+function makeFailureStatus(description: string): FailureStatusInfo {
+    return {
+        codeMajor: 'failure',
+        severity: 'error',
+        codeMinor: {
+            codeMinorField: [{ codeMinorName: 'error', codeMinorValue: 'error' }],
+        },
+        description: {
+            language: 'en',
+            text: description,
+        },
+    };
+}
 
 describe('Itslearning Person Repo', () => {
     let module: TestingModule;
@@ -116,6 +131,27 @@ describe('Itslearning Person Repo', () => {
             expect(result).toBeUndefined();
         });
 
+        it('should return error on failure', async () => {
+            const memberships: CreateMembershipParams[] = [
+                {
+                    id: faker.string.uuid(),
+                    personId: faker.string.uuid(),
+                    groupId: faker.string.uuid(),
+                    roleType: faker.helpers.enumValue(IMSESRoleType),
+                },
+            ];
+            itsLearningServiceMock.send.mockResolvedValueOnce(
+                Ok({
+                    status: [makeFailureStatus('Some Error')],
+                    value: undefined,
+                }),
+            );
+
+            const result: Option<DomainError> = await sut.createMemberships(memberships);
+
+            expect(result).toEqual(new ItsLearningError('1 of 1 Requests failed', makeFailureStatus('Some Error')));
+        });
+
         it('should return error on fail', async () => {
             const error: DomainError = new ItsLearningError('Test Error');
             const memberships: CreateMembershipParams[] = [
@@ -134,6 +170,31 @@ describe('Itslearning Person Repo', () => {
             const result: Option<DomainError> = await sut.createMemberships(memberships);
 
             expect(result).toBe(error);
+        });
+    });
+
+    describe('createMembershipsMass', () => {
+        it('should call the itslearning API and return the result', async () => {
+            const memberships: CreateMembershipParams[] = [
+                {
+                    id: faker.string.uuid(),
+                    personId: faker.string.uuid(),
+                    groupId: faker.string.uuid(),
+                    roleType: faker.helpers.enumValue(IMSESRoleType),
+                },
+            ];
+            const syncID: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
+
+            const result: Result<MassResult<void>, DomainError> = await sut.createMembershipsMass(memberships, syncID);
+
+            expect(result).toEqual({
+                ok: true,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
+            });
         });
     });
 
@@ -161,6 +222,20 @@ describe('Itslearning Person Repo', () => {
             expect(result).toBeUndefined();
         });
 
+        it('should return error on failure', async () => {
+            const memberships: string[] = [faker.string.uuid()];
+            itsLearningServiceMock.send.mockResolvedValueOnce(
+                Ok({
+                    status: [makeFailureStatus('Some Error')],
+                    value: undefined,
+                }),
+            );
+
+            const result: Option<DomainError> = await sut.removeMemberships(memberships);
+
+            expect(result).toEqual(new ItsLearningError('1 of 1 Requests failed', makeFailureStatus('Some Error')));
+        });
+
         it('should return error on fail', async () => {
             const error: DomainError = new ItsLearningError('Test Error');
             const membershipIDs: string[] = [faker.string.uuid()];
@@ -172,6 +247,24 @@ describe('Itslearning Person Repo', () => {
             const result: Option<DomainError> = await sut.removeMemberships(membershipIDs);
 
             expect(result).toBe(error);
+        });
+    });
+
+    describe('removeMembershipsMass', () => {
+        it('should call the itslearning API and return the result', async () => {
+            const memberships: string[] = [faker.string.uuid()];
+            const syncID: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
+
+            const result: Result<MassResult<void>, DomainError> = await sut.removeMembershipsMass(memberships, syncID);
+
+            expect(result).toEqual({
+                ok: true,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
+            });
         });
     });
 
