@@ -77,7 +77,7 @@ describe('EventService', () => {
 
             sut.publish(event);
 
-            expect(handler).toHaveBeenCalledWith(event);
+            expect(handler).toHaveBeenCalledWith(event, expect.any(Function));
         });
 
         it('should call multiple handlers', () => {
@@ -90,8 +90,8 @@ describe('EventService', () => {
 
             sut.publish(event);
 
-            expect(handler1).toHaveBeenCalledWith(event);
-            expect(handler2).toHaveBeenCalledWith(event);
+            expect(handler1).toHaveBeenCalledWith(event, expect.any(Function));
+            expect(handler2).toHaveBeenCalledWith(event, expect.any(Function));
         });
 
         it('should work when no handler is registered', () => {
