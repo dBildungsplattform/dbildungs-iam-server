@@ -862,7 +862,7 @@ describe('PersonenkontextWorkflow', () => {
     describe('checkPermissions', () => {
         it('should return undefined if user has limited anlegen permissions and only limited rollen are assigned', async () => {
             configMock.getOrThrow.mockReturnValueOnce({
-                LIMITED_ROLLENART_ALLOWLIST: [RollenArt.LERN, RollenArt.LEIT],
+                LIMITED_ROLLENART_ALLOWLIST: [RollenArt.LERN],
             });
             const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
             permissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(false);
@@ -873,22 +873,14 @@ describe('PersonenkontextWorkflow', () => {
                 name: 'Test Rolle',
                 rollenart: RollenArt.LERN,
             });
-            const leitRolle: Rolle<true> = DoFactory.createRolle(true, {
-                id: faker.string.uuid(),
-                name: 'Test Rolle',
-                rollenart: RollenArt.LEIT,
-            });
-            const rolleMap: Map<string, Rolle<true>> = new Map([
-                [lehrRolle.id, lehrRolle],
-                [leitRolle.id, leitRolle],
-            ]);
+            const rolleMap: Map<string, Rolle<true>> = new Map([[lehrRolle.id, lehrRolle]]);
             rolleRepoMock.findByIds.mockResolvedValue(rolleMap);
 
             const result: Option<DomainError> = await anlage.checkPermissions(
                 permissions,
                 undefined,
                 'orgId',
-                [lehrRolle.id, leitRolle.id],
+                [lehrRolle.id],
                 OperationContext.PERSON_ANLEGEN,
             );
 
