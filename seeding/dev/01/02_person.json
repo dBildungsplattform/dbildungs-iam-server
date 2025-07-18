@@ -464,6 +464,27 @@
             "password": "SPSHtest1!",
             "vorname": "Achim",
             "familienname": "Amtmann"
+        },
+        {
+            "id": 65,
+            "username": "2psync",
+            "password": "SPSHtest1!",
+            "vorname": "Zwei",
+            "familienname": "Psync"
+        },
+        {
+            "id": 66,
+            "username": "2plehrkraft",
+            "password": "SPSHtest1!",
+            "vorname": "Zwei",
+            "familienname": "Plehrkraft"
+        },
+        {
+            "id": 67,
+            "username": "2pschueler",
+            "password": "SPSHtest1!",
+            "vorname": "Zwei",
+            "familienname": "Pschueler"
         }
     ]
 }

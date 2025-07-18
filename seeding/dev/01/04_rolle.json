@@ -222,6 +222,16 @@
             "merkmale": [],
             "systemrechte": [],
             "serviceProviderIds": [17]
+        },
+        {
+            "id": 204,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "2P-Synchronisation",
+            "rollenart": "SYSADMIN",
+            "merkmale": [],
+            "systemrechte": [],
+            "serviceProviderIds": [17],
+            "istTechnisch": true
         }
 
     ]
