@@ -3,20 +3,22 @@ import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosResponse } from 'axios';
 import { of, throwError } from 'rxjs';
-import { ConfigTestModule } from '../../../test/utils/index.js';
+import { ConfigTestModule, LoggingTestModule } from '../../../test/utils/index.js';
 import { DomainError, ItsLearningError } from '../../shared/error/index.js';
 import { IMSESAction } from './actions/base-action.js';
 import { ItsLearningIMSESService } from './itslearning.service.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
 
 describe('ItsLearningIMSESService', () => {
     let module: TestingModule;
     let sut: ItsLearningIMSESService;
 
     let httpServiceMock: DeepMocked<HttpService>;
+    let loggerMock: DeepMocked<ClassLogger>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
-            imports: [ConfigTestModule],
+            imports: [LoggingTestModule, ConfigTestModule],
             providers: [
                 ItsLearningIMSESService,
                 {
@@ -28,6 +30,7 @@ describe('ItsLearningIMSESService', () => {
 
         sut = module.get(ItsLearningIMSESService);
         httpServiceMock = module.get(HttpService);
+        loggerMock = module.get(ClassLogger);
     });
 
     afterAll(async () => {
@@ -58,6 +61,7 @@ describe('ItsLearningIMSESService', () => {
                 },
             );
         });
+
         it('should include syncID if given', async () => {
             const mockAction: DeepMocked<IMSESAction<unknown, unknown>> = createMock<IMSESAction<unknown, unknown>>();
             mockAction.buildRequest.mockReturnValueOnce({});
@@ -94,16 +98,46 @@ describe('ItsLearningIMSESService', () => {
             });
         });
 
-        it('should return ItsLearningError if request failed', async () => {
-            const error: Error = new Error('AxiosError');
-            const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock<IMSESAction<unknown, string>>();
-            httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
+        describe('when an unexpected error occurs', () => {
+            it('should retry the request and return the successfull result', async () => {
+                const error: Error = new Error('AxiosError');
+                const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock<IMSESAction<unknown, string>>();
+                mockAction.parseResponse.mockReturnValueOnce({ ok: true, value: 'TestResult' });
+                httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
+                httpServiceMock.post.mockReturnValueOnce(of({} as AxiosResponse));
 
-            const result: Result<string, DomainError> = await sut.send(mockAction);
+                const result: Result<string, DomainError> = await sut.send(mockAction, 'test-id');
 
-            expect(result).toEqual({
-                ok: false,
-                error: new ItsLearningError('Request failed', [error]),
+                expect(loggerMock.logUnknownAsWarning).toHaveBeenCalledWith(
+                    `[SyncID: test-id] Request to itslearning failed, retrying in 100ms`,
+                    error,
+                );
+                expect(result).toEqual({
+                    ok: true,
+                    value: 'TestResult',
+                });
+            });
+
+            it('should retry the request and return the error if it still does not work', async () => {
+                const error: Error = new Error('AxiosError');
+                const mockAction: DeepMocked<IMSESAction<unknown, string>> = createMock<IMSESAction<unknown, string>>();
+                httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
+                httpServiceMock.post.mockReturnValueOnce(throwError(() => error));
+
+                const result: Result<string, DomainError> = await sut.send(mockAction, 'test-id');
+
+                expect(loggerMock.logUnknownAsWarning).toHaveBeenCalledWith(
+                    `[SyncID: test-id] Request to itslearning failed, retrying in 100ms`,
+                    error,
+                );
+                expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
+                    `[SyncID: test-id] Request to itslearning failed all retries, aborting`,
+                    error,
+                );
+                expect(result).toEqual({
+                    ok: false,
+                    error: new ItsLearningError('Request failed', [error]),
+                });
             });
         });
     });

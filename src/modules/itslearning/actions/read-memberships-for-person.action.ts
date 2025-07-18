@@ -2,7 +2,7 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 
 import { IMS_COMMON_SCHEMA, IMS_MEMBER_MAN_MESS_SCHEMA, IMS_MESS_BIND_SCHEMA } from '../schemas.js';
 import { IMSESRoleType } from '../types/role.enum.js';
-import { IMSESMassAction } from './base-mass-action.js';
+import { IMSESAction } from './base-action.js';
 
 export type ReadAllPersonsParams = {
     pageIndex: number;
@@ -52,7 +52,7 @@ function mapPersonIdPairToPersonResponse(idPair: MembershipIdPair): MembershipRe
     };
 }
 
-export class ReadMembershipsForPersonAction extends IMSESMassAction<
+export class ReadMembershipsForPersonAction extends IMSESAction<
     ReadMembershipsForPersonReponseBody,
     MembershipResponse[]
 > {

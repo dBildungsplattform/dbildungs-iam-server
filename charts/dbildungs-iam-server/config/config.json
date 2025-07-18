@@ -58,7 +58,10 @@
     "ITSLEARNING": {
         "ROOT": "sh",
         "ROOT_OEFFENTLICH": "oeffentlich",
-        "ROOT_ERSATZ": "ersatz"
+        "ROOT_ERSATZ": "ersatz",
+        "MAX_BATCH_SIZE": 100,
+        "MAX_ATTEMPTS": 5,
+        "RETRY_DELAY_MS": 15000
     },
     "PRIVACYIDEA": {
         "ENDPOINT": "http://localhost:5000",

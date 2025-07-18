@@ -5,13 +5,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LoggingTestModule } from '../../../../test/utils/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
+import { StatusInfo, MassResult } from '../actions/base-mass-action.js';
 import { CreateGroupAction } from '../actions/create-group.action.js';
 import { CreateGroupParams } from '../actions/create-group.params.js';
+import { CreateGroupsAction } from '../actions/create-groups.action.js';
 import { DeleteGroupAction } from '../actions/delete-group.action.js';
 import { GroupResponse, ReadGroupAction } from '../actions/read-group.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { ItslearningGroupRepo } from './itslearning-group.repo.js';
-import { CreateGroupsAction } from '../actions/create-groups.action.js';
 
 describe('Itslearning Group Repo', () => {
     let module: TestingModule;
@@ -156,7 +157,10 @@ describe('Itslearning Group Repo', () => {
             ];
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: true,
-                value: undefined,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
             }); // CreateGroupAction
             const syncID: string = faker.string.uuid();
 
@@ -180,12 +184,50 @@ describe('Itslearning Group Repo', () => {
             ];
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: true,
-                value: undefined,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
             }); // CreateGroupAction
 
             const result: Option<DomainError> = await sut.createOrUpdateGroups(createParams);
 
             expect(result).toBeUndefined();
+        });
+
+        it('should return error, if any group could not be created', async () => {
+            const createParams: CreateGroupParams[] = [
+                {
+                    id: faker.string.uuid(),
+                    name: faker.word.noun(),
+                    parentId: faker.string.uuid(),
+                    type: 'Unspecified',
+                },
+            ];
+            const failureStatuses: StatusInfo[] = [
+                {
+                    codeMajor: 'failure',
+                    severity: 'error',
+                    codeMinor: {
+                        codeMinorField: [],
+                    },
+                    description: {
+                        language: 'en',
+                        text: 'Some Error',
+                    },
+                },
+            ];
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    status: failureStatuses,
+                    value: undefined,
+                },
+            } satisfies Result<MassResult<void>>); // CreateGroupAction
+
+            const result: Option<DomainError> = await sut.createOrUpdateGroups(createParams);
+
+            expect(result).toEqual(new ItsLearningError(`1 of 1 Requests failed`, failureStatuses));
         });
 
         it('should return error, if the request failed', async () => {

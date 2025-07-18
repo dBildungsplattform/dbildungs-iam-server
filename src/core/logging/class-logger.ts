@@ -84,6 +84,21 @@ export class ClassLogger extends Logger {
     }
 
     /**
+     * Logs the message with log-level warning, then either logs the content of the parameter 'error' by calling util.inspect on it, if
+     * its type is not Error, or
+     * logs the message and stack contained in the parameter 'error', if its type is Error.
+     * @param message
+     * @param error should implement Error interface
+     */
+    public logUnknownAsWarning(message: string, error: unknown, warnWhenErrorIsUndefined: boolean = true): void {
+        if (this.instanceOfError(error, warnWhenErrorIsUndefined)) {
+            this.warning(message + ' - ' + error.message, error.stack);
+        } else {
+            this.warning(message + ' - ' + inspect(error, false, 2, false), undefined);
+        }
+    }
+
+    /**
      * Logs the message with log-level error, then either logs the content of the parameter 'error' by calling util.inspect on it, if
      * its type is not Error, or
      * logs the message and stack contained in the parameter 'error', if its type is Error.

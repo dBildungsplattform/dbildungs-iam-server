@@ -84,6 +84,9 @@ export default (): Config => ({
         ROOT: process.env['ITSLEARNING_ROOT'],
         ROOT_OEFFENTLICH: process.env['ITSLEARNING_ROOT_OEFFENTLICH'],
         ROOT_ERSATZ: process.env['ITSLEARNING_ROOT_ERSATZ'],
+        MAX_ATTEMPTS: envToOptionalInteger('ITSLEARNING_MAX_ATTEMPTS'),
+        MAX_BATCH_SIZE: envToOptionalInteger('ITSLEARNING_MAX_BATCH_SIZE'),
+        RETRY_DELAY_MS: envToOptionalInteger('ITSLEARNING_RETRY_DELAY_MS'),
     },
     PRIVACYIDEA: {
         ENDPOINT: process.env['PI_BASE_URL'],

@@ -1,6 +1,7 @@
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
 
 import { DomainError, ItsLearningError } from '../../../shared/error/index.js';
+import { ItslearningAction } from '../types/action.types.js';
 
 export type StatusInfo =
     | {
@@ -24,7 +25,7 @@ export type BaseResponse<BodyResponse> = {
     };
 };
 
-export abstract class IMSESAction<ResponseBodyType, ResultType> {
+export abstract class IMSESAction<ResponseBodyType, ResultType> implements ItslearningAction<ResultType> {
     protected readonly xmlBuilder: XMLBuilder = new XMLBuilder({ ignoreAttributes: false });
 
     protected readonly xmlParser: XMLParser = new XMLParser({
