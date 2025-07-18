@@ -28,3 +28,56 @@ Listen to messages:
 
 Produce messages:
 `kafka-console-producer.sh --bootstrap-server localhost:9094 --topic test_topic`
+
+
+### Using Kafka-client in cluster
+
+> [!IMPORTANT]
+> Take care of the kube-config you want to use via **_--kubeconfig_** parameter!
+> Examples below assume that your kube-configs are located in ~/.kube/ and file-names do not differ from the original OnePassword-files!
+> You can also ignore the **_--kubeconfig_** parameter.
+
+> [!WARNING]
+> If **_--kubeconfig_** parameter is used any changes of selected namespace via kubectl is ignored, so watch the namespace your container will be deployed!
+
+> [!TIP]
+> use ~/.kube/spsh-staging-schulportal.yaml instead of ~/.kube/spsh-dev-schulportal.yaml for usage on STAGE cluster
+
+
+Deploy and run a new kafka-tools-container:
+`kubectl run kafka-tools-2369 -n spsh --image docker.io/bitnami/kafka:3.9.0-debian-12-r6 --env="KAFKA_USER=Elizabeth" --env="KAFKA_PASS=TopangaCity" --restart=Never --kubeconfig ~/.kube/spsh-dev-schulportal.yaml --command sleep infinity`
+
+
+Enter bash of the container:
+`kubectl exec -i -t -n spsh kafka-tools-2369 --kubeconfig ~/.kube/spsh-dev-schulportal.yaml -- bash`
+
+Execute command:
+`echo "security.protocol=SASL_PLAINTEXT
+sasl.mechanism=SCRAM-SHA-256
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required \
+username=\"$KAFKA_USER\" \
+password=\"$KAFKA_PASS\";" > /tmp/client.properties`
+
+
+#### Different commands for usage in cluster:
+
+Print everything:
+`kafka-console-consumer.sh --bootstrap-server dbildungs-iam-kafka.spsh.svc.cluster.local:9092 --topic spsh-user-topic --from-beginning --property print.key=true --property print.value=true --property print.headers=true --consumer.config /tmp/client.properties`
+
+Print from a certain point/offset:
+`kafka-console-consumer.sh --bootstrap-server dbildungs-iam-kafka.spsh.svc.cluster.local:9092 --topic spsh-user-topic --partition 0 --offset 747 --max-messages 3 --consumer.config /tmp/client.properties`
+
+Print topics:
+`kafka-topics.sh --bootstrap-server dbildungs-iam-kafka.spsh.svc.cluster.local:9092 --list --command-config /tmp/client.properties`
+
+Delete topics:
+`kafka-topics.sh --bootstrap-server dbildungs-iam-kafka.spsh.svc.cluster.local:9092 --delete --topic user-dlq-topic --command-config /tmp/client.properties`
+
+Create topics:
+`kafka-topics.sh --bootstrap-server dbildungs-iam-kafka.spsh.svc.cluster.local:9092 --create --topic user-dlq-topic --command-config /tmp/client.properties`
+
+Print consumer groups:
+`kafka-consumer-groups.sh --bootstrap-server dbildungs-iam-kafka.spsh.svc.cluster.local:9092 --list --command-config /tmp/client.properties`
+
+Print offsets:
+`kafka-consumer-groups.sh --bootstrap-server dbildungs-iam-kafka.spsh.svc.cluster.local:9092 --describe --group spsh-group --command-config /tmp/client.properties`
