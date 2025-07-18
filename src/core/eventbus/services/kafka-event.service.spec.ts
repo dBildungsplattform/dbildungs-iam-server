@@ -110,6 +110,26 @@ describe('KafkaEventService', () => {
         expect(producer.disconnect).toHaveBeenCalled();
     });
 
+    it('should log crit and resolve with timeout error if handler times out', async () => {
+        jest.useFakeTimers();
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from(JSON.stringify(new TestEvent())),
+            headers: { eventKey: 'user.deleted' },
+        });
+        const handler: jest.Mock = jest.fn(() => new Promise(() => {}));
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
+
+        const handlePromise: Promise<void> = sut.handleMessage(message, () => Promise.resolve());
+        jest.runOnlyPendingTimers();
+        await Promise.resolve();
+
+        expect(handlePromise).toBeDefined();
+        expect(logger.crit).toHaveBeenCalledTimes(1);
+
+        jest.useRealTimers();
+    });
+
     it('should handle message correctly', async () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),

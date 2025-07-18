@@ -70,6 +70,19 @@ describe('EventService', () => {
     });
 
     describe('publish', () => {
+        it('should log warning when handler calls keepAlive', () => {
+            const handler: EventHandlerType<BaseEvent> = jest.fn((_event: BaseEvent, keepAlive: () => void) => {
+                keepAlive();
+            });
+            const event: TestEvent = new TestEvent();
+            sut.subscribe(TestEvent, handler);
+
+            sut.publish(event);
+
+            expect(event).toBeDefined();
+            expect(logger.warning).toHaveBeenCalledWith('Calling Keep Alive for Legacy Event System is not supported');
+        });
+
         it('should call handler with event', () => {
             const handler: EventHandlerType<BaseEvent> = jest.fn();
             const event: TestEvent = new TestEvent();
