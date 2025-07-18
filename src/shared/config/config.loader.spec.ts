@@ -67,6 +67,9 @@ describe('configloader', () => {
                     ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
+                    MAX_ATTEMPTS: 5,
+                    MAX_BATCH_SIZE: 100,
+                    RETRY_DELAY_MS: 15000,
                 },
                 PRIVACYIDEA: {
                     ENDPOINT: 'http://localhost:5000',
@@ -233,6 +236,9 @@ describe('configloader', () => {
                     ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
+                    MAX_ATTEMPTS: 5,
+                    MAX_BATCH_SIZE: 100,
+                    RETRY_DELAY_MS: 15000,
                 },
                 PRIVACYIDEA: {
                     ENDPOINT: 'http://localhost:5000',

@@ -73,6 +73,8 @@ import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-ren
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -89,6 +91,7 @@ describe('PersonRepository Integration', () => {
     let personenkontextFactory: PersonenkontextFactory;
     let userLockRepository: UserLockRepository;
     let organisationRepository: OrganisationRepository;
+    let serviceProviderRepository: ServiceProviderRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -144,6 +147,7 @@ describe('PersonRepository Integration', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
+        serviceProviderRepository = module.get(ServiceProviderRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -255,6 +259,42 @@ describe('PersonRepository Integration', () => {
             expect(foundPersons.findIndex((p: Person<true>) => p.id === personA.id)).not.toEqual(-1);
             expect(foundPersons.findIndex((p: Person<true>) => p.id === personB.id)).not.toEqual(-1);
             expect(foundPersons.findIndex((p: Person<true>) => p.id === personC.id)).toEqual(-1);
+        });
+    });
+
+    describe('findWithRolleAndNoOtherItslearningKontexteByCursor', () => {
+        it('should return found persons', async () => {
+            const personA: Person<true> = await savePerson(false);
+            const orga: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: true }),
+            );
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
+                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
+            if (rolle instanceof DomainError) throw rolle;
+            await dbiamPersonenkontextRepoInternal.save(
+                DoFactory.createPersonenkontext(false, {
+                    organisationId: orga.id,
+                    personId: personA.id,
+                    rolleId: rolle.id,
+                }),
+            );
+
+            let personen: Person<true>[] = [];
+            let cursor: string | undefined;
+
+            [personen, cursor] = await sut.findWithRolleAndNoOtherItslearningKontexteByCursor(rolle.id, 1, cursor);
+
+            expect(personen).toHaveLength(1);
+            expect(cursor).toBeDefined();
+
+            [personen, cursor] = await sut.findWithRolleAndNoOtherItslearningKontexteByCursor(rolle.id, 1, cursor);
+
+            expect(personen).toHaveLength(0);
+            expect(cursor).toBeUndefined();
         });
     });
 
