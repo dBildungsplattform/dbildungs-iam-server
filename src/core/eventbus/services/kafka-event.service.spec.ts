@@ -198,6 +198,23 @@ describe('KafkaEventService', () => {
         expect(logger.error).toHaveBeenCalled();
     });
 
+    it('should log error if handler throws an sync exception', async () => {
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from(JSON.stringify(new TestEvent())),
+            headers: { eventKey: 'user.deleted' },
+        });
+        const handler: jest.Mock = jest.fn().mockImplementation(() => {
+            throw new Error('Handler error');
+        });
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
+        await sut.handleMessage(message, () => Promise.resolve());
+        expect(logger.logUnknownAsError).toHaveBeenCalledWith(
+            'Handler failed for event KafkaPersonDeletedEvent',
+            expect.any(Error),
+        );
+    });
+
     it('should log error if message value is invalid JSON', async () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
