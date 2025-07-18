@@ -229,7 +229,7 @@
             "name": "2P-Synchronisation",
             "rollenart": "SYSADMIN",
             "merkmale": [],
-            "systemrechte": [],
+            "systemrechte": ["PERSONEN_LESEN"],
             "serviceProviderIds": [17],
             "istTechnisch": true
         }
