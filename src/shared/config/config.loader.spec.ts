@@ -119,7 +119,7 @@ describe('configloader', () => {
                     SASL_ENABLED: true,
                 },
                 PORTAL: {
-                    LIMITED_ROLLENART_ALLOWLIST: ['LEIT', 'LERN', 'EXTERN'],
+                    LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
                 },
             };
 
@@ -288,7 +288,7 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                 },
                 PORTAL: {
-                    LIMITED_ROLLENART_ALLOWLIST: ['LEIT', 'LERN', 'EXTERN'],
+                    LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
                 },
             };
 
