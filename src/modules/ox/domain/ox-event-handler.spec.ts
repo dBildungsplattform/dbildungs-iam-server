@@ -34,6 +34,7 @@ import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
 import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
+import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -1474,6 +1475,21 @@ describe('OxEventHandler', () => {
                     `Received EmailAddressDeletedEvent, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
                 );
                 expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            });
+        });
+
+        describe('when getting current user-data from OX fails because no such user exists (anymore)', () => {
+            it('should log error about that', async () => {
+                //mock: get-user-data fails
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: false,
+                    error: new OxNoSuchUserError('faultstring'),
+                });
+                await sut.handleEmailAddressMarkedForDeletionEvent(event);
+
+                expect(loggerMock.info).toHaveBeenCalledWith(
+                    `User already deleted in OX, publishing (Kafka)OxEmailAddressDeleted-event, personId:${event.personId}, username:${event.username}`,
+                );
             });
         });
 

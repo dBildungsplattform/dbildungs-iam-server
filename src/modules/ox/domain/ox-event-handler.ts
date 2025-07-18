@@ -79,6 +79,7 @@ import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/
 import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
+import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -487,6 +488,13 @@ export class OxEventHandler {
         const getDataAction: GetDataForUserAction = new GetDataForUserAction(idParams);
         const getDataResult: Result<GetDataForUserResponse, DomainError> = await this.oxService.send(getDataAction);
 
+        if (!getDataResult.ok && getDataResult.error instanceof OxNoSuchUserError) {
+            this.publishEmailAddressDeletedEvent(event.personId, event.oxUserId, event.username, event.address);
+            return this.logger.info(
+                `User already deleted in OX, publishing (Kafka)OxEmailAddressDeleted-event, personId:${event.personId}, username:${event.username}`,
+            );
+        }
+
         if (!getDataResult.ok) {
             return this.logger.error(
                 `Cannot get data for oxUsername:${event.username} from OX, Aborting Email-Address Removal, personId:${event.personId}, username:${event.username}`,
@@ -516,26 +524,28 @@ export class OxEventHandler {
             );
         }
 
-        this.eventService.publish(
-            new OxEmailAddressDeletedEvent(
-                event.personId,
-                event.oxUserId,
-                event.username,
-                event.address,
-                this.contextID,
-                this.contextName,
-            ),
-            new KafkaOxEmailAddressDeletedEvent(
-                event.personId,
-                event.oxUserId,
-                event.username,
-                event.address,
-                this.contextID,
-                this.contextName,
-            ),
-        );
+        this.publishEmailAddressDeletedEvent(event.personId, event.oxUserId, event.username, event.address);
         return this.logger.info(
             `Successfully Removed EmailAddress from OxAccount, personId:${event.personId}, username:${event.username}, oxUserId:${event.oxUserId}`,
+        );
+    }
+
+    private publishEmailAddressDeletedEvent(
+        personId: PersonID | undefined,
+        oxUserId: OXUserID,
+        username: PersonReferrer | undefined,
+        address: string,
+    ): void {
+        this.eventService.publish(
+            new OxEmailAddressDeletedEvent(personId, oxUserId, username, address, this.contextID, this.contextName),
+            new KafkaOxEmailAddressDeletedEvent(
+                personId,
+                oxUserId,
+                username,
+                address,
+                this.contextID,
+                this.contextName,
+            ),
         );
     }
 

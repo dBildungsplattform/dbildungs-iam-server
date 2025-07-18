@@ -46,6 +46,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             groupId: this.kafkaConfig.GROUP_ID,
             sessionTimeout: this.kafkaConfig.SESSION_TIMEOUT,
             heartbeatInterval: this.kafkaConfig.HEARTBEAT_INTERVAL,
+            allowAutoTopicCreation: false,
         });
         this.producer = this.kafka.producer();
     }

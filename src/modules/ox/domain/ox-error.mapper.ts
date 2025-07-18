@@ -4,6 +4,7 @@ import { OxUsernameAlreadyExistsError } from '../error/ox-username-already-exist
 import { OxDisplaynameAlreadyUsedError } from '../error/ox-displayname-already-used.error.js';
 import { OxPrimaryMailAlreadyExistsError } from '../error/ox-primary-mail-already-exists.error.js';
 import { OxPrimaryMailNotEqualEmail1Error } from '../error/ox-primary-mail-not-equal-email1.error.js';
+import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
 
 export class OxErrorMapper {
     private static readonly USERNAME_ALREADY_EXISTS_REGEX: RegExp =
@@ -17,6 +18,8 @@ export class OxErrorMapper {
     private static readonly PRIMARY_MAIL_ADDRESS_HAS_TO_EQUAL_EMAIL1_REGEX: RegExp =
         /^primarymail must have the same value as email1;[.]*/;
 
+    private static readonly NO_SUCH_USER_REGEX: RegExp = /^No such user [\d]* in context [\d]*; exceptionId [\w\d-]*/;
+
     public static mapOxErrorResponseToOxError(oxErrorResponse: OxErrorResponse): OxError {
         const faultString: string = oxErrorResponse.Envelope.Body.Fault.faultstring;
 
@@ -28,7 +31,7 @@ export class OxErrorMapper {
             return new OxPrimaryMailAlreadyExistsError(faultString);
         if (OxErrorMapper.PRIMARY_MAIL_ADDRESS_HAS_TO_EQUAL_EMAIL1_REGEX.test(faultString))
             return new OxPrimaryMailNotEqualEmail1Error(faultString);
-
+        if (OxErrorMapper.NO_SUCH_USER_REGEX.test(faultString)) return new OxNoSuchUserError(faultString);
         return new OxError();
     }
 }
