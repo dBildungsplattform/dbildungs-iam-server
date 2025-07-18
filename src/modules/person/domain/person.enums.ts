@@ -1,5 +1,7 @@
 export const VertrauensstufeTypName: string = 'Vertrauensstufe';
 export const GeschlechtTypName: string = 'Geschlecht';
+export const PersonLockOccasionTypName: string = 'PersonLockOccasion';
+export const SortFieldPersonTypName: string = 'SortFieldPerson';
 
 export enum Vertrauensstufe {
     KEIN = 'KEIN',
@@ -14,7 +16,7 @@ export enum Geschlecht {
     D = 'd',
     X = 'x',
 }
-export enum SortFieldPersonFrontend {
+export enum SortFieldPerson {
     FAMILIENNAME = 'familienname',
     VORNAME = 'vorname',
     PERSONALNUMMER = 'personalnummer',
