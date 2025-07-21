@@ -380,4 +380,34 @@ describe('KafkaEventService', () => {
         expect(consumer.connect).not.toHaveBeenCalled();
         expect(producer.connect).not.toHaveBeenCalled();
     });
+
+    it('should call logger.info when keepAlive is invoked in handler', async () => {
+        jest.useFakeTimers();
+        const event: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent('test', 'test');
+
+        const handler: jest.Mock = jest.fn((_, keepAlive: () => void) => {
+            setTimeout(() => {
+                keepAlive();
+            }, 1000);
+
+            return new Promise((resolve: (value: unknown) => void) => {
+                setTimeout(() => {
+                    resolve({ ok: true, value: null });
+                }, 2000);
+            });
+        });
+
+        const promise: Promise<Result<unknown, Error>> = sut.runWithTimoutAndKeepAlive(handler, event, () =>
+            Promise.resolve(),
+        );
+
+        jest.advanceTimersByTime(2000);
+        await promise;
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.stringMatching(
+                /^Handler for event KafkaPersonDeletedEvent with EventID: .+ is still running and called keepAlive, resetting timeout$/,
+            ),
+        );
+        jest.useRealTimers();
+    });
 });

@@ -247,7 +247,10 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         return topics;
     }
 
-    private runWithTimoutAndKeepAlive<Event extends BaseEvent>(
+    /*
+    Must be public because otherwise writing tests that cover 100% are very hard and not worth the effort
+    */
+    public runWithTimoutAndKeepAlive<Event extends BaseEvent>(
         handler: EventHandlerType<BaseEvent>,
         event: Event,
         heartbeat: () => Promise<void>,
