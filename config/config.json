@@ -133,6 +133,6 @@
         "PASSWORD": ""
     },
     "PORTAL": {
-        "LIMITED_ROLLENART_ALLOWLIST": ["LEIT", "LERN", "EXTERN"]
+        "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
     }
 }
