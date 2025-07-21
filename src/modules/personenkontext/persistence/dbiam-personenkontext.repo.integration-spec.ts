@@ -509,6 +509,45 @@ describe('dbiam Personenkontext Repo', () => {
             expect(pks).toHaveLength(0);
             expect(cursor).toBeUndefined();
         });
+
+        it('should not return personenkontexte, when another with itslearning exists for the same person at the same orga', async () => {
+            const person: Person<true> = await createPerson();
+            const sp: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
+            );
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [sp.id] }),
+            );
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [sp.id] }),
+            );
+            const organisation: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: true }),
+            );
+            if (rolleA instanceof DomainError) throw Error();
+            if (rolleB instanceof DomainError) throw Error();
+
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    rolleId: rolleA.id,
+                    personId: person.id,
+                    organisationId: organisation.id,
+                }),
+            );
+            await personenkontextRepoInternal.save(
+                createPersonenkontext(false, {
+                    rolleId: rolleB.id,
+                    personId: person.id,
+                    organisationId: organisation.id,
+                }),
+            );
+
+            const [pks, cursor]: [Personenkontext<true>[], string | undefined] =
+                await sut.findWithRolleAtItslearningOrgaByCursor(rolleA.id, 1);
+
+            expect(pks).toHaveLength(0);
+            expect(cursor).toBeUndefined();
+        });
     });
 
     describe('find', () => {

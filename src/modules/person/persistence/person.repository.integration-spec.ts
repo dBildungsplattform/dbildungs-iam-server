@@ -296,6 +296,74 @@ describe('PersonRepository Integration', () => {
             expect(personen).toHaveLength(0);
             expect(cursor).toBeUndefined();
         });
+
+        it('should not return persons that already have itslearning', async () => {
+            const personA: Person<true> = await savePerson(false);
+            const orgaA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: true }),
+            );
+            const orgaB: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: true }),
+            );
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
+                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
+            );
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [] }),
+            );
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
+            if (rolleA instanceof DomainError) throw rolleA;
+            if (rolleB instanceof DomainError) throw rolleB;
+            await dbiamPersonenkontextRepoInternal.save(
+                DoFactory.createPersonenkontext(false, {
+                    organisationId: orgaA.id,
+                    personId: personA.id,
+                    rolleId: rolleA.id,
+                }),
+            );
+            await dbiamPersonenkontextRepoInternal.save(
+                DoFactory.createPersonenkontext(false, {
+                    organisationId: orgaB.id,
+                    personId: personA.id,
+                    rolleId: rolleB.id,
+                }),
+            );
+
+            const [personen, cursor]: [Person<true>[], string | undefined] =
+                await sut.findWithRolleAndNoOtherItslearningKontexteByCursor(rolleA.id, 1);
+
+            expect(personen).toHaveLength(0);
+            expect(cursor).toBeUndefined();
+        });
+
+        it('should not return persons that are not at itslearning orgas', async () => {
+            const personA: Person<true> = await savePerson(false);
+            const orga: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: false }),
+            );
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
+                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
+            if (rolle instanceof DomainError) throw rolle;
+            await dbiamPersonenkontextRepoInternal.save(
+                DoFactory.createPersonenkontext(false, {
+                    organisationId: orga.id,
+                    personId: personA.id,
+                    rolleId: rolle.id,
+                }),
+            );
+
+            const [personen, cursor]: [Person<true>[], string | undefined] =
+                await sut.findWithRolleAndNoOtherItslearningKontexteByCursor(rolle.id, 1);
+
+            expect(personen).toHaveLength(0);
+            expect(cursor).toBeUndefined();
+        });
     });
 
     describe('findById', () => {
