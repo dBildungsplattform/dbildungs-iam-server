@@ -178,6 +178,8 @@ export class ItsLearningRolleEventHandler {
                 personCursor,
             );
 
+            this.logger.info(`[EventID: ${syncId}] Sending ${personen.length} Personen to itslearning.`);
+
             const createParams: CreatePersonParams[] = personen.map((p: Person<true>) => ({
                 id: p.id,
                 firstName: p.vorname,
@@ -227,6 +229,8 @@ export class ItsLearningRolleEventHandler {
                 personCursor,
             );
 
+            this.logger.info(`[EventID: ${syncId}] Deleting ${personen.length} Personen from itslearning.`);
+
             const deleteResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
                 await this.itslearningPersonRepo.deletePersons(
@@ -274,6 +278,10 @@ export class ItsLearningRolleEventHandler {
                     this.MAX_BATCH_SIZE,
                     personenkontextCursor,
                 );
+
+            this.logger.info(
+                `[EventID: ${syncId}] Sending ${personenkontexte.length} Personenkontexte to itslearning.`,
+            );
 
             const createParams: CreateMembershipParams[] = personenkontexte.map((pk: Personenkontext<true>) => ({
                 id: `membership-${pk.personId}-${pk.organisationId}`,
@@ -327,6 +335,10 @@ export class ItsLearningRolleEventHandler {
                     this.MAX_BATCH_SIZE,
                     personenkontextCursor,
                 );
+
+            this.logger.info(
+                `[EventID: ${syncId}] Deleting ${personenkontexte.length} Personenkontexte from itslearning.`,
+            );
 
             const removeResult: Result<MassResult<void>, DomainError> =
                 // eslint-disable-next-line no-await-in-loop
