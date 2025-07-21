@@ -24,6 +24,7 @@ import { KafkaEventHandler } from '../../eventbus/decorators/kafka-event-handler
 import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ldap-sync.event.js';
+import { LdapInstanceConfig } from '../ldap-instance-config.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -46,12 +47,11 @@ export type LdapSyncData = {
  */
 @Injectable()
 export class LdapSyncEventHandler {
-    public static readonly GROUP_DN_REGEX_STR: string = `cn=lehrer-KENNUNG1,cn=groups,ou=KENNUNG2,dc=schule-sh,dc=de`;
-
-    public static readonly GROUP_DN_REGEX: RegExp = /cn=lehrer-\d+,cn=groups,ou=\d+,dc=schule-sh,dc=de/;
+    public static readonly GROUP_DN_REGEX_STR: string = `cn=lehrer-KENNUNG1,cn=groups,ou=KENNUNG2,BASE_DN`;
 
     public constructor(
         private readonly logger: ClassLogger,
+        private readonly ldapInstanceConfig: LdapInstanceConfig,
         private readonly ldapClientService: LdapClientService,
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
@@ -369,10 +369,9 @@ export class LdapSyncEventHandler {
     }
 
     private isGroupDnForKennung(groupDn: string, kennung: string): boolean {
-        const rep: string = LdapSyncEventHandler.GROUP_DN_REGEX_STR.replace('KENNUNG1', kennung).replace(
-            'KENNUNG2',
-            kennung,
-        );
+        const rep: string = LdapSyncEventHandler.GROUP_DN_REGEX_STR.replace('KENNUNG1', kennung)
+            .replace('KENNUNG2', kennung)
+            .replace('BASE_DN', this.ldapInstanceConfig.BASE_DN);
         return groupDn === rep;
     }
 

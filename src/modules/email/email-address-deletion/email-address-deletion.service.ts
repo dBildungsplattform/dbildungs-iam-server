@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { EmailAddress, EmailAddressStatus } from '../domain/email-address.js';
+import { EmailAddress } from '../domain/email-address.js';
 import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { Person } from '../../person/domain/person.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
@@ -23,11 +23,8 @@ export class EmailAddressDeletionService {
     ) {}
 
     public async deleteEmailAddresses(permissions: PersonPermissions): Promise<void> {
-        const emailAddresses: EmailAddress<true>[] =
+        const nonPrimaryEmailAddresses: EmailAddress<true>[] =
             await this.emailRepo.getByDeletedStatusOrUpdatedAtExceedsDeadline();
-        const nonPrimaryEmailAddresses: EmailAddress<true>[] = emailAddresses.filter(
-            (ea: EmailAddress<true>) => ea.status !== EmailAddressStatus.ENABLED,
-        );
         const affectedPersonIds: (PersonID | undefined)[] = nonPrimaryEmailAddresses.map(
             (ea: EmailAddress<true>) => ea.personId,
         );
