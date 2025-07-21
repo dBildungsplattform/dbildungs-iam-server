@@ -385,6 +385,7 @@ describe('KafkaEventService', () => {
         jest.useFakeTimers();
         const event: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent('test', 'test');
 
+        // eslint-disable-next-line @typescript-eslint/typedef
         const handler: jest.Mock = jest.fn((_, keepAlive: () => void) => {
             setTimeout(() => {
                 keepAlive();
