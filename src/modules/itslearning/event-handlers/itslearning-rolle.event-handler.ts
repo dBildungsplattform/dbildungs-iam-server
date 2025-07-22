@@ -2,7 +2,7 @@ import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { difference, intersection } from 'lodash-es';
+import { difference } from 'lodash-es';
 import { EventHandler } from '../../../core/eventbus/decorators/event-handler.decorator.js';
 import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event-handler.decorator.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -135,14 +135,11 @@ export class ItsLearningRolleEventHandler {
         oldSpIds: ServiceProviderID[],
         newSpIds: ServiceProviderID[],
     ): Promise<[added: boolean, removed: boolean]> {
-        // ServiceProviders that did not change
-        const commonServiceProviderIDs: ServiceProviderID[] = intersection(oldSpIds, newSpIds);
-
         // ServiceProviders that were added
-        const addedServiceProviderIDs: ServiceProviderID[] = difference(newSpIds, commonServiceProviderIDs);
+        const addedServiceProviderIDs: ServiceProviderID[] = difference(newSpIds, oldSpIds);
 
         // ServiceProviders that were removed
-        const removedServiceProviderIDs: ServiceProviderID[] = difference(oldSpIds, commonServiceProviderIDs);
+        const removedServiceProviderIDs: ServiceProviderID[] = difference(oldSpIds, newSpIds);
 
         const serviceProviders: Map<
             ServiceProviderID,
