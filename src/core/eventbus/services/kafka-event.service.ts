@@ -256,7 +256,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         heartbeat: () => Promise<void>,
     ): Promise<Result<unknown, Error>> {
         return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
-            const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2.5; // To allow processing of offset commit after message before client times out
+            const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2500; // To allow processing of offset commit after message before client times out
             let completed: boolean = false;
 
             const onTimeout = (): void => {
