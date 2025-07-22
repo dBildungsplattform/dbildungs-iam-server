@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { BigIntType, Entity, Enum, Index, Opt, Property } from '@mikro-orm/core';
+import { BigIntType, Entity, Enum, Index, ManyToOne, Opt, Property, Ref } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import { OrganisationsTyp, Traegerschaft } from '../domain/organisation.enums.js';
 
@@ -9,14 +9,25 @@ export class OrganisationEntity extends TimestampedEntity {
         super();
     }
 
-    @AutoMap()
+    @ManyToOne({
+        fieldName: 'administriert_von',
+        columnType: 'uuid',
+        ref: true,
+        nullable: true,
+        index: false,
+        entity: () => OrganisationEntity,
+    })
     @Index({ name: 'organisation_administriert_von_index' })
-    @Property({ columnType: 'uuid', nullable: true })
-    public administriertVon?: string;
+    public administriertVon?: Ref<OrganisationEntity>;
 
-    @AutoMap()
-    @Property({ columnType: 'uuid', nullable: true })
-    public zugehoerigZu?: string;
+    @ManyToOne({
+        fieldName: 'zugehoerig_zu',
+        columnType: 'uuid',
+        ref: true,
+        nullable: true,
+        entity: () => OrganisationEntity,
+    })
+    public zugehoerigZu?: Ref<OrganisationEntity>;
 
     @AutoMap()
     @Property({ nullable: true })

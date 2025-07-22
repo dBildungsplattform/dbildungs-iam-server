@@ -59,8 +59,8 @@ export function mapOrgaEntityToAggregate(entity: OrganisationEntity): Organisati
         entity.createdAt,
         entity.updatedAt,
         entity.version,
-        entity.administriertVon,
-        entity.zugehoerigZu,
+        entity.administriertVon?.id,
+        entity.zugehoerigZu?.id,
         entity.kennung,
         entity.name,
         entity.namensergaenzung,
@@ -463,9 +463,12 @@ export class OrganisationRepository {
 
         let schoolName: string | undefined;
         if (organisationEntity.administriertVon) {
-            const school: Option<Organisation<true>> = await this.findById(organisationEntity.administriertVon);
+            const school: Option<Organisation<true>> = await this.findById(organisationEntity.administriertVon.id);
             if (!school) {
-                const error: DomainError = new EntityNotFoundError('Organisation', organisationEntity.administriertVon);
+                const error: DomainError = new EntityNotFoundError(
+                    'Organisation',
+                    organisationEntity.administriertVon.id,
+                );
                 this.logger.error(
                     `Admin: ${permissions.personFields.id}) hat versucht eine Klasse ${organisationEntity.name} zu entfernen. Fehler: ${error.message}`,
                 );
@@ -688,12 +691,12 @@ export class OrganisationRepository {
                 new KlasseCreatedEvent(
                     organisationEntity.id,
                     organisationEntity.name,
-                    organisationEntity.administriertVon,
+                    organisationEntity.administriertVon?.id,
                 ),
                 new KafkaKlasseCreatedEvent(
                     organisationEntity.id,
                     organisationEntity.name,
-                    organisationEntity.administriertVon,
+                    organisationEntity.administriertVon?.id,
                 ),
             );
         }

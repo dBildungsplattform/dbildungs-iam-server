@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import * as fs from 'fs';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { EntityManager, MikroORM, ref } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -163,16 +163,16 @@ describe('Import API', () => {
             const klasse1A: OrganisationEntity = new OrganisationEntity();
             klasse1A.typ = OrganisationsTyp.KLASSE;
             klasse1A.name = '1a';
-            klasse1A.administriertVon = schule.id;
-            klasse1A.zugehoerigZu = schule.id;
+            klasse1A.administriertVon = ref(OrganisationEntity, schule.id);
+            klasse1A.zugehoerigZu = ref(OrganisationEntity, schule.id);
             await em.persistAndFlush(klasse1A);
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
             const klasse2B: OrganisationEntity = new OrganisationEntity();
             klasse2B.typ = OrganisationsTyp.KLASSE;
             klasse2B.name = '2b';
-            klasse2B.administriertVon = schule.id;
-            klasse2B.zugehoerigZu = schule.id;
+            klasse2B.administriertVon = ref(OrganisationEntity, schule.id);
+            klasse2B.zugehoerigZu = ref(OrganisationEntity, schule.id);
             await em.persistAndFlush(klasse2B);
             await em.findOneOrFail(OrganisationEntity, { id: klasse2B.id });
 
@@ -216,8 +216,8 @@ describe('Import API', () => {
             const klasse1A: OrganisationEntity = new OrganisationEntity();
             klasse1A.typ = OrganisationsTyp.KLASSE;
             klasse1A.name = '1A';
-            klasse1A.administriertVon = schule.id;
-            klasse1A.zugehoerigZu = schule.id;
+            klasse1A.administriertVon = ref(OrganisationEntity, schule.id);
+            klasse1A.zugehoerigZu = ref(OrganisationEntity, schule.id);
             await em.persistAndFlush(klasse1A);
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
@@ -436,8 +436,8 @@ describe('Import API', () => {
             const klasse1A: OrganisationEntity = new OrganisationEntity();
             klasse1A.typ = OrganisationsTyp.KLASSE;
             klasse1A.name = '1a';
-            klasse1A.administriertVon = schule.id;
-            klasse1A.zugehoerigZu = schule.id;
+            klasse1A.administriertVon = ref(OrganisationEntity, schule.id);
+            klasse1A.zugehoerigZu = ref(OrganisationEntity, schule.id);
             await em.persistAndFlush(klasse1A);
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
@@ -482,8 +482,8 @@ describe('Import API', () => {
             const klasse: OrganisationEntity = new OrganisationEntity();
             klasse.typ = OrganisationsTyp.KLASSE;
             klasse.name = '1a';
-            klasse.administriertVon = schule.id;
-            klasse.zugehoerigZu = schule.id;
+            klasse.administriertVon = ref(OrganisationEntity, schule.id);
+            klasse.zugehoerigZu = ref(OrganisationEntity, schule.id);
             await em.persistAndFlush(klasse);
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
 
@@ -526,16 +526,16 @@ describe('Import API', () => {
             const klasse: OrganisationEntity = new OrganisationEntity();
             klasse.typ = OrganisationsTyp.KLASSE;
             klasse.name = '1a';
-            klasse.administriertVon = schule.id;
-            klasse.zugehoerigZu = schule.id;
+            klasse.administriertVon = ref(OrganisationEntity, schule.id);
+            klasse.zugehoerigZu = ref(OrganisationEntity, schule.id);
             await em.persistAndFlush(klasse);
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
 
             const klasse1A: OrganisationEntity = new OrganisationEntity();
             klasse1A.typ = OrganisationsTyp.KLASSE;
             klasse1A.name = '1A';
-            klasse1A.administriertVon = schule.id;
-            klasse1A.zugehoerigZu = schule.id;
+            klasse1A.administriertVon = ref(OrganisationEntity, schule.id);
+            klasse1A.zugehoerigZu = ref(OrganisationEntity, schule.id);
             await em.persistAndFlush(klasse1A);
             await em.findOneOrFail(OrganisationEntity, { id: klasse1A.id });
 
@@ -628,8 +628,8 @@ describe('Import API', () => {
             const klasse: OrganisationEntity = new OrganisationEntity();
             klasse.typ = OrganisationsTyp.KLASSE;
             klasse.name = '1a';
-            klasse.administriertVon = schule.id;
-            klasse.zugehoerigZu = schule.id;
+            klasse.administriertVon = ref(OrganisationEntity, schule.id);
+            klasse.zugehoerigZu = ref(OrganisationEntity, schule.id);
             await em.persistAndFlush(klasse);
             await em.findOneOrFail(OrganisationEntity, { id: klasse.id });
 
