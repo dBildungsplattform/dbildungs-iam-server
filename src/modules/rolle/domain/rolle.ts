@@ -24,6 +24,7 @@ export class Rolle<WasPersisted extends boolean> {
         public serviceProviderIds: string[],
         public istTechnisch: boolean,
         public serviceProviderData: ServiceProvider<true>[],
+        public lmsRolle?: string,
     ) {}
 
     public static createNew(
@@ -37,6 +38,7 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
         serviceProviderData: ServiceProvider<true>[],
         istTechnisch: boolean,
+        lmsRolle?: string,
     ): Rolle<false> | DomainError {
         // Validate the Rollenname
         if (!NameValidator.isNameValid(name)) {
@@ -57,6 +59,7 @@ export class Rolle<WasPersisted extends boolean> {
             serviceProviderIds,
             istTechnisch,
             serviceProviderData,
+            lmsRolle,
         );
     }
 
@@ -127,6 +130,7 @@ export class Rolle<WasPersisted extends boolean> {
         serviceProviderIds: string[],
         istTechnisch: boolean,
         serviceProviderData: ServiceProvider<true>[] | undefined,
+        lmsRolle?: string,
     ): Rolle<WasPersisted> {
         return new Rolle(
             organisationRepo,
@@ -143,6 +147,7 @@ export class Rolle<WasPersisted extends boolean> {
             serviceProviderIds,
             istTechnisch,
             serviceProviderData ?? [],
+            lmsRolle,
         );
     }
 
