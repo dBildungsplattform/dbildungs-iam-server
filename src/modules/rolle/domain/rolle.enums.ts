@@ -33,3 +33,20 @@ export enum RollenSystemRecht {
     SCHULPORTAL_VERWALTEN = 'SCHULPORTAL_VERWALTEN',
     HINWEISE_BEARBEITEN = 'HINWEISE_BEARBEITEN',
 }
+
+export enum SchulcloudRollenArt {
+    USER = 'user',
+    STUDENT = 'student',
+    TEACHER = 'teacher',
+    ADMIN = 'admin',
+    SUPERHERO = 'superhero',
+}
+
+export enum MoodleRollenArt {
+    AUTHENTICATED = 'Authenticated',
+    USER = 'User',
+    STUDENT = 'Student',
+    TEACHER = 'Teacher',
+    MANAGER = 'Manager',
+    SITE_ADMINISTRATOR = 'Site administrator',
+}
