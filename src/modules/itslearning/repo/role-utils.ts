@@ -10,6 +10,7 @@ const ROLLENART_VALUES: Record<RollenArt, number> = {
     [RollenArt.LEIT]: 3,
     [RollenArt.ORGADMIN]: 4,
     [RollenArt.SYSADMIN]: 5,
+    [RollenArt.PORTALADMIN]: 6,
 };
 
 // Maps our roles to itsLearning roles
@@ -20,6 +21,7 @@ const ROLLENART_TO_ITSLEARNING_ROLE: Record<RollenArt, IMSESInstitutionRoleType>
     [RollenArt.LEIT]: IMSESInstitutionRoleType.ADMINISTRATOR,
     [RollenArt.ORGADMIN]: IMSESInstitutionRoleType.ADMINISTRATOR,
     [RollenArt.SYSADMIN]: IMSESInstitutionRoleType.SYSTEM_ADMINISTRATOR,
+    [RollenArt.PORTALADMIN]: IMSESInstitutionRoleType.SYSTEM_ADMINISTRATOR,
 };
 
 // Maps our roles to IMS ES roles (Different from InstitutionRoleType)
@@ -30,6 +32,7 @@ const ROLLENART_TO_IMSES_ROLE: Record<RollenArt, IMSESRoleType> = {
     [RollenArt.LEIT]: IMSESRoleType.ADMINISTRATOR,
     [RollenArt.ORGADMIN]: IMSESRoleType.ADMINISTRATOR,
     [RollenArt.SYSADMIN]: IMSESRoleType.ADMINISTRATOR,
+    [RollenArt.PORTALADMIN]: IMSESRoleType.ADMINISTRATOR,
 };
 
 export function higherRollenart(a: RollenArt, b: RollenArt): RollenArt {
