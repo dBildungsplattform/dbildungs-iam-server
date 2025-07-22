@@ -17,7 +17,6 @@ import { OrganisationEntity } from '../../organisation/persistence/organisation.
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 
 export type RollenCount = { rollenart: string; count: string };
 
@@ -238,15 +237,7 @@ export class DBiamPersonenkontextRepo {
             {
                 rolleId,
                 organisationId: {
-                    $or: [
-                        { itslearningEnabled: true },
-                        {
-                            typ: OrganisationsTyp.KLASSE,
-                            administriertVon: {
-                                itslearningEnabled: true,
-                            },
-                        },
-                    ],
+                    itslearningEnabled: true,
                 },
                 [raw(
                     (alias: string) =>

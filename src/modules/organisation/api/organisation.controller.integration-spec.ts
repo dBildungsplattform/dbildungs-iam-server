@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { EntityManager, MikroORM, ref } from '@mikro-orm/core';
+import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { CallHandler, ExecutionContext, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -246,7 +246,7 @@ describe('Organisation API', () => {
                 await em.persistAndFlush(parentOrganisation);
                 const organisation: OrganisationEntity = new OrganisationEntity();
                 organisation.typ = OrganisationsTyp.KLASSE;
-                organisation.administriertVon = ref(OrganisationEntity, parentOrganisation.id);
+                organisation.administriertVon = parentOrganisation.id;
                 await em.persistAndFlush(organisation);
                 await em.findOneOrFail(OrganisationEntity, { id: organisation.id });
 

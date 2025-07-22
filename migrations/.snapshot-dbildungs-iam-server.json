@@ -1862,34 +1862,7 @@
         }
       ],
       "checks": [],
-      "foreignKeys": {
-        "organisation_administriert_von_foreign": {
-          "constraintName": "organisation_administriert_von_foreign",
-          "columnNames": [
-            "administriert_von"
-          ],
-          "localTableName": "public.organisation",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.organisation",
-          "deleteRule": "set null",
-          "updateRule": "cascade"
-        },
-        "organisation_zugehoerig_zu_foreign": {
-          "constraintName": "organisation_zugehoerig_zu_foreign",
-          "columnNames": [
-            "zugehoerig_zu"
-          ],
-          "localTableName": "public.organisation",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.organisation",
-          "deleteRule": "set null",
-          "updateRule": "cascade"
-        }
-      },
+      "foreignKeys": {},
       "nativeEnums": {
         "db_seed_status_enum": {
           "name": "db_seed_status_enum",
