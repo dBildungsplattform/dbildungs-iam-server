@@ -60,7 +60,7 @@ export class ItsLearningRolleEventHandler {
     @KafkaEventHandler(KafkaRolleUpdatedEvent)
     @EventHandler(RolleUpdatedEvent)
     @EnsureRequestContext()
-    public async rolleUpdatedEventHandler(event: RolleUpdatedEvent): Promise<void> {
+    public async rolleUpdatedEventHandler(event: RolleUpdatedEvent, keepAlive: () => void): Promise<void> {
         this.logger.info(`[EventID: ${event.eventID}] Received RolleUpdatedEvent, ${event.id} (${event.name})`);
 
         if (!this.ENABLED) {
@@ -85,6 +85,7 @@ export class ItsLearningRolleEventHandler {
                 event.id,
                 rollenartToIMSESInstitutionRole(event.rollenArt),
                 event.eventID,
+                keepAlive,
             );
 
             for (const [reason, person] of failedPersons) {
@@ -98,6 +99,7 @@ export class ItsLearningRolleEventHandler {
                 event.id,
                 rollenartToIMSESRole(event.rollenArt),
                 event.eventID,
+                keepAlive,
             );
 
             for (const [reason, pk] of failedMemberships) {
@@ -112,6 +114,7 @@ export class ItsLearningRolleEventHandler {
             const failedMemberships: FailedRequests<Personenkontext<true>> = await this.batchMembershipsDelete(
                 event.id,
                 event.eventID,
+                keepAlive,
             );
 
             for (const [reason, pk] of failedMemberships) {
@@ -121,7 +124,11 @@ export class ItsLearningRolleEventHandler {
             }
 
             // Delete persons
-            const failedPersons: FailedRequests<Person<true>> = await this.batchPersonDelete(event.id, event.eventID);
+            const failedPersons: FailedRequests<Person<true>> = await this.batchPersonDelete(
+                event.id,
+                event.eventID,
+                keepAlive,
+            );
 
             for (const [reason, person] of failedPersons) {
                 this.logger.error(
@@ -160,6 +167,7 @@ export class ItsLearningRolleEventHandler {
         rolleId: RolleID,
         institutionRole: IMSESInstitutionRoleType,
         syncId: string,
+        keepAlive: () => void,
     ): Promise<FailedRequests<Person<true>>> {
         const failedPersons: FailedRequests<Person<true>> = [];
 
@@ -206,12 +214,18 @@ export class ItsLearningRolleEventHandler {
                     ),
                 );
             }
+
+            keepAlive();
         } while (personCursor);
 
         return failedPersons;
     }
 
-    private async batchPersonDelete(rolleId: RolleID, syncId: string): Promise<FailedRequests<Person<true>>> {
+    private async batchPersonDelete(
+        rolleId: RolleID,
+        syncId: string,
+        keepAlive: () => void,
+    ): Promise<FailedRequests<Person<true>>> {
         const failedPersons: FailedRequests<Person<true>> = [];
 
         let personCursor: string | undefined;
@@ -251,6 +265,8 @@ export class ItsLearningRolleEventHandler {
                     ),
                 );
             }
+
+            keepAlive();
         } while (personCursor);
 
         return failedPersons;
@@ -260,6 +276,7 @@ export class ItsLearningRolleEventHandler {
         rolleId: RolleID,
         rollenart: IMSESRoleType,
         syncId: string,
+        keepAlive: () => void,
     ): Promise<FailedRequests<Personenkontext<true>>> {
         const failedMemberships: FailedRequests<Personenkontext<true>> = [];
 
@@ -309,6 +326,8 @@ export class ItsLearningRolleEventHandler {
                     ),
                 );
             }
+
+            keepAlive();
         } while (personenkontextCursor);
 
         return failedMemberships;
@@ -317,6 +336,7 @@ export class ItsLearningRolleEventHandler {
     private async batchMembershipsDelete(
         rolleId: RolleID,
         syncId: string,
+        keepAlive: () => void,
     ): Promise<FailedRequests<Personenkontext<true>>> {
         const failedMemberships: FailedRequests<Personenkontext<true>> = [];
 
@@ -364,6 +384,8 @@ export class ItsLearningRolleEventHandler {
                     ),
                 );
             }
+
+            keepAlive();
         } while (personenkontextCursor);
 
         return failedMemberships;

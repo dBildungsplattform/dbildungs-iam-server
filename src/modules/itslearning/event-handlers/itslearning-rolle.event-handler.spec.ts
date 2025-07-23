@@ -134,7 +134,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     ]),
                 );
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Itslearning status did not change during RoleUpdatedEvent, ignoring.`,
@@ -156,7 +156,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                     ]),
                 );
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Itslearning status did not change during RoleUpdatedEvent, ignoring.`,
@@ -189,7 +189,7 @@ describe('ItsLearning Rolle Event Handler', () => {
 
                 const event: RolleUpdatedEvent = createEvent([spA.id], []);
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor).toHaveBeenCalledWith(
                     event.id,
@@ -246,7 +246,7 @@ describe('ItsLearning Rolle Event Handler', () => {
 
                 const event: RolleUpdatedEvent = createEvent([spA.id], []);
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Creation of person ${person.referrer} failed with the following reason: Input Error`,
@@ -280,7 +280,7 @@ describe('ItsLearning Rolle Event Handler', () => {
 
                 const event: RolleUpdatedEvent = createEvent([spA.id], []);
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Creation of person ${person.referrer} failed with the following reason: Unknown Error`,
@@ -314,7 +314,7 @@ describe('ItsLearning Rolle Event Handler', () => {
 
                 const event: RolleUpdatedEvent = createEvent([], [spA.id]);
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(personRepoMock.findWithRolleAndNoOtherItslearningKontexteByCursor).toHaveBeenCalledWith(
                     event.id,
@@ -363,7 +363,7 @@ describe('ItsLearning Rolle Event Handler', () => {
 
                 const event: RolleUpdatedEvent = createEvent([], [spA.id]);
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Could not remove Rolle from person ${personenkontext.personId} at orga ${personenkontext.organisationId}, failed with the following reason: Input Error`,
@@ -397,7 +397,7 @@ describe('ItsLearning Rolle Event Handler', () => {
 
                 const event: RolleUpdatedEvent = createEvent([], [spA.id]);
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Could not remove Rolle from person ${personenkontext.personId} at orga ${personenkontext.organisationId}, failed with the following reason: Unknown Error`,
@@ -413,7 +413,7 @@ describe('ItsLearning Rolle Event Handler', () => {
                 sut.ENABLED = false;
                 const event: RolleUpdatedEvent = createEvent([], []);
 
-                await sut.rolleUpdatedEventHandler(event);
+                await sut.rolleUpdatedEventHandler(event, () => {});
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `[EventID: ${event.eventID}] Not enabled, ignoring event.`,
