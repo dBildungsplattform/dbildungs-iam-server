@@ -1,3 +1,5 @@
+export const ScopeOrderTypName: string = 'ScopeOrder';
+
 export enum ScopeOperator {
     AND = '$and',
     OR = '$or',
