@@ -42,7 +42,7 @@ describe('KafkaEventService', () => {
     const defaultKafkaConfig: KafkaConfig = {
         BROKER: 'broker',
         GROUP_ID: 'groupId',
-        SESSION_TIMEOUT: 30000,
+        SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
         TOPIC_PREFIX: 'prefix.',
         USER_TOPIC: 'user-topic',
@@ -110,6 +110,26 @@ describe('KafkaEventService', () => {
         expect(producer.disconnect).toHaveBeenCalled();
     });
 
+    it('should log crit and resolve with timeout error if handler times out', async () => {
+        jest.useFakeTimers();
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from(JSON.stringify(new TestEvent())),
+            headers: { eventKey: 'user.deleted' },
+        });
+        const handler: jest.Mock = jest.fn(() => new Promise(() => {}));
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
+
+        const handlePromise: Promise<void> = sut.handleMessage(message, () => Promise.resolve());
+        jest.runOnlyPendingTimers();
+        await Promise.resolve();
+
+        expect(handlePromise).toBeDefined();
+        expect(logger.crit).toHaveBeenCalledTimes(1);
+
+        jest.useRealTimers();
+    });
+
     it('should handle message correctly', async () => {
         const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
             key: Buffer.from('test'),
@@ -120,10 +140,16 @@ describe('KafkaEventService', () => {
         const handler: jest.Mock = jest.fn();
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(handler).toHaveBeenCalled();
-        expect(logger.info).toHaveBeenCalledWith('Handling event: KafkaPersonDeletedEvent for test with 1 handlers');
+        expect(logger.info).toHaveBeenNthCalledWith(1, 'Handling event: KafkaPersonDeletedEvent with 1 handlers');
+        expect(logger.info).toHaveBeenNthCalledWith(
+            2,
+            expect.stringMatching(
+                /^Handler for event KafkaPersonDeletedEvent with EventID: .+ completed successfully$/,
+            ),
+        );
     });
 
     it('should log error if event type header is missing', async () => {
@@ -133,7 +159,7 @@ describe('KafkaEventService', () => {
             headers: {},
         });
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith('Event type header is missing');
     });
@@ -145,7 +171,7 @@ describe('KafkaEventService', () => {
             headers: { eventKey: 'UnknownEvent' },
         });
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith('Event type in header: UnknownEvent is not a valid KafkaEventKey');
     });
@@ -157,7 +183,7 @@ describe('KafkaEventService', () => {
             headers: { eventKey: 'user.deleted' },
         });
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith('Parsed Kafka message is not a valid object');
     });
@@ -169,7 +195,7 @@ describe('KafkaEventService', () => {
             headers: { eventKey: 'user.deleted' },
         });
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith(
             expect.stringContaining('Failed to parse Kafka message'),
@@ -187,9 +213,26 @@ describe('KafkaEventService', () => {
         const handler: jest.Mock = jest.fn().mockRejectedValue(new Error('Handler error'));
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
-        expect(logger.logUnknownAsError).toHaveBeenCalled();
+        expect(logger.error).toHaveBeenCalled();
+    });
+
+    it('should log error if handler throws an sync exception', async () => {
+        const message: DeepMocked<KafkaMessage> = createMock<KafkaMessage>({
+            key: Buffer.from('test'),
+            value: Buffer.from(JSON.stringify(new TestEvent())),
+            headers: { eventKey: 'user.deleted' },
+        });
+        const handler: jest.Mock = jest.fn().mockImplementation(() => {
+            throw new Error('Handler error');
+        });
+        sut.subscribe(KafkaPersonDeletedEvent, handler);
+        await sut.handleMessage(message, () => Promise.resolve());
+        expect(logger.logUnknownAsError).toHaveBeenCalledWith(
+            'Handler failed for event KafkaPersonDeletedEvent',
+            expect.any(Error),
+        );
     });
 
     it('should log error if message value is invalid JSON', async () => {
@@ -202,7 +245,7 @@ describe('KafkaEventService', () => {
         const handler: jest.Mock = jest.fn();
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
 
         expect(logger.error).toHaveBeenCalledWith('Message value is empty or undefined');
     });
@@ -219,7 +262,7 @@ describe('KafkaEventService', () => {
         const handler: jest.Mock = jest.fn().mockReturnValue({ ok: false, error: error });
         sut.subscribe(KafkaPersonDeletedEvent, handler);
 
-        await sut.handleMessage(message);
+        await sut.handleMessage(message, () => Promise.resolve());
         expect(producer.send).toHaveBeenCalledWith({
             topic: 'prefix.user-dlq-topic',
             messages: [
@@ -231,10 +274,7 @@ describe('KafkaEventService', () => {
             ],
         });
 
-        expect(logger.info).toHaveBeenNthCalledWith(
-            1,
-            'Handling event: KafkaPersonDeletedEvent for test with 1 handlers',
-        );
+        expect(logger.info).toHaveBeenNthCalledWith(1, 'Handling event: KafkaPersonDeletedEvent with 1 handlers');
     });
 
     it('should publish event correctly', async () => {
@@ -339,5 +379,36 @@ describe('KafkaEventService', () => {
         expect(logger.info).toHaveBeenCalledWith('Kafka is disabled');
         expect(consumer.connect).not.toHaveBeenCalled();
         expect(producer.connect).not.toHaveBeenCalled();
+    });
+
+    it('should call logger.info when keepAlive is invoked in handler', async () => {
+        jest.useFakeTimers();
+        const event: KafkaPersonDeletedEvent = new KafkaPersonDeletedEvent('test', 'test');
+
+        // eslint-disable-next-line @typescript-eslint/typedef
+        const handler: jest.Mock = jest.fn((_, keepAlive: () => void) => {
+            setTimeout(() => {
+                keepAlive();
+            }, 1000);
+
+            return new Promise((resolve: (value: unknown) => void) => {
+                setTimeout(() => {
+                    resolve({ ok: true, value: null });
+                }, 2000);
+            });
+        });
+
+        const promise: Promise<Result<unknown, Error>> = sut.runWithTimoutAndKeepAlive(handler, event, () =>
+            Promise.resolve(),
+        );
+
+        jest.advanceTimersByTime(2000);
+        await promise;
+        expect(logger.info).toHaveBeenCalledWith(
+            expect.stringMatching(
+                /^Handler for event KafkaPersonDeletedEvent with EventID: .+ is still running and called keepAlive, resetting timeout$/,
+            ),
+        );
+        jest.useRealTimers();
     });
 });

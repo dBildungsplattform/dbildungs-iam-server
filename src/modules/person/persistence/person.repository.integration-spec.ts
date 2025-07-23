@@ -48,7 +48,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonExternalIdType, PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
@@ -2424,7 +2424,7 @@ describe('PersonRepository Integration', () => {
             const queryParams: PersonenQueryParams = {
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
+                sortField: SortFieldPerson.VORNAME,
                 sortOrder: ScopeOrder.ASC,
             };
 
@@ -2453,7 +2453,7 @@ describe('PersonRepository Integration', () => {
                 familienname: person2.familienname,
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
+                sortField: SortFieldPerson.VORNAME,
                 sortOrder: ScopeOrder.ASC,
                 suchFilter: person2.vorname,
             };
@@ -2480,7 +2480,7 @@ describe('PersonRepository Integration', () => {
                 organisationIDs: undefined,
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
+                sortField: SortFieldPerson.VORNAME,
                 sortOrder: ScopeOrder.ASC,
             };
 
@@ -2533,7 +2533,7 @@ describe('PersonRepository Integration', () => {
             const queryParams: PersonenQueryParams = {
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
+                sortField: SortFieldPerson.VORNAME,
                 sortOrder: ScopeOrder.ASC,
             };
 
@@ -2563,7 +2563,7 @@ describe('PersonRepository Integration', () => {
             const queryParams: PersonenQueryParams = {
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.FAMILIENNAME,
+                sortField: SortFieldPerson.FAMILIENNAME,
                 sortOrder: ScopeOrder.ASC,
             };
 
@@ -2583,9 +2583,9 @@ describe('PersonRepository Integration', () => {
             expect(persons[3]?.vorname).toBe('Charlie');
         });
 
-        it.each([SortFieldPersonFrontend.PERSONALNUMMER, SortFieldPersonFrontend.REFERRER])(
+        it.each([SortFieldPerson.PERSONALNUMMER, SortFieldPerson.REFERRER])(
             'should apply sort criteria correctly for %s',
-            async (sortField: SortFieldPersonFrontend) => {
+            async (sortField: SortFieldPerson) => {
                 await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', referrer: 'csmith' });
                 await savePerson(false, { vorname: 'Bob', familienname: 'Smith', referrer: 'bsmith' });
                 await savePerson(false, { vorname: 'Anna', familienname: 'Smith', referrer: 'asmith' });

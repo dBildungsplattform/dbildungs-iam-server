@@ -35,7 +35,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonExternalIdType, PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -223,7 +223,7 @@ export type PersonenQueryParams = {
     rolleIDs?: string[];
     offset?: number;
     limit?: number;
-    sortField?: SortFieldPersonFrontend;
+    sortField?: SortFieldPerson;
     sortOrder?: ScopeOrder;
     suchFilter?: string;
 };
@@ -867,10 +867,10 @@ export class PersonRepository {
         return [persons, total];
     }
 
-    private readonly SORT_CRITERIA: Partial<Record<SortFieldPersonFrontend, SortFieldPersonFrontend[]>> = {
-        [SortFieldPersonFrontend.VORNAME]: [SortFieldPersonFrontend.FAMILIENNAME, SortFieldPersonFrontend.REFERRER],
-        [SortFieldPersonFrontend.FAMILIENNAME]: [SortFieldPersonFrontend.VORNAME, SortFieldPersonFrontend.REFERRER],
-        [SortFieldPersonFrontend.PERSONALNUMMER]: [SortFieldPersonFrontend.REFERRER],
+    private readonly SORT_CRITERIA: Partial<Record<SortFieldPerson, SortFieldPerson[]>> = {
+        [SortFieldPerson.VORNAME]: [SortFieldPerson.FAMILIENNAME, SortFieldPerson.REFERRER],
+        [SortFieldPerson.FAMILIENNAME]: [SortFieldPerson.VORNAME, SortFieldPerson.REFERRER],
+        [SortFieldPerson.PERSONALNUMMER]: [SortFieldPerson.REFERRER],
     };
 
     public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
@@ -885,7 +885,7 @@ export class PersonRepository {
             .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
             .paged(queryParams.offset, queryParams.limit);
 
-        const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
+        const sortField: SortFieldPerson = queryParams.sortField || SortFieldPerson.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
 
         this.addSortCriteria(scope, sortField, sortOrder);
@@ -900,12 +900,8 @@ export class PersonRepository {
         return scope;
     }
 
-    private addSortCriteria(
-        scope: PersonScope,
-        criteria: SortFieldPersonFrontend,
-        order: ScopeOrder = ScopeOrder.ASC,
-    ): void {
-        if (criteria === SortFieldPersonFrontend.REFERRER) {
+    private addSortCriteria(scope: PersonScope, criteria: SortFieldPerson, order: ScopeOrder = ScopeOrder.ASC): void {
+        if (criteria === SortFieldPerson.REFERRER) {
             scope.sortBy(criteria, order);
         } else {
             scope.sortBy(raw(`lower(${criteria})`), order);

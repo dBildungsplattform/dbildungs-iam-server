@@ -32,8 +32,8 @@ fi
 # Check for KAFKA_TOPIC_PARTITIONS (optional)
 # Set to "1" as a default
 if [ -z "${KAFKA_TOPIC_PARTITIONS}" ]; then
-    KAFKA_TOPIC_PARTITIONS="1"
-    echo "Environment-variable KAFKA_TOPIC_PARTITIONS was not set, using the default (= 1)."
+    KAFKA_TOPIC_PARTITIONS="3"
+    echo "Environment-variable KAFKA_TOPIC_PARTITIONS was not set, using the default (= 3)."
 fi
 
 # Check for KAFKA_REPLICATION_FACTOR (optional)
