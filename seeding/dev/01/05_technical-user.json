@@ -15,5 +15,13 @@
             "password": "SPSHnextcloud1!",
             "familienname": "nextcloud"
         }
+        {
+            "id": 7777779,
+            "username": "service-account-datum-test-technicaluser",
+            "vorname": "datum-test",
+            "password": "SPSHnextcloud1!",
+            "familienname": "technicaluser",
+            "keycloakUserId": "ef6eac58-af39-4bea-9994-43472b4bc3c0"
+        }
     ]
 }

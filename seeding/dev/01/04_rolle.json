@@ -187,6 +187,16 @@
             "serviceProviderIds": [],
             "istTechnisch": true
         },
+         {
+            "id": 103,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "Technical User DaTUM",
+            "rollenart": "SYSADMIN",
+            "merkmale": [],
+            "systemrechte": ["PERSONEN_LESEN"],
+            "serviceProviderIds": [17],
+            "istTechnisch": true
+        },
         {
             "id": 200,
             "administeredBySchulstrukturknoten": 0,
