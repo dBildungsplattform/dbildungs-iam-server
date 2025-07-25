@@ -20,3 +20,7 @@ export enum ServiceProviderSystem {
     EMAIL = 'EMAIL',
     ITSLEARNING = 'ITSLEARNING',
 }
+
+export enum ServiceProviderMerkmal {
+    NACHTRAEGLICH_ZUWEISBAR = 'NACHTRAEGLICH_ZUWEISBAR',
+}

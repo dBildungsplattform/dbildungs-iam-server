@@ -8,27 +8,28 @@ import {
 } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
-import { Rolle } from '../domain/rolle.js';
-import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
-import { RolleEntity } from '../entity/rolle.entity.js';
-import { RolleFactory } from '../domain/rolle.factory.js';
-import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.entity.js';
-import { OrganisationID, RolleID } from '../../../shared/types/index.js';
-import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
-import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { DomainError, EntityNotFoundError, MissingPermissionsError } from '../../../shared/error/index.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
+import { OrganisationID, RolleID } from '../../../shared/types/index.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
+import { Rolle } from '../domain/rolle.js';
+import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
+import { RolleMerkmalEntity } from '../entity/rolle-merkmal.entity.js';
+import { RolleServiceProviderEntity } from '../entity/rolle-service-provider.entity.js';
+import { RolleSystemrechtEntity } from '../entity/rolle-systemrecht.entity.js';
+import { RolleEntity } from '../entity/rolle.entity.js';
 
+import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/service-provider-merkmal.entity.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
-import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
-import { KafkaRolleUpdatedEvent } from '../../../shared/events/kafka-rolle-updated.event.js';
+import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
@@ -91,6 +92,7 @@ export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: Rol
                 sp.externalSystem,
                 sp.requires2fa,
                 sp.vidisAngebotId,
+                sp.merkmale.map((merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal),
             );
         },
     );
@@ -308,6 +310,7 @@ export class RolleRepo {
         //Specifications
         if (
             isAlreadyAssigned &&
+            // TODO: check this logic
             (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
         ) {
             return new UpdateMerkmaleError();

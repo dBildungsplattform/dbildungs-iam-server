@@ -1,14 +1,16 @@
-import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
+import { EntityData, EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
-import { GroupAndRoleCreatedEvent } from '../../../shared/events/kc-group-and-role-event.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 
-import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
-import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-group-and-role-event.js';
+import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
+import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
+import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 
 /**
  * @deprecated Not for use outside of service-provider-repo, export will be removed at a later date
@@ -16,6 +18,13 @@ import { KafkaGroupAndRoleCreatedEvent } from '../../../shared/events/kafka-kc-g
 export function mapAggregateToData(
     serviceProvider: ServiceProvider<boolean>,
 ): RequiredEntityData<ServiceProviderEntity> {
+    const merkmale: EntityData<ServiceProviderMerkmalEntity>[] = serviceProvider.merkmale.map(
+        (merkmal: ServiceProviderMerkmal) => ({
+            serviceProvider: serviceProvider.id,
+            merkmal,
+        }),
+    );
+
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
         id: serviceProvider.id,
@@ -31,10 +40,15 @@ export function mapAggregateToData(
         externalSystem: serviceProvider.externalSystem,
         requires2fa: serviceProvider.requires2fa,
         vidisAngebotId: serviceProvider.vidisAngebotId,
+        merkmale,
     };
 }
 
 function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<boolean> {
+    const merkmale: ServiceProviderMerkmal[] = entity.merkmale.map(
+        (merkmalEntity: ServiceProviderMerkmalEntity) => merkmalEntity.merkmal,
+    );
+
     return ServiceProvider.construct(
         entity.id,
         entity.createdAt,
@@ -51,6 +65,7 @@ function mapEntityToAggregate(entity: ServiceProviderEntity): ServiceProvider<bo
         entity.externalSystem,
         entity.requires2fa,
         entity.vidisAngebotId,
+        merkmale,
     );
 }
 

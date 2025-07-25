@@ -280,6 +280,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -540,6 +547,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -824,6 +838,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -1099,6 +1120,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -1365,6 +1393,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -1661,6 +1696,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -2073,6 +2115,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -2360,6 +2409,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -2945,6 +3001,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -3287,6 +3350,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -3564,6 +3634,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -3881,6 +3958,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -4346,6 +4430,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -4730,6 +4821,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -5093,6 +5191,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -5371,6 +5476,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -5664,6 +5776,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -6021,6 +6140,13 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -6411,6 +6537,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -6687,6 +6820,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     },
@@ -6962,6 +7102,298 @@
             "NONE",
             "EMAIL",
             "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "service_provider_id": {
+          "name": "service_provider_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "merkmal": {
+          "name": "merkmal",
+          "type": "service_provider_merkmal_enum",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "nativeEnumName": "service_provider_merkmal_enum",
+          "enumItems": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ],
+          "mappedType": "enum"
+        }
+      },
+      "name": "service_provider_merkmal",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "service_provider_id"
+          ],
+          "composite": false,
+          "keyName": "service_provider_merkmal_service_provider_id_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "service_provider_merkmal_pkey",
+          "columnNames": [
+            "service_provider_id",
+            "merkmal"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "service_provider_merkmal_service_provider_id_foreign": {
+          "constraintName": "service_provider_merkmal_service_provider_id_foreign",
+          "columnNames": [
+            "service_provider_id"
+          ],
+          "localTableName": "public.service_provider_merkmal",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.service_provider",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "meldung_status_enum": {
+          "name": "meldung_status_enum",
+          "schema": "public",
+          "items": [
+            "VEROEFFENTLICHT",
+            "NICHT_VEROEFFENTLICHT"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED",
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
+          ]
+        },
+        "external_id_enum": {
+          "name": "external_id_enum",
+          "schema": "public",
+          "items": [
+            "LDAP"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "import_status_enum": {
+          "name": "import_status_enum",
+          "schema": "public",
+          "items": [
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
+          ]
+        },
+        "import_data_item_status_enum": {
+          "name": "import_data_item_status_enum",
+          "schema": "public",
+          "items": [
+            "FAILED",
+            "SUCCESS",
+            "PENDING"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN",
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN",
+            "BULK_VERWALTEN",
+            "SCHULPORTAL_VERWALTEN",
+            "HINWEISE_BEARBEITEN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
           ]
         }
       }
@@ -7286,6 +7718,13 @@
             "EMAIL",
             "ITSLEARNING"
           ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR"
+          ]
         }
       }
     }
@@ -7499,6 +7938,13 @@
         "NONE",
         "EMAIL",
         "ITSLEARNING"
+      ]
+    },
+    "service_provider_merkmal_enum": {
+      "name": "service_provider_merkmal_enum",
+      "schema": "public",
+      "items": [
+        "NACHTRAEGLICH_ZUWEISBAR"
       ]
     }
   }

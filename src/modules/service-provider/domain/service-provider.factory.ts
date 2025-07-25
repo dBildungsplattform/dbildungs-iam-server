@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderSystem,
+    ServiceProviderTarget,
+} from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 
 @Injectable()
 export class ServiceProviderFactory {
@@ -20,6 +25,7 @@ export class ServiceProviderFactory {
         externalSystem: ServiceProviderSystem,
         requires2fa: boolean,
         vidisAngebotId: string | undefined,
+        merkmale: ServiceProviderMerkmal[],
     ): ServiceProvider<true> {
         return ServiceProvider.construct(
             id,
@@ -37,6 +43,7 @@ export class ServiceProviderFactory {
             externalSystem,
             requires2fa,
             vidisAngebotId,
+            merkmale,
         );
     }
 
@@ -53,6 +60,7 @@ export class ServiceProviderFactory {
         externalSystem: ServiceProviderSystem,
         requires2fa: boolean,
         vidisAngebotId: string | undefined,
+        merkmale: ServiceProviderMerkmal[],
     ): ServiceProvider<false> {
         return ServiceProvider.createNew(
             name,
@@ -67,6 +75,7 @@ export class ServiceProviderFactory {
             externalSystem,
             requires2fa,
             vidisAngebotId,
+            merkmale,
         );
     }
 }
