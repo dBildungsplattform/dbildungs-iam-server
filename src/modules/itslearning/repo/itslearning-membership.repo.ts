@@ -39,11 +39,16 @@ export class ItslearningMembershipRepo {
         this.ROOT_NAMES = [itslearningConfig.ROOT, itslearningConfig.ROOT_OEFFENTLICH, itslearningConfig.ROOT_ERSATZ];
     }
 
-    public readMembershipsForPerson(
+    public async readMembershipsForPerson(
         personId: PersonID,
         syncId?: string,
     ): Promise<Result<MembershipResponse[], DomainError>> {
-        return this.itslearningService.send(new ReadMembershipsForPersonAction(personId), syncId);
+        const readResult: Result<MassResult<MembershipResponse[]>, DomainError> = await this.itslearningService.send(
+            new ReadMembershipsForPersonAction(personId),
+            syncId,
+        );
+
+        return StatusInfoHelpers.unpackMassResult(readResult);
     }
 
     public async createMemberships(

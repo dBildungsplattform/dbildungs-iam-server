@@ -1,5 +1,7 @@
+import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
-import { FailureStatusInfo, StatusInfo, SuccessStatusInfo } from '../actions/base-mass-action.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { FailureStatusInfo, MassResult, StatusInfo, SuccessStatusInfo } from '../actions/base-mass-action.js';
 import { StatusInfoHelpers } from './status-info.utils.js';
 
 function makeSuccessStatus(): SuccessStatusInfo {
@@ -49,6 +51,39 @@ describe('StatusInfoHelpers', () => {
             const result: FailureStatusInfo[] = StatusInfoHelpers.failedStatus(status);
 
             expect(result).toEqual([makeFailureStatus('Some Error')]);
+        });
+    });
+
+    describe('unpackMassResult', () => {
+        it('should return ok result, if input is okay and no failure statuses exist', () => {
+            const input: Result<MassResult<string>, DomainError> = Ok({
+                status: [makeSuccessStatus()],
+                value: 'will succeed',
+            });
+
+            const result: Result<string, DomainError> = StatusInfoHelpers.unpackMassResult(input);
+
+            expect(result).toEqual(Ok('will succeed'));
+        });
+
+        it('should return error result, if input is okay but failure status exist', () => {
+            const input: Result<MassResult<string>, DomainError> = Ok({
+                status: [makeFailureStatus('some error')],
+                value: 'will not succeed',
+            });
+
+            const result: Result<string, DomainError> = StatusInfoHelpers.unpackMassResult(input);
+
+            expect(result).toEqual(Err(new ItsLearningError('1 of 1 Requests failed')));
+        });
+
+        it('should return error result, if input is already an error result', () => {
+            const error: ItsLearningError = new ItsLearningError('error');
+            const input: Result<MassResult<string>, DomainError> = Err(error);
+
+            const result: Result<string, DomainError> = StatusInfoHelpers.unpackMassResult(input);
+
+            expect(result).toEqual(Err(error));
         });
     });
 

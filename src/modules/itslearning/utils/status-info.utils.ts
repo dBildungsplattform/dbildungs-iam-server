@@ -1,5 +1,6 @@
-import { ItsLearningError } from '../../../shared/error/index.js';
-import { FailureStatusInfo, StatusInfo } from '../actions/base-mass-action.js';
+import { DomainError, ItsLearningError } from '../../../shared/error/index.js';
+import { Err, Ok } from '../../../shared/util/result.js';
+import { FailureStatusInfo, MassResult, StatusInfo } from '../actions/base-mass-action.js';
 
 export class StatusInfoHelpers {
     public static errorOnFailure(status: StatusInfo[]): ItsLearningError | undefined {
@@ -14,6 +15,20 @@ export class StatusInfoHelpers {
 
     public static failedStatus(status: StatusInfo[]): FailureStatusInfo[] {
         return status.filter((si: StatusInfo) => si.codeMajor === 'failure');
+    }
+
+    public static unpackMassResult<T>(result: Result<MassResult<T>, DomainError>): Result<T, DomainError> {
+        if (result.ok) {
+            const error: DomainError | undefined = StatusInfoHelpers.errorOnFailure(result.value.status);
+
+            if (error) {
+                return Err(error);
+            } else {
+                return Ok(result.value.value);
+            }
+        } else {
+            return Err(result.error);
+        }
     }
 
     /**
