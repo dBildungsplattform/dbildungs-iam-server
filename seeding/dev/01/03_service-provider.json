@@ -222,6 +222,6 @@
             "keycloakGroup": "VIDIS-Dienste-service",
             "keycloakRole": "VIDIS-Dienste-user",
             "requires2fa": false
-        },
+        }
     ]
 }
