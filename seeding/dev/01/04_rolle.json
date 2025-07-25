@@ -204,6 +204,35 @@
             "merkmale": [],
             "systemrechte": [],
             "serviceProviderIds": [13, 14]
+        },
+        {
+            "id": 202,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "2P-Sek-I Schüler",
+            "rollenart": "LERN",
+            "merkmale": [],
+            "systemrechte": [],
+            "serviceProviderIds": [17]
+        },
+        {
+            "id": 203,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "2P-Sek-I Lehrkraft",
+            "rollenart": "LEHR",
+            "merkmale": [],
+            "systemrechte": [],
+            "serviceProviderIds": [17]
+        },
+        {
+            "id": 204,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "2P-Synchronisation",
+            "rollenart": "SYSADMIN",
+            "merkmale": [],
+            "systemrechte": ["PERSONEN_LESEN"],
+            "serviceProviderIds": [17],
+            "istTechnisch": true
         }
+
     ]
 }
