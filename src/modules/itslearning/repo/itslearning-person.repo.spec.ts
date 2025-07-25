@@ -11,6 +11,9 @@ import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { IMSESInstitutionRoleType } from '../types/role.enum.js';
 import { ItslearningPersonRepo } from './itslearning-person.repo.js';
+import { CreatePersonsAction } from '../actions/create-persons.action.js';
+import { MassResult } from '../actions/base-mass-action.js';
+import { DeletePersonsAction } from '../actions/delete-persons.action.js';
 
 describe('Itslearning Person Repo', () => {
     let module: TestingModule;
@@ -206,6 +209,40 @@ describe('Itslearning Person Repo', () => {
         });
     });
 
+    describe('createOrUpdatePersons', () => {
+        it('should call the itslearning API', async () => {
+            const createParams: CreatePersonParams = {
+                id: faker.string.uuid(),
+                firstName: faker.person.firstName(),
+                lastName: faker.person.lastName(),
+                username: faker.internet.userName(),
+                institutionRoleType: faker.helpers.enumValue(IMSESInstitutionRoleType),
+            };
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
+            }); // CreatePersonsAction
+            const syncID: string = faker.string.uuid();
+
+            const result: Result<MassResult<void>, DomainError> = await sut.createOrUpdatePersons(
+                [createParams],
+                syncID,
+            );
+
+            expect(result).toEqual({
+                ok: true,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
+            });
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(CreatePersonsAction), syncID);
+        });
+    });
+
     describe('deletePerson', () => {
         it('should call the itslearning API', async () => {
             const personId: string = faker.string.uuid();
@@ -243,6 +280,31 @@ describe('Itslearning Person Repo', () => {
             const result: Option<DomainError> = await sut.deletePerson(faker.string.uuid());
 
             expect(result).toBe(error);
+        });
+    });
+
+    describe('deletePersons', () => {
+        it('should call the itslearning API', async () => {
+            const personId: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
+            }); // DeletePersonsAction
+            const syncID: string = faker.string.uuid();
+
+            const result: Result<MassResult<void>, DomainError> = await sut.deletePersons([personId], syncID);
+
+            expect(result).toEqual({
+                ok: true,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
+            });
+            expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.any(DeletePersonsAction), syncID);
         });
     });
 });

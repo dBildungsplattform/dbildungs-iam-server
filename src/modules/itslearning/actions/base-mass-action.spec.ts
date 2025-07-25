@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ItsLearningError } from '../../../shared/error/its-learning.error.js';
-import { IMSESMassAction } from './base-mass-action.js';
+import { IMSESMassAction, MassResult, StatusInfo } from './base-mass-action.js';
+import { Err, Ok } from '../../../shared/util/result.js';
 
 function buildXMLResponse(codeMajor: 'success' | 'failure', severity: 'status' | 'error', body: string): string {
     return `<s:Envelope
@@ -17,7 +18,7 @@ function buildXMLResponse(codeMajor: 'success' | 'failure', severity: 'status' |
             <statusInfoSet>
                 <statusInfo>
                     <codeMajor>${codeMajor}</codeMajor>
-                    <severity>${severity}c</severity>
+                    <severity>${severity}</severity>
                     <messageIdRef/>
                 </statusInfo>
             </statusInfoSet>
@@ -50,10 +51,11 @@ class TestAction extends IMSESMassAction<DummyResponse, string> {
     }
 
     public parseBody(body: DummyResponse): Result<string, DomainError> {
-        return {
-            ok: true,
-            value: body.dummyResponse,
-        };
+        if (body.dummyResponse === 'error') {
+            return Err(new ItsLearningError('Parse Error'));
+        } else {
+            return Ok(body.dummyResponse);
+        }
     }
 }
 
@@ -63,23 +65,31 @@ describe('IMSESMassAction', () => {
             const xmlTest: string = buildXMLResponse('success', 'status', '<dummyResponse>test</dummyResponse>');
             const testAction: TestAction = new TestAction();
 
-            const result: Result<string, DomainError> = testAction.parseResponse(xmlTest);
+            const result: Result<MassResult<string>, DomainError> = testAction.parseResponse(xmlTest);
 
-            expect(result).toEqual({
+            expect(result).toEqual<Result<MassResult<string>, DomainError>>({
                 ok: true,
-                value: 'test',
+                value: {
+                    status: [
+                        expect.objectContaining({
+                            codeMajor: 'success',
+                            severity: 'status',
+                        }) as StatusInfo,
+                    ],
+                    value: 'test',
+                },
             });
         });
 
-        it('should return ItsLearningError if response is an error', () => {
-            const xmlTest: string = buildXMLResponse('failure', 'error', '<dummyResponse/>');
+        it('should return error if action could not parse response', () => {
+            const xmlTest: string = buildXMLResponse('success', 'status', '<dummyResponse>error</dummyResponse>');
             const testAction: TestAction = new TestAction();
 
-            const result: Result<string, DomainError> = testAction.parseResponse(xmlTest);
+            const result: Result<MassResult<string>, DomainError> = testAction.parseResponse(xmlTest);
 
             expect(result).toEqual({
                 ok: false,
-                error: new ItsLearningError('1 of 1 Requests failed', expect.anything() as Record<string, unknown>),
+                error: new ItsLearningError('Parse Error'),
             });
         });
     });
