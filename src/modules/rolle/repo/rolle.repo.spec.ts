@@ -610,7 +610,7 @@ describe('RolleRepo', () => {
         it('should return error when organisation has a personenkontext and merkmale needs to be updated', async () => {
             const organisationId: OrganisationID = faker.string.uuid();
             const rolle: Rolle<true> | DomainError = await sut.save(
-                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId }),
+                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, merkmale: [] }),
             );
             if (rolle instanceof DomainError) throw Error();
 

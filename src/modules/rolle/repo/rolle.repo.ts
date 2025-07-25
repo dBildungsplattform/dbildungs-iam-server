@@ -308,11 +308,13 @@ export class RolleRepo {
             return authorizedRoleResult.error;
         }
         //Specifications
-        if (
-            isAlreadyAssigned &&
-            // TODO: check this logic
-            (merkmale.length > 0 || merkmale.length < authorizedRoleResult.value.merkmale.length)
-        ) {
+        const willMerkmaleChange: boolean = !(
+            merkmale.length === authorizedRoleResult.value.merkmale.length &&
+            merkmale.every((m: RollenMerkmal) => authorizedRoleResult.value.merkmale.includes(m)) &&
+            authorizedRoleResult.value.merkmale.every((m: RollenMerkmal) => merkmale.includes(m))
+        );
+
+        if (isAlreadyAssigned && willMerkmaleChange) {
             return new UpdateMerkmaleError();
         }
 
