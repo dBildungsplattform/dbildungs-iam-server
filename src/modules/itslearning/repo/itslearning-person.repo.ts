@@ -6,6 +6,9 @@ import { CreatePersonAction, CreatePersonParams } from '../actions/create-person
 import { DeletePersonAction } from '../actions/delete-person.action.js';
 import { PersonResponse, ReadPersonAction } from '../actions/read-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
+import { CreatePersonsAction } from '../actions/create-persons.action.js';
+import { MassResult } from '../actions/base-mass-action.js';
+import { DeletePersonsAction } from '../actions/delete-persons.action.js';
 
 @Injectable()
 export class ItslearningPersonRepo {
@@ -34,6 +37,20 @@ export class ItslearningPersonRepo {
         }
 
         return undefined;
+    }
+
+    public async createOrUpdatePersons(
+        params: CreatePersonParams[],
+        syncId?: string,
+    ): Promise<Result<MassResult<void>, DomainError>> {
+        const createAction: CreatePersonsAction = new CreatePersonsAction(params);
+
+        const createResult: Result<MassResult<void>, DomainError> = await this.itslearningService.send(
+            createAction,
+            syncId,
+        );
+
+        return createResult;
     }
 
     public async updateEmail(personId: PersonID, email: string, syncId?: string): Promise<Option<DomainError>> {
@@ -66,5 +83,16 @@ export class ItslearningPersonRepo {
         }
 
         return undefined;
+    }
+
+    public async deletePersons(ids: PersonID[], syncId?: string): Promise<Result<MassResult<void>, DomainError>> {
+        const deleteAction: DeletePersonsAction = new DeletePersonsAction(ids);
+
+        const deleteResult: Result<MassResult<void>, DomainError> = await this.itslearningService.send(
+            deleteAction,
+            syncId,
+        );
+
+        return deleteResult;
     }
 }

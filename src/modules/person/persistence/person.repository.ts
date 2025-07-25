@@ -1,5 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, FilterQuery, Loaded, QBFilterQuery, raw, RequiredEntityData } from '@mikro-orm/postgresql';
+import {
+    Cursor,
+    EntityManager,
+    FilterQuery,
+    Loaded,
+    QBFilterQuery,
+    QueryOrder,
+    raw,
+    RequiredEntityData,
+} from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -12,7 +21,7 @@ import {
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
@@ -51,6 +60,7 @@ import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/ev
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/email.repo.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -329,6 +339,67 @@ export class PersonRepository {
         });
 
         return personEntities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+    }
+
+    /**
+     * Find all personen, that
+     * - have a personenkontext with the specified rolle
+     * - at an organisation that is itslearning enabled
+     * but
+     * - no other personenkontext
+     * - with a different rolle
+     * - with the itslearning serviceprovider
+     * - at an organisaton that is itslearning enabled
+     */
+    public async findWithRolleAndNoOtherItslearningKontexteByCursor(
+        rolle: RolleID,
+        count: number,
+        cursor?: string,
+    ): Promise<[persons: Person<true>[], cursor: string | undefined]> {
+        const personCursor: Cursor<PersonEntity> = await this.em.findByCursor(
+            PersonEntity,
+            {
+                personenKontexte: {
+                    // Only if the person has the requested rolle
+                    $some: {
+                        rolleId: rolle,
+                        // at an organisation that is itslearning enabled
+                        organisationId: {
+                            itslearningEnabled: true,
+                        },
+                    },
+                    // But no other kontext
+                    $none: {
+                        rolleId: {
+                            // That is not the requested rolle
+                            $ne: rolle,
+                            serviceProvider: {
+                                // with itslearning
+                                serviceProvider: {
+                                    externalSystem: ServiceProviderSystem.ITSLEARNING,
+                                },
+                            },
+                        },
+                        // at an organisation that is itslearning enabled
+                        organisationId: {
+                            itslearningEnabled: true,
+                        },
+                    },
+                },
+            },
+            {
+                after: cursor,
+                first: count,
+                orderBy: {
+                    id: QueryOrder.ASC,
+                },
+            },
+        );
+
+        return [
+            personCursor.items.map((entity: PersonEntity) => mapEntityToAggregate(entity)),
+            personCursor.endCursor ?? undefined, // Map null to undefined
+        ];
     }
 
     public async getPersonIfAllowed(

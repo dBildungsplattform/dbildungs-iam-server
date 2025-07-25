@@ -1,4 +1,4 @@
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsInt, IsPositive, IsString } from 'class-validator';
 
 export class ItsLearningConfig {
     @IsBoolean()
@@ -21,4 +21,16 @@ export class ItsLearningConfig {
 
     @IsString()
     public readonly ROOT_ERSATZ!: string;
+
+    @IsInt()
+    @IsPositive()
+    public readonly MAX_BATCH_SIZE!: number;
+
+    @IsInt()
+    @IsPositive()
+    public readonly MAX_ATTEMPTS!: number;
+
+    @IsInt()
+    @IsPositive()
+    public readonly RETRY_DELAY_MS!: number;
 }
