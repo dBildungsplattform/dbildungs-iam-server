@@ -190,15 +190,38 @@ backend:
 redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
+# kafka:
+#   url: 'dbildungs-iam-kafka.spsh.svc.cluster.local:9092'
+#   enabled: true
+#   saslEnabled: true
+#   initEnabled: true
+#   initImage:
+#     repository: docker.io/bitnami/kafka
+#     tag: '3.9.0'
+#     pullPolicy: Always
+
+
 kafka:
-  url: 'dbildungs-iam-kafka.spsh.svc.cluster.local:9092'
-  enabled: true
-  saslEnabled: true
-  initEnabled: true
-  initImage:
-    repository: docker.io/bitnami/kafka
-    tag: '3.9.0'
-    pullPolicy: Always
+  enable: true
+  extraVolumes:
+    - name: kafka-tls
+      secret:
+        secretName: kafka-tls
+  
+  extraVolumeMounts:
+    - name: kafka-tls
+      mountPath: /tls
+      readOnly: true
+  
+  extraEnvVars:
+    - name: KAFKA_CA_CERT
+      value: "/tls/ca.pem"
+    - name: KAFKA_CLIENT_CERT
+      value: "/tls/client-cert.pem"
+    - name: KAFKA_CLIENT_KEY
+      value: "/tls/client-key.pem"
+
+
 
 autoscaling:
   enabled: false
