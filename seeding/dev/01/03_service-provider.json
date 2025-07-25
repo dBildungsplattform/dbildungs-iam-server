@@ -223,14 +223,5 @@
             "keycloakRole": "VIDIS-Dienste-user",
             "requires2fa": false
         },
-        {
-            "id": 17,
-            "name": "DaTUM",
-            "target": "URL",
-            "url": "https://poc-data-app.dev.ibmcloudpic.datenfabrik.schleswig-holstein.de/",
-            "kategorie": "VERWALTUNG",
-            "providedOnSchulstrukturknoten": 0,
-            "requires2fa": false
-        }
     ]
 }
