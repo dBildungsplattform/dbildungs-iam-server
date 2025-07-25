@@ -6,8 +6,10 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
 import { PersonModule } from '../person/person.module.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
 import { RolleModule } from '../rolle/rolle.module.js';
+import { ServiceProviderModule } from '../service-provider/service-provider.module.js';
 import { ItsLearningOrganisationsEventHandler } from './event-handlers/itslearning-organisations.event-handler.js';
 import { ItsLearningPersonsEventHandler } from './event-handlers/itslearning-persons.event-handler.js';
+import { ItsLearningRolleEventHandler } from './event-handlers/itslearning-rolle.event-handler.js';
 import { ItsLearningSyncEventHandler } from './event-handlers/itslearning-sync.event-handler.js';
 import { ItsLearningIMSESService } from './itslearning.service.js';
 import { ItslearningGroupRepo } from './repo/itslearning-group.repo.js';
@@ -22,6 +24,7 @@ import { ItslearningPersonRepo } from './repo/itslearning-person.repo.js';
         RolleModule,
         OrganisationModule,
         PersonenKontextModule,
+        ServiceProviderModule,
     ],
     providers: [
         ItsLearningIMSESService,
@@ -31,6 +34,7 @@ import { ItslearningPersonRepo } from './repo/itslearning-person.repo.js';
         ItsLearningOrganisationsEventHandler,
         ItsLearningPersonsEventHandler,
         ItsLearningSyncEventHandler,
+        ItsLearningRolleEventHandler,
     ],
     exports: [ItsLearningIMSESService],
 })

@@ -4,13 +4,14 @@ import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { Hash, createHash } from 'crypto';
 import { XMLBuilder } from 'fast-xml-parser';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { lastValueFrom } from 'rxjs';
 
+import { ClassLogger } from '../../core/logging/class-logger.js';
 import { ItsLearningConfig, ServerConfig } from '../../shared/config/index.js';
 import { DomainError, ItsLearningError } from '../../shared/error/index.js';
-import { IMSESAction } from './actions/base-action.js';
-import { IMSESMassAction } from './actions/base-mass-action.js';
 import { IMS_MESS_BIND_SCHEMA } from './schemas.js';
+import { ItslearningAction } from './types/action.types.js';
 
 @Injectable()
 export class ItsLearningIMSESService {
@@ -22,8 +23,13 @@ export class ItsLearningIMSESService {
 
     private readonly xmlBuilder: XMLBuilder = new XMLBuilder({ ignoreAttributes: false });
 
+    private readonly MAX_ATTEMPTS: number;
+
+    private readonly RETRY_DELAY: number;
+
     public constructor(
         private readonly httpService: HttpService,
+        private readonly logger: ClassLogger,
         configService: ConfigService<ServerConfig>,
     ) {
         const itsLearningConfig: ItsLearningConfig = configService.getOrThrow<ItsLearningConfig>('ITSLEARNING');
@@ -31,11 +37,22 @@ export class ItsLearningIMSESService {
         this.endpoint = itsLearningConfig.ENDPOINT;
         this.username = itsLearningConfig.USERNAME;
         this.password = itsLearningConfig.PASSWORD;
+
+        this.MAX_ATTEMPTS = itsLearningConfig.MAX_ATTEMPTS;
+        this.RETRY_DELAY = itsLearningConfig.RETRY_DELAY_MS;
     }
 
-    public async send<ResponseBody, ResultType>(
-        action: IMSESAction<ResponseBody, ResultType> | IMSESMassAction<ResponseBody, ResultType>,
+    public async send<ResultType>(
+        action: ItslearningAction<ResultType>,
         syncId?: string,
+    ): Promise<Result<ResultType, DomainError>> {
+        return this.sendWithRetry(action, syncId);
+    }
+
+    private async sendWithRetry<ResultType>(
+        action: ItslearningAction<ResultType>,
+        syncId?: string,
+        currentAttempt: number = 0,
     ): Promise<Result<ResultType, DomainError>> {
         const body: object = action.buildRequest();
         const message: string = this.createMessage(body, syncId);
@@ -52,6 +69,26 @@ export class ItsLearningIMSESService {
 
             return action.parseResponse(response.data);
         } catch (err: unknown) {
+            if (currentAttempt + 1 < this.MAX_ATTEMPTS) {
+                // Linear backoff
+                const delay: number = this.RETRY_DELAY;
+
+                this.logger.logUnknownAsWarning(
+                    `[SyncID: ${syncId}] Request to itslearning failed, retrying in ${delay}ms`,
+                    err,
+                );
+
+                await sleep(delay);
+
+                return this.sendWithRetry(action, syncId, currentAttempt + 1);
+            }
+
+            // All retries failed, return error
+            this.logger.logUnknownAsError(
+                `[SyncID: ${syncId}] Request to itslearning failed all retries, aborting`,
+                err,
+            );
+
             return {
                 ok: false,
                 error: new ItsLearningError('Request failed', [err]),
