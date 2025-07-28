@@ -30,7 +30,7 @@ import { ServiceProviderEntity } from '../../service-provider/repo/service-provi
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
-import { OnlyAssignableServiceProviders } from '../specification/only-assignable-sps.js';
+import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-sps.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
@@ -133,7 +133,12 @@ export class RolleRepo {
         const query: { id: RolleID; istTechnisch?: boolean } = includeTechnical ? { id } : { id, istTechnisch: false };
 
         const rolle: Option<RolleEntity> = await this.em.findOne(this.entityName, query, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 
@@ -174,7 +179,12 @@ export class RolleRepo {
             RolleEntity,
             { id: { $in: ids } },
             {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                populate: [
+                    'merkmale',
+                    'systemrechte',
+                    'serviceProvider.serviceProvider',
+                    'serviceProvider.serviceProvider.merkmale',
+                ] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
             },
         );
@@ -203,7 +213,12 @@ export class RolleRepo {
             this.entityName,
             { name: { $ilike: '%' + searchStr + '%' }, ...rollenartQuery, ...technischeQuery },
             {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                populate: [
+                    'merkmale',
+                    'systemrechte',
+                    'serviceProvider.serviceProvider',
+                    'serviceProvider.serviceProvider.merkmale',
+                ] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
                 limit: limit,
                 offset: offset,
@@ -223,7 +238,12 @@ export class RolleRepo {
             rollenarten && rollenarten.length > 0 ? { rollenart: { $in: rollenarten } } : {};
 
         const rollen: RolleEntity[] = await this.em.findAll(RolleEntity, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
             where: { ...technischeQuery, ...rollenartQuery },
             limit: limit,
@@ -259,7 +279,12 @@ export class RolleRepo {
                 ...(orgIdsWithRecht.all ? {} : { administeredBySchulstrukturknoten: { $in: orgIdsWithRecht.orgaIds } }),
             },
             {
-                populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+                populate: [
+                    'merkmale',
+                    'systemrechte',
+                    'serviceProvider.serviceProvider',
+                    'serviceProvider.serviceProvider.merkmale',
+                ] as const,
                 exclude: ['serviceProvider.serviceProvider.logo'] as const,
                 limit: limit,
                 offset: offset,
@@ -341,7 +366,9 @@ export class RolleRepo {
         }
 
         if (isAlreadyAssigned) {
-            const spec: OnlyAssignableServiceProviders = new OnlyAssignableServiceProviders(authorizedRole);
+            const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(
+                authorizedRole,
+            );
             if (!(await spec.isSatisfiedBy(updatedRolle))) {
                 return new ServiceProviderNichtNachtraeglichZuweisbarError();
             }
@@ -363,7 +390,12 @@ export class RolleRepo {
         }
 
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, id, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 
@@ -389,7 +421,12 @@ export class RolleRepo {
 
     private async update(rolle: Rolle<true>): Promise<Rolle<true>> {
         const rolleEntity: Loaded<RolleEntity> = await this.em.findOneOrFail(RolleEntity, rolle.id, {
-            populate: ['merkmale', 'systemrechte', 'serviceProvider.serviceProvider'] as const,
+            populate: [
+                'merkmale',
+                'systemrechte',
+                'serviceProvider.serviceProvider',
+                'serviceProvider.serviceProvider.merkmale',
+            ] as const,
             exclude: ['serviceProvider.serviceProvider.logo'] as const,
         });
 

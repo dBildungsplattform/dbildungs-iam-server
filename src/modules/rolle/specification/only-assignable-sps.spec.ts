@@ -2,7 +2,7 @@ import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { Rolle } from '../domain/rolle.js';
-import { OnlyAssignableServiceProviders } from './only-assignable-sps.js';
+import { NurNachtraeglichZuweisbareServiceProvider } from './only-assignable-sps.js';
 
 function getUnassignableServiceProviders(n: number): ServiceProvider<true>[] {
     const result: ServiceProvider<true>[] = [];
@@ -53,7 +53,7 @@ describe('OnlyAssignableServiceProviders', () => {
                 const oldRolle: Rolle<true> = buildRolleWithServiceProviders(sps);
                 const updatedRolle: Rolle<false> = DoFactory.createRolle(false, oldRolle);
 
-                const spec: OnlyAssignableServiceProviders = new OnlyAssignableServiceProviders(oldRolle);
+                const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(oldRolle);
                 await expect(spec.isSatisfiedBy(updatedRolle)).resolves.toBe(true);
             });
         });
@@ -87,7 +87,7 @@ describe('OnlyAssignableServiceProviders', () => {
             ])(
                 'should return $isValid if $oldRolle.serviceProviderData.length changes to $updatedRolle.serviceProviderData.length',
                 async ({ oldRolle, updatedRolle, isValid }: TestData) => {
-                    const spec: OnlyAssignableServiceProviders = new OnlyAssignableServiceProviders(oldRolle);
+                    const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(oldRolle);
                     await expect(spec.isSatisfiedBy(updatedRolle)).resolves.toBe(isValid);
                 },
             );
@@ -122,7 +122,7 @@ describe('OnlyAssignableServiceProviders', () => {
             ])(
                 'should return $isValid if $oldRolle.serviceProviderData.length changes to $updatedRolle.serviceProviderData.length',
                 async ({ oldRolle, updatedRolle, isValid }: TestData) => {
-                    const spec: OnlyAssignableServiceProviders = new OnlyAssignableServiceProviders(oldRolle);
+                    const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(oldRolle);
                     await expect(spec.isSatisfiedBy(updatedRolle)).resolves.toBe(isValid);
                 },
             );
@@ -158,7 +158,7 @@ describe('OnlyAssignableServiceProviders', () => {
                 isValid: false,
             },
         ])('should return $isValid', async ({ oldRolle, updatedRolle, isValid }: TestData) => {
-            const spec: OnlyAssignableServiceProviders = new OnlyAssignableServiceProviders(oldRolle);
+            const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(oldRolle);
             await expect(spec.isSatisfiedBy(updatedRolle)).resolves.toBe(isValid);
         });
     });

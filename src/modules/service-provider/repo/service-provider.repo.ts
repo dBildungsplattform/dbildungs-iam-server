@@ -86,16 +86,20 @@ export class ServiceProviderRepo {
         const serviceProvider: Option<ServiceProviderEntity> = (await this.em.findOne(
             ServiceProviderEntity,
             { id },
-            { exclude },
+            { exclude, populate: ['merkmale'] },
         )) as Option<ServiceProviderEntity>;
 
         return serviceProvider && mapEntityToAggregate(serviceProvider);
     }
 
     public async findByName(name: string): Promise<Option<ServiceProvider<true>>> {
-        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
-            name: name,
-        });
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(
+            ServiceProviderEntity,
+            {
+                name: name,
+            },
+            { populate: ['merkmale'] },
+        );
         if (serviceProvider) {
             return mapEntityToAggregate(serviceProvider);
         }
@@ -104,9 +108,13 @@ export class ServiceProviderRepo {
     }
 
     public async findByVidisAngebotId(vidisAngebotId: string): Promise<Option<ServiceProvider<true>>> {
-        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(ServiceProviderEntity, {
-            vidisAngebotId: vidisAngebotId,
-        });
+        const serviceProvider: Option<ServiceProviderEntity> = await this.em.findOne(
+            ServiceProviderEntity,
+            {
+                vidisAngebotId: vidisAngebotId,
+            },
+            { populate: ['merkmale'] },
+        );
         if (serviceProvider) {
             return mapEntityToAggregate(serviceProvider);
         }
@@ -115,9 +123,13 @@ export class ServiceProviderRepo {
     }
 
     public async findByKeycloakGroup(groupname: string): Promise<ServiceProvider<true>[]> {
-        const serviceProviders: ServiceProviderEntity[] = await this.em.find(ServiceProviderEntity, {
-            keycloakGroup: groupname,
-        });
+        const serviceProviders: ServiceProviderEntity[] = await this.em.find(
+            ServiceProviderEntity,
+            {
+                keycloakGroup: groupname,
+            },
+            { populate: ['merkmale'] },
+        );
         return serviceProviders.map(mapEntityToAggregate);
     }
 
@@ -126,6 +138,7 @@ export class ServiceProviderRepo {
 
         const serviceProviders: ServiceProviderEntity[] = (await this.em.findAll(ServiceProviderEntity, {
             exclude,
+            populate: ['merkmale'],
         })) as ServiceProviderEntity[];
 
         return serviceProviders.map(mapEntityToAggregate);
@@ -135,7 +148,9 @@ export class ServiceProviderRepo {
         const serviceProviderEntities: ServiceProviderEntity[] = await this.em.find(
             ServiceProviderEntity,
             { id: { $in: ids } },
-            {},
+            {
+                populate: ['merkmale'],
+            },
         );
 
         const serviceProviderMap: Map<string, ServiceProvider<true>> = new Map();
@@ -199,7 +214,7 @@ export class ServiceProviderRepo {
                 },
             },
             {
-                populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'],
+                populate: ['serviceProvider', 'serviceProvider.merkmale', 'rolle', 'rolle.personenKontexte'],
             },
         );
 

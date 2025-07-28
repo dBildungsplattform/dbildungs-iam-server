@@ -4,7 +4,7 @@ import { CompositeSpecification } from '../../specification/specifications.js';
 
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { Rolle } from '../domain/rolle.js';
-export class OnlyAssignableServiceProviders extends CompositeSpecification<Rolle<boolean>> {
+export class NurNachtraeglichZuweisbareServiceProvider extends CompositeSpecification<Rolle<boolean>> {
     public constructor(private readonly oldRolle: Rolle<true>) {
         super();
     }
