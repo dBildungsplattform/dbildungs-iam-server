@@ -29,6 +29,8 @@ import { ServiceProviderMerkmalEntity } from '../../service-provider/repo/servic
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
+import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
+import { OnlyAssignableServiceProviders } from '../specification/only-assignable-sps.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
@@ -308,14 +310,14 @@ export class RolleRepo {
             return authorizedRoleResult.error;
         }
         //Specifications
-        const willMerkmaleChange: boolean = !(
-            merkmale.length === authorizedRoleResult.value.merkmale.length &&
-            merkmale.every((m: RollenMerkmal) => authorizedRoleResult.value.merkmale.includes(m)) &&
-            authorizedRoleResult.value.merkmale.every((m: RollenMerkmal) => merkmale.includes(m))
-        );
 
-        if (isAlreadyAssigned && willMerkmaleChange) {
-            return new UpdateMerkmaleError();
+        if (isAlreadyAssigned) {
+            const willMerkmaleChange: boolean = !(
+                merkmale.length === authorizedRoleResult.value.merkmale.length &&
+                merkmale.every((m: RollenMerkmal) => authorizedRoleResult.value.merkmale.includes(m)) &&
+                authorizedRoleResult.value.merkmale.every((m: RollenMerkmal) => merkmale.includes(m))
+            );
+            if (willMerkmaleChange) return new UpdateMerkmaleError();
         }
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;
@@ -337,6 +339,14 @@ export class RolleRepo {
         if (updatedRolle instanceof DomainError) {
             return updatedRolle;
         }
+
+        if (isAlreadyAssigned) {
+            const spec: OnlyAssignableServiceProviders = new OnlyAssignableServiceProviders(authorizedRole);
+            if (!(await spec.isSatisfiedBy(updatedRolle))) {
+                return new ServiceProviderNichtNachtraeglichZuweisbarError();
+            }
+        }
+
         const result: Rolle<true> | DomainError = await this.save(updatedRolle);
         if (result instanceof DomainError) {
             return result;
