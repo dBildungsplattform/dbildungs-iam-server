@@ -125,6 +125,7 @@ export class DBiamPersonenkontextRepo {
                     'rolleId.merkmale',
                     'rolleId.systemrechte',
                     'rolleId.serviceProvider',
+                    'rolleId.serviceProvider.serviceProvider.merkmale',
                 ],
             },
         );
@@ -155,6 +156,7 @@ export class DBiamPersonenkontextRepo {
                     'rolleId.merkmale',
                     'rolleId.systemrechte',
                     'rolleId.serviceProvider',
+                    'rolleId.serviceProvider.serviceProvider.merkmale',
                 ],
             },
         );
