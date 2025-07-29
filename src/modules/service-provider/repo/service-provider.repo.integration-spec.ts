@@ -1,25 +1,26 @@
 import { faker } from '@faker-js/faker';
-import { EntityManager, MikroORM } from '@mikro-orm/core';
+import { createMock } from '@golevelup/ts-jest';
+import { Collection, EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
-    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DatabaseTestModule,
+    DEFAULT_TIMEOUT_FOR_TESTCONTAINERS,
     DoFactory,
     LoggingTestModule,
 } from '../../../../test/utils/index.js';
-import { ServiceProvider } from '../domain/service-provider.js';
-import { ServiceProviderRepo } from './service-provider.repo.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { createMock } from '@golevelup/ts-jest';
 import { RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { ServiceProviderEntity } from './service-provider.entity.js';
-import { ServiceProviderKategorie, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { ServiceProviderKategorie, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import { ServiceProvider } from '../domain/service-provider.js';
+import { ServiceProviderEntity } from './service-provider.entity.js';
+import { ServiceProviderRepo } from './service-provider.repo.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 
 describe('ServiceProviderRepo', () => {
     let module: TestingModule;
@@ -262,13 +263,14 @@ describe('ServiceProviderRepo', () => {
             // Arrange
             const roleId: RolleID = faker.string.uuid();
 
-            const serviceProviderEntityMock: ServiceProviderEntity = {
+            const serviceProviderEntityMock: ServiceProviderEntity = createMock<ServiceProviderEntity>({
                 id: faker.string.uuid(),
                 name: faker.company.name(),
                 target: ServiceProviderTarget.SCHULPORTAL_ADMINISTRATION,
                 providedOnSchulstrukturknoten: faker.string.uuid(),
                 kategorie: ServiceProviderKategorie.VERWALTUNG,
-            } as ServiceProviderEntity;
+                merkmale: createMock<Collection<ServiceProviderMerkmalEntity>>(),
+            });
 
             const rolleServiceProviderEntityMock: RolleServiceProviderEntity = {
                 rolle: { id: roleId } as RolleEntity,
@@ -283,7 +285,7 @@ describe('ServiceProviderRepo', () => {
             expect(em.find).toHaveBeenCalledWith(
                 RolleServiceProviderEntity,
                 { rolle: { id: roleId } },
-                { populate: ['serviceProvider', 'rolle', 'rolle.personenKontexte'] },
+                { populate: ['serviceProvider', 'serviceProvider.merkmale', 'rolle', 'rolle.personenKontexte'] },
             );
         });
     });
