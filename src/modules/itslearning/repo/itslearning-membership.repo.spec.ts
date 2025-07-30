@@ -13,8 +13,24 @@ import { ItslearningMembershipRepo, SetMembershipParams, SetMembershipsResult } 
 import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { Ok } from '../../../shared/util/result.js';
+import { FailureStatusInfo, MassResult } from '../actions/base-mass-action.js';
 
-describe('Itslearning Person Repo', () => {
+function makeFailureStatus(description: string): FailureStatusInfo {
+    return {
+        codeMajor: 'failure',
+        severity: 'error',
+        codeMinor: {
+            codeMinorField: [{ codeMinorName: 'error', codeMinorValue: 'error' }],
+        },
+        description: {
+            language: 'en',
+            text: description,
+        },
+    };
+}
+
+describe('Itslearning Membership Repo', () => {
     let module: TestingModule;
 
     let sut: ItslearningMembershipRepo;
@@ -47,6 +63,21 @@ describe('Itslearning Person Repo', () => {
             const personId: string = faker.string.uuid();
             const syncID: string = faker.string.uuid();
 
+            const membershipResponse: MembershipResponse[] = [
+                {
+                    id: faker.string.uuid(),
+                    groupId: faker.string.uuid(),
+                    role: faker.helpers.enumValue(IMSESRoleType),
+                },
+            ];
+            itsLearningServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    status: [],
+                    value: membershipResponse,
+                },
+            });
+
             await sut.readMembershipsForPerson(personId, syncID);
 
             expect(itsLearningServiceMock.send).toHaveBeenCalledWith(expect.objectContaining({ personId }), syncID);
@@ -66,7 +97,10 @@ describe('Itslearning Person Repo', () => {
             ];
             itsLearningServiceMock.send.mockResolvedValueOnce({
                 ok: true,
-                value: membershipResponse,
+                value: {
+                    status: [],
+                    value: membershipResponse,
+                },
             });
 
             const result: Result<MembershipResponse[], DomainError> = await sut.readMembershipsForPerson(
@@ -88,6 +122,7 @@ describe('Itslearning Person Repo', () => {
                 },
             ];
             const syncID: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
 
             await sut.createMemberships(memberships, syncID);
 
@@ -107,14 +142,32 @@ describe('Itslearning Person Repo', () => {
                     roleType: faker.helpers.enumValue(IMSESRoleType),
                 },
             ];
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: undefined,
-            });
+            itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
 
             const result: Option<DomainError> = await sut.createMemberships(memberships);
 
             expect(result).toBeUndefined();
+        });
+
+        it('should return error on failure', async () => {
+            const memberships: CreateMembershipParams[] = [
+                {
+                    id: faker.string.uuid(),
+                    personId: faker.string.uuid(),
+                    groupId: faker.string.uuid(),
+                    roleType: faker.helpers.enumValue(IMSESRoleType),
+                },
+            ];
+            itsLearningServiceMock.send.mockResolvedValueOnce(
+                Ok({
+                    status: [makeFailureStatus('Some Error')],
+                    value: undefined,
+                }),
+            );
+
+            const result: Option<DomainError> = await sut.createMemberships(memberships);
+
+            expect(result).toEqual(new ItsLearningError('1 of 1 Requests failed', makeFailureStatus('Some Error')));
         });
 
         it('should return error on fail', async () => {
@@ -138,10 +191,36 @@ describe('Itslearning Person Repo', () => {
         });
     });
 
+    describe('createMembershipsMass', () => {
+        it('should call the itslearning API and return the result', async () => {
+            const memberships: CreateMembershipParams[] = [
+                {
+                    id: faker.string.uuid(),
+                    personId: faker.string.uuid(),
+                    groupId: faker.string.uuid(),
+                    roleType: faker.helpers.enumValue(IMSESRoleType),
+                },
+            ];
+            const syncID: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
+
+            const result: Result<MassResult<void>, DomainError> = await sut.createMembershipsMass(memberships, syncID);
+
+            expect(result).toEqual({
+                ok: true,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
+            });
+        });
+    });
+
     describe('removeMemberships', () => {
         it('should call the itslearning API', async () => {
             const membershipIDs: string[] = [faker.string.uuid()];
             const syncID: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
 
             await sut.removeMemberships(membershipIDs, syncID);
 
@@ -154,14 +233,25 @@ describe('Itslearning Person Repo', () => {
 
         it('should not return error on success', async () => {
             const membershipIDs: string[] = [faker.string.uuid()];
-            itsLearningServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: undefined,
-            });
+            itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
 
             const result: Option<DomainError> = await sut.removeMemberships(membershipIDs);
 
             expect(result).toBeUndefined();
+        });
+
+        it('should return error on failure', async () => {
+            const memberships: string[] = [faker.string.uuid()];
+            itsLearningServiceMock.send.mockResolvedValueOnce(
+                Ok({
+                    status: [makeFailureStatus('Some Error')],
+                    value: undefined,
+                }),
+            );
+
+            const result: Option<DomainError> = await sut.removeMemberships(memberships);
+
+            expect(result).toEqual(new ItsLearningError('1 of 1 Requests failed', makeFailureStatus('Some Error')));
         });
 
         it('should return error on fail', async () => {
@@ -178,11 +268,29 @@ describe('Itslearning Person Repo', () => {
         });
     });
 
+    describe('removeMembershipsMass', () => {
+        it('should call the itslearning API and return the result', async () => {
+            const memberships: string[] = [faker.string.uuid()];
+            const syncID: string = faker.string.uuid();
+            itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined }));
+
+            const result: Result<MassResult<void>, DomainError> = await sut.removeMembershipsMass(memberships, syncID);
+
+            expect(result).toEqual({
+                ok: true,
+                value: {
+                    status: [],
+                    value: undefined,
+                },
+            });
+        });
+    });
+
     describe('setMemberships', () => {
         describe('reading current memberships', () => {
             it('should read current memberships for person', async () => {
                 const personId: string = faker.string.uuid();
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: [] }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: { status: [], value: [] } }); // Read Memberships
                 const syncID: string = faker.string.uuid();
 
                 await sut.setMemberships(personId, [], syncID);
@@ -211,8 +319,11 @@ describe('Itslearning Person Repo', () => {
                 const existingMemberships: MembershipResponse[] = [
                     { id: 'test', groupId: 'test-group', role: faker.helpers.enumValue(IMSESRoleType) },
                 ];
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: existingMemberships }); // Read Memberships
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined }); // Remove Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: { status: [], value: existingMemberships },
+                }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined })); // Remove Memberships
 
                 const setResult: Result<SetMembershipsResult, DomainError> = await sut.setMemberships(personId, []);
 
@@ -226,8 +337,11 @@ describe('Itslearning Person Repo', () => {
                     { id: 'oeffentlich-test', groupId: 'oeffentlich', role: faker.helpers.enumValue(IMSESRoleType) },
                     { id: 'ersatz-test', groupId: 'ersatz', role: faker.helpers.enumValue(IMSESRoleType) },
                 ];
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: existingMemberships }); // Read Memberships
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined }); // Remove Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: { status: [], value: existingMemberships },
+                }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined })); // Remove Memberships
 
                 const setResult: Result<SetMembershipsResult, DomainError> = await sut.setMemberships(personId, []);
 
@@ -240,7 +354,10 @@ describe('Itslearning Person Repo', () => {
                 const existingMemberships: MembershipResponse[] = [
                     { id: 'test', groupId: 'test-group', role: faker.helpers.enumValue(IMSESRoleType) },
                 ];
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: existingMemberships }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: { status: [], value: existingMemberships },
+                }); // Read Memberships
                 itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: error }); // Remove Memberships
 
                 const setResult: Result<SetMembershipsResult, DomainError> = await sut.setMemberships(personId, []);
@@ -259,8 +376,8 @@ describe('Itslearning Person Repo', () => {
                 const currentMemberships: SetMembershipParams[] = [
                     { organisationId: 'orga-test', role: faker.helpers.enumValue(RollenArt) },
                 ];
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: [] }); // Read Memberships
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined }); // Create Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: { status: [], value: [] } }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined })); // Create Memberships
 
                 const setResult: Result<SetMembershipsResult, DomainError> = await sut.setMemberships(
                     personId,
@@ -277,8 +394,11 @@ describe('Itslearning Person Repo', () => {
                     { id: 'oeffentlich-test', groupId: 'oeffentlich', role: faker.helpers.enumValue(IMSESRoleType) },
                     { id: 'ersatz-test', groupId: 'ersatz', role: faker.helpers.enumValue(IMSESRoleType) },
                 ];
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: existingMemberships }); // Read Memberships
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: undefined }); // Remove Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: { status: [], value: existingMemberships },
+                }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce(Ok({ status: [], value: undefined })); // Remove Memberships
 
                 const setResult: Result<SetMembershipsResult, DomainError> = await sut.setMemberships(personId, []);
 
@@ -291,7 +411,7 @@ describe('Itslearning Person Repo', () => {
                 const currentMemberships: SetMembershipParams[] = [
                     { organisationId: 'orga-test', role: faker.helpers.enumValue(RollenArt) },
                 ];
-                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: [] }); // Read Memberships
+                itsLearningServiceMock.send.mockResolvedValueOnce({ ok: true, value: { status: [], value: [] } }); // Read Memberships
                 itsLearningServiceMock.send.mockResolvedValueOnce({ ok: false, error: error }); // Create Memberships
 
                 const setResult: Result<SetMembershipsResult, DomainError> = await sut.setMemberships(
