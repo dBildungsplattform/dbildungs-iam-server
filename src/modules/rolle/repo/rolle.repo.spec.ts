@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import {
     ConfigTestModule,
     DatabaseTestModule,
@@ -10,22 +11,23 @@ import {
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { Rolle } from '../domain/rolle.js';
-import { RolleRepo } from './rolle.repo.js';
-import { RolleFactory } from '../domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { OrganisationID } from '../../../shared/types/index.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { RollenMerkmal, RollenSystemRecht, RollenArt } from '../domain/rolle.enums.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { OrganisationID } from '../../../shared/types/index.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
+import { Rolle } from '../domain/rolle.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
+import { RolleRepo } from './rolle.repo.js';
 
 describe('RolleRepo', () => {
     let module: TestingModule;
@@ -100,7 +102,9 @@ describe('RolleRepo', () => {
 
         it('should save with service provider', async () => {
             const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
-                DoFactory.createServiceProvider(false),
+                DoFactory.createServiceProvider(false, {
+                    merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+                }),
             );
             const rolle: Rolle<false> = DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] });
 
@@ -607,29 +611,48 @@ describe('RolleRepo', () => {
             expect(rolleResult).toBeInstanceOf(DomainError);
         });
 
-        it('should return error when organisation has a personenkontext and merkmale needs to be updated', async () => {
-            const organisationId: OrganisationID = faker.string.uuid();
-            const rolle: Rolle<true> | DomainError = await sut.save(
-                DoFactory.createRolle(false, { administeredBySchulstrukturknoten: organisationId, merkmale: [] }),
-            );
-            if (rolle instanceof DomainError) throw Error();
+        it.each([
+            {
+                oldMerkmale: [],
+                newMerkmale: [faker.helpers.enumValue(RollenMerkmal)],
+            },
+            {
+                oldMerkmale: [faker.helpers.enumValue(RollenMerkmal)],
+                newMerkmale: [],
+            },
+            {
+                oldMerkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
+                newMerkmale: [RollenMerkmal.KOPERS_PFLICHT],
+            },
+        ])(
+            'should return error when organisation has a personenkontext and merkmale change from $old to $new',
+            async ({ oldMerkmale, newMerkmale }: { oldMerkmale: RollenMerkmal[]; newMerkmale: RollenMerkmal[] }) => {
+                const organisationId: OrganisationID = faker.string.uuid();
+                const rolle: Rolle<true> | DomainError = await sut.save(
+                    DoFactory.createRolle(false, {
+                        administeredBySchulstrukturknoten: organisationId,
+                        merkmale: oldMerkmale,
+                    }),
+                );
+                if (rolle instanceof DomainError) throw Error();
 
-            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
-            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
+                const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
 
-            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
-                rolle.id,
-                faker.company.name(),
-                [faker.helpers.enumValue(RollenMerkmal)],
-                [],
-                [],
-                1,
-                true,
-                permissions,
-            );
+                const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+                    rolle.id,
+                    faker.company.name(),
+                    newMerkmale,
+                    [],
+                    [],
+                    1,
+                    true,
+                    permissions,
+                );
 
-            expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
-        });
+                expect(rolleResult).toBeInstanceOf(UpdateMerkmaleError);
+            },
+        );
 
         it('should return error when organisation has a personenkontext and merkmale needs to be deleted', async () => {
             const organisationId: OrganisationID = faker.string.uuid();
@@ -719,6 +742,45 @@ describe('RolleRepo', () => {
             );
 
             expect(rolleResult).toBeInstanceOf(RolleNameNotUniqueOnSskError);
+        });
+
+        it('should return error when a service provider has changed and it is not nachtraeglich zuweisbar', async () => {
+            const organisationId: OrganisationID = faker.string.uuid();
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, {
+                    merkmale: [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+                }),
+            );
+            const rolle: Rolle<true> | DomainError = await sut.save(
+                DoFactory.createRolle(false, {
+                    administeredBySchulstrukturknoten: organisationId,
+                    serviceProviderIds: [serviceProvider.id],
+                    serviceProviderData: [serviceProvider],
+                }),
+            );
+            if (rolle instanceof DomainError) throw Error();
+
+            const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+            permissions.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: false, orgaIds: [organisationId] });
+
+            const newServiceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, {
+                    merkmale: [],
+                }),
+            );
+
+            const rolleResult: Rolle<true> | DomainError = await sut.updateRolleAuthorized(
+                rolle.id,
+                rolle.name,
+                rolle.merkmale,
+                rolle.systemrechte,
+                [newServiceProvider.id],
+                1,
+                true,
+                permissions,
+            );
+
+            expect(rolleResult).toBeInstanceOf(ServiceProviderNichtNachtraeglichZuweisbarError);
         });
     });
 

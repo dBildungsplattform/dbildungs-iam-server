@@ -16,7 +16,11 @@ import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { RolleServiceProviderEntity } from '../../rolle/entity/rolle-service-provider.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { ServiceProviderKategorie, ServiceProviderTarget } from '../domain/service-provider.enum.js';
+import {
+    ServiceProviderKategorie,
+    ServiceProviderMerkmal,
+    ServiceProviderTarget,
+} from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderEntity } from './service-provider.entity.js';
 import { ServiceProviderRepo } from './service-provider.repo.js';
@@ -73,6 +77,7 @@ describe('ServiceProviderRepo', () => {
     describe('save', () => {
         it('should save new service-provider', async () => {
             const serviceProvider: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+            serviceProvider.merkmale = [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR];
 
             const savedServiceProvider: ServiceProvider<true> = await sut.save(serviceProvider);
 
@@ -269,7 +274,9 @@ describe('ServiceProviderRepo', () => {
                 target: ServiceProviderTarget.SCHULPORTAL_ADMINISTRATION,
                 providedOnSchulstrukturknoten: faker.string.uuid(),
                 kategorie: ServiceProviderKategorie.VERWALTUNG,
-                merkmale: createMock<Collection<ServiceProviderMerkmalEntity>>(),
+                merkmale: createMock<Collection<ServiceProviderMerkmalEntity>>({
+                    map: () => [ServiceProviderMerkmal.NACHTRAEGLICH_ZUWEISBAR],
+                }),
             });
 
             const rolleServiceProviderEntityMock: RolleServiceProviderEntity = {

@@ -32,6 +32,7 @@ import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-sps.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
 export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityData<RolleEntity> {
     const merkmale: EntityData<RolleMerkmalEntity>[] = rolle.merkmale.map((merkmal: RollenMerkmal) => ({
@@ -123,6 +124,7 @@ export class RolleRepo {
         protected readonly rolleFactory: RolleFactory,
         private readonly eventService: EventRoutingLegacyKafkaService,
         protected readonly em: EntityManager,
+        private readonly serviceProviderRepo: ServiceProviderRepo,
     ) {}
 
     public get entityName(): EntityName<RolleEntity> {
@@ -367,6 +369,7 @@ export class RolleRepo {
 
         if (isAlreadyAssigned) {
             const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(
+                this.serviceProviderRepo,
                 authorizedRole,
             );
             if (!(await spec.isSatisfiedBy(updatedRolle))) {
