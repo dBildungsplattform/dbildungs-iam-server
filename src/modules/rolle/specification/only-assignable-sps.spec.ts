@@ -1,8 +1,11 @@
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { Rolle } from '../domain/rolle.js';
 import { NurNachtraeglichZuweisbareServiceProvider } from './only-assignable-sps.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { xorBy } from 'lodash-es';
 
 function getUnassignableServiceProviders(n: number): ServiceProvider<true>[] {
     const result: ServiceProvider<true>[] = [];
@@ -36,6 +39,14 @@ function buildRolleWithServiceProviders(
     });
 }
 
+function buildServiceProviderDifferenceMap(a: Rolle<boolean>, b: Rolle<boolean>): Map<string, ServiceProvider<true>> {
+    return new Map(
+        xorBy(a.serviceProviderData, b.serviceProviderData, (sp: ServiceProvider<true>) => sp.id).map(
+            (sp: ServiceProvider<true>) => [sp.id, sp],
+        ),
+    );
+}
+
 type TestData = {
     oldRolle: Rolle<true>;
     updatedRolle: Rolle<true>;
@@ -43,6 +54,11 @@ type TestData = {
 };
 
 describe('OnlyAssignableServiceProviders', () => {
+    const serviceProviderRepoMock: DeepMocked<ServiceProviderRepo> = createMock<ServiceProviderRepo>();
+    beforeEach(() => {
+        jest.restoreAllMocks();
+    });
+
     describe('when sps have not changed', () => {
         describe.each([
             { sps: getAssignableServiceProviders(0) },
@@ -53,7 +69,12 @@ describe('OnlyAssignableServiceProviders', () => {
                 const oldRolle: Rolle<true> = buildRolleWithServiceProviders(sps);
                 const updatedRolle: Rolle<false> = DoFactory.createRolle(false, oldRolle);
 
+                serviceProviderRepoMock.findByIds.mockResolvedValue(
+                    buildServiceProviderDifferenceMap(oldRolle, updatedRolle),
+                );
+
                 const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(
+                    serviceProviderRepoMock,
                     oldRolle,
                 );
                 await expect(spec.isSatisfiedBy(updatedRolle)).resolves.toBe(true);
@@ -89,13 +110,18 @@ describe('OnlyAssignableServiceProviders', () => {
             ])(
                 'should return $isValid if $oldRolle.serviceProviderData.length changes to $updatedRolle.serviceProviderData.length',
                 async ({ oldRolle, updatedRolle, isValid }: TestData) => {
+                    serviceProviderRepoMock.findByIds.mockResolvedValue(
+                        buildServiceProviderDifferenceMap(oldRolle, updatedRolle),
+                    );
+
                     const spec: NurNachtraeglichZuweisbareServiceProvider =
-                        new NurNachtraeglichZuweisbareServiceProvider(oldRolle);
+                        new NurNachtraeglichZuweisbareServiceProvider(serviceProviderRepoMock, oldRolle);
                     await expect(spec.isSatisfiedBy(updatedRolle)).resolves.toBe(isValid);
                 },
             );
         });
     });
+
     describe('when sps are removed', () => {
         const baseRolle: Rolle<true> = buildRolleWithServiceProviders(
             getAssignableServiceProviders(3).concat(getUnassignableServiceProviders(2)),
@@ -125,8 +151,12 @@ describe('OnlyAssignableServiceProviders', () => {
             ])(
                 'should return $isValid if $oldRolle.serviceProviderData.length changes to $updatedRolle.serviceProviderData.length',
                 async ({ oldRolle, updatedRolle, isValid }: TestData) => {
+                    serviceProviderRepoMock.findByIds.mockResolvedValue(
+                        buildServiceProviderDifferenceMap(oldRolle, updatedRolle),
+                    );
+
                     const spec: NurNachtraeglichZuweisbareServiceProvider =
-                        new NurNachtraeglichZuweisbareServiceProvider(oldRolle);
+                        new NurNachtraeglichZuweisbareServiceProvider(serviceProviderRepoMock, oldRolle);
                     await expect(spec.isSatisfiedBy(updatedRolle)).resolves.toBe(isValid);
                 },
             );
@@ -162,7 +192,12 @@ describe('OnlyAssignableServiceProviders', () => {
                 isValid: false,
             },
         ])('should return $isValid', async ({ oldRolle, updatedRolle, isValid }: TestData) => {
+            serviceProviderRepoMock.findByIds.mockResolvedValue(
+                buildServiceProviderDifferenceMap(oldRolle, updatedRolle),
+            );
+
             const spec: NurNachtraeglichZuweisbareServiceProvider = new NurNachtraeglichZuweisbareServiceProvider(
+                serviceProviderRepoMock,
                 oldRolle,
             );
             await expect(spec.isSatisfiedBy(updatedRolle)).resolves.toBe(isValid);
