@@ -206,6 +206,23 @@
             "istTechnisch": true
         },
         {
+            "id": 103,
+            "administeredBySchulstrukturknoten": 0,
+            "name": "Portal Admin",
+            "rollenart": "PORTALADMIN",
+            "merkmale": [],
+            "systemrechte": [
+                "PERSONEN_ANLEGEN",
+                "PERSONEN_LESEN",
+                "PERSONEN_VERWALTEN",
+                "PERSONEN_SOFORT_LOESCHEN",
+                "ROLLEN_VERWALTEN",
+                "LMS_VERWALTEN"
+            ],
+            "serviceProviderIds": [],
+            "istTechnisch": false
+        },
+        {
             "id": 200,
             "administeredBySchulstrukturknoten": 0,
             "name": "Schulleitung",
