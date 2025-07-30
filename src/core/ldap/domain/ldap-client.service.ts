@@ -85,6 +85,10 @@ export class LdapClientService {
 
     private mutex: Mutex;
 
+    private addPersonToGroupMutex: Mutex;
+
+    private deletePersonFromGroupMutex: Mutex;
+
     public constructor(
         private readonly ldapClient: LdapClient,
         private readonly ldapInstanceConfig: LdapInstanceConfig,
@@ -92,6 +96,8 @@ export class LdapClientService {
         private readonly eventService: EventRoutingLegacyKafkaService,
     ) {
         this.mutex = new Mutex();
+        this.addPersonToGroupMutex = new Mutex();
+        this.deletePersonFromGroupMutex = new Mutex();
     }
 
     //** BELOW ONLY PUBLIC FUNCTIONS - MUST USE THE 'executeWithRetry' WRAPPER TO HAVE STRONG FAULT TOLERANCE*/
@@ -1130,81 +1136,83 @@ export class LdapClientService {
         orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
-        const groupId: string = 'lehrer-' + orgaKennung;
-        this.logger.info(`LDAP: Adding person ${personUid} to group ${groupId}`);
-        const client: Client = this.ldapClient.getClient();
-        const bindResult: Result<boolean> = await this.bind();
-        if (!bindResult.ok) return bindResult;
+        return this.addPersonToGroupMutex.runExclusive(async () => {
+            const groupId: string = 'lehrer-' + orgaKennung;
+            this.logger.info(`LDAP: Adding person ${personUid} to group ${groupId}`);
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
 
-        const orgUnitDn: string = `ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`;
-        const searchResultOrgUnit: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
-            filter: `(ou=${orgaKennung})`,
-        });
+            const orgUnitDn: string = `ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`;
+            const searchResultOrgUnit: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
+                filter: `(ou=${orgaKennung})`,
+            });
 
-        if (!searchResultOrgUnit.searchEntries[0]) {
-            this.logger.info(`LDAP: organizationalUnit ${orgaKennung} not found, creating organizationalUnit`);
+            if (!searchResultOrgUnit.searchEntries[0]) {
+                this.logger.info(`LDAP: organizationalUnit ${orgaKennung} not found, creating organizationalUnit`);
 
-            const newOrgUnit: { ou: string; objectClass: string } = {
-                ou: orgaKennung,
-                objectClass: 'organizationalUnit',
-            };
-            await client.add(orgUnitDn, newOrgUnit);
-        }
+                const newOrgUnit: { ou: string; objectClass: string } = {
+                    ou: orgaKennung,
+                    objectClass: 'organizationalUnit',
+                };
+                await client.add(orgUnitDn, newOrgUnit);
+            }
 
-        const orgRoleDn: string = `cn=${LdapClientService.GROUPS},${orgUnitDn}`;
-        const searchResultOrgRole: SearchResult = await client.search(orgUnitDn, {
-            filter: `(cn=${LdapClientService.GROUPS})`,
-        });
-        if (!searchResultOrgRole.searchEntries[0]) {
-            const newOrgRole: { cn: string; objectClass: string } = {
-                cn: LdapClientService.GROUPS,
-                objectClass: 'organizationalRole',
-            };
-            await client.add(orgRoleDn, newOrgRole);
-        }
+            const orgRoleDn: string = `cn=${LdapClientService.GROUPS},${orgUnitDn}`;
+            const searchResultOrgRole: SearchResult = await client.search(orgUnitDn, {
+                filter: `(cn=${LdapClientService.GROUPS})`,
+            });
+            if (!searchResultOrgRole.searchEntries[0]) {
+                const newOrgRole: { cn: string; objectClass: string } = {
+                    cn: LdapClientService.GROUPS,
+                    objectClass: 'organizationalRole',
+                };
+                await client.add(orgRoleDn, newOrgRole);
+            }
 
-        const lehrerDn: string = `cn=${groupId},${orgRoleDn}`;
-        const searchResultGroupOfNames: SearchResult = await client.search(orgRoleDn, {
-            filter: `(cn=${groupId})`,
-        });
-        if (!searchResultGroupOfNames.searchEntries[0]) {
-            const newLehrerGroup: { cn: string; objectclass: string[]; member: string[] } = {
-                cn: groupId,
-                objectclass: ['groupOfNames'],
-                member: [lehrerUid],
-            };
+            const lehrerDn: string = `cn=${groupId},${orgRoleDn}`;
+            const searchResultGroupOfNames: SearchResult = await client.search(orgRoleDn, {
+                filter: `(cn=${groupId})`,
+            });
+            if (!searchResultGroupOfNames.searchEntries[0]) {
+                const newLehrerGroup: { cn: string; objectclass: string[]; member: string[] } = {
+                    cn: groupId,
+                    objectclass: ['groupOfNames'],
+                    member: [lehrerUid],
+                };
+                try {
+                    await client.add(lehrerDn, newLehrerGroup);
+                    this.logger.info(`LDAP: Successfully created group ${groupId} and added person ${personUid}`);
+                    return { ok: true, value: true };
+                } catch (err) {
+                    const errMsg: string = `LDAP: Failed to create group ${groupId}, errMsg: ${String(err)}`;
+                    this.logger.error(errMsg);
+                    return { ok: false, error: new LdapAddPersonToGroupError() };
+                }
+            }
+            if (this.isPersonInSearchResult(searchResultGroupOfNames.searchEntries[0], lehrerUid)) {
+                this.logger.info(`LDAP: Person ${personUid} is already in group ${groupId}`);
+                return { ok: true, value: false };
+            }
+
             try {
-                await client.add(lehrerDn, newLehrerGroup);
-                this.logger.info(`LDAP: Successfully created group ${groupId} and added person ${personUid}`);
+                await client.modify(searchResultGroupOfNames.searchEntries[0].dn, [
+                    new Change({
+                        operation: 'add',
+                        modification: new Attribute({
+                            type: LdapClientService.MEMBER,
+                            values: [lehrerUid],
+                        }),
+                    }),
+                ]);
+                this.logger.info(`LDAP: Successfully added person ${personUid} to group ${groupId}`);
                 return { ok: true, value: true };
             } catch (err) {
-                const errMsg: string = `LDAP: Failed to create group ${groupId}, errMsg: ${String(err)}`;
+                const errMsg: string = `LDAP: Failed to add person to group ${groupId}, errMsg: ${String(err)}`;
                 this.logger.error(errMsg);
                 return { ok: false, error: new LdapAddPersonToGroupError() };
             }
-        }
-        if (this.isPersonInSearchResult(searchResultGroupOfNames.searchEntries[0], lehrerUid)) {
-            this.logger.info(`LDAP: Person ${personUid} is already in group ${groupId}`);
-            return { ok: true, value: false };
-        }
-
-        try {
-            await client.modify(searchResultGroupOfNames.searchEntries[0].dn, [
-                new Change({
-                    operation: 'add',
-                    modification: new Attribute({
-                        type: LdapClientService.MEMBER,
-                        values: [lehrerUid],
-                    }),
-                }),
-            ]);
-            this.logger.info(`LDAP: Successfully added person ${personUid} to group ${groupId}`);
-            return { ok: true, value: true };
-        } catch (err) {
-            const errMsg: string = `LDAP: Failed to add person to group ${groupId}, errMsg: ${String(err)}`;
-            this.logger.error(errMsg);
-            return { ok: false, error: new LdapAddPersonToGroupError() };
-        }
+        });
     }
 
     private async removePersonFromGroupInternal(
@@ -1212,52 +1220,54 @@ export class LdapClientService {
         orgaKennung: OrganisationKennung,
         lehrerUid: string,
     ): Promise<Result<boolean>> {
-        const groupId: string = 'lehrer-' + orgaKennung;
-        this.logger.info(`LDAP: Removing person ${username} from group ${groupId}`);
-        const client: Client = this.ldapClient.getClient();
-        const bindResult: Result<boolean> = await this.bind();
-        if (!bindResult.ok) return bindResult;
-        const searchResultOrgUnit: SearchResult = await client.search(
-            `cn=${LdapClientService.GROUPS},ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`,
-            {
-                filter: `(cn=${groupId})`,
-            },
-        );
+        return this.deletePersonFromGroupMutex.runExclusive(async () => {
+            const groupId: string = 'lehrer-' + orgaKennung;
+            this.logger.info(`LDAP: Removing person ${username} from group ${groupId}`);
+            const client: Client = this.ldapClient.getClient();
+            const bindResult: Result<boolean> = await this.bind();
+            if (!bindResult.ok) return bindResult;
+            const searchResultOrgUnit: SearchResult = await client.search(
+                `cn=${LdapClientService.GROUPS},ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`,
+                {
+                    filter: `(cn=${groupId})`,
+                },
+            );
 
-        if (!searchResultOrgUnit.searchEntries[0]) {
-            const errMsg: string = `LDAP: Group ${groupId} not found`;
-            this.logger.error(errMsg);
-            return { ok: false, error: new Error(errMsg) };
-        }
-
-        if (!this.isPersonInSearchResult(searchResultOrgUnit.searchEntries[0], lehrerUid)) {
-            this.logger.info(`LDAP: Person ${username} is not in group ${groupId}`);
-            return { ok: true, value: false };
-        }
-        const groupDn: string = searchResultOrgUnit.searchEntries[0].dn;
-        try {
-            if (typeof searchResultOrgUnit.searchEntries[0][LdapClientService.MEMBER] === 'string') {
-                await client.del(groupDn);
-                this.logger.info(`LDAP: Successfully removed person ${username} from group ${groupId}`);
-                this.logger.info(`LDAP: Successfully deleted group ${groupId}`);
-                return { ok: true, value: true };
+            if (!searchResultOrgUnit.searchEntries[0]) {
+                const errMsg: string = `LDAP: Group ${groupId} not found`;
+                this.logger.error(errMsg);
+                return { ok: false, error: new Error(errMsg) };
             }
-            await client.modify(groupDn, [
-                new Change({
-                    operation: 'delete',
-                    modification: new Attribute({
-                        type: LdapClientService.MEMBER,
-                        values: [lehrerUid],
+
+            if (!this.isPersonInSearchResult(searchResultOrgUnit.searchEntries[0], lehrerUid)) {
+                this.logger.info(`LDAP: Person ${username} is not in group ${groupId}`);
+                return { ok: true, value: false };
+            }
+            const groupDn: string = searchResultOrgUnit.searchEntries[0].dn;
+            try {
+                if (typeof searchResultOrgUnit.searchEntries[0][LdapClientService.MEMBER] === 'string') {
+                    await client.del(groupDn);
+                    this.logger.info(`LDAP: Successfully removed person ${username} from group ${groupId}`);
+                    this.logger.info(`LDAP: Successfully deleted group ${groupId}`);
+                    return { ok: true, value: true };
+                }
+                await client.modify(groupDn, [
+                    new Change({
+                        operation: 'delete',
+                        modification: new Attribute({
+                            type: LdapClientService.MEMBER,
+                            values: [lehrerUid],
+                        }),
                     }),
-                }),
-            ]);
-            this.logger.info(`LDAP: Successfully removed person ${username} from group ${groupId}`);
-            return { ok: true, value: true };
-        } catch (err) {
-            const errMsg: string = `LDAP: Failed to remove person from group ${groupId}, errMsg: ${String(err)}`;
-            this.logger.error(errMsg);
-            return { ok: false, error: new LdapRemovePersonFromGroupError() };
-        }
+                ]);
+                this.logger.info(`LDAP: Successfully removed person ${username} from group ${groupId}`);
+                return { ok: true, value: true };
+            } catch (err) {
+                const errMsg: string = `LDAP: Failed to remove person from group ${groupId}, errMsg: ${String(err)}`;
+                this.logger.error(errMsg);
+                return { ok: false, error: new LdapRemovePersonFromGroupError() };
+            }
+        });
     }
 
     private isPersonInSearchResult(searchEntry: Entry, lehrerUid: string): boolean | undefined {
@@ -1345,7 +1355,7 @@ export class LdapClientService {
     private async executeWithRetry<T>(
         func: () => Promise<Result<T>>,
         retries: number,
-        delay: number = 1000,
+        delay: number = 15000,
     ): Promise<Result<T>> {
         let currentAttempt: number = 1;
         let result: Result<T, Error> = {
@@ -1363,14 +1373,13 @@ export class LdapClientService {
                     throw new Error(`Function returned error: ${result.error.message}`);
                 }
             } catch (error) {
-                const currentDelay: number = delay * Math.pow(currentAttempt, 3);
                 this.logger.logUnknownAsError(
-                    `Attempt ${currentAttempt} failed. Retrying in ${currentDelay}ms... Remaining retries: ${retries - currentAttempt}`,
+                    `Attempt ${currentAttempt} failed. Retrying in ${delay}ms... Remaining retries: ${retries - currentAttempt}`,
                     error,
                 );
 
                 // eslint-disable-next-line no-await-in-loop
-                if (currentAttempt < retries) await this.sleep(currentDelay);
+                if (currentAttempt < retries) await this.sleep(delay);
             }
             currentAttempt++;
         }

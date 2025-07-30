@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer, Kafka, KafkaMessage, Producer } from 'kafkajs';
 import { BaseEvent } from '../../../shared/events/index.js';
-import { Constructor, EventHandlerType } from '../types/util.types.js';
+import { Constructor, EventHandlerType, MaybePromise } from '../types/util.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
 import {
     isKafkaEventKey,
@@ -46,6 +46,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             groupId: this.kafkaConfig.GROUP_ID,
             sessionTimeout: this.kafkaConfig.SESSION_TIMEOUT,
             heartbeatInterval: this.kafkaConfig.HEARTBEAT_INTERVAL,
+            allowAutoTopicCreation: false,
         });
         this.producer = this.kafka.producer();
     }
@@ -65,8 +66,26 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             );
 
             await this.consumer?.run({
-                eachMessage: async ({ message }: { message: KafkaMessage }) => {
-                    await this.handleMessage(message);
+                autoCommit: true,
+                autoCommitThreshold: 1,
+                eachMessage: async ({
+                    topic,
+                    partition,
+                    message,
+                    heartbeat,
+                }: {
+                    topic: string;
+                    partition: number;
+                    message: KafkaMessage;
+                    heartbeat: () => Promise<void>;
+                }) => {
+                    this.logger.info(
+                        `Consuming message from topic: ${topic}, partition: ${partition}, offset: ${message.offset}, key: ${message.key?.toString()}`,
+                    );
+                    // Call heartbeat before and after processing, and optionally during long processing
+                    await heartbeat();
+                    await this.handleMessage(message, heartbeat);
+                    await heartbeat();
                 },
             });
 
@@ -87,8 +106,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         this.handlerMap.set(eventType, handlers);
     }
 
-    public async handleMessage(message: KafkaMessage): Promise<void> {
-        const personId: string | undefined = message.key?.toString();
+    public async handleMessage(message: KafkaMessage, heartbeat: () => Promise<void>): Promise<void> {
         const eventKey: string | undefined = message.headers?.['eventKey']?.toString();
 
         if (!eventKey) {
@@ -125,20 +143,19 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         const handlers: EventHandlerType<BaseEvent>[] | undefined = this.handlerMap.get(eventClass);
 
         if (handlers?.length) {
-            this.logger.info(`Handling event: ${eventClass.name} for ${personId} with ${handlers.length} handlers`);
+            this.logger.info(`Handling event: ${eventClass.name} with ${handlers.length} handlers`);
             const handlerPromises: Promise<Result<unknown>>[] = handlers.map(
                 async (handler: EventHandlerType<BaseEvent>) => {
                     try {
-                        const result: Result<unknown> | void = await handler(kafkaEvent);
-
-                        if (!result) return { ok: true, value: null } satisfies Result<unknown>;
-                        return result;
-                    } catch (err) {
-                        this.logger.logUnknownAsError(
-                            `Handler ${handler.name} failed for event ${eventClass.name}`,
-                            err,
+                        const res: Result<unknown, Error> = await this.runWithTimoutAndKeepAlive(
+                            handler,
+                            kafkaEvent,
+                            heartbeat,
                         );
 
+                        return res;
+                    } catch (err) {
+                        this.logger.logUnknownAsError(`Handler failed for event ${eventClass.name}`, err);
                         return {
                             ok: false,
                             error: new Error('Unexpected handler error'),
@@ -228,5 +245,72 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             topics.add(this.kafkaConfig.TOPIC_PREFIX + topic);
         }
         return topics;
+    }
+
+    /*
+    Must be public because otherwise writing tests that cover 100% are very hard and not worth the effort
+    */
+    public runWithTimoutAndKeepAlive<Event extends BaseEvent>(
+        handler: EventHandlerType<BaseEvent>,
+        event: Event,
+        heartbeat: () => Promise<void>,
+    ): Promise<Result<unknown, Error>> {
+        return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
+            const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2500; // To allow processing of offset commit after message before client times out
+            let completed: boolean = false;
+
+            const onTimeout = (): void => {
+                if (!completed) {
+                    completed = true;
+                    this.logger.crit(
+                        `Handler for event ${event.constructor.name} with EventID: ${event.eventID} timed out after ${timeoutMs}ms`,
+                    );
+                    resolve({
+                        ok: false,
+                        error: new Error(`Handler timed out after ${timeoutMs}ms`),
+                    } satisfies Result<Error>);
+                }
+            };
+
+            let timeout: NodeJS.Timeout = setTimeout(onTimeout, timeoutMs);
+
+            const keepAlive = (): void => {
+                if (!completed) {
+                    this.logger.info(
+                        `Handler for event ${event.constructor.name} with EventID: ${event.eventID} is still running and called keepAlive, resetting timeout`,
+                    );
+                    void heartbeat();
+                    clearTimeout(timeout);
+                    timeout = setTimeout(onTimeout, timeoutMs);
+                }
+            };
+
+            const maybePromise: MaybePromise<void | Result<unknown, Error>> = handler(event, keepAlive);
+            Promise.resolve(maybePromise)
+                .then((result: Result<unknown> | void) => {
+                    if (!completed) {
+                        this.logger.info(
+                            `Handler for event ${event.constructor.name} with EventID: ${event.eventID} completed successfully`,
+                        );
+                        clearTimeout(timeout);
+                        completed = true;
+                        resolve(result ?? ({ ok: true, value: null } satisfies Result<unknown> | void));
+                    }
+                })
+                .catch((error: Error) => {
+                    if (!completed) {
+                        this.logger.error(
+                            `Handler for event ${event.constructor.name} with EventID: ${event.eventID} failed`,
+                            error,
+                        );
+                        clearTimeout(timeout);
+                        completed = true;
+                        resolve({
+                            ok: false,
+                            error,
+                        } satisfies Result<unknown> | void);
+                    }
+                });
+        });
     }
 }
