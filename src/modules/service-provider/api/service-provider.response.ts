@@ -43,6 +43,6 @@ export class ServiceProviderResponse {
         this.kategorie = serviceProvider.kategorie;
         this.hasLogo = !!serviceProvider.logoMimeType; // serviceProvider.logo might not be loaded, so just check the mime-type
         this.requires2fa = serviceProvider.requires2fa;
-        this.merkmale = serviceProvider.merkmale ?? [];
+        this.merkmale = serviceProvider.merkmale;
     }
 }
