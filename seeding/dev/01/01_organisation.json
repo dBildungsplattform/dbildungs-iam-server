@@ -475,6 +475,14 @@
             "typ": "TRAEGER",
             "administriertVon": 2,
             "zugehoerigZu": 2
+        },
+        {
+            "id": 1002,
+            "name": "10b",
+            "namensergaenzung": "Keine",
+            "typ": "KLASSE",
+            "administriertVon": 3,
+            "zugehoerigZu": 3
         }
     ]
 }
