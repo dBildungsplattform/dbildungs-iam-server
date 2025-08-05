@@ -406,6 +406,7 @@ export class OrganisationService {
             await this.organisationRepo.save(childOrga);
             return { ok: true, value: undefined };
         } catch (e) {
+            this.logger.logUnknownAsError('Could not update organisation', e);
             return { ok: false, error: new EntityCouldNotBeUpdated('Organisation', childId) };
         }
     }
