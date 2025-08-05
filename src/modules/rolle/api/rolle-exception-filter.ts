@@ -9,6 +9,7 @@ import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
 import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
+import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 
 @Catch(RolleDomainError)
 export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
@@ -53,6 +54,13 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
             new DbiamRolleError({
                 code: 400,
                 i18nKey: RolleErrorI18nTypes.ROLLE_NAME_UNIQUE_ON_SSK,
+            }),
+        ],
+        [
+            ServiceProviderNichtNachtraeglichZuweisbarError.name,
+            new DbiamRolleError({
+                code: 400,
+                i18nKey: RolleErrorI18nTypes.SERVICE_PROVIDER_NICHT_NACHTRAEGLICH_ZUWEISBAR,
             }),
         ],
     ]);

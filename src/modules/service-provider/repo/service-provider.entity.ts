@@ -1,4 +1,4 @@
-import { BlobType, Entity, Enum, Property } from '@mikro-orm/core';
+import { BlobType, Collection, Entity, Enum, OneToMany, Property } from '@mikro-orm/core';
 
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 import {
@@ -6,6 +6,7 @@ import {
     ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../domain/service-provider.enum.js';
+import { ServiceProviderMerkmalEntity } from './service-provider-merkmal.entity.js';
 
 @Entity({ tableName: 'service_provider' })
 export class ServiceProviderEntity extends TimestampedEntity {
@@ -44,4 +45,11 @@ export class ServiceProviderEntity extends TimestampedEntity {
 
     @Property({ nullable: true })
     public vidisAngebotId?: string;
+
+    @OneToMany({
+        entity: () => ServiceProviderMerkmalEntity,
+        mappedBy: 'serviceProvider',
+        orphanRemoval: true,
+    })
+    public merkmale: Collection<ServiceProviderMerkmalEntity> = new Collection<ServiceProviderMerkmalEntity>(this);
 }
