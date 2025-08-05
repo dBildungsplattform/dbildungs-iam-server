@@ -411,6 +411,7 @@ export class OxEventHandler {
         //change oxUserName to avoid conflicts for future OX-createUser-requests
         const params: ChangeUserParams = {
             contextId: this.contextID,
+            contextName: this.contextName,
             userId: oxUserId,
             username: personId,
             login: this.authUser,
@@ -512,8 +513,13 @@ export class OxEventHandler {
                 `Removed From alias:${event.address}, personId:${event.personId}, username:${event.username}`,
             );
         }
-
-        const changeParams: ChangeUserParams = idParams;
+        const changeParams: ChangeUserParams = {
+            contextId: this.contextID,
+            contextName: this.contextName,
+            userId: event.oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
         changeParams.aliases = newAliasesArray;
         const action: ChangeUserAction = new ChangeUserAction(changeParams);
         const result: Result<void, DomainError> = await this.oxService.send(action);
@@ -1017,6 +1023,7 @@ export class OxEventHandler {
 
         const params: ChangeUserParams = {
             contextId: this.contextID,
+            contextName: this.contextName,
             userId: person.oxUserId,
             username: person.referrer,
             givenname: person.vorname,
