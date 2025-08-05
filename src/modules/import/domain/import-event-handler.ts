@@ -170,8 +170,9 @@ export class ImportEventHandler {
                 `Created user ${savedPersonWithPersonenkontext.person.referrer} (${savedPersonWithPersonenkontext.person.id}).`,
             );
         } catch (error) {
-            this.logger.error(
+            this.logger.logUnknownAsError(
                 `Unexpected error while processing item ${importDataItem.vorname} ${importDataItem.nachname}`,
+                error,
             );
             importDataItem.status = ImportDataItemStatus.FAILED;
             await this.importDataRepository.save(importDataItem);
