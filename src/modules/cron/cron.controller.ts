@@ -130,6 +130,7 @@ export class CronController {
 
             return allSuccessful;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not lock users', error);
             throw new Error('Failed to lock users due to an internal server error.');
         }
     }
@@ -225,6 +226,7 @@ export class CronController {
 
             return allSuccessful;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not remove personenkontexte', error);
             throw new Error('Failed to remove kontexte due to an internal server error.');
         }
     }
@@ -314,6 +316,7 @@ export class CronController {
 
             return allSuccessful;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not remove users', error);
             throw new Error('Failed to remove users due to an internal server error.');
         }
     }
@@ -390,6 +393,7 @@ export class CronController {
             }
             return allSuccessful;
         } catch (error) {
+            this.logger.logUnknownAsError('Could not unlock users', error);
             throw new Error('Failed to unlock users due to an internal server error.');
         }
     }
