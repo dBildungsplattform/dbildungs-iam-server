@@ -43,8 +43,7 @@ export class PersonenInfoController {
     ): Promise<PersonInfoResponseV1[]> {
         const parsedOffset: number = Number.isNaN(parseInt(offset, 10)) ? 0 : parseInt(offset, 10);
         const parsedLimit: number = Number.isNaN(parseInt(limit, 10)) ? 25 : parseInt(limit, 10);
-        const boundedLimit: number = Math.min(parsedLimit, 2000);
 
-        return this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, boundedLimit);
+        return this.personInfoService.findPersonsForPersonenInfo(permissions, parsedOffset, parsedLimit);
     }
 }

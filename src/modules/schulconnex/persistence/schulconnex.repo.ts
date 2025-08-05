@@ -56,11 +56,7 @@ export class SchulconnexRepo {
                 .where({ 'sp.id': { $in: Array.from(serviceProviderIds) } });
         }
 
-        const results: { personId: string }[] = await qb
-            .orderBy({ 'pk.personId': 'asc' })
-            .limit(limit)
-            .offset(offset)
-            .execute('all');
-        return results.map((r: { personId: string }) => r.personId);
+        const results: { personId: string }[] = await qb.orderBy({ 'pk.personId': 'asc' }).execute('all');
+        return Array.from(new Set(results.map((r: { personId: string }) => r.personId))).slice(offset, offset + limit);
     }
 }
