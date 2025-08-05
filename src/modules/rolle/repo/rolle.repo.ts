@@ -30,7 +30,7 @@ import { ServiceProviderEntity } from '../../service-provider/repo/service-provi
 import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
-import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-sps.js';
+import { NurNachtraeglichZuweisbareServiceProvider } from '../specification/only-assignable-service-providers.specification.js';
 import { RolleNameUniqueOnSsk } from '../specification/rolle-name-unique-on-ssk.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 
