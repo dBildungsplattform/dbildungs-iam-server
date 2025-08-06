@@ -28,7 +28,7 @@
             "keycloakGroup": "Kalender-service",
             "keycloakRole": "Kalender-user",
             "requires2fa": true,
-            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
+            "merkmale": []
         },
         {
             "id": 2,
@@ -42,7 +42,7 @@
             "keycloakGroup": "Adressbuch-service",
             "keycloakRole": "Adressbuch-user",
             "requires2fa": true,
-            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
+            "merkmale": []
         },
         {
             "id": 3,
