@@ -1,21 +1,21 @@
+import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
+import { VidisService } from '../../vidis/vidis.service.js';
+import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
+import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
 import { ServiceProvider } from './service-provider.js';
 import { ServiceProviderService } from './service-provider.service.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
-import { VidisService } from '../../vidis/vidis.service.js';
-import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
-import { ServiceProviderKategorie, ServiceProviderSystem, ServiceProviderTarget } from './service-provider.enum.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { faker } from '@faker-js/faker';
-import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
-import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 
 const mockVidisAngebote: VidisAngebot[] = [
     {
@@ -84,6 +84,7 @@ const mockExistingVidisServiceProviderContainedInVidisAngebote: ServiceProvider<
     externalSystem: ServiceProviderSystem.NONE,
     requires2fa: false,
     vidisAngebotId: '7654321',
+    merkmale: [],
 };
 
 const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> = {
@@ -102,6 +103,7 @@ const mockExistingVidisServiceProviderNotInVidisAngebote: ServiceProvider<true> 
     externalSystem: ServiceProviderSystem.NONE,
     requires2fa: false,
     vidisAngebotId: '9999999',
+    merkmale: [],
 };
 
 const mockExistingServiceProviders: ServiceProvider<true>[] = [
