@@ -17,7 +17,10 @@
                 "PERSON_SYNCHRONISIEREN",
                 "IMPORT_DURCHFUEHREN",
                 "PERSONEN_ANLEGEN",
-                "BULK_VERWALTEN"
+                "BULK_VERWALTEN",
+                "SCHULPORTAL_VERWALTEN",
+                "HINWEISE_BEARBEITEN",
+                "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN"
             ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
         },
@@ -54,7 +57,12 @@
             "name": "Schuladministrator öffentlich",
             "rollenart": "LEIT",
             "merkmale": [],
-            "systemrechte": ["PERSONEN_VERWALTEN", "KLASSEN_VERWALTEN"],
+            "systemrechte": [
+                "PERSONEN_VERWALTEN",
+                "KLASSEN_VERWALTEN",
+                "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+                "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN"
+            ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
         },
         {
