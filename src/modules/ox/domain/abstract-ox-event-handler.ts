@@ -41,6 +41,9 @@ export abstract class AbstractOxEventHandler {
         if (!enabledEmailAddresses || !enabledEmailAddresses[0]) {
             this.logger.warning(`No ENABLED email-address found for personId:${personId}`);
         } else {
+            this.logger.info(
+                `Found mostRecentEnabled Email-Address:${JSON.stringify(enabledEmailAddresses[0].address)} for personId:${personId}`,
+            );
             return enabledEmailAddresses[0];
         }
 

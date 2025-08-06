@@ -9,9 +9,7 @@ import { LdapSyncCompletedEvent } from '../../../shared/events/ldap/ldap-sync-co
 import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
 import { Person } from '../../person/domain/person.js';
-import { EmailAddress } from '../../email/domain/email-address.js';
-import { UserIdParams } from '../actions/user/ox-user.types.js';
-import { GetDataForUserAction, GetDataForUserResponse } from '../actions/user/get-data-user.action.js';
+import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
@@ -76,37 +74,6 @@ const generateOxUserChangedEvent: OxUserChangedEventCreator = (
     ];
 };
 
-/*const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
-    personId: PersonID,
-    username: PersonReferrer,
-    oxUserId: OXUserID,
-    oxUserName: OXUserName,
-    oxContextId: OXContextID,
-    oxContextName: OXContextName,
-    emailAddress: string,
-) => {
-    return [
-        new DisabledOxUserChangedEvent(
-            personId,
-            username,
-            oxUserId,
-            oxUserName, //strictEquals the new OxUsername
-            oxContextId,
-            oxContextName,
-            emailAddress,
-        ),
-        new KafkaDisabledOxUserChangedEvent(
-            personId,
-            username,
-            oxUserId,
-            oxUserName, //strictEquals the new OxUsername
-            oxContextId,
-            oxContextName,
-            emailAddress,
-        ),
-    ];
-};*/
-//
 @Injectable()
 export class OxSyncEventHandler extends AbstractOxEventHandler {
     public constructor(
@@ -227,35 +194,19 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         const mostRecentRequestedOrEnabledEA: Option<EmailAddress<true>> =
             await this.getMostRecentEnabledOrRequestedEmailAddress(personId);
         if (!mostRecentRequestedOrEnabledEA) return; //logging is done in getMostRecentRequestedEmailAddress
-        const emailAddressString: string = mostRecentRequestedOrEnabledEA.address;
+        const currentEmailAddressString: string = mostRecentRequestedOrEnabledEA.address;
 
-        const getDataParams: UserIdParams = {
-            contextId: this.contextID,
-            userId: person.oxUserId,
-            login: this.authUser,
-            password: this.authPassword,
-        };
+        const disabledEmailAddresses: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(
+            personId,
+            EmailAddressStatus.DISABLED,
+        );
+        const aliases: string[] = disabledEmailAddresses.map((ea: EmailAddress<true>) => ea.address);
+        aliases.push(currentEmailAddressString);
 
-        const getDataAction: GetDataForUserAction = new GetDataForUserAction(getDataParams);
-
-        const getDataResult: Result<GetDataForUserResponse, DomainError> = await this.oxService.send(getDataAction);
-
-        if (!getDataResult.ok) {
-            mostRecentRequestedOrEnabledEA.failed();
-            await this.emailRepo.save(mostRecentRequestedOrEnabledEA);
-            return this.logger.error(
-                `Cannot get data for oxUsername:${person.referrer} from OX, Aborting Email-Address Change, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
-            );
-        }
-        const newAliasesArray: string[] = getDataResult.value.aliases;
         this.logger.info(
-            `Found Current aliases:${JSON.stringify(newAliasesArray)}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+            `Current aliases to be written:${JSON.stringify(aliases)}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
         );
 
-        newAliasesArray.push(emailAddressString);
-        this.logger.info(
-            `Added New alias:${emailAddressString}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
-        );
         const params: ChangeUserParams = {
             contextId: this.contextID,
             contextName: this.contextName,
@@ -264,11 +215,11 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
             givenname: person.vorname,
             surname: person.familienname,
             displayname: person.referrer, //IS EXPLICITLY NOT SET to vorname+familienname
-            defaultSenderAddress: emailAddressString,
-            email1: emailAddressString,
-            aliases: newAliasesArray,
-            primaryEmail: emailAddressString,
-            imapLogin: emailAddressString,
+            defaultSenderAddress: currentEmailAddressString,
+            email1: currentEmailAddressString,
+            aliases: aliases,
+            primaryEmail: currentEmailAddressString,
+            imapLogin: currentEmailAddressString,
             login: this.authUser,
             password: this.authPassword,
         };
@@ -288,7 +239,7 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         }
 
         this.logger.infoPersonalized(
-            `Rewritten OxUser successfully, oxUserId:${person.oxUserId}, oxUsername:${person.referrer}, new email-address:${emailAddressString}`,
+            `Rewritten OxUser successfully, oxUserId:${person.oxUserId}, oxUsername:${person.referrer}, new email-address:${currentEmailAddressString}`,
             personIdentifier,
         );
 
@@ -299,7 +250,7 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
             person.referrer, //strictEquals the new OxUsername
             this.contextID,
             this.contextName,
-            emailAddressString,
+            currentEmailAddressString,
         );
 
         this.eventService.publish(...event);
