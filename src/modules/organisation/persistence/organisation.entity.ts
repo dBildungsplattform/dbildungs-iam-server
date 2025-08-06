@@ -54,4 +54,8 @@ export class OrganisationEntity extends TimestampedEntity {
 
     @Property({ type: new BigIntType('number'), defaultRaw: '1', concurrencyCheck: true })
     public version!: number & Opt;
+
+    @AutoMap()
+    @Property({ columnType: 'uuid', nullable: true })
+    public lernmanagementsystem?: string;
 }

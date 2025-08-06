@@ -10,6 +10,7 @@ export enum OrganisationsTyp {
     ANBIETER = 'ANBIETER',
     SONSTIGE = 'SONSTIGE ORGANISATION / EINRICHTUNG',
     UNBEST = 'UNBESTAETIGT',
+    LMS = 'LMS',
 }
 
 export enum Traegerschaft {

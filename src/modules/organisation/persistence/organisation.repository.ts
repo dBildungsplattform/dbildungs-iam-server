@@ -46,6 +46,7 @@ export function mapOrgaAggregateToData(organisation: Organisation<boolean>): Req
         emailDomain: organisation.emailDomain,
         emailAddress: organisation.emailAdress,
         itslearningEnabled: organisation.itslearningEnabled,
+        lernmanagementsystem: organisation.lernmanagementsystem?.id ?? undefined,
     };
 }
 
