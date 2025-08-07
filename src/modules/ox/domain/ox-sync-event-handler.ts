@@ -7,7 +7,7 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-completed.event.js';
 import { LdapSyncCompletedEvent } from '../../../shared/events/ldap/ldap-sync-completed.event.js';
 import { OrganisationID, PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
+import { PersonEmailIdentifier, PersonIdentifier } from '../../../core/logging/person-identifier.js';
 import { Person } from '../../person/domain/person.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
@@ -17,7 +17,7 @@ import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user
 import { AbstractOxEventHandler } from './abstract-ox-event-handler.js';
 import { OxService } from './ox.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { OXContextID, OXContextName, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
+import { OXContextID, OXContextName, OXGroupID, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { uniq } from 'lodash-es';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -31,6 +31,9 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { Injectable } from '@nestjs/common';
+import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
+import { GroupMemberParams } from '../actions/group/ox-group.types.js';
+import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 
 //Duplicate from OxEventHandler, to be refactored...
 export type OxUserChangedEventCreator = (
@@ -78,11 +81,11 @@ const generateOxUserChangedEvent: OxUserChangedEventCreator = (
 export class OxSyncEventHandler extends AbstractOxEventHandler {
     public constructor(
         protected override readonly logger: ClassLogger,
+        protected override readonly oxService: OxService,
         protected override readonly emailRepo: EmailRepo,
         protected override readonly eventService: EventRoutingLegacyKafkaService,
         protected override configService: ConfigService<ServerConfig>,
 
-        private readonly oxService: OxService,
         private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
@@ -92,7 +95,7 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
     ) {
-        super(logger, emailRepo, eventService, configService);
+        super(logger, oxService, emailRepo, eventService, configService);
     }
 
     @KafkaEventHandler(KafkaLdapSyncCompletedEvent)
@@ -102,6 +105,38 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         this.logger.info(`[EventID: ${event.eventID}] Received LdapSyncCompletedEvent, personId:${event.personId}`);
 
         await this.sync(event.personId, event.username);
+    }
+
+    private async getPerson(personId: PersonID, username: PersonReferrer): Promise<PersonEmailIdentifier | undefined> {
+        const personIdentifier: PersonIdentifier = {
+            personId: personId,
+            username: username,
+        };
+        const person: Option<Person<true>> = await this.personRepository.findById(personId);
+
+        if (!person) {
+            this.logger.errorPersonalized(`Person not found`, personIdentifier);
+            return undefined;
+        }
+        if (!person.referrer) {
+            this.logger.errorPersonalized(
+                `Person has no username: Cannot Change Email-Address In OX`,
+                personIdentifier,
+            );
+            return undefined;
+        }
+        if (!person.oxUserId) {
+            this.logger.errorPersonalized(`Person has no OxUserId`, personIdentifier);
+            return undefined;
+        }
+
+        return {
+            personId: personId,
+            username: username,
+            oxUserId: person.oxUserId,
+            oxUserName: person.referrer,
+            person: person,
+        };
     }
 
     private async sync(personId: PersonID, username: PersonReferrer): Promise<void> {
@@ -176,19 +211,9 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
             personId: personId,
             username: username,
         };
-        const person: Option<Person<true>> = await this.personRepository.findById(personId);
-
-        if (!person) {
-            return this.logger.errorPersonalized(`Person not found`, personIdentifier);
-        }
-        if (!person.referrer) {
-            return this.logger.errorPersonalized(
-                `Person has no username: Cannot Change Email-Address In OX`,
-                personIdentifier,
-            );
-        }
-        if (!person.oxUserId) {
-            return this.logger.errorPersonalized(`Person has no OxUserId`, personIdentifier);
+        const personEmailIdentifier: PersonEmailIdentifier | undefined = await this.getPerson(personId, username);
+        if (!personEmailIdentifier) {
+            return this.logger.errorPersonalized('Fetching Person during OxSync failed', personIdentifier);
         }
 
         const mostRecentRequestedOrEnabledEA: Option<EmailAddress<true>> =
@@ -204,17 +229,17 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         aliases.push(currentEmailAddressString);
 
         this.logger.info(
-            `Current aliases to be written:${JSON.stringify(aliases)}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+            `Current aliases to be written:${JSON.stringify(aliases)}, personId:${personId}, username:${username}`,
         );
 
         const params: ChangeUserParams = {
             contextId: this.contextID,
             contextName: this.contextName,
-            userId: person.oxUserId,
-            username: person.referrer,
-            givenname: person.vorname,
-            surname: person.familienname,
-            displayname: person.referrer, //IS EXPLICITLY NOT SET to vorname+familienname
+            userId: personEmailIdentifier.oxUserId,
+            username: username,
+            givenname: personEmailIdentifier.person.vorname,
+            surname: personEmailIdentifier.person.familienname,
+            displayname: personEmailIdentifier.person.referrer, //IS EXPLICITLY NOT SET to vorname+familienname
             defaultSenderAddress: currentEmailAddressString,
             email1: currentEmailAddressString,
             aliases: aliases,
@@ -233,21 +258,21 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
             await this.emailRepo.save(mostRecentRequestedOrEnabledEA);
 
             return this.logger.errorPersonalized(
-                `Could not rewrite OxUser for oxUserId:${person.oxUserId}, error:${result.error.message}`,
+                `Could not rewrite OxUser for oxUserId:${personEmailIdentifier.oxUserId}, error:${result.error.message}`,
                 personIdentifier,
             );
         }
 
         this.logger.infoPersonalized(
-            `Rewritten OxUser successfully, oxUserId:${person.oxUserId}, oxUsername:${person.referrer}, new email-address:${currentEmailAddressString}`,
+            `Rewritten OxUser successfully, oxUserId:${personEmailIdentifier.oxUserId}, oxUsername:${username}, new email-address:${currentEmailAddressString}`,
             personIdentifier,
         );
 
         const event: [OxUserChangedEvent, KafkaOxUserChangedEvent] = eventCreator(
             personId,
-            person.referrer,
-            person.oxUserId,
-            person.referrer, //strictEquals the new OxUsername
+            username,
+            personEmailIdentifier.oxUserId,
+            personEmailIdentifier.oxUserName, //strictEquals the new OxUsername
             this.contextID,
             this.contextName,
             currentEmailAddressString,
@@ -256,8 +281,61 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         this.eventService.publish(...event);
     }
 
+    private async addOxUserToGroup(
+        oxUserId: OXUserID,
+        schuleDstrNr: string,
+        personIdentifier: PersonIdentifier,
+    ): Promise<void> {
+        // Fetch or create the relevant OX group based on orgaKennung (group identifier)
+        const oxGroupIdResult: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
+            AbstractOxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + schuleDstrNr,
+            AbstractOxEventHandler.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + schuleDstrNr,
+        );
+
+        if (!oxGroupIdResult.ok) {
+            return this.logger.errorPersonalized(
+                `Could not get OxGroup for schulenDstNr:${schuleDstrNr}`,
+                personIdentifier,
+            );
+        }
+        const groupMemberParams: GroupMemberParams = {
+            contextId: this.contextID,
+            groupId: oxGroupIdResult.value,
+            memberId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const addMemberToGroupAction: AddMemberToGroupAction = new AddMemberToGroupAction(groupMemberParams);
+
+        const result: Result<AddMemberToGroupResponse, DomainError> = await this.oxService.send(addMemberToGroupAction);
+        if (!result.ok && !(result.error instanceof OxMemberAlreadyInGroupError)) {
+            this.logger.errorPersonalized(
+                `Could not add oxUser to oxGroup, schulenDstNr:${schuleDstrNr}`,
+                personIdentifier,
+            );
+        }
+    }
+
     private async changeUsersGroups(personId: PersonID, username: PersonReferrer): Promise<void> {
-        //const schulenDstNrList: string[] = await this.getOrganisationKennungen(personId, username);
-        await this.getOrganisationKennungen(personId, username);
+        const personIdentifier: PersonIdentifier = {
+            personId: personId,
+            username: username,
+        };
+        const personEmailIdentifier: PersonEmailIdentifier | undefined = await this.getPerson(personId, username);
+        if (!personEmailIdentifier) {
+            return this.logger.errorPersonalized('Fetching Person during OxSync failed', personIdentifier);
+        }
+
+        const oxUserId: OXUserID = personEmailIdentifier.oxUserId;
+
+        const schulenDstNrList: string[] | OxSyncError = await this.getOrganisationKennungen(personId, username);
+        if (schulenDstNrList instanceof OxSyncError) {
+            return this.logger.errorPersonalized('Could not get organisations during OxSync', personIdentifier);
+        }
+
+        const promises: Promise<void>[] = schulenDstNrList.map((schulenDstNr: string) =>
+            this.addOxUserToGroup(oxUserId, schulenDstNr, personIdentifier),
+        );
+        await Promise.allSettled(promises);
     }
 }

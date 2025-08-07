@@ -5,7 +5,6 @@ import { EventHandler } from '../../../core/eventbus/decorators/event-handler.de
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/index.js';
-import { OxConfig } from '../../../shared/config/ox.config.js';
 import { OxService } from './ox.service.js';
 import { CreateUserAction, CreateUserParams, CreateUserResponse } from '../actions/user/create-user.action.js';
 import { OrganisationKennung, PersonID, PersonReferrer } from '../../../shared/types/index.js';
@@ -14,14 +13,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { ExistsUserAction, ExistsUserResponse } from '../actions/user/exists-user.action.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import {
-    OXContextID,
-    OXContextName,
-    OXGroupID,
-    OXGroupName,
-    OXUserID,
-    OXUserName,
-} from '../../../shared/types/ox-ids.types.js';
+import { OXContextID, OXContextName, OXGroupID, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
@@ -31,10 +23,6 @@ import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
 import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
-import { CreateGroupAction, CreateGroupParams, CreateGroupResponse } from '../actions/group/create-group.action.js';
-import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
-import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actions/group/list-groups.action.js';
-import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error.js';
 import {
     ChangeByModuleAccessAction,
     ChangeByModuleAccessParams,
@@ -80,6 +68,7 @@ import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
 import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
+import { AbstractOxEventHandler } from './abstract-ox-event-handler.js';
 
 type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -154,8 +143,8 @@ const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
 };
 
 @Injectable()
-export class OxEventHandler {
-    public ENABLED: boolean;
+export class OxEventHandler extends AbstractOxEventHandler {
+    /*    public ENABLED: boolean;
 
     private readonly authUser: string;
 
@@ -163,30 +152,28 @@ export class OxEventHandler {
 
     private readonly contextID: OXContextID;
 
-    private readonly contextName: OXContextName;
-
-    private static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
-
-    private static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'lehrer-';
+    private readonly contextName: OXContextName;*/
 
     public constructor(
-        private readonly logger: ClassLogger,
-        private readonly oxService: OxService,
-        private readonly personRepository: PersonRepository,
-        private readonly emailRepo: EmailRepo,
-        private readonly eventService: EventRoutingLegacyKafkaService,
-        configService: ConfigService<ServerConfig>,
+        protected override readonly logger: ClassLogger,
+        protected override readonly oxService: OxService,
+        protected readonly personRepository: PersonRepository,
+        protected override readonly emailRepo: EmailRepo,
+        protected override readonly eventService: EventRoutingLegacyKafkaService,
+        protected override configService: ConfigService<ServerConfig>,
+        //configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
     ) {
-        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
-        this.ENABLED = oxConfig.ENABLED;
+        //const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        /*this.ENABLED = oxConfig.ENABLED;
         this.authUser = oxConfig.USERNAME;
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;
-        this.contextName = oxConfig.CONTEXT_NAME;
+        this.contextName = oxConfig.CONTEXT_NAME;*/
+        super(logger, oxService, emailRepo, eventService, configService);
     }
 
     @EventHandler(EmailAddressChangedEvent)
@@ -646,87 +633,6 @@ export class OxEventHandler {
         );
 
         return requestedEmailAddresses[0];
-    }
-
-    private async createOxGroup(oxGroupName: OXGroupName, displayName: string): Promise<Result<OXGroupID>> {
-        const params: CreateGroupParams = {
-            contextId: this.contextID,
-            name: oxGroupName,
-            displayname: displayName,
-            login: this.authUser,
-            password: this.authPassword,
-        };
-
-        const action: CreateGroupAction = new CreateGroupAction(params);
-        const result: Result<CreateGroupResponse, DomainError> = await this.oxService.send(action);
-
-        if (!result.ok) {
-            this.logger.error(`Could Not Create OxGroup with name:${oxGroupName}, displayName:${displayName}`);
-
-            return result;
-        }
-
-        this.logger.info(
-            `Successfully Created OxGroup, oxGroupId:${result.value.id}, name:${oxGroupName}, displayName:${displayName}`,
-        );
-
-        return {
-            ok: true,
-            value: result.value.id,
-        };
-    }
-
-    private async getOxGroupByName(oxGroupName: OXGroupName): Promise<OXGroupID | DomainError> {
-        const params: ListGroupsParams = {
-            contextId: this.contextID,
-            pattern: `${oxGroupName}`,
-            login: this.authUser,
-            password: this.authPassword,
-        };
-        const action: ListGroupsAction = new ListGroupsAction(params);
-        const result: Result<ListGroupsResponse, DomainError> = await this.oxService.send(action);
-
-        if (!result.ok) {
-            this.logger.error(`Could Not Retrieve Groups For Context, contextId:${this.contextID}`);
-            return result.error;
-        }
-        if (!result.value.groups[0] || result.value.groups.length == 0) {
-            this.logger.info(`Found No Matching OxGroup For OxGroupName:${oxGroupName}`);
-            return new OxGroupNotFoundError(oxGroupName);
-        }
-        if (result.value.groups.length > 1) {
-            this.logger.error(`Found multiple OX-groups For OxGroupName:${oxGroupName}, Cannot Proceed`);
-            return new OxGroupNameAmbiguousError(oxGroupName);
-        }
-
-        this.logger.info(`Found existing oxGroup for oxGroupName:${oxGroupName}`);
-
-        return result.value.groups[0].id;
-    }
-
-    private async getExistingOxGroupByNameOrCreateOxGroup(
-        oxGroupName: OXGroupName,
-        displayName: string,
-    ): Promise<Result<OXGroupID>> {
-        const oxGroupId: OXGroupID | DomainError = await this.getOxGroupByName(oxGroupName);
-
-        if (oxGroupId instanceof OxGroupNotFoundError) {
-            const createGroupResult: Result<OXGroupID> = await this.createOxGroup(oxGroupName, displayName);
-
-            return createGroupResult;
-        }
-
-        //return if OxGroupNameAmbiguousError or any other error
-        if (oxGroupId instanceof DomainError)
-            return {
-                ok: false,
-                error: oxGroupId,
-            };
-
-        return {
-            ok: true,
-            value: oxGroupId,
-        };
     }
 
     private async addOxUserToOxGroup(
