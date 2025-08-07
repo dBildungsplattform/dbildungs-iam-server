@@ -129,7 +129,7 @@ header_base64=$(base64url_encode "$header")
 
 # Create JWT payload
 current_time=$(date +%s)
-exp_time=$((current_time + 55))  # Token valid for 5 minutes
+exp_time=$((current_time + 55))  # Token valid for 55 seconds
 jti=$(generate_jti)
 
 payload=$(cat <<EOF
