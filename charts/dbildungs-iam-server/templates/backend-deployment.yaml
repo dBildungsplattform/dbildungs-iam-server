@@ -57,8 +57,8 @@ spec:
               mountPath: /init
               readOnly: true
             - name: kafka-tls
-                readOnly: true
-                mountPath: /tls
+              readOnly: true
+              mountPath: /tls
             - name: jks
               mountPath: /jks
             - name: keystore-password
