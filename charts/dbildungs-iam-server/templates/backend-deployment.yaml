@@ -53,10 +53,10 @@ spec:
                   name: kafka-tls
                   key: keystore-password
           volumeMounts:
-          - name: kafka-init-volume
-            mountPath: /init
-            readOnly: true
-          - name: kafka-tls
+            - name: kafka-init-volume
+              mountPath: /init
+              readOnly: true
+            - name: kafka-tls
               readOnly: true
               mountPath: /tls
             - name: jks
