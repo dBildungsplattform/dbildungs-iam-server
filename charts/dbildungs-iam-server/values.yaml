@@ -191,7 +191,8 @@ redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
-  url: 'dbildungs-iam-kafka.spsh.svc.cluster.local:9092'
+  url: '10.7.250.102:9093'
+  topicPartitions: 3
   enabled: true
   saslEnabled: true
   initEnabled: true
@@ -199,6 +200,7 @@ kafka:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'
     pullPolicy: Always
+
 
 autoscaling:
   enabled: false

@@ -95,7 +95,19 @@
         "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true
     },
     "KAFKA": {
-        "BROKER": "localhost:9092",
+        // "BROKER": "localhost:9092",
+        // "TOPIC_PREFIX": "dev.",
+        // "USER_TOPIC": "spsh-user-topic",
+        // "USER_DLQ_TOPIC": "spsh-user-dlq-topic",
+        // "GROUP_ID": "nestjs-kafka",
+        // "SESSION_TIMEOUT": 300000,
+        // "HEARTBEAT_INTERVAL": 10000,
+        // "ENABLED": true,
+        // "SASL_ENABLED": true,
+        // "USERNAME": "username",
+        // "PASSWORD": "password"
+        
+        "BROKER": "10.7.250.102:9093", // check if you can adjust it to be standard
         "TOPIC_PREFIX": "dev.",
         "USER_TOPIC": "spsh-user-topic",
         "USER_DLQ_TOPIC": "spsh-user-dlq-topic",
@@ -103,9 +115,11 @@
         "SESSION_TIMEOUT": 300000,
         "HEARTBEAT_INTERVAL": 10000,
         "ENABLED": true,
-        "SASL_ENABLED": true,
-        "USERNAME": "username",
-        "PASSWORD": "password"
+        "SASL_ENABLED": false,
+        "SSL": true,
+        "SSL_CA_PATH": "/tls/ca.pem",
+        "SSL_CERT_PATH": "/tls/client-cert.pem",
+        "SSL_KEY_PATH": "/tls/client-key.pem"
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
