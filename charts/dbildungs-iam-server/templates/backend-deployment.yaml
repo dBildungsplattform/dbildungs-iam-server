@@ -37,20 +37,35 @@ spec:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
           env:
-            - name: KAFKA_USERNAME
+            - name: KAFKA_CA_FILE
+              value: /tls/ca.pem
+            - name: KAFKA_CERT_FILE
+              value: /tls/client-cert.pem
+            - name: KAFKA_KEY_FILE
+              value: /tls/client-key.pem
+            - name: TLS_KEYSTORE
+              value: /jks/client.keystore.jks
+            - name: TLS_TRUSTSTORE
+              value: /jks/client.truststore.jks
+            - name: TLS_KEYSTORE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: dbildungs-iam-server
-                  key: kafka-username
-            - name: KAFKA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: dbildungs-iam-server
-                  key: kafka-password
+                  name: kafka-tls
+                  key: keystore-password
           volumeMounts:
-          - name: kafka-init-volume
-            mountPath: /init
-            readOnly: true
+            - name: kafka-init-volume
+              mountPath: /init
+              readOnly: true
+            - name: kafka-tls
+                readOnly: true
+                mountPath: /tls
+            - name: jks
+              mountPath: /jks
+            - name: keystore-password
+              readOnly: true
+              mountPath: /keystore-password.txt
+              subPath: keystore-password
+            
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
         {{- if .Values.backend.dbmigration.enabled }}
@@ -142,6 +157,18 @@ spec:
           configMap:
             name: {{ template "common.names.name" $ }}-kafka-init-configmap
             defaultMode: 0555
+        - name: kafka-tls
+          secret:
+            secretName: kafka-tls
+            defaultMode: 420
+        - name: jks
+          emptyDir: {}
+        - name: keystore-password
+          secret:
+            secretName: kafka-tls
+            items:
+              - key: keystore-password
+                path: keystore-password
         {{- end }}
         - name: migration-volume
           configMap:
