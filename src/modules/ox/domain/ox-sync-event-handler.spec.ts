@@ -25,6 +25,7 @@ import { INestApplication } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/core';
 import { OxError } from '../../../shared/error/ox.error.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import assert from 'assert';
 
 describe('OxSyncEventHandler', () => {
     let app: INestApplication;
@@ -39,7 +40,6 @@ describe('OxSyncEventHandler', () => {
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let dBiamPersonenkontextRepoMock: DeepMocked<DBiamPersonenkontextRepo>;
     let oxServiceMock: DeepMocked<OxService>;
-    //let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -88,7 +88,6 @@ describe('OxSyncEventHandler', () => {
         dBiamPersonenkontextRepoMock = module.get(DBiamPersonenkontextRepo);
 
         oxServiceMock = module.get(OxService);
-        //eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
         app = module.createNestApplication();
         await app.init();
@@ -339,6 +338,11 @@ describe('OxSyncEventHandler', () => {
                 //mock search for REQUESTED EAs
                 emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([ea]);
 
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: undefined,
+                });
+
                 await sut.ldapSyncCompletedEventHandler(event);
 
                 expect(loggerMock.warning).toHaveBeenCalledWith(
@@ -347,11 +351,6 @@ describe('OxSyncEventHandler', () => {
                 expect(loggerMock.info).toHaveBeenCalledWith(
                     `Found mostRecentRequested Email-Address:${JSON.stringify(ea.address)} for personId:${personId}`,
                 );
-
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
             });
         });
 
@@ -506,21 +505,6 @@ describe('OxSyncEventHandler', () => {
                     },
                     3,
                 );
-                /* //mock OxGetGroup-request
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: {
-                        groups: [
-                            {
-                                displayname: 'displayName',
-                                id: 'oxGroupId',
-                                name: 'oxGroupName',
-                                memberIds: [oxUserId],
-                            },
-                        ],
-                    },
-                });*/
-
                 //mock OxAddMemberToGroup-request
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
@@ -548,25 +532,19 @@ describe('OxSyncEventHandler', () => {
         });
     });
 
-    /*describe('getOrganisationKennungen', () => {
+    describe('getOrganisationKennungen', () => {
         let personId: PersonID;
         let username: PersonReferrer;
         let oxUserId: OXUserID;
-        let personIdentifier: PersonIdentifier;
         let event: LdapSyncCompletedEvent;
         let person: Person<true>;
         let address: string;
 
         beforeEach(() => {
-            //jest.resetAllMocks();
-            //jest.clearAllMocks();
+            jest.resetAllMocks();
             personId = faker.string.uuid();
             username = faker.internet.userName();
             oxUserId = faker.string.numeric({ length: 5 });
-            personIdentifier = {
-                personId: personId,
-                username: username,
-            };
             event = new LdapSyncCompletedEvent(personId, username);
             person = createMock<Person<true>>({
                 email: faker.internet.email(),
@@ -574,156 +552,78 @@ describe('OxSyncEventHandler', () => {
                 oxUserId: oxUserId,
             });
             address = faker.internet.email();
+        });
 
-        /!*    // create PKs, orgaMap and rolleMap
+        it('should log error, when an organisation in orgaMap CANNOT be found', async () => {
+            personRepositoryMock.findById.mockResolvedValue(person);
+            const ea: EmailAddress<true> = getEmailAddress(personId, address, EmailAddressStatus.ENABLED);
+            //mock search for ENABLED EAs
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([ea]);
+            //mock search for disabled EAs (no EAs with DISABLED status found)
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+            //mock OxChangeUser-request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+
+            // create PKs, orgaMap and rolleMap
             const [kontexte, orgaMap, rolleMap]: [
                 Personenkontext<true>[],
                 Map<OrganisationID, Organisation<true>>,
                 Map<RolleID, Rolle<true>>,
             ] = getPkArrayOrgaMapAndRolleMap(person);
-            mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);*!/
-        });
-
-        describe('when at least one organisation CANNOT be found in orgaMap', () => {
-            it('should log error and return', async () => {
-                const [ea, disabledEmailAddressString1, disabledEmailAddressString2]: [
-                    EmailAddress<true>,
-                    string,
-                    string,
-                ] = mockPersonFoundEnabledEAAndDisabledEAsFound(person, personId, address);
-
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-
-                await sut.ldapSyncCompletedEventHandler(event);
-
-                const aliases: string[] = [disabledEmailAddressString1, disabledEmailAddressString2, address];
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Found mostRecentEnabled Email-Address:${JSON.stringify(ea.address)} for personId:${personId}`,
-                );
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Current aliases to be written:${JSON.stringify(aliases)}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
-                );
-
-                // create PKs, orgaMap and rolleMap
-                const [kontexte, orgaMap, rolleMap]: [
-                    Personenkontext<true>[],
-                    Map<OrganisationID, Organisation<true>>,
-                    Map<RolleID, Rolle<true>>,
-                ] = getPkArrayOrgaMapAndRolleMap(person);
-                // hence kontexte are filtered by organisations.has, removing one organisation from map here, would not create a coverage case
-                // therefore a mocked map is used
-                const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> =
-                    createMock<Map<OrganisationID, Organisation<true>>>();
-                mockedMap.entries.mockImplementationOnce(() => {
-                    return orgaMap.entries();
-                });
-                mockedMap.has.mockImplementationOnce((id: string) => {
-                    return orgaMap.has(id);
-                });
-                mockedMap.get.mockImplementationOnce(() => {
-                    return undefined;
-                });
-                mockPersonenKontextRelatedRepositoryCalls(kontexte, mockedMap, rolleMap);
-
-                await sut.ldapSyncCompletedEventHandler(event);
-
-                expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining(`Could not find organisation`));
+            // hence kontexte are filtered by organisations.has, removing one organisation from map here, would not create a coverage case
+            // therefore a mocked map is used
+            const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> =
+                createMock<Map<OrganisationID, Organisation<true>>>();
+            mockedMap.entries.mockImplementationOnce(() => {
+                return orgaMap.entries();
             });
-        });
-
-        describe('when at least one organisation does NOT have a kennung', () => {
-            it('should log error and return', async () => {
-                const [ea, disabledEmailAddressString1, disabledEmailAddressString2]: [
-                    EmailAddress<true>,
-                    string,
-                    string,
-                ] = mockPersonFoundEnabledEAAndDisabledEAsFound(person, personId, address);
-
-                // create PKs, orgaMap and rolleMap
-                const [kontexte, orgaMap, rolleMap]: [
-                    Personenkontext<true>[],
-                    Map<OrganisationID, Organisation<true>>,
-                    Map<RolleID, Rolle<true>>,
-                ] = getPkArrayOrgaMapAndRolleMap(person);
-                // set kennung for an organisation undefined to force 'Required kennung is missing on organisation'
-                assert(kontexte[0]);
-                const orgaWithoutKennung: Organisation<true> | undefined = orgaMap.get(kontexte[0].organisationId);
-                if (!orgaWithoutKennung) throw Error();
-                orgaWithoutKennung.kennung = undefined;
-                mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
-
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-
-                await sut.ldapSyncCompletedEventHandler(event);
-
-                const aliases: string[] = [disabledEmailAddressString1, disabledEmailAddressString2, address];
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Found mostRecentEnabled Email-Address:${JSON.stringify(ea.address)} for personId:${personId}`,
-                );
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Current aliases to be written:${JSON.stringify(aliases)}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
-                );
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining(`Required kennung is missing on organisation`),
-                );
+            mockedMap.has.mockImplementationOnce((id: string) => {
+                return orgaMap.has(id);
             });
-        });
-
-        describe('when at least one organisation does NOT have a kennung2', () => {
-            it('should log error and return2', async () => {
-                const [ea, disabledEmailAddressString1, disabledEmailAddressString2]: [
-                    EmailAddress<true>,
-                    string,
-                    string,
-                ] = mockPersonFoundEnabledEAAndDisabledEAsFound(person, personId, address);
-
-                // create PKs, orgaMap and rolleMap
-                const [kontexte, orgaMap, rolleMap]: [
-                    Personenkontext<true>[],
-                    Map<OrganisationID, Organisation<true>>,
-                    Map<RolleID, Rolle<true>>,
-                ] = getPkArrayOrgaMapAndRolleMap(person);
-                const mockedMap: DeepMocked<Map<OrganisationID, Organisation<true>>> =
-                    createMock<Map<OrganisationID, Organisation<true>>>();
-                mockedMap.entries.mockImplementationOnce(() => {
-                    return orgaMap.entries();
-                });
-                mockedMap.has.mockImplementationOnce((id: string) => {
-                    return orgaMap.has(id);
-                });
-                mockedMap.get.mockImplementationOnce(() => {
-                    return createMock<Organisation<true>>({
-                        kennung: undefined,
-                    });
-                });
-                mockPersonenKontextRelatedRepositoryCalls(kontexte, mockedMap, rolleMap);
-
-                oxServiceMock.send.mockResolvedValueOnce({
-                    ok: true,
-                    value: undefined,
-                });
-
-                await sut.ldapSyncCompletedEventHandler(event);
-
-                const aliases: string[] = [disabledEmailAddressString1, disabledEmailAddressString2, address];
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Found mostRecentEnabled Email-Address:${JSON.stringify(ea.address)} for personId:${personId}`,
-                );
-                expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Current aliases to be written:${JSON.stringify(aliases)}, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
-                );
-
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    expect.stringContaining(`Required kennung is missing on organisation`),
-                );
+            mockedMap.get.mockImplementationOnce(() => {
+                return undefined;
             });
+            mockPersonenKontextRelatedRepositoryCalls(kontexte, mockedMap, rolleMap);
+
+            await sut.ldapSyncCompletedEventHandler(event);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                expect.stringContaining(`Could not find organisation, orgaId:`),
+            );
         });
-    });*/
+
+        it('should log error, when for at least one organisation in orgaMap kennung is NOT defined', async () => {
+            personRepositoryMock.findById.mockResolvedValue(person);
+            const ea: EmailAddress<true> = getEmailAddress(personId, address, EmailAddressStatus.ENABLED);
+            //mock search for ENABLED EAs
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([ea]);
+            //mock search for disabled EAs (no EAs with DISABLED status found)
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+            //mock OxChangeUser-request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+
+            // create PKs, orgaMap and rolleMap
+            const [kontexte, orgaMap, rolleMap]: [
+                Personenkontext<true>[],
+                Map<OrganisationID, Organisation<true>>,
+                Map<RolleID, Rolle<true>>,
+            ] = getPkArrayOrgaMapAndRolleMap(person);
+            // set kennung for an organisation undefined to force 'Required kennung is missing on organisation'
+            assert(kontexte[0]);
+            const orgaWithoutKennung: Organisation<true> | undefined = orgaMap.get(kontexte[0].organisationId);
+            if (!orgaWithoutKennung) throw Error();
+            orgaWithoutKennung.kennung = undefined;
+            mockPersonenKontextRelatedRepositoryCalls(kontexte, orgaMap, rolleMap);
+
+            await sut.ldapSyncCompletedEventHandler(event);
+            expect(loggerMock.error).toHaveBeenCalledWith(
+                expect.stringContaining(`Required kennung is missing on organisation, orgaId:`),
+            );
+        });
+    });
 });
