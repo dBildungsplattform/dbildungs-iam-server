@@ -33,6 +33,7 @@ import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka
 import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
 import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
+import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-completed.event.js';
 
 export type KafkaEventKey =
     | 'user.created.email'
@@ -49,6 +50,7 @@ export type KafkaEventKey =
     | 'user.email.disabled'
     | 'user.email.purged'
     | 'user.ldap.synced'
+    | 'user.ldap.sync.completed'
     | 'user.ldap.entry_deleted'
     | 'user.ldap.entry_changed'
     | 'user.ldap.entry_renamed'
@@ -216,7 +218,11 @@ export const KafkaEventMapping: Record<KafkaEventKey, KafkaEventMappingEntry> = 
         topic: 'user-topic',
         topicDlq: 'user-dlq-topic',
     },
-
+    'user.ldap.sync.completed': {
+        eventClass: KafkaLdapSyncCompletedEvent,
+        topic: 'user-topic',
+        topicDlq: 'user-dlq-topic',
+    },
     'user.ox.deleted': {
         eventClass: KafkaOxAccountDeletedEvent,
         topic: 'user-topic',

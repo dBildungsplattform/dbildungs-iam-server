@@ -25,6 +25,9 @@ import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafk
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { KafkaPersonLdapSyncEvent } from '../../../shared/events/kafka-person-ldap-sync.event.js';
 import { LdapInstanceConfig } from '../ldap-instance-config.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { LdapSyncCompletedEvent } from '../../../shared/events/ldap/ldap-sync-completed.event.js';
+import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-completed.event.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -58,6 +61,7 @@ export class LdapSyncEventHandler {
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly emailRepo: EmailRepo,
+        private readonly eventService: EventRoutingLegacyKafkaService,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
@@ -232,6 +236,10 @@ export class LdapSyncEventHandler {
         };
 
         await this.syncDataToLdap(syncData, personAttributes.value);
+        this.eventService.publish(
+            new LdapSyncCompletedEvent(personId, person.referrer),
+            new KafkaLdapSyncCompletedEvent(personId, person.referrer),
+        );
     }
 
     private async syncDataToLdap(ldapSyncData: LdapSyncData, personAttributes: LdapPersonAttributes): Promise<void> {
