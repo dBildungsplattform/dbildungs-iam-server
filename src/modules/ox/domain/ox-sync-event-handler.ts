@@ -14,10 +14,14 @@ import { DomainError } from '../../../shared/error/domain.error.js';
 import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
-import { AbstractOxEventHandler } from './abstract-ox-event-handler.js';
+import {
+    AbstractOxEventHandler,
+    generateOxUserChangedEvent,
+    OxUserChangedEventCreator,
+} from './abstract-ox-event-handler.js';
 import { OxService } from './ox.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { OXContextID, OXContextName, OXGroupID, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
+import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { uniq } from 'lodash-es';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -35,7 +39,7 @@ import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/gro
 import { GroupMemberParams } from '../actions/group/ox-group.types.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 
-//Duplicate from OxEventHandler, to be refactored...
+/*//Duplicate from OxEventHandler, to be refactored...
 export type OxUserChangedEventCreator = (
     personId: PersonID,
     username: PersonReferrer,
@@ -75,7 +79,7 @@ const generateOxUserChangedEvent: OxUserChangedEventCreator = (
             emailAddress,
         ),
     ];
-};
+};*/
 
 @Injectable()
 export class OxSyncEventHandler extends AbstractOxEventHandler {

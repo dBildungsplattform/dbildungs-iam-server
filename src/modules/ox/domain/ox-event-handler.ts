@@ -13,7 +13,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { EmailAddressGeneratedEvent } from '../../../shared/events/email/email-address-generated.event.js';
 import { ExistsUserAction, ExistsUserResponse } from '../actions/user/exists-user.action.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { OXContextID, OXContextName, OXGroupID, OXUserID, OXUserName } from '../../../shared/types/ox-ids.types.js';
+import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressChangedEvent } from '../../../shared/events/email/email-address-changed.event.js';
 import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
 import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
@@ -46,7 +46,6 @@ import { KafkaEventHandler } from '../../../core/eventbus/decorators/kafka-event
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { EnsureRequestContext, EntityManager } from '@mikro-orm/core';
 import { DisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/disabled-email-address-generated.event.js';
-import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { EmailAddressesPurgedEvent } from '../../../shared/events/email/email-addresses-purged.event.js';
 import { DeleteUserAction } from '../actions/user/delete-user.action.js';
 import { EmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/email-address-marked-for-deletion.event.js';
@@ -58,7 +57,6 @@ import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/
 import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 import { KafkaOxAccountDeletedEvent } from '../../../shared/events/ox/kafka-ox-account-deleted.event.js';
-import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
 import { KafkaEmailAddressDisabledEvent } from '../../../shared/events/email/kafka-email-address-disabled.event.js';
 import { KafkaEmailAddressAlreadyExistsEvent } from '../../../shared/events/email/kafka-email-address-already-exists.event.js';
 import { KafkaDisabledEmailAddressGeneratedEvent } from '../../../shared/events/email/kafka-disabled-email-address-generated.event.js';
@@ -68,9 +66,14 @@ import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
 import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
-import { AbstractOxEventHandler } from './abstract-ox-event-handler.js';
+import {
+    AbstractOxEventHandler,
+    generateDisabledOxUserChangedEvent,
+    generateOxUserChangedEvent,
+    OxUserChangedEventCreator,
+} from './abstract-ox-event-handler.js';
 
-type OxUserChangedEventCreator = (
+/*type OxUserChangedEventCreator = (
     personId: PersonID,
     username: PersonReferrer,
     oxUserId: OXUserID,
@@ -140,7 +143,7 @@ const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
             emailAddress,
         ),
     ];
-};
+};*/
 
 @Injectable()
 export class OxEventHandler extends AbstractOxEventHandler {

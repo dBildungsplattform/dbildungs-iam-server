@@ -1,8 +1,15 @@
-import { OXContextID, OXContextName, OXGroupID, OXGroupName } from '../../../shared/types/ox-ids.types.js';
+import {
+    OXContextID,
+    OXContextName,
+    OXGroupID,
+    OXGroupName,
+    OXUserID,
+    OXUserName,
+} from '../../../shared/types/ox-ids.types.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { OxConfig } from '../../../shared/config/ox.config.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
@@ -13,6 +20,82 @@ import { ListGroupsAction, ListGroupsParams, ListGroupsResponse } from '../actio
 import { OxGroupNotFoundError } from '../error/ox-group-not-found.error.js';
 import { OxGroupNameAmbiguousError } from '../error/ox-group-name-ambiguous.error.js';
 import { OxService } from './ox.service.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
+import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
+import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
+
+export type OxUserChangedEventCreator = (
+    personId: PersonID,
+    username: PersonReferrer,
+    oxUserId: OXUserID,
+    oxUserName: OXUserName,
+    oxContextId: OXContextID,
+    oxContextName: OXContextName,
+    emailAddress: string,
+) => [OxUserChangedEvent, KafkaOxUserChangedEvent];
+
+export const generateOxUserChangedEvent: OxUserChangedEventCreator = (
+    personId: PersonID,
+    username: PersonReferrer,
+    oxUserId: OXUserID,
+    oxUserName: OXUserName,
+    oxContextId: OXContextID,
+    oxContextName: OXContextName,
+    emailAddress: string,
+) => {
+    return [
+        new OxUserChangedEvent(
+            personId,
+            username,
+            oxUserId,
+            oxUserName, //strictEquals the new OxUsername
+            oxContextId,
+            oxContextName,
+            emailAddress,
+        ),
+        new KafkaOxUserChangedEvent(
+            personId,
+            username,
+            oxUserId,
+            oxUserName, //strictEquals the new OxUsername
+            oxContextId,
+            oxContextName,
+            emailAddress,
+        ),
+    ];
+};
+
+export const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
+    personId: PersonID,
+    username: PersonReferrer,
+    oxUserId: OXUserID,
+    oxUserName: OXUserName,
+    oxContextId: OXContextID,
+    oxContextName: OXContextName,
+    emailAddress: string,
+) => {
+    return [
+        new DisabledOxUserChangedEvent(
+            personId,
+            username,
+            oxUserId,
+            oxUserName, //strictEquals the new OxUsername
+            oxContextId,
+            oxContextName,
+            emailAddress,
+        ),
+        new KafkaDisabledOxUserChangedEvent(
+            personId,
+            username,
+            oxUserId,
+            oxUserName, //strictEquals the new OxUsername
+            oxContextId,
+            oxContextName,
+            emailAddress,
+        ),
+    ];
+};
 
 export abstract class AbstractOxEventHandler {
     protected static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
