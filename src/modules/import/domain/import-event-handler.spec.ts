@@ -282,8 +282,9 @@ describe('ImportEventHandler', () => {
             await sut.handleExecuteImport(event);
 
             expect(importDataItem.status).toBe(ImportDataItemStatus.FAILED);
-            expect(loggerMock.error).toHaveBeenCalledWith(
+            expect(loggerMock.logUnknownAsError).toHaveBeenCalledWith(
                 `Unexpected error while processing item ${importDataItem.vorname} ${importDataItem.nachname}`,
+                unexpectedError,
             );
             expect(importDataRepositoryMock.save).toHaveBeenCalledWith(importDataItem);
         });

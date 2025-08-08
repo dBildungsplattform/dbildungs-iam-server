@@ -3,6 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
     ServiceProviderKategorie,
     ServiceProviderKategorieTypName,
+    ServiceProviderMerkmal,
+    ServiceProviderMerkmalTypName,
     ServiceProviderTarget,
     ServiceProviderTargetTypName,
 } from '../domain/service-provider.enum.js';
@@ -30,6 +32,9 @@ export class ServiceProviderResponse {
     @ApiProperty()
     public requires2fa?: boolean;
 
+    @ApiProperty({ enum: ServiceProviderMerkmal, enumName: ServiceProviderMerkmalTypName, isArray: true })
+    public merkmale: ServiceProviderMerkmal[];
+
     public constructor(serviceProvider: ServiceProvider<true>) {
         this.id = serviceProvider.id;
         this.name = serviceProvider.name;
@@ -38,5 +43,6 @@ export class ServiceProviderResponse {
         this.kategorie = serviceProvider.kategorie;
         this.hasLogo = !!serviceProvider.logoMimeType; // serviceProvider.logo might not be loaded, so just check the mime-type
         this.requires2fa = serviceProvider.requires2fa;
+        this.merkmale = serviceProvider.merkmale;
     }
 }

@@ -1,39 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import fs from 'fs';
-import { DataProviderFile } from '../file/data-provider-file.js';
-import { OrganisationFile } from '../file/organisation-file.js';
-import { Rolle } from '../../../modules/rolle/domain/rolle.js';
-import { ConstructorCall, EntityFile } from '../db-seed.console.js';
-import { ServiceProvider } from '../../../modules/service-provider/domain/service-provider.js';
-import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
-import { plainToInstance } from 'class-transformer';
-import { Person, PersonCreationParams } from '../../../modules/person/domain/person.js';
-import { PersonFile } from '../file/person-file.js';
-import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
-import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
-import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ConfigService } from '@nestjs/config';
-import { PersonenkontextFile } from '../file/personenkontext-file.js';
-import { RolleFile } from '../file/rolle-file.js';
-import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
-import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
-import { ServiceProviderFile } from '../file/service-provider-file.js';
+import { plainToInstance } from 'class-transformer';
+import fs from 'fs';
+import { validate as isUUID } from 'uuid';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { FindUserFilter, KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
+import { Organisation } from '../../../modules/organisation/domain/organisation.js';
+import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
+import { PersonFactory } from '../../../modules/person/domain/person.factory.js';
+import { Person, PersonCreationParams } from '../../../modules/person/domain/person.js';
+import { PersonRepository } from '../../../modules/person/persistence/person.repository.js';
+import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
+import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
+import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
+import { Rolle } from '../../../modules/rolle/domain/rolle.js';
+import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';
+import { ServiceProviderSystem } from '../../../modules/service-provider/domain/service-provider.enum.js';
 import { ServiceProviderFactory } from '../../../modules/service-provider/domain/service-provider.factory.js';
+import { ServiceProvider } from '../../../modules/service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../../modules/service-provider/repo/service-provider.repo.js';
 import { DataConfig, ServerConfig } from '../../../shared/config/index.js';
-import { FindUserFilter, KeycloakUserService, User } from '../../../modules/keycloak-administration/index.js';
-import { DBiamPersonenkontextService } from '../../../modules/personenkontext/domain/dbiam-personenkontext.service.js';
+import { DomainError, EntityNotFoundError } from '../../../shared/error/index.js';
+import { ConstructorCall, EntityFile } from '../db-seed.console.js';
+import { DataProviderFile } from '../file/data-provider-file.js';
+import { OrganisationFile } from '../file/organisation-file.js';
+import { PersonFile } from '../file/person-file.js';
+import { PersonenkontextFile } from '../file/personenkontext-file.js';
+import { RolleFile } from '../file/rolle-file.js';
+import { ServiceProviderFile } from '../file/service-provider-file.js';
+import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
 import { DbSeedReferenceRepo } from '../repo/db-seed-reference.repo.js';
 import { DbSeedReference } from './db-seed-reference.js';
-import { ReferencedEntityType } from '../repo/db-seed-reference.entity.js';
-import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
-import { OrganisationRepository } from '../../../modules/organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../../modules/organisation/domain/organisation.js';
-import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
-import { ServiceProviderSystem } from '../../../modules/service-provider/domain/service-provider.enum.js';
-import { validate as isUUID } from 'uuid';
 
 @Injectable()
 export class DbSeedService {
@@ -208,6 +208,7 @@ export class DbSeedService {
                 file.externalSystem ?? ServiceProviderSystem.NONE,
                 file.requires2fa,
                 file.vidisAngebotId,
+                file.merkmale ?? [],
             );
             if (file.overrideId) {
                 serviceProvider.id = this.getValidUuidOrUndefined(file.overrideId);

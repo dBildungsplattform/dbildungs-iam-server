@@ -1,5 +1,6 @@
 export const ServiceProviderKategorieTypName: string = 'ServiceProviderKategorie';
 export const ServiceProviderTargetTypName: string = 'ServiceProviderTarget';
+export const ServiceProviderMerkmalTypName: string = 'ServiceProviderMerkmal';
 
 export enum ServiceProviderKategorie {
     EMAIL = 'EMAIL',
@@ -19,4 +20,8 @@ export enum ServiceProviderSystem {
     NONE = 'NONE',
     EMAIL = 'EMAIL',
     ITSLEARNING = 'ITSLEARNING',
+}
+
+export enum ServiceProviderMerkmal {
+    NACHTRAEGLICH_ZUWEISBAR = 'NACHTRAEGLICH_ZUWEISBAR',
 }

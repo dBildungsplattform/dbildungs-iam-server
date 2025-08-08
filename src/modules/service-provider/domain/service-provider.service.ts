@@ -82,6 +82,7 @@ export class ServiceProviderService {
                         ServiceProviderSystem.NONE,
                         false,
                         angebot.angebotId,
+                        existingServiceProvider.merkmale,
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' already exists.`);
                 } else {
@@ -98,6 +99,7 @@ export class ServiceProviderService {
                         ServiceProviderSystem.NONE,
                         false,
                         angebot.angebotId,
+                        [],
                     );
                     this.logger.info(`ServiceProvider for VIDIS Angebot '${serviceProvider.name}' was created.`);
                 }
