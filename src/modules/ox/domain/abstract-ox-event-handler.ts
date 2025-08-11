@@ -24,6 +24,17 @@ import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.ev
 import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
+import {
+    ListGroupsForUserAction,
+    ListGroupsForUserParams,
+    ListGroupsForUserResponse,
+} from '../actions/group/list-groups-for-user.action.js';
+import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
+import {
+    RemoveMemberFromGroupAction,
+    RemoveMemberFromGroupResponse,
+} from '../actions/group/remove-member-from-group.action.js';
+import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
 
 export type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -233,5 +244,70 @@ export abstract class AbstractOxEventHandler {
             ok: true,
             value: oxGroupId,
         };
+    }
+
+    protected async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
+        const params: ListGroupsForUserParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const action: ListGroupsForUserAction = new ListGroupsForUserAction(params);
+        const result: Result<ListGroupsForUserResponse, DomainError> = await this.oxService.send(action);
+        if (!result.ok) {
+            this.logger.error(`Could Not Retrieve OxGroups For OxUser, oxUserId:${oxUserId}`);
+        } else {
+            this.logger.info(`Successfully Retrieved OxGroups For OxUser, oxUserId:${oxUserId}`);
+        }
+        return result;
+    }
+
+    protected async removeOxUserFromOxGroup(
+        oxGroupId: OXGroupID,
+        oxUserId: OXUserID,
+        personIdentifier: PersonIdentifier,
+    ): Promise<Result<RemoveMemberFromGroupResponse>> {
+        const params: GroupMemberParams = {
+            contextId: this.contextID,
+            groupId: oxGroupId,
+            memberId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const action: RemoveMemberFromGroupAction = new RemoveMemberFromGroupAction(params);
+        const result: Result<RemoveMemberFromGroupResponse, DomainError> = await this.oxService.send(action);
+        if (!result.ok) {
+            this.logger.errorPersonalized(
+                `Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                personIdentifier,
+            );
+        } else {
+            this.logger.infoPersonalized(
+                `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                personIdentifier,
+            );
+        }
+
+        return result;
+    }
+
+    protected async removeOxUserFromAllItsOxGroups(
+        oxUserId: OXUserID,
+        personIdentifier: PersonIdentifier,
+    ): Promise<void> {
+        const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
+            await this.getOxGroupsForOxUserId(oxUserId);
+        if (!listGroupsForUserResponse.ok) {
+            return this.logger.errorPersonalized(`Retrieving OxGroups For OxUser Failed`, personIdentifier);
+        }
+        //Removal from Standard-Group is possible even when user is member of other OxGroups
+        const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
+        // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
+        /* eslint-disable no-await-in-loop */
+        for (const oxGroup of oxGroups) {
+            //logging of results is done in removeOxUserFromOxGroup
+            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId, personIdentifier);
+        }
     }
 }

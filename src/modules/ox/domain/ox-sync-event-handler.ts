@@ -39,48 +39,6 @@ import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/gro
 import { GroupMemberParams } from '../actions/group/ox-group.types.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 
-/*//Duplicate from OxEventHandler, to be refactored...
-export type OxUserChangedEventCreator = (
-    personId: PersonID,
-    username: PersonReferrer,
-    oxUserId: OXUserID,
-    oxUserName: OXUserName,
-    oxContextId: OXContextID,
-    oxContextName: OXContextName,
-    emailAddress: string,
-) => [OxUserChangedEvent, KafkaOxUserChangedEvent];
-
-const generateOxUserChangedEvent: OxUserChangedEventCreator = (
-    personId: PersonID,
-    username: PersonReferrer,
-    oxUserId: OXUserID,
-    oxUserName: OXUserName,
-    oxContextId: OXContextID,
-    oxContextName: OXContextName,
-    emailAddress: string,
-) => {
-    return [
-        new OxUserChangedEvent(
-            personId,
-            username,
-            oxUserId,
-            oxUserName, //strictEquals the new OxUsername
-            oxContextId,
-            oxContextName,
-            emailAddress,
-        ),
-        new KafkaOxUserChangedEvent(
-            personId,
-            username,
-            oxUserId,
-            oxUserName, //strictEquals the new OxUsername
-            oxContextId,
-            oxContextName,
-            emailAddress,
-        ),
-    ];
-};*/
-
 @Injectable()
 export class OxSyncEventHandler extends AbstractOxEventHandler {
     public constructor(
@@ -331,6 +289,8 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         }
 
         const oxUserId: OXUserID = personEmailIdentifier.oxUserId;
+
+        await this.removeOxUserFromAllItsOxGroups(oxUserId, personIdentifier);
 
         const schulenDstNrList: string[] | OxSyncError = await this.getOrganisationKennungen(personId, username);
         if (schulenDstNrList instanceof OxSyncError) {

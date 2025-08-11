@@ -22,23 +22,14 @@ import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
-import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
+import { GroupMemberParams } from '../actions/group/ox-group.types.js';
 import {
     ChangeByModuleAccessAction,
     ChangeByModuleAccessParams,
 } from '../actions/user/change-by-module-access.action.js';
 import { EmailAddressAlreadyExistsEvent } from '../../../shared/events/email/email-address-already-exists.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import {
-    ListGroupsForUserAction,
-    ListGroupsForUserParams,
-    ListGroupsForUserResponse,
-} from '../actions/group/list-groups-for-user.action.js';
 import { EmailAddressDisabledEvent } from '../../../shared/events/email/email-address-disabled.event.js';
-import {
-    RemoveMemberFromGroupAction,
-    RemoveMemberFromGroupResponse,
-} from '../actions/group/remove-member-from-group.action.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
@@ -605,7 +596,7 @@ export class OxEventHandler extends AbstractOxEventHandler {
         );
     }
 
-    private async removeOxUserFromAllItsOxGroups(
+    /* private async removeOxUserFromAllItsOxGroups(
         oxUserId: OXUserID,
         personIdentifier: PersonIdentifier,
     ): Promise<void> {
@@ -617,12 +608,12 @@ export class OxEventHandler extends AbstractOxEventHandler {
         //Removal from Standard-Group is possible even when user is member of other OxGroups
         const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
         // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
-        /* eslint-disable no-await-in-loop */
+        /!* eslint-disable no-await-in-loop *!/
         for (const oxGroup of oxGroups) {
             //logging of results is done in removeOxUserFromOxGroup
             await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId, personIdentifier);
         }
-    }
+    }*/
 
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
         const requestedEmailAddresses: Option<EmailAddress<true>[]> =
@@ -668,7 +659,7 @@ export class OxEventHandler extends AbstractOxEventHandler {
         return result;
     }
 
-    private async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
+    /*private async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
         const params: ListGroupsForUserParams = {
             contextId: this.contextID,
             userId: oxUserId,
@@ -712,7 +703,7 @@ export class OxEventHandler extends AbstractOxEventHandler {
         }
 
         return result;
-    }
+    }*/
 
     private async createOxUser(
         personId: PersonID,

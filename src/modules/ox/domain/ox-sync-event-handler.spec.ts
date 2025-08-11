@@ -204,51 +204,41 @@ describe('OxSyncEventHandler', () => {
         rolleRepoMock.findByIds.mockResolvedValueOnce(rolleMap);
     }
 
-    function mockOxServiceSendTimes(result: unknown, times: number = 1): void {
+    function mockOxServiceSendTimes(results: unknown[], times: number = 1): void {
         for (let i: number = 0; i < times; i++) {
-            oxServiceMock.send.mockResolvedValueOnce({
-                ok: true,
-                value: result,
-            });
+            for (const res of results) {
+                oxServiceMock.send.mockResolvedValueOnce({
+                    ok: true,
+                    value: res,
+                });
+            }
         }
     }
 
-    /**
-     * Mocks call to find person by personID via PersonRepository, finding ENABLED EmailAddress and two DISABLED EmailAddresses
-     * and returns the addresses of both DISABLED EmailAddresses.
-     * @param person
-     * @param personId
-     * @param enabledEmailAddressString
-     */
-    /*function mockPersonFoundEnabledEAAndDisabledEAsFound(
-        person: Person<true>,
-        personId: PersonID,
-        enabledEmailAddressString: string,
-    ): [EmailAddress<true>, string, string] {
-        personRepositoryMock.findById.mockResolvedValueOnce(person);
-        const ea: EmailAddress<true> = getEmailAddress(personId, enabledEmailAddressString, EmailAddressStatus.ENABLED);
-        //mock search for ENABLED EAs
-        emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([ea]);
-        //mock search for disabled EAs
-        const disabledEmailAddressString1: string = faker.internet.email();
-        const disabledEmailAddressString2: string = faker.internet.email();
-        const disabledEmailAddress1: EmailAddress<true> = getEmailAddress(
-            personId,
-            disabledEmailAddressString1,
-            EmailAddressStatus.DISABLED,
+    function mockGetGroupRemoveMemberFromGroup(oxUserId: OXUserID, times: number = 1): void {
+        //mock OxGetGroup-request and OxRemoveMember-request 3 times (3 organisations are found)
+        mockOxServiceSendTimes(
+            [
+                {
+                    groups: [
+                        {
+                            displayname: 'displayName',
+                            id: 'oxGroupId',
+                            name: 'oxGroupName',
+                            memberIds: [oxUserId],
+                        },
+                    ],
+                },
+                {
+                    status: {
+                        code: 'success',
+                    },
+                    data: undefined,
+                },
+            ],
+            times,
         );
-        const disabledEmailAddress2: EmailAddress<true> = getEmailAddress(
-            personId,
-            disabledEmailAddressString2,
-            EmailAddressStatus.DISABLED,
-        );
-        emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([
-            disabledEmailAddress1,
-            disabledEmailAddress2,
-        ]);
-
-        return [ea, disabledEmailAddressString1, disabledEmailAddressString2];
-    }*/
+    }
 
     afterAll(async () => {
         await app.close();
@@ -296,6 +286,9 @@ describe('OxSyncEventHandler', () => {
 
         describe('when person CANNOT be found', () => {
             it('should log error and return without proceeding', async () => {
+                //mock person CANNOT be found in changeUser
+                personRepositoryMock.findById.mockResolvedValueOnce(undefined);
+                //mock person CANNOT be found in changeUserGroups
                 personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
                 await sut.ldapSyncCompletedEventHandler(event);
@@ -451,6 +444,9 @@ describe('OxSyncEventHandler', () => {
                     ok: true,
                     value: undefined,
                 });
+                //mock OxGetGroup-request and OxRemoveMember-request 1 time (3 organisations found, but only one school)
+                mockGetGroupRemoveMemberFromGroup(oxUserId, 1);
+
                 //mock GetOxGroup-request
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
@@ -491,20 +487,26 @@ describe('OxSyncEventHandler', () => {
                     ok: true,
                     value: undefined,
                 });
-                //mock OxGetGroup-request 3 times (3 organisations are found)
+                //mock OxGetGroup-request and OxRemoveMember-request 1 time (3 organisations found, but only one school)
+                mockGetGroupRemoveMemberFromGroup(oxUserId, 1);
+
+                //mock OxGetGroup-requests when fetching for adding member to group
                 mockOxServiceSendTimes(
-                    {
-                        groups: [
-                            {
-                                displayname: 'displayName',
-                                id: 'oxGroupId',
-                                name: 'oxGroupName',
-                                memberIds: [oxUserId],
-                            },
-                        ],
-                    },
+                    [
+                        {
+                            groups: [
+                                {
+                                    displayname: 'displayName',
+                                    id: 'oxGroupId',
+                                    name: 'oxGroupName',
+                                    memberIds: [oxUserId],
+                                },
+                            ],
+                        },
+                    ],
                     3,
                 );
+
                 //mock OxAddMemberToGroup-request
                 oxServiceMock.send.mockResolvedValueOnce({
                     ok: false,
@@ -561,11 +563,15 @@ describe('OxSyncEventHandler', () => {
             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([ea]);
             //mock search for disabled EAs (no EAs with DISABLED status found)
             emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
             //mock OxChangeUser-request
             oxServiceMock.send.mockResolvedValueOnce({
                 ok: true,
                 value: undefined,
             });
+
+            //mock OxGetGroup-request and OxRemoveMember-request 1 time (3 organisations found, but only one school)
+            mockGetGroupRemoveMemberFromGroup(oxUserId, 1);
 
             // create PKs, orgaMap and rolleMap
             const [kontexte, orgaMap, rolleMap]: [
@@ -606,6 +612,9 @@ describe('OxSyncEventHandler', () => {
                 ok: true,
                 value: undefined,
             });
+
+            //mock OxGetGroup-request and OxRemoveMember-request 3 times (3 organisations are found)
+            mockGetGroupRemoveMemberFromGroup(oxUserId, 3);
 
             // create PKs, orgaMap and rolleMap
             const [kontexte, orgaMap, rolleMap]: [
