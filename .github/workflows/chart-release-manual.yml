@@ -5,7 +5,7 @@ on:
     inputs:
       chart_version:
         type: string
-        description: "Chart version"
+        description: "Chart version" 
         required: true
       image_tag:
         type: string
