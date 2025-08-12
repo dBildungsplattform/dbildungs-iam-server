@@ -48,6 +48,8 @@ import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { EmailFactory } from './email.factory.js';
+import { LdapSyncFailedEvent } from '../../../shared/events/ldap/ldap-sync-failed.event.js';
+import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-failed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -173,6 +175,15 @@ export class EmailEventHandler {
         });
 
         return resMap;
+    }
+
+    @KafkaEventHandler(KafkaLdapSyncFailedEvent)
+    @EventHandler(LdapSyncFailedEvent)
+    @EnsureRequestContext()
+    public async handleLdapSyncFailedEvent(event: LdapSyncFailedEvent | KafkaLdapSyncFailedEvent): Promise<void> {
+        this.logger.info(`Received LdapSyncFailedEvent, personId:${event.personId}, username:${event.username}`);
+
+        await this.handlePerson(event.personId, event.username, undefined);
     }
 
     @KafkaEventHandler(KafkaPersonenkontextUpdatedEvent)

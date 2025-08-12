@@ -36,6 +36,7 @@ import { LdapEntityType } from './ldap.types.js';
 import assert from 'assert';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
+import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
 
 describe('LdapSyncEventHandler', () => {
     const oeffentlicheSchulenDomain: string = 'schule-sh.de';
@@ -50,6 +51,7 @@ describe('LdapSyncEventHandler', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let organisationRepositoryMock: DeepMocked<OrganisationRepository>;
     let emailRepoMock: DeepMocked<EmailRepo>;
+    let eventServiceMock: DeepMocked<EventRoutingLegacyKafkaService>;
     let loggerMock: DeepMocked<ClassLogger>;
 
     let personId: PersonID;
@@ -96,6 +98,8 @@ describe('LdapSyncEventHandler', () => {
             .useValue(createMock<OrganisationRepository>())
             .overrideProvider(EmailRepo)
             .useValue(createMock<EmailRepo>())
+            .overrideProvider(EventRoutingLegacyKafkaService)
+            .useValue(createMock<EventRoutingLegacyKafkaService>())
             .overrideProvider(ClassLogger)
             .useValue(createMock<ClassLogger>())
             .compile();
@@ -111,6 +115,7 @@ describe('LdapSyncEventHandler', () => {
         rolleRepoMock = module.get(RolleRepo);
         organisationRepositoryMock = module.get(OrganisationRepository);
         emailRepoMock = module.get(EmailRepo);
+        eventServiceMock = module.get(EventRoutingLegacyKafkaService);
         loggerMock = module.get(ClassLogger);
 
         await DatabaseTestModule.setupDatabase(module.get(MikroORM));
@@ -339,7 +344,7 @@ describe('LdapSyncEventHandler', () => {
             personId = faker.string.uuid();
             username = faker.internet.userName();
             event = new PersonExternalSystemsSyncEvent(personId);
-            person = createMock<Person<true>>();
+            person = createMock<Person<true>>({ referrer: username });
             email = faker.internet.email();
             enabledEmailAddress = createMock<EmailAddress<true>>({
                 get address(): string {
@@ -382,6 +387,18 @@ describe('LdapSyncEventHandler', () => {
                 await sut.personExternalSystemSyncEventHandler(event);
 
                 expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(0);
+                expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        personId: personId,
+                        username: username,
+                    }),
+                    expect.objectContaining({
+                        personId: personId,
+                        username: username,
+                    }),
+                );
+                /*expect(eventServiceMock.publish).toHaveBeenCalledWith(new LdapSyncFailedEvent(personId, username),
+                    new KafkaLdapSyncFailedEvent(personId, username));*/
                 expect(loggerMock.error).toHaveBeenCalledWith(
                     `Person with personId:${event.personId} has no enabled EmailAddress!`,
                 );
