@@ -35,6 +35,7 @@ import {
     RemoveMemberFromGroupResponse,
 } from '../actions/group/remove-member-from-group.action.js';
 import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
 
 export type OxUserChangedEventCreator = (
     personId: PersonID,
@@ -127,6 +128,7 @@ export abstract class AbstractOxEventHandler {
         protected readonly logger: ClassLogger,
         protected readonly oxService: OxService,
         protected readonly emailRepo: EmailRepo,
+        protected readonly personRepository: PersonRepository,
         protected readonly eventService: EventRoutingLegacyKafkaService,
         protected configService: ConfigService<ServerConfig>,
     ) {

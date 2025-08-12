@@ -63,111 +63,23 @@ import {
     generateOxUserChangedEvent,
     OxUserChangedEventCreator,
 } from './abstract-ox-event-handler.js';
-
-/*type OxUserChangedEventCreator = (
-    personId: PersonID,
-    username: PersonReferrer,
-    oxUserId: OXUserID,
-    oxUserName: OXUserName,
-    oxContextId: OXContextID,
-    oxContextName: OXContextName,
-    emailAddress: string,
-) => [OxUserChangedEvent, KafkaOxUserChangedEvent];
-
-const generateOxUserChangedEvent: OxUserChangedEventCreator = (
-    personId: PersonID,
-    username: PersonReferrer,
-    oxUserId: OXUserID,
-    oxUserName: OXUserName,
-    oxContextId: OXContextID,
-    oxContextName: OXContextName,
-    emailAddress: string,
-) => {
-    return [
-        new OxUserChangedEvent(
-            personId,
-            username,
-            oxUserId,
-            oxUserName, //strictEquals the new OxUsername
-            oxContextId,
-            oxContextName,
-            emailAddress,
-        ),
-        new KafkaOxUserChangedEvent(
-            personId,
-            username,
-            oxUserId,
-            oxUserName, //strictEquals the new OxUsername
-            oxContextId,
-            oxContextName,
-            emailAddress,
-        ),
-    ];
-};
-
-const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
-    personId: PersonID,
-    username: PersonReferrer,
-    oxUserId: OXUserID,
-    oxUserName: OXUserName,
-    oxContextId: OXContextID,
-    oxContextName: OXContextName,
-    emailAddress: string,
-) => {
-    return [
-        new DisabledOxUserChangedEvent(
-            personId,
-            username,
-            oxUserId,
-            oxUserName, //strictEquals the new OxUsername
-            oxContextId,
-            oxContextName,
-            emailAddress,
-        ),
-        new KafkaDisabledOxUserChangedEvent(
-            personId,
-            username,
-            oxUserId,
-            oxUserName, //strictEquals the new OxUsername
-            oxContextId,
-            oxContextName,
-            emailAddress,
-        ),
-    ];
-};*/
+import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 
 @Injectable()
 export class OxEventHandler extends AbstractOxEventHandler {
-    /*    public ENABLED: boolean;
-
-    private readonly authUser: string;
-
-    private readonly authPassword: string;
-
-    private readonly contextID: OXContextID;
-
-    private readonly contextName: OXContextName;*/
-
     public constructor(
         protected override readonly logger: ClassLogger,
         protected override readonly oxService: OxService,
-        protected readonly personRepository: PersonRepository,
         protected override readonly emailRepo: EmailRepo,
+        protected override readonly personRepository: PersonRepository,
         protected override readonly eventService: EventRoutingLegacyKafkaService,
         protected override configService: ConfigService<ServerConfig>,
-        //configService: ConfigService<ServerConfig>,
         // @ts-expect-error used by EnsureRequestContext decorator
         // Although not accessed directly, MikroORM's @EnsureRequestContext() uses this.em internally
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
     ) {
-        //const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
-        /*this.ENABLED = oxConfig.ENABLED;
-        this.authUser = oxConfig.USERNAME;
-        this.authPassword = oxConfig.PASSWORD;
-        this.contextID = oxConfig.CONTEXT_ID;
-        this.contextName = oxConfig.CONTEXT_NAME;*/
-        super(logger, oxService, emailRepo, eventService, configService);
+        super(logger, oxService, emailRepo, personRepository, eventService, configService);
     }
 
     @EventHandler(EmailAddressChangedEvent)
@@ -596,25 +508,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
         );
     }
 
-    /* private async removeOxUserFromAllItsOxGroups(
-        oxUserId: OXUserID,
-        personIdentifier: PersonIdentifier,
-    ): Promise<void> {
-        const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
-            await this.getOxGroupsForOxUserId(oxUserId);
-        if (!listGroupsForUserResponse.ok) {
-            return this.logger.errorPersonalized(`Retrieving OxGroups For OxUser Failed`, personIdentifier);
-        }
-        //Removal from Standard-Group is possible even when user is member of other OxGroups
-        const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
-        // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
-        /!* eslint-disable no-await-in-loop *!/
-        for (const oxGroup of oxGroups) {
-            //logging of results is done in removeOxUserFromOxGroup
-            await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId, personIdentifier);
-        }
-    }*/
-
     private async getMostRecentRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
         const requestedEmailAddresses: Option<EmailAddress<true>[]> =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId, EmailAddressStatus.REQUESTED);
@@ -646,10 +539,17 @@ export class OxEventHandler extends AbstractOxEventHandler {
         const result: Result<AddMemberToGroupResponse, DomainError> = await this.oxService.send(action);
 
         if (!result.ok) {
-            this.logger.errorPersonalized(
-                `Could Not Add OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
-                personIdentifier,
-            );
+            if (result.error instanceof OxMemberAlreadyInGroupError) {
+                this.logger.infoPersonalized(
+                    `Added OxUser To OxGroup not necessary (already in group), oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                    personIdentifier,
+                );
+            } else {
+                this.logger.errorPersonalized(
+                    `Could Not Add OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
+                    personIdentifier,
+                );
+            }
         } else {
             this.logger.infoPersonalized(
                 `Successfully Added OxUser To OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
@@ -658,52 +558,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
         }
         return result;
     }
-
-    /*private async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
-        const params: ListGroupsForUserParams = {
-            contextId: this.contextID,
-            userId: oxUserId,
-            login: this.authUser,
-            password: this.authPassword,
-        };
-        const action: ListGroupsForUserAction = new ListGroupsForUserAction(params);
-        const result: Result<ListGroupsForUserResponse, DomainError> = await this.oxService.send(action);
-        if (!result.ok) {
-            this.logger.error(`Could Not Retrieve OxGroups For OxUser, oxUserId:${oxUserId}`);
-        } else {
-            this.logger.info(`Successfully Retrieved OxGroups For OxUser, oxUserId:${oxUserId}`);
-        }
-        return result;
-    }
-
-    private async removeOxUserFromOxGroup(
-        oxGroupId: OXGroupID,
-        oxUserId: OXUserID,
-        personIdentifier: PersonIdentifier,
-    ): Promise<Result<RemoveMemberFromGroupResponse>> {
-        const params: GroupMemberParams = {
-            contextId: this.contextID,
-            groupId: oxGroupId,
-            memberId: oxUserId,
-            login: this.authUser,
-            password: this.authPassword,
-        };
-        const action: RemoveMemberFromGroupAction = new RemoveMemberFromGroupAction(params);
-        const result: Result<RemoveMemberFromGroupResponse, DomainError> = await this.oxService.send(action);
-        if (!result.ok) {
-            this.logger.errorPersonalized(
-                `Could Not Remove OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
-                personIdentifier,
-            );
-        } else {
-            this.logger.infoPersonalized(
-                `Successfully Removed OxUser From OxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupId}`,
-                personIdentifier,
-            );
-        }
-
-        return result;
-    }*/
 
     private async createOxUser(
         personId: PersonID,

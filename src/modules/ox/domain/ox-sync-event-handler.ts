@@ -45,10 +45,10 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         protected override readonly logger: ClassLogger,
         protected override readonly oxService: OxService,
         protected override readonly emailRepo: EmailRepo,
+        protected override readonly personRepository: PersonRepository,
         protected override readonly eventService: EventRoutingLegacyKafkaService,
         protected override configService: ConfigService<ServerConfig>,
 
-        private readonly personRepository: PersonRepository,
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
         private readonly organisationRepository: OrganisationRepository,
@@ -57,7 +57,7 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
     ) {
-        super(logger, oxService, emailRepo, eventService, configService);
+        super(logger, oxService, emailRepo, personRepository, eventService, configService);
     }
 
     @KafkaEventHandler(KafkaLdapSyncCompletedEvent)
@@ -276,6 +276,9 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
                 personIdentifier,
             );
         }
+        this.logger.info(
+            `Successfully added oxUser to oxGroup, oxUserId:${oxUserId}, oxGroupId:${oxGroupIdResult.value}`,
+        );
     }
 
     private async changeUsersGroups(personId: PersonID, username: PersonReferrer): Promise<void> {
