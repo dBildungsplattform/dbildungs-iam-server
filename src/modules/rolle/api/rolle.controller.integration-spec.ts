@@ -1007,6 +1007,7 @@ describe('Rolle API', () => {
                         administeredBySchulstrukturknoten: organisation.id,
                         rollenart: RollenArt.LEHR,
                         istTechnisch: false,
+                        merkmale: [],
                     }),
                 );
                 if (rolle instanceof DomainError) throw Error();

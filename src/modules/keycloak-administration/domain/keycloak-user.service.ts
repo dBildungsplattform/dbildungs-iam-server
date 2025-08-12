@@ -296,6 +296,7 @@ export class KeycloakUserService {
             });
             return { ok: true, value: password };
         } catch (err) {
+            this.logger.logUnknownAsError('Could not authorize with Keycloak', err);
             return { ok: false, error: new KeycloakClientError('Could not authorize with Keycloak') };
         }
     }
@@ -411,6 +412,7 @@ export class KeycloakUserService {
             const result: T = await promise;
             return { ok: true, value: result };
         } catch (err) {
+            this.logger.logUnknownAsError('Keycloak request failed', err);
             return { ok: false, error: new KeycloakClientError('Keycloak request failed', [err]) };
         }
     }

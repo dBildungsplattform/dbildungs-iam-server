@@ -11,6 +11,7 @@ import { Person } from '../../person/domain/person.js';
 import { KeycloakUserNotFoundError } from '../domain/keycloak-user-not-found.error.js';
 import { Request } from 'express';
 import { decode, JwtPayload } from 'jsonwebtoken';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 
 export interface CustomJwtPayload extends JwtPayload {
     acr: StepUpLevel;
@@ -62,6 +63,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
         @Inject(OIDC_CLIENT) private client: Client,
         configService: ConfigService<ServerConfig>,
         private personRepo: PersonRepository,
+        private readonly logger: ClassLogger,
     ) {
         const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
 
@@ -89,6 +91,7 @@ export class OpenIdConnectStrategy extends PassportStrategy(Strategy, 'oidc') {
             userinfo = await this.client.userinfo(tokenset);
             person = await this.personRepo.findByKeycloakUserId(userinfo.sub);
         } catch (err: unknown) {
+            this.logger.logUnknownAsWarning('Could not authorize user', err);
             throw new UnauthorizedException();
         }
 
