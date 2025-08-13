@@ -50,21 +50,15 @@ export class RollenMappingRepo {
         return rollenMapping && mapRollenMappingEntityToAggregate(rollenMapping, this.rollenMappingFactory);
     }
 
-    public async findByIds(ids: string[]): Promise<Map<string, RollenMapping<true>>> {
-        const rollenMappingEntities: RollenMappingEntity[] = await this.em.find(RollenMappingEntity, {
-            id: { $in: ids },
+    public async find(limit?: number, offset?: number): Promise<RollenMapping<true>[]> {
+        const rollenMappingEntities: RollenMappingEntity[] = await this.em.findAll(RollenMappingEntity, {
+            limit: limit,
+            offset: offset,
         });
 
-        const rollenMappingMap: Map<string, RollenMapping<true>> = new Map();
-        rollenMappingEntities.forEach((rollenMappingEntity: RollenMappingEntity) => {
-            const rollenMapping: RollenMapping<true> = mapRollenMappingEntityToAggregate(
-                rollenMappingEntity,
-                this.rollenMappingFactory,
-            );
-            rollenMappingMap.set(rollenMappingEntity.id, rollenMapping);
-        });
-
-        return rollenMappingMap;
+        return rollenMappingEntities.map((rollenMappingEntity: RollenMappingEntity) =>
+            mapRollenMappingEntityToAggregate(rollenMappingEntity, this.rollenMappingFactory),
+        );
     }
 
     public async save(rollenMapping: RollenMapping<boolean>): Promise<RollenMapping<true>> {

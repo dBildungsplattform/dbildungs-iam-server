@@ -1,6 +1,5 @@
-import { Entity, ManyToOne, Property } from '@mikro-orm/core';
+import { Entity, ManyToOne, Property, Ref } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
-import { Ref } from '@mikro-orm/core/entity/Reference.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { ServiceProviderEntity } from '../../service-provider/repo/service-provider.entity.js';
 
