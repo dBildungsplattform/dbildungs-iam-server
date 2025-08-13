@@ -3,19 +3,25 @@ import { Injectable } from '@nestjs/common';
 
 import { RollenMapping } from '../domain/rollenmapping.js';
 import { RollenMappingEntity } from '../entity/rollenmapping.entity.js';
+import { RollenMappingFactory } from '../domain/rollenmapping.factory.js';
 
-export function mapRolleAggregateToData(rolle: RollenMapping<boolean>): RequiredEntityData<RollenMappingEntity> {
+export function mapRollenMappingAggregateToData(
+    rollenMapping: RollenMapping<boolean>,
+): RequiredEntityData<RollenMappingEntity> {
     return {
         // Don't assign createdAt and updatedAt, they are auto-generated!
-        id: rolle.id,
-        rolleId: rolle.rolleId,
-        serviceProviderId: rolle.serviceProviderId,
-        mapToLmsRolle: rolle.mapToLmsRolle,
+        id: rollenMapping.id,
+        rolleId: rollenMapping.rolleId,
+        serviceProviderId: rollenMapping.serviceProviderId,
+        mapToLmsRolle: rollenMapping.mapToLmsRolle,
     };
 }
 
-export function mapRolleEntityToAggregate(entity: RollenMappingEntity): RollenMapping<boolean> {
-    return RollenMapping.construct(
+export function mapRollenMappingEntityToAggregate(
+    entity: RollenMappingEntity,
+    rollenMappingFactory: RollenMappingFactory,
+): RollenMapping<boolean> {
+    return rollenMappingFactory.construct(
         entity.id,
         entity.createdAt,
         entity.updatedAt,
@@ -26,8 +32,11 @@ export function mapRolleEntityToAggregate(entity: RollenMappingEntity): RollenMa
 }
 
 @Injectable()
-export class RolleRepo {
-    public constructor(protected readonly em: EntityManager) {}
+export class RollenMappingRepo {
+    public constructor(
+        protected readonly rollenMappingFactory: RollenMappingFactory,
+        protected readonly em: EntityManager,
+    ) {}
 
     public get entityName(): EntityName<RollenMappingEntity> {
         return RollenMappingEntity;
@@ -36,28 +45,33 @@ export class RolleRepo {
     public async findById(id: string): Promise<Option<RollenMapping<true>>> {
         const query: { id: string } = { id };
 
-        const rolle: Option<RollenMappingEntity> = await this.em.findOne(this.entityName, query);
+        const rollenMapping: Option<RollenMappingEntity> = await this.em.findOne(this.entityName, query);
 
-        return rolle && mapRolleEntityToAggregate(rolle);
+        return rollenMapping && mapRollenMappingEntityToAggregate(rollenMapping, this.rollenMappingFactory);
     }
 
     public async findByIds(ids: string[]): Promise<Map<string, RollenMapping<true>>> {
-        const rollenEntities: RollenMappingEntity[] = await this.em.find(RollenMappingEntity, { id: { $in: ids } });
+        const rollenMappingEntities: RollenMappingEntity[] = await this.em.find(RollenMappingEntity, {
+            id: { $in: ids },
+        });
 
         const rollenMappingMap: Map<string, RollenMapping<true>> = new Map();
-        rollenEntities.forEach((rolleEntity: RollenMappingEntity) => {
-            const rolle: RollenMapping<true> = mapRolleEntityToAggregate(rolleEntity);
-            rollenMappingMap.set(rolleEntity.id, rolle);
+        rollenMappingEntities.forEach((rollenMappingEntity: RollenMappingEntity) => {
+            const rollenMapping: RollenMapping<true> = mapRollenMappingEntityToAggregate(
+                rollenMappingEntity,
+                this.rollenMappingFactory,
+            );
+            rollenMappingMap.set(rollenMappingEntity.id, rollenMapping);
         });
 
         return rollenMappingMap;
     }
 
-    public async save(rolle: RollenMapping<boolean>): Promise<RollenMapping<true>> {
-        if (rolle.id) {
-            return this.update(rolle);
+    public async save(rollenMapping: RollenMapping<boolean>): Promise<RollenMapping<true>> {
+        if (rollenMapping.id) {
+            return this.update(rollenMapping);
         } else {
-            return this.create(rolle);
+            return this.create(rollenMapping);
         }
     }
 
@@ -66,20 +80,26 @@ export class RolleRepo {
         await this.em.removeAndFlush(rollenMappingEntity);
     }
 
-    public async create(rolle: RollenMapping<false>): Promise<RollenMapping<true>> {
-        const rolleEntity: RollenMappingEntity = this.em.create(RollenMappingEntity, mapRolleAggregateToData(rolle));
+    public async create(rollenMapping: RollenMapping<false>): Promise<RollenMapping<true>> {
+        const rollenMappingEntity: RollenMappingEntity = this.em.create(
+            RollenMappingEntity,
+            mapRollenMappingAggregateToData(rollenMapping),
+        );
 
-        await this.em.persistAndFlush(rolleEntity);
+        await this.em.persistAndFlush(rollenMappingEntity);
 
-        return mapRolleEntityToAggregate(rolleEntity);
+        return mapRollenMappingEntityToAggregate(rollenMappingEntity, this.rollenMappingFactory);
     }
 
-    private async update(rolle: RollenMapping<true>): Promise<RollenMapping<true>> {
-        const rolleEntity: Loaded<RollenMappingEntity> = await this.em.findOneOrFail(RollenMappingEntity, rolle.id);
+    private async update(rollenMapping: RollenMapping<true>): Promise<RollenMapping<true>> {
+        const rollenMappingEntity: Loaded<RollenMappingEntity> = await this.em.findOneOrFail(
+            RollenMappingEntity,
+            rollenMapping.id,
+        );
 
-        rolleEntity.assign(mapRolleAggregateToData(rolle), { updateNestedEntities: true });
-        await this.em.persistAndFlush(rolleEntity);
+        rollenMappingEntity.assign(mapRollenMappingAggregateToData(rollenMapping));
+        await this.em.persistAndFlush(rollenMappingEntity);
 
-        return mapRolleEntityToAggregate(rolleEntity);
+        return mapRollenMappingEntityToAggregate(rollenMappingEntity, this.rollenMappingFactory);
     }
 }
