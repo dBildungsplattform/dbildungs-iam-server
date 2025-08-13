@@ -36,8 +36,7 @@ export class PersonenInfoController {
 
     @Get()
     @ApiOperation({
-        summary:
-            'liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers',
+        summary: `liefert Personeninformationen basierend auf den Berechtigungen auf Service Provider des aufrufenden Nutzers. Das Limit (x-limit) und Offset (x-offset) dürfen maximal ${MAX_PERSONENINFO_LIMIT} betragen. `,
         description: `Das Limit (x-limit) und Offset (x-offset) dürfen maximal ${MAX_PERSONENINFO_LIMIT} betragen.`,
     })
     @ApiQuery({
@@ -62,10 +61,10 @@ export class PersonenInfoController {
         const parsedOffset: number = Number.isNaN(parseInt(offset, 10)) ? 0 : parseInt(offset, 10);
         const parsedLimit: number = Number.isNaN(parseInt(limit, 10)) ? MAX_PERSONENINFO_LIMIT : parseInt(limit, 10);
 
-        if (parsedLimit > MAX_PERSONENINFO_LIMIT) {
+        if (parsedLimit > MAX_PERSONENINFO_LIMIT || parsedOffset > MAX_PERSONENINFO_LIMIT) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
-                    new ExceedsLimitError(`Limit darf maximal ${MAX_PERSONENINFO_LIMIT} sein.`),
+                    new ExceedsLimitError(`Limit un Offset darf maximal ${MAX_PERSONENINFO_LIMIT} sein.`),
                 ),
             );
         }

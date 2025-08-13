@@ -54,4 +54,14 @@ describe('PersonenInfoController', () => {
             expect(e).toBeInstanceOf(HttpException);
         }
     });
+
+    it('should handle offset that exceeds maximum limit', async () => {
+        const permissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+        try {
+            await controller.infoV1(permissions, '1000000', '15');
+            fail('Expected exception was not thrown');
+        } catch (e) {
+            expect(e).toBeInstanceOf(HttpException);
+        }
+    });
 });
