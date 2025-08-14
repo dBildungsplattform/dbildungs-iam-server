@@ -17,18 +17,18 @@ export const KafkaProvider: Provider<Kafka | null> = {
             return null;
         }
 
-        if (!kafkaConfig.SSL) {
+        if (!kafkaConfig.KAFKA_SSL_ENABLED) {
             throw new Error('SSL ist deaktiviert');
         }
 
-        if (kafkaConfig.SSL_ENABLED) {
+        if (kafkaConfig.KAFKA_SSL_ENABLED) {
         return new Kafka({
             brokers: [kafkaConfig.BROKER],
             ssl: {
             rejectUnauthorized: true,
-            ca: [fs.readFileSync(kafkaConfig.SSL_CA_PATH, 'utf-8')],
-            cert: fs.readFileSync(kafkaConfig.SSL_CERT_PATH, 'utf-8'),
-            key: fs.readFileSync(kafkaConfig.SSL_KEY_PATH, 'utf-8'),
+            ca: [fs.readFileSync(kafkaConfig.KAFKA_SSL_CA_PATH, 'utf-8')],
+            cert: fs.readFileSync(kafkaConfig.KAFKA_SSL_CERT_PATH, 'utf-8'),
+            key: fs.readFileSync(kafkaConfig.KAFKA_SSL_KEY_PATH, 'utf-8'),
             },
         });
 

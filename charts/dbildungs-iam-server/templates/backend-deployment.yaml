@@ -37,11 +37,11 @@ spec:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
           env:
-            - name: KAFKA_CA_FILE
+            - name: KAFKA_SSL_CA_PATH
               value: /tls/ca.pem
-            - name: KAFKA_CERT_FILE
+            - name: KAFKA_SSL_CERT_PATH
               value: /tls/client-cert.pem
-            - name: KAFKA_KEY_FILE
+            - name: KAFKA_SSL_KEY_PATH
               value: /tls/client-key.pem
             - name: TLS_KEYSTORE
               value: /jks/client.keystore.jks

@@ -4,8 +4,8 @@ set -e
 # === Input aus Umgebungsvariablen ===
 KAFKA_URL="${KAFKA_URL:?Missing KAFKA_URL}"
 KAFKA_CA_FILE="${KAFKA_CA_FILE:?Missing CA file}"
-KAFKA_CERT_FILE="${KAFKA_CERT_FILE:?Missing client cert}"
-KAFKA_KEY_FILE="${KAFKA_KEY_FILE:?Missing client key}"
+KAFKA_SSL_CERT_PATH="${KAFKA_SSL_CERT_PATH:?Missing client cert}"
+KAFKA_SSL_KEY_PATH="${KAFKA_SSL_KEY_PATH:?Missing client key}"
 PASSWORD="${TLS_KEYSTORE_PASSWORD:?Missing TLS_KEYSTORE_PASSWORD}"
 
 #  Neues beschreibbares Zielverzeichnis (z. B. /jks via emptyDir)
@@ -26,8 +26,8 @@ PREFIX="${KAFKA_TOPIC_PREFIX:-}"
 # === Konvertierung ===
 echo " Erzeuge PKCS12-Datei..."
 openssl pkcs12 -export \
-  -in "${KAFKA_CERT_FILE}" \
-  -inkey "${KAFKA_KEY_FILE}" \
+  -in "${KAFKA_SSL_CERT_PATH}" \
+  -inkey "${KAFKA_SSL_KEY_PATH}" \
   -certfile "${KAFKA_CA_FILE}" \
   -name kafka-client \
   -out "${P12_FILE}" \

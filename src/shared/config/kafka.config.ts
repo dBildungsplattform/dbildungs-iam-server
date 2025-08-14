@@ -26,14 +26,12 @@ export class KafkaConfig {
     public readonly ENABLED!: boolean;
 
     @IsBoolean()
-    public readonly SSL_ENABLED!: boolean;
+    public readonly KAFKA_SSL_ENABLED!: boolean;
 
     @IsString()
-    public readonly SSL_CA_PATH!: string;
-
+    public readonly KAFKA_SSL_CA_PATH!: string;      
     @IsString()
-    public readonly SSL_CERT_PATH!: string;
-
+    public readonly KAFKA_SSL_CERT_PATH!: string;   
     @IsString()
-    public readonly SSL_KEY_PATH!: string;
+    public readonly KAFKA_SSL_KEY_PATH!: string;
 }
