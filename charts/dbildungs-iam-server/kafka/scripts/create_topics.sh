@@ -2,8 +2,8 @@
 set -e
 
 # === Input aus Umgebungsvariablen ===
-KAFKA_URL="${KAFKA_URL:?Missing KAFKA_URL}"
-KAFKA_CA_FILE="${KAFKA_CA_FILE:?Missing CA file}"
+BROKER="${BROKER:?Missing BROKER}"
+KAFKA_SSL_CA_PATH="${KAFKA_SSL_CA_PATH:?Missing CA file}"
 KAFKA_SSL_CERT_PATH="${KAFKA_SSL_CERT_PATH:?Missing client cert}"
 KAFKA_SSL_KEY_PATH="${KAFKA_SSL_KEY_PATH:?Missing client key}"
 PASSWORD="${TLS_KEYSTORE_PASSWORD:?Missing TLS_KEYSTORE_PASSWORD}"
@@ -28,7 +28,7 @@ echo " Erzeuge PKCS12-Datei..."
 openssl pkcs12 -export \
   -in "${KAFKA_SSL_CERT_PATH}" \
   -inkey "${KAFKA_SSL_KEY_PATH}" \
-  -certfile "${KAFKA_CA_FILE}" \
+  -certfile "${KAFKA_SSL_CA_PATH}" \
   -name kafka-client \
   -out "${P12_FILE}" \
   -passout pass:"${PASSWORD}"
@@ -47,7 +47,7 @@ echo "🛡️ Erstelle Truststore (${TRUSTSTORE_FILE})..."
 keytool -import \
   -trustcacerts \
   -alias CARoot \
-  -file "${KAFKA_CA_FILE}" \
+  -file "${KAFKA_SSL_CA_PATH}" \
   -keystore "${TRUSTSTORE_FILE}" \
   -storepass "${PASSWORD}" \
   -noprompt
@@ -71,12 +71,12 @@ echo " TLS-Konfiguration geschrieben in ${CONFIG}"
 # === Topics anlegen ===
 echo "📌 Erzeuge Topics..."
 < "${TOPIC_FILE}" xargs -I % \
-  kafka-topics.sh --bootstrap-server "${KAFKA_URL}" \
+  kafka-topics.sh --bootstrap-server "${BROKER}" \
     --create --if-not-exists \
     --topic "${PREFIX}%" \
     --partitions "${PARTITIONS}" ${REPL} \
     --command-config "${CONFIG}"
 
 echo " Topics erstellt. Anzeige folgt:"
-kafka-topics.sh --bootstrap-server "${KAFKA_URL}" \
+kafka-topics.sh --bootstrap-server "${BROKER}" \
   --describe --command-config "${CONFIG}"

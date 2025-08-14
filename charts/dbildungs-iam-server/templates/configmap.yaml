@@ -53,7 +53,7 @@ data:
   KAFKA_ENABLED: '{{ .Values.kafka.enabled }}'
   KAFKA_KAFKA_SSL_ENABLED: '{{ .Values.kafka.sslEnabled }}'
   KAFKA_TOPIC_PREFIX: '{{ .Release.Namespace }}-'
-  KAFKA_BROKER: '{{ .Values.kafka.url }}'
+  KAFKA_BROKER: '{{ .Values.kafka.broker }}'
   KAFKA_GROUP_ID: '{{ .Release.Namespace }}-group'
   KAFKA_SESSION_TIMEOUT: '{{ .Values.kafka.sessionTimeout }}'
   KAFKA_HEARTBEAT_INTERVAL: '{{ .Values.kafka.heartbeatInterval }}'
