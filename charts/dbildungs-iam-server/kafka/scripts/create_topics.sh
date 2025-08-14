@@ -2,7 +2,7 @@
 set -e
 
 # === Input aus Umgebungsvariablen ===
-BROKER="${BROKER:?Missing BROKER}"
+KAFKA_BROKER="${KAFKA_BROKER:?Missing KAFKA_BROKER}"
 KAFKA_SSL_CA_PATH="${KAFKA_SSL_CA_PATH:?Missing CA file}"
 KAFKA_SSL_CERT_PATH="${KAFKA_SSL_CERT_PATH:?Missing client cert}"
 KAFKA_SSL_KEY_PATH="${KAFKA_SSL_KEY_PATH:?Missing client key}"
@@ -71,12 +71,12 @@ echo " TLS-Konfiguration geschrieben in ${CONFIG}"
 # === Topics anlegen ===
 echo "📌 Erzeuge Topics..."
 < "${TOPIC_FILE}" xargs -I % \
-  kafka-topics.sh --bootstrap-server "${BROKER}" \
+  kafka-topics.sh --bootstrap-server "${KAFKA_BROKER}" \
     --create --if-not-exists \
     --topic "${PREFIX}%" \
     --partitions "${PARTITIONS}" ${REPL} \
     --command-config "${CONFIG}"
 
 echo " Topics erstellt. Anzeige folgt:"
-kafka-topics.sh --bootstrap-server "${BROKER}" \
+kafka-topics.sh --bootstrap-server "${KAFKA_BROKER}" \
   --describe --command-config "${CONFIG}"

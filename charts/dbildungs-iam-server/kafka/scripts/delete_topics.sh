@@ -2,7 +2,7 @@
 set -e
  
 # === Input aus Umgebungsvariablen ===
-BROKER="${BROKER:?Missing BROKER}"
+KAFKA_BROKER="${KAFKA_BROKER:?Missing KAFKA_BROKER}"
 KAFKA_SSL_CA_PATH="${KAFKA_SSL_CA_PATH:?Missing CA file}"
 KAFKA_SSL_CERT_PATH="${KAFKA_SSL_CERT_PATH:?Missing client cert}"
 KAFKA_SSL_KEY_PATH="${KAFKA_SSL_KEY_PATH:?Missing client key}"
@@ -68,7 +68,7 @@ echo "🔧 TLS-Konfiguration geschrieben in ${CONFIG}"
 echo "🔍 Suche nach Topics mit Prefix '${TOPIC_PREFIX}'..."
  
 TOPICS=$(kafka-topics.sh \
-    --bootstrap-server "${BROKER}" \
+    --bootstrap-server "${KAFKA_BROKER}" \
     --list --command-config "${CONFIG}" | grep "^${TOPIC_PREFIX}")
  
 if [ -z "$TOPICS" ]; then
@@ -81,7 +81,7 @@ echo "🗑️ Lösche Topics..."
 for topic in $TOPICS; do
   echo "❌ Lösche Topic: $topic"
   kafka-topics.sh \
-    --bootstrap-server "${BROKER}" \
+    --bootstrap-server "${KAFKA_BROKER}" \
     --delete \
     --topic "$topic" \
     --command-config "${CONFIG}"
