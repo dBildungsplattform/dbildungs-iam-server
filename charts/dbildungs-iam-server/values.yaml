@@ -193,8 +193,10 @@ redis:
 kafka:
   url: '10.7.250.102:9093'
   enabled: true
-  saslEnabled: true
+  sslEnabled: true
   initEnabled: true
+  sessionTimeout: 300000
+  heartbeatInterval: 10000
   initImage:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'

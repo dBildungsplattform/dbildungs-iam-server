@@ -21,7 +21,7 @@ export const KafkaProvider: Provider<Kafka | null> = {
             throw new Error('SSL ist deaktiviert');
         }
 
-        if (kafkaConfig.SSL) {
+        if (kafkaConfig.SSL_ENABLED) {
         return new Kafka({
             brokers: [kafkaConfig.BROKER],
             ssl: {
