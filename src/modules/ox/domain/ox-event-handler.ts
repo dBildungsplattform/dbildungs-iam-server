@@ -60,10 +60,15 @@ import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
 import {
     AbstractOxEventHandler,
     generateDisabledOxUserChangedEvent,
+    generateOxSyncUserCreatedEvent,
     generateOxUserChangedEvent,
+    generateOxUserCreatedEvent,
     OxUserChangedEventCreator,
+    OxUserCreatedEventCreator,
 } from './abstract-ox-event-handler.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
+import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
+import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
 
 @Injectable()
 export class OxEventHandler extends AbstractOxEventHandler {
@@ -113,7 +118,24 @@ export class OxEventHandler extends AbstractOxEventHandler {
             return this.logger.info('Not enabled, ignoring event');
         }
 
-        await this.createOxUser(event.personId, event.username, event.orgaKennung);
+        await this.createOxUser(event.personId, event.username, event.orgaKennung, generateOxUserCreatedEvent);
+    }
+
+    @EventHandler(EmailAddressGeneratedAfterLdapSyncFailedEvent)
+    @KafkaEventHandler(KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent)
+    @EnsureRequestContext()
+    public async handleEmailAddressGeneratedAfterLdapSyncFailedEvent(
+        event: EmailAddressGeneratedAfterLdapSyncFailedEvent | KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent,
+    ): Promise<void> {
+        this.logger.info(
+            `Received EmailAddressGeneratedAfterLdapSyncFailedEvent, personId:${event.personId}, username:${event.username}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
+        );
+
+        if (!this.ENABLED) {
+            return this.logger.info('Not enabled, ignoring event');
+        }
+
+        await this.createOxUser(event.personId, event.username, event.orgaKennung, generateOxSyncUserCreatedEvent);
     }
 
     @KafkaEventHandler(KafkaDisabledEmailAddressGeneratedEvent)
@@ -563,6 +585,7 @@ export class OxEventHandler extends AbstractOxEventHandler {
         personId: PersonID,
         username: PersonReferrer,
         orgaKennung: OrganisationKennung,
+        oxUserCreatedEventCreator: OxUserCreatedEventCreator,
     ): Promise<void> {
         const personIdentifier: PersonIdentifier = {
             personId: personId,
@@ -696,7 +719,17 @@ export class OxEventHandler extends AbstractOxEventHandler {
             );
         }
 
-        this.eventService.publish(
+        const events: [OxUserChangedEvent, KafkaOxUserChangedEvent] = oxUserCreatedEventCreator(
+            personId,
+            person.referrer,
+            createUserResult.value.id,
+            createUserResult.value.username,
+            this.contextID,
+            this.contextName,
+            createUserResult.value.primaryEmail,
+        );
+        this.eventService.publish(...events);
+        /* this.eventService.publish(
             new OxUserChangedEvent(
                 personId,
                 person.referrer,
@@ -715,7 +748,7 @@ export class OxEventHandler extends AbstractOxEventHandler {
                 this.contextName,
                 createUserResult.value.primaryEmail,
             ),
-        );
+        );*/
     }
 
     private async changeOxUser(

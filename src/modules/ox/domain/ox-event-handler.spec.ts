@@ -36,6 +36,7 @@ import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/
 import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
 import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
+import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -897,6 +898,95 @@ describe('OxEventHandler', () => {
                 `Could not create user in OX, error:Request failed`,
                 personIdentifier,
             );
+        });
+    });
+
+    describe('handleEmailAddressGeneratedAfterLdapSyncFailedEvent', () => {
+        let personId: PersonID;
+        let username: PersonReferrer;
+        let personIdentifier: PersonIdentifier;
+        let event: EmailAddressGeneratedAfterLdapSyncFailedEvent;
+        let person: Person<true>;
+
+        beforeEach(() => {
+            jest.resetAllMocks();
+            personId = faker.string.uuid();
+            username = faker.internet.userName();
+            personIdentifier = {
+                personId: personId,
+                username: username,
+            };
+            event = new EmailAddressGeneratedAfterLdapSyncFailedEvent(
+                personId,
+                username,
+                faker.string.uuid(),
+                faker.internet.email(),
+                true,
+                faker.string.numeric(),
+            );
+            person = createMock<Person<true>>({ email: faker.internet.email(), referrer: username });
+        });
+
+        it('should skip event, if not enabled', async () => {
+            sut.ENABLED = false;
+            await sut.handleEmailAddressGeneratedAfterLdapSyncFailedEvent(event);
+
+            expect(loggerMock.info).toHaveBeenCalledWith('Not enabled, ignoring event');
+            expect(oxServiceMock.send).not.toHaveBeenCalled();
+        });
+
+        it('should log info and publish OxUserCreatedEvent on success', async () => {
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([createMock<EmailAddress<true>>()]);
+
+            //mock exists-oxUser-request
+            mockExistsUserRequest(false);
+            //mock create-oxUser-request
+            const fakeOXUserId: string = faker.string.uuid();
+            mockUserCreationRequest(fakeOXUserId, event.address);
+            //mock list-oxGroups-request, no result -> mocks no group found
+            const fakeOXGroupId: string = faker.string.uuid();
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    groups: [],
+                },
+            });
+            //mock create-oxGroup-request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    id: fakeOXGroupId,
+                },
+            });
+            //mock add-member-to-oxGroup-request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: {
+                    status: {
+                        code: 'success',
+                    },
+                    data: undefined,
+                },
+            });
+            //mock changeByModuleAccess request
+            oxServiceMock.send.mockResolvedValueOnce({
+                ok: true,
+                value: undefined,
+            });
+
+            await sut.handleEmailAddressGeneratedAfterLdapSyncFailedEvent(event);
+
+            expect(oxServiceMock.send).toHaveBeenCalledWith(expect.any(CreateUserAction));
+            expect(loggerMock.infoPersonalized).toHaveBeenCalledWith(
+                `User created in OX, oxUserId:${fakeOXUserId}, oxEmail:${event.address}`,
+                personIdentifier,
+            );
+            expect(loggerMock.infoPersonalized).toHaveBeenLastCalledWith(
+                `Successfully Added OxUser To OxGroup, oxUserId:${fakeOXUserId}, oxGroupId:${fakeOXGroupId}`,
+                personIdentifier,
+            );
+            expect(eventServiceMock.publish).toHaveBeenCalledTimes(1);
         });
     });
 

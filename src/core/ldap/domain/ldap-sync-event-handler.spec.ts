@@ -380,13 +380,12 @@ describe('LdapSyncEventHandler', () => {
         });
 
         describe('when person has NO enabled/active email-address', () => {
-            it('should log error and return without proceeding', async () => {
+            it('should log error, return without proceeding and publish LdapSyncFailedEvent', async () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(person);
                 emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined);
 
                 await sut.personExternalSystemSyncEventHandler(event);
 
-                expect(emailRepoMock.findByPersonSortedByUpdatedAtDesc).toHaveBeenCalledTimes(0);
                 expect(eventServiceMock.publish).toHaveBeenCalledWith(
                     expect.objectContaining({
                         personId: personId,

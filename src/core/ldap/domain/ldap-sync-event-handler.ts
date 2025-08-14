@@ -113,10 +113,17 @@ export class LdapSyncEventHandler {
         // Check person has active, primary EmailAddress
         const enabledEmailAddress: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
         if (!enabledEmailAddress) {
-            this.eventService.publish(
-                new LdapSyncFailedEvent(personId, person.referrer),
-                new KafkaLdapSyncFailedEvent(personId, person.referrer),
+            const failedEmailAddresses: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(
+                personId,
+                EmailAddressStatus.FAILED,
             );
+            //only publish LdapSyncFailedEvent when oxUserId is UNDEFINED, because creation of OxUser-account should be avoided, when oxUserId is already present
+            if (failedEmailAddresses && failedEmailAddresses[0] && !failedEmailAddresses[0].oxUserID) {
+                this.eventService.publish(
+                    new LdapSyncFailedEvent(personId, person.referrer),
+                    new KafkaLdapSyncFailedEvent(personId, person.referrer),
+                );
+            }
             return this.logger.error(`Person with personId:${personId} has no enabled EmailAddress!`);
         }
 

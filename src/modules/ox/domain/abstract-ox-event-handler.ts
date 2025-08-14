@@ -36,6 +36,80 @@ import {
 } from '../actions/group/remove-member-from-group.action.js';
 import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
+import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
+
+export type OxUserCreatedEventCreator = (
+    personId: PersonID,
+    username: PersonReferrer,
+    oxUserId: OXUserID,
+    oxUserName: OXUserName,
+    oxContextId: OXContextID,
+    oxContextName: OXContextName,
+    emailAddress: string,
+) => [OxUserChangedEvent, KafkaOxUserChangedEvent];
+
+export const generateOxUserCreatedEvent: OxUserCreatedEventCreator = (
+    personId: PersonID,
+    username: PersonReferrer,
+    oxUserId: OXUserID,
+    oxUserName: OXUserName,
+    oxContextId: OXContextID,
+    oxContextName: OXContextName,
+    emailAddress: string,
+) => {
+    return [
+        new OxUserChangedEvent(
+            personId,
+            username,
+            oxUserId,
+            oxUserName, //strictEquals the new OxUsername
+            oxContextId,
+            oxContextName,
+            emailAddress,
+        ),
+        new KafkaOxUserChangedEvent(
+            personId,
+            username,
+            oxUserId,
+            oxUserName, //strictEquals the new OxUsername
+            oxContextId,
+            oxContextName,
+            emailAddress,
+        ),
+    ];
+};
+
+export const generateOxSyncUserCreatedEvent: OxUserCreatedEventCreator = (
+    personId: PersonID,
+    username: PersonReferrer,
+    oxUserId: OXUserID,
+    oxUserName: OXUserName,
+    oxContextId: OXContextID,
+    oxContextName: OXContextName,
+    emailAddress: string,
+) => {
+    return [
+        new OxSyncUserCreatedEvent(
+            personId,
+            username,
+            oxUserId,
+            oxUserName, //strictEquals the new OxUsername
+            oxContextId,
+            oxContextName,
+            emailAddress,
+        ),
+        new KafkaOxSyncUserCreatedEvent(
+            personId,
+            username,
+            oxUserId,
+            oxUserName, //strictEquals the new OxUsername
+            oxContextId,
+            oxContextName,
+            emailAddress,
+        ),
+    ];
+};
 
 export type OxUserChangedEventCreator = (
     personId: PersonID,
