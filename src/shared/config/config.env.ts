@@ -135,7 +135,7 @@ export default (): Config => ({
         SESSION_TIMEOUT: envToOptionalInteger('KAFKA_SESSION_TIMEOUT'),
         HEARTBEAT_INTERVAL: envToOptionalInteger('KAFKA_HEARTBEAT_INTERVAL'),
         ENABLED: envToOptionalBoolean('KAFKA_ENABLED'),
-        KAFKA_SSL_ENABLED: envToOptionalBoolean('KAFKA_SSL_ENABLED'),
+        KAFKA_SSL_ENABLED: envToOptionalBoolean('KAFKA_SSL_ENABLED') ?? false,
         KAFKA_SSL_CA_PATH: process.env['KAFKA_SSL_CA_PATH'],
         KAFKA_SSL_CERT_PATH: process.env['KAFKA_SSL_CERT_PATH'],
         KAFKA_SSL_KEY_PATH: process.env['KAFKA_SSL_KEY_PATH'],

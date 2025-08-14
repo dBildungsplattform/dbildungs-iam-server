@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsBoolean, IsNumber, IsString, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class KafkaConfig {
@@ -28,9 +28,8 @@ export class KafkaConfig {
   @IsBoolean()
   public readonly ENABLED!: boolean;
 
-  @IsOptional()
   @IsBoolean()
-  public readonly KAFKA_SSL_ENABLED?: boolean;
+  public readonly KAFKA_SSL_ENABLED!: boolean;
 
   @ValidateIf(o => o.KAFKA_SSL_ENABLED === true)
   @IsString()

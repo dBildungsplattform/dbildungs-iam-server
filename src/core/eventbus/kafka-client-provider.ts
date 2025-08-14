@@ -18,10 +18,13 @@ export const KafkaProvider: Provider<Kafka | null> = {
         }
 
         if (!kafkaConfig.KAFKA_SSL_ENABLED) {
-            throw new Error('SSL ist deaktiviert');
+            throw new Error('SSL is disabled. SSL must be enabled');
         }
 
         
+        if (!kafkaConfig.KAFKA_SSL_CA_PATH || !kafkaConfig.KAFKA_SSL_CERT_PATH || !kafkaConfig.KAFKA_SSL_KEY_PATH) {
+            throw new Error('SSL paths must be set when KAFKA_SSL_ENABLED is true');
+        }
 
         if (kafkaConfig.KAFKA_SSL_ENABLED) {
         return new Kafka({
