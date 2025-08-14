@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class KafkaConfig {
     @IsString()
@@ -26,12 +26,18 @@ export class KafkaConfig {
     public readonly ENABLED!: boolean;
 
     @IsBoolean()
-    public readonly KAFKA_SSL_ENABLED!: boolean;
+    @IsOptional()
+    public readonly KAFKA_SSL_ENABLED?: boolean;
 
     @IsString()
-    public readonly KAFKA_SSL_CA_PATH!: string;      
+    @IsOptional()
+    public readonly KAFKA_SSL_CA_PATH?: string;
+
     @IsString()
-    public readonly KAFKA_SSL_CERT_PATH!: string;   
+    @IsOptional()
+    public readonly KAFKA_SSL_CERT_PATH?: string;
+
     @IsString()
-    public readonly KAFKA_SSL_KEY_PATH!: string;
+    @IsOptional()
+    public readonly KAFKA_SSL_KEY_PATH?: string;
 }
