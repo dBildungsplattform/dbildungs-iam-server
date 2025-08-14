@@ -37,20 +37,34 @@ spec:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
           env:
-            - name: KAFKA_USERNAME
+            - name: KAFKA_CA_FILE
+              value: /tls/ca.pem
+            - name: KAFKA_CERT_FILE
+              value: /tls/client-cert.pem
+            - name: KAFKA_KEY_FILE
+              value: /tls/client-key.pem
+            - name: TLS_KEYSTORE
+              value: /jks/client.keystore.jks
+            - name: TLS_TRUSTSTORE
+              value: /jks/client.truststore.jks
+            - name: TLS_KEYSTORE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: dbildungs-iam-server
-                  key: kafka-username
-            - name: KAFKA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: dbildungs-iam-server
-                  key: kafka-password
+                  name: dbildungs-iam-kafka-tls
+                  key: keystore-password
           volumeMounts:
-          - name: kafka-init-volume
-            mountPath: /init
-            readOnly: true
+            - name: kafka-init-volume
+              mountPath: /init
+              readOnly: true
+            - name: dbildungs-iam-kafka-tls
+              readOnly: true
+              mountPath: /tls
+            - name: jks
+              mountPath: /jks
+            - name: keystore-password
+              readOnly: true
+              mountPath: /keystore-password.txt
+              subPath: keystore-password
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
         {{- if .Values.backend.dbmigration.enabled }}
@@ -64,6 +78,15 @@ spec:
               {{- if .Values.backend.extraEnvVars }}
               {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
               {{- end }}
+            - name: TLS_KEYSTORE
+              value: /jks/client.keystore.jks
+            - name: TLS_TRUSTSTORE
+              value: /jks/client.truststore.jks
+            - name: TLS_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dbildungs-iam-kafka-tls
+                  key: keystore-password
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
@@ -125,6 +148,12 @@ spec:
             {{- with .Values.backend.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+            - name: dbildungs-iam-kafka-tls
+              mountPath: /tls
+              readOnly: true
+            - name: jks
+              mountPath: /jks
+              readOnly: true
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
           startupProbe: {{- omit .Values.backend.startupProbe "enabled" | toYaml | nindent 12 }}
           livenessProbe: {{- omit .Values.backend.livenessProbe "enabled" | toYaml | nindent 12 }}
@@ -142,6 +171,18 @@ spec:
           configMap:
             name: {{ template "common.names.name" $ }}-kafka-init-configmap
             defaultMode: 0555
+        - name: dbildungs-iam-kafka-tls
+          secret:
+            secretName: dbildungs-iam-kafka-tls
+            defaultMode: 420
+        - name: jks
+          emptyDir: {}
+        - name: keystore-password
+          secret:
+            secretName: dbildungs-iam-kafka-tls
+            items:
+              - key: keystore-password
+                path: keystore-password
         {{- end }}
         - name: migration-volume
           configMap:
