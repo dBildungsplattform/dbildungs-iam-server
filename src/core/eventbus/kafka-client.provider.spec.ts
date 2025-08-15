@@ -10,7 +10,7 @@ describe('KafkaProvider', () => {
     let configService: DeepMocked<ConfigService>;
 
     const kafkaConfigEnabled: KafkaConfig = {
-        BROKER: 'localhost:9092',
+        BROKER: "10.7.250.102:9093",
         GROUP_ID: 'test-group',
         SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
@@ -18,15 +18,16 @@ describe('KafkaProvider', () => {
         USER_TOPIC: 'user-topic',
         USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
-        SASL_ENABLED: false,
-        USERNAME: '',
-        PASSWORD: '',
+        KAFKA_SSL_ENABLED: true,
+        KAFKA_SSL_CA_PATH: "/tls/ca.pem",
+        KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
+        KAFKA_SSL_KEY_PATH: "/tls/client-key.pem"
     };
 
     const kafkaConfigSaslEnabled: KafkaConfig = {
         ...kafkaConfigEnabled,
         ENABLED: true,
-        SASL_ENABLED: true,
+        KAFKA_SSL_ENABLED: true,
     };
 
     const kafkaConfigDisabled: KafkaConfig = {
