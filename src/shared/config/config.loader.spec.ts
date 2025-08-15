@@ -289,9 +289,12 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SASL_ENABLED: true,
-                    USERNAME: 'username',
-                    PASSWORD: 'password',
+                    KAFKA_SSL_ENABLED: true,
+                    KAFKA_SSL_CA_PATH: "/tls/ca.pem",
+                    KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
+                    KAFKA_SSL_KEY_PATH: "/tls/client-key.pem",
+                    KAFKA_SSL_SERVERNAME: "managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc"
+                    
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
