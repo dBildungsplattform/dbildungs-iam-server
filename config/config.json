@@ -129,6 +129,7 @@
         "GROUP_ID": "nestjs-kafka",
         "SESSION_TIMEOUT": 300000,
         "HEARTBEAT_INTERVAL": 10000,
+        "ENABLED": true,
         "KAFKA_SSL_ENABLED": true,
         "KAFKA_SSL_CA_PATH": "/tls/ca.pem",
         "KAFKA_SSL_CERT_PATH": "/tls/client-cert.pem",
