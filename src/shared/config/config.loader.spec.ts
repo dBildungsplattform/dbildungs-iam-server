@@ -119,7 +119,7 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SASL_ENABLED: true,
+                    KAFKA_SSL_ENABLED: true,
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
@@ -281,19 +281,19 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                    BROKER: 'localhost:9094',
-                    TOPIC_PREFIX: 'local.',
-                    USER_TOPIC: 'spsh-user-topic',
-                    USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
-                    GROUP_ID: 'nestjs-kafka',
-                    SESSION_TIMEOUT: 300000,
-                    HEARTBEAT_INTERVAL: 10000,
-                    ENABLED: true,
-                    KAFKA_SSL_ENABLED: true,
-                    KAFKA_SSL_CA_PATH: "/tls/ca.pem",
-                    KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
-                    KAFKA_SSL_KEY_PATH: "/tls/client-key.pem",
-                    KAFKA_SSL_SERVERNAME: "managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc"
+                BROKER: "10.7.250.102:9093",
+                GROUP_ID: 'test-group',
+                SESSION_TIMEOUT: 300000,
+                HEARTBEAT_INTERVAL: 3000,
+                TOPIC_PREFIX: 'test.',
+                USER_TOPIC: 'user-topic',
+                USER_DLQ_TOPIC: 'dlq-topic',
+                ENABLED: true,
+                KAFKA_SSL_ENABLED: true,
+                KAFKA_SSL_CA_PATH: "/tls/ca.pem",
+                KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
+                KAFKA_SSL_KEY_PATH: "/tls/client-key.pem",
+                KAFKA_SSL_SERVERNAME: "managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc"
                     
                 },
                 PORTAL: {

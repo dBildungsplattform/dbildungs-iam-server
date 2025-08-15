@@ -25,7 +25,7 @@ describe('KafkaProvider', () => {
         KAFKA_SSL_SERVERNAME: "managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc"
     };
 
-    const kafkaConfigSaslEnabled: KafkaConfig = {
+    const kafkaConfigSslEnabled: KafkaConfig = {
         ...kafkaConfigEnabled,
         ENABLED: true,
         KAFKA_SSL_ENABLED: true,
@@ -59,7 +59,7 @@ describe('KafkaProvider', () => {
 
     it('should return Kafka instance when enabled', async () => {
         configService = createMock<ConfigService>();
-        configService.getOrThrow.mockReturnValue(kafkaConfigSaslEnabled);
+        configService.getOrThrow.mockReturnValue(kafkaConfigSslEnabled);
 
         module = await Test.createTestingModule({
             providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
