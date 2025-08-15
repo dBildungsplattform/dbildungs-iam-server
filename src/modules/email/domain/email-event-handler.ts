@@ -470,6 +470,49 @@ export class EmailEventHandler {
         }
     }
 
+    private async handlePersonWithEmailSPReferenceAfterLdapSyncFailed(
+        personId: PersonID,
+        username: PersonReferrer | undefined,
+        personenkontexte: Personenkontext<true>[],
+        rollenIdWithSPReference: string,
+        rolleIdPKMap: Map<string, Personenkontext<true>>,
+        emailAdressGeneratedCreator: EmailAddressGeneratedCreator,
+    ): Promise<void> {
+        // Array to store matching Personenkontext objects for further processing
+        const pkOfRolleWithSPReferenceList: Personenkontext<true>[] = [];
+
+        // Check all combinations of rolleId and organisationId for this role
+        for (const pk of personenkontexte) {
+            if (pk.rolleId === rollenIdWithSPReference) {
+                const key: string = `${pk.rolleId}-${pk.organisationId}`;
+                const pkFromMap: Personenkontext<true> | undefined = rolleIdPKMap.get(key);
+                if (pkFromMap) {
+                    pkOfRolleWithSPReferenceList.push(pkFromMap); // Collect valid matches
+                }
+            }
+        }
+
+        // Process each valid Personenkontext
+        if (pkOfRolleWithSPReferenceList.length > 0) {
+            this.logger.info(
+                `Person with personId:${personId}, username:${username} needs an email, creating or enabling address`,
+            );
+            // Iterate over all valid Personenkontext objects and trigger email creation
+            for (const pkOfRolleWithSPReference of pkOfRolleWithSPReferenceList) {
+                // eslint-disable-next-line no-await-in-loop
+                await this.createNewEmail(
+                    personId,
+                    pkOfRolleWithSPReference.organisationId,
+                    emailAdressGeneratedCreator,
+                );
+            }
+        } else {
+            this.logger.error(
+                `Rolle with id:${rollenIdWithSPReference} references SP, but no matching Personenkontext was found`,
+            );
+        }
+    }
+
     private async handlePerson(
         personId: PersonID,
         username: PersonReferrer | undefined,
@@ -551,49 +594,6 @@ export class EmailEventHandler {
             for (const pkOfRolleWithSPReference of pkOfRolleWithSPReferenceList) {
                 // eslint-disable-next-line no-await-in-loop
                 await this.createOrEnableEmail(
-                    personId,
-                    pkOfRolleWithSPReference.organisationId,
-                    emailAdressGeneratedCreator,
-                );
-            }
-        } else {
-            this.logger.error(
-                `Rolle with id:${rollenIdWithSPReference} references SP, but no matching Personenkontext was found`,
-            );
-        }
-    }
-
-    private async handlePersonWithEmailSPReferenceAfterLdapSyncFailed(
-        personId: PersonID,
-        username: PersonReferrer | undefined,
-        personenkontexte: Personenkontext<true>[],
-        rollenIdWithSPReference: string,
-        rolleIdPKMap: Map<string, Personenkontext<true>>,
-        emailAdressGeneratedCreator: EmailAddressGeneratedCreator,
-    ): Promise<void> {
-        // Array to store matching Personenkontext objects for further processing
-        const pkOfRolleWithSPReferenceList: Personenkontext<true>[] = [];
-
-        // Check all combinations of rolleId and organisationId for this role
-        for (const pk of personenkontexte) {
-            if (pk.rolleId === rollenIdWithSPReference) {
-                const key: string = `${pk.rolleId}-${pk.organisationId}`;
-                const pkFromMap: Personenkontext<true> | undefined = rolleIdPKMap.get(key);
-                if (pkFromMap) {
-                    pkOfRolleWithSPReferenceList.push(pkFromMap); // Collect valid matches
-                }
-            }
-        }
-
-        // Process each valid Personenkontext
-        if (pkOfRolleWithSPReferenceList.length > 0) {
-            this.logger.info(
-                `Person with personId:${personId}, username:${username} needs an email, creating or enabling address`,
-            );
-            // Iterate over all valid Personenkontext objects and trigger email creation
-            for (const pkOfRolleWithSPReference of pkOfRolleWithSPReferenceList) {
-                // eslint-disable-next-line no-await-in-loop
-                await this.createNewEmail(
                     personId,
                     pkOfRolleWithSPReference.organisationId,
                     emailAdressGeneratedCreator,
