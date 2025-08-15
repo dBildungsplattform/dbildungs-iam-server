@@ -22,9 +22,14 @@ export const KafkaProvider: Provider<Kafka | null> = {
         }
 
         
-        if (!kafkaConfig.KAFKA_SSL_CA_PATH || !kafkaConfig.KAFKA_SSL_CERT_PATH || !kafkaConfig.KAFKA_SSL_KEY_PATH) {
-            throw new Error('SSL paths must be set when KAFKA_SSL_ENABLED is true');
-        }
+        if (
+            !kafkaConfig.KAFKA_SSL_CA_PATH ||
+            !kafkaConfig.KAFKA_SSL_CERT_PATH ||
+            !kafkaConfig.KAFKA_SSL_KEY_PATH ||
+            !kafkaConfig.KAFKA_SSL_SERVERNAME
+        ){
+            throw new Error('All SSL parameters (CA, CERT, KEY, SERVERNAME) must be set when SSL is enabled');
+}
 
         if (kafkaConfig.KAFKA_SSL_ENABLED) {
         return new Kafka({
@@ -34,12 +39,12 @@ export const KafkaProvider: Provider<Kafka | null> = {
             ca: [fs.readFileSync(kafkaConfig.KAFKA_SSL_CA_PATH, 'utf-8')],
             cert: fs.readFileSync(kafkaConfig.KAFKA_SSL_CERT_PATH, 'utf-8'),
             key: fs.readFileSync(kafkaConfig.KAFKA_SSL_KEY_PATH, 'utf-8'),
+            servername: kafkaConfig.KAFKA_SSL_SERVERNAME,
             },
         });
 
         } else {
-            return new Kafka({
-                brokers: [kafkaConfig.BROKER],
+            return new Kafka({brokers: [kafkaConfig.BROKER],
             });
         }
     },

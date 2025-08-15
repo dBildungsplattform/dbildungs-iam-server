@@ -139,6 +139,7 @@ export default (): Config => ({
         KAFKA_SSL_CA_PATH: process.env['KAFKA_SSL_CA_PATH'],
         KAFKA_SSL_CERT_PATH: process.env['KAFKA_SSL_CERT_PATH'],
         KAFKA_SSL_KEY_PATH: process.env['KAFKA_SSL_KEY_PATH'],
+        KAFKA_SSL_SERVERNAME: process.env['KAFKA_SSL_SERVERNAME']
     },
     PORTAL: {
         LIMITED_ROLLENART_ALLOWLIST: envToStringArray('PORTAL_LIMITED_ROLLENART_ALLOWLIST'),

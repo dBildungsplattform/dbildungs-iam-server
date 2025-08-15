@@ -42,4 +42,8 @@ export class KafkaConfig {
   @ValidateIf(o => o.KAFKA_SSL_ENABLED === true)
   @IsString()
   public readonly KAFKA_SSL_KEY_PATH?: string;
+  
+  @ValidateIf(o => o.KAFKA_SSL_ENABLED === true)
+  @IsString()
+  public readonly KAFKA_SSL_SERVERNAME?: string;
 }

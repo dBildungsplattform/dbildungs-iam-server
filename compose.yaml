@@ -190,46 +190,49 @@ services:
         target: '/app/config/config.json'
         type: bind
 
-  kafka:
-    image: bitnami/kafka:3.9.0
-    profiles:
-      - third-party
-    ports:
-      - '9094:9094'
-    environment:
-      - KAFKA_CFG_NODE_ID=0
-      - KAFKA_CFG_PROCESS_ROLES=controller,broker
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-    healthcheck:
-      test: kafka-topics.sh --list --bootstrap-server localhost:9092 || exit 1
-      start_period: 10s
-      interval: 5s
-    volumes:
-      - kafka:/bitnami/kafka
+  #kafka:
+  #  image: bitnami/kafka:3.9.0
+  #  profiles:
+  #    - third-party
+  #  ports:
+  #    - '9093:9093'
+    #environment:
+    #  - KAFKA_CFG_NODE_ID=0
+    #  - KAFKA_CFG_PROCESS_ROLES=controller,broker
+    #  - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+    #  - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+    #  - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+    #  - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+    #  - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    #healthcheck:
+    #  test: kafka-topics.sh --list --bootstrap-server 10.7.250.102:9093 || exit 1
+    #  start_period: 10s
+    #  interval: 5s
+    #volumes:
+    #  - kafka:/bitnami/kafka
 
   kafka-init:
     image: bitnami/kafka:3.9.0
     profiles:
       - third-party
-    depends_on:
-      kafka:
-        condition: service_healthy
     command: /init/scripts/create_topics.sh /init-data/kafka-topics.txt
     environment:
-      - KAFKA_BROKER=kafka:9093
+      - KAFKA_BROKER=10.7.250.102:9093
       - KAFKA_TOPIC_PREFIX=local.
       - KAFKA_TOPIC_PARTITIONS=1
       - KAFKA_REPLICATION_FACTOR=1
+      - KAFKA_SSL_CA=/tls/ca.pem
+      - KAFKA_SSL_CERT=/tls/client-cert.pem
+      - KAFKA_SSL_KEY=/tls/client-key.pem
     volumes:
       - ./charts/dbildungs-iam-server/kafka/scripts:/init/scripts:ro
       - type: bind
         source: ./charts/dbildungs-iam-server/config/kafka-topics.txt
         target: /init-data/kafka-topics.txt
         read_only: true
+      - name: dbildungs-iam-kafka-tls
+        mountPath: /tls
+        readOnly: true
 
   openldap:
     image: osixia/openldap:1.5.0
