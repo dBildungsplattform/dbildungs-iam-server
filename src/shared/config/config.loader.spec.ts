@@ -111,7 +111,7 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                    BROKER: 'localhost:9094',
+                    BROKER: "10.7.250.102:9093",
                     TOPIC_PREFIX: 'local.',
                     USER_TOPIC: 'spsh-user-topic',
                     USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
@@ -120,6 +120,10 @@ describe('configloader', () => {
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
                     KAFKA_SSL_ENABLED: true,
+                    KAFKA_SSL_CA_PATH: "/tls/ca.pem",
+                    KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
+                    KAFKA_SSL_KEY_PATH: "/tls/client-key.pem",
+                    KAFKA_SSL_SERVERNAME: "managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc" 
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
@@ -141,10 +145,6 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                 },
                 OX: {
-                    PASSWORD: 'password',
-                },
-                KAFKA: {
-                    USERNAME: 'username',
                     PASSWORD: 'password',
                 },
             };
