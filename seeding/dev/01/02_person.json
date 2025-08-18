@@ -467,17 +467,17 @@
         },
         {
             "id": 66,
-            "username": "2plehrkraft",
+            "username": "zweiploginlehrkraft",
             "password": "SPSHtest1!",
-            "vorname": "Zwei",
-            "familienname": "Plehrkraft"
+            "vorname": "Zweiplogin",
+            "familienname": "Lehrkraft"
         },
         {
             "id": 67,
-            "username": "2pschueler",
+            "username": "zweiploginschueler",
             "password": "SPSHtest1!",
-            "vorname": "Zwei",
-            "familienname": "Pschueler"
+            "vorname": "Zweiplogin",
+            "familienname": "Schueler"
         },
 
         {
