@@ -19,7 +19,8 @@
                 "PERSONEN_ANLEGEN",
                 "BULK_VERWALTEN",
                 "SCHULPORTAL_VERWALTEN",
-                "HINWEISE_BEARBEITEN"
+                "HINWEISE_BEARBEITEN",
+                "SERVICEPROVIDER_VERWALTEN"
             ],
             "serviceProviderIds": [5, 8, 9, 10, 11]
         },
@@ -190,7 +191,8 @@
                 "KLASSEN_VERWALTEN",
                 "SCHULTRAEGER_VERWALTEN",
                 "MIGRATION_DURCHFUEHREN",
-                "PERSON_SYNCHRONISIEREN"
+                "PERSON_SYNCHRONISIEREN",
+                "SERVICEPROVIDER_VERWALTEN"
             ],
             "serviceProviderIds": [],
             "istTechnisch": true
@@ -217,7 +219,8 @@
                 "PERSONEN_VERWALTEN",
                 "PERSONEN_SOFORT_LOESCHEN",
                 "ROLLEN_VERWALTEN",
-                "LMS_VERWALTEN"
+                "LMS_VERWALTEN",
+                "SERVICEPROVIDER_VERWALTEN"
             ],
             "serviceProviderIds": [],
             "istTechnisch": false

@@ -5340,7 +5340,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "SERVICEPROVIDER_VERWALTEN"
           ],
           "mappedType": "enum"
         }
