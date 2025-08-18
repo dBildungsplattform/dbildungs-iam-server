@@ -24,6 +24,7 @@ import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js
 import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
 import { ImportDataItemStatus } from '../../src/modules/import/domain/importDataItem.enum.js';
 import { Meldung } from '../../src/modules/meldung/domain/meldung.js';
+import { RollenMapping } from '../../src/modules/rollenmapping/domain/rollenmapping.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -138,6 +139,22 @@ export class DoFactory {
             serviceProviderData: [],
         };
         return Object.assign(Object.create(RolleAggregate.prototype) as RolleAggregate<boolean>, rolle, props);
+    }
+
+    public static createRollenMapping<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        props?: Partial<RollenMapping<WasPersisted>>,
+    ): RollenMapping<WasPersisted> {
+        const rollenMapping: Partial<RollenMapping<WasPersisted>> = {
+            rolleId: faker.string.uuid(),
+            serviceProviderId: faker.string.uuid(),
+            mapToLmsRolle: faker.string.alphanumeric(),
+            id: withId ? faker.string.uuid() : undefined,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+        };
+        return Object.assign(Object.create(RollenMapping.prototype) as RollenMapping<boolean>, rollenMapping, props);
     }
 
     public static createServiceProvider<WasPersisted extends boolean>(

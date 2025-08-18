@@ -7,7 +7,6 @@ export enum ServiceProviderKategorie {
     VERWALTUNG = 'VERWALTUNG',
     HINWEISE = 'HINWEISE',
     ANGEBOTE = 'ANGEBOTE',
-    LMS = 'LMS',
 }
 
 export enum ServiceProviderTarget {
