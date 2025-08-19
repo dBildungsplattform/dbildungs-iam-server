@@ -183,38 +183,11 @@ backend:
     stepUpTimeoutInSeconds: 900
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
-  extraVolumeMounts:
-    - name: dbildungs-iam-kafka-tls
-      mountPath: /tls
-      readOnly: true
-    #- name: jks
-    #  mountPath: /jks
-    #  readOnly: true
-  extraVolumes:
-    - name: dbildungs-iam-kafka-tls
-      secret:
-        secretName: dbildungs-iam-kafka-tls
-        defaultMode: 420
-    #- name: jks
-    #  emptyDir: {}
-  extraEnvVars:
-    #- name: TLS_KEYSTORE
-    #  value: /jks/client.keystore.jks
-    #- name: TLS_TRUSTSTORE
-    #  value: /jks/client.truststore.jks
-    #- name: TLS_KEYSTORE_PASSWORD
-    #  valueFrom:
-    #    secretKeyRef:
-    #      name: dbildungs-iam-kafka-tls
-    #      key: keystore-password
-    - name: KAFKA_SSL_ENABLED
-      value: "true"
-    - name: KAFKA_SSL_CA_PATH
-      value: "/tls/ca.crt"
-    - name: KAFKA_SSL_CERT_PATH
-      value: "/tls/client.crt"
-    - name: KAFKA_SSL_KEY_PATH
-      value: "/tls/client.key"
+  
+  
+  extraVolumeMounts: []
+  extraVolumes: []
+  extraEnvVars: []
   
 
 redis:
