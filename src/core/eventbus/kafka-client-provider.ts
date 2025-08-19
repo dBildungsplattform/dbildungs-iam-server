@@ -12,14 +12,14 @@ export const KafkaProvider: Provider<Kafka | null> = {
     provide: KAFKA_INSTANCE,
     useFactory: (configService: ConfigService<ServerConfig>): Kafka | null => {
         const kafkaConfig: KafkaConfig = configService.getOrThrow<KafkaConfig>('KAFKA');
-        
+
     if (kafkaConfig.KAFKA_SSL_ENABLED) {
       const caPath = kafkaConfig.KAFKA_SSL_CA_PATH;
       const certPath = kafkaConfig.KAFKA_SSL_CERT_PATH;
       const keyPath = kafkaConfig.KAFKA_SSL_KEY_PATH;
 
       if (!caPath || !certPath || !keyPath) {
-        throw new Error('SSL enabled but cert paths are missing! (Runtime check)');
+        throw new Error('SSL enabled but cert paths are missing');
       }
 
       return new Kafka({

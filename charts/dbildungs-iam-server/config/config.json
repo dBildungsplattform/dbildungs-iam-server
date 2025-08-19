@@ -95,7 +95,7 @@
         "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true
     },
     "KAFKA": {
-        "BROKER": "10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093",
+        "BROKER": "10.7.250.100:9093",
         "TOPIC_PREFIX": "dev.",
         "USER_TOPIC": "spsh-user-topic",
         "USER_DLQ_TOPIC": "spsh-user-dlq-topic",
