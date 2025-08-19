@@ -14,6 +14,7 @@ import { InvalidAttributeLengthError } from './invalid-attribute-length.error.js
 import { InvalidNameError } from './invalid-name.error.js';
 import { MissingPermissionsError } from './missing-permissions.error.js';
 import { UserExternalDataWorkflowError } from './user-externaldata-workflow.error.js';
+import { ExceedsLimitError } from './exceeds-limit.error.js';
 
 export class SchulConnexErrorMapper {
     private static SCHULCONNEX_ERROR_MAPPINGS: Map<string, SchulConnexError> = new Map([
@@ -124,6 +125,15 @@ export class SchulConnexErrorMapper {
                 subcode: '01',
                 titel: 'Angefragte Entität existiert nicht',
                 beschreibung: 'Die angeforderte Entität existiert nicht',
+            }),
+        ],
+        [
+            ExceedsLimitError.name,
+            new SchulConnexError({
+                code: 400,
+                subcode: '01',
+                titel: 'Die Anfrage überschreitete das Limit',
+                beschreibung: 'Die Anfrage überschreitete das Limit',
             }),
         ],
         [
