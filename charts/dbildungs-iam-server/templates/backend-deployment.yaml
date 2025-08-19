@@ -37,7 +37,7 @@ spec:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
           env:
-             name: KAFKA_SSL_ENABLED
+            - name: KAFKA_SSL_ENABLED
               value: "true"  # set in values
             - name: KAFKA_SSL_CA_PATH
               value: /tls/ca.pem
