@@ -217,7 +217,7 @@ services:
       - third-party
     command: /init/scripts/create_topics.sh /init-data/kafka-topics.txt
     environment:
-      - KAFKA_BROKER=10.7.250.102:9093
+      - KAFKA_BROKER=10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093
       - KAFKA_TOPIC_PREFIX=local.
       - KAFKA_TOPIC_PARTITIONS=1
       - KAFKA_REPLICATION_FACTOR=1
