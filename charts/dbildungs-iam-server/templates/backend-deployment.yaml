@@ -177,8 +177,8 @@ spec:
           secret:
             secretName: dbildungs-iam-kafka-tls
             defaultMode: 420
-        #- name: jks
-        #  emptyDir: {}
+        - name: jks
+          emptyDir: {}
         - name: keystore-password
           secret:
             secretName: dbildungs-iam-kafka-tls
