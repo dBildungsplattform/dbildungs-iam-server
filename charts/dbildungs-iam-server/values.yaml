@@ -194,7 +194,7 @@ redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
-  bootstrapServers: 'managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc:9093'
+  bootstrapServers: '10.7.250.102:9093'
   enabled: true
   sslEnabled: true
   initEnabled: true
