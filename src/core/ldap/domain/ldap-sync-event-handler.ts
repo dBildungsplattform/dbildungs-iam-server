@@ -30,6 +30,7 @@ import { LdapSyncCompletedEvent } from '../../../shared/events/ldap/ldap-sync-co
 import { KafkaLdapSyncCompletedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-completed.event.js';
 import { LdapSyncFailedEvent } from '../../../shared/events/ldap/ldap-sync-failed.event.js';
 import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-failed.event.js';
+import { PersonIdentifier } from '../../logging/person-identifier.js';
 
 export type LdapSyncData = {
     givenName: string;
@@ -109,22 +110,45 @@ export class LdapSyncEventHandler {
         if (!person.referrer) {
             return this.logger.error(`Person with personId:${personId} has no username!`);
         }
-
+        const username: PersonReferrer = person.referrer;
+        const personInfo: PersonIdentifier = {
+            personId: personId,
+            username: username,
+        };
         // Check person has active, primary EmailAddress
         const enabledEmailAddress: Option<EmailAddress<true>> = await this.emailRepo.findEnabledByPerson(personId);
         if (!enabledEmailAddress) {
+            this.logger.warningPersonalized(
+                `Could not find ENABLED EmailAddress, searching for FAILED EmailAddress`,
+                personInfo,
+            );
             const failedEmailAddresses: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(
                 personId,
                 EmailAddressStatus.FAILED,
             );
             //only publish LdapSyncFailedEvent when oxUserId is UNDEFINED, because creation of OxUser-account should be avoided, when oxUserId is already present
-            if (failedEmailAddresses && failedEmailAddresses[0] && !failedEmailAddresses[0].oxUserID) {
-                this.eventService.publish(
-                    new LdapSyncFailedEvent(personId, person.referrer),
-                    new KafkaLdapSyncFailedEvent(personId, person.referrer),
+            if (failedEmailAddresses && failedEmailAddresses[0]) {
+                if (!failedEmailAddresses[0].oxUserID) {
+                    this.eventService.publish(
+                        new LdapSyncFailedEvent(personId, person.referrer),
+                        new KafkaLdapSyncFailedEvent(personId, person.referrer),
+                    );
+                    return this.logger.infoPersonalized(
+                        `Published LdapSyncFailed-event for FAILED EmailAddress, ABORTING LDAP-Sync, address:${failedEmailAddresses[0].address}`,
+                        personInfo,
+                    );
+                } else {
+                    return this.logger.errorPersonalized(
+                        `Most recent FAILED EmailAddress already has an oxUserId, ABORTING LDAP-Sync`,
+                        personInfo,
+                    );
+                }
+            } else {
+                return this.logger.errorPersonalized(
+                    `Could not find any FAILED EmailAddress after no ENABLED EmaiLAddress could be found, ABORTING LDAP-Sync`,
+                    personInfo,
                 );
             }
-            return this.logger.error(`Person with personId:${personId} has no enabled EmailAddress!`);
         }
 
         // Search for most recent deactivated EmailAddress

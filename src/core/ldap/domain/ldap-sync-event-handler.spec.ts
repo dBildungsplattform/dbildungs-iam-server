@@ -37,6 +37,7 @@ import assert from 'assert';
 import { OrganisationsTyp } from '../../../modules/organisation/domain/organisation.enums.js';
 import { PersonLdapSyncEvent } from '../../../shared/events/person-ldap-sync.event.js';
 import { EventRoutingLegacyKafkaService } from '../../eventbus/services/event-routing-legacy-kafka.service.js';
+import { PersonIdentifier } from '../../logging/person-identifier.js';
 
 describe('LdapSyncEventHandler', () => {
     const oeffentlicheSchulenDomain: string = 'schule-sh.de';
@@ -340,6 +341,7 @@ describe('LdapSyncEventHandler', () => {
     });
 
     describe('personExternalSystemSyncEventHandler', () => {
+        let personInfo: PersonIdentifier;
         beforeEach(() => {
             personId = faker.string.uuid();
             username = faker.internet.userName();
@@ -351,6 +353,10 @@ describe('LdapSyncEventHandler', () => {
                     return email;
                 },
             });
+            personInfo = {
+                personId: personId,
+                username: username,
+            };
         });
 
         describe('when person CANNOT be found by events personID', () => {
@@ -396,11 +402,57 @@ describe('LdapSyncEventHandler', () => {
                         username: username,
                     }),
                 );
-                /*expect(eventServiceMock.publish).toHaveBeenCalledWith(new LdapSyncFailedEvent(personId, username),
-                    new KafkaLdapSyncFailedEvent(personId, username));*/
-                expect(loggerMock.error).toHaveBeenCalledWith(
-                    `Person with personId:${event.personId} has no enabled EmailAddress!`,
+                expect(loggerMock.warningPersonalized).toHaveBeenCalledWith(
+                    `Could not find ENABLED EmailAddress, searching for FAILED EmailAddress`,
+                    personInfo,
                 );
+            });
+
+            describe('and not any FAILED EmailAddress could be found', () => {
+                it('should log error, return without proceeding and publish LdapSyncFailedEvent', async () => {
+                    personRepositoryMock.findById.mockResolvedValueOnce(person);
+                    //mock search for ENABLED EmailAddress
+                    emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined);
+                    //mock search for FAILED EmailAddresses
+                    emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([]);
+
+                    await sut.personExternalSystemSyncEventHandler(event);
+
+                    expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+                    expect(loggerMock.errorPersonalized).toHaveBeenCalledWith(
+                        `Could not find any FAILED EmailAddress after no ENABLED EmaiLAddress could be found, ABORTING LDAP-Sync`,
+                        personInfo,
+                    );
+                });
+            });
+
+            describe('and FAILED EmailAddress is found but already has an oxUserId', () => {
+                it('should log error, return without proceeding and publish LdapSyncFailedEvent', async () => {
+                    personRepositoryMock.findById.mockResolvedValueOnce(person);
+                    //mock search for ENABLED EmailAddress
+                    emailRepoMock.findEnabledByPerson.mockResolvedValueOnce(undefined);
+                    //mock search for FAILED EmailAddresses
+                    const failedEmailAddress: EmailAddress<true> = createMock<EmailAddress<true>>({
+                        get address(): string {
+                            return email;
+                        },
+                        get status(): EmailAddressStatus {
+                            return EmailAddressStatus.FAILED;
+                        },
+                        get oxUserID(): string {
+                            return faker.string.numeric();
+                        },
+                    });
+                    emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([failedEmailAddress]);
+
+                    await sut.personExternalSystemSyncEventHandler(event);
+
+                    expect(eventServiceMock.publish).toHaveBeenCalledTimes(0);
+                    expect(loggerMock.errorPersonalized).toHaveBeenCalledWith(
+                        `Most recent FAILED EmailAddress already has an oxUserId, ABORTING LDAP-Sync`,
+                        personInfo,
+                    );
+                });
             });
         });
 
