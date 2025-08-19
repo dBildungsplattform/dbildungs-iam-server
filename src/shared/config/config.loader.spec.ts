@@ -111,7 +111,7 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                    BROKER: "managedkafka-kafka-bootstrap:9093",
+                    BROKER: "10.7.250.100:9093",
                     TOPIC_PREFIX: 'local.',
                     USER_TOPIC: 'spsh-user-topic',
                     USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
@@ -286,7 +286,7 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                BROKER: 'managedkafka-kafka-bootstrap:9093',
+                BROKER: '10.7.250.100:9093',
                 TOPIC_PREFIX: 'local.',
                 USER_TOPIC: 'spsh-user-topic',
                 USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
