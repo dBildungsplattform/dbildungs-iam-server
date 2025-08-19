@@ -249,7 +249,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -517,7 +518,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -807,7 +809,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -1089,7 +1092,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -1363,7 +1367,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -1666,7 +1671,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -2084,7 +2090,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -2379,7 +2386,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -2970,7 +2978,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -3319,7 +3328,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -3604,7 +3614,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -3928,7 +3939,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -4399,7 +4411,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -4790,7 +4803,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -5160,7 +5174,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -5446,7 +5461,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -5522,7 +5538,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ],
           "mappedType": "enum"
         }
@@ -5746,7 +5763,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -6110,7 +6128,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -6506,7 +6525,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -6789,7 +6809,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -7072,7 +7093,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -7357,7 +7379,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -7687,7 +7710,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -7908,7 +7932,8 @@
         "PERSONEN_LESEN",
         "BULK_VERWALTEN",
         "SCHULPORTAL_VERWALTEN",
-        "HINWEISE_BEARBEITEN"
+        "HINWEISE_BEARBEITEN",
+        "ROLLEN_ERWEITERN"
       ]
     },
     "service_provider_target_enum": {
