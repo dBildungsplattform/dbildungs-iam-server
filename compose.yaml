@@ -94,6 +94,11 @@ services:
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
+      KAFKA_BOOTSTRAPSERVERS: managedkafka-kafka-bootstrap:9093
+      KAFKA_SSL_ENABLED: true
+      KAFKA_SSL_CA_PATH: /tls/ca.pem
+      KAFKA_SSL_CERT_PATH: /tls/client-cert.pem
+      KAFKA_SSL_KEY_PATH: /tls/client-key.pem
     restart: unless-stopped
     ports:
       - 9090:9090
@@ -104,6 +109,7 @@ services:
       - source: 'config/docker-config.json'
         target: '/app/config/config.json'
         type: bind
+      - ./tls:/tls # vielleicht nur RO
 
   db-init:
     profiles:
@@ -190,49 +196,30 @@ services:
         target: '/app/config/config.json'
         type: bind
 
-  #kafka:
-  #  image: bitnami/kafka:3.9.0
-  #  profiles:
-  #    - third-party
-  #  ports:
-  #    - '9093:9093'
-    #environment:
-    #  - KAFKA_CFG_NODE_ID=0
-    #  - KAFKA_CFG_PROCESS_ROLES=controller,broker
-    #  - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-    #  - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-    #  - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
-    #  - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
-    #  - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-    #healthcheck:
-    #  test: kafka-topics.sh --list --bootstrap-server 10.7.250.102:9093 || exit 1
-    #  start_period: 10s
-    #  interval: 5s
-    #volumes:
-    #  - kafka:/bitnami/kafka
-
   kafka-init:
     image: bitnami/kafka:3.9.0
     profiles:
       - third-party
     command: /init/scripts/create_topics.sh /init-data/kafka-topics.txt
     environment:
-      - KAFKA_BROKER=10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093
+      - KAFKA_BOOTSTRAPSERVERS= managedkafka-kafka-bootstrap:9093
       - KAFKA_TOPIC_PREFIX=local.
       - KAFKA_TOPIC_PARTITIONS=1
       - KAFKA_REPLICATION_FACTOR=1
+      - KAFKA_SECURITY_PROTOCOL=SSL
       - KAFKA_SSL_CA=/tls/ca.pem
       - KAFKA_SSL_CERT=/tls/client-cert.pem
       - KAFKA_SSL_KEY=/tls/client-key.pem
+      # Passwort für Key-/Truststore
+      - TLS_KEYSTORE_PASSWORD=${TLS_KEYSTORE_PASSWORD}
+      - TLS_KEYSTORE_DIR=/jks
     volumes:
       - ./charts/dbildungs-iam-server/kafka/scripts:/init/scripts:ro
       - type: bind
         source: ./charts/dbildungs-iam-server/config/kafka-topics.txt
         target: /init-data/kafka-topics.txt
         read_only: true
-      - name: dbildungs-iam-kafka-tls
-        mountPath: /tls
-        readOnly: true
+      - ./tls:/tls
 
   openldap:
     image: osixia/openldap:1.5.0

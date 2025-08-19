@@ -10,7 +10,7 @@ describe('KafkaProvider', () => {
     let configService: DeepMocked<ConfigService>;
 
     const kafkaConfigEnabled: KafkaConfig = {
-        BROKER: "10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093",
+        BROKER: 'managedkafka-kafka-bootstrap:9093',
         GROUP_ID: 'test-group',
         SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
@@ -21,8 +21,7 @@ describe('KafkaProvider', () => {
         KAFKA_SSL_ENABLED: true,
         KAFKA_SSL_CA_PATH: "/tls/ca.pem",
         KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
-        KAFKA_SSL_KEY_PATH: "/tls/client-key.pem",
-        KAFKA_SSL_SERVERNAME: "managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc"
+        KAFKA_SSL_KEY_PATH: "/tls/client-key.pem"
     };
 
     const kafkaConfigSslEnabled: KafkaConfig = {

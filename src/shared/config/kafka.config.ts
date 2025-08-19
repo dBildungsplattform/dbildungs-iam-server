@@ -29,19 +29,15 @@ export class KafkaConfig {
     @IsBoolean()
     public readonly KAFKA_SSL_ENABLED!: boolean;
 
-    @ValidateIf(o => o.KAFKA_SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.KAFKA_SSL_ENABLED === true)
     @IsString()
     public readonly KAFKA_SSL_CA_PATH?: string;
 
-    @ValidateIf(o => o.KAFKA_SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.KAFKA_SSL_ENABLED === true)
     @IsString()
     public readonly KAFKA_SSL_CERT_PATH?: string;
 
-    @ValidateIf(o => o.KAFKA_SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.KAFKA_SSL_ENABLED === true)
     @IsString()
     public readonly KAFKA_SSL_KEY_PATH?: string;
-    
-    @ValidateIf(o => o.KAFKA_SSL_ENABLED === true)
-    @IsString()
-    public readonly KAFKA_SSL_SERVERNAME?: string;
 }

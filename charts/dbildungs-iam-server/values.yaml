@@ -170,8 +170,6 @@ backend:
     interval: 30m
     endpoints:
       - port: 'web'
-  extraEnvVars: []
-  extraVolumes: []
   volumeMounts:
     - mountPath: /app/config/config.json
       subPath: config-json
@@ -180,18 +178,50 @@ backend:
     - mountPath: /app/config/secrets.json
       subPath: secrets-json
       name: secret-volume
-  extraVolumeMounts: []
   env:
     renameWaitingTimeInSeconds: 3
     stepUpTimeoutInSeconds: 900
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
+  extraVolumeMounts:
+    - name: dbildungs-iam-kafka-tls
+      mountPath: /tls
+      readOnly: true
+    #- name: jks
+    #  mountPath: /jks
+    #  readOnly: true
+  extraVolumes:
+    - name: dbildungs-iam-kafka-tls
+      secret:
+        secretName: dbildungs-iam-kafka-tls
+        defaultMode: 420
+    #- name: jks
+    #  emptyDir: {}
+  extraEnvVars:
+    #- name: TLS_KEYSTORE
+    #  value: /jks/client.keystore.jks
+    #- name: TLS_TRUSTSTORE
+    #  value: /jks/client.truststore.jks
+    #- name: TLS_KEYSTORE_PASSWORD
+    #  valueFrom:
+    #    secretKeyRef:
+    #      name: dbildungs-iam-kafka-tls
+    #      key: keystore-password
+    - name: KAFKA_SSL_ENABLED
+      value: "true"
+    - name: KAFKA_SSL_CA_PATH
+      value: "/tls/ca.crt"
+    - name: KAFKA_SSL_CERT_PATH
+      value: "/tls/client.crt"
+    - name: KAFKA_SSL_KEY_PATH
+      value: "/tls/client.key"
+  
 
 redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
-  broker: '10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093'
+  bootstrapServers: 'managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc:9093'
   enabled: true
   sslEnabled: true
   initEnabled: true

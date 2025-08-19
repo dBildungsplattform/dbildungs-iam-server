@@ -111,7 +111,7 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                    BROKER: "10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093",
+                    BROKER: "managedkafka-kafka-bootstrap:9093",
                     TOPIC_PREFIX: 'local.',
                     USER_TOPIC: 'spsh-user-topic',
                     USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
@@ -123,7 +123,6 @@ describe('configloader', () => {
                     KAFKA_SSL_CA_PATH: "/tls/ca.pem",
                     KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
                     KAFKA_SSL_KEY_PATH: "/tls/client-key.pem",
-                    KAFKA_SSL_SERVERNAME: "managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc" 
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
@@ -146,6 +145,12 @@ describe('configloader', () => {
                 },
                 OX: {
                     PASSWORD: 'password',
+                },
+                KAFKA: {
+                    KAFKA_SSL_ENABLED: true,
+                    KAFKA_SSL_CA_PATH: '/tls/ca.pem',
+                    KAFKA_SSL_CERT_PATH: '/tls/client-cert.pem',
+                    KAFKA_SSL_KEY_PATH: '/tls/client-key.pem',
                 },
             };
 
@@ -281,20 +286,18 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                BROKER: "10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093",
-                GROUP_ID: 'test-group',
+                BROKER: 'managedkafka-kafka-bootstrap:9093',
+                TOPIC_PREFIX: 'local.',
+                USER_TOPIC: 'spsh-user-topic',
+                USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
+                GROUP_ID: 'nestjs-kafka',
                 SESSION_TIMEOUT: 300000,
-                HEARTBEAT_INTERVAL: 3000,
-                TOPIC_PREFIX: 'test.',
-                USER_TOPIC: 'user-topic',
-                USER_DLQ_TOPIC: 'dlq-topic',
+                HEARTBEAT_INTERVAL: 10000,
                 ENABLED: true,
                 KAFKA_SSL_ENABLED: true,
                 KAFKA_SSL_CA_PATH: "/tls/ca.pem",
                 KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
-                KAFKA_SSL_KEY_PATH: "/tls/client-key.pem",
-                KAFKA_SSL_SERVERNAME: "managedkafka-kafka-bootstrap.ec1334ad-3aa8-48b4-9d45-12db9b48115d.svc"
-                    
+                KAFKA_SSL_KEY_PATH: "/tls/client-key.pem"
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
