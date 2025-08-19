@@ -13,25 +13,27 @@ export const KafkaProvider: Provider<Kafka | null> = {
     useFactory: (configService: ConfigService<ServerConfig>): Kafka | null => {
         const kafkaConfig: KafkaConfig = configService.getOrThrow<KafkaConfig>('KAFKA');
         
-        if (!kafkaConfig.KAFKA_SSL_ENABLED) {
-            throw new Error('SSL is disabled. SSL must be enabled');
-        }
+    if (kafkaConfig.KAFKA_SSL_ENABLED) {
+      const caPath = kafkaConfig.KAFKA_SSL_CA_PATH;
+      const certPath = kafkaConfig.KAFKA_SSL_CERT_PATH;
+      const keyPath = kafkaConfig.KAFKA_SSL_KEY_PATH;
 
-        if (kafkaConfig.KAFKA_SSL_ENABLED) {
-        return new Kafka({
-            brokers: [kafkaConfig.BROKER],
-            ssl: {
-            rejectUnauthorized: true,
-            ca: [fs.readFileSync(kafkaConfig.KAFKA_SSL_CA_PATH, 'utf-8')],
-            cert: fs.readFileSync(kafkaConfig.KAFKA_SSL_CERT_PATH, 'utf-8'),
-            key: fs.readFileSync(kafkaConfig.KAFKA_SSL_KEY_PATH, 'utf-8'),
-            },
-        });
+      if (!caPath || !certPath || !keyPath) {
+        throw new Error('SSL enabled but cert paths are missing! (Runtime check)');
+      }
 
-        } else {
-            return new Kafka({brokers: [kafkaConfig.BROKER],
-            });
-        }
-    },
-    inject: [ConfigService],
+      return new Kafka({
+        brokers: [kafkaConfig.BROKER],
+        ssl: {
+          rejectUnauthorized: true,
+          ca: [fs.readFileSync(caPath, 'utf-8')],
+          cert: fs.readFileSync(certPath, 'utf-8'),
+          key: fs.readFileSync(keyPath, 'utf-8'),
+        },
+      });
+    } else {
+      throw new Error('SSL is disabled. SSL must be enabled');
+    }
+  },
+  inject: [ConfigService],
 };
