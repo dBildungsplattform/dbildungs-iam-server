@@ -173,18 +173,18 @@ spec:
           configMap:
             name: {{ template "common.names.name" $ }}-kafka-init-configmap
             defaultMode: 0555
-        #- name: dbildungs-iam-kafka-tls
-        #  secret:
-        #    secretName: dbildungs-iam-kafka-tls
-        #    defaultMode: 420
+        - name: dbildungs-iam-kafka-tls
+          secret:
+            secretName: dbildungs-iam-kafka-tls
+            defaultMode: 420
         #- name: jks
         #  emptyDir: {}
-        #- name: keystore-password
-        #  secret:
-        #    secretName: dbildungs-iam-kafka-tls
-        #    items:
-        #      - key: keystore-password
-        #        path: keystore-password
+        - name: keystore-password
+          secret:
+            secretName: dbildungs-iam-kafka-tls
+            items:
+              - key: keystore-password
+                path: keystore-password
         {{- end }}
         - name: migration-volume
           configMap:
