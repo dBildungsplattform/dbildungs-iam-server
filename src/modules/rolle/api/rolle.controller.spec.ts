@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -8,29 +9,33 @@ import {
     MapperTestModule,
 } from '../../../../test/utils/index.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
-import { RolleRepo } from '../repo/rolle.repo.js';
-import { RolleFactory } from '../domain/rolle.factory.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { Rolle } from '../domain/rolle.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { RolleController } from './rolle.controller.js';
-import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { CreateRolleBodyParams } from './create-rolle.body.params.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
+import { Rolle } from '../domain/rolle.js';
+import { RolleRepo } from '../repo/rolle.repo.js';
+import { CreateRolleBodyParams } from './create-rolle.body.params.js';
+import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
+import { RolleController } from './rolle.controller.js';
 
-import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing-space.error.js';
+import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
+import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
+import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
+import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
     let rolleController: RolleController;
     let organisationServiceMock: DeepMocked<OrganisationService>;
+    let rollenerweiterungRepoMock: DeepMocked<RollenerweiterungRepo>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -61,15 +66,16 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     useValue: createMock<DBiamPersonenkontextRepo>(),
                 },
                 {
-                    provide: RolleFactory,
-                    useValue: createMock<RolleFactory>(),
-                },
-                {
                     provide: OrganisationService,
                     useValue: createMock<OrganisationService>(),
                 },
+                {
+                    provide: RollenerweiterungRepo,
+                    useValue: createMock<RollenerweiterungRepo>(),
+                },
                 RolleController,
                 RolleFactory,
+                RollenerweiterungFactory,
             ],
         }).compile();
 
@@ -77,6 +83,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
         serviceProviderRepoMock = module.get(ServiceProviderRepo);
         rolleController = module.get(RolleController);
         organisationServiceMock = module.get(OrganisationService);
+        rollenerweiterungRepoMock = module.get(RollenerweiterungRepo);
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
 
     beforeEach(() => {
@@ -128,6 +135,26 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 await expect(rolleController.createRolle(createRolleParams, permissionsMock)).rejects.toThrow(
                     NameForRolleWithTrailingSpaceError,
                 );
+            });
+        });
+    });
+
+    describe('POST rolle/erweiterung', () => {
+        describe('createRollenerweiterung', () => {
+            it('should throw an HTTP exception when rollenerweiterung can not be created', async () => {
+                const createRollenerweiterungParams: CreateRollenerweiterungBodyParams = {
+                    organisationId: faker.string.uuid(),
+                    rolleId: faker.string.uuid(),
+                    serviceProviderId: faker.string.uuid(),
+                };
+                const permissions: PersonPermissions = createMock<PersonPermissions>();
+                rollenerweiterungRepoMock.createAuthorized.mockResolvedValueOnce({
+                    ok: false,
+                    error: new MissingPermissionsError('dummy error'),
+                });
+                await expect(
+                    rolleController.createRollenerweiterung(createRollenerweiterungParams, permissions),
+                ).rejects.toThrow(MissingPermissionsError);
             });
         });
     });

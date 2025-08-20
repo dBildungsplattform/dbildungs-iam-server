@@ -41,7 +41,10 @@ export class RollenerweiterungRepo {
         rollenerweiterung: Rollenerweiterung<false>,
         permissions: PersonPermissions,
     ): Promise<Result<Rollenerweiterung<true>, DomainError>> {
-        const permissionError: Option<DomainError> = await this.checkPermissions(permissions, rollenerweiterung.organisationId);
+        const permissionError: Option<DomainError> = await this.checkPermissions(
+            permissions,
+            rollenerweiterung.organisationId,
+        );
         if (permissionError) return { ok: false, error: permissionError };
 
         const referenceError: Option<DomainError> = await rollenerweiterung.checkReferences();
@@ -61,8 +64,14 @@ export class RollenerweiterungRepo {
         };
     }
 
-    private async checkPermissions(permissions: PersonPermissions, organisationId: OrganisationID): Promise<Option<DomainError>> {
-        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht([RollenSystemRecht.ROLLEN_ERWEITERN], true);
+    private async checkPermissions(
+        permissions: PersonPermissions,
+        organisationId: OrganisationID,
+    ): Promise<Option<DomainError>> {
+        const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
+            [RollenSystemRecht.ROLLEN_ERWEITERN],
+            true,
+        );
         if (permittedOrgas.all || permittedOrgas.orgaIds.includes(organisationId)) {
             return undefined;
         }
