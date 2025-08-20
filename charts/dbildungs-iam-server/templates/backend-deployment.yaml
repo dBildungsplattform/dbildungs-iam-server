@@ -173,8 +173,36 @@ spec:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
           env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
+          {{- if .Values.kafka.sslEnabled }}
+            - name: KAFKA_SSL_ENABLED
+              value: "true"  # set in values
+            - name: KAFKA_SSL_CA_PATH
+              value: /tls/ca.pem
+            - name: KAFKA_SSL_CERT_PATH
+              value: /tls/client-cert.pem
+            - name: KAFKA_SSL_KEY_PATH
+              value: /tls/client-key.pem
+            - name: TLS_KEYSTORE
+              value: /jks/client.keystore.jks
+            - name: TLS_TRUSTSTORE
+              value: /jks/client.truststore.jks
+            - name: TLS_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dbildungs-iam-kafka-tls
+                  key: keystore-password
+            {{- end }}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            - name: dbildungs-iam-kafka-tls
+              readOnly: true
+              mountPath: /tls
+            - name: jks
+              mountPath: /jks
+            - name: keystore-password
+              readOnly: true
+              mountPath: /keystore-password.txt
+              subPath: keystore-password
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
       containers:

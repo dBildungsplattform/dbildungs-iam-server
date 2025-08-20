@@ -94,7 +94,7 @@ services:
     environment:
       NODE_ENV: dev
       DEPLOY_STAGE: dev
-      KAFKA_BOOTSTRAPSERVERS: 10.7.250.100:9093
+      KAFKA_BOOTSTRAPSERVERS: 10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093
       KAFKA_SSL_ENABLED: true
       KAFKA_SSL_CA_PATH: /tls/ca.pem
       KAFKA_SSL_CERT_PATH: /tls/client-cert.pem
@@ -202,7 +202,7 @@ services:
       - third-party
     command: /init/scripts/create_topics.sh /init-data/kafka-topics.txt
     environment:
-      - KAFKA_BOOTSTRAPSERVERS= 10.7.250.100:9093
+      - KAFKA_BOOTSTRAPSERVERS= 10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093
       - KAFKA_TOPIC_PREFIX=local.
       - KAFKA_TOPIC_PARTITIONS=1
       - KAFKA_REPLICATION_FACTOR=1
