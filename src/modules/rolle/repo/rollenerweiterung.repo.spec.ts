@@ -23,6 +23,8 @@ import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { faker } from '@faker-js/faker';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 describe('RollenerweiterungRepo', () => {
     let module: TestingModule;
@@ -142,6 +144,25 @@ describe('RollenerweiterungRepo', () => {
             expect(savedRollenerweiterung.ok).toBe(false);
             if (!savedRollenerweiterung.ok) {
                 expect(savedRollenerweiterung.error).toBeInstanceOf(MissingPermissionsError);
+            }
+        });
+
+        it('should return an error if references are invalid', async () => {
+            permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+            const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
+                faker.string.uuid(),
+                rolle.id,
+                serviceProvider.id,
+            );
+
+            const savedRollenerweiterung: Result<Rollenerweiterung<true>, DomainError> = await sut.createAuthorized(
+                rollenerweiterung,
+                permissionMock,
+            );
+
+            expect(savedRollenerweiterung.ok).toBe(false);
+            if (!savedRollenerweiterung.ok) {
+                expect(savedRollenerweiterung.error).toBeInstanceOf(EntityNotFoundError);
             }
         });
     });

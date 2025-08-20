@@ -29,6 +29,7 @@ import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js
 import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
+import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -141,13 +142,37 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
 
     describe('POST rolle/erweiterung', () => {
         describe('createRollenerweiterung', () => {
-            it('should throw an HTTP exception when rollenerweiterung can not be created', async () => {
-                const createRollenerweiterungParams: CreateRollenerweiterungBodyParams = {
+            let createRollenerweiterungParams: CreateRollenerweiterungBodyParams;
+            let permissions: PersonPermissions;
+            beforeEach(() => {
+                createRollenerweiterungParams = {
                     organisationId: faker.string.uuid(),
                     rolleId: faker.string.uuid(),
                     serviceProviderId: faker.string.uuid(),
                 };
-                const permissions: PersonPermissions = createMock<PersonPermissions>();
+                permissions = createMock<PersonPermissions>();
+            });
+
+            it('should return the response', async () => {
+                rollenerweiterungRepoMock.createAuthorized.mockResolvedValueOnce({
+                    ok: true,
+                    value: DoFactory.createRollenerweiterung<true>(true, createRollenerweiterungParams),
+                });
+                const result: RollenerweiterungResponse = await rolleController.createRollenerweiterung(
+                    createRollenerweiterungParams,
+                    permissions,
+                );
+                expect(result).toBeInstanceOf(RollenerweiterungResponse);
+                expect(result).toEqual(
+                    expect.objectContaining({
+                        organisationId: createRollenerweiterungParams.organisationId,
+                        rolleId: createRollenerweiterungParams.rolleId,
+                        serviceProviderId: createRollenerweiterungParams.serviceProviderId,
+                    }),
+                );
+            });
+
+            it('should throw an HTTP exception when rollenerweiterung can not be created', async () => {
                 rollenerweiterungRepoMock.createAuthorized.mockResolvedValueOnce({
                     ok: false,
                     error: new MissingPermissionsError('dummy error'),
