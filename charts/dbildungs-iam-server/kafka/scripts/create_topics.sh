@@ -8,7 +8,7 @@ SSL_CERT_PATH="${KAFKA_SSL_CERT_PATH:?Missing client cert}"
 SSL_KEY_PATH="${KAFKA_SSL_KEY_PATH:?Missing client key}"
 PASSWORD="${TLS_KEYSTORE_PASSWORD:?Missing TLS_KEYSTORE_PASSWORD}"
 
-#  /jks via emptyDir)
+#  /jks via emptyDir
 KEYSTORE_DIR="${TLS_KEYSTORE_DIR:-/jks}"
 
 # Create files in writeable dir
@@ -77,6 +77,6 @@ echo "📌 Create Topics..."
     --partitions "${PARTITIONS}" ${REPL} \
     --command-config "${CONFIG}"
 
-echo " Topics created:"
-kafka-topics.sh --bootstrap-server "${BROKER}" \
-  --describe --command-config "${CONFIG}"
+echo " Topics have been created"
+#kafka-topics.sh --bootstrap-server "${BROKER}" \
+#   --describe --command-config "${CONFIG}"

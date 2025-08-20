@@ -141,11 +141,8 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-        {{if .Values.kafka.initEnabled }}
-        - name: kafka-init-volume
-          configMap:
-            name: {{ template "common.names.name" $ }}-kafka-init-configmap
-            defaultMode: 0555
+        {{if .Values.kafka.enabled }}
+        {{- toYaml .Values.kafka.volumes | nindent 8 }}
         {{- end }}
         - name: migration-volume
           configMap:

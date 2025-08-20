@@ -197,7 +197,10 @@ kafka:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'
     pullPolicy: Always
-  volumeMounts: 
+  volumeMounts:
+    - name: kafka-init-volume
+      readOnly: true
+      mountPath: /init
     - name: dbildungs-iam-kafka-tls
       readOnly: true
       mountPath: /tls
@@ -207,6 +210,23 @@ kafka:
       readOnly: true
       mountPath: /keystore-password.txt
       subPath: keystore-password
+  volumes: 
+    - name: kafka-init-volume
+      configMap:
+        name: dbildungs-iam-server-kafka-init-configmap
+        defaultMode: 0555
+    - name: dbildungs-iam-kafka-tls
+      secret:
+        secretName: dbildungs-iam-kafka-tls
+        defaultMode: 420
+    - name: jks
+      emptyDir: {}
+    - name: keystore-password
+      secret:
+        secretName: dbildungs-iam-kafka-tls
+        items:
+          - key: keystore-password
+            path: keystore-password
 
 autoscaling:
   enabled: false

@@ -10,7 +10,7 @@ data:
   KAFKA_TOPIC_PREFIX: '{{ .Release.Namespace }}-'
   KAFKA_TOPIC_PARTITIONS: '{{ .Values.kafka.topicPartitions }}'
   KAFKA_BROKER: '{{ .Values.kafka.url }}'
-  KAFKA_SSL_ENABLED: true
+  KAFKA_SSL_ENABLED: "true"
   KAFKA_SSL_CA_PATH: /tls/ca.pem
   KAFKA_SSL_CERT_PATH: /tls/client-cert.pem
   KAFKA_SSL_KEY_PATH: /tls/client-key.pem

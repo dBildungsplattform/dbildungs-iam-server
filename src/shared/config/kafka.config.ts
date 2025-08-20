@@ -31,10 +31,7 @@ export class KafkaConfig {
   @IsBoolean()
   public readonly SSL_ENABLED!: boolean;
  
-  @IsBoolean()
-  public readonly KAFKA_SSL_ENABLED!: boolean;
- 
-  @ValidateIf(o => o.KAFKA_SSL_ENABLED === true)
+  @ValidateIf(o => o.SSL_ENABLED === true)
   @IsString()
   public readonly SSL_CA_PATH?: string;
  
