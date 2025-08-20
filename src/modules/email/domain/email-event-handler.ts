@@ -726,24 +726,6 @@ export class EmailEventHandler {
                             organisationKennung.value,
                         );
                     this.eventService.publish(...events);
-                    /* this.eventService.publish(
-                        new EmailAddressGeneratedEvent(
-                            personId,
-                            personUsername.value,
-                            persistenceResult.id,
-                            persistenceResult.address,
-                            persistenceResult.enabled,
-                            organisationKennung.value,
-                        ),
-                        new KafkaEmailAddressGeneratedEvent(
-                            personId,
-                            personUsername.value,
-                            persistenceResult.id,
-                            persistenceResult.address,
-                            persistenceResult.enabled,
-                            organisationKennung.value,
-                        ),
-                    );*/
                 } else {
                     this.logger.error(
                         `Could not ENABLE email for personId:${personId}, username:${personUsername.value}, error:${persistenceResult.message}`,
@@ -815,24 +797,6 @@ export class EmailEventHandler {
                 organisationKennung.value,
             );
             this.eventService.publish(...events);
-            /*this.eventService.publish(
-                new EmailAddressGeneratedEvent(
-                    personId,
-                    personUsername.value,
-                    persistenceResult.id,
-                    persistenceResult.address,
-                    persistenceResult.enabled,
-                    organisationKennung.value,
-                ),
-                new KafkaEmailAddressGeneratedEvent(
-                    personId,
-                    personUsername.value,
-                    persistenceResult.id,
-                    persistenceResult.address,
-                    persistenceResult.enabled,
-                    organisationKennung.value,
-                ),
-            );*/
         } else {
             this.logger.error(
                 `Could not persist email for personId:${personId}, username:${personUsername.value}, error:${persistenceResult.message}`,

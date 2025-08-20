@@ -96,7 +96,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
         this.logger.info(
             `Received EmailAddressChangedEvent, personId:${event.personId}, username:${event.username}, oldEmailAddressId:${event.oldEmailAddressId}, oldAddress:${event.oldAddress}, newEmailAddressId:${event.newEmailAddressId}, newAddress:${event.newAddress}`,
         );
-
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
@@ -113,7 +112,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
         this.logger.info(
             `Received EmailAddressGeneratedEvent, personId:${event.personId}, username:${event.username}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
         );
-
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
@@ -130,7 +128,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
         this.logger.info(
             `Received EmailAddressGeneratedAfterLdapSyncFailedEvent, personId:${event.personId}, username:${event.username}, emailAddressId:${event.emailAddressId}, address:${event.address}`,
         );
-
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
         }
@@ -160,7 +157,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
         this.logger.info(
             `Received EmailAddressAlreadyExistsEvent, personId:${event.personId}, orgaKennung:${event.orgaKennung}`,
         );
-
         // Check if the functionality is enabled
         if (!this.ENABLED) {
             return this.logger.info('Not enabled, ignoring event');
@@ -171,7 +167,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
         if (!person) {
             return this.logger.error(`Person not found for personId:${event.personId}`);
         }
-
         // If the person doesn't have an OX user ID, log an error and stop the process
         if (!person.oxUserId) {
             return this.logger.error(
@@ -184,7 +179,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
             OxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + event.orgaKennung,
             OxEventHandler.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + event.orgaKennung,
         );
-
         if (!oxGroupIdResult.ok) {
             return this.logger.error(
                 `Get or create OX group failed, personId:${event.personId}, oxUserId:${person.oxUserId}, orgaKennung:${event.orgaKennung}`,
@@ -200,7 +194,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
                 username: undefined,
             },
         );
-
         if (!addUserToGroupResult.ok) {
             return this.logger.error(
                 `Failed to add user to group, personId:${event.personId}, oxUserId:${person.oxUserId}, oxGroupId:${oxGroupIdResult.value}`,
@@ -729,26 +722,6 @@ export class OxEventHandler extends AbstractOxEventHandler {
             createUserResult.value.primaryEmail,
         );
         this.eventService.publish(...events);
-        /* this.eventService.publish(
-            new OxUserChangedEvent(
-                personId,
-                person.referrer,
-                createUserResult.value.id,
-                createUserResult.value.username,
-                this.contextID,
-                this.contextName,
-                createUserResult.value.primaryEmail,
-            ),
-            new KafkaOxUserChangedEvent(
-                personId,
-                person.referrer,
-                createUserResult.value.id,
-                createUserResult.value.username,
-                this.contextID,
-                this.contextName,
-                createUserResult.value.primaryEmail,
-            ),
-        );*/
     }
 
     private async changeOxUser(
