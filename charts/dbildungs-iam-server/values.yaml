@@ -76,8 +76,6 @@ auth:
   import_passphrase_salt: ''
   ox_password: ''
   basic_auth_password: ''
-  kafka_username: ''
-  kafka_password: ''
 
 ox:
   enabled: false
@@ -199,6 +197,16 @@ kafka:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'
     pullPolicy: Always
+  volumeMounts: 
+    - name: dbildungs-iam-kafka-tls
+      readOnly: true
+      mountPath: /tls
+    - name: jks
+      mountPath: /jks
+    - name: keystore-password
+      readOnly: true
+      mountPath: /keystore-password.txt
+      subPath: keystore-password
 
 autoscaling:
   enabled: false

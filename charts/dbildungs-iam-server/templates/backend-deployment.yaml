@@ -33,24 +33,16 @@ spec:
           imagePullPolicy: {{ .Values.kafka.initImage.pullPolicy | default "Always" }}
           securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           command: [ "sh", "/init/create_topics.sh", "/init/topics.txt" ]
+          env: 
+            - name: TLS_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dbildungs-iam-kafka-tls
+                  key: keystore-password
           envFrom:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
-          env:
-            - name: KAFKA_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: dbildungs-iam-server
-                  key: kafka-username
-            - name: KAFKA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: dbildungs-iam-server
-                  key: kafka-password
-          volumeMounts:
-          - name: kafka-init-volume
-            mountPath: /init
-            readOnly: true
+          volumeMounts: {{- toYaml .Values.kafka.volumeMounts | nindent 12 }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
         {{- if .Values.backend.dbmigration.enabled }}
@@ -117,11 +109,23 @@ spec:
             {{- if .Values.backend.extraEnvVars }}
             {{ toYaml .Values.backend.extraEnvVars | nindent 12 }}
             {{- end }}
+            - name: TLS_KEYSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dbildungs-iam-kafka-tls
+                  key: keystore-password
           envFrom:
             - configMapRef:
                 name: {{ template "common.names.name" . }}
+            {{- if .Values.kafka.enabled }}
+            - configMapRef:
+                name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
+            {{- end }}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            {{- if .Values.kafka.enabled }}
+            {{- toYaml .Values.kafka.volumeMounts | nindent 12 }}
+            {{- end }}
             {{- with .Values.backend.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

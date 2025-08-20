@@ -119,7 +119,10 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SASL_ENABLED: true,
+                    SSL_ENABLED: true,
+                    SSL_CA_PATH: "/tls/ca.pem",
+                    SSL_CERT_PATH: "/tls/client-cert.pem",
+                    SSL_KEY_PATH: "/tls/client-key.pem",
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
@@ -144,8 +147,10 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                 },
                 KAFKA: {
-                    USERNAME: 'username',
-                    PASSWORD: 'password',
+                    SSL_ENABLED: true,
+                    SSL_CA_PATH: '/tls/ca.pem',
+                    SSL_CERT_PATH: '/tls/client-cert.pem',
+                    SSL_KEY_PATH: '/tls/client-key.pem',
                 },
             };
 
@@ -289,9 +294,10 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SASL_ENABLED: true,
-                    USERNAME: 'username',
-                    PASSWORD: 'password',
+                    SSL_ENABLED: true,
+                    SSL_CA_PATH: "/tls/ca.pem",
+                    SSL_CERT_PATH: "/tls/client-cert.pem",
+                    SSL_KEY_PATH: "/tls/client-key.pem"
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],

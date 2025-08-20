@@ -3,7 +3,7 @@ import { CommandFactory } from 'nest-commander';
 import { ConsoleModule } from './console.module.js';
 
 //Since We cannot have different configurations for console and server, we disable Kafka in the console environment
-process.env['KAFKA_ENABLED'] = 'false';
+// process.env['KAFKA_ENABLED'] = 'false';
 
 async function bootstrap(): Promise<void> {
     await CommandFactory.run(ConsoleModule, {
