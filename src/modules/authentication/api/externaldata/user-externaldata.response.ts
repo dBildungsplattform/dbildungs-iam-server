@@ -46,6 +46,11 @@ export class UserExeternalDataResponse {
         const ox: UserExeternalDataResponseOx = new UserExeternalDataResponseOx(person.referrer!, contextID);
         const itslearning: UserExeternalDataResponseItslearning = new UserExeternalDataResponseItslearning(person.id);
         const vidis: UserExeternalDataResponseVidis = new UserExeternalDataResponseVidis(
+            person.id,
+            person.vorname,
+            person.familienname,
+            externalPkData[0]?.rollenart,
+            person.email,
             externalPkData.map((pk: RequiredExternalPkData) => pk.kennung),
         );
         const opsh: UserExeternalDataResponseOpsh = new UserExeternalDataResponseOpsh(

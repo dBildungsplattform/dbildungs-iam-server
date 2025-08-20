@@ -1,5 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { EntityManager, FilterQuery, Loaded, QBFilterQuery, raw, RequiredEntityData } from '@mikro-orm/postgresql';
+import {
+    Cursor,
+    EntityManager,
+    FilterQuery,
+    Loaded,
+    QBFilterQuery,
+    QueryOrder,
+    raw,
+    RequiredEntityData,
+} from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataConfig } from '../../../shared/config/data.config.js';
@@ -12,7 +21,7 @@ import {
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
 import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonID, PersonReferrer } from '../../../shared/types/aggregate-ids.types.js';
+import { PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
@@ -26,7 +35,7 @@ import { PersonenkontextEventKontextData } from '../../../shared/events/personen
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonExternalIdType, PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
 import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { UsernameGeneratorService } from '../domain/username-generator.service.js';
 import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
@@ -51,6 +60,7 @@ import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/ev
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/email.repo.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -213,7 +223,7 @@ export type PersonenQueryParams = {
     rolleIDs?: string[];
     offset?: number;
     limit?: number;
-    sortField?: SortFieldPersonFrontend;
+    sortField?: SortFieldPerson;
     sortOrder?: ScopeOrder;
     suchFilter?: string;
 };
@@ -321,6 +331,75 @@ export class PersonRepository {
         });
 
         return personEntities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+    }
+
+    public async findByPersonIds(personIds: PersonID[]): Promise<Person<true>[]> {
+        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, {
+            id: { $in: personIds },
+        });
+
+        return personEntities.map((entity: PersonEntity) => mapEntityToAggregate(entity));
+    }
+
+    /**
+     * Find all personen, that
+     * - have a personenkontext with the specified rolle
+     * - at an organisation that is itslearning enabled
+     * but
+     * - no other personenkontext
+     * - with a different rolle
+     * - with the itslearning serviceprovider
+     * - at an organisaton that is itslearning enabled
+     */
+    public async findWithRolleAndNoOtherItslearningKontexteByCursor(
+        rolle: RolleID,
+        count: number,
+        cursor?: string,
+    ): Promise<[persons: Person<true>[], cursor: string | undefined]> {
+        const personCursor: Cursor<PersonEntity> = await this.em.findByCursor(
+            PersonEntity,
+            {
+                personenKontexte: {
+                    // Only if the person has the requested rolle
+                    $some: {
+                        rolleId: rolle,
+                        // at an organisation that is itslearning enabled
+                        organisationId: {
+                            itslearningEnabled: true,
+                        },
+                    },
+                    // But no other kontext
+                    $none: {
+                        rolleId: {
+                            // That is not the requested rolle
+                            $ne: rolle,
+                            serviceProvider: {
+                                // with itslearning
+                                serviceProvider: {
+                                    externalSystem: ServiceProviderSystem.ITSLEARNING,
+                                },
+                            },
+                        },
+                        // at an organisation that is itslearning enabled
+                        organisationId: {
+                            itslearningEnabled: true,
+                        },
+                    },
+                },
+            },
+            {
+                after: cursor,
+                first: count,
+                orderBy: {
+                    id: QueryOrder.ASC,
+                },
+            },
+        );
+
+        return [
+            personCursor.items.map((entity: PersonEntity) => mapEntityToAggregate(entity)),
+            personCursor.endCursor ?? undefined, // Map null to undefined
+        ];
     }
 
     public async getPersonIfAllowed(
@@ -788,10 +867,10 @@ export class PersonRepository {
         return [persons, total];
     }
 
-    private readonly SORT_CRITERIA: Partial<Record<SortFieldPersonFrontend, SortFieldPersonFrontend[]>> = {
-        [SortFieldPersonFrontend.VORNAME]: [SortFieldPersonFrontend.FAMILIENNAME, SortFieldPersonFrontend.REFERRER],
-        [SortFieldPersonFrontend.FAMILIENNAME]: [SortFieldPersonFrontend.VORNAME, SortFieldPersonFrontend.REFERRER],
-        [SortFieldPersonFrontend.PERSONALNUMMER]: [SortFieldPersonFrontend.REFERRER],
+    private readonly SORT_CRITERIA: Partial<Record<SortFieldPerson, SortFieldPerson[]>> = {
+        [SortFieldPerson.VORNAME]: [SortFieldPerson.FAMILIENNAME, SortFieldPerson.REFERRER],
+        [SortFieldPerson.FAMILIENNAME]: [SortFieldPerson.VORNAME, SortFieldPerson.REFERRER],
+        [SortFieldPerson.PERSONALNUMMER]: [SortFieldPerson.REFERRER],
     };
 
     public createPersonScope(queryParams: PersonenQueryParams, permittedOrgas: PermittedOrgas): PersonScope {
@@ -806,7 +885,7 @@ export class PersonRepository {
             .findByPersonenKontext(queryParams.organisationIDs, queryParams.rolleIDs)
             .paged(queryParams.offset, queryParams.limit);
 
-        const sortField: SortFieldPersonFrontend = queryParams.sortField || SortFieldPersonFrontend.VORNAME;
+        const sortField: SortFieldPerson = queryParams.sortField || SortFieldPerson.VORNAME;
         const sortOrder: ScopeOrder = queryParams.sortOrder || ScopeOrder.ASC;
 
         this.addSortCriteria(scope, sortField, sortOrder);
@@ -821,12 +900,8 @@ export class PersonRepository {
         return scope;
     }
 
-    private addSortCriteria(
-        scope: PersonScope,
-        criteria: SortFieldPersonFrontend,
-        order: ScopeOrder = ScopeOrder.ASC,
-    ): void {
-        if (criteria === SortFieldPersonFrontend.REFERRER) {
+    private addSortCriteria(scope: PersonScope, criteria: SortFieldPerson, order: ScopeOrder = ScopeOrder.ASC): void {
+        if (criteria === SortFieldPerson.REFERRER) {
             scope.sortBy(criteria, order);
         } else {
             scope.sortBy(raw(`lower(${criteria})`), order);

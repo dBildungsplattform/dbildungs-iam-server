@@ -4,6 +4,7 @@ import { Logger as LoggerWinston } from 'winston';
 import { Logger } from './logger.js';
 import { INQUIRER } from '@nestjs/core';
 import { inspect } from 'util';
+import { PersonIdentifier } from './person-identifier.js';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class ClassLogger extends Logger {
@@ -36,6 +37,21 @@ export class ClassLogger extends Logger {
         this.logger.log('error', this.createMessage(message, trace));
     }
 
+    /**
+     * Calls the error-method after extending the message with ',personId:XX, username:YYYY'.
+     * @param message
+     * @param personIdentifier
+     */
+    public errorPersonalized(message: string, personIdentifier: PersonIdentifier, trace?: unknown): void {
+        this.logger.log(
+            'error',
+            this.createMessage(
+                message + `, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+                trace,
+            ),
+        );
+    }
+
     public warning(message: string, trace?: unknown): void {
         this.logger.log('warning', this.createMessage(message, trace));
     }
@@ -48,8 +64,38 @@ export class ClassLogger extends Logger {
         this.logger.log('info', this.createMessage(message, trace));
     }
 
+    /**
+     * Calls the info-method after extending the message with ',personId:XX, username:YYYY'.
+     * @param message
+     * @param personIdentifier
+     */
+    public infoPersonalized(message: string, personIdentifier: PersonIdentifier, trace?: unknown): void {
+        this.logger.log(
+            'info',
+            this.createMessage(
+                message + `, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+                trace,
+            ),
+        );
+    }
+
     public debug(message: string, trace?: unknown): void {
         this.logger.log('debug', this.createMessage(message, trace));
+    }
+
+    /**
+     * Logs the message with log-level warning, then either logs the content of the parameter 'error' by calling util.inspect on it, if
+     * its type is not Error, or
+     * logs the message and stack contained in the parameter 'error', if its type is Error.
+     * @param message
+     * @param error should implement Error interface
+     */
+    public logUnknownAsWarning(message: string, error: unknown, warnWhenErrorIsUndefined: boolean = true): void {
+        if (this.instanceOfError(error, warnWhenErrorIsUndefined)) {
+            this.warning(message + ' - ' + error.message, error.stack);
+        } else {
+            this.warning(message + ' - ' + inspect(error, false, 2, false), undefined);
+        }
     }
 
     /**

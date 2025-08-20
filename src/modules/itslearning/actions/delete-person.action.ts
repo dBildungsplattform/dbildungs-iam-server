@@ -3,7 +3,7 @@ import { IMS_COMMON_SCHEMA, IMS_PERSON_MAN_MESS_SCHEMA } from '../schemas.js';
 import { IMSESAction } from './base-action.js';
 
 type DeletePersonResponseBody = {
-    readPersonResponse: undefined;
+    deletePersonResponse: undefined;
 };
 
 export class DeletePersonAction extends IMSESAction<DeletePersonResponseBody, void> {

@@ -13,7 +13,8 @@
             "keycloakGroup": "E-Mail-service",
             "keycloakRole": "E-Mail-user",
             "externalSystem": "EMAIL",
-            "requires2fa": true
+            "requires2fa": true,
+            "merkmale": []
         },
         {
             "id": 1,
@@ -26,7 +27,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Kalender-service",
             "keycloakRole": "Kalender-user",
-            "requires2fa": true
+            "requires2fa": true,
+            "merkmale": []
         },
         {
             "id": 2,
@@ -39,7 +41,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Adressbuch-service",
             "keycloakRole": "Adressbuch-user",
-            "requires2fa": true
+            "requires2fa": true,
+            "merkmale": []
         },
         {
             "id": 3,
@@ -53,7 +56,8 @@
             "keycloakGroup": "itslearning-service",
             "keycloakRole": "itslearning-user",
             "externalSystem": "ITSLEARNING",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 4,
@@ -66,7 +70,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "OP.SH-service",
             "keycloakRole": "OP.SH-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 5,
@@ -78,7 +83,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Schulportal-Administration-service",
             "keycloakRole": "Schulportal-Administration-user",
-            "requires2fa": true
+            "requires2fa": true,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 6,
@@ -91,7 +97,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "School-SH-service",
             "keycloakRole": "School-SH-user",
-            "requires2fa": true
+            "requires2fa": true,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 7,
@@ -104,7 +111,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "WebUntis-service",
             "keycloakRole": "WebUntis-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 8,
@@ -117,7 +125,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Anleitungen-service",
             "keycloakRole": "Anleitungen-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 9,
@@ -130,7 +139,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Schulrecht A-Z-service",
             "keycloakRole": "Schulrecht A-Z-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 10,
@@ -143,7 +153,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Helpdesk kontaktieren-service",
             "keycloakRole": "Helpdesk kontaktieren-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 11,
@@ -156,7 +167,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Psychosoziales Beratungsangebot-service",
             "keycloakRole": "Psychosoziales Beratungsangebot-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 12,
@@ -169,7 +181,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "LeOniE-service",
             "keycloakRole": "LeOniE-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 13,
@@ -182,7 +195,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "DaZ-Dashboard-service",
             "keycloakRole": "DaZ-Dashboard-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 14,
@@ -195,7 +209,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "Schuldatenblatt-service",
             "keycloakRole": "Schuldatenblatt-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 15,
@@ -208,7 +223,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "VIDIS-Dienste-service",
             "keycloakRole": "VIDIS-Dienste-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         },
         {
             "id": 16,
@@ -221,7 +237,8 @@
             "providedOnSchulstrukturknoten": 0,
             "keycloakGroup": "VIDIS-Dienste-service",
             "keycloakRole": "VIDIS-Dienste-user",
-            "requires2fa": false
+            "requires2fa": false,
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
         }
     ]
 }

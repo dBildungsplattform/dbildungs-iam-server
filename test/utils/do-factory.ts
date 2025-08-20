@@ -1,28 +1,28 @@
 import { faker } from '@faker-js/faker';
+import { ImportDataItem } from '../../src/modules/import/domain/import-data-item.js';
+import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js';
+import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
+import { ImportDataItemStatus } from '../../src/modules/import/domain/importDataItem.enum.js';
 import { User } from '../../src/modules/keycloak-administration/domain/user.js';
+import { Meldung } from '../../src/modules/meldung/domain/meldung.js';
 import { OrganisationsTyp, Traegerschaft } from '../../src/modules/organisation/domain/organisation.enums.js';
+import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
+import { Person } from '../../src/modules/person/domain/person.js';
 import {
     Jahrgangsstufe,
     Personenstatus,
     SichtfreigabeType,
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
+import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
 import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../src/modules/rolle/domain/rolle.enums.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
-import { DoBase } from '../../src/shared/types/do-base.js';
-import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import {
     ServiceProviderKategorie,
     ServiceProviderSystem,
     ServiceProviderTarget,
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
-import { Person } from '../../src/modules/person/domain/person.js';
-import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
-import { Organisation } from '../../src/modules/organisation/domain/organisation.js';
-import { ImportDataItem } from '../../src/modules/import/domain/import-data-item.js';
-import { ImportVorgang } from '../../src/modules/import/domain/import-vorgang.js';
-import { ImportStatus } from '../../src/modules/import/domain/import.enums.js';
-import { ImportDataItemStatus } from '../../src/modules/import/domain/importDataItem.enum.js';
-import { Meldung } from '../../src/modules/meldung/domain/meldung.js';
+import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
+import { DoBase } from '../../src/shared/types/do-base.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -161,6 +161,7 @@ export class DoFactory {
             providedOnSchulstrukturknoten: faker.string.uuid(),
             externalSystem: ServiceProviderSystem.NONE,
             requires2fa: true,
+            merkmale: [],
         };
         return Object.assign(
             Object.create(ServiceProvider.prototype) as ServiceProvider<boolean>,

@@ -67,6 +67,9 @@ describe('configloader', () => {
                     ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
+                    MAX_ATTEMPTS: 5,
+                    MAX_BATCH_SIZE: 100,
+                    RETRY_DELAY_MS: 15000,
                 },
                 PRIVACYIDEA: {
                     ENDPOINT: 'http://localhost:5000',
@@ -113,13 +116,13 @@ describe('configloader', () => {
                     USER_TOPIC: 'spsh-user-topic',
                     USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
                     GROUP_ID: 'nestjs-kafka',
-                    SESSION_TIMEOUT: 30000,
+                    SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
                     SASL_ENABLED: true,
                 },
                 PORTAL: {
-                    LIMITED_ROLLENART_ALLOWLIST: ['LEIT', 'LERN', 'EXTERN'],
+                    LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
                 },
             };
 
@@ -233,6 +236,9 @@ describe('configloader', () => {
                     ROOT: 'sh',
                     ROOT_OEFFENTLICH: 'oeffentlich',
                     ROOT_ERSATZ: 'ersatz',
+                    MAX_ATTEMPTS: 5,
+                    MAX_BATCH_SIZE: 100,
+                    RETRY_DELAY_MS: 15000,
                 },
                 PRIVACYIDEA: {
                     ENDPOINT: 'http://localhost:5000',
@@ -280,7 +286,7 @@ describe('configloader', () => {
                     USER_TOPIC: 'spsh-user-topic',
                     USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
                     GROUP_ID: 'nestjs-kafka',
-                    SESSION_TIMEOUT: 30000,
+                    SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
                     SASL_ENABLED: true,
@@ -288,7 +294,7 @@ describe('configloader', () => {
                     PASSWORD: 'password',
                 },
                 PORTAL: {
-                    LIMITED_ROLLENART_ALLOWLIST: ['LEIT', 'LERN', 'EXTERN'],
+                    LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
                 },
             };
 

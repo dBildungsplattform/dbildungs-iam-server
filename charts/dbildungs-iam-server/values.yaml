@@ -76,8 +76,6 @@ auth:
   import_passphrase_salt: ''
   ox_password: ''
   basic_auth_password: ''
-  vidis_client_id: ''
-  vidis_client_secret: ''
   kafka_username: ''
   kafka_password: ''
 
@@ -248,11 +246,11 @@ cronjobs:
       endpoint: '/api/cron/unlock'
       httpMethod: 'PUT'
       script: 'cron_trigger.sh'
-    cron-trigger-5:
-      schedule: 30 0 * * *
-      endpoint: '/api/cron/vidis-angebote'
-      httpMethod: 'PUT'
-      script: 'cron_trigger.sh'
+#    cron-trigger-5:
+#      schedule: 30 0 * * *
+#      endpoint: '/api/cron/vidis-angebote'
+#      httpMethod: 'PUT'
+#      script: 'cron_trigger.sh'
 
 import:
   csvFileMaxSizeInMB: 10

@@ -48,7 +48,7 @@ import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.j
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonExternalIdType, PersonLockOccasion, SortFieldPersonFrontend } from '../domain/person.enums.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
@@ -73,6 +73,8 @@ import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-ren
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -89,6 +91,7 @@ describe('PersonRepository Integration', () => {
     let personenkontextFactory: PersonenkontextFactory;
     let userLockRepository: UserLockRepository;
     let organisationRepository: OrganisationRepository;
+    let serviceProviderRepository: ServiceProviderRepo;
 
     beforeAll(async () => {
         module = await Test.createTestingModule({
@@ -144,6 +147,7 @@ describe('PersonRepository Integration', () => {
         personenkontextFactory = module.get(PersonenkontextFactory);
         userLockRepository = module.get(UserLockRepository);
         organisationRepository = module.get(OrganisationRepository);
+        serviceProviderRepository = module.get(ServiceProviderRepo);
         eventServiceMock = module.get(EventRoutingLegacyKafkaService);
 
         await DatabaseTestModule.setupDatabase(orm);
@@ -240,6 +244,125 @@ describe('PersonRepository Integration', () => {
 
                 expect(foundPerson).toBeNull();
             });
+        });
+    });
+
+    describe('findByPersonIds', () => {
+        it('should return found person', async () => {
+            const personA: Person<true> = await savePerson(false);
+            const personB: Person<true> = await savePerson(false);
+            const personC: Person<true> = await savePerson(false);
+
+            const foundPersons: Person<true>[] = await sut.findByPersonIds([personA.id, personB.id]);
+
+            expect(foundPersons.length).toEqual(2);
+            expect(foundPersons.findIndex((p: Person<true>) => p.id === personA.id)).not.toEqual(-1);
+            expect(foundPersons.findIndex((p: Person<true>) => p.id === personB.id)).not.toEqual(-1);
+            expect(foundPersons.findIndex((p: Person<true>) => p.id === personC.id)).toEqual(-1);
+        });
+    });
+
+    describe('findWithRolleAndNoOtherItslearningKontexteByCursor', () => {
+        it('should return found persons', async () => {
+            const personA: Person<true> = await savePerson(false);
+            const orga: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: true }),
+            );
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
+                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
+            if (rolle instanceof DomainError) throw rolle;
+            await dbiamPersonenkontextRepoInternal.save(
+                DoFactory.createPersonenkontext(false, {
+                    organisationId: orga.id,
+                    personId: personA.id,
+                    rolleId: rolle.id,
+                }),
+            );
+
+            let personen: Person<true>[] = [];
+            let cursor: string | undefined;
+
+            [personen, cursor] = await sut.findWithRolleAndNoOtherItslearningKontexteByCursor(rolle.id, 1, cursor);
+
+            expect(personen).toHaveLength(1);
+            expect(cursor).toBeDefined();
+
+            [personen, cursor] = await sut.findWithRolleAndNoOtherItslearningKontexteByCursor(rolle.id, 1, cursor);
+
+            expect(personen).toHaveLength(0);
+            expect(cursor).toBeUndefined();
+        });
+
+        it('should not return persons that already have itslearning', async () => {
+            const personA: Person<true> = await savePerson(false);
+            const orgaA: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: true }),
+            );
+            const orgaB: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: true }),
+            );
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
+                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
+            );
+            const rolleA: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [] }),
+            );
+            const rolleB: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
+            if (rolleA instanceof DomainError) throw rolleA;
+            if (rolleB instanceof DomainError) throw rolleB;
+            await dbiamPersonenkontextRepoInternal.save(
+                DoFactory.createPersonenkontext(false, {
+                    organisationId: orgaA.id,
+                    personId: personA.id,
+                    rolleId: rolleA.id,
+                }),
+            );
+            await dbiamPersonenkontextRepoInternal.save(
+                DoFactory.createPersonenkontext(false, {
+                    organisationId: orgaB.id,
+                    personId: personA.id,
+                    rolleId: rolleB.id,
+                }),
+            );
+
+            const [personen, cursor]: [Person<true>[], string | undefined] =
+                await sut.findWithRolleAndNoOtherItslearningKontexteByCursor(rolleA.id, 1);
+
+            expect(personen).toHaveLength(0);
+            expect(cursor).toBeUndefined();
+        });
+
+        it('should not return persons that are not at itslearning orgas', async () => {
+            const personA: Person<true> = await savePerson(false);
+            const orga: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false, { itslearningEnabled: false }),
+            );
+            const serviceProvider: ServiceProvider<true> = await serviceProviderRepository.save(
+                DoFactory.createServiceProvider(false, { externalSystem: ServiceProviderSystem.ITSLEARNING }),
+            );
+            const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+            );
+            if (rolle instanceof DomainError) throw rolle;
+            await dbiamPersonenkontextRepoInternal.save(
+                DoFactory.createPersonenkontext(false, {
+                    organisationId: orga.id,
+                    personId: personA.id,
+                    rolleId: rolle.id,
+                }),
+            );
+
+            const [personen, cursor]: [Person<true>[], string | undefined] =
+                await sut.findWithRolleAndNoOtherItslearningKontexteByCursor(rolle.id, 1);
+
+            expect(personen).toHaveLength(0);
+            expect(cursor).toBeUndefined();
         });
     });
 
@@ -2301,7 +2424,7 @@ describe('PersonRepository Integration', () => {
             const queryParams: PersonenQueryParams = {
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
+                sortField: SortFieldPerson.VORNAME,
                 sortOrder: ScopeOrder.ASC,
             };
 
@@ -2330,7 +2453,7 @@ describe('PersonRepository Integration', () => {
                 familienname: person2.familienname,
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
+                sortField: SortFieldPerson.VORNAME,
                 sortOrder: ScopeOrder.ASC,
                 suchFilter: person2.vorname,
             };
@@ -2357,7 +2480,7 @@ describe('PersonRepository Integration', () => {
                 organisationIDs: undefined,
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
+                sortField: SortFieldPerson.VORNAME,
                 sortOrder: ScopeOrder.ASC,
             };
 
@@ -2410,7 +2533,7 @@ describe('PersonRepository Integration', () => {
             const queryParams: PersonenQueryParams = {
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.VORNAME,
+                sortField: SortFieldPerson.VORNAME,
                 sortOrder: ScopeOrder.ASC,
             };
 
@@ -2440,7 +2563,7 @@ describe('PersonRepository Integration', () => {
             const queryParams: PersonenQueryParams = {
                 offset: 0,
                 limit: 10,
-                sortField: SortFieldPersonFrontend.FAMILIENNAME,
+                sortField: SortFieldPerson.FAMILIENNAME,
                 sortOrder: ScopeOrder.ASC,
             };
 
@@ -2460,9 +2583,9 @@ describe('PersonRepository Integration', () => {
             expect(persons[3]?.vorname).toBe('Charlie');
         });
 
-        it.each([SortFieldPersonFrontend.PERSONALNUMMER, SortFieldPersonFrontend.REFERRER])(
+        it.each([SortFieldPerson.PERSONALNUMMER, SortFieldPerson.REFERRER])(
             'should apply sort criteria correctly for %s',
-            async (sortField: SortFieldPersonFrontend) => {
+            async (sortField: SortFieldPerson) => {
                 await savePerson(false, { vorname: 'Charlie', familienname: 'Smith', referrer: 'csmith' });
                 await savePerson(false, { vorname: 'Bob', familienname: 'Smith', referrer: 'bsmith' });
                 await savePerson(false, { vorname: 'Anna', familienname: 'Smith', referrer: 'asmith' });

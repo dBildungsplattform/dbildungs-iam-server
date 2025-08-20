@@ -28,41 +28,41 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
+import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { Permissions } from '../../authentication/api/permissions.decorator.js';
+import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OrganisationDo } from '../../organisation/domain/organisation.do.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { RolleDomainError } from '../domain/rolle-domain.error.js';
+import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
-import { CreateRolleBodyParams } from './create-rolle.body.params.js';
-import { RolleResponse } from './rolle.response.js';
-import { RolleFactory } from '../domain/rolle.factory.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
-import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
-import { RolleNameQueryParams } from './rolle-name-query.param.js';
-import { ServiceProviderResponse } from '../../service-provider/api/service-provider.response.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
-import { RolleExceptionFilter } from './rolle-exception-filter.js';
-import { Paged, PagedResponse, PagingHeadersObject } from '../../../shared/paging/index.js';
-import { Permissions } from '../../authentication/api/permissions.decorator.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RolleDomainError } from '../domain/rolle-domain.error.js';
-import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
+import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
+import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
+import { RolleExceptionFilter } from './rolle-exception-filter.js';
+import { RolleNameQueryParams } from './rolle-name-query.param.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
-import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
+import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
+import { RolleResponse } from './rolle.response.js';
+import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 
@@ -296,6 +296,7 @@ export class RolleController {
                 ),
             );
         }
+
         const result: void | DomainError = await rolle.updateServiceProviders(spBodyParams.serviceProviderIds);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
@@ -354,6 +355,7 @@ export class RolleController {
                 ),
             );
         }
+
         const result: void | DomainError = rolle.detatchServiceProvider(spBodyParams.serviceProviderIds);
         if (result instanceof DomainError) {
             throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(

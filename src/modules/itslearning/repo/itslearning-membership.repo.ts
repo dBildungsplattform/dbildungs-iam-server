@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { ItsLearningConfig } from '../../../shared/config/itslearning.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
-import { DomainError } from '../../../shared/error/index.js';
+import { DomainError, ItsLearningError } from '../../../shared/error/index.js';
 import { OrganisationID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { CreateMembershipParams, CreateMembershipsAction } from '../actions/create-memberships.action.js';
@@ -12,6 +12,8 @@ import { DeleteMembershipsAction } from '../actions/delete-memberships.action.js
 import { MembershipResponse, ReadMembershipsForPersonAction } from '../actions/read-memberships-for-person.action.js';
 import { ItsLearningIMSESService } from '../itslearning.service.js';
 import { determineHighestRollenart, higherRollenart, rollenartToIMSESRole } from './role-utils.js';
+import { MassResult } from '../actions/base-mass-action.js';
+import { StatusInfoHelpers } from '../utils/status-info.utils.js';
 
 export type SetMembershipParams = {
     organisationId: OrganisationID;
@@ -37,11 +39,16 @@ export class ItslearningMembershipRepo {
         this.ROOT_NAMES = [itslearningConfig.ROOT, itslearningConfig.ROOT_OEFFENTLICH, itslearningConfig.ROOT_ERSATZ];
     }
 
-    public readMembershipsForPerson(
+    public async readMembershipsForPerson(
         personId: PersonID,
         syncId?: string,
     ): Promise<Result<MembershipResponse[], DomainError>> {
-        return this.itslearningService.send(new ReadMembershipsForPersonAction(personId), syncId);
+        const readResult: Result<MassResult<MembershipResponse[]>, DomainError> = await this.itslearningService.send(
+            new ReadMembershipsForPersonAction(personId),
+            syncId,
+        );
+
+        return StatusInfoHelpers.unpackMassResult(readResult);
     }
 
     public async createMemberships(
@@ -50,7 +57,7 @@ export class ItslearningMembershipRepo {
     ): Promise<Option<DomainError>> {
         const createMembershipsAction: CreateMembershipsAction = new CreateMembershipsAction(memberships);
 
-        const createResult: Result<void, DomainError> = await this.itslearningService.send(
+        const createResult: Result<MassResult<void>, DomainError> = await this.itslearningService.send(
             createMembershipsAction,
             syncId,
         );
@@ -59,11 +66,30 @@ export class ItslearningMembershipRepo {
             return createResult.error;
         }
 
+        const statusFailure: ItsLearningError | undefined = StatusInfoHelpers.errorOnFailure(createResult.value.status);
+        if (statusFailure) {
+            return statusFailure;
+        }
+
         return undefined;
     }
 
+    public async createMembershipsMass(
+        memberships: CreateMembershipParams[],
+        syncId?: string,
+    ): Promise<Result<MassResult<void>, DomainError>> {
+        const createMembershipsAction: CreateMembershipsAction = new CreateMembershipsAction(memberships);
+
+        const createResult: Result<MassResult<void>, DomainError> = await this.itslearningService.send(
+            createMembershipsAction,
+            syncId,
+        );
+
+        return createResult;
+    }
+
     public async removeMemberships(membershipIDs: string[], syncId?: string): Promise<Option<DomainError>> {
-        const deleteResult: Result<void, DomainError> = await this.itslearningService.send(
+        const deleteResult: Result<MassResult<void>, DomainError> = await this.itslearningService.send(
             new DeleteMembershipsAction(membershipIDs),
             syncId,
         );
@@ -72,7 +98,24 @@ export class ItslearningMembershipRepo {
             return deleteResult.error;
         }
 
+        const statusFailure: ItsLearningError | undefined = StatusInfoHelpers.errorOnFailure(deleteResult.value.status);
+        if (statusFailure) {
+            return statusFailure;
+        }
+
         return undefined;
+    }
+
+    public async removeMembershipsMass(
+        membershipIDs: string[],
+        syncId?: string,
+    ): Promise<Result<MassResult<void>, DomainError>> {
+        const deleteResult: Result<MassResult<void>, DomainError> = await this.itslearningService.send(
+            new DeleteMembershipsAction(membershipIDs),
+            syncId,
+        );
+
+        return deleteResult;
     }
 
     public async setMemberships(

@@ -1,4 +1,4 @@
-import { Loaded, QBFilterQuery } from '@mikro-orm/core';
+import { Cursor, Loaded, QBFilterQuery, QueryOrder, raw, sql } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { OrganisationID, PersonID, PersonenkontextID, RolleID } from '../../../shared/types/index.js';
@@ -16,6 +16,8 @@ import { Rolle } from '../../rolle/domain/rolle.js';
 import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+
 export type RollenCount = { rollenart: string; count: string };
 
 export type ExternalPkData = {
@@ -125,6 +127,7 @@ export class DBiamPersonenkontextRepo {
                     'rolleId.merkmale',
                     'rolleId.systemrechte',
                     'rolleId.serviceProvider',
+                    'rolleId.serviceProvider.serviceProvider.merkmale',
                 ],
             },
         );
@@ -138,6 +141,46 @@ export class DBiamPersonenkontextRepo {
                 rolle: this.entityAggregateMapper.mapRolleEntityToAggregate(rolleEntity),
             };
         });
+    }
+
+    public async findByPersonIdsWithOrgaAndRolle(
+        personIds: PersonID[],
+    ): Promise<Map<PersonID, KontextWithOrgaAndRolle[]>> {
+        const result: Map<PersonID, KontextWithOrgaAndRolle[]> = new Map<PersonID, KontextWithOrgaAndRolle[]>();
+
+        const personenKontexte: PersonenkontextEntity[] = await this.em.find(
+            PersonenkontextEntity,
+            { personId: { $in: personIds } },
+            {
+                populate: [
+                    'organisationId',
+                    'rolleId',
+                    'rolleId.merkmale',
+                    'rolleId.systemrechte',
+                    'rolleId.serviceProvider',
+                    'rolleId.serviceProvider.serviceProvider.merkmale',
+                ],
+            },
+        );
+
+        for (const pk of personenKontexte) {
+            const personId: string = pk.personId.id;
+            const orgaEntity: OrganisationEntity = pk.organisationId.unwrap();
+            const rolleEntity: RolleEntity = pk.rolleId.unwrap();
+
+            const kontext: KontextWithOrgaAndRolle = {
+                personenkontext: mapEntityToAggregate(pk, this.personenkontextFactory),
+                organisation: this.entityAggregateMapper.mapOrganisationEntityToAggregate(orgaEntity),
+                rolle: this.entityAggregateMapper.mapRolleEntityToAggregate(rolleEntity),
+            };
+
+            if (!result.has(personId)) {
+                result.set(personId, []);
+            }
+
+            result.get(personId)!.push(kontext);
+        }
+        return result;
     }
 
     public async findBy(scope: PersonenkontextScope): Promise<Counted<Personenkontext<true>>> {
@@ -175,6 +218,62 @@ export class DBiamPersonenkontextRepo {
         return personenKontexte.map((pk: PersonenkontextEntity) =>
             mapEntityToAggregate(pk, this.personenkontextFactory),
         );
+    }
+
+    /**
+     * Find all Personenkontexte with the specified Rolle, if
+     * - they are at an organisation where itslearning is enabled
+     * - there is no other Personenkontext_
+     *   - for the same person
+     *   - at the same organisation
+     *   - with a different rolle
+     *   - that has the itslearning service provider
+     */
+    public async findWithRolleAtItslearningOrgaByCursor(
+        rolleId: RolleID,
+        count: number,
+        cursor?: string,
+    ): Promise<[pks: Personenkontext<true>[], cursor: string | undefined]> {
+        const personenkontextCursor: Cursor<PersonenkontextEntity> = await this.em.findByCursor(
+            PersonenkontextEntity,
+            {
+                rolleId,
+                organisationId: {
+                    itslearningEnabled: true,
+                },
+                [raw(
+                    (alias: string) =>
+                        `NOT EXISTS (${this.em
+                            .createQueryBuilder(PersonenkontextEntity, 'sq')
+                            .select('id')
+                            .where({
+                                personId: sql.ref(alias, 'person_id'),
+                                organisationId: sql.ref(alias, 'organisation_id'),
+                                rolleId: {
+                                    $ne: rolleId,
+                                    serviceProvider: {
+                                        serviceProvider: {
+                                            externalSystem: ServiceProviderSystem.ITSLEARNING,
+                                        },
+                                    },
+                                },
+                            })
+                            .getFormattedQuery()})`,
+                )]: [],
+            },
+            {
+                after: cursor,
+                first: count,
+                orderBy: { id: QueryOrder.ASC },
+            },
+        );
+
+        return [
+            personenkontextCursor.items.map((pk: PersonenkontextEntity) =>
+                mapEntityToAggregate(pk, this.personenkontextFactory),
+            ),
+            personenkontextCursor.endCursor ?? undefined, // Map null to undefined
+        ];
     }
 
     public async find(
