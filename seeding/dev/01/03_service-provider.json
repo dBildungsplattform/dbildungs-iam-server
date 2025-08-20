@@ -140,7 +140,7 @@
             "keycloakGroup": "Schulrecht A-Z-service",
             "keycloakRole": "Schulrecht A-Z-user",
             "requires2fa": false,
-            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR"]
+            "merkmale": ["NACHTRAEGLICH_ZUWEISBAR", "VERFUEGBAR_FUER_ROLLENERWEITERUNG"]
         },
         {
             "id": 10,
