@@ -6,7 +6,7 @@ import {
 } from '../domain/service-provider.enum.js';
 import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
-export class ServiceProviderBodyParams {
+export class CreateServiceProviderBodyParams {
     @IsString()
     @ApiProperty({
         description: 'The name of the service provider.',
@@ -48,27 +48,35 @@ export class ServiceProviderBodyParams {
 
     @IsString()
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({
+        description: 'The logo of the service-provider as a base64 encoded string.',
+    })
     public readonly logo?: string;
 
     @IsString()
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({
+        description: 'The mime type of the logo.',
+    })
     public readonly logoMimeType?: string;
 
     @IsString()
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({
+        description: 'The keycloak group of the service-provider.',
+    })
     public readonly keycloakGroup?: string;
 
     @IsString()
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({
+        description: 'The keycloak role of the service-provider',
+    })
     public readonly keycloakRole?: string;
 
     @IsEnum(ServiceProviderSystem)
     @ApiProperty({
-        description: 'The external system of the service provider.',
+        description: 'The external system of the service-provider.',
         required: true,
         enum: ServiceProviderSystem,
         enumName: 'ServiceProviderSystem',
@@ -77,13 +85,15 @@ export class ServiceProviderBodyParams {
 
     @IsBoolean()
     @ApiProperty({
-        description: 'Indicates if the service provider requires 2FA.',
+        description: 'Indicates if the service-provider requires 2FA.',
         required: true,
     })
     public readonly requires2fa!: boolean;
 
     @IsString()
     @IsOptional()
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({
+        description: 'The id of the vidis angebot of this service-provider',
+    })
     public readonly vidisAngebotId?: string;
 }

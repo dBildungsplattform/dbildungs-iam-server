@@ -1,4 +1,14 @@
-import { Body, Controller, ForbiddenException, Get, Param, Post, StreamableFile, UseFilters } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    ForbiddenException,
+    Get,
+    Param,
+    Patch,
+    Post,
+    StreamableFile,
+    UseFilters,
+} from '@nestjs/common';
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -25,8 +35,10 @@ import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
-import { ServiceProviderBodyParams } from './service-provider.body.params.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider.body.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
+import { UpdateServiceProviderBodyParams } from './update-service-provider.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -38,6 +50,7 @@ export class ProviderController {
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
+        private readonly serviceProviderFactory: ServiceProviderFactory,
     ) {}
 
     @Get('all')
@@ -128,14 +141,14 @@ export class ProviderController {
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create a new service-provider.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a new service-provider.' })
     public async createNewServiceProvider(
-        @Body() spBodyParams: ServiceProviderBodyParams,
+        @Body() spBodyParams: CreateServiceProviderBodyParams,
         @Permissions() permissions: PersonPermissions,
     ): Promise<ServiceProviderResponse> {
         if (!(await permissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SERVICEPROVIDER_VERWALTEN]))) {
             throw new ForbiddenException('You do not have the required permissions to create new service provider.');
         }
 
-        const newServiceProvider: ServiceProvider<false> = ServiceProvider.createNew(
+        const newServiceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
             spBodyParams.name,
             spBodyParams.target,
             spBodyParams.url,
@@ -150,6 +163,60 @@ export class ProviderController {
             spBodyParams.vidisAngebotId,
         );
         const savedServiceProvider: ServiceProvider<true> = await this.serviceProviderRepo.save(newServiceProvider);
+        const response: ServiceProviderResponse = new ServiceProviderResponse(savedServiceProvider);
+
+        return response;
+    }
+
+    @Patch(':angebotId')
+    @ApiOperation({ description: 'Update an existing service-provider.' })
+    @ApiOkResponse({
+        description: 'The service-provider was updated successfully.',
+        type: ServiceProviderResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to update the service provider.' })
+    @ApiNotFoundResponse({ description: 'The service-provider with the given id was not found' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to update the service-provider.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the service-provider.' })
+    public async updateServiceProvider(
+        @Param() params: AngebotByIdParams,
+        @Body() spBodyParams: UpdateServiceProviderBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<ServiceProviderResponse> {
+        if (!(await permissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SERVICEPROVIDER_VERWALTEN]))) {
+            throw new ForbiddenException('You do not have the required permissions to update a service provider.');
+        }
+
+        const serviceProvider: Option<ServiceProvider<true>> = await this.serviceProviderRepo.findById(
+            params.angebotId,
+        );
+
+        if (!serviceProvider) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('ServiceProvider', params.angebotId),
+                ),
+            );
+        }
+
+        const updatedServiceProvider: ServiceProvider<true> = this.serviceProviderFactory.construct(
+            serviceProvider.id,
+            serviceProvider.createdAt,
+            serviceProvider.updatedAt,
+            spBodyParams.name || serviceProvider.name,
+            spBodyParams.target || serviceProvider.target,
+            spBodyParams.url || serviceProvider.url,
+            spBodyParams.kategorie || serviceProvider.kategorie,
+            spBodyParams.providedOnSchulstrukturknoten || serviceProvider.providedOnSchulstrukturknoten,
+            spBodyParams.logo ? Buffer.from(spBodyParams.logo, 'base64') : serviceProvider.logo,
+            spBodyParams.logoMimeType || serviceProvider.logoMimeType,
+            spBodyParams.keycloakGroup || serviceProvider.keycloakGroup,
+            spBodyParams.keycloakRole || serviceProvider.keycloakRole,
+            spBodyParams.externalSystem || serviceProvider.externalSystem,
+            spBodyParams.requires2fa || serviceProvider.requires2fa,
+            spBodyParams.vidisAngebotId || serviceProvider.vidisAngebotId,
+        );
+        const savedServiceProvider: ServiceProvider<true> = await this.serviceProviderRepo.save(updatedServiceProvider);
         const response: ServiceProviderResponse = new ServiceProviderResponse(savedServiceProvider);
 
         return response;
