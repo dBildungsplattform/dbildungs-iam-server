@@ -24,7 +24,7 @@ export const KafkaProvider: Provider<Kafka | null> = {
 
       return new Kafka({
         //brokers: [kafkaConfig.BROKER],
-        brokers: kafkaConfig.BROKER.split(','),
+        brokers: kafkaConfig.BROKER,
         ssl: {
           rejectUnauthorized: true,
           ca: [fs.readFileSync(caPath, 'utf-8')],

@@ -2,7 +2,7 @@
 set -e
  
 # === Input aus Umgebungsvariablen ===
-KAFKA_BROKER="${KAFKA_BOOTSTRAPSERVERS:?Missing KAFKA_BOOTSTRAPSERVERS}"
+KAFKA_BROKER="${KAFKA_BROKER:?Missing KAFKA_BROKER}"
 KAFKA_SSL_CA_PATH="${KAFKA_SSL_CA_PATH:?Missing CA file}"
 KAFKA_SSL_CERT_PATH="${KAFKA_SSL_CERT_PATH:?Missing client cert}"
 KAFKA_SSL_KEY_PATH="${KAFKA_SSL_KEY_PATH:?Missing client key}"
