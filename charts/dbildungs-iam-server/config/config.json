@@ -103,9 +103,9 @@
         "SESSION_TIMEOUT": 300000,
         "HEARTBEAT_INTERVAL": 10000,
         "ENABLED": true,
-        "SASL_ENABLED": true,
-        "USERNAME": "username",
-        "PASSWORD": "password"
+        "SSL_ENABLED": true,
+        "SSL_CA_PATH": "",
+        "SSL_CERT_PATH": ""
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]

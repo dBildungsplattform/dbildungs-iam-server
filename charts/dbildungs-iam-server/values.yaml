@@ -191,12 +191,18 @@ redis:
 kafka:
   url: '10.7.250.100:9093'
   enabled: true
-  saslEnabled: true
+  sslEnabled: true
+  ssl: 
+    caPath:  /tls/ca.pem
+    certPath: /tls/client-cert.pem
+    keyPath: /tls/client-key.pem
   initEnabled: true
   initImage:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'
     pullPolicy: Always
+  # sessionTimeout: 
+  # heartbeatInterval:
   volumeMounts:
     - name: kafka-init-volume
       readOnly: true

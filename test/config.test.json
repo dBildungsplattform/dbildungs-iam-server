@@ -114,7 +114,10 @@
         "GROUP_ID": "nestjs-kafka",
         "SESSION_TIMEOUT": 300000,
         "HEARTBEAT_INTERVAL": 10000,
-        "ENABLED": false
+        "ENABLED": false,
+        "SSL_ENABLED": false,
+        "SSL_CA_PATH": "",
+        "SSL_CERT_PATH": ""
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]

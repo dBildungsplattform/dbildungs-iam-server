@@ -42,7 +42,11 @@ spec:
           envFrom:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
-          volumeMounts: {{- toYaml .Values.kafka.volumeMounts | nindent 12 }}
+          volumeMounts: 
+            {{- toYaml .Values.kafka.volumeMounts | nindent 12 }}
+            {{- if .Values.kafka.enabled }}
+            {{- toYaml .Values.kafka.volumeMounts | nindent 12 }}
+            {{- end }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
         {{- if .Values.backend.dbmigration.enabled }}
@@ -61,6 +65,9 @@ spec:
                 name: {{ template "common.names.name" . }}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            {{- if .Values.kafka.enabled }}
+            {{- toYaml .Values.kafka.volumeMounts | nindent 12 }}
+            {{- end }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
         {{- if .Values.backend.keycloakdatamigration.enabled }}
@@ -79,6 +86,9 @@ spec:
                 name: {{ template "common.names.name" . }}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            {{- if .Values.kafka.enabled }}
+            {{- toYaml .Values.kafka.volumeMounts | nindent 12 }}
+            {{- end }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
         {{- if .Values.backend.dbseeding.enabled }}
@@ -93,6 +103,9 @@ spec:
           env: {{- include "dbildungs-iam-server-backend-envs" . | indent  12}}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            {{- if .Values.kafka.enabled }}
+            {{- toYaml .Values.kafka.volumeMounts | nindent 12 }}
+            {{- end }}
           resources: {{- toYaml .Values.backend.resources | nindent 12 }}
         {{ end }}
       containers:
