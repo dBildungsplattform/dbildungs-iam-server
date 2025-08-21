@@ -10,7 +10,6 @@ import { validate, ValidationError } from 'class-validator';
 
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
-import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
 import { UserRepresentationDto } from './keycloak-client/user-representation.dto.js';
 import { ExternalSystemIDs, User } from './user.js';
@@ -173,7 +172,7 @@ export class KeycloakUserService {
         }
     }
 
-    public async updateOXUserAttributes(
+    /* public async updateOXUserAttributes(
         username: string,
         oxUserName: OXUserName,
         oxContextName: OXContextName,
@@ -212,7 +211,7 @@ export class KeycloakUserService {
 
             return { ok: false, error: new KeycloakClientError('Could not update user-attributes') };
         }
-    }
+    }*/
 
     public async delete(id: string): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
@@ -370,7 +369,7 @@ export class KeycloakUserService {
         }
     }
 
-    public async removeOXUserAttributes(username: string): Promise<Result<void, DomainError>> {
+    /*public async removeOXUserAttributes(username: string): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
 
@@ -405,7 +404,7 @@ export class KeycloakUserService {
 
             return { ok: false, error: new KeycloakClientError('Could not remove ID_OX from user-attributes') };
         }
-    }
+    }*/
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {
         try {

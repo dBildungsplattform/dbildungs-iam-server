@@ -17,7 +17,6 @@ import { EntityCouldNotBeUpdated } from '../../../shared/error/entity-could-not-
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
 import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js';
@@ -1311,7 +1310,7 @@ describe('EmailEventHandler', () => {
         });
     });
 
-    describe('handleOxMetadataInKeycloakChangedEvent', () => {
+    /*describe('handleOxMetadataInKeycloakChangedEvent', () => {
         let fakePersonId: string;
         let fakeKeycloakUsername: string;
         let fakeOXUserId: OXUserID;
@@ -1411,7 +1410,7 @@ describe('EmailEventHandler', () => {
                 );
             });
         });
-    });
+    });*/
 
     describe('handleDisabledOxUserChangedEvent', () => {
         let fakePersonId: string;

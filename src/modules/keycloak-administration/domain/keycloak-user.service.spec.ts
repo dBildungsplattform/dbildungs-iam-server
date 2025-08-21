@@ -11,7 +11,6 @@ import { faker } from '@faker-js/faker';
 import { ConfigTestModule, DoFactory, LoggingTestModule, MapperTestModule } from '../../../../test/utils/index.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DomainError, EntityNotFoundError, KeycloakClientError } from '../../../shared/error/index.js';
-import { OXContextName, OXUserName } from '../../../shared/types/ox-ids.types.js';
 import { PersonService } from '../../person/domain/person.service.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { KeycloakAdministrationService } from './keycloak-admin-client.service.js';
@@ -404,7 +403,7 @@ describe('KeycloakUserService', () => {
         });
     });
 
-    describe('updateOXUserAttributes', () => {
+    /*describe('updateOXUserAttributes', () => {
         let username: string;
         let oxUserName: OXUserName;
         let oxContextName: OXContextName;
@@ -527,7 +526,7 @@ describe('KeycloakUserService', () => {
                 expect(res).toBe(error);
             });
         });
-    });
+    });*/
 
     describe('delete', () => {
         it('should return ok result if user exists', async () => {
@@ -1509,6 +1508,43 @@ describe('KeycloakUserService', () => {
             newUsername = faker.internet.userName();
         });
 
+        //kap
+        describe('when user does not exist', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockRejectedValueOnce(new Error());
+
+                const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when user exists but id is undefined', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([
+                    {
+                        username: faker.string.alphanumeric(),
+                        email: faker.internet.email(),
+                        createdTimestamp: faker.date.recent().getTime(),
+                    },
+                ]);
+
+                const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+
+        describe('when find returns array with undefined first element', () => {
+            it('should return error', async () => {
+                kcUsersMock.find.mockResolvedValueOnce([]);
+
+                const res: Result<void, DomainError> = await service.updateUsername(username, newUsername);
+
+                expect(res.ok).toBeFalsy();
+            });
+        });
+        //
         describe('when updating user is successful', () => {
             it('should return undefined and no errors', async () => {
                 const kcId: string = faker.string.uuid();
@@ -1591,7 +1627,7 @@ describe('KeycloakUserService', () => {
         });
     });
 
-    describe('removeOXUserAttributes', () => {
+    /*describe('removeOXUserAttributes', () => {
         let username: string;
 
         beforeEach(() => {
@@ -1688,5 +1724,5 @@ describe('KeycloakUserService', () => {
                 expect(kcUsersMock.find).not.toHaveBeenCalledWith({ username: username, exact: true });
             });
         });
-    });
+    });*/
 });

@@ -24,8 +24,6 @@ import { KafkaLdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ka
 import { LdapPersonEntryRenamedEvent } from '../../../shared/events/ldap/ldap-person-entry-renamed.event.js';
 import { DisabledOxUserChangedEvent } from '../../../shared/events/ox/disabled-ox-user-changed.event.js';
 import { KafkaDisabledOxUserChangedEvent } from '../../../shared/events/ox/kafka-disabled-ox-user-changed.event.js';
-import { KafkaOxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/kafka-ox-metadata-in-keycloak-changed.event.js';
-import { OxMetadataInKeycloakChangedEvent } from '../../../shared/events/ox/ox-metadata-in-keycloak-changed.event.js';
 import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
 import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
 import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
@@ -259,7 +257,7 @@ export class EmailEventHandler {
         await Promise.all(handlePersonPromises);
     }
 
-    @KafkaEventHandler(KafkaOxMetadataInKeycloakChangedEvent)
+    /*@KafkaEventHandler(KafkaOxMetadataInKeycloakChangedEvent)
     @EventHandler(OxMetadataInKeycloakChangedEvent)
     @EnsureRequestContext()
     public async handleOxMetadataInKeycloakChangedEvent(event: OxMetadataInKeycloakChangedEvent): Promise<void> {
@@ -297,7 +295,7 @@ export class EmailEventHandler {
                 `Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
             );
         }
-    }
+    }*/
 
     @KafkaEventHandler(KafkaDisabledOxUserChangedEvent)
     @EventHandler(DisabledOxUserChangedEvent)
