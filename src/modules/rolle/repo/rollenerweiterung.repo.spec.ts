@@ -1,6 +1,7 @@
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import {
     ConfigTestModule,
@@ -11,22 +12,23 @@ import {
 } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
+import { RollenerweiterungEntity } from '../entity/rollenerweiterung.entity.js';
+import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
+import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 import { RolleRepo } from './rolle.repo.js';
 import { RollenerweiterungRepo } from './rollenerweiterung.repo.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { faker } from '@faker-js/faker';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
-import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 
 describe('RollenerweiterungRepo', () => {
     let module: TestingModule;
@@ -78,6 +80,45 @@ describe('RollenerweiterungRepo', () => {
     it('should be defined', () => {
         expect(sut).toBeDefined();
         expect(em).toBeDefined();
+    });
+
+    describe('exists', () => {
+        let organisation: Organisation<true>;
+        let rolle: Rolle<true>;
+        let serviceProvider: ServiceProvider<true>;
+        beforeEach(async () => {
+            organisation = await organisationRepo.save(DoFactory.createOrganisation(false));
+            const rolleOrError: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
+            if (rolleOrError instanceof DomainError) {
+                throw new Error('Failed to create Rolle');
+            }
+            rolle = rolleOrError;
+            serviceProvider = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
+        });
+
+        it.each([
+            ['exists', true],
+            ['does not exist', false],
+        ])('if rollenerweiterung %s, it should return %s', async (_label: string, expected: boolean) => {
+            if (expected) {
+                const entity: RollenerweiterungEntity = em.create(RollenerweiterungEntity, {
+                    organisationId: organisation.id,
+                    rolleId: rolle.id,
+                    serviceProviderId: serviceProvider.id,
+                });
+                await em.persistAndFlush(entity);
+            }
+            const result: boolean = await sut.exists({
+                organisationId: organisation.id,
+                rolleId: rolle.id,
+                serviceProviderId: serviceProvider.id,
+            });
+            expect(result).toBe(expected);
+        });
     });
 
     describe('createAuthorized', () => {
@@ -161,14 +202,39 @@ describe('RollenerweiterungRepo', () => {
                 serviceProvider.id,
             );
 
-            const savedRollenerweiterung: Result<Rollenerweiterung<true>, DomainError> = await sut.createAuthorized(
+            const createResult: Result<Rollenerweiterung<true>, DomainError> = await sut.createAuthorized(
                 rollenerweiterung,
                 permissionMock,
             );
 
-            expect(savedRollenerweiterung.ok).toBe(false);
-            if (!savedRollenerweiterung.ok) {
-                expect(savedRollenerweiterung.error).toBeInstanceOf(EntityNotFoundError);
+            expect(createResult.ok).toBe(false);
+            if (!createResult.ok) {
+                expect(createResult.error).toBeInstanceOf(EntityNotFoundError);
+            }
+        });
+
+        it('should return an error if rolle already has access to service provider', async () => {
+            permissionMock.getOrgIdsWithSystemrecht.mockResolvedValueOnce({ all: true });
+            const updatedRolle: Option<Rolle<true>> = await rolleRepo.findById(rolle.id);
+            if (!updatedRolle) {
+                throw new Error('Rolle not found');
+            }
+            await updatedRolle.attachServiceProvider(serviceProvider.id);
+            await rolleRepo.save(updatedRolle);
+            const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
+                organisation.id,
+                rolle.id,
+                serviceProvider.id,
+            );
+
+            const createResult: Result<Rollenerweiterung<true>, DomainError> = await sut.createAuthorized(
+                rollenerweiterung,
+                permissionMock,
+            );
+
+            expect(createResult.ok).toBe(false);
+            if (!createResult.ok) {
+                expect(createResult.error).toBeInstanceOf(NoRedundantRollenerweiterungError);
             }
         });
 
@@ -188,16 +254,14 @@ describe('RollenerweiterungRepo', () => {
                 serviceProvider.id,
             );
 
-            const savedRollenerweiterung: Result<Rollenerweiterung<true>, DomainError> = await sut.createAuthorized(
+            const createResult: Result<Rollenerweiterung<true>, DomainError> = await sut.createAuthorized(
                 rollenerweiterung,
                 permissionMock,
             );
 
-            expect(savedRollenerweiterung.ok).toBe(false);
-            if (!savedRollenerweiterung.ok) {
-                expect(savedRollenerweiterung.error).toBeInstanceOf(
-                    ServiceProviderNichtVerfuegbarFuerRollenerweiterungError,
-                );
+            expect(createResult.ok).toBe(false);
+            if (!createResult.ok) {
+                expect(createResult.error).toBeInstanceOf(ServiceProviderNichtVerfuegbarFuerRollenerweiterungError);
             }
         });
     });

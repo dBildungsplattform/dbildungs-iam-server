@@ -11,6 +11,7 @@ import { RolleUpdateOutdatedError } from '../domain/update-outdated.error.js';
 import { RolleNameNotUniqueOnSskError } from '../specification/error/rolle-name-not-unique-on-ssk.error.js';
 import { ServiceProviderNichtNachtraeglichZuweisbarError } from '../specification/error/service-provider-nicht-nachtraeglich-zuweisbar.error.js';
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
+import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
 
 @Catch(RolleDomainError)
 export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
@@ -62,6 +63,13 @@ export class RolleExceptionFilter implements ExceptionFilter<RolleDomainError> {
             new DbiamRolleError({
                 code: 400,
                 i18nKey: RolleErrorI18nTypes.SERVICE_PROVIDER_NICHT_NACHTRAEGLICH_ZUWEISBAR,
+            }),
+        ],
+        [
+            NoRedundantRollenerweiterungError.name,
+            new DbiamRolleError({
+                code: 400,
+                i18nKey: RolleErrorI18nTypes.NO_REDUNDANT_ROLLENERWEITERUNG,
             }),
         ],
         [

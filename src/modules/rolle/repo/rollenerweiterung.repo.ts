@@ -1,16 +1,20 @@
 import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RollenSystemRecht } from '../domain/rolle.enums.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RollenerweiterungEntity } from '../entity/rollenerweiterung.entity.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
-import { RollenSystemRecht } from '../domain/rolle.enums.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { NoRedundantRollenerweiterungError } from '../specification/error/no-redundant-rollenerweiterung.error.js';
 import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
+import { NoRedundantRollenerweiterung } from '../specification/no-redundant-rollenerweiterung.specification.js';
 import { ServiceProviderVerfuegbarFuerRollenerweiterung } from '../specification/service-provider-verfuegbar-fuer-rollenerweiterung.specification.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+
+type RollenerweiterungIds = Pick<Rollenerweiterung<boolean>, 'organisationId' | 'rolleId' | 'serviceProviderId'>;
 
 @Injectable()
 export class RollenerweiterungRepo {
@@ -40,6 +44,15 @@ export class RollenerweiterungRepo {
         );
     }
 
+    public async exists({ organisationId, rolleId, serviceProviderId }: RollenerweiterungIds): Promise<boolean> {
+        const count: number = await this.em.count(RollenerweiterungEntity, {
+            organisationId: organisationId,
+            rolleId: rolleId,
+            serviceProviderId: serviceProviderId,
+        });
+        return count > 0;
+    }
+
     public async createAuthorized(
         rollenerweiterung: Rollenerweiterung<false>,
         permissions: PersonPermissions,
@@ -52,6 +65,11 @@ export class RollenerweiterungRepo {
 
         const referenceError: Option<EntityNotFoundError> = await rollenerweiterung.checkReferences();
         if (referenceError) return { ok: false, error: referenceError };
+
+        const noRedundantRollenerweiterung: NoRedundantRollenerweiterung = new NoRedundantRollenerweiterung();
+        if (!(await noRedundantRollenerweiterung.isSatisfiedBy(rollenerweiterung))) {
+            return { ok: false, error: new NoRedundantRollenerweiterungError() };
+        }
 
         const serviceProviderVerfuegbarFuerRollenerweiterungSpecification: ServiceProviderVerfuegbarFuerRollenerweiterung =
             new ServiceProviderVerfuegbarFuerRollenerweiterung();
