@@ -628,6 +628,19 @@ describe('OxEventHandler', () => {
             );
         });
 
+        it('should set email to failed when person already exists in OX', async () => {
+            const mockEmail: DeepMocked<EmailAddress<true>> = createMock();
+            personRepositoryMock.findById.mockResolvedValueOnce(person);
+            emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockResolvedValueOnce([mockEmail]);
+            //mock exists-oxUser-request
+            mockExistsUserRequest(true);
+
+            await sut.handleEmailAddressGeneratedEvent(event);
+
+            expect(mockEmail.failed).toHaveBeenCalled();
+            expect(emailRepoMock.save).toHaveBeenCalledWith(mockEmail);
+        });
+
         it('should log error when person cannot be found in DB', async () => {
             personRepositoryMock.findById.mockResolvedValueOnce(undefined);
 
