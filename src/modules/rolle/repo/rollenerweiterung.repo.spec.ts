@@ -25,6 +25,8 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { faker } from '@faker-js/faker';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
 
 describe('RollenerweiterungRepo', () => {
     let module: TestingModule;
@@ -92,7 +94,11 @@ describe('RollenerweiterungRepo', () => {
                 throw new Error('Failed to create Rolle');
             }
             rolle = rolleOrError;
-            serviceProvider = await serviceProviderRepo.save(DoFactory.createServiceProvider(false));
+            serviceProvider = await serviceProviderRepo.save(
+                DoFactory.createServiceProvider(false, {
+                    merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                }),
+            );
             permissionMock = createMock<PersonPermissions>();
         });
 
@@ -163,6 +169,35 @@ describe('RollenerweiterungRepo', () => {
             expect(savedRollenerweiterung.ok).toBe(false);
             if (!savedRollenerweiterung.ok) {
                 expect(savedRollenerweiterung.error).toBeInstanceOf(EntityNotFoundError);
+            }
+        });
+
+        it('should return an error if service provider is not available for rollenerweiterung', async () => {
+            const updatedServiceProvider: Option<ServiceProvider<true>> = await serviceProviderRepo.findById(
+                serviceProvider.id,
+            );
+            if (!updatedServiceProvider) {
+                throw new Error('Service provider not found');
+            }
+            updatedServiceProvider.merkmale = [];
+            await serviceProviderRepo.save(updatedServiceProvider);
+
+            const rollenerweiterung: Rollenerweiterung<false> = factory.createNew(
+                organisation.id,
+                rolle.id,
+                serviceProvider.id,
+            );
+
+            const savedRollenerweiterung: Result<Rollenerweiterung<true>, DomainError> = await sut.createAuthorized(
+                rollenerweiterung,
+                permissionMock,
+            );
+
+            expect(savedRollenerweiterung.ok).toBe(false);
+            if (!savedRollenerweiterung.ok) {
+                expect(savedRollenerweiterung.error).toBeInstanceOf(
+                    ServiceProviderNichtVerfuegbarFuerRollenerweiterungError,
+                );
             }
         });
     });

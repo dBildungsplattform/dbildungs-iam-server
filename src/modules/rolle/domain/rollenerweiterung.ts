@@ -1,4 +1,3 @@
-import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import {
     OrganisationID,
@@ -71,7 +70,7 @@ export class Rollenerweiterung<WasPersisted extends boolean> {
         );
     }
 
-    public async checkReferences(): Promise<Option<DomainError>> {
+    public async checkReferences(): Promise<Option<EntityNotFoundError>> {
         const [organisation, rolle, serviceProvider]: [
             Option<Organisation<true>>,
             Option<Rolle<true>>,
@@ -85,5 +84,9 @@ export class Rollenerweiterung<WasPersisted extends boolean> {
         if (!rolle) return new EntityNotFoundError('Rolle', this.rolleId);
         if (!serviceProvider) return new EntityNotFoundError('ServiceProvider', this.serviceProviderId);
         return undefined;
+    }
+
+    public async getServiceProvider(): Promise<Option<ServiceProvider<true>>> {
+        return this.serviceProviderRepo.findById(this.serviceProviderId);
     }
 }

@@ -8,6 +8,9 @@ import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/p
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { RollenSystemRecht } from '../domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../specification/error/service-provider-nicht-verfuegbar-fuer-rollenerweiterung.error.js';
+import { ServiceProviderVerfuegbarFuerRollenerweiterung } from '../specification/service-provider-verfuegbar-fuer-rollenerweiterung.specification.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 
 @Injectable()
 export class RollenerweiterungRepo {
@@ -41,16 +44,20 @@ export class RollenerweiterungRepo {
         rollenerweiterung: Rollenerweiterung<false>,
         permissions: PersonPermissions,
     ): Promise<Result<Rollenerweiterung<true>, DomainError>> {
-        const permissionError: Option<DomainError> = await this.checkPermissions(
+        const permissionError: Option<MissingPermissionsError> = await this.checkPermissions(
             permissions,
             rollenerweiterung.organisationId,
         );
         if (permissionError) return { ok: false, error: permissionError };
 
-        const referenceError: Option<DomainError> = await rollenerweiterung.checkReferences();
+        const referenceError: Option<EntityNotFoundError> = await rollenerweiterung.checkReferences();
         if (referenceError) return { ok: false, error: referenceError };
 
-        // TODO: check if SP is available for extension
+        const serviceProviderVerfuegbarFuerRollenerweiterungSpecification: ServiceProviderVerfuegbarFuerRollenerweiterung =
+            new ServiceProviderVerfuegbarFuerRollenerweiterung();
+        const result: boolean =
+            await serviceProviderVerfuegbarFuerRollenerweiterungSpecification.isSatisfiedBy(rollenerweiterung);
+        if (!result) return { ok: false, error: new ServiceProviderNichtVerfuegbarFuerRollenerweiterungError() };
 
         const rollenerweiterungEntity: RollenerweiterungEntity = this.em.create(
             RollenerweiterungEntity,
