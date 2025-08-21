@@ -172,47 +172,6 @@ export class KeycloakUserService {
         }
     }
 
-    /* public async updateOXUserAttributes(
-        username: string,
-        oxUserName: OXUserName,
-        oxContextName: OXContextName,
-    ): Promise<Result<void, DomainError>> {
-        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
-            await this.kcAdminService.getAuthedKcAdminClient();
-
-        if (!kcAdminClientResult.ok) {
-            return kcAdminClientResult;
-        }
-
-        const keycloakUserResult: Result<UserRepresentation, DomainError> =
-            await this.tryToFindKeycloakUserByUsernameForUpdate(kcAdminClientResult.value, username);
-
-        if (!keycloakUserResult.ok) {
-            return keycloakUserResult;
-        }
-        const userRepresentation: UserRepresentation = keycloakUserResult.value;
-        const attributes: Record<string, string[]> | undefined = userRepresentation.attributes ?? {};
-
-        attributes['ID_OX'] = [oxUserName + '@' + oxContextName];
-
-        const updatedUserRepresentation: UserRepresentation = {
-            //only attributes shall be updated here for this event
-            username: userRepresentation.username,
-            attributes: attributes,
-        };
-
-        try {
-            await kcAdminClientResult.value.users.update({ id: userRepresentation.id! }, updatedUserRepresentation);
-            this.logger.info(`Updated user-attributes for user:${userRepresentation.id}`);
-
-            return { ok: true, value: undefined };
-        } catch (err) {
-            this.logger.logUnknownAsError('Could not update user-attributes', err);
-
-            return { ok: false, error: new KeycloakClientError('Could not update user-attributes') };
-        }
-    }*/
-
     public async delete(id: string): Promise<Result<void, DomainError>> {
         const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
             await this.kcAdminService.getAuthedKcAdminClient();
@@ -368,43 +327,6 @@ export class KeycloakUserService {
             return { ok: false, error: new KeycloakClientError('Could not update username') };
         }
     }
-
-    /*public async removeOXUserAttributes(username: string): Promise<Result<void, DomainError>> {
-        const kcAdminClientResult: Result<KeycloakAdminClient, DomainError> =
-            await this.kcAdminService.getAuthedKcAdminClient();
-
-        if (!kcAdminClientResult.ok) {
-            return kcAdminClientResult;
-        }
-
-        const keycloakUserResult: Result<UserRepresentation, DomainError> =
-            await this.tryToFindKeycloakUserByUsernameForUpdate(kcAdminClientResult.value, username);
-
-        if (!keycloakUserResult.ok) {
-            return keycloakUserResult;
-        }
-        const userRepresentation: UserRepresentation = keycloakUserResult.value;
-        const attributes: Record<string, string[]> | undefined = userRepresentation.attributes ?? {};
-
-        attributes['ID_OX'] = [''];
-
-        const updatedUserRepresentation: UserRepresentation = {
-            //only attributes shall be updated here for this event
-            username: userRepresentation.username,
-            attributes: attributes,
-        };
-
-        try {
-            await kcAdminClientResult.value.users.update({ id: userRepresentation.id! }, updatedUserRepresentation);
-            this.logger.info(`Updated user-attributes for user:${userRepresentation.id}, removed ID_OX`);
-
-            return { ok: true, value: undefined };
-        } catch (err) {
-            this.logger.logUnknownAsError('Could not remove ID_OX from user-attributes', err);
-
-            return { ok: false, error: new KeycloakClientError('Could not remove ID_OX from user-attributes') };
-        }
-    }*/
 
     private async wrapClientResponse<T>(promise: Promise<T>): Promise<Result<T, DomainError>> {
         try {
