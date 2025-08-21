@@ -28,9 +28,12 @@ export const KafkaProvider: Provider<Kafka | null> = {
                 ssl: {
                     rejectUnauthorized: false,
                     checkServerIdentity: () => undefined,
+                    allowPartialTrustChain: true,
                     ca: [fs.readFileSync(caPath, 'utf-8')],
                     cert: fs.readFileSync(certPath, 'utf-8'),
                     key: fs.readFileSync(keyPath, 'utf-8'),
+                    minVersion: 'TLSv1.1',
+                    maxVersion: 'TLSv1.2',
                 },
             });
         } else {
