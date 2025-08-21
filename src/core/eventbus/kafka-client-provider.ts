@@ -1,4 +1,4 @@
-import { Kafka } from 'kafkajs';
+import { Kafka, logLevel } from 'kafkajs';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../shared/config/kafka.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
@@ -13,28 +13,29 @@ export const KafkaProvider: Provider<Kafka | null> = {
     useFactory: (configService: ConfigService<ServerConfig>): Kafka | null => {
         const kafkaConfig: KafkaConfig = configService.getOrThrow<KafkaConfig>('KAFKA');
 
-    if (kafkaConfig.KAFKA_SSL_ENABLED) {
-      const caPath = kafkaConfig.KAFKA_SSL_CA_PATH;
-      const certPath = kafkaConfig.KAFKA_SSL_CERT_PATH;
-      const keyPath = kafkaConfig.KAFKA_SSL_KEY_PATH;
+        if (kafkaConfig.KAFKA_SSL_ENABLED) {
+            const caPath: string | undefined = kafkaConfig.KAFKA_SSL_CA_PATH;
+            const certPath: string | undefined = kafkaConfig.KAFKA_SSL_CERT_PATH;
+            const keyPath: string | undefined = kafkaConfig.KAFKA_SSL_KEY_PATH;
 
-      if (!caPath || !certPath || !keyPath) {
-        throw new Error('SSL enabled but cert paths are missing');
-      }
+            if (!caPath || !certPath || !keyPath) {
+                throw new Error('SSL enabled but cert paths are missing');
+            }
 
-      return new Kafka({
-        //brokers: [kafkaConfig.BROKER],
-        brokers: kafkaConfig.BROKER,
-        ssl: {
-          rejectUnauthorized: true,
-          ca: [fs.readFileSync(caPath, 'utf-8')],
-          cert: fs.readFileSync(certPath, 'utf-8'),
-          key: fs.readFileSync(keyPath, 'utf-8'),
-        },
-      });
-    } else {
-      throw new Error('SSL is disabled. SSL must be enabled');
-    }
-  },
-  inject: [ConfigService],
+            return new Kafka({
+                brokers: kafkaConfig.BROKER,
+                logLevel: logLevel.DEBUG,
+                ssl: {
+                    rejectUnauthorized: false,
+                    checkServerIdentity: () => undefined,
+                    ca: [fs.readFileSync(caPath, 'utf-8')],
+                    cert: fs.readFileSync(certPath, 'utf-8'),
+                    key: fs.readFileSync(keyPath, 'utf-8'),
+                },
+            });
+        } else {
+            throw new Error('SSL is disabled. SSL must be enabled');
+        }
+    },
+    inject: [ConfigService],
 };

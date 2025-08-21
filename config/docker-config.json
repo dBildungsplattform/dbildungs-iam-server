@@ -120,7 +120,9 @@
         "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true
     },
     "KAFKA": {
-        "BROKER": "10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093",
+        "BROKER": [
+            "localhost:9094"
+        ],
         "TOPIC_PREFIX": "local.",
         "USER_TOPIC": "spsh-user-topic",
         "USER_DLQ_TOPIC": "spsh-user-dlq-topic",
@@ -128,11 +130,7 @@
         "SESSION_TIMEOUT": 300000,
         "HEARTBEAT_INTERVAL": 10000,
         "ENABLED": true,
-        "KAFKA_SSL_ENABLED": true,
-        "KAFKA_SSL_CA_PATH": "/tls/ca.pem",
-        "KAFKA_SSL_CERT_PATH": "/tls/client-cert.pem",
-        "KAFKA_SSL_KEY_PATH": "/tls/client-key.pem"
-  
+        "KAFKA_SSL_ENABLED": false
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
