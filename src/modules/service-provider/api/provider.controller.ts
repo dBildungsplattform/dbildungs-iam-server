@@ -1,8 +1,11 @@
 import {
     Body,
     Controller,
+    Delete,
     ForbiddenException,
     Get,
+    HttpCode,
+    HttpStatus,
     Param,
     Patch,
     Post,
@@ -15,6 +18,7 @@ import {
     ApiCreatedResponse,
     ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
+    ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOAuth2,
     ApiOkResponse,
@@ -31,13 +35,13 @@ import { AuthenticationExceptionFilter } from '../../authentication/api/authenti
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider.body.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
-import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider.body.params.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
@@ -220,5 +224,34 @@ export class ProviderController {
         const response: ServiceProviderResponse = new ServiceProviderResponse(savedServiceProvider);
 
         return response;
+    }
+
+    @Delete(':angebotId')
+    @ApiOperation({ description: 'Delete an existing service-provider.' })
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiNoContentResponse({
+        description: 'The service-provider was deleted successfully.',
+        type: ServiceProviderResponse,
+    })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to delete the service provider.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to delete the service-provider.' })
+    @ApiNotFoundResponse({ description: 'The service-provider with the given id was not found' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while updating the service-provider.' })
+    public async deleteServiceProvider(
+        @Param() params: AngebotByIdParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<void> {
+        if (!(await permissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SERVICEPROVIDER_VERWALTEN]))) {
+            throw new ForbiddenException('You do not have the required permissions to delete a service provider.');
+        }
+
+        const deleted: boolean = await this.serviceProviderRepo.deleteById(params.angebotId);
+        if (!deleted) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(
+                    new EntityNotFoundError('ServiceProvider', params.angebotId),
+                ),
+            );
+        }
     }
 }

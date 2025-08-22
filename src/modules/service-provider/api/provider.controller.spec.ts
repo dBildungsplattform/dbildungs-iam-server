@@ -9,20 +9,20 @@ import { DatabaseTestModule } from '../../../../test/utils/database-test.module.
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
+import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
+import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
+import { CreateServiceProviderBodyParams } from './create-service-provider.body.params.js';
 import { ProviderController } from './provider.controller.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
-import { CreateServiceProviderBodyParams } from './create-service-provider.body.params.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { ServiceProviderFactory } from '../domain/service-provider.factory.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider.body.params.js';
-import { SchulConnexError } from '../../../shared/error/schul-connex.error.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
@@ -339,6 +339,72 @@ describe('Provider Controller Test', () => {
 
                 expect(serviceProviderRepoMock.findById).toHaveBeenCalledWith(spId);
                 expect(serviceProviderRepoMock.save).not.toHaveBeenCalled();
+                expect(personPermissions.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
+                    RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
+                ]);
+            });
+        });
+    });
+
+    describe('deleteServiceProvider', () => {
+        describe('when user has the RollenSystemRecht SERVICEPROVIDER_VERWALTEN and service provider exists', () => {
+            it('should not throw', async () => {
+                const spId: string = faker.string.uuid();
+                serviceProviderRepoMock.deleteById.mockResolvedValueOnce(true);
+
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                await expect(
+                    providerController.deleteServiceProvider({ angebotId: spId }, personPermissions),
+                ).resolves.not.toThrow();
+
+                expect(serviceProviderRepoMock.deleteById).toHaveBeenCalledWith(spId);
+                expect(personPermissions.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
+                    RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
+                ]);
+            });
+        });
+
+        describe('when user does not have the RollenSystemRecht SERVICEPROVIDER_VERWALTEN', () => {
+            it('should throw ForbiddenException', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+
+                await expect(() =>
+                    providerController.deleteServiceProvider({ angebotId: faker.string.uuid() }, personPermissions),
+                ).rejects.toThrow(ForbiddenException);
+
+                expect(serviceProviderRepoMock.deleteById).not.toHaveBeenCalled();
+                expect(personPermissions.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
+                    RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
+                ]);
+            });
+        });
+
+        describe('when user has the RollenSystemRecht SERVICEPROVIDER_VERWALTEN but the service provider does not exist', () => {
+            it('should throw SchulConnexError', async () => {
+                const spId: string = faker.string.uuid();
+                serviceProviderRepoMock.deleteById.mockResolvedValueOnce(false);
+
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                await expect(() =>
+                    providerController.deleteServiceProvider({ angebotId: spId }, personPermissions),
+                ).rejects.toThrow(
+                    new HttpException(
+                        new SchulConnexError({
+                            code: 404,
+                            subcode: '01',
+                            titel: 'Angefragte Entität existiert nicht',
+                            beschreibung: 'Die angeforderte Entität existiert nicht',
+                        }),
+                        404,
+                    ),
+                );
+
+                expect(serviceProviderRepoMock.deleteById).toHaveBeenCalledWith(spId);
                 expect(personPermissions.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
                     RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
                 ]);
