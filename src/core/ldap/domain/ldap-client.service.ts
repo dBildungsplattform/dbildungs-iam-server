@@ -168,8 +168,14 @@ export class LdapClientService {
         );
     }
 
-    public async deleteLehrerByUsername(username: PersonReferrer): Promise<Result<string>> {
-        return this.executeWithRetry(() => this.deleteLehrerByUsernameInternal(username), this.getNrOfRetries());
+    public async deleteLehrerByUsername(
+        username: PersonReferrer,
+        failIfUserNotFound: boolean = false,
+    ): Promise<Result<string>> {
+        return this.executeWithRetry(
+            () => this.deleteLehrerByUsernameInternal(username, failIfUserNotFound),
+            this.getNrOfRetries(),
+        );
     }
 
     public async deleteLehrer(
@@ -882,7 +888,10 @@ export class LdapClientService {
         return { ok: true, value: `Updated member data for ${groupEntries.length} groups.` };
     }
 
-    private async deleteLehrerByUsernameInternal(username: PersonReferrer): Promise<Result<string>> {
+    private async deleteLehrerByUsernameInternal(
+        username: PersonReferrer,
+        failIfUserNotFound: boolean,
+    ): Promise<Result<string | null>> {
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrerByUsernameInternal');
             const client: Client = this.ldapClient.getClient();
@@ -894,9 +903,15 @@ export class LdapClientService {
                 filter: `(uid=${username})`,
             });
             if (!searchResultLehrer.searchEntries[0]) {
+                if (failIfUserNotFound) {
+                    return {
+                        ok: false,
+                        error: new Error(`User not found: ${username}`),
+                    };
+                }
                 return {
-                    ok: false,
-                    error: new LdapSearchError(LdapEntityType.LEHRER),
+                    ok: true,
+                    value: null,
                 };
             }
             await client.del(searchResultLehrer.searchEntries[0].dn);

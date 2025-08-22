@@ -1514,9 +1514,26 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByUsername(person.referrer!);
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByUsername(person.referrer!, true);
 
                 expect(result.ok).toBeFalsy();
+            });
+
+            it('should return truthy when lehrer cannot be found', async () => {
+                ldapClientMock.getClient.mockImplementation(() => {
+                    clientMock.bind.mockResolvedValueOnce();
+                    clientMock.search.mockResolvedValueOnce(
+                        createMock<SearchResult>({
+                            searchEntries: [],
+                        }),
+                    );
+                    clientMock.del.mockResolvedValueOnce();
+
+                    return clientMock;
+                });
+                const result: Result<PersonID> = await ldapClientService.deleteLehrerByUsername(person.referrer!);
+
+                expect(result.ok).toBeTruthy();
             });
 
             it('when bind returns error', async () => {

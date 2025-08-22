@@ -36,6 +36,7 @@ import { KafkaLdapEntryDeletedEvent } from '../../../shared/events/ldap/kafka-ld
 import { LdapDeleteLehrerError } from '../error/ldap-delete-lehrer.error.js';
 import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
+import { tr } from '@faker-js/faker';
 
 @Injectable()
 export class LdapEventHandler {
@@ -340,7 +341,10 @@ export class LdapEventHandler {
             };
         }
 
-        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(event.username);
+        const deletionResult: Result<PersonID> = await this.ldapClientService.deleteLehrerByUsername(
+            event.username,
+            true,
+        );
         if (!deletionResult.ok) {
             this.logger.error(deletionResult.error.message);
         } else {
