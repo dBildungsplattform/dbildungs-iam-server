@@ -909,6 +909,7 @@ export class LdapClientService {
                         error: new Error(`User not found: ${username}`),
                     };
                 }
+                this.logger.info(`LDAP: user to delete not found: ${username}`);
                 return {
                     ok: true,
                     value: null,
