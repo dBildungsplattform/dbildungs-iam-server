@@ -73,8 +73,7 @@ export class RollenerweiterungRepo {
 
         const serviceProviderVerfuegbarFuerRollenerweiterung: ServiceProviderVerfuegbarFuerRollenerweiterung =
             new ServiceProviderVerfuegbarFuerRollenerweiterung();
-        const result: boolean =
-            await serviceProviderVerfuegbarFuerRollenerweiterung.isSatisfiedBy(rollenerweiterung);
+        const result: boolean = await serviceProviderVerfuegbarFuerRollenerweiterung.isSatisfiedBy(rollenerweiterung);
         if (!result) return { ok: false, error: new ServiceProviderNichtVerfuegbarFuerRollenerweiterungError() };
 
         const rollenerweiterungEntity: RollenerweiterungEntity = this.em.create(
