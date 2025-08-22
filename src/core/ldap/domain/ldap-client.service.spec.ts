@@ -32,6 +32,7 @@ import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.err
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
 import assert from 'assert';
+import e from 'express';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
@@ -1497,9 +1498,14 @@ describe('LDAP Client Service', () => {
                     return clientMock;
                 });
 
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByUsername(person.referrer!);
+                const result: Result<PersonID | null> = await ldapClientService.deleteLehrerByUsername(
+                    person.referrer!,
+                );
 
                 expect(result.ok).toBeTruthy();
+                if (result.ok) {
+                    expect(result.value).toBe(person.referrer);
+                }
             });
 
             it('should return error when lehrer cannot be found', async () => {
@@ -1514,7 +1520,10 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByUsername(person.referrer!, true);
+                const result: Result<PersonID | null> = await ldapClientService.deleteLehrerByUsername(
+                    person.referrer!,
+                    true,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
@@ -1531,9 +1540,14 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByUsername(person.referrer!);
+                const result: Result<PersonID | null> = await ldapClientService.deleteLehrerByUsername(
+                    person.referrer!,
+                );
 
                 expect(result.ok).toBeTruthy();
+                if (result.ok) {
+                    expect(result.value).toBeNull();
+                }
             });
 
             it('when bind returns error', async () => {
@@ -1543,7 +1557,9 @@ describe('LDAP Client Service', () => {
 
                     return clientMock;
                 });
-                const result: Result<PersonID> = await ldapClientService.deleteLehrerByUsername(person.referrer!);
+                const result: Result<PersonID | null> = await ldapClientService.deleteLehrerByUsername(
+                    person.referrer!,
+                );
 
                 expect(result.ok).toBeFalsy();
             });
