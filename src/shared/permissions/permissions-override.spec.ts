@@ -117,7 +117,7 @@ describe('PermissionsOverride', () => {
         describe('when no rechte are overridden', () => {
             it('should call the underlying permissions', async () => {
                 const orgaId: OrganisationID = faker.string.uuid();
-                const systemrecht: RollenSystemRecht = faker.helpers.enumValue(RollenSystemRecht);
+                const systemrecht: RollenSystemRecht = RollenSystemRecht.ROLLEN_VERWALTEN;
                 const fakeResult: boolean = faker.datatype.boolean();
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(fakeResult);
@@ -132,7 +132,7 @@ describe('PermissionsOverride', () => {
             it('should return true', async () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 const orgaId: OrganisationID = faker.string.uuid();
-                const systemrecht: RollenSystemRecht = faker.helpers.enumValue(RollenSystemRecht);
+                const systemrecht: RollenSystemRecht = RollenSystemRecht.ROLLEN_VERWALTEN;
                 const override: PermissionsOverride = new PermissionsOverride(permissionsMock).grantSystemrechteAtOrga(
                     orgaId,
                     [systemrecht],
@@ -144,7 +144,7 @@ describe('PermissionsOverride', () => {
             it('should not call underlying permissions', async () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 const orgaId: OrganisationID = faker.string.uuid();
-                const systemrecht: RollenSystemRecht = faker.helpers.enumValue(RollenSystemRecht);
+                const systemrecht: RollenSystemRecht = RollenSystemRecht.ROLLEN_VERWALTEN;
                 const override: PermissionsOverride = new PermissionsOverride(permissionsMock).grantSystemrechteAtOrga(
                     orgaId,
                     [systemrecht],
