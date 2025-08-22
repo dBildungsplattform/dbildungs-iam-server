@@ -285,7 +285,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -553,7 +554,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -843,7 +845,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -1125,7 +1128,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -1399,7 +1403,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -1702,7 +1707,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -2120,7 +2126,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -2415,7 +2422,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -3006,7 +3014,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -3355,7 +3364,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -3640,7 +3650,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -3964,7 +3975,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -4435,7 +4447,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -4826,7 +4839,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -5196,7 +5210,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -5482,7 +5497,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -5782,7 +5798,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -6146,7 +6163,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -6542,7 +6560,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -6825,7 +6844,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7108,7 +7128,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7133,7 +7154,8 @@
           "nullable": false,
           "nativeEnumName": "service_provider_merkmal_enum",
           "enumItems": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ],
           "mappedType": "enum"
         }
@@ -7393,7 +7415,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7723,7 +7746,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7944,7 +7968,8 @@
       "name": "service_provider_merkmal_enum",
       "schema": "public",
       "items": [
-        "NACHTRAEGLICH_ZUWEISBAR"
+        "NACHTRAEGLICH_ZUWEISBAR",
+        "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
       ]
     }
   }
