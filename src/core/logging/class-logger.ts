@@ -56,6 +56,21 @@ export class ClassLogger extends Logger {
         this.logger.log('warning', this.createMessage(message, trace));
     }
 
+    /**
+     * Calls the warning-method after extending the message with ',personId:XX, username:YYYY'.
+     * @param message
+     * @param personIdentifier
+     */
+    public warningPersonalized(message: string, personIdentifier: PersonIdentifier, trace?: unknown): void {
+        this.logger.log(
+            'warning',
+            this.createMessage(
+                message + `, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+                trace,
+            ),
+        );
+    }
+
     public notice(message: string, trace?: unknown): void {
         this.logger.log('notice', this.createMessage(message, trace));
     }

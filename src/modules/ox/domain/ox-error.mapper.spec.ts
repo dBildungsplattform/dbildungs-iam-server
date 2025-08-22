@@ -78,5 +78,12 @@ describe('OXErrorMapper', () => {
             const oxError: OxError = OxErrorMapper.mapOxErrorResponseToOxError(oxErrorResponse);
             expect(oxError.code).toStrictEqual('OX_NO_SUCH_USER_ERROR');
         });
+
+        it('when faultString contains info that user could not be added as member to group', () => {
+            oxErrorResponse.Envelope.Body.Fault.faultstring = `Member already exists in group; exceptionId -483860422-666`;
+
+            const oxError: OxError = OxErrorMapper.mapOxErrorResponseToOxError(oxErrorResponse);
+            expect(oxError.code).toStrictEqual('OX_MEMBER_ALREADY_IN_GROUP_ERROR');
+        });
     });
 });
