@@ -613,8 +613,9 @@ export class OxEventHandler extends AbstractOxEventHandler {
         const existsResult: Result<ExistsUserResponse, DomainError> = await this.oxService.send(existsAction);
 
         if (existsResult.ok && existsResult.value.exists) {
-            this.logger.errorPersonalized(`Cannot create user in OX, user already exists`, personIdentifier);
-            return;
+            mostRecentRequestedEmailAddress.failed();
+            await this.emailRepo.save(mostRecentRequestedEmailAddress);
+            return this.logger.errorPersonalized(`Cannot create user in OX, user already exists`, personIdentifier);
         }
 
         const params: CreateUserParams = {
