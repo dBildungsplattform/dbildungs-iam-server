@@ -46,6 +46,8 @@ import { EmailAddressEntity } from '../persistence/email-address.entity.js';
 import { EmailRepo } from '../persistence/email.repo.js';
 import { EmailAddress, EmailAddressStatus } from './email-address.js';
 import { EmailFactory } from './email.factory.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
 
 type RolleWithPK = {
     rolle: Rolle<true>;
@@ -74,6 +76,46 @@ export class EmailEventHandler {
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
         this.OX_ENABLED = oxConfig.ENABLED;
+    }
+
+    @KafkaEventHandler(KafkaOxUserChangedEvent)
+    @EventHandler(OxUserChangedEvent)
+    @EnsureRequestContext()
+    public async handleOxUserChangedEvent(event: OxUserChangedEvent): Promise<void> {
+        this.logger.info(
+            `Received OxUserChangedEvent personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.primaryEmail}`,
+        );
+        const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
+
+        if (!email) {
+            return this.logger.info(
+                `Cannot find REQUESTED email-address for person with personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, enabling not necessary`,
+            );
+        }
+
+        if (email.address !== event.primaryEmail) {
+            this.logger.warning(
+                `Mismatch between REQUESTED(${email.address}) and received(${event.primaryEmail}) address from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+            this.logger.warning(
+                `Overriding ${email.address} with ${event.primaryEmail}) from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+            email.setAddress(event.primaryEmail);
+        }
+
+        email.enable();
+        email.oxUserID = event.oxUserId;
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
+
+        if (persistenceResult instanceof DomainError) {
+            return this.logger.error(
+                `Could not ENABLE email for personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, error:${persistenceResult.message}`,
+            );
+        } else {
+            return this.logger.info(
+                `Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+        }
     }
 
     /*
