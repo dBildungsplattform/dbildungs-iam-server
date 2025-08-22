@@ -36,7 +36,6 @@ import { KafkaLdapEntryDeletedEvent } from '../../../shared/events/ldap/kafka-ld
 import { LdapDeleteLehrerError } from '../error/ldap-delete-lehrer.error.js';
 import { KafkaEmailAddressMarkedForDeletionEvent } from '../../../shared/events/email/kafka-email-address-marked-for-deletion.event.js';
 import { KafkaLdapEmailAddressDeletedEvent } from '../../../shared/events/ldap/kafka-ldap-email-address-deleted.event.js';
-import { tr } from '@faker-js/faker';
 
 @Injectable()
 export class LdapEventHandler {
