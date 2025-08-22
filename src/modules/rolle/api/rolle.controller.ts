@@ -65,6 +65,7 @@ import { RolleResponse } from './rolle.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
+import { Public } from '../../authentication/api/public.decorator.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -150,6 +151,7 @@ export class RolleController {
 
     @Get('systemrechte')
     @ApiOperation({ description: 'Get all systemrechte for rollen.' })
+    @Public()
     @ApiOkResponse({
         description: 'Returns all systemrechte for rollen.',
         type: [SystemRechtResponse],

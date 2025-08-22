@@ -30,7 +30,6 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { PersonApiMapper } from '../../person/mapper/person-api.mapper.js';
 
-
 describe('PersonenkontextController', () => {
     let module: TestingModule;
     let sut: PersonenkontextController;
