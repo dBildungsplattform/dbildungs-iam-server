@@ -148,6 +148,21 @@ export class RolleController {
         return new PagedResponse(pagedRolleWithServiceProvidersResponse);
     }
 
+    @Get('systemrechte')
+    @ApiOperation({ description: 'Get all systemrechte for rollen.' })
+    @ApiOkResponse({
+        description: 'Returns all systemrechte for rollen.',
+        type: [SystemRechtResponse],
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error',
+    })
+    public getAllSystemrechte(): SystemRechtResponse[] {
+        return RollenSystemRecht.ALL.map((systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht));
+        // filter(
+        //     (systemRecht: RollenSystemRecht) => includeTechnicalRights || !systemRecht.technical,)
+    }
+
     @Get(':rolleId')
     @ApiOperation({ description: 'Get rolle by id.' })
     @ApiOkResponse({
@@ -466,21 +481,6 @@ export class RolleController {
         }
 
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle entfernt: ${rolleName}.`);
-    }
-
-    @Get('systemrechte')
-    @ApiOperation({ description: 'Get all systemrechte for rollen.' })
-    @ApiOkResponse({
-        description: 'Returns all systemrechte for rollen.',
-        type: [SystemRechtResponse],
-    })
-    @ApiInternalServerErrorResponse({
-        description: 'Internal server error',
-    })
-    public getAllSystemrechte(): SystemRechtResponse[] {
-        return RollenSystemRecht.ALL.map((systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht));
-        // filter(
-        //     (systemRecht: RollenSystemRecht) => includeTechnicalRights || !systemRecht.technical,)
     }
 
     private async returnRolleWithServiceProvidersResponse(
