@@ -68,6 +68,7 @@ export default (): Config => ({
     FEATUREFLAG: {
         FEATURE_FLAG_ROLLE_BEARBEITEN: envToOptionalBoolean('FEATURE_FLAG_ROLLE_BEARBEITEN'),
         FEATURE_FLAG_BEFRISTUNG_BEARBEITEN: envToOptionalBoolean('FEATURE_FLAG_BEFRISTUNG_BEARBEITEN'),
+        FEATURE_FLAG_ROLLE_ERWEITERN: envToOptionalBoolean('FEATURE_FLAG_ROLLE_ERWEITERN'),
     },
     HOST: {
         HOSTNAME: process.env['BACKEND_HOSTNAME'],

@@ -23,3 +23,6 @@ export type ServiceProviderID = Flavor<string, typeof serviceProviderSymbol>;
 
 declare const emailAddressSymbol: unique symbol;
 export type EmailAddressID = Flavor<string, typeof emailAddressSymbol>;
+
+declare const rollenerweiterungSymbol: unique symbol;
+export type RollenerweiterungID = Flavor<string, typeof rollenerweiterungSymbol>;

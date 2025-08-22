@@ -33,4 +33,5 @@ export enum RollenSystemRecht {
     BULK_VERWALTEN = 'BULK_VERWALTEN', // For Admins that can do bulk operations like adding personenkontexte to 100 users at once.
     SCHULPORTAL_VERWALTEN = 'SCHULPORTAL_VERWALTEN',
     HINWEISE_BEARBEITEN = 'HINWEISE_BEARBEITEN',
+    ROLLEN_ERWEITERN = 'ROLLEN_ERWEITERN',
 }

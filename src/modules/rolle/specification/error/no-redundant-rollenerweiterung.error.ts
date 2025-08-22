@@ -1,9 +1,9 @@
 import { RolleDomainError } from '../../domain/rolle-domain.error.js';
 
-export class ServiceProviderNichtVerfuegbarFuerRollenerweiterungError extends RolleDomainError {
+export class NoRedundantRollenerweiterungError extends RolleDomainError {
     public constructor(details?: unknown[] | Record<string, undefined>) {
         super(
-            'The Rollenerweiterung is not possible, because the ServiceProvider is not available for Rollenerweiterung.',
+            'The Rollenerweiterung is not possible, because the Rolle already has access to the ServiceProvider.',
             undefined,
             details,
         );
