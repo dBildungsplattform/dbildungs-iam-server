@@ -71,10 +71,10 @@ export class RollenerweiterungRepo {
             return { ok: false, error: new NoRedundantRollenerweiterungError() };
         }
 
-        const serviceProviderVerfuegbarFuerRollenerweiterungSpecification: ServiceProviderVerfuegbarFuerRollenerweiterung =
+        const serviceProviderVerfuegbarFuerRollenerweiterung: ServiceProviderVerfuegbarFuerRollenerweiterung =
             new ServiceProviderVerfuegbarFuerRollenerweiterung();
         const result: boolean =
-            await serviceProviderVerfuegbarFuerRollenerweiterungSpecification.isSatisfiedBy(rollenerweiterung);
+            await serviceProviderVerfuegbarFuerRollenerweiterung.isSatisfiedBy(rollenerweiterung);
         if (!result) return { ok: false, error: new ServiceProviderNichtVerfuegbarFuerRollenerweiterungError() };
 
         const rollenerweiterungEntity: RollenerweiterungEntity = this.em.create(
