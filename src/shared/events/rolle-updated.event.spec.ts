@@ -10,7 +10,7 @@ describe('RolleUpdatedEvent', () => {
         const rolle: Rolle<true> = DoFactory.createRolle(true);
         const oldRolle: Rolle<true> = cloneDeep(rolle);
         rolle.addMerkmal(faker.helpers.enumValue(RollenMerkmal));
-        rolle.addSystemRecht(faker.helpers.enumValue(RollenSystemRecht));
+        rolle.addSystemRecht(RollenSystemRecht.KLASSEN_VERWALTEN);
 
         const event: RolleUpdatedEvent = RolleUpdatedEvent.fromRollen(rolle, oldRolle);
 
