@@ -171,7 +171,7 @@ export class LdapClientService {
     public async deleteLehrerByUsername(
         username: PersonReferrer,
         failIfUserNotFound: boolean = false,
-    ): Promise<Result<string|null>> {
+    ): Promise<Result<string | null>> {
         return this.executeWithRetry(
             () => this.deleteLehrerByUsernameInternal(username, failIfUserNotFound),
             this.getNrOfRetries(),

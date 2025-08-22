@@ -32,7 +32,6 @@ import { LdapAddPersonToGroupError } from '../error/ldap-add-person-to-group.err
 import { LdapRemovePersonFromGroupError } from '../error/ldap-remove-person-from-group.error.js';
 import { LdapModifyUserPasswordError } from '../error/ldap-modify-user-password.error.js';
 import assert from 'assert';
-import e from 'express';
 
 describe('LDAP Client Service', () => {
     let app: INestApplication;
