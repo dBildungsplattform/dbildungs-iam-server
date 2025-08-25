@@ -22,15 +22,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+const HEARTBEAT_CHECK_INTERVAL = 10000; // 10 Sekunden, kannst du anpassen
+
 @Injectable()
 export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     private readonly handlerMap: Map<Constructor<BaseEvent>, EventHandlerType<BaseEvent>[]> = new Map();
 
     private readonly consumer?: Consumer;
-
     private producer?: Producer;
 
     private readonly kafkaConfig: KafkaConfig;
+
+    private lastHeartbeat: Date = new Date();
+    private heartbeatCheckInterval?: NodeJS.Timeout;
 
     public constructor(
         private readonly logger: ClassLogger,
@@ -60,6 +64,12 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
             this.logger.info('Connecting to Kafka');
             await this.consumer?.connect();
+
+            // Heartbeat listener
+            this.consumer?.on('consumer.heartbeat', () => {
+                this.lastHeartbeat = new Date();
+            });
+
             const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
             await this.consumer?.subscribe({ topics: Array.from(topics), fromBeginning: true });
 
@@ -80,7 +90,6 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                     this.logger.info(
                         `Consuming message from topic: ${topic}, partition: ${partition}, offset: ${message.offset}, key: ${message.key?.toString()}`,
                     );
-                    // Call heartbeat before and after processing, and optionally during long processing
                     await heartbeat();
                     await this.handleMessage(message, heartbeat);
                     await heartbeat();
@@ -88,14 +97,47 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             });
 
             await this.producer?.connect();
+
+            // Start heartbeat monitor
+            this.startHeartbeatCheck();
         } catch (err) {
             this.logger.error('Error in KafkaEventService', util.inspect(err));
         }
     }
 
     public async onModuleDestroy(): Promise<void> {
+        if (this.heartbeatCheckInterval) {
+            clearInterval(this.heartbeatCheckInterval);
+        }
         await this.consumer?.disconnect();
         await this.producer?.disconnect();
+    }
+
+    private startHeartbeatCheck() {
+        this.heartbeatCheckInterval = setInterval(async () => {
+            const now = new Date();
+            if (this.lastHeartbeat.getTime() < now.getTime() - HEARTBEAT_CHECK_INTERVAL) {
+                this.logger.error(`No heartbeat detected. Last heartbeat was at ${this.lastHeartbeat.toISOString()}`);
+                await this.restartConsumer();
+            }
+        }, HEARTBEAT_CHECK_INTERVAL);
+    }
+
+    private async restartConsumer() {
+        try {
+            this.logger.info('Restarting Kafka consumer due to missed heartbeats...');
+            await this.consumer?.disconnect();
+            await this.consumer?.connect();
+
+            const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
+            await Promise.all(
+                Array.from(topics).map((topic: string) => this.consumer?.subscribe({ topic, fromBeginning: true })),
+            );
+
+            this.logger.info('Kafka consumer restarted successfully.');
+        } catch (err) {
+            this.logger.error('Failed to restart Kafka consumer', util.inspect(err));
+        }
     }
 
     public subscribe<Event extends BaseEvent>(eventType: Constructor<Event>, handler: EventHandlerType<Event>): void {
@@ -137,6 +179,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             this.logger.error('Failed to parse Kafka message', error);
             return;
         }
+
         const kafkaEvent: BaseEvent & KafkaEvent = Object.assign(new eventClass(), eventData);
         const handlers: EventHandlerType<BaseEvent>[] | undefined = this.handlerMap.get(eventClass);
 
@@ -150,7 +193,6 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                             kafkaEvent,
                             heartbeat,
                         );
-
                         return res;
                     } catch (err) {
                         this.logger.logUnknownAsError(`Handler failed for event ${eventClass.name}`, err);
@@ -164,15 +206,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
             const results: PromiseSettledResult<Result<unknown>>[] = await Promise.allSettled(handlerPromises);
 
-            const firstFailure:
-                | PromiseFulfilledResult<{
-                      ok: false;
-                      error: Error;
-                  }>
-                | undefined = results.find(
-                (
-                    res: PromiseSettledResult<Result<unknown, Error>>,
-                ): res is PromiseFulfilledResult<{ ok: false; error: Error }> =>
+            const firstFailure = results.find(
+                (res): res is PromiseFulfilledResult<{ ok: false; error: Error }> =>
                     res.status === 'fulfilled' && !res.value.ok && res.value.error instanceof Error,
             );
 
@@ -197,7 +232,13 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         try {
             await this.producer?.send({
                 topic,
-                messages: [{ key: event.kafkaKey, value: JSON.stringify(event), headers }],
+                messages: [
+                    {
+                        key: event.kafkaKey,
+                        value: JSON.stringify(event) ?? null,
+                        headers,
+                    },
+                ],
             });
         } catch (err) {
             this.logger.error(`Error publishing event to Kafka on topic ${topic}`, util.inspect(err));
@@ -245,17 +286,15 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         return topics;
     }
 
-    /*
-    Must be public because otherwise writing tests that cover 100% are very hard and not worth the effort
-    */
     public runWithTimoutAndKeepAlive<Event extends BaseEvent>(
         handler: EventHandlerType<BaseEvent>,
         event: Event,
         heartbeat: () => Promise<void>,
     ): Promise<Result<unknown, Error>> {
-        return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
-            const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2500; // To allow processing of offset commit after message before client times out
-            let completed: boolean = false;
+        return new Promise((resolve) => {
+            const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2500;
+
+            let completed = false;
 
             const onTimeout = (): void => {
                 if (!completed) {
@@ -292,10 +331,10 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                         );
                         clearTimeout(timeout);
                         completed = true;
-                        resolve(result ?? ({ ok: true, value: null } satisfies Result<unknown> | void));
+                        resolve(result ?? ({ ok: true, value: null } satisfies Result<unknown>));
                     }
                 })
-                .catch((error: Error) => {
+                .catch((error: unknown) => {
                     if (!completed) {
                         this.logger.error(
                             `Handler for event ${event.constructor.name} with EventID: ${event.eventID} failed`,
@@ -305,8 +344,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                         completed = true;
                         resolve({
                             ok: false,
-                            error,
-                        } satisfies Result<unknown> | void);
+                            error: error as Error,
+                        } satisfies Result<unknown>);
                     }
                 });
         });
