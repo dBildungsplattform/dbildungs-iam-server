@@ -1,4 +1,4 @@
-import { Admin, Kafka, logLevel } from 'kafkajs';
+import { Kafka, logLevel } from 'kafkajs';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../shared/config/kafka.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
@@ -22,36 +22,16 @@ export const KafkaProvider: Provider<Kafka | null> = {
                 throw new Error('SSL enabled but cert paths are missing');
             }
 
-            const kafka: Kafka = new Kafka({
+            return new Kafka({
                 brokers: kafkaConfig.BROKER,
                 logLevel: logLevel.DEBUG,
                 ssl: {
                     rejectUnauthorized: false,
-                    checkServerIdentity: () => undefined,
-                    allowPartialTrustChain: true,
                     ca: [fs.readFileSync(caPath, 'utf-8')],
                     cert: fs.readFileSync(certPath, 'utf-8'),
                     key: fs.readFileSync(keyPath, 'utf-8'),
-                    minVersion: 'TLSv1.1',
-                    maxVersion: 'TLSv1.2',
                 },
             });
-
-            const admin: Admin = kafka.admin();
-
-            void admin
-                .connect()
-                .then(async () => {
-                    const topics: string[] = await admin.listTopics();
-                    console.log(topics);
-                })
-                .finally(() => {
-                    void admin.disconnect().then(() => {
-                        console.log('Disconnected!');
-                    });
-                });
-
-            return kafka;
         } else {
             throw new Error('SSL is disabled. SSL must be enabled');
         }
