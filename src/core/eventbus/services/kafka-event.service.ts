@@ -61,9 +61,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             this.logger.info('Connecting to Kafka');
             await this.consumer?.connect();
             const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
-            await Promise.all(
-                Array.from(topics).map((topic: string) => this.consumer?.subscribe({ topic, fromBeginning: true })),
-            );
+            await this.consumer?.subscribe({ topics: Array.from(topics), fromBeginning: true });
 
             await this.consumer?.run({
                 autoCommit: true,
