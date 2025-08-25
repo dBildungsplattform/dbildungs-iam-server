@@ -197,12 +197,12 @@ jobs:
       - create_branch_identifier
       - wait_for_helm_chart_to_get_published
       - build_image_on_push
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@DBP-1587-exclude-ldap
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/deploy.yml@7
     with:
       dbildungs_iam_server_branch: ${{ needs.branch_meta.outputs.ticket }}
       schulportal_client_branch: ${{ needs.branch_meta.outputs.ticket }}
       dbildungs_iam_keycloak_branch: ${{ needs.branch_meta.outputs.ticket }}
-    # dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
+      dbildungs_iam_ldap_branch: ${{ needs.branch_meta.outputs.ticket }}
       namespace: ${{ needs.create_branch_identifier.outputs.namespace_from_branch }}
       database_recreation: "true" # to prevent database recreation this has to be set to false
     secrets: inherit
