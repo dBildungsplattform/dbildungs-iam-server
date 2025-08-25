@@ -22,7 +22,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-const HEARTBEAT_CHECK_INTERVAL = 10000; // alle 10s prüfen
+const HEARTBEAT_CHECK_INTERVAL = 10000; // 10 Sekunden, kannst du anpassen
 
 @Injectable()
 export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
@@ -65,14 +65,10 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
       this.logger.info('Connecting to Kafka');
       await this.consumer?.connect();
 
-      // ⏱ Heartbeat-Listener registrieren
-      this.consumer?.on(this.consumer.events.HEARTBEAT, () => {
+      // Heartbeat listener
+      this.consumer?.on('consumer.heartbeat', () => {
         this.lastHeartbeat = new Date();
-        this.logger.debug(`Kafka consumer heartbeat at ${this.lastHeartbeat.toISOString()}`);
       });
-
-      // ⏱ Heartbeat-Check starten
-      this.startHeartbeatCheck();
 
       const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
       await Promise.all(
@@ -105,6 +101,9 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
       });
 
       await this.producer?.connect();
+
+      // Start heartbeat monitor
+      this.startHeartbeatCheck();
     } catch (err) {
       this.logger.error('Error in KafkaEventService', util.inspect(err));
     }
@@ -118,23 +117,21 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     await this.producer?.disconnect();
   }
 
-  // 🔄 Heartbeat Check implementiert
   private startHeartbeatCheck() {
     this.heartbeatCheckInterval = setInterval(async () => {
       const now = new Date();
       if (this.lastHeartbeat.getTime() < now.getTime() - HEARTBEAT_CHECK_INTERVAL) {
         this.logger.error(
-          new Error(`No heartbeat detected. Last heartbeat was at ${this.lastHeartbeat.toISOString()}`),
+          `No heartbeat detected. Last heartbeat was at ${this.lastHeartbeat.toISOString()}`,
         );
         await this.restartConsumer();
       }
     }, HEARTBEAT_CHECK_INTERVAL);
   }
 
-  // 🔄 Consumer neu starten, wenn Heartbeats fehlen
   private async restartConsumer() {
     try {
-      this.logger.warn('Restarting Kafka consumer due to missed heartbeats...');
+      this.logger.info('Restarting Kafka consumer due to missed heartbeats...');
       await this.consumer?.disconnect();
       await this.consumer?.connect();
 
