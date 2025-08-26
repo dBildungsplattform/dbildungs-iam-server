@@ -99,7 +99,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             await this.producer?.connect();
 
             // Start heartbeat monitor
-            this.startHeartbeatCheck();
+            //this.startHeartbeatCheck();
         } catch (err) {
             this.logger.error('Error in KafkaEventService', util.inspect(err));
         }

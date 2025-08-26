@@ -183,12 +183,12 @@ backend:
     stepUpTimeoutInSeconds: 900
     stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
-  
-  
+
+
   extraVolumeMounts: []
   extraVolumes: []
   extraEnvVars: []
-  
+
 
 redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
@@ -198,8 +198,8 @@ kafka:
   enabled: true
   sslEnabled: true
   initEnabled: true
-  sessionTimeout: 300000
-  heartbeatInterval: 10000
+  sessionTimeout: 45000
+  heartbeatInterval: 3000
   initImage:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'
