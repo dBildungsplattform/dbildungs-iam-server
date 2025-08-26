@@ -1366,7 +1366,6 @@ describe('KeycloakUserService', () => {
             newUsername = faker.internet.userName();
         });
 
-        //kap
         describe('when user does not exist', () => {
             it('should return error', async () => {
                 kcUsersMock.find.mockRejectedValueOnce(new Error());
@@ -1402,7 +1401,7 @@ describe('KeycloakUserService', () => {
                 expect(res.ok).toBeFalsy();
             });
         });
-        //
+
         describe('when updating user is successful', () => {
             it('should return undefined and no errors', async () => {
                 const kcId: string = faker.string.uuid();

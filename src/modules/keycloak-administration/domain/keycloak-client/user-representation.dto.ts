@@ -18,6 +18,4 @@ export class UserRepresentationDto {
 
     @IsBoolean()
     public enabled!: boolean;
-
-    //public attributes!: KcCustomAttributes;
 }
