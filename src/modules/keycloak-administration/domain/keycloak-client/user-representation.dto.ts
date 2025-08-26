@@ -1,5 +1,4 @@
 import { IsBoolean, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { KcCustomAttributes } from '../user.js';
 
 export class UserRepresentationDto {
     @IsString()
@@ -20,5 +19,5 @@ export class UserRepresentationDto {
     @IsBoolean()
     public enabled!: boolean;
 
-    public attributes!: KcCustomAttributes;
+    //public attributes!: KcCustomAttributes;
 }
