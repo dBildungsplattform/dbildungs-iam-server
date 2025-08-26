@@ -38,6 +38,20 @@ import { GroupMemberParams, OXGroup } from '../actions/group/ox-group.types.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
 import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
+import { Injectable } from '@nestjs/common';
+import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
+import { UserIdParams, UserNameParams } from '../actions/user/ox-user.types.js';
+import { GetDataForUserAction } from '../actions/user/get-data-user.action.js';
+import { OxEmailAddressDeletedEvent } from '../../../shared/events/ox/ox-email-address-deleted.event.js';
+import { KafkaOxEmailAddressDeletedEvent } from '../../../shared/events/ox/kafka-ox-email-address-deleted.event.js';
+import { DeleteUserAction } from '../actions/user/delete-user.action.js';
+import { AddMemberToGroupAction } from '../actions/group/add-member-to-group.action.js';
+import { ExistsUserAction } from '../actions/user/exists-user.action.js';
+import { CreateUserAction, CreateUserParams } from '../actions/user/create-user.action.js';
+import {
+    ChangeByModuleAccessAction,
+    ChangeByModuleAccessParams,
+} from '../actions/user/change-by-module-access.action.js';
 
 export type OxUserCreatedEventCreator = (
     personId: PersonID,
@@ -183,20 +197,21 @@ export const generateDisabledOxUserChangedEvent: OxUserChangedEventCreator = (
     ];
 };
 
-export abstract class AbstractOxEventHandler {
-    protected static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
+@Injectable()
+export class OxEventService {
+    public static readonly LEHRER_OX_GROUP_NAME_PREFIX: string = 'lehrer-';
 
-    protected static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'lehrer-';
+    public static readonly LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX: string = 'lehrer-';
 
     public ENABLED: boolean;
 
-    protected readonly authUser: string;
+    public readonly authUser: string;
 
-    protected readonly authPassword: string;
+    public readonly authPassword: string;
 
-    protected readonly contextID: OXContextID;
+    public readonly contextID: OXContextID;
 
-    protected readonly contextName: OXContextName;
+    public readonly contextName: OXContextName;
 
     public constructor(
         protected readonly logger: ClassLogger,
@@ -214,9 +229,7 @@ export abstract class AbstractOxEventHandler {
         this.contextName = oxConfig.CONTEXT_NAME;
     }
 
-    protected async getMostRecentEnabledOrRequestedEmailAddress(
-        personId: PersonID,
-    ): Promise<Option<EmailAddress<true>>> {
+    public async getMostRecentEnabledOrRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
         const enabledEmailAddresses: Option<EmailAddress<true>[]> =
             await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId, EmailAddressStatus.ENABLED);
         if (!enabledEmailAddresses || !enabledEmailAddresses[0]) {
@@ -241,7 +254,7 @@ export abstract class AbstractOxEventHandler {
         return requestedEmailAddresses[0];
     }
 
-    protected async createOxGroup(oxGroupName: OXGroupName, displayName: string): Promise<Result<OXGroupID>> {
+    public async createOxGroup(oxGroupName: OXGroupName, displayName: string): Promise<Result<OXGroupID>> {
         const params: CreateGroupParams = {
             contextId: this.contextID,
             name: oxGroupName,
@@ -269,7 +282,7 @@ export abstract class AbstractOxEventHandler {
         };
     }
 
-    protected async getOxGroupByName(oxGroupName: OXGroupName): Promise<OXGroupID | DomainError> {
+    public async getOxGroupByName(oxGroupName: OXGroupName): Promise<OXGroupID | DomainError> {
         const params: ListGroupsParams = {
             contextId: this.contextID,
             pattern: `${oxGroupName}`,
@@ -283,7 +296,7 @@ export abstract class AbstractOxEventHandler {
             this.logger.error(`Could Not Retrieve Groups For Context, contextId:${this.contextID}`);
             return result.error;
         }
-        if (!result.value.groups[0] || result.value.groups.length == 0) {
+        if (!result.value.groups[0] || result.value.groups.length === 0) {
             this.logger.info(`Found No Matching OxGroup For OxGroupName:${oxGroupName}`);
             return new OxGroupNotFoundError(oxGroupName);
         }
@@ -297,7 +310,7 @@ export abstract class AbstractOxEventHandler {
         return result.value.groups[0].id;
     }
 
-    protected async getExistingOxGroupByNameOrCreateOxGroup(
+    public async getExistingOxGroupByNameOrCreateOxGroup(
         oxGroupName: OXGroupName,
         displayName: string,
     ): Promise<Result<OXGroupID>> {
@@ -322,7 +335,7 @@ export abstract class AbstractOxEventHandler {
         };
     }
 
-    protected async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
+    public async getOxGroupsForOxUserId(oxUserId: OXUserID): Promise<Result<ListGroupsForUserResponse>> {
         const params: ListGroupsForUserParams = {
             contextId: this.contextID,
             userId: oxUserId,
@@ -339,7 +352,7 @@ export abstract class AbstractOxEventHandler {
         return result;
     }
 
-    protected async removeOxUserFromOxGroup(
+    public async removeOxUserFromOxGroup(
         oxGroupId: OXGroupID,
         oxUserId: OXUserID,
         personIdentifier: PersonIdentifier,
@@ -368,10 +381,7 @@ export abstract class AbstractOxEventHandler {
         return result;
     }
 
-    protected async removeOxUserFromAllItsOxGroups(
-        oxUserId: OXUserID,
-        personIdentifier: PersonIdentifier,
-    ): Promise<void> {
+    public async removeOxUserFromAllItsOxGroups(oxUserId: OXUserID, personIdentifier: PersonIdentifier): Promise<void> {
         const listGroupsForUserResponse: Result<ListGroupsForUserResponse> =
             await this.getOxGroupsForOxUserId(oxUserId);
         if (!listGroupsForUserResponse.ok) {
@@ -380,10 +390,208 @@ export abstract class AbstractOxEventHandler {
         //Removal from Standard-Group is possible even when user is member of other OxGroups
         const oxGroups: OXGroup[] = listGroupsForUserResponse.value.groups;
         // The sent Ox-request should be awaited explicitly to avoid failures due to async execution in OX-Database (SQL-exceptions)
-        /* eslint-disable no-await-in-loop */
         for (const oxGroup of oxGroups) {
             //logging of results is done in removeOxUserFromOxGroup
+            /* eslint-disable-next-line no-await-in-loop */
             await this.removeOxUserFromOxGroup(oxGroup.id, oxUserId, personIdentifier);
         }
+    }
+
+    public publishOxUserChangedEvent(
+        personId: PersonID,
+        username: PersonReferrer,
+        oxUserId: OXUserID,
+        oxUserName: OXUserName,
+        emailAddress: string,
+    ): void {
+        this.eventService.publish(
+            new OxUserChangedEvent(
+                personId,
+                username,
+                oxUserId,
+                oxUserName,
+                this.contextID,
+                this.contextName,
+                emailAddress,
+            ),
+            new KafkaOxUserChangedEvent(
+                personId,
+                username,
+                oxUserId,
+                oxUserName,
+                this.contextID,
+                this.contextName,
+                emailAddress,
+            ),
+        );
+    }
+
+    public publishOxEmailAddressDeletedEvent(
+        personId: PersonID | undefined,
+        username: PersonReferrer | undefined,
+        oxUserId: OXUserID,
+        emailAddress: string,
+    ): void {
+        this.eventService.publish(
+            new OxEmailAddressDeletedEvent(
+                personId,
+                oxUserId,
+                username,
+                emailAddress,
+                this.contextID,
+                this.contextName,
+            ),
+            new KafkaOxEmailAddressDeletedEvent(
+                personId,
+                oxUserId,
+                username,
+                emailAddress,
+                this.contextID,
+                this.contextName,
+            ),
+        );
+    }
+
+    public publishOxUserChangedEvent2(
+        oxUserCreatedEventCreator: OxUserCreatedEventCreator,
+        personId: PersonID,
+        username: PersonReferrer,
+        oxUserId: OXUserID,
+        oxUserName: OXUserName,
+        emailAddress: string,
+    ): void {
+        const events: [OxUserChangedEvent, KafkaOxUserChangedEvent] = oxUserCreatedEventCreator(
+            personId,
+            username,
+            oxUserId,
+            oxUserName,
+            this.contextID,
+            this.contextName,
+            emailAddress,
+        );
+        this.eventService.publish(...events);
+    }
+
+    public createChangeUserAction(
+        oxUserId: OXUserID,
+        oxUserName?: string,
+        aliases?: string[],
+        givenname?: string,
+        surname?: string,
+        displayName?: string,
+        defaultSenderAddress?: string,
+        primaryEmail?: string,
+    ): ChangeUserAction {
+        //change oxUserName to avoid conflicts for future OX-createUser-requests
+        const params: ChangeUserParams = {
+            contextId: this.contextID,
+            contextName: this.contextName,
+            userId: oxUserId,
+            username: oxUserName,
+            aliases: aliases,
+
+            givenname: givenname,
+            surname: surname,
+            displayname: displayName,
+            defaultSenderAddress: defaultSenderAddress,
+            email1: primaryEmail,
+            primaryEmail: primaryEmail,
+
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: ChangeUserAction = new ChangeUserAction(params);
+        return action;
+    }
+
+    public createGetDataForUserAction(oxUserId: OXUserID): GetDataForUserAction {
+        const idParams: UserIdParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const getDataAction: GetDataForUserAction = new GetDataForUserAction(idParams);
+        return getDataAction;
+    }
+
+    public createDeleteUserAction(oxUserId: OXUserID): DeleteUserAction {
+        const params: UserIdParams = {
+            contextId: this.contextID,
+            userId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: DeleteUserAction = new DeleteUserAction(params);
+        return action;
+    }
+
+    public createAddMemberToGroupAction(oxGroupId: OXGroupID, oxUserId: OXUserID): AddMemberToGroupAction {
+        const params: GroupMemberParams = {
+            contextId: this.contextID,
+            groupId: oxGroupId,
+            memberId: oxUserId,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: AddMemberToGroupAction = new AddMemberToGroupAction(params);
+        return action;
+    }
+
+    public createExistsUserAction(username: PersonReferrer): ExistsUserAction {
+        const existsParams: UserNameParams = {
+            contextId: this.contextID,
+            userName: username,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const existsAction: ExistsUserAction = new ExistsUserAction(existsParams);
+        return existsAction;
+    }
+
+    public createCreateUserAction(
+        displayName: string,
+        username: string,
+        firstname: string,
+        lastname: string,
+        primaryEmail: string,
+    ): CreateUserAction {
+        const params: CreateUserParams = {
+            contextId: this.contextID,
+            displayName: displayName,
+            email1: primaryEmail,
+            username: username,
+            firstname: firstname,
+            mailEnabled: true,
+            lastname: lastname,
+            primaryEmail: primaryEmail,
+            userPassword: 'TestPassword1',
+            login: this.authUser,
+            password: this.authPassword,
+        };
+
+        const action: CreateUserAction = new CreateUserAction(params);
+        return action;
+    }
+
+    public createChangeByModuleAccessAction(userId: string): ChangeByModuleAccessAction {
+        //adjust user infostore and globalAddressBook
+        const changeByModuleAccessParams: ChangeByModuleAccessParams = {
+            contextId: this.contextID,
+            userId: userId,
+            globalAddressBookDisabled: true,
+            infostore: false,
+            login: this.authUser,
+            password: this.authPassword,
+        };
+        const changeByModuleAccessAction: ChangeByModuleAccessAction = new ChangeByModuleAccessAction(
+            changeByModuleAccessParams,
+        );
+        return changeByModuleAccessAction;
     }
 }

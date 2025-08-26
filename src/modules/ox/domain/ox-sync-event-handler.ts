@@ -11,14 +11,8 @@ import { PersonEmailIdentifier, PersonIdentifier } from '../../../core/logging/p
 import { Person } from '../../person/domain/person.js';
 import { EmailAddress, EmailAddressStatus } from '../../email/domain/email-address.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { ChangeUserAction, ChangeUserParams } from '../actions/user/change-user.action.js';
-import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
-import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
-import {
-    AbstractOxEventHandler,
-    generateOxUserChangedEvent,
-    OxUserChangedEventCreator,
-} from './abstract-ox-event-handler.js';
+import { ChangeUserAction } from '../actions/user/change-user.action.js';
+import { generateOxUserChangedEvent, OxUserChangedEventCreator } from './ox-event.service.js';
 import { OxService } from './ox.service.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { OXGroupID, OXUserID } from '../../../shared/types/ox-ids.types.js';
@@ -36,18 +30,22 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { Injectable } from '@nestjs/common';
 import { AddMemberToGroupAction, AddMemberToGroupResponse } from '../actions/group/add-member-to-group.action.js';
-import { GroupMemberParams } from '../actions/group/ox-group.types.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
+import { OxConfig } from '../../../shared/config/ox.config.js';
+import { OxEventService } from './ox-event.service.js';
 
 @Injectable()
-export class OxSyncEventHandler extends AbstractOxEventHandler {
+export class OxSyncEventHandler {
+    public ENABLED: boolean;
+
     public constructor(
-        protected override readonly logger: ClassLogger,
-        protected override readonly oxService: OxService,
-        protected override readonly emailRepo: EmailRepo,
-        protected override readonly personRepository: PersonRepository,
-        protected override readonly eventService: EventRoutingLegacyKafkaService,
-        protected override configService: ConfigService<ServerConfig>,
+        protected readonly logger: ClassLogger,
+        protected readonly oxService: OxService,
+        protected readonly oxEventService: OxEventService,
+        protected readonly emailRepo: EmailRepo,
+        protected readonly personRepository: PersonRepository,
+        protected readonly eventService: EventRoutingLegacyKafkaService,
+        protected configService: ConfigService<ServerConfig>,
 
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly rolleRepo: RolleRepo,
@@ -57,7 +55,8 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         // to create the request-bound EntityManager context. Removing it would break context creation.
         private readonly em: EntityManager,
     ) {
-        super(logger, oxService, emailRepo, personRepository, eventService, configService);
+        const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
+        this.ENABLED = oxConfig.ENABLED;
     }
 
     @KafkaEventHandler(KafkaLdapSyncCompletedEvent)
@@ -179,7 +178,7 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         }
 
         const mostRecentRequestedOrEnabledEA: Option<EmailAddress<true>> =
-            await this.getMostRecentEnabledOrRequestedEmailAddress(personId);
+            await this.oxEventService.getMostRecentEnabledOrRequestedEmailAddress(personId);
         if (!mostRecentRequestedOrEnabledEA) return; //logging is done in getMostRecentRequestedEmailAddress
         const currentEmailAddressString: string = mostRecentRequestedOrEnabledEA.address;
 
@@ -194,24 +193,16 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
             `Current aliases to be written:${JSON.stringify(aliases)}, personId:${personId}, username:${username}`,
         );
 
-        const params: ChangeUserParams = {
-            contextId: this.contextID,
-            contextName: this.contextName,
-            userId: personEmailIdentifier.oxUserId,
-            username: username,
-            givenname: personEmailIdentifier.person.vorname,
-            surname: personEmailIdentifier.person.familienname,
-            displayname: personEmailIdentifier.person.referrer, //IS EXPLICITLY NOT SET to vorname+familienname
-            defaultSenderAddress: currentEmailAddressString,
-            email1: currentEmailAddressString,
-            aliases: aliases,
-            primaryEmail: currentEmailAddressString,
-            imapLogin: currentEmailAddressString,
-            login: this.authUser,
-            password: this.authPassword,
-        };
-
-        const action: ChangeUserAction = new ChangeUserAction(params);
+        const action: ChangeUserAction = this.oxEventService.createChangeUserAction(
+            personEmailIdentifier.oxUserId,
+            username,
+            aliases,
+            personEmailIdentifier.person.vorname,
+            personEmailIdentifier.person.familienname,
+            personEmailIdentifier.person.referrer, //IS EXPLICITLY NOT SET to vorname+familienname
+            currentEmailAddressString,
+            currentEmailAddressString,
+        );
 
         const result: Result<void, DomainError> = await this.oxService.send(action);
 
@@ -230,17 +221,14 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
             personIdentifier,
         );
 
-        const event: [OxUserChangedEvent, KafkaOxUserChangedEvent] = eventCreator(
+        this.oxEventService.publishOxUserChangedEvent2(
+            eventCreator,
             personId,
             username,
             personEmailIdentifier.oxUserId,
-            personEmailIdentifier.oxUserName, //strictEquals the new OxUsername
-            this.contextID,
-            this.contextName,
+            personEmailIdentifier.oxUserName,
             currentEmailAddressString,
         );
-
-        this.eventService.publish(...event);
     }
 
     private async addOxUserToGroup(
@@ -249,9 +237,9 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
         personIdentifier: PersonIdentifier,
     ): Promise<void> {
         // Fetch or create the relevant OX group based on orgaKennung (group identifier)
-        const oxGroupIdResult: Result<OXGroupID> = await this.getExistingOxGroupByNameOrCreateOxGroup(
-            AbstractOxEventHandler.LEHRER_OX_GROUP_NAME_PREFIX + schuleDstrNr,
-            AbstractOxEventHandler.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + schuleDstrNr,
+        const oxGroupIdResult: Result<OXGroupID> = await this.oxEventService.getExistingOxGroupByNameOrCreateOxGroup(
+            OxEventService.LEHRER_OX_GROUP_NAME_PREFIX + schuleDstrNr,
+            OxEventService.LEHRER_OX_GROUP_DISPLAY_NAME_PREFIX + schuleDstrNr,
         );
 
         if (!oxGroupIdResult.ok) {
@@ -260,14 +248,11 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
                 personIdentifier,
             );
         }
-        const groupMemberParams: GroupMemberParams = {
-            contextId: this.contextID,
-            groupId: oxGroupIdResult.value,
-            memberId: oxUserId,
-            login: this.authUser,
-            password: this.authPassword,
-        };
-        const addMemberToGroupAction: AddMemberToGroupAction = new AddMemberToGroupAction(groupMemberParams);
+
+        const addMemberToGroupAction: AddMemberToGroupAction = this.oxEventService.createAddMemberToGroupAction(
+            oxGroupIdResult.value,
+            oxUserId,
+        );
 
         const result: Result<AddMemberToGroupResponse, DomainError> = await this.oxService.send(addMemberToGroupAction);
         if (!result.ok && !(result.error instanceof OxMemberAlreadyInGroupError)) {
@@ -293,7 +278,7 @@ export class OxSyncEventHandler extends AbstractOxEventHandler {
 
         const oxUserId: OXUserID = personEmailIdentifier.oxUserId;
 
-        await this.removeOxUserFromAllItsOxGroups(oxUserId, personIdentifier);
+        await this.oxEventService.removeOxUserFromAllItsOxGroups(oxUserId, personIdentifier);
 
         const schulenDstNrList: string[] | OxSyncError = await this.getOrganisationKennungen(personId, username);
         if (schulenDstNrList instanceof OxSyncError) {

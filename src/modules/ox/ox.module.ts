@@ -11,6 +11,7 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
 import { EmailModule } from '../email/email.module.js';
 import { OxSyncEventHandler } from './domain/ox-sync-event-handler.js';
 import { OrganisationModule } from '../organisation/organisation.module.js';
+import { OxEventService } from './domain/ox-event.service.js';
 
 @Module({
     imports: [
@@ -23,7 +24,7 @@ import { OrganisationModule } from '../organisation/organisation.module.js';
         LoggerModule.register(OxModule.name),
         HttpModule,
     ],
-    providers: [OxService, OxEventHandler, OxSyncEventHandler],
-    exports: [OxService],
+    providers: [OxService, OxEventService, OxEventHandler, OxSyncEventHandler],
+    exports: [OxService, OxEventService],
 })
 export class OxModule {}

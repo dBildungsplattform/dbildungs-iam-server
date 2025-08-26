@@ -37,6 +37,7 @@ import { PersonIdentifier } from '../../../core/logging/person-identifier.js';
 import { OxNoSuchUserError } from '../error/ox-no-such-user.error.js';
 import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
 import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
+import { OxEventService } from './ox-event.service.js';
 
 describe('OxEventHandler', () => {
     let module: TestingModule;
@@ -53,6 +54,7 @@ describe('OxEventHandler', () => {
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot()],
             providers: [
                 OxEventHandler,
+                OxEventService,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),

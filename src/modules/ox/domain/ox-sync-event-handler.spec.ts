@@ -26,6 +26,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { OxError } from '../../../shared/error/ox.error.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
 import assert from 'assert';
+import { OxEventService } from './ox-event.service.js';
 
 describe('OxSyncEventHandler', () => {
     let app: INestApplication;
@@ -46,6 +47,7 @@ describe('OxSyncEventHandler', () => {
             imports: [LoggingTestModule, ConfigTestModule, DatabaseTestModule.forRoot({ isDatabaseRequired: true })],
             providers: [
                 OxSyncEventHandler,
+                OxEventService,
                 {
                     provide: RolleRepo,
                     useValue: createMock<RolleRepo>(),
