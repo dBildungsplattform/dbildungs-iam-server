@@ -13,7 +13,7 @@ import { ServerConfig } from '../../../shared/config/server.config.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { OxErrorMapper } from './ox-error.mapper.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { OxMemberAlreadyInGroupError } from '../error/ox-member-already-in-group.error.js';
+import { OxNonRetryableError } from '../error/ox-non-retryable.error.js';
 
 export type OxErrorType = {
     message: string;
@@ -79,7 +79,11 @@ export class OxService {
                     throw result.error;
                 }
             } catch (error) {
-                if (failCounter < this.max_retries && !(error instanceof OxMemberAlreadyInGroupError)) {
+                if (error instanceof OxNonRetryableError) {
+                    this.logger.info('Skipping retry for non-retryable error', error);
+                    return result;
+                }
+                if (failCounter < this.max_retries) {
                     this.logger.logUnknownAsError(
                         `Attempt ${failCounter + 1} failed. Retrying in ${delay}ms... Remaining retries: ${this.max_retries - failCounter}`,
                         error,
