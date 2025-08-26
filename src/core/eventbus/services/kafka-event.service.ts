@@ -22,19 +22,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-const HEARTBEAT_CHECK_INTERVAL = 10000; // 10 Sekunden, kannst du anpassen
+// const HEARTBEAT_CHECK_INTERVAL = 10000; // 10 Sekunden, kannst du anpassen
 
 @Injectable()
 export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     private readonly handlerMap: Map<Constructor<BaseEvent>, EventHandlerType<BaseEvent>[]> = new Map();
 
     private readonly consumer?: Consumer;
+
     private producer?: Producer;
 
     private readonly kafkaConfig: KafkaConfig;
 
-    private lastHeartbeat: Date = new Date();
-    private heartbeatCheckInterval?: NodeJS.Timeout;
+    //private lastHeartbeat: Date = new Date();
+    //private heartbeatCheckInterval?: NodeJS.Timeout;
 
     public constructor(
         private readonly logger: ClassLogger,
@@ -66,9 +67,9 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             await this.consumer?.connect();
 
             // Heartbeat listener
-            this.consumer?.on('consumer.heartbeat', () => {
-                this.lastHeartbeat = new Date();
-            });
+            // this.consumer?.on('consumer.heartbeat', () => {
+            //     this.lastHeartbeat = new Date();
+            // });
 
             const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
             await this.consumer?.subscribe({ topics: Array.from(topics), fromBeginning: true });
@@ -106,39 +107,39 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     }
 
     public async onModuleDestroy(): Promise<void> {
-        if (this.heartbeatCheckInterval) {
-            clearInterval(this.heartbeatCheckInterval);
-        }
+        // if (this.heartbeatCheckInterval) {
+        //     clearInterval(this.heartbeatCheckInterval);
+        // }
         await this.consumer?.disconnect();
         await this.producer?.disconnect();
     }
 
-    private startHeartbeatCheck() {
-        this.heartbeatCheckInterval = setInterval(async () => {
-            const now = new Date();
-            if (this.lastHeartbeat.getTime() < now.getTime() - HEARTBEAT_CHECK_INTERVAL) {
-                this.logger.error(`No heartbeat detected. Last heartbeat was at ${this.lastHeartbeat.toISOString()}`);
-                await this.restartConsumer();
-            }
-        }, HEARTBEAT_CHECK_INTERVAL);
-    }
+    //private startHeartbeatCheck() {
+    //    this.heartbeatCheckInterval = setInterval(async () => {
+    //        const now = new Date();
+    //        if (this.lastHeartbeat.getTime() < now.getTime() - HEARTBEAT_CHECK_INTERVAL) {
+    //            this.logger.error(`No heartbeat detected. Last heartbeat was at ${this.lastHeartbeat.toISOString()}`);
+    //            await this.restartConsumer();
+    //        }
+    //    }, HEARTBEAT_CHECK_INTERVAL);
+    //}
 
-    private async restartConsumer() {
-        try {
-            this.logger.info('Restarting Kafka consumer due to missed heartbeats...');
-            await this.consumer?.disconnect();
-            await this.consumer?.connect();
+    // private async restartConsumer() {
+    //     try {
+    //         this.logger.info('Restarting Kafka consumer due to missed heartbeats...');
+    //         await this.consumer?.disconnect();
+    //         await this.consumer?.connect();
 
-            const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
-            await Promise.all(
-                Array.from(topics).map((topic: string) => this.consumer?.subscribe({ topic, fromBeginning: true })),
-            );
+    //         const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
+    //         await Promise.all(
+    //             Array.from(topics).map((topic: string) => this.consumer?.subscribe({ topic, fromBeginning: true })),
+    //         );
 
-            this.logger.info('Kafka consumer restarted successfully.');
-        } catch (err) {
-            this.logger.error('Failed to restart Kafka consumer', util.inspect(err));
-        }
-    }
+    //         this.logger.info('Kafka consumer restarted successfully.');
+    //     } catch (err) {
+    //         this.logger.error('Failed to restart Kafka consumer', util.inspect(err));
+    //     }
+    // }
 
     public subscribe<Event extends BaseEvent>(eventType: Constructor<Event>, handler: EventHandlerType<Event>): void {
         const handlers: EventHandlerType<BaseEvent>[] = this.handlerMap.get(eventType) ?? [];
