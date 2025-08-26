@@ -1,6 +1,6 @@
 import { uniq } from 'lodash-es';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
-import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
+import { OrganisationID, PersonID, RolleID, ServiceProviderID } from '../../../shared/types/index.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
@@ -9,7 +9,9 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
+import { Rollenerweiterung } from '../../rolle/domain/rollenerweiterung.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 
 export type PersonFields = Pick<
     Person<true>,
@@ -43,6 +45,7 @@ export class PersonPermissions implements IPersonPermissions {
         private personenkontextRepo: DBiamPersonenkontextRepo,
         private organisationRepo: OrganisationRepository,
         private rolleRepo: RolleRepo,
+        private rollenerweiterungRepo: RollenerweiterungRepo,
         person: Person<true>,
     ) {
         this.cachedPersonFields = {
@@ -142,19 +145,14 @@ export class PersonPermissions implements IPersonPermissions {
     }
 
     public async canModifyPerson(personId: PersonID): Promise<boolean> {
-        {
-            const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
-                RollenSystemRecht.PERSONEN_VERWALTEN,
-            ]);
+        const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.PERSONEN_VERWALTEN,
+        ]);
 
-            if (hasModifyRechtAtRoot) {
-                return true;
-            }
+        if (hasModifyRechtAtRoot) {
+            return true;
         }
-
-        {
-            return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
-        }
+        return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
     }
 
     private async getPersonenkontextsFields(): Promise<PersonKontextFields[]> {
@@ -233,5 +231,14 @@ export class PersonPermissions implements IPersonPermissions {
             return this.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SCHULTRAEGER_VERWALTEN]);
         }
         return false;
+    }
+
+    public async getAssignedServiceProviderIdsFromErweiterungen(): Promise<Array<ServiceProviderID>> {
+        const personenkontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
+        const rollenerweiterungen: Array<Rollenerweiterung<true>> =
+            await this.rollenerweiterungRepo.findManyByOrganisationAndRolle(personenkontextFields);
+        return rollenerweiterungen.map(
+            (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId,
+        );
     }
 }

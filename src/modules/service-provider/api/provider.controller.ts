@@ -12,9 +12,12 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
+import { ConfigService } from '@nestjs/config';
+import { uniqBy } from 'lodash-es';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
+import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
@@ -35,6 +38,7 @@ export class ProviderController {
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
+        private readonly configService: ConfigService,
     ) {}
 
     @Get('all')
@@ -67,11 +71,15 @@ export class ProviderController {
     public async getAvailableServiceProviders(
         @Permissions() permissions: PersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
-        const roleIds: string[] = await permissions.getRoleIds();
+        const rolleIds: string[] = await permissions.getRoleIds();
         const serviceProviders: ServiceProvider<true>[] =
-            await this.serviceProviderService.getServiceProvidersByRolleIds(roleIds);
-
-        return serviceProviders.map(
+            await this.serviceProviderService.getServiceProvidersByRolleIds(rolleIds);
+        if (this.configService.get('FEATUREFLAG.FEATURE_FLAG_ROLLE_ERWEITERN')) {
+            const serviceProviderIds: ServiceProviderID[] =
+                await permissions.getAssignedServiceProviderIdsFromErweiterungen();
+            serviceProviders.push(...(await this.serviceProviderRepo.findByIds(serviceProviderIds)).values());
+        }
+        return uniqBy(serviceProviders, (sp: ServiceProvider<true>) => sp.id).map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
     }

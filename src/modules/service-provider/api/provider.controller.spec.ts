@@ -13,6 +13,7 @@ import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeo
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
+import { ServiceProviderMerkmal } from '../domain/service-provider.enum.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
@@ -54,6 +55,7 @@ describe('Provider Controller Test', () => {
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         providerController = module.get(ProviderController);
+
         app = module.createNestApplication();
         await app.init();
     }, DEFAULT_TIMEOUT_FOR_TESTCONTAINERS);
@@ -90,39 +92,57 @@ describe('Provider Controller Test', () => {
     });
 
     describe('getAvailableServiceProviders', () => {
-        describe('when service providers were found', () => {
-            it('should return all service provider', async () => {
-                const rolleId: string = faker.string.uuid();
-                const spId: string = faker.string.uuid();
+        let rolleId: string;
+        let spId: string;
+        let sp: ServiceProvider<true>;
+        let personPermissions: DeepMocked<PersonPermissions>;
 
-                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, { id: spId });
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
-                personPermissions.getRoleIds.mockResolvedValueOnce([rolleId]);
-
-                serviceProviderServiceMock.getServiceProvidersByRolleIds.mockResolvedValueOnce([sp]);
-
-                const spResponse: ServiceProviderResponse[] =
-                    await providerController.getAvailableServiceProviders(personPermissions);
-                expect(spResponse).toBeDefined();
-                expect(spResponse).toBeInstanceOf(Array);
-                expect(spResponse).toHaveLength(1);
-            });
+        beforeEach(() => {
+            rolleId = faker.string.uuid();
+            spId = faker.string.uuid();
+            sp = DoFactory.createServiceProvider(true, { id: spId });
+            personPermissions = createMock<PersonPermissions>({});
+            personPermissions.getRoleIds.mockResolvedValueOnce([rolleId]);
+            personPermissions.getAssignedServiceProviderIdsFromErweiterungen.mockResolvedValueOnce([
+                faker.string.uuid(),
+            ]);
         });
 
-        describe('when no service providers were found', () => {
-            it('should return empty list as response', async () => {
-                const rolleId: string = faker.string.uuid();
-
-                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
-                personPermissions.getRoleIds.mockResolvedValueOnce([rolleId]);
-
-                serviceProviderServiceMock.getServiceProvidersByRolleIds.mockResolvedValueOnce([]);
-
-                const spResponse: ServiceProviderResponse[] =
-                    await providerController.getAvailableServiceProviders(personPermissions);
-                expect(spResponse).toBeDefined();
-                expect(spResponse).toBeInstanceOf(Array);
-                expect(spResponse).toHaveLength(0);
+        describe.each([
+            ['found', true],
+            ['not found', false],
+        ])('when service providers were %s', (_label: string, hasFoundServiceProviders: boolean) => {
+            describe.each([[true], [false]])('when Rolle has Rollenerweiterung:%s', (hasRollenerweiterung: boolean) => {
+                beforeEach(() => {
+                    if (hasFoundServiceProviders) {
+                        serviceProviderServiceMock.getServiceProvidersByRolleIds.mockResolvedValueOnce([sp]);
+                        serviceProviderRepoMock.findByIds.mockResolvedValueOnce(
+                            new Map(
+                                hasRollenerweiterung
+                                    ? [
+                                          [
+                                              faker.string.uuid(),
+                                              DoFactory.createServiceProvider(true, {
+                                                  merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                                              }),
+                                          ],
+                                      ]
+                                    : [],
+                            ),
+                        );
+                    } else {
+                        serviceProviderRepoMock.findByIds.mockResolvedValueOnce(new Map());
+                        serviceProviderServiceMock.getServiceProvidersByRolleIds.mockResolvedValueOnce([]);
+                    }
+                });
+                it('should return list of responses', async () => {
+                    const spResponse: ServiceProviderResponse[] =
+                        await providerController.getAvailableServiceProviders(personPermissions);
+                    expect(spResponse).toBeDefined();
+                    expect(spResponse).toBeInstanceOf(Array);
+                    if (hasFoundServiceProviders) expect(spResponse).toHaveLength(hasRollenerweiterung ? 2 : 1);
+                    else expect(spResponse).toHaveLength(0);
+                });
             });
         });
     });
