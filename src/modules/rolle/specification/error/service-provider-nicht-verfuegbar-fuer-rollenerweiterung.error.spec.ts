@@ -5,7 +5,7 @@ describe('ServiceProviderNichtNachtraeglichZuweisbarError', () => {
         const error: ServiceProviderNichtVerfuegbarFuerRollenerweiterungError =
             new ServiceProviderNichtVerfuegbarFuerRollenerweiterungError();
         expect(error.message).toBe(
-            'The Rolle cannot be updated, because one or more ServiceProviders are not available for RollenErweiterung.',
+            'The Rollenerweiterung is not possible, because the ServiceProvider is not available for Rollenerweiterung.',
         );
     });
 
