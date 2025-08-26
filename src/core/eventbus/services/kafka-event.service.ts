@@ -91,8 +91,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                     this.logger.info(
                         `Consuming message from topic: ${topic}, partition: ${partition}, offset: ${message.offset}, key: ${message.key?.toString()}`,
                     );
-                    await heartbeat();
-                    await this.handleMessage(message, heartbeat);
+                    // await heartbeat();
+                    // await this.handleMessage(message, heartbeat);
                     await heartbeat();
                 },
             });
