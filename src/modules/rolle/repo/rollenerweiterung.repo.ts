@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
+import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RollenSystemRecht } from '../domain/rolle.enums.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
@@ -14,7 +14,11 @@ import { ServiceProviderNichtVerfuegbarFuerRollenerweiterungError } from '../spe
 import { NoRedundantRollenerweiterung } from '../specification/no-redundant-rollenerweiterung.specification.js';
 import { ServiceProviderVerfuegbarFuerRollenerweiterung } from '../specification/service-provider-verfuegbar-fuer-rollenerweiterung.specification.js';
 
-type RollenerweiterungIds = Pick<Rollenerweiterung<boolean>, 'organisationId' | 'rolleId' | 'serviceProviderId'>;
+type RollenerweiterungIds = {
+    organisationId: OrganisationID;
+    rolleId: RolleID;
+    serviceProviderId: ServiceProviderID;
+};
 
 @Injectable()
 export class RollenerweiterungRepo {
