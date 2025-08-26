@@ -27,9 +27,5 @@ describe('EmailModule', () => {
 
     it('should run its configure method', () => {
         expect(module.get(EmailModule)).toBeDefined();
-        /*const consumer: MiddlewareConsumer = createMock<MiddlewareConsumer>();
-        await module.get(EmailModule).configure(consumer);
-
-        expect(consumer.apply).toHaveBeenCalled();*/
     });
 });

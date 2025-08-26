@@ -73,11 +73,6 @@ async function bootstrap(): Promise<void> {
         },
     });
 
-    /* const frontendConfig: FrontendConfig = configService.getOrThrow<FrontendConfig>('FRONTEND');
-    if (frontendConfig.TRUST_PROXY !== undefined) {
-        app.set('trust proxy', frontendConfig.TRUST_PROXY);
-    }*/
-
     await app.listen(port);
 
     console.info(`\nListening on: http://127.0.0.1:${port}`);

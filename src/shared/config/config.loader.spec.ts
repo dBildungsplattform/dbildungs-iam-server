@@ -353,7 +353,6 @@ describe('configloader', () => {
         });
     });
 
-    //todo
     describe('loadEmailAppConfigFiles', () => {
         describe('when config is valid', () => {
             let readFileSyncSpy: jest.SpyInstance;
@@ -490,5 +489,4 @@ describe('configloader', () => {
             });
         });
     });
-    //
 });
