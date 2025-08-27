@@ -108,6 +108,7 @@ export class EmailEventHandler {
         const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
 
         if (persistenceResult instanceof DomainError) {
+            this.logger.error('Irgendwas ist immer...');
             return this.logger.error(
                 `Could not ENABLE email for personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, error:${persistenceResult.message}`,
             );
