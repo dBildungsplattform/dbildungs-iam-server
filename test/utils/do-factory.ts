@@ -23,6 +23,7 @@ import {
 } from '../../src/modules/service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../src/modules/service-provider/domain/service-provider.js';
 import { DoBase } from '../../src/shared/types/do-base.js';
+import { Rollenerweiterung } from '../../src/modules/rolle/domain/rollenerweiterung.js';
 
 export class DoFactory {
     public static createMany<T extends DoBase<boolean>>(
@@ -88,7 +89,6 @@ export class DoFactory {
             email: faker.internet.email(),
             externalSystemIDs: {},
             enabled: true,
-            attributes: {},
         };
 
         return Object.assign(Object.create(User.prototype) as User<boolean>, user, props);
@@ -248,5 +248,25 @@ export class DoFactory {
             organisationId: faker.string.uuid(),
         };
         return Object.assign(Object.create(ImportVorgang.prototype) as ImportVorgang<boolean>, objectVallue, props);
+    }
+
+    public static createRollenerweiterung<WasPersisted extends boolean>(
+        this: void,
+        withId: WasPersisted,
+        props?: Partial<Rollenerweiterung<WasPersisted>>,
+    ): Rollenerweiterung<WasPersisted> {
+        const rollenerweiterung: Partial<Rollenerweiterung<WasPersisted>> = {
+            id: withId ? faker.string.uuid() : undefined,
+            createdAt: withId ? faker.date.past() : undefined,
+            updatedAt: withId ? faker.date.recent() : undefined,
+            rolleId: faker.string.uuid(),
+            serviceProviderId: faker.string.uuid(),
+            organisationId: faker.string.uuid(),
+        };
+        return Object.assign(
+            Object.create(Rollenerweiterung.prototype) as Rollenerweiterung<boolean>,
+            rollenerweiterung,
+            props,
+        );
     }
 }
