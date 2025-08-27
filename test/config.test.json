@@ -119,5 +119,8 @@
     },
     "PORTAL": {
         "LIMITED_ROLLENART_ALLOWLIST": ["LERN", "EXTERN"]
+    },
+    "CRON": {
+        "PERSON_WITHOUT_ORG_LIMIT": 10
     }
 }

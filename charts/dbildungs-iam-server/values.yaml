@@ -237,7 +237,7 @@ cronjobs:
       httpMethod: 'PUT'
       script: 'cron_trigger.sh'
     cron-trigger-3:
-      schedule: '*/15 0-6 * * *'
+      schedule: "*/15 0-6 * * *"
       endpoint: '/api/cron/person-without-org'
       httpMethod: 'PUT'
       script: 'cron_trigger.sh'
@@ -258,3 +258,6 @@ import:
 
 featureFlags:
   befristungBearbeiten: true
+
+cron:
+  personWithoutOrgLimit: 10
