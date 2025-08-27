@@ -687,7 +687,11 @@ describe('PersonPermissions', () => {
             ];
             rollenerweiterungRepoMock.findManyByOrganisationAndRolle.mockResolvedValueOnce(
                 rollenerweiterungServiceProviderIds.map((serviceProviderId: ServiceProviderID) =>
-                    DoFactory.createRollenerweiterung(true, { organisationId: organisation.id, serviceProviderId }),
+                    DoFactory.createRollenerweiterung(true, {
+                        organisationId: organisation.id,
+                        rolleId: rolle.id,
+                        serviceProviderId,
+                    }),
                 ),
             );
             dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([personenkontext]); // getPersonenkontextFields
@@ -710,6 +714,96 @@ describe('PersonPermissions', () => {
             ]);
             expect(result).toEqual(expect.arrayContaining(rollenerweiterungServiceProviderIds));
             expect(result).toHaveLength(rollenerweiterungServiceProviderIds.length);
+        });
+
+        it('should return an array of service provider IDs if multiple rollenerweiterungen exist', async () => {
+            const person: Person<true> = DoFactory.createPerson(true);
+            const organisation1: Organisation<true> = DoFactory.createOrganisation(true);
+            const organisation2: Organisation<true> = DoFactory.createOrganisation(true);
+            const rolle1: Rolle<true> = DoFactory.createRolle(true, {
+                serviceProviderIds: [faker.string.uuid(), faker.string.uuid()],
+            });
+            const rolle2: Rolle<true> = DoFactory.createRolle(true, {
+                serviceProviderIds: [faker.string.uuid(), faker.string.uuid()],
+            });
+            const personenkontexte: Array<Personenkontext<true>> = [
+                DoFactory.createPersonenkontext(true, {
+                    personId: person.id,
+                    organisationId: organisation1.id,
+                    rolleId: rolle1.id,
+                }),
+                DoFactory.createPersonenkontext(true, {
+                    personId: person.id,
+                    organisationId: organisation2.id,
+                    rolleId: rolle1.id,
+                }),
+                DoFactory.createPersonenkontext(true, {
+                    personId: person.id,
+                    organisationId: organisation2.id,
+                    rolleId: rolle2.id,
+                }),
+            ];
+            const rollenerweiterung1ServiceProviderIds: ServiceProviderID[] = [
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            ];
+            const rollenerweiterung2ServiceProviderIds: ServiceProviderID[] = [
+                faker.string.uuid(),
+                faker.string.uuid(),
+                faker.string.uuid(),
+            ];
+            rollenerweiterungRepoMock.findManyByOrganisationAndRolle.mockResolvedValueOnce(
+                rollenerweiterung1ServiceProviderIds
+                    .map((serviceProviderId: ServiceProviderID) =>
+                        DoFactory.createRollenerweiterung(true, {
+                            organisationId: organisation1.id,
+                            rolleId: rolle1.id,
+                            serviceProviderId,
+                        }),
+                    )
+                    .concat(
+                        rollenerweiterung1ServiceProviderIds.map((serviceProviderId: ServiceProviderID) =>
+                            DoFactory.createRollenerweiterung(true, {
+                                organisationId: organisation2.id,
+                                rolleId: rolle1.id,
+                                serviceProviderId,
+                            }),
+                        ),
+                    )
+                    .concat(
+                        rollenerweiterung2ServiceProviderIds.map((serviceProviderId: ServiceProviderID) =>
+                            DoFactory.createRollenerweiterung(true, {
+                                organisationId: organisation2.id,
+                                rolleId: rolle2.id,
+                                serviceProviderId,
+                            }),
+                        ),
+                    ),
+            );
+            dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce(personenkontexte); // getPersonenkontextFields
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                rollenerweiterungRepoMock,
+                person,
+            );
+
+            const result: Array<ServiceProviderID> =
+                await personPermissions.getAssignedServiceProviderIdsFromErweiterungen();
+
+            expect(rollenerweiterungRepoMock.findManyByOrganisationAndRolle).toHaveBeenCalledWith(
+                personenkontexte.map((pk: Personenkontext<true>) => ({
+                    organisationId: pk.organisationId,
+                    rolleId: pk.rolleId,
+                })),
+            );
+            expect(result).toEqual(expect.arrayContaining(rollenerweiterung1ServiceProviderIds));
+            expect(result).toEqual(expect.arrayContaining(rollenerweiterung2ServiceProviderIds));
+            expect(result).toHaveLength(
+                rollenerweiterung1ServiceProviderIds.length + rollenerweiterung2ServiceProviderIds.length,
+            );
         });
     });
 });

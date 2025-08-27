@@ -237,8 +237,10 @@ export class PersonPermissions implements IPersonPermissions {
         const personenkontextFields: PersonKontextFields[] = await this.getPersonenkontextsFields();
         const rollenerweiterungen: Array<Rollenerweiterung<true>> =
             await this.rollenerweiterungRepo.findManyByOrganisationAndRolle(personenkontextFields);
-        return rollenerweiterungen.map(
-            (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId,
+        return uniq(
+            rollenerweiterungen.map(
+                (rollenerweiterung: Rollenerweiterung<true>) => rollenerweiterung.serviceProviderId,
+            ),
         );
     }
 }
