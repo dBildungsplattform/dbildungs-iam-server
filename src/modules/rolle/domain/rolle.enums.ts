@@ -132,6 +132,11 @@ export class RollenSystemRecht {
         RollenSystemRechtEnum.HINWEISE_BEARBEITEN,
     );
 
+    public static readonly ROLLEN_ERWEITERN: RollenSystemRecht = new RollenSystemRecht(
+        false,
+        RollenSystemRechtEnum.ROLLEN_ERWEITERN,
+    );
+
     public static readonly ALL: RollenSystemRecht[] = [
         RollenSystemRecht.ROLLEN_VERWALTEN,
         RollenSystemRecht.PERSONEN_SOFORT_LOESCHEN,
@@ -149,6 +154,7 @@ export class RollenSystemRecht {
         RollenSystemRecht.BULK_VERWALTEN,
         RollenSystemRecht.SCHULPORTAL_VERWALTEN,
         RollenSystemRecht.HINWEISE_BEARBEITEN,
+        RollenSystemRecht.ROLLEN_ERWEITERN,
     ];
 
     public static get ALL_NAMES(): RollenSystemRechtEnum[] {
@@ -189,6 +195,8 @@ export class RollenSystemRecht {
                 return RollenSystemRecht.SCHULPORTAL_VERWALTEN;
             case RollenSystemRechtEnum.HINWEISE_BEARBEITEN:
                 return RollenSystemRecht.HINWEISE_BEARBEITEN;
+            case RollenSystemRechtEnum.ROLLEN_ERWEITERN:
+                return RollenSystemRecht.ROLLEN_ERWEITERN;
         }
     }
 }

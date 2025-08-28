@@ -103,6 +103,6 @@ export class RollenerweiterungRepo {
         if (permittedOrgas.all || permittedOrgas.orgaIds.includes(organisationId)) {
             return undefined;
         }
-        return new MissingPermissionsError(`Missing systemrecht ${RollenSystemRecht.ROLLEN_ERWEITERN}.`);
+        return new MissingPermissionsError(`Missing systemrecht ${RollenSystemRecht.ROLLEN_ERWEITERN.name}.`);
     }
 }
