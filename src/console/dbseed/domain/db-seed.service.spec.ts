@@ -446,7 +446,6 @@ describe('DbSeedService', () => {
                         ID_ITSLEARNING: [faker.string.uuid()],
                     },
                     true,
-                    {},
                 );
 
                 kcUserService.findOne.mockResolvedValueOnce({ ok: true, value: existingUser });

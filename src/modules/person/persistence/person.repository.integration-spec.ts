@@ -1529,7 +1529,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1582,7 +1581,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1639,7 +1637,6 @@ describe('PersonRepository Integration', () => {
                     email: faker.internet.email(),
                     createdDate: new Date(),
                     externalSystemIDs: {},
-                    attributes: {},
                 },
             });
 
@@ -1673,7 +1670,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1753,7 +1749,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1789,7 +1784,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1822,7 +1816,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1889,7 +1882,6 @@ describe('PersonRepository Integration', () => {
                             email: faker.internet.email(),
                             createdDate: new Date(),
                             externalSystemIDs: {},
-                            attributes: {},
                         },
                     });
 
@@ -1949,7 +1941,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1982,7 +1973,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2025,7 +2015,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2058,7 +2047,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2131,7 +2119,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2218,7 +2205,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2251,7 +2237,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 

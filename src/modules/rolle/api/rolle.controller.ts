@@ -50,10 +50,14 @@ import { ServiceProviderRepo } from '../../service-provider/repo/service-provide
 import { RolleDomainError } from '../domain/rolle-domain.error.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
+import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
+import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../repo/rollenerweiterung.repo.js';
 import { AddSystemrechtBodyParams } from './add-systemrecht.body.params.js';
 import { AddSystemrechtError } from './add-systemrecht.error.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
+import { CreateRollenerweiterungBodyParams } from './create-rollenerweiterung.body.params.js';
 import { DbiamRolleError } from './dbiam-rolle.error.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { RolleExceptionFilter } from './rolle-exception-filter.js';
@@ -62,6 +66,7 @@ import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.pa
 import { RolleServiceProviderResponse } from './rolle-service-provider.response.js';
 import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.response.js';
 import { RolleResponse } from './rolle.response.js';
+import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
 import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
@@ -81,6 +86,8 @@ export class RolleController {
         private readonly dBiamPersonenkontextRepo: DBiamPersonenkontextRepo,
         private readonly organisationRepository: OrganisationRepository,
         private readonly logger: ClassLogger,
+        private readonly rollenerweiterungRepo: RollenerweiterungRepo,
+        private readonly rollenerweiterungFactory: RollenerweiterungFactory,
     ) {}
 
     @Get()
@@ -483,6 +490,45 @@ export class RolleController {
         }
 
         this.logger.info(`Admin: ${permissions.personFields.id}) hat eine Rolle entfernt: ${rolleName}.`);
+    }
+
+    @Post('erweiterung')
+    @UseGuards(StepUpGuard)
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({ description: 'Create a new rollenerweiterung.' })
+    @ApiCreatedResponse({
+        description: 'The rollenerweiterung was successfully created.',
+        type: RollenerweiterungResponse,
+    })
+    @ApiBadRequestResponse({ description: 'The input was not valid.', type: DbiamRolleError })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to create the rollenerweiterung.' })
+    @ApiForbiddenResponse({ description: 'Insufficient permissions to create the rollenerweiterung.' })
+    @ApiInternalServerErrorResponse({ description: 'Internal server error while creating the rollenerweiterung.' })
+    public async createRollenerweiterung(
+        @Body() params: CreateRollenerweiterungBodyParams,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<RollenerweiterungResponse> {
+        const rollenerweiterung: Rollenerweiterung<false> = this.rollenerweiterungFactory.createNew(
+            params.organisationId,
+            params.rolleId,
+            params.serviceProviderId,
+        );
+
+        const result: Result<Rollenerweiterung<true>, DomainError> = await this.rollenerweiterungRepo.createAuthorized(
+            rollenerweiterung,
+            permissions,
+        );
+        if (!result.ok) {
+            this.logger.error(
+                `Admin: ${permissions.personFields.id}) hat versucht eine Rolle ${params.rolleId} zu erweitern. Fehler: ${result.error.message}.`,
+            );
+            throw result.error;
+        }
+        this.logger.info(
+            `Admin: ${permissions.personFields.id}) hat eine Rolle erweitert. organisationId: ${result.value.organisationId} rolleId: ${result.value.rolleId} serviceProviderId: ${result.value.serviceProviderId}.`,
+        );
+
+        return new RollenerweiterungResponse(result.value);
     }
 
     private async returnRolleWithServiceProvidersResponse(
