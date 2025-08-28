@@ -34,12 +34,17 @@ import { ServiceProviderResponse } from './service-provider.response.js';
 @ApiBearerAuth()
 @Controller({ path: 'provider' })
 export class ProviderController {
+    private readonly isFeatureRolleErweiternEnabled: boolean;
+
     public constructor(
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly configService: ConfigService,
-    ) {}
+    ) {
+        this.isFeatureRolleErweiternEnabled =
+            this.configService.get('FEATUREFLAG.FEATURE_FLAG_ROLLE_ERWEITERN') ?? false;
+    }
 
     @Get('all')
     @ApiOperation({ description: 'Get all service-providers.' })
@@ -74,7 +79,7 @@ export class ProviderController {
         const rolleIds: string[] = await permissions.getRoleIds();
         const serviceProviders: ServiceProvider<true>[] =
             await this.serviceProviderService.getServiceProvidersByRolleIds(rolleIds);
-        if (this.configService.get('FEATUREFLAG.FEATURE_FLAG_ROLLE_ERWEITERN')) {
+        if (this.isFeatureRolleErweiternEnabled) {
             const serviceProviderIds: ServiceProviderID[] =
                 await permissions.getAssignedServiceProviderIdsFromErweiterungen();
             serviceProviders.push(...(await this.serviceProviderRepo.findByIds(serviceProviderIds)).values());
