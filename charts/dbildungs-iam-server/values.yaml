@@ -198,8 +198,8 @@ kafka:
   enabled: true
   sslEnabled: true
   initEnabled: true
-  sessionTimeout: 45000
-  heartbeatInterval: 3000
+  sessionTimeout: 8000
+  heartbeatInterval: 1000
   initImage:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'
