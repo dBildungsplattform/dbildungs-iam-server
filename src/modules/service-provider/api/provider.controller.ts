@@ -82,7 +82,13 @@ export class ProviderController {
         if (this.isFeatureRolleErweiternEnabled) {
             const serviceProviderIds: ServiceProviderID[] =
                 await permissions.getAssignedServiceProviderIdsFromErweiterungen();
-            serviceProviders.push(...(await this.serviceProviderRepo.findByIds(serviceProviderIds)).values());
+            const serviceProvidersFromRollenerweiterungenMap: Map<
+                string,
+                ServiceProvider<true>
+            > = await this.serviceProviderRepo.findByIds(serviceProviderIds);
+            for (const serviceProvider of serviceProvidersFromRollenerweiterungenMap.values()) {
+                serviceProviders.push(serviceProvider);
+            }
         }
         return uniqBy(serviceProviders, (sp: ServiceProvider<true>) => sp.id).map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
