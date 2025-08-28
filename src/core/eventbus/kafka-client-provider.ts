@@ -25,6 +25,7 @@ export const KafkaProvider: Provider<Kafka | null> = {
             return new Kafka({
                 brokers: kafkaConfig.BROKER,
                 logLevel: logLevel.DEBUG,
+                connectionTimeout: 30000,
                 ssl: {
                     rejectUnauthorized: false,
                     ca: [fs.readFileSync(caPath, 'utf-8')],
