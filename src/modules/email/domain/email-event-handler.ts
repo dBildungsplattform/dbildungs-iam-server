@@ -56,6 +56,10 @@ import { LdapSyncFailedEvent } from '../../../shared/events/ldap/ldap-sync-faile
 import { KafkaLdapSyncFailedEvent } from '../../../shared/events/ldap/kafka-ldap-sync-failed.event.js';
 import { EmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/email-address-generated-after-ldap-sync-failed.event.js';
 import { KafkaEmailAddressGeneratedAfterLdapSyncFailedEvent } from '../../../shared/events/email/kafka-email-address-generated-after-ldap-sync-failed.event.js';
+import { OxUserChangedEvent } from '../../../shared/events/ox/ox-user-changed.event.js';
+import { KafkaOxUserChangedEvent } from '../../../shared/events/ox/kafka-ox-user-changed.event.js';
+import { KafkaOxSyncUserCreatedEvent } from '../../../shared/events/ox/kafka-ox-sync-user-created.event.js';
+import { OxSyncUserCreatedEvent } from '../../../shared/events/ox/ox-sync-user-created.event.js';
 
 export type EmailAddressGeneratedCreator = (
     personId: PersonID,
@@ -135,6 +139,61 @@ export class EmailEventHandler {
     ) {
         const oxConfig: OxConfig = configService.getOrThrow<OxConfig>('OX');
         this.OX_ENABLED = oxConfig.ENABLED;
+    }
+
+    @KafkaEventHandler(KafkaOxSyncUserCreatedEvent)
+    @EventHandler(OxSyncUserCreatedEvent)
+    @EnsureRequestContext()
+    public async handleOxSyncUserCreatedEvent(event: OxSyncUserCreatedEvent): Promise<void> {
+        this.logger.info(
+            `Received OxSyncUserCreatedEvent personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.primaryEmail}`,
+        );
+        await this.handleOxUserChangedEventOrOxSyncUserCreatedEvent(event);
+    }
+
+    @KafkaEventHandler(KafkaOxUserChangedEvent)
+    @EventHandler(OxUserChangedEvent)
+    @EnsureRequestContext()
+    public async handleOxUserChangedEvent(event: OxUserChangedEvent): Promise<void> {
+        this.logger.info(
+            `Received OxUserChangedEvent personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, oxUserName:${event.oxUserName}, contextName:${event.oxContextName}, email:${event.primaryEmail}`,
+        );
+        await this.handleOxUserChangedEventOrOxSyncUserCreatedEvent(event);
+    }
+
+    private async handleOxUserChangedEventOrOxSyncUserCreatedEvent(event: OxUserChangedEvent): Promise<void> {
+        const email: Option<EmailAddress<true>> = await this.emailRepo.findRequestedByPerson(event.personId);
+
+        if (!email) {
+            return this.logger.info(
+                `Cannot find REQUESTED email-address for person with personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, enabling not necessary`,
+            );
+        }
+
+        if (email.address !== event.primaryEmail) {
+            this.logger.warning(
+                `Mismatch between REQUESTED(${email.address}) and received(${event.primaryEmail}) address from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+            this.logger.warning(
+                `Overriding ${email.address} with ${event.primaryEmail}) from OX, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+            email.setAddress(event.primaryEmail);
+        }
+
+        email.enable();
+        email.oxUserID = event.oxUserId;
+        const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
+
+        if (persistenceResult instanceof DomainError) {
+            this.logger.error('Irgendwas ist immer...');
+            return this.logger.error(
+                `Could not ENABLE email for personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}, error:${persistenceResult.message}`,
+            );
+        } else {
+            return this.logger.info(
+                `Changed email-address:${persistenceResult.address} from REQUESTED to ENABLED, personId:${event.personId}, username:${event.keycloakUsername}, oxUserId:${event.oxUserId}`,
+            );
+        }
     }
 
     /*
@@ -450,20 +509,15 @@ export class EmailEventHandler {
             }
         }
 
-        // Process each valid Personenkontext
-        if (pkOfRolleWithSPReferenceList.length > 0) {
+        // Only look for the first PK here, because we DO NOT want to create multiple EmailAddresses for a person
+        // just because multiple PKs with Email-SP-reference exist for that person. At the moment the only valid domain is 'schule-sh.de'.
+        // This has to be adjusted in the future when organisations start to define different domains for EmailAddresses.
+        if (pkOfRolleWithSPReferenceList[0]) {
             this.logger.info(
                 `Person with personId:${personId}, username:${username} needs an email, creating or enabling address`,
             );
-            // Iterate over all valid Personenkontext objects and trigger email creation
-            for (const pkOfRolleWithSPReference of pkOfRolleWithSPReferenceList) {
-                // eslint-disable-next-line no-await-in-loop
-                await this.createNewEmail(
-                    personId,
-                    pkOfRolleWithSPReference.organisationId,
-                    emailAdressGeneratedCreator,
-                );
-            }
+            const pkOfRolleWithSPReference: Personenkontext<true> = pkOfRolleWithSPReferenceList[0];
+            await this.createNewEmail(personId, pkOfRolleWithSPReference.organisationId, emailAdressGeneratedCreator);
         } else {
             this.logger.error(
                 `Rolle with id:${rollenIdWithSPReference} references SP, but no matching Personenkontext was found`,

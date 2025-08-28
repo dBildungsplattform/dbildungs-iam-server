@@ -23,4 +23,7 @@ export class OxConfig {
     @IsInt()
     @IsOptional()
     public readonly NUMBER_OF_RETRIES?: number;
+
+    @IsString()
+    public readonly USER_PASSWORD_DEFAULT!: string;
 }

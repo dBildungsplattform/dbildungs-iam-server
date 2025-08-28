@@ -213,6 +213,8 @@ export class OxEventService {
 
     public readonly contextName: OXContextName;
 
+    public readonly userPasswordDefault: string;
+
     public constructor(
         protected readonly logger: ClassLogger,
         protected readonly oxService: OxService,
@@ -227,6 +229,7 @@ export class OxEventService {
         this.authPassword = oxConfig.PASSWORD;
         this.contextID = oxConfig.CONTEXT_ID;
         this.contextName = oxConfig.CONTEXT_NAME;
+        this.userPasswordDefault = oxConfig.USER_PASSWORD_DEFAULT;
     }
 
     public async getMostRecentEnabledOrRequestedEmailAddress(personId: PersonID): Promise<Option<EmailAddress<true>>> {
@@ -570,7 +573,7 @@ export class OxEventService {
             mailEnabled: true,
             lastname: lastname,
             primaryEmail: primaryEmail,
-            userPassword: 'TestPassword1',
+            userPassword: this.userPasswordDefault,
             login: this.authUser,
             password: this.authPassword,
         };
