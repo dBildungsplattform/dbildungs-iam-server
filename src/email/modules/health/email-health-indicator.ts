@@ -18,11 +18,9 @@ export class EmailHealthIndicator extends HealthIndicator {
             await this.findEmailAddresses();
             return super.getStatus(HealthCheckKey, true);
         } catch (e: unknown) {
-            let statusMessage: string;
+            let statusMessage: string = `EmailApp does not seem to be up and there is no error message available`;
             if (e instanceof Error) {
                 statusMessage = `EmailApp does not seem to be up: ${e.message}`;
-            } else {
-                statusMessage = `EmailApp does not seem to be up and there is no error message available`;
             }
             return super.getStatus(HealthCheckKey, false, { message: statusMessage });
         }

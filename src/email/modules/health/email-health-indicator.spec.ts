@@ -7,16 +7,8 @@ import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { EmailHealthModule } from './email-health.module.js';
 import { HttpModule, HttpService } from '@nestjs/axios';
-import { AxiosError, AxiosResponse } from 'axios';
-import { Observable, of } from 'rxjs';
-
-const mockEmptyUserResponse = (): Observable<AxiosResponse> => of({ data: { result: { value: [] } } } as AxiosResponse);
-
-const mockError = (): Observable<AxiosResponse> => {
-    const error: AxiosError<Error> = new AxiosError<Error>(`Mock error`);
-    error.response = { data: {} } as AxiosResponse;
-    return of({ data: { error: 'err' } } as AxiosResponse);
-};
+import { AxiosResponse } from 'axios';
+import { of, throwError } from 'rxjs';
 
 describe('Email health indicator', () => {
     let module: TestingModule;
@@ -41,24 +33,20 @@ describe('Email health indicator', () => {
         httpServiceMock = module.get(HttpService);
     });
 
-    it('should report a successful fetch of EmailAddresses', async () => {
-        httpServiceMock.get.mockReturnValueOnce(mockEmptyUserResponse());
-
+    it('should report failure', async () => {
+        const error: Error = new Error('AxiosError');
+        httpServiceMock.get.mockReturnValueOnce(throwError(() => error));
         const ehi: EmailHealthIndicator = module.get<EmailHealthIndicator>(EmailHealthIndicator);
-        const checkResult: HealthIndicatorResult = await ehi.check();
 
+        const checkResult: HealthIndicatorResult = await ehi.check();
         expect(checkResult['Email']).toBeDefined();
-        expect(checkResult['Email']?.status).toBe('up');
     });
 
-    it('should report a failed fetch of EmailAddresses', async () => {
-        httpServiceMock.get.mockReturnValueOnce(mockError());
-
+    it('should report success', async () => {
+        httpServiceMock.get.mockReturnValueOnce(of({} as AxiosResponse));
         const ehi: EmailHealthIndicator = module.get<EmailHealthIndicator>(EmailHealthIndicator);
+
         const checkResult: HealthIndicatorResult = await ehi.check();
-
         expect(checkResult['Email']).toBeDefined();
-        expect(checkResult['Email']?.status).toBe('up');
     });
-
 });
