@@ -157,10 +157,6 @@ export class RollenSystemRecht {
         RollenSystemRecht.ROLLEN_ERWEITERN,
     ];
 
-    public static get ALL_NAMES(): RollenSystemRechtEnum[] {
-        return RollenSystemRecht.ALL.map((systemrecht: RollenSystemRecht) => systemrecht.name);
-    }
-
     public static getByName(name: RollenSystemRechtEnum): RollenSystemRecht {
         switch (name) {
             case RollenSystemRechtEnum.ROLLEN_VERWALTEN:

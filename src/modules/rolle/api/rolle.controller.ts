@@ -168,8 +168,6 @@ export class RolleController {
     })
     public getAllSystemrechte(): SystemRechtResponse[] {
         return RollenSystemRecht.ALL.map((systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht));
-        // filter(
-        //     (systemRecht: RollenSystemRecht) => includeTechnicalRights || !systemRecht.technical,)
     }
 
     @Get(':rolleId')

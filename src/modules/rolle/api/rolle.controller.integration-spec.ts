@@ -38,7 +38,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
@@ -51,6 +51,7 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RolleResponse } from './rolle.response.js';
 import { ServiceProviderIdNameResponse } from './serviceprovider-id-name.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { SystemRechtResponse } from './systemrecht.response.js';
 
 describe('Rolle API', () => {
     let app: INestApplication;
@@ -792,6 +793,16 @@ describe('Rolle API', () => {
         });
     });
 
+    describe('GET systemrechte', () => {
+        it('should return all systemrechte', async () => {
+            const response: Response = await request(app.getHttpServer() as App).get('/rolle/systemrechte');
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual(
+                RollenSystemRecht.ALL.map((sr: RollenSystemRecht) => new SystemRechtResponse(sr)),
+            );
+        });
+    });
+
     describe('/PUT rolle', () => {
         it('should return updated rolle', async () => {
             const userOrganisation: Organisation<false> = DoFactory.createOrganisation(false);
@@ -827,7 +838,7 @@ describe('Rolle API', () => {
             const params: UpdateRolleBodyParams = {
                 name: faker.person.jobTitle(),
                 merkmale: [faker.helpers.enumValue(RollenMerkmal)],
-                systemrechte: [faker.helpers.enumValue(RollenSystemRechtEnum)],
+                systemrechte: [RollenSystemRechtEnum.ROLLEN_ERWEITERN],
                 serviceProviderIds: [serviceProvider.id],
                 version: 1,
             };
@@ -837,13 +848,21 @@ describe('Rolle API', () => {
                 .send(params);
 
             expect(response.status).toBe(200);
+            // const expectedResponse: RolleWithServiceProvidersResponse = {
+            //     id: rolle.id,
+            //     name: params.name,
+            //     administeredBySchulstrukturknoten: organisation.id,
+            //     rollenart: rolle.rollenart,
+            //     merkmale: params.merkmale,
+            //     systemrechte: [new SystemRechtResponse(RollenSystemRecht.ROLLEN_ERWEITERN)],
+            // };
             expect(response.body).toMatchObject({
                 id: rolle.id,
                 name: params.name,
                 administeredBySchulstrukturknoten: organisation.id,
                 rollenart: rolle.rollenart,
                 merkmale: params.merkmale,
-                systemrechte: params.systemrechte,
+                systemrechte: [new SystemRechtResponse(RollenSystemRecht.ROLLEN_ERWEITERN)],
             });
         });
 
