@@ -27,7 +27,7 @@ import { UserLock } from '../keycloak-administration/domain/user-lock.js';
 import { UserLockRepository } from '../keycloak-administration/repository/user-lock.repository.js';
 import { PersonLockOccasion } from '../person/domain/person.enums.js';
 import { Person } from '../person/domain/person.js';
-import { PersonRepository } from '../person/persistence/person.repository.js';
+import { PersonRepository, PersonWithoutOrgDeleteListResult } from '../person/persistence/person.repository.js';
 import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
 import { DbiamPersonenkontextBodyParams } from '../personenkontext/api/param/dbiam-personenkontext.body.params.js';
 import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
@@ -286,10 +286,9 @@ export class CronController {
                 );
             }
 
-            const { ids: personIds, total } = await this.personRepository.getPersonWithoutOrgDeleteList(
-                this.config.PERSON_WITHOUT_ORG_LIMIT,
-            );
-            const toDeleteCount = personIds.length;
+            const { ids: personIds, total }: PersonWithoutOrgDeleteListResult =
+                await this.personRepository.getPersonWithoutOrgDeleteList(this.config.PERSON_WITHOUT_ORG_LIMIT);
+            const toDeleteCount: number = personIds.length;
             if (toDeleteCount === 0) {
                 return true;
             }

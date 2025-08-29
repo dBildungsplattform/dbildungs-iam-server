@@ -32,6 +32,8 @@ class UnknownError extends DomainError {
     }
 }
 
+const PERSON_WITHOUT_ORG_LIMIT: number = 30;
+
 describe('CronController', () => {
     let cronController: CronController;
     let keycloakUserServiceMock: DeepMocked<KeycloakUserService>;
@@ -382,7 +384,9 @@ describe('CronController', () => {
                 expect(personDeleteServiceMock.deletePersonAfterDeadlineExceeded).toHaveBeenCalledTimes(
                     mockUserIds.length,
                 );
-                expect(personRepositoryMock.getPersonWithoutOrgDeleteList).toHaveBeenCalledWith(10);
+                expect(personRepositoryMock.getPersonWithoutOrgDeleteList).toHaveBeenCalledWith(
+                    PERSON_WITHOUT_ORG_LIMIT,
+                );
             });
         });
 
