@@ -28,7 +28,6 @@ import { Personenkontext } from '../../personenkontext/domain/personenkontext.js
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';
 import { PersonUserPasswordModificationError } from '../domain/person-user-password-modification.error.js';
@@ -1077,7 +1076,6 @@ describe('PersonController', () => {
                 createMock<DBiamPersonenkontextRepo>(),
                 createMock<OrganisationRepository>(),
                 createMock<RolleRepo>(),
-                createMock<RollenerweiterungRepo>(),
                 person,
             );
 
@@ -1093,7 +1091,6 @@ describe('PersonController', () => {
                 createMock<DBiamPersonenkontextRepo>(),
                 createMock<OrganisationRepository>(),
                 createMock<RolleRepo>(),
-                createMock<RollenerweiterungRepo>(),
                 person,
             );
 
@@ -1118,7 +1115,6 @@ describe('PersonController', () => {
                 createMock<DBiamPersonenkontextRepo>(),
                 createMock<OrganisationRepository>(),
                 createMock<RolleRepo>(),
-                createMock<RollenerweiterungRepo>(),
                 person,
             );
 

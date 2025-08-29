@@ -7,7 +7,6 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { TimeLimitOccasion } from '../../person/domain/time-limit-occasion.enums.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { PersonPermissions } from '../domain/person-permissions.js';
 import { StepUpLevel } from '../passport/oidc.strategy.js';
 import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js';
@@ -19,7 +18,6 @@ describe('UserinfoResponse', () => {
         createMock<DBiamPersonenkontextRepo>(),
         createMock<OrganisationRepository>(),
         createMock<RolleRepo>(),
-        createMock<RollenerweiterungRepo>(),
         DoFactory.createPerson(true),
     );
     const pk: PersonenkontextRolleFieldsResponse = {

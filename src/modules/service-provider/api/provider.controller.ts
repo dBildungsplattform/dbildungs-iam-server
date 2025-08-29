@@ -12,16 +12,14 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { ConfigService } from '@nestjs/config';
-import { uniqBy } from 'lodash-es';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { SchulConnexErrorMapper } from '../../../shared/error/schul-connex-error.mapper.js';
 import { SchulConnexValidationErrorFilter } from '../../../shared/error/schulconnex-validation-error.filter.js';
-import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { StreamableFileFactory } from '../../../shared/util/streamable-file.factory.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
@@ -34,17 +32,11 @@ import { ServiceProviderResponse } from './service-provider.response.js';
 @ApiBearerAuth()
 @Controller({ path: 'provider' })
 export class ProviderController {
-    private readonly isFeatureRolleErweiternEnabled: boolean;
-
     public constructor(
         private readonly streamableFileFactory: StreamableFileFactory,
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
-        private readonly configService: ConfigService,
-    ) {
-        this.isFeatureRolleErweiternEnabled =
-            this.configService.get('FEATUREFLAG.FEATURE_FLAG_ROLLE_ERWEITERN') ?? false;
-    }
+    ) {}
 
     @Get('all')
     @ApiOperation({ description: 'Get all service-providers.' })
@@ -76,21 +68,11 @@ export class ProviderController {
     public async getAvailableServiceProviders(
         @Permissions() permissions: PersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
-        const rolleIds: string[] = await permissions.getRoleIds();
+        const personenkontexteIds: Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[] =
+            await permissions.getPersonenkontextIds();
         const serviceProviders: ServiceProvider<true>[] =
-            await this.serviceProviderService.getServiceProvidersByRolleIds(rolleIds);
-        if (this.isFeatureRolleErweiternEnabled) {
-            const serviceProviderIds: ServiceProviderID[] =
-                await permissions.getAssignedServiceProviderIdsFromErweiterungen();
-            const serviceProvidersFromRollenerweiterungenMap: Map<
-                string,
-                ServiceProvider<true>
-            > = await this.serviceProviderRepo.findByIds(serviceProviderIds);
-            for (const serviceProvider of serviceProvidersFromRollenerweiterungenMap.values()) {
-                serviceProviders.push(serviceProvider);
-            }
-        }
-        return uniqBy(serviceProviders, (sp: ServiceProvider<true>) => sp.id).map(
+            await this.serviceProviderService.getServiceProvidersByOrganisationenAndRollen(personenkontexteIds);
+        return serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
     }

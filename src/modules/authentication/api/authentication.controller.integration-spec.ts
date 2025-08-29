@@ -23,7 +23,6 @@ import { PersonModule } from '../../person/person.module.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { PersonenKontextModule } from '../../personenkontext/personenkontext.module.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { ServiceProviderModule } from '../../service-provider/service-provider.module.js';
 import { PersonPermissionsRepo } from '../domain/person-permission.repo.js';
 import { PersonenkontextRolleWithOrganisation, PersonPermissions } from '../domain/person-permissions.js';
@@ -263,7 +262,6 @@ describe('AuthenticationController', () => {
                 dbiamPersonenkontextRepoMock,
                 organisationRepoMock,
                 rolleRepoMock,
-                createMock<RollenerweiterungRepo>(),
                 person,
             );
             personPermissionsRepoMock.loadPersonPermissions.mockResolvedValueOnce(personPermissions);

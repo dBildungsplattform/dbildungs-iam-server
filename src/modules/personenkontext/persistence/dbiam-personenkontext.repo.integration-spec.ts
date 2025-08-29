@@ -34,9 +34,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
-import { RollenerweiterungFactory } from '../../rolle/domain/rollenerweiterung.factory.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { RolleModule } from '../../rolle/rolle.module.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
@@ -63,7 +61,6 @@ describe('dbiam Personenkontext Repo', () => {
     let personRepo: PersonRepository;
     let organisationRepository: OrganisationRepository;
     let rolleRepo: RolleRepo;
-    let rollenerweiterungRepo: RollenerweiterungRepo;
     let serviceProviderRepo: ServiceProviderRepo;
     let rolleFactory: RolleFactory;
 
@@ -108,8 +105,6 @@ describe('dbiam Personenkontext Repo', () => {
                 OxUserBlacklistRepo,
                 RolleFactory,
                 RolleRepo,
-                RollenerweiterungFactory,
-                RollenerweiterungRepo,
                 ServiceProviderRepo,
                 PersonenkontextFactory,
                 EntityAggregateMapper,
@@ -143,7 +138,6 @@ describe('dbiam Personenkontext Repo', () => {
         personRepo = module.get(PersonRepository);
         organisationRepository = module.get(OrganisationRepository);
         rolleRepo = module.get(RolleRepo);
-        rollenerweiterungRepo = module.get(RollenerweiterungRepo);
         serviceProviderRepo = module.get(ServiceProviderRepo);
         rolleFactory = module.get(RolleFactory);
         personenkontextFactory = module.get(PersonenkontextFactory);
@@ -195,7 +189,7 @@ describe('dbiam Personenkontext Repo', () => {
     }
 
     function createPermissions(person: Person<true>): PersonPermissions {
-        return new PersonPermissions(sut, organisationRepository, rolleRepo, rollenerweiterungRepo, person);
+        return new PersonPermissions(sut, organisationRepository, rolleRepo, person);
     }
 
     afterAll(async () => {

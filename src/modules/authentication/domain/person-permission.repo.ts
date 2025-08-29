@@ -4,18 +4,16 @@ import { Person } from '../../person/domain/person.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { KeycloakUserNotFoundError } from './keycloak-user-not-found.error.js';
 import { PersonPermissions } from './person-permissions.js';
 
 @Injectable()
 export class PersonPermissionsRepo {
     public constructor(
-        private personRepo: PersonRepository,
-        private personenkontextRepo: DBiamPersonenkontextRepo,
-        private organisationRepo: OrganisationRepository,
-        private rollenRepo: RolleRepo,
-        private rollenerweiterungRepo: RollenerweiterungRepo,
+        private readonly personRepo: PersonRepository,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepo: OrganisationRepository,
+        private readonly rollenRepo: RolleRepo,
     ) {}
 
     public async loadPersonPermissions(keycloakUserId: string): Promise<PersonPermissions> {
@@ -24,12 +22,6 @@ export class PersonPermissionsRepo {
             throw new KeycloakUserNotFoundError();
         }
 
-        return new PersonPermissions(
-            this.personenkontextRepo,
-            this.organisationRepo,
-            this.rollenRepo,
-            this.rollenerweiterungRepo,
-            person,
-        );
+        return new PersonPermissions(this.personenkontextRepo, this.organisationRepo, this.rollenRepo, person);
     }
 }
