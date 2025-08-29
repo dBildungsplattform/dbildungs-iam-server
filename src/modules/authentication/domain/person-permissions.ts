@@ -7,7 +7,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Person } from '../../person/domain/person.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 

@@ -28,7 +28,7 @@ import { UserLockRepository } from '../keycloak-administration/repository/user-l
 import { Person } from '../person/domain/person.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
 import { PersonLockOccasion } from '../person/domain/person.enums.js';
-import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
 import { ClassLogger } from '../../core/logging/class-logger.js';

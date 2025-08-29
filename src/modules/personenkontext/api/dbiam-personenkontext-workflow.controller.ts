@@ -55,7 +55,8 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DbiamCreatePersonenkontextBodyParams } from './param/dbiam-create-personenkontext.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/index.js';
 import { PortalConfig } from '../../../shared/config/portal.config.js';
@@ -112,7 +113,7 @@ export class DbiamPersonenkontextWorkflowController {
 
         // filter rollenarten
         let rollenarten: RollenArt[] | undefined = undefined;
-        if (params.requestedWithSystemrecht === RollenSystemRecht.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN) {
+        if (params.requestedWithSystemrecht === RollenSystemRechtEnum.EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN) {
             const portalConfig: PortalConfig = this.configService.getOrThrow<PortalConfig>('PORTAL');
 
             rollenarten = mapStringsToRollenArt(portalConfig.LIMITED_ROLLENART_ALLOWLIST || []);

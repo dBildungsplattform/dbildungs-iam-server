@@ -31,7 +31,8 @@ import { MissingPermissionsError } from '../../../shared/error/missing-permissio
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { createMock } from '@golevelup/ts-jest';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';

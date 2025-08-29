@@ -12,12 +12,13 @@ import { GlobalValidationPipe } from '../../../shared/validation/global-validati
 import { OrganisationService } from '../../organisation/domain/organisation.service.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { CreateRolleBodyParams } from './create-rolle.body.params.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleRepo } from '../repo/rolle.repo.js';
-import { CreateRolleBodyParams } from './create-rolle.body.params.js';
 import { FindRolleByIdParams } from './find-rolle-by-id.params.js';
 import { RolleController } from './rolle.controller.js';
 
@@ -124,7 +125,7 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                     administeredBySchulstrukturknoten: faker.string.uuid(),
                     rollenart: RollenArt.LEHR,
                     merkmale: [RollenMerkmal.BEFRISTUNG_PFLICHT],
-                    systemrechte: [RollenSystemRecht.KLASSEN_VERWALTEN],
+                    systemrechte: [RollenSystemRechtEnum.KLASSEN_VERWALTEN],
                 };
 
                 const organisation: Organisation<true> = DoFactory.createOrganisation(true);

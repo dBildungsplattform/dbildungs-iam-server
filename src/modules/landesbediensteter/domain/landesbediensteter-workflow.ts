@@ -18,7 +18,7 @@ import { PersonenkontextWorkflowSharedKernel } from '../../personenkontext/domai
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontexteUpdate } from '../../personenkontext/domain/personenkontexte-update.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 

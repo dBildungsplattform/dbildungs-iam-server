@@ -13,7 +13,7 @@ import { ScopeOperator } from '../../../shared/persistence/index.js';
 import { OrganisationID } from '../../../shared/types/aggregate-ids.types.js';
 import { NameValidator } from '../../../shared/validation/name-validator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { OrganisationRepository } from '../persistence/organisation.repository.js';
 import { OrganisationScope } from '../persistence/organisation.scope.js';
 import { EmailAdressOnOrganisationTyp } from '../specification/email-on-organisation-type.js';

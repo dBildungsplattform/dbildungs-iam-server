@@ -68,6 +68,9 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
+import { SystemRechtResponse } from './systemrecht.response.js';
+import { Public } from '../../authentication/api/public.decorator.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -153,6 +156,20 @@ export class RolleController {
         return new PagedResponse(pagedRolleWithServiceProvidersResponse);
     }
 
+    @Get('systemrechte')
+    @ApiOperation({ description: 'Get all systemrechte for rollen.' })
+    @Public()
+    @ApiOkResponse({
+        description: 'Returns all systemrechte for rollen.',
+        type: [SystemRechtResponse],
+    })
+    @ApiInternalServerErrorResponse({
+        description: 'Internal server error',
+    })
+    public getAllSystemrechte(): SystemRechtResponse[] {
+        return RollenSystemRecht.ALL.map((systemRecht: RollenSystemRecht) => new SystemRechtResponse(systemRecht));
+    }
+
     @Get(':rolleId')
     @ApiOperation({ description: 'Get rolle by id.' })
     @ApiOkResponse({
@@ -210,7 +227,7 @@ export class RolleController {
             params.administeredBySchulstrukturknoten,
             params.rollenart,
             params.merkmale,
-            params.systemrechte,
+            params.systemrechte.map((s: RollenSystemRechtEnum) => RollenSystemRecht.getByName(s)),
             [],
             [],
             false,
@@ -251,7 +268,7 @@ export class RolleController {
     ): Promise<void> {
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(findRolleByIdParams.rolleId);
         if (rolle) {
-            rolle.addSystemRecht(addSystemrechtBodyParams.systemRecht);
+            rolle.addSystemRecht(RollenSystemRecht.getByName(addSystemrechtBodyParams.systemRecht));
             await this.rolleRepo.save(rolle);
         } else {
             throw new AddSystemrechtError(); //hide that rolle is not found
@@ -400,7 +417,7 @@ export class RolleController {
             findRolleByIdParams.rolleId,
             params.name,
             params.merkmale,
-            params.systemrechte,
+            params.systemrechte.map((s: RollenSystemRechtEnum) => RollenSystemRecht.getByName(s)),
             params.serviceProviderIds,
             params.version,
             isAlreadyAssigned,

@@ -30,6 +30,7 @@ import { OrganisationByNameQueryParams } from './organisation-by-name.query.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
+import { RollenSystemRechtEnum, RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 function getFakeParamsAndBody(): [OrganisationByIdParams, OrganisationByIdBodyParams] {
     const params: OrganisationByIdParams = {
@@ -455,7 +456,7 @@ describe('OrganisationController', () => {
                 const queryParams: FindOrganisationQueryParams = {
                     typ: OrganisationsTyp.SONSTIGE,
                     searchString: faker.lorem.word(),
-                    systemrechte: [],
+                    systemrechte: [RollenSystemRechtEnum.PERSONEN_VERWALTEN],
                     administriertVon: [faker.string.uuid(), faker.string.uuid()],
                     // Assuming you have a field for organisationIds in your query params
                     organisationIds: organisationIds,
@@ -509,6 +510,11 @@ describe('OrganisationController', () => {
                 );
 
                 expect(organisationRepositoryMock.findAuthorized).toHaveBeenCalledTimes(1);
+                expect(organisationRepositoryMock.findAuthorized.mock.calls[0]).toMatchObject([
+                    permissionsMock,
+                    [RollenSystemRecht.PERSONEN_VERWALTEN],
+                    queryParams,
+                ]);
 
                 expect(result.items.length).toEqual(3);
             });

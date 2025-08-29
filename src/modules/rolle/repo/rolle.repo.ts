@@ -14,7 +14,8 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';
@@ -43,7 +44,7 @@ export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityDa
     const systemrechte: EntityData<RolleSystemrechtEntity>[] = rolle.systemrechte.map(
         (systemrecht: RollenSystemRecht) => ({
             rolle: rolle.id,
-            systemrecht,
+            systemrecht: systemrecht.name,
         }),
     );
 
@@ -68,8 +69,8 @@ export function mapRolleAggregateToData(rolle: Rolle<boolean>): RequiredEntityDa
 
 export function mapRolleEntityToAggregate(entity: RolleEntity, rolleFactory: RolleFactory): Rolle<boolean> {
     const merkmale: RollenMerkmal[] = entity.merkmale.map((merkmalEntity: RolleMerkmalEntity) => merkmalEntity.merkmal);
-    const systemrechte: RollenSystemRecht[] = entity.systemrechte.map(
-        (systemRechtEntity: RolleSystemrechtEntity) => systemRechtEntity.systemrecht,
+    const systemrechte: RollenSystemRecht[] = entity.systemrechte.map((systemRechtEntity: RolleSystemrechtEntity) =>
+        RollenSystemRecht.getByName(systemRechtEntity.systemrecht),
     );
 
     const serviceProviderIds: string[] = entity.serviceProvider.map(

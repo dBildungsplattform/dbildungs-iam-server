@@ -8,7 +8,8 @@ import { PersonenkontextScope } from './personenkontext.scope.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
@@ -341,7 +342,7 @@ export class DBiamPersonenkontextRepo {
                         `;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht]);
+        const result: any[] = await this.em.execute(query, [organisationId, personId, systemrecht.name]);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         return result[0].has_systemrecht_at_orga as boolean;
     }
@@ -384,7 +385,7 @@ export class DBiamPersonenkontextRepo {
         const result: [{ has_persona_systemrecht_at_any_kontext_of_personb: boolean }] = await this.em.execute(query, [
             personIdB,
             personIdA,
-            systemrecht,
+            systemrecht.name,
         ]);
         return result[0].has_persona_systemrecht_at_any_kontext_of_personb;
     }

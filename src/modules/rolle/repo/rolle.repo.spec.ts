@@ -20,7 +20,8 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { ServiceProviderMerkmal } from '../../service-provider/domain/service-provider.enum.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';

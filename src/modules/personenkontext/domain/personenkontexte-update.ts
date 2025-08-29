@@ -15,7 +15,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Person } from '../../person/domain/person.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rollenart-for-lern.error.js';

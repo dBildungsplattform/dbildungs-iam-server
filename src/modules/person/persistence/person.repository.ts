@@ -24,7 +24,8 @@ import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enu
 import { PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
-import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Person } from '../domain/person.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
