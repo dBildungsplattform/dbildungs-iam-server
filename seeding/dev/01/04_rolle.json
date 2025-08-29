@@ -226,6 +226,54 @@
             "istTechnisch": false
         },
         {
+           "id": 104,
+            "administeredBySchulstrukturknoten": 1,
+            "name": "SVS Systemadministrator",
+            "rollenart": "SYSADMIN",
+            "merkmale": [],
+            "systemrechte": [
+                "PERSONEN_LESEN",
+                "SERVICEPROVIDER_VERWALTEN",
+                "ROLLEN_VERWALTEN"
+            ],
+            "serviceProviderIds": [],
+            "istTechnisch": false 
+        },
+        {
+           "id": 105,
+            "administeredBySchulstrukturknoten": 1,
+            "name": "Moodle Systemadministrator",
+            "rollenart": "SYSADMIN",
+            "merkmale": [],
+            "systemrechte": [
+                "PERSONEN_LESEN",
+                "SERVICEPROVIDER_VERWALTEN",
+                "ROLLEN_VERWALTEN"
+            ],
+            "serviceProviderIds": [],
+            "istTechnisch": false 
+        }, 
+        {
+           "id": 106,
+            "administeredBySchulstrukturknoten": 1,
+            "name": "SVS Leiter",
+            "rollenart": "LEIT",
+            "merkmale": [],
+            "systemrechte": ["PERSONEN_LESEN"],
+            "serviceProviderIds": [],
+            "istTechnisch": false 
+        },
+        {
+           "id": 107,
+            "administeredBySchulstrukturknoten": 1,
+            "name": "Moodle Leiter",
+            "rollenart": "LEIT",
+            "merkmale": [],
+            "systemrechte": ["PERSONEN_LESEN"],
+            "serviceProviderIds": [],
+            "istTechnisch": false 
+        },      
+        {
             "id": 200,
             "administeredBySchulstrukturknoten": 0,
             "name": "Schulleitung",
