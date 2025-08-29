@@ -260,4 +260,4 @@ featureFlags:
   befristungBearbeiten: true
 
 cron:
-  personWithoutOrgLimit: 10
+  personWithoutOrgLimit: 30

@@ -126,7 +126,7 @@ describe('configloader', () => {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
                 },
                 CRON: {
-                    PERSON_WITHOUT_ORG_LIMIT: 10,
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
                 },
             };
 
@@ -302,7 +302,7 @@ describe('configloader', () => {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
                 },
                 CRON: {
-                    PERSON_WITHOUT_ORG_LIMIT: 10,
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
                 },
             };
 

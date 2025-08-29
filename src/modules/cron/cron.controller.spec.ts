@@ -357,7 +357,10 @@ describe('CronController', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock1);
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock2);
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
-                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
+                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce({
+                    ids: mockUserIds,
+                    total: mockUserIds.length,
+                });
                 personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
                     ok: true,
                     value: undefined,
@@ -386,7 +389,7 @@ describe('CronController', () => {
         describe('when there are no users to remove', () => {
             it('should return false', async () => {
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce([]);
+                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce({ ids: [], total: 0 });
 
                 const personPermissionsMock: PersonPermissions = createMock<PersonPermissions>();
                 const result: boolean = await cronController.personWithoutOrgDelete(personPermissionsMock);
@@ -407,7 +410,10 @@ describe('CronController', () => {
                 personRepositoryMock.findById.mockResolvedValueOnce(personMock3);
 
                 permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
-                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce(mockUserIds);
+                personRepositoryMock.getPersonWithoutOrgDeleteList.mockResolvedValueOnce({
+                    ids: mockUserIds,
+                    total: mockUserIds.length,
+                });
                 personDeleteServiceMock.deletePersonAfterDeadlineExceeded.mockResolvedValueOnce({
                     ok: true,
                     value: undefined,

@@ -286,12 +286,17 @@ export class CronController {
                 );
             }
 
-            const personIds: string[] = await this.personRepository.getPersonWithoutOrgDeleteList(
+            const { ids: personIds, total } = await this.personRepository.getPersonWithoutOrgDeleteList(
                 this.config.PERSON_WITHOUT_ORG_LIMIT,
             );
-            if (personIds.length === 0) {
+            const toDeleteCount = personIds.length;
+            if (toDeleteCount === 0) {
                 return true;
             }
+
+            this.logger.info(
+                `Es wurden ${total} Benutzer gefunden, die seit 84 Tagen oder mehr ohne Schulzuordnung sind. Zur vollständigen Bereinigung sind ${Math.ceil(total / this.config.PERSON_WITHOUT_ORG_LIMIT)} Durchläufe notwendig.`,
+            );
 
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
                 personIds.map(async (id: string) => {
@@ -317,10 +322,12 @@ export class CronController {
             );
 
             if (allSuccessful) {
-                this.logger.info(`System hat alle Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen gelöscht.`);
+                this.logger.info(
+                    `System hat ${toDeleteCount} Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen gelöscht.`,
+                );
             } else {
                 this.logger.error(
-                    `System konnte nicht alle Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen löschen.`,
+                    `System konnte nicht alle ${toDeleteCount} Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen löschen.`,
                 );
             }
 

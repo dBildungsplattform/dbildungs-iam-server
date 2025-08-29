@@ -228,6 +228,11 @@ export type PersonenQueryParams = {
     suchFilter?: string;
 };
 
+export type PersonWithoutOrgDeleteListResult = {
+    ids: string[];
+    total: number;
+};
+
 @Injectable()
 export class PersonRepository {
     public readonly ROOT_ORGANISATION_ID: string;
@@ -1135,7 +1140,7 @@ export class PersonRepository {
         return personEntities.map((person: PersonEntity) => [person.id, person.keycloakUserId]);
     }
 
-    public async getPersonWithoutOrgDeleteList(limit?: number | undefined): Promise<string[]> {
+    public async getPersonWithoutOrgDeleteList(limit?: number | undefined): Promise<PersonWithoutOrgDeleteListResult> {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - NO_KONTEXTE_DEADLINE_IN_DAYS);
 
@@ -1148,10 +1153,10 @@ export class PersonRepository {
             },
         };
 
-        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters, {
+        const [personEntities, total]: [PersonEntity[], number] = await this.em.findAndCount(PersonEntity, filters, {
             limit,
         });
-        return personEntities.map((person: PersonEntity) => person.id);
+        return { ids: personEntities.map((person: PersonEntity) => person.id), total };
     }
 
     public async findOrganisationAdminsByOrganisationId(organisation_id: string): Promise<string[]> {
