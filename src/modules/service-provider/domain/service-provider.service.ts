@@ -36,8 +36,8 @@ export class ServiceProviderService {
         configService: ConfigService<ServerConfig>,
     ) {
         this.vidisConfig = configService.getOrThrow<VidisConfig>('VIDIS');
-        const featureFlags: FeatureFlagConfig | undefined = configService.get<FeatureFlagConfig>('FEATUREFLAG');
-        this.isFeatureRolleErweiternEnabled = featureFlags?.FEATURE_FLAG_ROLLE_ERWEITERN ?? false;
+        const featureFlags: FeatureFlagConfig = configService.getOrThrow<FeatureFlagConfig>('FEATUREFLAG');
+        this.isFeatureRolleErweiternEnabled = featureFlags.FEATURE_FLAG_ROLLE_ERWEITERN;
     }
 
     public async getServiceProvidersByRolleIds(rolleIds: string[]): Promise<ServiceProvider<true>[]> {
