@@ -1,6 +1,6 @@
 import { BaseEntity, Entity, Enum, Index, ManyToOne, PrimaryKeyProp, Rel } from '@mikro-orm/core';
 import { RolleEntity } from './rolle.entity.js';
-import { RollenSystemRechtEnum } from '../domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 
 @Entity({ tableName: 'rolle_systemrecht' })
 export class RolleSystemrechtEntity extends BaseEntity {

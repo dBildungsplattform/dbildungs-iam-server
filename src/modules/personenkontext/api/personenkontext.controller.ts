@@ -37,7 +37,7 @@ import { PersonenkontextResponse } from './response/personenkontext.response.js'
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
 
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { DomainError } from '../../../shared/error/index.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';

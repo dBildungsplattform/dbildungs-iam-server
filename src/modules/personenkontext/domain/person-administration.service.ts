@@ -4,7 +4,7 @@ import { OrganisationRepository } from '../../organisation/persistence/organisat
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationMatchesRollenart } from '../specification/organisation-matches-rollenart.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 
 @Injectable()

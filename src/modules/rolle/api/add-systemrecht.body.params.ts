@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/rolle.enums.js';
+import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 
 export class AddSystemrechtBodyParams {
     @IsEnum(RollenSystemRechtEnum)

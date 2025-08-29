@@ -62,7 +62,7 @@ import { OrganisationResponseLegacy } from './organisation.response.legacy.js';
 import { ParentOrganisationsByIdsBodyParams } from './parent-organisations-by-ids.body.params.js';
 import { ParentOrganisationenResponse } from './organisation.parents.response.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../rolle/domain/systemrecht.js';
 
 @UseFilters(
     new SchulConnexValidationErrorFilter(),

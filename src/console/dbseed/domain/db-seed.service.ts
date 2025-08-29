@@ -14,7 +14,8 @@ import { DBiamPersonenkontextService } from '../../../modules/personenkontext/do
 import { PersonenkontextFactory } from '../../../modules/personenkontext/domain/personenkontext.factory.js';
 import { Personenkontext } from '../../../modules/personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepoInternal } from '../../../modules/personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
-import { RollenMerkmal, RollenSystemRecht, RollenSystemRechtEnum } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../../../modules/rolle/domain/systemrecht.js';
 import { RolleFactory } from '../../../modules/rolle/domain/rolle.factory.js';
 import { Rolle } from '../../../modules/rolle/domain/rolle.js';
 import { RolleRepo } from '../../../modules/rolle/repo/rolle.repo.js';

@@ -1,4 +1,5 @@
-import { RollenArt, RollenMerkmal, RollenSystemRechtEnum } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../../../modules/rolle/domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from "../../../modules/rolle/domain/systemrecht.js";
 
 export class RolleFile {
     public id?: number;

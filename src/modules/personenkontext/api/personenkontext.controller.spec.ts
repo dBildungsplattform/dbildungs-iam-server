@@ -15,7 +15,7 @@ import { PersonenkontextController } from './personenkontext.controller.js';
 import { PersonenkontextdatensatzResponse } from './response/personenkontextdatensatz.response.js';
 
 import { DeleteRevisionBodyParams } from '../../person/api/delete-revision.body.params.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 import { DomainError, MissingPermissionsError } from '../../../shared/error/index.js';
 

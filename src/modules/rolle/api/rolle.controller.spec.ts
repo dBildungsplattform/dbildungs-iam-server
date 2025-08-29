@@ -13,7 +13,8 @@ import { OrganisationService } from '../../organisation/domain/organisation.serv
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { CreateRolleBodyParams } from './create-rolle.body.params.js';
-import { RollenArt, RollenMerkmal, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';

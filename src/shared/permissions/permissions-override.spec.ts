@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { PersonPermissions } from '../../modules/authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../modules/rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../modules/rolle/domain/systemrecht.js';
 import { OrganisationID, PersonID } from '../types/index.js';
 import { PermissionsOverride } from './permissions-override.js';
 

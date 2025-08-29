@@ -12,7 +12,7 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { PersonenkontextRolleFieldsResponse } from '../api/personen-kontext-rolle-fields.response.js';

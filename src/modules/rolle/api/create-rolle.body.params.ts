@@ -1,14 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayUnique, IsEnum, IsNotEmpty, IsUUID, MaxLength } from 'class-validator';
 
-import {
-    RollenArt,
-    RollenArtTypName,
-    RollenMerkmal,
-    RollenMerkmalTypName,
-    RollenSystemRechtEnum,
-    RollenSystemRechtEnumName,
-} from '../domain/rolle.enums.js';
+import { RollenArt, RollenArtTypName, RollenMerkmal, RollenMerkmalTypName } from '../domain/rolle.enums.js';
+import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 import { IsDIN91379AEXT } from '../../../shared/util/din-91379-validation.js';
 
 export class CreateRolleBodyParams {

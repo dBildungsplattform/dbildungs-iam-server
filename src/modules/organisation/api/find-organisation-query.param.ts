@@ -4,7 +4,7 @@ import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
 import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../rolle/domain/systemrecht.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @IsString()

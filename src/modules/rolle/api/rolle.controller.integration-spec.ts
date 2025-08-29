@@ -38,7 +38,8 @@ import { PersonRepository } from '../../person/persistence/person.repository.js'
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
 import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { Rolle } from '../domain/rolle.js';
 import { RolleEntity } from '../entity/rolle.entity.js';
 import { RolleRepo } from '../repo/rolle.repo.js';

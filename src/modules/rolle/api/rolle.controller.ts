@@ -68,7 +68,7 @@ import { RolleWithServiceProvidersResponse } from './rolle-with-serviceprovider.
 import { RolleResponse } from './rolle.response.js';
 import { RollenerweiterungResponse } from './rollenerweiterung.response.js';
 import { UpdateRolleBodyParams } from './update-rolle.body.params.js';
-import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum } from '../domain/systemrecht.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 import { Public } from '../../authentication/api/public.decorator.js';
 

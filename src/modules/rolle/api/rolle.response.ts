@@ -1,11 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-    RollenArt,
-    RollenArtTypName,
-    RollenMerkmal,
-    RollenMerkmalTypName,
-    RollenSystemRecht,
-} from '../domain/rolle.enums.js';
+import { RollenArt, RollenArtTypName, RollenMerkmal, RollenMerkmalTypName } from '../domain/rolle.enums.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { Rolle } from '../domain/rolle.js';
 import { SystemRechtResponse } from './systemrecht.response.js';
 

@@ -36,7 +36,7 @@ import { PersonTimeLimitInfoResponse } from './person-time-limit-info.reponse.js
 import PersonTimeLimitService from '../../person/domain/person-time-limit-info.service.js';
 import { ExternalPkData } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
 import { OrganisationResponse } from '../../organisation/api/organisation.response.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 type WithoutOptional<T> = {
     [K in keyof T]-?: T[K];

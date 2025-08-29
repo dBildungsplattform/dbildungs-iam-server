@@ -14,7 +14,8 @@ import { RolleUpdatedEvent } from '../../../shared/events/rolle-updated.event.js
 import { OrganisationID, RolleID } from '../../../shared/types/index.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
 import { RolleHatPersonenkontexteError } from '../domain/rolle-hat-personenkontexte.error.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../domain/rolle.enums.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RolleFactory } from '../domain/rolle.factory.js';
 import { Rolle } from '../domain/rolle.js';
 import { UpdateMerkmaleError } from '../domain/update-merkmale.error.js';

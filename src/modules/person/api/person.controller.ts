@@ -59,7 +59,7 @@ import { PersonenkontextResponse } from '../../personenkontext/api/response/pers
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { PersonenkontextService } from '../../personenkontext/domain/personenkontext.service.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 import { PersonDomainError } from '../domain/person-domain.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
 import { NotFoundOrNoPermissionError } from '../domain/person-not-found-or-no-permission.error.js';

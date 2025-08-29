@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RollenSystemRecht, RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/rolle.enums.js';
+import { RollenSystemRecht, RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../domain/systemrecht.js';
 
 export class SystemRechtResponse {
     public constructor(systemRecht: RollenSystemRecht) {

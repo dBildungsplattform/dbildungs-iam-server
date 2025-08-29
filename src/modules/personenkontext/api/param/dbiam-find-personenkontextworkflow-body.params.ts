@@ -1,7 +1,7 @@
 import { ArrayUnique, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
-import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../../rolle/domain/rolle.enums.js';
+import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../../rolle/domain/systemrecht.js';
 import { OperationContext } from '../../domain/personenkontext.enums.js';
 import { PersonID } from '../../../../shared/types/aggregate-ids.types.js';
 

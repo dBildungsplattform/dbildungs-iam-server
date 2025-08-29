@@ -14,7 +14,8 @@ import {
     SichtfreigabeType,
 } from '../../src/modules/personenkontext/domain/personenkontext.enums.js';
 import { Personenkontext } from '../../src/modules/personenkontext/domain/personenkontext.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../src/modules/rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../../src/modules/rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../src/modules/rolle/domain/systemrecht.js';
 import { Rolle as RolleAggregate } from '../../src/modules/rolle/domain/rolle.js';
 import {
     ServiceProviderKategorie,
