@@ -357,21 +357,24 @@ export class PersonenkontexteUpdate {
             return permissionsError;
         }
 
+        // Update the personalnummer if it is provided
+        if (this.personalnummer) {
+            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
+            if (person) {
+                person.personalnummer = this.personalnummer;
+                const saveResult: DomainError | Person<true> = await this.personRepo.save(person);
+                if (saveResult instanceof DomainError) {
+                    return saveResult;
+                }
+            }
+        }
+
         const deletedPKs: Personenkontext<true>[] = await this.delete(existingPKs, sentPKs);
         const createdPKs: Personenkontext<true>[] = await this.add(existingPKs, sentPKs);
 
         const existingPKsAfterUpdate: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(
             this.personId,
         );
-
-        // Update the personalnummer if it is provided
-        if (this.personalnummer) {
-            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
-            if (person) {
-                person.personalnummer = this.personalnummer;
-                await this.personRepo.save(person);
-            }
-        }
 
         // Set value with current date in database, when person has no Personenkontext anymore
         if (existingPKsAfterUpdate.length == 0) {

@@ -190,6 +190,10 @@ export class DbiamPersonenkontextWorkflowController {
         if (updateResult instanceof PersonenkontexteUpdateError) {
             throw updateResult;
         }
+
+        if (updateResult instanceof DuplicatePersonalnummerError) {
+            throw updateResult;
+        }
         return new PersonenkontexteUpdateResponse(updateResult);
     }
 

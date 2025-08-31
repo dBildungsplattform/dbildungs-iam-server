@@ -732,7 +732,7 @@ export class PersonRepository {
 
         // Check for duplicate personalnummer if it's being updated
         if (person.personalnummer) {
-            const existingPerson: Loaded<PersonEntity, never, '*', never> | null = await this.em.findOne(PersonEntity, {
+            const existingPerson: Loaded<PersonEntity> | null = await this.em.findOne(PersonEntity, {
                 personalnummer: person.personalnummer,
             });
             if (existingPerson) {
