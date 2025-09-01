@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -43,6 +44,10 @@ import { AngebotByIdParams } from './angebot-by.id.params.js';
 import { CreateServiceProviderBodyParams } from './create-service-provider.body.params.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider.body.params.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ServiceProviderKategorie } from '../domain/service-provider.enum.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 @UseFilters(SchulConnexValidationErrorFilter, new AuthenticationExceptionFilter())
 @ApiTags('provider')
@@ -55,6 +60,7 @@ export class ProviderController {
         private readonly serviceProviderRepo: ServiceProviderRepo,
         private readonly serviceProviderService: ServiceProviderService,
         private readonly serviceProviderFactory: ServiceProviderFactory,
+        private readonly organisationRepository: OrganisationRepository,
     ) {}
 
     @Get('all')
@@ -141,6 +147,7 @@ export class ProviderController {
         description: 'The service-provider was added successfully.',
         type: ServiceProviderResponse,
     })
+    @ApiBadRequestResponse({ description: 'Could not create provider due to a error in the request' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to create new service provider.' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to create a new service-provider.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while creating a new service-provider.' })
@@ -150,6 +157,17 @@ export class ProviderController {
     ): Promise<ServiceProviderResponse> {
         if (!(await permissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.SERVICEPROVIDER_VERWALTEN]))) {
             throw new ForbiddenException('You do not have the required permissions to create new service provider.');
+        }
+
+        if (spBodyParams.kategorie === ServiceProviderKategorie.LMS) {
+            const org: Option<Organisation<true>> = await this.organisationRepository.findById(
+                spBodyParams.providedOnSchulstrukturknoten,
+            );
+            if (org?.typ !== OrganisationsTyp.LMS) {
+                throw new BadRequestException(
+                    'Could not create LMS service-provider because Organization is not of type LMS',
+                );
+            }
         }
 
         const newServiceProvider: ServiceProvider<false> = this.serviceProviderFactory.createNew(
@@ -178,6 +196,7 @@ export class ProviderController {
         description: 'The service-provider was updated successfully.',
         type: ServiceProviderResponse,
     })
+    @ApiBadRequestResponse({ description: 'Could not update provider due to a error in the request' })
     @ApiUnauthorizedResponse({ description: 'Not authorized to update the service provider.' })
     @ApiNotFoundResponse({ description: 'The service-provider with the given id was not found' })
     @ApiForbiddenResponse({ description: 'Insufficient permissions to update the service-provider.' })
@@ -201,6 +220,17 @@ export class ProviderController {
                     new EntityNotFoundError('ServiceProvider', params.angebotId),
                 ),
             );
+        }
+
+        if ((spBodyParams.kategorie || serviceProvider.kategorie) === ServiceProviderKategorie.LMS) {
+            const org: Option<Organisation<true>> = await this.organisationRepository.findById(
+                spBodyParams.providedOnSchulstrukturknoten || serviceProvider.providedOnSchulstrukturknoten,
+            );
+            if (org?.typ !== OrganisationsTyp.LMS) {
+                throw new BadRequestException(
+                    'Could not update LMS service-provider because Organization is not of type LMS',
+                );
+            }
         }
 
         const updatedServiceProvider: ServiceProvider<true> = this.serviceProviderFactory.construct(

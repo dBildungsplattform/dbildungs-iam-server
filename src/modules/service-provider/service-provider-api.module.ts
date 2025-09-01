@@ -5,6 +5,7 @@ import { ServiceProviderModule } from './service-provider.module.js';
 import { KeycloakAdministrationModule } from '../keycloak-administration/keycloak-administration.module.js';
 import { StreamableFileFactory } from '../../shared/util/streamable-file.factory.js';
 import { PersonenKontextModule } from '../personenkontext/personenkontext.module.js';
+import { OrganisationModule } from '../organisation/organisation.module.js';
 
 @Module({
     imports: [
@@ -12,6 +13,7 @@ import { PersonenKontextModule } from '../personenkontext/personenkontext.module
         LoggerModule.register(ServiceProviderApiModule.name),
         PersonenKontextModule,
         KeycloakAdministrationModule,
+        OrganisationModule,
     ],
     providers: [StreamableFileFactory],
     controllers: [ProviderController],

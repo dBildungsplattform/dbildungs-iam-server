@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { ForbiddenException, HttpException, INestApplication } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpException, INestApplication } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Client } from 'openid-client';
@@ -23,11 +23,16 @@ import { CreateServiceProviderBodyParams } from './create-service-provider.body.
 import { ProviderController } from './provider.controller.js';
 import { ServiceProviderResponse } from './service-provider.response.js';
 import { UpdateServiceProviderBodyParams } from './update-service-provider.body.params.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { ServiceProviderKategorie } from '../domain/service-provider.enum.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
 
 describe('Provider Controller Test', () => {
     let app: INestApplication;
     let serviceProviderServiceMock: DeepMocked<ServiceProviderService>;
     let serviceProviderRepoMock: DeepMocked<ServiceProviderRepo>;
+    let organisationRepoMock: DeepMocked<OrganisationRepository>;
     let serviceProviderFactoryMock: DeepMocked<ServiceProviderFactory>;
     let providerController: ProviderController;
 
@@ -56,10 +61,13 @@ describe('Provider Controller Test', () => {
             .useValue(createMock<ServiceProviderRepo>())
             .overrideProvider(ServiceProviderFactory)
             .useValue(createMock<ServiceProviderFactory>())
+            .overrideProvider(OrganisationRepository)
+            .useValue(createMock<OrganisationRepository>())
             .compile();
 
         serviceProviderServiceMock = module.get<DeepMocked<ServiceProviderService>>(ServiceProviderService);
         serviceProviderRepoMock = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
+        organisationRepoMock = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
         serviceProviderFactoryMock = module.get<DeepMocked<ServiceProviderFactory>>(ServiceProviderFactory);
         providerController = module.get(ProviderController);
         app = module.createNestApplication();
@@ -143,7 +151,9 @@ describe('Provider Controller Test', () => {
         describe('when user has the RollenSystemRecht SERVICEPROVIDER_VERWALTEN', () => {
             it('should create a new service-provider', async () => {
                 const spId: string = faker.string.uuid();
-                const spNew: ServiceProvider<false> = DoFactory.createServiceProvider(false);
+                const spNew: ServiceProvider<false> = DoFactory.createServiceProvider(false, {
+                    kategorie: ServiceProviderKategorie.EMAIL,
+                });
                 const sp: ServiceProvider<true> = ServiceProvider.construct(
                     spId,
                     faker.date.past(),
@@ -227,13 +237,42 @@ describe('Provider Controller Test', () => {
                 ]);
             });
         });
+
+        describe('when service-provider is of kategorie LMS but organization is not', () => {
+            it('should throw BadRequestException', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                const spBodyParams: CreateServiceProviderBodyParams = {
+                    kategorie: ServiceProviderKategorie.LMS,
+                    providedOnSchulstrukturknoten: faker.string.uuid(),
+                } as CreateServiceProviderBodyParams;
+
+                const org: Organisation<true> = DoFactory.createOrganisation(true, {
+                    typ: OrganisationsTyp.KLASSE,
+                });
+                organisationRepoMock.findById.mockResolvedValueOnce(org);
+
+                await expect(
+                    providerController.createNewServiceProvider(spBodyParams, personPermissions),
+                ).rejects.toThrow(BadRequestException);
+                expect(serviceProviderFactoryMock.createNew).not.toHaveBeenCalled();
+                expect(serviceProviderRepoMock.save).not.toHaveBeenCalled();
+                expect(personPermissions.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
+                    RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
+                ]);
+            });
+        });
     });
 
     describe('updateServiceProvider', () => {
         describe('when user has the RollenSystemRecht SERVICEPROVIDER_VERWALTEN and service provider exists', () => {
             it('should update the service provider', async () => {
                 const spId: string = faker.string.uuid();
-                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, { id: spId });
+                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    id: spId,
+                    kategorie: ServiceProviderKategorie.EMAIL,
+                });
                 serviceProviderFactoryMock.construct.mockReturnValueOnce(sp);
                 serviceProviderRepoMock.findById.mockResolvedValueOnce(sp);
                 serviceProviderRepoMock.save.mockResolvedValueOnce(sp);
@@ -338,6 +377,40 @@ describe('Provider Controller Test', () => {
                 );
 
                 expect(serviceProviderRepoMock.findById).toHaveBeenCalledWith(spId);
+                expect(serviceProviderRepoMock.save).not.toHaveBeenCalled();
+                expect(personPermissions.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
+                    RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
+                ]);
+            });
+        });
+
+        describe('when service-provider is of kategorie LMS but organization is not', () => {
+            it('should throw BadRequestException', async () => {
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                const spBodyParams: UpdateServiceProviderBodyParams = {
+                    kategorie: ServiceProviderKategorie.LMS,
+                    providedOnSchulstrukturknoten: faker.string.uuid(),
+                } as UpdateServiceProviderBodyParams;
+
+                const existingProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    kategorie: ServiceProviderKategorie.LMS,
+                });
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(existingProvider);
+
+                const org: Organisation<true> = DoFactory.createOrganisation(true, {
+                    typ: OrganisationsTyp.KLASSE,
+                });
+                organisationRepoMock.findById.mockResolvedValueOnce(org);
+
+                await expect(
+                    providerController.updateServiceProvider(
+                        { angebotId: faker.string.uuid() },
+                        spBodyParams,
+                        personPermissions,
+                    ),
+                ).rejects.toThrow(BadRequestException);
                 expect(serviceProviderRepoMock.save).not.toHaveBeenCalled();
                 expect(personPermissions.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
                     RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
