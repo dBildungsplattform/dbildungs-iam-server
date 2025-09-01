@@ -1100,6 +1100,98 @@ describe('PersonRepository Integration', () => {
                 expect(usernameGeneratorService.generateUsername).toHaveBeenCalledWith(firstname, lastname);
             });
         });
+
+        describe('when updating personalnummer to duplicate value', () => {
+            it('should return DuplicatePersonalnummerError', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'testusername1',
+                });
+
+                // Create first person with personalnummer
+                const person1: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    personalnummer: '12345',
+                });
+                expect(person1).not.toBeInstanceOf(DomainError);
+                if (person1 instanceof DomainError) {
+                    throw person1;
+                }
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something',
+                });
+
+                const existingPerson1: Person<true> | DomainError = await sut.create(person1);
+                expect(existingPerson1).not.toBeInstanceOf(DomainError);
+                if (existingPerson1 instanceof DomainError) {
+                    return;
+                }
+
+                // Create second person without personalnummer
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'testusername2',
+                });
+
+                const person2: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
+                expect(person2).not.toBeInstanceOf(DomainError);
+                if (person2 instanceof DomainError) {
+                    throw person2;
+                }
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something2',
+                });
+
+                const existingPerson2: Person<true> | DomainError = await sut.create(person2);
+                expect(existingPerson2).not.toBeInstanceOf(DomainError);
+                if (existingPerson2 instanceof DomainError) {
+                    return;
+                }
+
+                // Try to update person2 with the same personalnummer as person1
+                const personToUpdate: Person<true> = Person.construct(
+                    existingPerson2.id,
+                    existingPerson2.createdAt,
+                    existingPerson2.updatedAt,
+                    existingPerson2.familienname,
+                    existingPerson2.vorname,
+                    existingPerson2.revision,
+                    existingPerson2.username,
+                    existingPerson2.keycloakUserId,
+                    existingPerson2.referrer,
+                    existingPerson2.stammorganisation,
+                    existingPerson2.initialenFamilienname,
+                    existingPerson2.initialenVorname,
+                    existingPerson2.rufname,
+                    existingPerson2.nameTitel,
+                    existingPerson2.nameAnrede,
+                    existingPerson2.namePraefix,
+                    existingPerson2.nameSuffix,
+                    existingPerson2.nameSortierindex,
+                    existingPerson2.geburtsdatum,
+                    existingPerson2.geburtsort,
+                    existingPerson2.geschlecht,
+                    existingPerson2.lokalisierung,
+                    existingPerson2.vertrauensstufe,
+                    existingPerson2.auskunftssperre,
+                    '12345',
+                );
+                const result: Person<true> | DomainError = await sut.update(personToUpdate);
+
+                expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+                if (result instanceof DuplicatePersonalnummerError) {
+                    expect(result.message).toContain('Personalnummer 12345 already exists');
+                }
+            });
+        });
     });
 
     describe('getEnabledEmailAddress', () => {
