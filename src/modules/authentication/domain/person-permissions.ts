@@ -1,4 +1,4 @@
-import { clone, uniq } from 'lodash-es';
+import { cloneDeep, uniq } from 'lodash-es';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -167,7 +167,7 @@ export class PersonPermissions implements IPersonPermissions {
     }
 
     public async getPersonenkontextIds(): Promise<Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[]> {
-        return clone(await this.getPersonenkontextsFields());
+        return cloneDeep(await this.getPersonenkontextsFields());
     }
 
     public async getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]> {

@@ -5,7 +5,7 @@ import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { FeatureFlagConfig } from '../../../shared/config/featureflag.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { VidisConfig } from '../../../shared/config/vidis.config.js';
-import { ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
+import { RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
@@ -41,7 +41,7 @@ export class ServiceProviderService {
     }
 
     public async getServiceProvidersByRolleIds(rolleIds: string[]): Promise<ServiceProvider<true>[]> {
-        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(rolleIds);
+        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(uniq(rolleIds));
         const serviceProviderIds: Array<string> = uniq(
             Array.from(rollen.values()).flatMap((rolle: Rolle<true>) => rolle.serviceProviderIds),
         );
@@ -55,9 +55,10 @@ export class ServiceProviderService {
     public async getServiceProvidersByOrganisationenAndRollen(
         ids: Array<{ organisationId: string; rolleId: string }>,
     ): Promise<ServiceProvider<true>[]> {
-        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(
+        const uniqueRollenIds: RolleID[] = uniq(
             ids.map((idTuple: { organisationId: string; rolleId: string }) => idTuple.rolleId),
         );
+        const rollen: Map<string, Rolle<true>> = await this.rolleRepo.findByIds(uniqueRollenIds);
         const serviceProviderIds: Set<ServiceProviderID> = new Set();
         for (const rolle of rollen.values()) {
             for (const id of rolle.serviceProviderIds) serviceProviderIds.add(id);
