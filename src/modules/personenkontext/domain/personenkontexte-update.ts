@@ -29,6 +29,7 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { LernHatKlasse } from '../specification/lern-hat-klasse.js';
 import { LernHatKeineKlasseError } from '../specification/error/lern-hat-keine-klasse.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -363,7 +364,7 @@ export class PersonenkontexteUpdate {
             if (person) {
                 person.personalnummer = this.personalnummer;
                 const saveResult: DomainError | Person<true> = await this.personRepo.save(person);
-                if (saveResult instanceof DomainError) {
+                if (saveResult instanceof DuplicatePersonalnummerError) {
                     return saveResult;
                 }
             }
