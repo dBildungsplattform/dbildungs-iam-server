@@ -5400,7 +5400,8 @@
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
             "HINWEISE_BEARBEITEN",
-            "LMS_VERWALTEN"
+            "LMS_VERWALTEN",
+            "SERVICEPROVIDER_VERWALTEN"
           ],
           "mappedType": "enum"
         }
