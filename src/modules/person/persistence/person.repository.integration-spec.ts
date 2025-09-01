@@ -773,7 +773,7 @@ describe('PersonRepository Integration', () => {
                 const person1: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                    personalnummer: '12345',
+                    personalnummer: '54321',
                 });
                 expect(person1).not.toBeInstanceOf(DomainError);
                 if (person1 instanceof DomainError) {
@@ -783,6 +783,11 @@ describe('PersonRepository Integration', () => {
                 kcUserServiceMock.create.mockResolvedValueOnce({
                     ok: true,
                     value: 'something',
+                });
+
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
                 });
 
                 const existingPerson1: Person<true> | DomainError = await sut.create(person1);
@@ -811,6 +816,11 @@ describe('PersonRepository Integration', () => {
                     value: 'something2',
                 });
 
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+
                 const existingPerson2: Person<true> | DomainError = await sut.create(person2);
                 expect(existingPerson2).not.toBeInstanceOf(DomainError);
                 if (existingPerson2 instanceof DomainError) {
@@ -829,13 +839,13 @@ describe('PersonRepository Integration', () => {
                 );
 
                 personToUpdate.keycloakUserId = existingPerson2.keycloakUserId;
-                personToUpdate.personalnummer = '12345'; // Duplicate personalnummer
+                personToUpdate.personalnummer = '54321'; // Duplicate personalnummer
 
                 const result: Person<true> | DomainError = await sut.update(personToUpdate);
 
                 expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
                 if (result instanceof DuplicatePersonalnummerError) {
-                    expect(result.message).toContain('Personalnummer 12345 already exists');
+                    expect(result.message).toContain('Personalnummer 54321 already exists');
                 }
             });
         });
