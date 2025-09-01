@@ -803,6 +803,7 @@ describe('PersonenkontexteUpdate', () => {
             dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
             dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
             dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
 
             const mapRollen: Map<string, Rolle<true>> = new Map();
             mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
