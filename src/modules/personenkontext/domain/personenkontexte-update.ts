@@ -323,7 +323,9 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
-    public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+    public async update(): Promise<
+        Personenkontext<true>[] | PersonenkontexteUpdateError | DuplicatePersonalnummerError
+    > {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
@@ -364,7 +366,7 @@ export class PersonenkontexteUpdate {
             if (person) {
                 person.personalnummer = this.personalnummer;
                 const saveResult: DomainError | Person<true> = await this.personRepo.save(person);
-                if (saveResult instanceof DuplicatePersonalnummerError) {
+                if (saveResult instanceof DomainError) {
                     return saveResult;
                 }
             }
