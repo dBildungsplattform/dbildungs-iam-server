@@ -28,8 +28,8 @@ import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rolle
 import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
-import { DomainError } from '../../../shared/error/index.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -793,7 +793,7 @@ describe('PersonenkontexteUpdate', () => {
             sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
                 personId,
                 lastModified,
-                3,
+                2,
                 [bodyParam1, bodyParam2],
                 personPermissionsMock,
                 'new-personalnummer',
@@ -802,8 +802,7 @@ describe('PersonenkontexteUpdate', () => {
             personRepoMock.findById.mockResolvedValueOnce(newPerson);
             dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
             dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
-            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1]);
+            dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
 
             const mapRollen: Map<string, Rolle<true>> = new Map();
             mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
