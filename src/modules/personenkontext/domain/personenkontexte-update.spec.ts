@@ -783,7 +783,7 @@ describe('PersonenkontexteUpdate', () => {
                 expect(updateError).toBeDefined();
             });
         });
-        it.only('should return DomainError when saving person with personalnummer fails', async () => {
+        it('should return DomainError when saving person with personalnummer fails', async () => {
             const newPerson: Person<true> = createMock<Person<true>>({
                 id: personId,
                 personalnummer: 'old-number',
