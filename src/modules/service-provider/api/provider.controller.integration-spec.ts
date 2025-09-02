@@ -5,18 +5,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request, { Response } from 'supertest';
 import { App } from 'supertest/types.js';
 
+import { createMock } from '@golevelup/ts-jest';
+import { Client } from 'openid-client';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DatabaseTestModule } from '../../../../test/utils/database-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
+import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
 import { DEFAULT_TIMEOUT_FOR_TESTCONTAINERS } from '../../../../test/utils/timeouts.js';
 import { GlobalValidationPipe } from '../../../shared/validation/global-validation.pipe.js';
+import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
 import { ServiceProviderApiModule } from '../service-provider-api.module.js';
-import { MapperTestModule } from '../../../../test/utils/mapper-test.module.js';
-import { createMock } from '@golevelup/ts-jest';
-import { OIDC_CLIENT } from '../../authentication/services/oidc-client.service.js';
-import { Client } from 'openid-client';
 
 describe('ServiceProvider API', () => {
     let app: INestApplication;

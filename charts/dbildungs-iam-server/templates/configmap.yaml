@@ -58,3 +58,4 @@ data:
   KAFKA_SESSION_TIMEOUT: '{{ .Values.kafka.sessionTimeout }}'
   KAFKA_HEARTBEAT_INTERVAL: '{{ .Values.kafka.heartbeatInterval }}'
   REDIS_HOST: '{{ .Values.redis.host }}'
+  FEATURE_FLAG_ROLLE_ERWEITERN: '{{ .Values.featureFlags.rolleErweitern }}'

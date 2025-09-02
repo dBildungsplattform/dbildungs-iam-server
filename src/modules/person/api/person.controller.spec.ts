@@ -6,10 +6,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DoFactory, MapperTestModule } from '../../../../test/utils/index.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { LdapClientService } from '../../../core/ldap/domain/ldap-client.service.js';
+import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import { EntityCouldNotBeDeleted, EntityNotFoundError, MismatchedRevisionError } from '../../../shared/error/index.js';
 import { KeycloakClientError } from '../../../shared/error/keycloak-client.error.js';
+import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
 import { PersonExternalSystemsSyncEvent } from '../../../shared/events/person-external-systems-sync.event.js';
 import { Paged, PagedResponse } from '../../../shared/paging/index.js';
 import { PersonID } from '../../../shared/types/index.js';
@@ -17,6 +19,7 @@ import { PersonPermissions } from '../../authentication/domain/person-permission
 import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailRepo } from '../../email/persistence/email.repo.js';
 import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { PersonenkontextQueryParams } from '../../personenkontext/api/param/personenkontext-query.params.js';
 import { PersonenkontextResponse } from '../../personenkontext/api/response/personenkontext.response.js';
 import { DBiamPersonenkontextService } from '../../personenkontext/domain/dbiam-personenkontext.service.js';
@@ -37,20 +40,17 @@ import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-t
 import { PersonApiMapper } from '../mapper/person-api.mapper.js';
 import { PersonRepository } from '../persistence/person.repository.js';
 import { PersonDeleteService } from '../person-deletion/person-delete.service.js';
+import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
 import { LockUserBodyParams } from './lock-user.body.params.js';
 import { PersonByIdParams } from './person-by-id.param.js';
 import { PersonEmailResponse } from './person-email-response.js';
+import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
+import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 import { PersonMetadataBodyParams } from './person-metadata.body.param.js';
 import { PersonController } from './person.controller.js';
 import { PersonenQueryParams } from './personen-query.param.js';
 import { PersonendatensatzResponse } from './personendatensatz.response.js';
 import { UpdatePersonBodyParams } from './update-person.body.params.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { LdapSyncEventHandler } from '../../../core/ldap/domain/ldap-sync-event-handler.js';
-import { KafkaPersonExternalSystemsSyncEvent } from '../../../shared/events/kafka-person-external-systems-sync.event.js';
-import { PersonLandesbediensteterSearchService } from '../person-landesbedienstete-search/person-landesbediensteter-search.service.js';
-import { PersonLandesbediensteterSearchQueryParams } from './person-landesbediensteter-search-query.param.js';
-import { PersonLandesbediensteterSearchResponse } from './person-landesbediensteter-search.response.js';
 
 describe('PersonController', () => {
     let module: TestingModule;

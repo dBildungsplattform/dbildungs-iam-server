@@ -258,3 +258,4 @@ import:
 
 featureFlags:
   befristungBearbeiten: true
+  rolleErweitern: true
