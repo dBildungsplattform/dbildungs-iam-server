@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { PersonPermissions } from './person-permissions.js';
-import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { Person } from '../../person/domain/person.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { Person } from '../../person/domain/person.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { DBiamPersonenkontextRepo } from '../../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { KeycloakUserNotFoundError } from './keycloak-user-not-found.error.js';
+import { PersonPermissions } from './person-permissions.js';
 
 @Injectable()
 export class PersonPermissionsRepo {
     public constructor(
-        private personRepo: PersonRepository,
-        private personenkontextRepo: DBiamPersonenkontextRepo,
-        private organisationRepo: OrganisationRepository,
-        private rollenRepo: RolleRepo,
+        private readonly personRepo: PersonRepository,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepo: OrganisationRepository,
+        private readonly rollenRepo: RolleRepo,
     ) {}
 
     public async loadPersonPermissions(keycloakUserId: string): Promise<PersonPermissions> {

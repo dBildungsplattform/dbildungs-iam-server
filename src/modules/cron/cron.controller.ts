@@ -1,45 +1,49 @@
 import { Controller, Delete, HttpCode, HttpStatus, Put } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
-    ApiCreatedResponse,
     ApiBadRequestResponse,
-    ApiUnauthorizedResponse,
-    ApiForbiddenResponse,
-    ApiNotFoundResponse,
-    ApiOkResponse,
-    ApiInternalServerErrorResponse,
     ApiBearerAuth,
+    ApiCreatedResponse,
+    ApiForbiddenResponse,
+    ApiInternalServerErrorResponse,
+    ApiNotFoundResponse,
     ApiOAuth2,
+    ApiOkResponse,
     ApiTags,
+    ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { PersonRepository } from '../person/persistence/person.repository.js';
-import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
+import { ClassLogger } from '../../core/logging/class-logger.js';
+import { CronConfig } from '../../shared/config/cron.config.js';
 import { DomainError } from '../../shared/error/domain.error.js';
-import { UserLock } from '../keycloak-administration/domain/user-lock.js';
-import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
-import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { PersonPermissions } from '../authentication/domain/person-permissions.js';
-import { Permissions } from '../authentication/api/permissions.decorator.js';
-import { DbiamPersonenkontextBodyParams } from '../personenkontext/api/param/dbiam-personenkontext.body.params.js';
-import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
-import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
-import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
-import { PersonID } from '../../shared/types/aggregate-ids.types.js';
-import { UserLockRepository } from '../keycloak-administration/repository/user-lock.repository.js';
-import { Person } from '../person/domain/person.js';
 import { EntityNotFoundError } from '../../shared/error/entity-not-found.error.js';
-import { PersonLockOccasion } from '../person/domain/person.enums.js';
-import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
 import { MissingPermissionsError } from '../../shared/error/missing-permissions.error.js';
 import { SchulConnexErrorMapper } from '../../shared/error/schul-connex-error.mapper.js';
-import { ClassLogger } from '../../core/logging/class-logger.js';
-import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
+import { PersonID } from '../../shared/types/aggregate-ids.types.js';
+import { Permissions } from '../authentication/api/permissions.decorator.js';
+import { PersonPermissions } from '../authentication/domain/person-permissions.js';
 import { EmailAddressDeletionService } from '../email/email-address-deletion/email-address-deletion.service.js';
+import { KeycloakUserService } from '../keycloak-administration/domain/keycloak-user.service.js';
+import { UserLock } from '../keycloak-administration/domain/user-lock.js';
+import { UserLockRepository } from '../keycloak-administration/repository/user-lock.repository.js';
+import { PersonLockOccasion } from '../person/domain/person.enums.js';
+import { Person } from '../person/domain/person.js';
+import { PersonRepository, PersonWithoutOrgDeleteListResult } from '../person/persistence/person.repository.js';
+import { PersonDeleteService } from '../person/person-deletion/person-delete.service.js';
+import { DbiamPersonenkontextBodyParams } from '../personenkontext/api/param/dbiam-personenkontext.body.params.js';
+import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/personenkontexte-update.error.js';
+import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
+import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
+import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
+import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 
 @Controller({ path: 'cron' })
 @ApiBearerAuth()
 @ApiOAuth2(['openid'])
 @ApiTags('cron')
 export class CronController {
+    private readonly config: CronConfig;
+
     public constructor(
         private readonly keyCloakUserService: KeycloakUserService,
         private readonly personRepository: PersonRepository,
@@ -50,7 +54,10 @@ export class CronController {
         private readonly emailAddressDeletionService: EmailAddressDeletionService,
         private readonly logger: ClassLogger,
         private readonly serviceProviderService: ServiceProviderService,
-    ) {}
+        configService: ConfigService,
+    ) {
+        this.config = configService.getOrThrow<CronConfig>('CRON');
+    }
 
     @Put('kopers-lock')
     @HttpCode(HttpStatus.OK)
@@ -278,10 +285,17 @@ export class CronController {
                     ),
                 );
             }
-            const personIds: string[] = await this.personRepository.getPersonWithoutOrgDeleteList();
-            if (personIds.length === 0) {
+
+            const { ids: personIds, total }: PersonWithoutOrgDeleteListResult =
+                await this.personRepository.getPersonWithoutOrgDeleteList(this.config.PERSON_WITHOUT_ORG_LIMIT);
+            const toDeleteCount: number = personIds.length;
+            if (toDeleteCount === 0) {
                 return true;
             }
+
+            this.logger.info(
+                `Es wurden ${total} Benutzer gefunden, die seit 84 Tagen oder mehr ohne Schulzuordnung sind. Zur vollständigen Bereinigung sind ${Math.ceil(total / this.config.PERSON_WITHOUT_ORG_LIMIT)} Durchläufe notwendig.`,
+            );
 
             const results: PromiseSettledResult<Result<void, DomainError>>[] = await Promise.allSettled(
                 personIds.map(async (id: string) => {
@@ -307,10 +321,12 @@ export class CronController {
             );
 
             if (allSuccessful) {
-                this.logger.info(`System hat alle Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen gelöscht.`);
+                this.logger.info(
+                    `System hat ${toDeleteCount} Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen gelöscht.`,
+                );
             } else {
                 this.logger.error(
-                    `System konnte nicht alle Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen löschen.`,
+                    `System konnte nicht alle ${toDeleteCount} Benutzer mit einer fehlenden Schulzuordnung nach 84 Tagen löschen.`,
                 );
             }
 

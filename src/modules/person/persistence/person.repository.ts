@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import {
     Cursor,
     EntityManager,
@@ -11,8 +10,13 @@ import {
 } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'node:crypto';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
 import { DataConfig } from '../../../shared/config/data.config.js';
 import { ServerConfig } from '../../../shared/config/server.config.js';
+import { SystemConfig } from '../../../shared/config/system.config.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import {
     DomainError,
     EntityCouldNotBeCreated,
@@ -20,47 +24,43 @@ import {
     EntityNotFoundError,
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
-import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
-import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { Person } from '../domain/person.js';
-import { PersonEntity } from './person.entity.js';
-import { PersonScope } from './person.scope.js';
-import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
-import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
-import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
-import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
-import { UsernameGeneratorService } from '../domain/username-generator.service.js';
-import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
-import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
-import { NameValidator } from '../../../shared/validation/name-validator.js';
-import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
-import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
-import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
-import { SystemConfig } from '../../../shared/config/system.config.js';
-import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
-import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
-import { mapDefinedObjectProperties } from '../../../shared/util/object-utils.js';
-import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
+import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
-import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { PersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/person-deleted-after-deadline-exceeded.event.js';
-import { KafkaPersonDeletedAfterDeadlineExceededEvent } from '../../../shared/events/kafka-person-deleted-after-deadline-exceeded.event.js';
+import { PersonDeletedEvent } from '../../../shared/events/person-deleted.event.js';
+import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { PersonenkontextUpdatedEvent } from '../../../shared/events/personenkontext-updated.event.js';
+import { ScopeOperator, ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { PersonID, PersonReferrer, RolleID } from '../../../shared/types/aggregate-ids.types.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
+import { toDIN91379SearchForm } from '../../../shared/util/din-91379-validation.js';
+import { mapDefinedObjectProperties } from '../../../shared/util/object-utils.js';
+import { NameValidator } from '../../../shared/validation/name-validator.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
 import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
 import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/email.repo.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
+import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
+import { KOPERS_DEADLINE_IN_DAYS, NO_KONTEXTE_DEADLINE_IN_DAYS } from '../domain/person-time-limit.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
+import { Person } from '../domain/person.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
+import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { PersonEntity } from './person.entity.js';
+import { PersonScope } from './person.scope.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
@@ -226,6 +226,11 @@ export type PersonenQueryParams = {
     sortField?: SortFieldPerson;
     sortOrder?: ScopeOrder;
     suchFilter?: string;
+};
+
+export type PersonWithoutOrgDeleteListResult = {
+    ids: string[];
+    total: number;
 };
 
 @Injectable()
@@ -1146,7 +1151,7 @@ export class PersonRepository {
         return personEntities.map((person: PersonEntity) => [person.id, person.keycloakUserId]);
     }
 
-    public async getPersonWithoutOrgDeleteList(): Promise<string[]> {
+    public async getPersonWithoutOrgDeleteList(limit?: number | undefined): Promise<PersonWithoutOrgDeleteListResult> {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - NO_KONTEXTE_DEADLINE_IN_DAYS);
 
@@ -1159,8 +1164,10 @@ export class PersonRepository {
             },
         };
 
-        const personEntities: PersonEntity[] = await this.em.find(PersonEntity, filters);
-        return personEntities.map((person: PersonEntity) => person.id);
+        const [personEntities, total]: [PersonEntity[], number] = await this.em.findAndCount(PersonEntity, filters, {
+            limit,
+        });
+        return { ids: personEntities.map((person: PersonEntity) => person.id), total };
     }
 
     public async findOrganisationAdminsByOrganisationId(organisation_id: string): Promise<string[]> {

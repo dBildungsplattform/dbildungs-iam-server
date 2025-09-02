@@ -1,8 +1,8 @@
-import 'reflect-metadata'; // some decorators use reflect-metadata in the background
 import fs from 'fs';
-import { JsonConfig, loadConfigFiles } from './index.js';
-import { DeepPartial } from '../../../test/utils/index.js';
 import { PathLike } from 'node:fs';
+import 'reflect-metadata'; // some decorators use reflect-metadata in the background
+import { DeepPartial } from '../../../test/utils/index.js';
+import { JsonConfig, loadConfigFiles } from './index.js';
 
 describe('configloader', () => {
     describe('loadConfigFiles', () => {
@@ -93,6 +93,7 @@ describe('configloader', () => {
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
+                    USER_PASSWORD_DEFAULT: 'password',
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -124,6 +125,9 @@ describe('configloader', () => {
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                },
+                CRON: {
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
                 },
             };
 
@@ -264,6 +268,7 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    USER_PASSWORD_DEFAULT: 'password',
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -297,6 +302,9 @@ describe('configloader', () => {
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                },
+                CRON: {
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
                 },
             };
 
