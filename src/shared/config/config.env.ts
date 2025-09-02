@@ -1,20 +1,21 @@
+import { CronConfig } from './cron.config.js';
 import { DbConfig } from './db.config.js';
-import { KeycloakConfig } from './keycloak.config.js';
-import { FrontendConfig } from './frontend.config.js';
-import { HostConfig } from './host.config.js';
-import { ItsLearningConfig } from './itslearning.config.js';
-import { LdapConfig } from './ldap.config.js';
-import { PrivacyIdeaConfig } from './privacyidea.config.js';
-import { SystemConfig } from './system.config.js';
-import { OxConfig } from './ox.config.js';
-import { RedisConfig } from './redis.config.js';
 import { FeatureFlagConfig } from './featureflag.config.js';
+import { FrontendConfig } from './frontend.config.js';
+import { HeaderApiKeyConfig } from './headerapikey.config.js';
+import { HostConfig } from './host.config.js';
+import { ImportConfig } from './import.config.js';
+import { ItsLearningConfig } from './itslearning.config.js';
+import { KafkaConfig } from './kafka.config.js';
+import { KeycloakConfig } from './keycloak.config.js';
+import { LdapConfig } from './ldap.config.js';
+import { OxConfig } from './ox.config.js';
+import { PortalConfig } from './portal.config.js';
+import { PrivacyIdeaConfig } from './privacyidea.config.js';
+import { RedisConfig } from './redis.config.js';
+import { SystemConfig } from './system.config.js';
 import { envToOptionalBoolean, envToOptionalInteger, envToStringArray } from './utils.js';
 import { VidisConfig } from './vidis.config.js';
-import { ImportConfig } from './import.config.js';
-import { HeaderApiKeyConfig } from './headerapikey.config.js';
-import { KafkaConfig } from './kafka.config.js';
-import { PortalConfig } from './portal.config.js';
 
 export type Config = {
     DB: Partial<DbConfig>;
@@ -33,6 +34,7 @@ export type Config = {
     HEADER_API_KEY: Partial<HeaderApiKeyConfig>;
     KAFKA: Partial<KafkaConfig>;
     PORTAL: Partial<PortalConfig>;
+    CRON: Partial<CronConfig>;
 };
 
 export default (): Config => ({
@@ -143,5 +145,8 @@ export default (): Config => ({
     },
     PORTAL: {
         LIMITED_ROLLENART_ALLOWLIST: envToStringArray('PORTAL_LIMITED_ROLLENART_ALLOWLIST'),
+    },
+    CRON: {
+        PERSON_WITHOUT_ORG_LIMIT: envToOptionalInteger('CRON_PERSON_WITHOUT_ORG_LIMIT'),
     },
 });
