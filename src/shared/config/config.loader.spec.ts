@@ -1,9 +1,9 @@
-import 'reflect-metadata'; // some decorators use reflect-metadata in the background
 import fs from 'fs';
 import { JsonConfig, loadConfigFiles, loadEmailAppConfigFiles } from './index.js';
 import { DeepPartial } from '../../../test/utils/index.js';
 import { PathLike } from 'node:fs';
 import { EmailAppConfig } from './email-app.config.js';
+import 'reflect-metadata'; // some decorators use reflect-metadata in the background
 
 describe('configloader', () => {
     describe('loadConfigFiles', () => {
@@ -126,6 +126,9 @@ describe('configloader', () => {
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                },
+                CRON: {
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
                 },
             };
 
@@ -300,6 +303,9 @@ describe('configloader', () => {
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                },
+                CRON: {
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
                 },
             };
 
