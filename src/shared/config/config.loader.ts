@@ -55,7 +55,7 @@ export function loadConfigFiles(): JsonConfig {
 }
 
 export function loadEmailAppConfigFiles(): EmailAppConfig {
-    const secretFilePath: string = './config/secrets.json';
+    const secretFilePath: string = './config/email-secrets.json';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-assignment
     const json: any = parseFileToJSON('./config/email-config.json');

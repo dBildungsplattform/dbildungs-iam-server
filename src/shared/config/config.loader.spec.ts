@@ -365,43 +365,12 @@ describe('configloader', () => {
                 HOST: {
                     PORT: 8080,
                 },
-                KEYCLOAK: {
-                    BASE_URL: 'localhost:8080',
-                    EXTERNAL_BASE_URL: 'localhost:8080',
-                    ADMIN_CLIENT_ID: 'admin-cli',
-                    ADMIN_REALM_NAME: 'master',
-                    REALM_NAME: 'schulportal',
-                    CLIENT_ID: 'schulportal',
-                    TEST_CLIENT_ID: 'schulportal-test',
-                    SERVICE_CLIENT_ID: 'spsh-service',
-                },
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
             };
 
-            const secrets: DeepPartial<JsonConfig> = {
-                DB: { SECRET: 'SuperSecretSecret' },
-                KEYCLOAK: {
-                    ADMIN_SECRET: 'AdminClientSecret',
-                    CLIENT_SECRET: 'ClientSecret',
-                    SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
-                },
-                LDAP: { ADMIN_PASSWORD: 'password' },
-                FRONTEND: { SESSION_SECRET: 'SessionSecret' },
-                FEATUREFLAG: {},
-                REDIS: { PASSWORD: 'password' },
-                ITSLEARNING: {
-                    PASSWORD: 'password',
-                },
-                OX: {
-                    PASSWORD: 'password',
-                },
-                KAFKA: {
-                    USERNAME: 'username',
-                    PASSWORD: 'password',
-                },
-            };
+            const secrets: DeepPartial<EmailAppConfig> = {};
 
             beforeEach(() => {
                 readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
@@ -429,19 +398,6 @@ describe('configloader', () => {
                 HOST: {
                     PORT: 8080,
                 },
-                KEYCLOAK: {
-                    BASE_URL: 'localhost:8080',
-                    EXTERNAL_BASE_URL: 'localhost:8080',
-                    ADMIN_CLIENT_ID: 'admin-cli',
-                    ADMIN_REALM_NAME: 'master',
-                    REALM_NAME: 'schulportal',
-                    CLIENT_ID: 'schulportal',
-                    ADMIN_SECRET: 'geheimer Admin',
-                    CLIENT_SECRET: 'geheimer client',
-                    TEST_CLIENT_ID: 'schulportal-test',
-                    SERVICE_CLIENT_ID: 'spsh-service',
-                    SERVICE_CLIENT_PRIVATE_JWKS: '{"keys":[]}',
-                },
                 LOGGING: {
                     DEFAULT_LOG_LEVEL: 'debug',
                 },
@@ -451,7 +407,7 @@ describe('configloader', () => {
                 const existsSyncSpy: jest.SpyInstance = jest
                     .spyOn(fs, 'existsSync')
                     .mockImplementation((name: PathLike): boolean => {
-                        if (name == './config/secrets.json') {
+                        if (name == './config/email-secrets.json') {
                             return false;
                         }
                         fail(`Unknown file ${name.toString()}`);
@@ -468,14 +424,6 @@ describe('configloader', () => {
             const config: DeepPartial<EmailAppConfig> = {
                 HOST: {
                     PORT: 1,
-                },
-                KEYCLOAK: {
-                    BASE_URL: '',
-                    ADMIN_CLIENT_ID: '',
-                    ADMIN_REALM_NAME: '',
-                    REALM_NAME: '',
-                    CLIENT_ID: '',
-                    TEST_CLIENT_ID: '',
                 },
             };
 
