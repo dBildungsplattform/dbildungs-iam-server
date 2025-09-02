@@ -827,7 +827,7 @@ describe('PersonRepository Integration', () => {
                 const existingPerson2: Person<true> | DomainError = await sut.create(person2);
                 expect(existingPerson2).not.toBeInstanceOf(DomainError);
                 if (existingPerson2 instanceof DomainError) {
-                    throw existingPerson1;
+                    throw existingPerson2;
                 }
 
                 // Try to update person2 with the same personalnummer as person1
