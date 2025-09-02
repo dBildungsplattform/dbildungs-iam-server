@@ -19,6 +19,7 @@ import { StreamableFileFactory } from '../../../shared/util/streamable-file.fact
 import { AuthenticationExceptionFilter } from '../../authentication/api/authentication-exception-filter.js';
 import { Permissions } from '../../authentication/api/permissions.decorator.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { ServiceProvider } from '../domain/service-provider.js';
 import { ServiceProviderService } from '../domain/service-provider.service.js';
 import { ServiceProviderRepo } from '../repo/service-provider.repo.js';
@@ -67,10 +68,10 @@ export class ProviderController {
     public async getAvailableServiceProviders(
         @Permissions() permissions: PersonPermissions,
     ): Promise<ServiceProviderResponse[]> {
-        const roleIds: string[] = await permissions.getRoleIds();
+        const personenkontexteIds: Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[] =
+            await permissions.getPersonenkontextIds();
         const serviceProviders: ServiceProvider<true>[] =
-            await this.serviceProviderService.getServiceProvidersByRolleIds(roleIds);
-
+            await this.serviceProviderService.getServiceProvidersByOrganisationenAndRollen(personenkontexteIds);
         return serviceProviders.map(
             (serviceProvider: ServiceProvider<true>) => new ServiceProviderResponse(serviceProvider),
         );
