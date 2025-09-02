@@ -770,54 +770,42 @@ describe('PersonenkontexteUpdate', () => {
                     'new-personalnummer',
                 );
 
-                personRepoMock.findById.mockResolvedValueOnce(newPerson);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk1);
-                dBiamPersonenkontextRepoMock.find.mockResolvedValueOnce(pk2);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
-                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk1, pk2]);
+                personRepoMock.findById.mockResolvedValue(newPerson);
 
-                const mapRollen: Map<string, Rolle<true>> = new Map();
-                mapRollen.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
-                organisationRepoMock.findByIds.mockResolvedValueOnce(new Map());
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([pk1, pk2]);
 
-                const mapRollenExisting: Map<string, Rolle<true>> = new Map();
-                mapRollenExisting.set(faker.string.uuid(), DoFactory.createRolle(true, { rollenart: RollenArt.LEHR }));
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenExisting);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollen);
+                rolleRepoMock.findByIds.mockImplementation(async (ids: string[]): Promise<Map<string, Rolle<true>>> => {
+                    const map: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+                    for (const id of ids) {
+                        if (id === pk1.rolleId || id === pk2.rolleId) {
+                            map.set(
+                                id,
+                                DoFactory.createRolle(true, {
+                                    id,
+                                    rollenart: RollenArt.LEHR,
+                                    merkmale: [],
+                                }),
+                            );
+                        } else {
+                            map.set(id, DoFactory.createRolle(true, { id, rollenart: RollenArt.LEHR }));
+                        }
+                    }
+                    return Promise.resolve(map);
+                });
 
-                const mapRollenBefristung: Map<string, Rolle<true>> = new Map();
-                mapRollenBefristung.set(
-                    pk1.rolleId,
-                    DoFactory.createRolle(true, {
-                        id: pk1.rolleId,
-                        rollenart: RollenArt.LEHR,
-                        merkmale: [],
-                    }),
-                );
-                mapRollenBefristung.set(
-                    pk2.rolleId,
-                    DoFactory.createRolle(true, {
-                        id: pk2.rolleId,
-                        rollenart: RollenArt.LEHR,
-                        merkmale: [],
-                    }),
-                );
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenBefristung);
-                rolleRepoMock.findByIds.mockResolvedValueOnce(mapRollenBefristung);
-
-                personRepoMock.findById.mockResolvedValueOnce(newPerson);
+                organisationRepoMock.findByIds.mockResolvedValue(new Map());
 
                 const saveError: DuplicatePersonalnummerError = new DuplicatePersonalnummerError(
                     'PERSONALNUMMER_SAVE_ERROR',
                 );
-                personRepoMock.save.mockResolvedValueOnce(saveError);
+                personRepoMock.save.mockResolvedValue(saveError);
 
                 const updateResult: Personenkontext<true>[] | DuplicatePersonalnummerError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(DuplicatePersonalnummerError);
             });
+
             it('Should not throw any PersonenkontextBefristungRequiredError', async () => {
                 const newPerson: Person<true> = createMock<Person<true>>();
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);

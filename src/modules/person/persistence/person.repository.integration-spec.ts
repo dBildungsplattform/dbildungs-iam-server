@@ -769,11 +769,13 @@ describe('PersonRepository Integration', () => {
                     value: 'testusername1',
                 });
 
+                const personalnummer: string = '54321';
+
                 // Create first person with personalnummer
                 const person1: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
                     familienname: faker.person.lastName(),
                     vorname: faker.person.firstName(),
-                    personalnummer: '54321',
+                    personalnummer: personalnummer,
                 });
                 expect(person1).not.toBeInstanceOf(DomainError);
                 if (person1 instanceof DomainError) {
@@ -793,7 +795,7 @@ describe('PersonRepository Integration', () => {
                 const existingPerson1: Person<true> | DomainError = await sut.create(person1);
                 expect(existingPerson1).not.toBeInstanceOf(DomainError);
                 if (existingPerson1 instanceof DomainError) {
-                    return;
+                    throw existingPerson1;
                 }
 
                 // Create second person without personalnummer
@@ -824,7 +826,7 @@ describe('PersonRepository Integration', () => {
                 const existingPerson2: Person<true> | DomainError = await sut.create(person2);
                 expect(existingPerson2).not.toBeInstanceOf(DomainError);
                 if (existingPerson2 instanceof DomainError) {
-                    return;
+                    throw existingPerson1;
                 }
 
                 // Try to update person2 with the same personalnummer as person1
@@ -839,7 +841,7 @@ describe('PersonRepository Integration', () => {
                 );
 
                 personToUpdate.keycloakUserId = existingPerson2.keycloakUserId;
-                personToUpdate.personalnummer = '54321'; // Duplicate personalnummer
+                personToUpdate.personalnummer = personalnummer; // Duplicate personalnummer
 
                 const result: Person<true> | DomainError = await sut.update(personToUpdate);
 
