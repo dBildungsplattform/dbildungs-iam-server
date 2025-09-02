@@ -84,7 +84,8 @@
         "CONTEXT_NAME": "contextname",
         "USERNAME": "username",
         "PASSWORD": "password",
-        "NUMBER_OF_RETRIES": 3
+        "NUMBER_OF_RETRIES": 3,
+        "USER_PASSWORD_DEFAULT": "placeholder"
     },
     "EMAIL": {
         "NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS": 180
@@ -121,7 +122,7 @@
     "FEATUREFLAG": {
         "FEATURE_FLAG_ROLLE_BEARBEITEN": false,
         "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": true,
-        "FEATURE_FLAG_ROLLE_ERWEITERN": false
+        "FEATURE_FLAG_ROLLE_ERWEITERN": true
     },
     "KAFKA": {
         "BROKER": "localhost:9094",

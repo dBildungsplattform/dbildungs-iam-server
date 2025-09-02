@@ -265,4 +265,97 @@ describe('RollenerweiterungRepo', () => {
             }
         });
     });
+
+    describe('findManyByOrganisationAndRolle', () => {
+        function makeN<T>(fn: () => T, n: number): Array<T> {
+            return Array.from({ length: n }, fn);
+        }
+        let organisations: Array<Organisation<true>>;
+        let rollen: Array<Rolle<true>>;
+        let serviceProviders: Array<ServiceProvider<true>>;
+        let permissionMock: DeepMocked<PersonPermissions>;
+
+        beforeEach(async () => {
+            organisations = await Promise.all(
+                makeN(() => organisationRepo.save(DoFactory.createOrganisation(false)), 3),
+            );
+            rollen = (await Promise.all(makeN(() => rolleRepo.save(DoFactory.createRolle(false)), 3))).filter(
+                (rolle: Rolle<true> | DomainError): rolle is Rolle<true> => {
+                    if (rolle instanceof Rolle) return true;
+                    else throw rolle;
+                },
+            );
+            serviceProviders = await Promise.all(
+                makeN(
+                    () =>
+                        serviceProviderRepo.save(
+                            DoFactory.createServiceProvider(false, {
+                                merkmale: [ServiceProviderMerkmal.VERFUEGBAR_FUER_ROLLENERWEITERUNG],
+                            }),
+                        ),
+                    3,
+                ),
+            );
+            permissionMock = createMock<PersonPermissions>();
+            permissionMock.getOrgIdsWithSystemrecht.mockResolvedValue({ all: true });
+            const unpersistedRollenerweiterungen: Array<Rollenerweiterung<false>> = [];
+            for (const organisation of organisations) {
+                for (const rolle of rollen) {
+                    for (const serviceProvider of serviceProviders) {
+                        unpersistedRollenerweiterungen.push(
+                            factory.createNew(organisation.id, rolle.id, serviceProvider.id),
+                        );
+                    }
+                }
+            }
+            const results: Array<Result<Rollenerweiterung<true>, DomainError>> = await Promise.all(
+                unpersistedRollenerweiterungen.map((re: Rollenerweiterung<false>) =>
+                    sut.createAuthorized(re, permissionMock),
+                ),
+            );
+            for (const result of results) {
+                if (!result.ok) throw result.error;
+            }
+        });
+
+        test('should return empty array for empty query', async () => {
+            const query: Array<Pick<Rollenerweiterung<boolean>, 'organisationId' | 'rolleId'>> = [];
+            const result: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationAndRolle(query);
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(0);
+        });
+
+        test('should return all rollenerweiterungen for given organisation and rolle', async () => {
+            const query: Array<Pick<Rollenerweiterung<boolean>, 'organisationId' | 'rolleId'>> = [
+                { organisationId: organisations[0]!.id, rolleId: rollen[0]!.id },
+            ];
+            const result: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationAndRolle(query);
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(3);
+            for (const erweiterung of result) {
+                expect(erweiterung).toEqual(expect.objectContaining(query[0]!));
+            }
+        });
+
+        test('should return all rollenerweiterungen for multiple given organisations and rollen', async () => {
+            type QueryItem = Pick<Rollenerweiterung<boolean>, 'organisationId' | 'rolleId'>;
+            const query: Array<QueryItem> = [
+                { organisationId: organisations[0]!.id, rolleId: rollen[0]!.id },
+                { organisationId: organisations[1]!.id, rolleId: rollen[1]!.id },
+                { organisationId: organisations[2]!.id, rolleId: rollen[2]!.id },
+            ];
+            const result: Array<Rollenerweiterung<true>> = await sut.findManyByOrganisationAndRolle(query);
+            expect(result).toBeInstanceOf(Array);
+            expect(result).toHaveLength(9);
+            query.forEach((queryItem: QueryItem) => {
+                expect(
+                    result.filter(
+                        (rollenerweiterung: Rollenerweiterung<true>) =>
+                            rollenerweiterung.organisationId === queryItem.organisationId &&
+                            rollenerweiterung.rolleId === queryItem.rolleId,
+                    ),
+                ).toHaveLength(3);
+            });
+        });
+    });
 });

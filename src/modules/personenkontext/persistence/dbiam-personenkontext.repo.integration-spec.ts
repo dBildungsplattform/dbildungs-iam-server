@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { createMock } from '@golevelup/ts-jest';
 import { EntityManager, MikroORM } from '@mikro-orm/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
@@ -8,7 +9,38 @@ import {
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { Personenkontext, mapAggregateToPartial } from '../domain/personenkontext.js';
+import {
+    createAndPersistOrganisation,
+    createAndPersistRootOrganisation,
+} from '../../../../test/utils/organisation-test-helper.js';
+import { DomainError } from '../../../shared/error/domain.error.js';
+import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
+import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
+import { OrganisationID, PersonenkontextID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
+import { generatePassword } from '../../../shared/util/password-generator.js';
+import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { KeycloakUserService } from '../../keycloak-administration/index.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationModule } from '../../organisation/organisation.module.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonFactory } from '../../person/domain/person.factory.js';
+import { Person } from '../../person/domain/person.js';
+import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
+import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
+import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
+import { PersonRepository } from '../../person/persistence/person.repository.js';
+import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RolleModule } from '../../rolle/rolle.module.js';
+import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
+import { mapAggregateToPartial, Personenkontext } from '../domain/personenkontext.js';
 import {
     DBiamPersonenkontextRepo,
     ExternalPkData,
@@ -16,39 +48,7 @@ import {
     RollenCount,
 } from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
-import { UsernameGeneratorService } from '../../person/domain/username-generator.service.js';
-import { PersonFactory } from '../../person/domain/person.factory.js';
-import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { Person } from '../../person/domain/person.js';
-import { DomainError } from '../../../shared/error/domain.error.js';
-import { PersonenkontextFactory } from '../domain/personenkontext.factory.js';
-import { RolleModule } from '../../rolle/rolle.module.js';
-import { OrganisationModule } from '../../organisation/organisation.module.js';
-import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
-import { OrganisationID, PersonenkontextID, PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { createMock } from '@golevelup/ts-jest';
-import { KeycloakUserService } from '../../keycloak-administration/index.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import {
-    createAndPersistOrganisation,
-    createAndPersistRootOrganisation,
-} from '../../../../test/utils/organisation-test-helper.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { generatePassword } from '../../../shared/util/password-generator.js';
-import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
-import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
-import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;

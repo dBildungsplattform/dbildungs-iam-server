@@ -105,7 +105,7 @@
     "FEATUREFLAG": {
         "FEATURE_FLAG_ROLLE_BEARBEITEN": false,
         "FEATURE_FLAG_BEFRISTUNG_BEARBEITEN": false,
-        "FEATURE_FLAG_ROLLE_ERWEITERN": false
+        "FEATURE_FLAG_ROLLE_ERWEITERN": true
     },
     "KAFKA": {
         "BROKER": "localhost:9094",
