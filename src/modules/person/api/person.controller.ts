@@ -408,6 +408,7 @@ export class PersonController {
             params.personId,
             permissions,
         );
+
         if (!personResult.ok) {
             const error: HttpException = SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
                 SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(

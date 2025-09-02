@@ -731,7 +731,7 @@ export class PersonRepository {
         const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
 
         // Check for duplicate personalnummer if it's being updated
-        if (person.personalnummer) {
+        if (person.personalnummer && person.personalnummer !== personEntity.personalnummer) {
             const existingPerson: Loaded<PersonEntity> | null = await this.em.findOne(PersonEntity, {
                 personalnummer: person.personalnummer,
             });
