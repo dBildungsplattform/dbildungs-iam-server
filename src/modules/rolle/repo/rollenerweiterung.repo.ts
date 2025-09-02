@@ -1,4 +1,4 @@
-import { EntityManager, RequiredEntityData } from '@mikro-orm/core';
+import { EntityManager, Loaded, RequiredEntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { DomainError } from '../../../shared/error/domain.error.js';
 import { EntityNotFoundError } from '../../../shared/error/entity-not-found.error.js';
@@ -104,5 +104,15 @@ export class RollenerweiterungRepo {
             return undefined;
         }
         return new MissingPermissionsError(`Missing systemrecht ${RollenSystemRecht.ROLLEN_ERWEITERN}.`);
+    }
+
+    public async findManyByOrganisationAndRolle(
+        query: Array<Pick<Rollenerweiterung<boolean>, 'organisationId' | 'rolleId'>>,
+    ): Promise<Rollenerweiterung<true>[]> {
+        if (query.length === 0) return [];
+        const rollenerweiterungen: Loaded<RollenerweiterungEntity>[] = await this.em.find(RollenerweiterungEntity, {
+            $or: query,
+        });
+        return rollenerweiterungen.map((entity: Loaded<RollenerweiterungEntity>) => this.mapEntityToAggregate(entity));
     }
 }

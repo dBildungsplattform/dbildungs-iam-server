@@ -13,7 +13,7 @@ export type CreateUserParams = AuthParams & {
     mailEnabled: boolean;
     lastname: string;
     primaryEmail: string; //has to be unique in OX
-    userPassword: string;
+    userPassword: string; //has to be set, OX is not allowing undefined or empty pasword
 };
 
 export type CreateUserResponse = {
