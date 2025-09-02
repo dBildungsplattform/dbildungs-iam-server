@@ -6,6 +6,7 @@ import { OXUserID } from '../../../../shared/types/ox-ids.types.js';
 // Incomplete
 export type ChangeUserParams = AuthParams & {
     contextId: string;
+    contextName: string;
 
     userId: OXUserID;
     username?: string;
@@ -17,6 +18,8 @@ export type ChangeUserParams = AuthParams & {
     primaryEmail?: string;
     defaultSenderAddress?: string;
     aliases?: string[];
+
+    imapLogin?: string;
 };
 
 export type ChangeUserResponseBody = {
@@ -53,8 +56,21 @@ export class ChangeUserAction extends OxBaseAction<ChangeUserResponseBody, void>
                     'ns6:primaryEmail': this.params.primaryEmail,
                     'ns6:defaultSenderAddress': this.params.defaultSenderAddress,
                     'ns6:aliases': this.params.aliases,
+                    'ns6:imapLogin': this.params.email1,
+                    'ns6:userAttributes': {
+                        'ns6:entries': [
+                            {
+                                'ns6:key': 'loginnamerecorder',
+                                'ns6:value': {
+                                    'ns6:entries': {
+                                        'ns6:key': 'user_login',
+                                        'ns6:value': this.params.username + '@' + this.params.contextName,
+                                    },
+                                },
+                            },
+                        ],
+                    },
                 },
-
                 'tns:auth': {
                     'ns2:login': this.params.login,
                     'ns2:password': this.params.password,
