@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { zip } from 'lodash-es';
 import { ConfigTestModule } from '../../../../test/utils/config-test.module.js';
 import { DoFactory } from '../../../../test/utils/do-factory.js';
 import { LoggingTestModule } from '../../../../test/utils/logging-test.module.js';
@@ -9,6 +10,7 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
+import { RollenerweiterungRepo } from '../../rolle/repo/rollenerweiterung.repo.js';
 import { VidisAngebot } from '../../vidis/domain/vidis-angebot.js';
 import { VidisService } from '../../vidis/vidis.service.js';
 import { OrganisationServiceProviderRepo } from '../repo/organisation-service-provider.repo.js';
@@ -190,6 +192,7 @@ function getIdMap<T>(arr: Array<T & { id: string }>): Map<string, T> {
 describe('ServiceProviderService', () => {
     let service: ServiceProviderService;
     let rolleRepo: DeepMocked<RolleRepo>;
+    let rollenerweiterungRepo: DeepMocked<RollenerweiterungRepo>;
     let serviceProviderRepo: DeepMocked<ServiceProviderRepo>;
     let organisationRepo: DeepMocked<OrganisationRepository>;
     let vidisService: DeepMocked<VidisService>;
@@ -201,6 +204,7 @@ describe('ServiceProviderService', () => {
             providers: [
                 ServiceProviderService,
                 { provide: RolleRepo, useValue: createMock<RolleRepo>() },
+                { provide: RollenerweiterungRepo, useValue: createMock<RollenerweiterungRepo>() },
                 { provide: ServiceProviderRepo, useValue: createMock<ServiceProviderRepo>() },
                 { provide: OrganisationRepository, useValue: createMock<OrganisationRepository>() },
                 { provide: VidisService, useValue: createMock<VidisService>() },
@@ -209,6 +213,7 @@ describe('ServiceProviderService', () => {
         }).compile();
         service = module.get<ServiceProviderService>(ServiceProviderService);
         rolleRepo = module.get<DeepMocked<RolleRepo>>(RolleRepo);
+        rollenerweiterungRepo = module.get<DeepMocked<RollenerweiterungRepo>>(RollenerweiterungRepo);
         serviceProviderRepo = module.get<DeepMocked<ServiceProviderRepo>>(ServiceProviderRepo);
         organisationRepo = module.get<DeepMocked<OrganisationRepository>>(OrganisationRepository);
         vidisService = module.get<DeepMocked<VidisService>>(VidisService);
@@ -275,6 +280,64 @@ describe('ServiceProviderService', () => {
                 expect(result.length).toBe(0);
             },
         );
+    });
+    describe('getServiceProvidersByOrganisationenAndRollen', () => {
+        describe.each([[true], [false]])('when rollen have rollenerweiterungen', (haveRollenerweiterungen: boolean) => {
+            const organisations: Array<Organisation<true>> = [
+                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true),
+                DoFactory.createOrganisation(true),
+            ];
+            const serviceProviders: Array<ServiceProvider<true>> = [
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+                DoFactory.createServiceProvider(true),
+            ];
+            const rollen: Array<Rolle<true>> = serviceProviders.map((sp: ServiceProvider<true>) =>
+                DoFactory.createRolle(true, { serviceProviderIds: [sp.id] }),
+            );
+            beforeEach(() => {
+                rolleRepo.findByIds.mockImplementation((ids: Array<string>) => {
+                    return Promise.resolve(getIdMap(rollen.filter((r: Rolle<true>) => ids.includes(r.id))));
+                });
+                rollenerweiterungRepo.findManyByOrganisationAndRolle.mockResolvedValue(
+                    haveRollenerweiterungen
+                        ? zip(organisations, rollen).map(
+                              ([organisation, rolle]: [Organisation<true> | undefined, Rolle<true> | undefined]) =>
+                                  DoFactory.createRollenerweiterung(true, {
+                                      organisationId: organisation?.id,
+                                      rolleId: rolle?.id,
+                                  }),
+                          )
+                        : [],
+                );
+                serviceProviderRepo.findByIds.mockImplementation((ids: Array<string>) => {
+                    return Promise.resolve(
+                        getIdMap(ids.map((id: string) => DoFactory.createServiceProvider(true, { id }))),
+                    );
+                });
+            });
+            afterEach(() => {
+                jest.restoreAllMocks();
+            });
+            it('returns a list of service providers', async () => {
+                const result: Array<ServiceProvider<true>> = await service.getServiceProvidersByOrganisationenAndRollen(
+                    zip(organisations, rollen).map(
+                        ([o, r]: [Organisation<true> | undefined, Rolle<true> | undefined]) => ({
+                            organisationId: o!.id,
+                            rolleId: r!.id,
+                        }),
+                    ),
+                );
+                expect(result.length).toBe(
+                    haveRollenerweiterungen ? organisations.length + serviceProviders.length : serviceProviders.length,
+                );
+            });
+        });
     });
 
     describe('updateServiceProvidersForVidis', () => {
