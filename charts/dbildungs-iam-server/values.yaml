@@ -250,9 +250,6 @@ emailBackend:
       name: secret-volume
   extraVolumeMounts: []
   env:
-    renameWaitingTimeInSeconds: 3
-    stepUpTimeoutInSeconds: 900
-    stepUpTimeoutEnabled: 'false'
     maxOldSpaceSize: 3584
 
 redis:
