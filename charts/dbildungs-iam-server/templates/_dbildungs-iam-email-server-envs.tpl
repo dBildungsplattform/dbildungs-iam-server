@@ -1,3 +1,4 @@
-{{- define "dbildungs-iam-email-server-backend-envs" }}
-
+{{- define "dbildungs-iam-email-backend-envs" }}
+- name: PLACEHOLDER
+  value: "placeholder"
 {{- end}}
