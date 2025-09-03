@@ -1,0 +1,8 @@
+{
+    "HOST": {
+        "PORT": 9095
+    },
+    "LOGGING": {
+        "DEFAULT_LOG_LEVEL": "info"
+    }
+}
