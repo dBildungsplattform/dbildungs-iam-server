@@ -760,6 +760,99 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('update', () => {
+        describe('when updating personalnummer to duplicate value', () => {
+            beforeEach(() => {
+                jest.restoreAllMocks();
+            });
+            it('should return DuplicatePersonalnummerError', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'testusername1',
+                });
+
+                const personalnummer: string = '54321';
+
+                // Create first person with personalnummer
+                const person1: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    personalnummer: personalnummer,
+                });
+                expect(person1).not.toBeInstanceOf(DomainError);
+                if (person1 instanceof DomainError) {
+                    throw person1;
+                }
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something',
+                });
+
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+
+                const existingPerson1: Person<true> | DomainError = await sut.create(person1);
+                expect(existingPerson1).not.toBeInstanceOf(DomainError);
+                if (existingPerson1 instanceof DomainError) {
+                    throw existingPerson1;
+                }
+
+                // Create second person without personalnummer
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'testusername2',
+                });
+
+                const person2: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
+                expect(person2).not.toBeInstanceOf(DomainError);
+                if (person2 instanceof DomainError) {
+                    throw person2;
+                }
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something2',
+                });
+
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+
+                const existingPerson2: Person<true> | DomainError = await sut.create(person2);
+                expect(existingPerson2).not.toBeInstanceOf(DomainError);
+                if (existingPerson2 instanceof DomainError) {
+                    throw existingPerson2;
+                }
+
+                // Try to update person2 with the same personalnummer as person1
+                const personToUpdate: Person<true> = Person.construct(
+                    existingPerson2.id,
+                    existingPerson2.createdAt,
+                    existingPerson2.updatedAt,
+                    existingPerson2.familienname,
+                    existingPerson2.vorname,
+                    existingPerson2.revision,
+                    existingPerson2.username,
+                );
+
+                personToUpdate.keycloakUserId = existingPerson2.keycloakUserId;
+                personToUpdate.personalnummer = personalnummer; // Duplicate personalnummer
+
+                const result: Person<true> | DomainError = await sut.update(personToUpdate);
+
+                expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+                if (result instanceof DuplicatePersonalnummerError) {
+                    expect(result.message).toContain('Personalnummer 54321 already exists');
+                }
+            });
+        });
+
         describe('when person exist', () => {
             describe('when only updating database attributes', () => {
                 it('should return updated person', async () => {
