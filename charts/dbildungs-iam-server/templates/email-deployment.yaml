@@ -17,7 +17,7 @@ spec:
       maxSurge: {{ .Values.emailBackend.maxSurge }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ template "common.names.name" . }}-email-backend
+      app.kubernetes.io/name: {{ template "common.names.name" . }}-email
       app.kubernetes.io/component: email-backend
   template:
     metadata:
@@ -37,13 +37,13 @@ spec:
               containerPort: {{ .Values.emailBackend.containerPorts.http }}
               protocol: TCP
           env:
-            {{- include "dbildungs-iam-email-backend-envs" . | nindent 12 }}
+            {{- include "dbildungs-iam-server-email-backend-envs" . | nindent 12 }}
             {{- if .Values.emailBackend.extraEnvVars }}
             {{ toYaml .Values.emailBackend.extraEnvVars | nindent 12 }}
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ template "common.names.name" . }}-email-backend
+                name: {{ template "common.names.name" . }}-email
           volumeMounts:
             {{- toYaml .Values.emailBackend.volumeMounts | nindent 12 }}
             {{- with .Values.emailBackend.extraVolumeMounts }}
@@ -57,7 +57,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ template "common.names.name" . }}-email-backend
+            name: {{ template "common.names.name" . }}-email
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
