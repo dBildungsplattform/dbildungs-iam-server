@@ -42,6 +42,8 @@ import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-pe
 import { PersonenkontexteUpdateError } from '../domain/error/personenkontexte-update.error.js';
 import { generatePassword } from '../../../shared/util/password-generator.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
+import { PersonenkontextWorkflowAggregate } from '../domain/personenkontext-workflow.js';
+import { PersonenkontextWorkflowFactory } from '../domain/personenkontext-workflow.factory.js';
 
 describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let app: INestApplication;
@@ -53,6 +55,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
     let personenkontextRepoInternal: DBiamPersonenkontextRepoInternal;
     let personFactory: PersonFactory;
     let personenkontextService: PersonenkontextCreationService;
+    let personenkontextWorkflowFactoryMock: DeepMocked<PersonenkontextWorkflowFactory>;
 
     beforeAll(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -72,6 +75,10 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 {
                     provide: PersonPermissionsRepo,
                     useValue: createMock<PersonPermissionsRepo>(),
+                },
+                {
+                    provide: PersonenkontextWorkflowFactory,
+                    useValue: createMock<PersonenkontextWorkflowFactory>(),
                 },
                 {
                     provide: APP_INTERCEPTOR,
@@ -104,6 +111,7 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
         personenkontextRepoInternal = module.get(DBiamPersonenkontextRepoInternal);
         personFactory = module.get(PersonFactory);
         personenkontextService = module.get(PersonenkontextCreationService);
+        personenkontextWorkflowFactoryMock = module.get(PersonenkontextWorkflowFactory);
 
         await DatabaseTestModule.setupDatabase(orm);
         app = module.createNestApplication();
@@ -558,6 +566,61 @@ describe('DbiamPersonenkontextWorkflowController Integration Test', () => {
                 expect(response.body).toEqual({
                     code: 400,
                     i18nKey: 'INVALID_PERSONENKONTEXT_FOR_PERSON_WITH_ROLLENART_LERN',
+                });
+            });
+        });
+
+        describe('when duplicate personalnummer error occurs', () => {
+            it('should return error with status-code 400 for duplicate personalnummer', async () => {
+                const person: Person<true> = await createPerson();
+                const orga: Organisation<true> = await organisationRepo.save(DoFactory.createOrganisation(false));
+                const rolle: Rolle<true> | DomainError = await rolleRepo.save(
+                    DoFactory.createRolle(false, { systemrechte: [RollenSystemRecht.PERSONEN_VERWALTEN] }),
+                );
+                if (rolle instanceof DomainError) throw Error();
+
+                const savedPK: Personenkontext<true> = await personenkontextRepoInternal.save(
+                    DoFactory.createPersonenkontext(false, {
+                        personId: person.id,
+                        rolleId: rolle.id,
+                        organisationId: orga.id,
+                        updatedAt: new Date(),
+                    }),
+                );
+
+                const updatePKsRequest: DbiamUpdatePersonenkontexteBodyParams =
+                    createMock<DbiamUpdatePersonenkontexteBodyParams>({
+                        count: 1,
+                        lastModified: savedPK.updatedAt,
+                        personenkontexte: [
+                            {
+                                personId: person.id,
+                                rolleId: rolle.id,
+                                organisationId: orga.id,
+                            },
+                        ],
+                    });
+
+                const personpermissions: DeepMocked<PersonPermissions> = createMock();
+                personpermissions.canModifyPerson.mockResolvedValueOnce(true);
+                personpermissions.hasSystemrechtAtOrganisation.mockResolvedValueOnce(true);
+                personpermissionsRepoMock.loadPersonPermissions.mockResolvedValue(personpermissions);
+
+                const mockWorkflow: DeepMocked<PersonenkontextWorkflowAggregate> =
+                    createMock<PersonenkontextWorkflowAggregate>();
+                mockWorkflow.commit.mockResolvedValueOnce(new DuplicatePersonalnummerError('12345'));
+
+                jest.spyOn(personenkontextWorkflowFactoryMock, 'createNew').mockReturnValueOnce(mockWorkflow);
+
+                const response: Response = await request(app.getHttpServer() as App)
+                    .put(`/personenkontext-workflow/${person.id}`)
+                    .query({ personalnummer: '12345' })
+                    .send(updatePKsRequest);
+
+                expect(response.status).toBe(400);
+                expect(response.body).toEqual({
+                    code: 400,
+                    i18nKey: 'PERSONALNUMMER_NICHT_EINDEUTIG',
                 });
             });
         });

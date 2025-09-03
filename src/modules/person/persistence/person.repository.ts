@@ -734,6 +734,17 @@ export class PersonRepository {
         let oldReferrer: PersonReferrer | undefined = '';
         const personEntity: Loaded<PersonEntity> = await this.em.findOneOrFail(PersonEntity, person.id);
         const isPersonRenamedEventNecessary: boolean = this.hasChangedNames(personEntity, person);
+
+        // Check for duplicate personalnummer if it's being updated
+        if (person.personalnummer && person.personalnummer !== personEntity.personalnummer) {
+            const existingPerson: Loaded<PersonEntity> | null = await this.em.findOne(PersonEntity, {
+                personalnummer: person.personalnummer,
+            });
+            if (existingPerson) {
+                return new DuplicatePersonalnummerError(`Personalnummer ${person.personalnummer} already exists.`);
+            }
+        }
+
         if (person.newPassword) {
             const setPasswordResult: Result<string, DomainError> = await this.kcUserService.setPassword(
                 person.keycloakUserId!,
