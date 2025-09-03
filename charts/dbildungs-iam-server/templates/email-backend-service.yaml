@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/component: email-backend
 spec:
   selector:
-    app.kubernetes.io/name: {{ template "common.names.name" . }}
+    app.kubernetes.io/name: {{ template "common.names.name" . }}-email-backend
     app.kubernetes.io/component: email-backend
   type: {{ .Values.emailBackend.service.type }}
   ports:
