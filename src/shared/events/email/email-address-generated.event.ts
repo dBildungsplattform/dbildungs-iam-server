@@ -14,6 +14,7 @@ export class EmailAddressGeneratedEvent extends BaseEvent {
         public readonly address: string,
         public readonly enabled: boolean,
         public readonly orgaKennung: string,
+        public readonly alternativeAddress?: string,
     ) {
         super();
     }
