@@ -955,7 +955,7 @@ describe('EmailEventHandler', () => {
                 await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
                 expect(loggerMock.info).toHaveBeenCalledWith(
-                    `Set REQUESTED status and persisted address:${persistedEmail.currentAddress}, personId:${fakePersonId}, username:${fakeUsername}`,
+                    `Enabled PRIMARY email address:${persistedEmail.address}, personId:${fakePersonId}, username:${fakeUsername}`,
                 );
             });
         });

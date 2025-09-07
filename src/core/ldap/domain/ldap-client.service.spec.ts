@@ -2511,6 +2511,7 @@ describe('LDAP Client Service', () => {
                         fakePersonID,
                         fakeUsername,
                         newEmailAddress,
+                        currentEmailAddress,
                     );
 
                     expect(result.ok).toBeTruthy();
@@ -2555,6 +2556,7 @@ describe('LDAP Client Service', () => {
                             fakePersonID,
                             fakeUsername,
                             newEmailAddress,
+                            currentEmailAddress,
                         );
 
                         expect(result.ok).toBeTruthy();
@@ -2578,7 +2580,7 @@ describe('LDAP Client Service', () => {
             });
 
             describe('but does NOT have a mailPrimaryAddress', () => {
-                it('should set mailAlternativeAddress to same value as mailPrimaryAddress and throw LdapPersonEntryChangedEvent', async () => {
+                it('should set mailAlternativeAddress to current address and throw LdapPersonEntryChangedEvent', async () => {
                     ldapClientMock.getClient.mockImplementation(() => {
                         clientMock.bind.mockResolvedValueOnce();
                         clientMock.search.mockResolvedValueOnce(
@@ -2599,6 +2601,7 @@ describe('LDAP Client Service', () => {
                         fakePersonID,
                         fakeUsername,
                         newEmailAddress,
+                        currentEmailAddress,
                     );
 
                     expect(result.ok).toBeTruthy();
@@ -2609,12 +2612,12 @@ describe('LDAP Client Service', () => {
                         expect.objectContaining({
                             personId: fakePersonID,
                             mailPrimaryAddress: newEmailAddress,
-                            mailAlternativeAddress: newEmailAddress,
+                            mailAlternativeAddress: currentEmailAddress,
                         }),
                         expect.objectContaining({
                             personId: fakePersonID,
                             mailPrimaryAddress: newEmailAddress,
-                            mailAlternativeAddress: newEmailAddress,
+                            mailAlternativeAddress: currentEmailAddress,
                         }),
                     );
                 });
