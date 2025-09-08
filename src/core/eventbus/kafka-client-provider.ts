@@ -28,7 +28,7 @@ export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
                 'ssl.certificate.location': certPath,
                 'ssl.key.location': keyPath,
                 'bootstrap.servers': kafkaConfig.BROKER.join(','),
-                log_level: 7,
+                // log_level: 7,
             });
 
             // const admin: KafkaJS.Admin = kafka.admin();
