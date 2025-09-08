@@ -57,7 +57,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         });
         this.producer = this.kafka.producer({
             'allow.auto.create.topics': false,
-            'log.connection.close': false, // 0.9 Broker? Is this relevant for us and might be the cause of disconnect?
+            'log.connection.close': true, // 0.9 Broker? Is this relevant for us and might be the cause of disconnect?
             // 'socket.keepalive.enable': true, // Doesn't help?
         });
     }
