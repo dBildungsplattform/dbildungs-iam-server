@@ -1185,7 +1185,6 @@ describe('EmailEventHandler', () => {
 
                         await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
 
-
                         expect(loggerMock.info).toHaveBeenCalledWith(
                             `Enabled PRIMARY email address:first@example.com, personId:${fakePersonId}, username:${fakeUsername}`,
                         );

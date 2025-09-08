@@ -2621,6 +2621,49 @@ describe('LDAP Client Service', () => {
                         }),
                     );
                 });
+                it('should set mailAlternativeAddress to undefined when currentEmailAddress is undefined and throw LdapPersonEntryChangedEvent', async () => {
+                    ldapClientMock.getClient.mockImplementation(() => {
+                        clientMock.bind.mockResolvedValueOnce();
+                        clientMock.search.mockResolvedValueOnce(
+                            createMock<SearchResult>({
+                                searchEntries: [
+                                    createMock<Entry>({
+                                        dn: fakeDN,
+                                        mailPrimaryAddress: undefined,
+                                    }),
+                                ],
+                            }),
+                        );
+                        clientMock.modify.mockResolvedValue();
+
+                        return clientMock;
+                    });
+
+                    // Call the method with undefined currentEmailAddress
+                    const result: Result<PersonID> = await ldapClientService.changeEmailAddressByPersonId(
+                        fakePersonID,
+                        fakeUsername,
+                        newEmailAddress,
+                        undefined, // Undefined current email address
+                    );
+
+                    expect(result.ok).toBeTruthy();
+                    expect(loggerMock.info).toHaveBeenLastCalledWith(
+                        `LDAP: Successfully modified mailPrimaryAddress and mailAlternativeAddress for personId:${fakePersonID}, username:${fakeUsername}`,
+                    );
+                    expect(eventServiceMock.publish).toHaveBeenCalledWith(
+                        expect.objectContaining({
+                            personId: fakePersonID,
+                            mailPrimaryAddress: newEmailAddress,
+                            mailAlternativeAddress: undefined,
+                        }),
+                        expect.objectContaining({
+                            personId: fakePersonID,
+                            mailPrimaryAddress: newEmailAddress,
+                            mailAlternativeAddress: undefined,
+                        }),
+                    );
+                });
             });
         });
     });
