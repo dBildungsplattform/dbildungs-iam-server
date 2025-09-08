@@ -29,6 +29,16 @@
             "administriertVon": 0,
             "zugehoerigZu": 0,
             "emailDomain": "ersatzschule-sh.de"
+        },
+        {
+            "id": 3,
+            "name": "SVS",
+            "typ": "LMS"
+        },
+        {
+            "id": 4,
+            "name": "Moodle",
+            "typ": "LMS"
         }
     ]
 }

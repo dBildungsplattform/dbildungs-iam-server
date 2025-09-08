@@ -475,6 +475,16 @@
             "typ": "TRAEGER",
             "administriertVon": 2,
             "zugehoerigZu": 2
+        },
+        {
+            "id": 1002,
+            "name": "SVS",
+            "typ": "LMS"
+        },
+        {
+            "id": 1003,
+            "name": "Moodle",
+            "typ": "LMS"
         }
     ]
 }
