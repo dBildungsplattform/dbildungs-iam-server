@@ -238,7 +238,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         topic: string,
         additionalHeaders: Record<string, string> = {},
     ): Promise<void> {
-        await this.producer?.connect();
+        // await this.producer?.connect();
 
         const eventType: string | undefined = event.constructor.name;
         const headers: Record<string, string> = { eventKey, ...additionalHeaders };
