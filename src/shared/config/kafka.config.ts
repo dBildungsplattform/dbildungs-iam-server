@@ -2,8 +2,8 @@ import { IsBoolean, IsNumber, IsString, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class KafkaConfig {
-    @IsString({ each: true })
-    public readonly BROKER!: string[];
+    @IsString()
+    public readonly BROKER!: string;
 
     @IsString()
     public readonly TOPIC_PREFIX!: string;

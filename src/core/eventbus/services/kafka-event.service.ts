@@ -22,6 +22,7 @@ type Kafka = KafkaJS.Kafka;
 type Consumer = KafkaJS.Consumer;
 type Producer = KafkaJS.Producer;
 type KafkaMessage = KafkaJS.KafkaMessage;
+type EachMessagePayload = KafkaJS.EachMessagePayload;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -67,6 +68,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     }
 
     public async onModuleInit(): Promise<void> {
+        const logger: ClassLogger = this.logger;
+
         try {
             if (this.kafkaConfig.ENABLED !== true) {
                 this.logger.info('Kafka is disabled');
@@ -74,22 +77,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             }
 
             this.logger.info('Connecting to Kafka');
-
-            this.logger.info('Getting Topics');
-            const admin: KafkaJS.Admin = this.kafka.admin();
-            await admin
-                .connect()
-                .then(() => admin.listTopics())
-                .then((topics: string[]) => this.logger.info('Topics: ' + topics.join(', ')));
-
-            await admin.disconnect();
-
             await this.consumer?.connect();
-
-            // Heartbeat listener
-            // this.consumer?.on('consumer.heartbeat', () => {
-            //     this.lastHeartbeat = new Date();
-            // });
 
             const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
             await this.consumer?.subscribe({ topics: Array.from(topics) });
@@ -100,64 +88,27 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                     partition,
                     message,
                     heartbeat,
-                }: {
-                    topic: string;
-                    partition: number;
-                    message: KafkaMessage;
-                    heartbeat: () => Promise<void>;
-                }) => {
-                    this.logger.info(
+                }: Omit<EachMessagePayload, 'heartbeat'> & { heartbeat: (this: void) => Promise<void> }) => {
+                    logger.info(
                         `Consuming message from topic: ${topic}, partition: ${partition}, offset: ${message.offset}, key: ${message.key?.toString()}`,
                     );
-                    // await heartbeat();
-                    // await this.handleMessage(message, heartbeat);
+                    // Call heartbeat before and after processing, and optionally during long processing
+                    await heartbeat();
+                    await this.handleMessage(message, heartbeat);
                     await heartbeat();
                 },
             });
 
             await this.producer?.connect();
-
-            // Start heartbeat monitor
-            //this.startHeartbeatCheck();
         } catch (err) {
             this.logger.error('Error in KafkaEventService', util.inspect(err));
         }
     }
 
     public async onModuleDestroy(): Promise<void> {
-        // if (this.heartbeatCheckInterval) {
-        //     clearInterval(this.heartbeatCheckInterval);
-        // }
         await this.consumer?.disconnect();
         await this.producer?.disconnect();
     }
-
-    //private startHeartbeatCheck() {
-    //    this.heartbeatCheckInterval = setInterval(async () => {
-    //        const now = new Date();
-    //        if (this.lastHeartbeat.getTime() < now.getTime() - HEARTBEAT_CHECK_INTERVAL) {
-    //            this.logger.error(`No heartbeat detected. Last heartbeat was at ${this.lastHeartbeat.toISOString()}`);
-    //            await this.restartConsumer();
-    //        }
-    //    }, HEARTBEAT_CHECK_INTERVAL);
-    //}
-
-    // private async restartConsumer() {
-    //     try {
-    //         this.logger.info('Restarting Kafka consumer due to missed heartbeats...');
-    //         await this.consumer?.disconnect();
-    //         await this.consumer?.connect();
-
-    //         const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
-    //         await Promise.all(
-    //             Array.from(topics).map((topic: string) => this.consumer?.subscribe({ topic, fromBeginning: true })),
-    //         );
-
-    //         this.logger.info('Kafka consumer restarted successfully.');
-    //     } catch (err) {
-    //         this.logger.error('Failed to restart Kafka consumer', util.inspect(err));
-    //     }
-    // }
 
     public subscribe<Event extends BaseEvent>(eventType: Constructor<Event>, handler: EventHandlerType<Event>): void {
         const handlers: EventHandlerType<BaseEvent>[] = this.handlerMap.get(eventType) ?? [];
@@ -212,6 +163,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                             kafkaEvent,
                             heartbeat,
                         );
+
                         return res;
                     } catch (err) {
                         this.logger.logUnknownAsError(`Handler failed for event ${eventClass.name}`, err);
@@ -225,8 +177,15 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
 
             const results: PromiseSettledResult<Result<unknown>>[] = await Promise.allSettled(handlerPromises);
 
-            const firstFailure = results.find(
-                (res): res is PromiseFulfilledResult<{ ok: false; error: Error }> =>
+            const firstFailure:
+                | PromiseFulfilledResult<{
+                      ok: false;
+                      error: Error;
+                  }>
+                | undefined = results.find(
+                (
+                    res: PromiseSettledResult<Result<unknown, Error>>,
+                ): res is PromiseFulfilledResult<{ ok: false; error: Error }> =>
                     res.status === 'fulfilled' && !res.value.ok && res.value.error instanceof Error,
             );
 
@@ -242,8 +201,6 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         topic: string,
         additionalHeaders: Record<string, string> = {},
     ): Promise<void> {
-        // await this.producer?.connect();
-
         const eventType: string | undefined = event.constructor.name;
         const headers: Record<string, string> = { eventKey, ...additionalHeaders };
 
@@ -305,15 +262,18 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         return topics;
     }
 
+    /*
+    Must be public because otherwise writing tests that cover 100% are very hard and not worth the effort
+    */
     public runWithTimoutAndKeepAlive<Event extends BaseEvent>(
         handler: EventHandlerType<BaseEvent>,
         event: Event,
         heartbeat: () => Promise<void>,
     ): Promise<Result<unknown, Error>> {
-        return new Promise((resolve) => {
-            const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2500;
+        return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
+            const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2500; // To allow processing of offset commit after message before client times out
 
-            let completed = false;
+            let completed: boolean = false;
 
             const onTimeout = (): void => {
                 if (!completed) {

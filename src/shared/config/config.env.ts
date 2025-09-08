@@ -128,7 +128,7 @@ export default (): Config => ({
     },
     KAFKA: {
         // BROKER: process.env['KAFKA_BROKER']?.split(','),
-        BROKER: envToStringArray('KAFKA_BROKER'),
+        BROKER: process.env['KAFKA_BROKER'],
         TOPIC_PREFIX: process.env['KAFKA_TOPIC_PREFIX'],
         USER_TOPIC: process.env['KAFKA_USER_TOPIC'],
         USER_DLQ_TOPIC: process.env['KAFKA_USER_DLQ_TOPIC'],

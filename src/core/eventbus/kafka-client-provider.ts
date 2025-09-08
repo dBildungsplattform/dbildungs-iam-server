@@ -21,23 +21,14 @@ export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
                 throw new Error('SSL enabled but cert paths are missing');
             }
 
-            const kafka: KafkaJS.Kafka = new KafkaJS.Kafka({
+            return new KafkaJS.Kafka({
+                'bootstrap.servers': kafkaConfig.BROKER,
                 'security.protocol': 'ssl',
                 'enable.ssl.certificate.verification': false,
                 'ssl.ca.location': caPath,
                 'ssl.certificate.location': certPath,
                 'ssl.key.location': keyPath,
-                'bootstrap.servers': kafkaConfig.BROKER.join(','),
-                // log_level: 7,
             });
-
-            // const admin: KafkaJS.Admin = kafka.admin();
-            // void admin
-            //     .connect()
-            //     .then(() => admin.listTopics())
-            //     .then((topics: string[]) => console.log(topics));
-
-            return kafka;
         } else {
             throw new Error('SSL is disabled. SSL must be enabled');
         }
