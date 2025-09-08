@@ -22,6 +22,7 @@ export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
             }
 
             const kafka: KafkaJS.Kafka = new KafkaJS.Kafka({
+                'security.protocol': 'ssl',
                 'enable.ssl.certificate.verification': false,
                 'ssl.ca.location': caPath,
                 'ssl.certificate.location': certPath,

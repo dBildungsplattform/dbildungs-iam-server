@@ -70,6 +70,16 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             }
 
             this.logger.info('Connecting to Kafka');
+
+            this.logger.info('Getting Topics');
+            const admin: KafkaJS.Admin = this.kafka.admin();
+            await admin
+                .connect()
+                .then(() => admin.listTopics())
+                .then((topics: string[]) => this.logger.info('Topics: ' + topics.join(', ')));
+
+            await admin.disconnect();
+
             await this.consumer?.connect();
 
             // Heartbeat listener
