@@ -43,6 +43,7 @@ import { SpshConfigModule } from '../modules/spshconfig/spshconfig.module.js';
 import { VidisModule } from '../modules/vidis/vidis.module.js';
 import { MeldungModule } from '../modules/meldung/meldung.module.js';
 import { MapperModule } from '../modules/person/mapper/mapper.module.js';
+import { RollenartApiModule } from '../modules/rollenart/rollenart-api.module.js';
 
 @Module({
     imports: [
@@ -90,6 +91,7 @@ import { MapperModule } from '../modules/person/mapper/mapper.module.js';
         KeycloakAdministrationModule,
         HealthModule,
         RolleApiModule,
+        RollenartApiModule,
         ServiceProviderApiModule,
         PersonenKontextApiModule,
         ErrorModule,

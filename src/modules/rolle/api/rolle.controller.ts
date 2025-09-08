@@ -2,6 +2,7 @@ import {
     Body,
     Controller,
     Delete,
+    ForbiddenException,
     Get,
     HttpCode,
     HttpStatus,
@@ -63,6 +64,8 @@ import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { StepUpGuard } from '../../authentication/api/steup-up.guard.js';
 import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { RolleNameIdResponse } from './rolle-name-id.response.js';
+import { RollenSystemRecht } from '../domain/rolle.enums.js';
 
 @UseFilters(new SchulConnexValidationErrorFilter(), new RolleExceptionFilter(), new AuthenticationExceptionFilter())
 @ApiTags('rolle')
@@ -474,5 +477,30 @@ export class RolleController {
             .filter(Boolean) as ServiceProvider<true>[];
 
         return new RolleWithServiceProvidersResponse(rolle, rolleServiceProviders);
+    }
+
+    @Get('/by-provider/:serviceProviderId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({ description: 'Get rollen objects by service provider id.' })
+    @ApiOkResponse({ description: 'Returns a list of rollen objects.', type: [RolleNameIdResponse] })
+    @ApiNotFoundResponse({ description: 'The service provider does not exist.' })
+    @ApiUnauthorizedResponse({ description: 'Not authorized to retrieve rollen for service provider.' })
+    public async getRollenByServiceProviderId(
+        @Param('serviceProviderId') serviceProviderId: string,
+        @Permissions() permissions: PersonPermissions,
+    ): Promise<RolleNameIdResponse[]> {
+        if (!(await permissions.hasSystemrechteAtRootOrganisation([RollenSystemRecht.ROLLEN_VERWALTEN]))) {
+            throw new ForbiddenException('You do not have the required permissions to read roles.');
+        }
+
+        const rollen: Rolle<boolean>[] = await this.rolleRepo.findRollenByServiceProviderId(serviceProviderId);
+
+        if (!rollen || rollen.length === 0) {
+            throw SchulConnexErrorMapper.mapSchulConnexErrorToHttpException(
+                SchulConnexErrorMapper.mapDomainErrorToSchulConnexError(new EntityNotFoundError('No rollen found')),
+            );
+        }
+
+        return rollen.map((rolle: Rolle<boolean>) => new RolleNameIdResponse(rolle));
     }
 }

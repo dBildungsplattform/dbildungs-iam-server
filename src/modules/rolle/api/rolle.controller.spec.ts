@@ -25,6 +25,8 @@ import { NameForRolleWithTrailingSpaceError } from '../domain/name-with-trailing
 import { Organisation } from '../../organisation/domain/organisation.js';
 import { RolleServiceProviderBodyParams } from './rolle-service-provider.body.params.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { RolleNameIdResponse } from './rolle-name-id.response.js';
+import { HttpException } from '@nestjs/common';
 
 describe('Rolle API with mocked ServiceProviderRepo', () => {
     let rolleRepoMock: DeepMocked<RolleRepo>;
@@ -128,6 +130,56 @@ describe('Rolle API with mocked ServiceProviderRepo', () => {
                 await expect(rolleController.createRolle(createRolleParams, permissionsMock)).rejects.toThrow(
                     NameForRolleWithTrailingSpaceError,
                 );
+            });
+        });
+    });
+
+    describe('/GET rollen objects by service provider id', () => {
+        const serviceProviderId: string = faker.string.uuid();
+        describe('getRollenByServiceProviderId', () => {
+            it('should return an array of RolleNameIdResponse when rollen exist', async () => {
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                const rolleMock: DeepMocked<Rolle<true>> = createMock<Rolle<true>>({
+                    id: faker.string.uuid(),
+                    name: faker.person.fullName(),
+                });
+                rolleRepoMock.findRollenByServiceProviderId.mockResolvedValueOnce([rolleMock]);
+
+                const result: RolleNameIdResponse[] = await rolleController.getRollenByServiceProviderId(
+                    serviceProviderId,
+                    permissionsMock,
+                );
+
+                expect(Array.isArray(result)).toBe(true);
+                expect(result.length).toBe(1);
+                expect(result[0]).toBeInstanceOf(RolleNameIdResponse);
+                expect(result[0]?.id).toBe(rolleMock.id);
+                expect(result[0]?.name).toBe(rolleMock.name);
+                expect(rolleRepoMock.findRollenByServiceProviderId).toHaveBeenCalledWith(serviceProviderId);
+            });
+
+            it('should throw an error if no rollen are found', async () => {
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                rolleRepoMock.findRollenByServiceProviderId.mockResolvedValueOnce([]);
+
+                await expect(
+                    rolleController.getRollenByServiceProviderId(serviceProviderId, permissionsMock),
+                ).rejects.toThrow(HttpException);
+
+                expect(rolleRepoMock.findRollenByServiceProviderId).toHaveBeenCalledWith(serviceProviderId);
+            });
+
+            it('should throw an error that the right permissions are required', async () => {
+                const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
+                permissionsMock.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(false);
+
+                await expect(
+                    rolleController.getRollenByServiceProviderId(serviceProviderId, permissionsMock),
+                ).rejects.toThrow(HttpException);
             });
         });
     });

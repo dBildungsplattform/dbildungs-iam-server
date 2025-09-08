@@ -429,6 +429,43 @@ describe('RolleRepo', () => {
         });
     });
 
+    describe('findRollenByServiceProviderId', () => {
+        describe('when rollen exist for the given service provider', () => {
+            it('should return all rollen associated with the service provider', async () => {
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rolle1: Rolle<true> | DomainError = await sut.save(
+                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                );
+                const rolle2: Rolle<true> | DomainError = await sut.save(
+                    DoFactory.createRolle(false, { serviceProviderIds: [serviceProvider.id] }),
+                );
+                if (rolle1 instanceof DomainError || rolle2 instanceof DomainError) throw Error();
+
+                const rollen: Rolle<true>[] = await sut.findRollenByServiceProviderId(serviceProvider.id);
+
+                expect(rollen).toBeDefined();
+                expect(rollen.length).toBe(2);
+                const ids: string[] = rollen.map((rolle: Rolle<true>) => rolle.id);
+                expect(ids).toContain(rolle1.id);
+                expect(ids).toContain(rolle2.id);
+            });
+        });
+
+        describe('when no rollen exist for the given service provider', () => {
+            it('should return an empty array', async () => {
+                const serviceProvider: ServiceProvider<true> = await serviceProviderRepo.save(
+                    DoFactory.createServiceProvider(false),
+                );
+                const rollen: Rolle<true>[] = await sut.findRollenByServiceProviderId(serviceProvider.id);
+
+                expect(rollen).toBeDefined();
+                expect(rollen.length).toBe(0);
+            });
+        });
+    });
+
     describe('exists', () => {
         it('should return true, if the rolle exists', async () => {
             const rolle: Rolle<true> | DomainError = await sut.save(DoFactory.createRolle(false));
