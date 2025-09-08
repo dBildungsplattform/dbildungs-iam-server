@@ -2,7 +2,6 @@ import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../shared/config/kafka.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
-import * as fs from 'fs';
 
 import { Provider } from '@nestjs/common';
 
@@ -24,19 +23,18 @@ export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
 
             const kafka: KafkaJS.Kafka = new KafkaJS.Kafka({
                 'enable.ssl.certificate.verification': false,
-                'ssl.ca.pem': fs.readFileSync(caPath, 'utf8'),
-                'ssl.certificate.pem': fs.readFileSync(certPath, 'utf8'),
-                'ssl.key.pem': fs.readFileSync(keyPath, 'utf8'),
+                'ssl.ca.location': caPath,
+                'ssl.certificate.location': certPath,
+                'ssl.key.location': keyPath,
                 'bootstrap.servers': kafkaConfig.BROKER.join(','),
                 log_level: 7,
             });
 
-            const admin: KafkaJS.Admin = kafka.admin();
-
-            void admin
-                .connect()
-                .then(() => admin.listTopics())
-                .then((topics: string[]) => console.log(topics));
+            // const admin: KafkaJS.Admin = kafka.admin();
+            // void admin
+            //     .connect()
+            //     .then(() => admin.listTopics())
+            //     .then((topics: string[]) => console.log(topics));
 
             return kafka;
         } else {
