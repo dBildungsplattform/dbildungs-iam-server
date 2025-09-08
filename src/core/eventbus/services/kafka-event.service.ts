@@ -28,8 +28,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-// const HEARTBEAT_CHECK_INTERVAL = 10000; // 10 Sekunden, kannst du anpassen
-
 @Injectable()
 export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     private readonly handlerMap: Map<Constructor<BaseEvent>, EventHandlerType<BaseEvent>[]> = new Map();
@@ -39,9 +37,6 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     private producer?: Producer;
 
     private readonly kafkaConfig: KafkaConfig;
-
-    //private lastHeartbeat: Date = new Date();
-    //private heartbeatCheckInterval?: NodeJS.Timeout;
 
     public constructor(
         private readonly logger: ClassLogger,
@@ -63,13 +58,11 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         this.producer = this.kafka.producer({
             'allow.auto.create.topics': false,
             'log.connection.close': false, // 0.9 Broker? Is this relevant for us and might be the cause of disconnect?
-            // 'socket.keepalive.enable': true, // Do we want to do this?
+            // 'socket.keepalive.enable': true, // Doesn't help?
         });
     }
 
     public async onModuleInit(): Promise<void> {
-        const logger: ClassLogger = this.logger;
-
         try {
             if (this.kafkaConfig.ENABLED !== true) {
                 this.logger.info('Kafka is disabled');
@@ -88,8 +81,8 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                     partition,
                     message,
                     heartbeat,
-                }: Omit<EachMessagePayload, 'heartbeat'> & { heartbeat: (this: void) => Promise<void> }) => {
-                    logger.info(
+                }: Omit<EachMessagePayload, 'heartbeat'> & { heartbeat: () => Promise<void> }) => {
+                    this.logger.info(
                         `Consuming message from topic: ${topic}, partition: ${partition}, offset: ${message.offset}, key: ${message.key?.toString()}`,
                     );
                     // Call heartbeat before and after processing, and optionally during long processing
@@ -208,13 +201,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
         try {
             await this.producer?.send({
                 topic,
-                messages: [
-                    {
-                        key: event.kafkaKey,
-                        value: JSON.stringify(event) ?? null,
-                        headers,
-                    },
-                ],
+                messages: [{ key: event.kafkaKey, value: JSON.stringify(event), headers }],
             });
         } catch (err) {
             this.logger.error(`Error publishing event to Kafka on topic ${topic}`, util.inspect(err));
@@ -272,7 +259,6 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
     ): Promise<Result<unknown, Error>> {
         return new Promise((resolve: (value: Result<unknown, Error> | PromiseLike<Result<unknown, Error>>) => void) => {
             const timeoutMs: number = this.kafkaConfig.SESSION_TIMEOUT - this.kafkaConfig.HEARTBEAT_INTERVAL - 2500; // To allow processing of offset commit after message before client times out
-
             let completed: boolean = false;
 
             const onTimeout = (): void => {
@@ -313,7 +299,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                         resolve(result ?? ({ ok: true, value: null } satisfies Result<unknown>));
                     }
                 })
-                .catch((error: unknown) => {
+                .catch((error: Error) => {
                     if (!completed) {
                         this.logger.error(
                             `Handler for event ${event.constructor.name} with EventID: ${event.eventID} failed`,
@@ -323,7 +309,7 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
                         completed = true;
                         resolve({
                             ok: false,
-                            error: error as Error,
+                            error,
                         } satisfies Result<unknown>);
                     }
                 });
