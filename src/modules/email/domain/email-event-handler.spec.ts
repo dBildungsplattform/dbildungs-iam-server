@@ -1135,6 +1135,67 @@ describe('EmailEventHandler', () => {
                     `Could not persist email for personId:${fakePersonId}, username:${fakeUsername}, error:requested EmailAddress with the address:${fakeEmailAddressString} was not found`,
                 );
             });
+            describe('when multiple disabled emails exist, should enable first one as primary and identify latest as alternative', () => {
+                describe('when multiple disabled emails exist, should enable first one as primary and identify latest as alternative', () => {
+                    it('should enable first disabled email as primary and keep latest disabled email as alternative', async () => {
+                        mockRepositoryFindMethods(personenkontexte, rolleMap, spMap);
+
+                        // Mock person with username is found
+                        personRepositoryMock.findById.mockResolvedValueOnce(
+                            createMock<Person<true>>({ id: faker.string.uuid(), referrer: fakeUsername }),
+                        );
+
+                        // Create multiple disabled emails
+                        const latestDisabledEmail: EmailAddress<true> = new EmailAddress<true>(
+                            'latest-email-id',
+                            faker.date.past(),
+                            faker.date.recent(),
+                            fakePersonId,
+                            'latest@example.com',
+                            EmailAddressStatus.DISABLED,
+                        );
+
+                        const firstDisabledEmail: EmailAddress<true> = new EmailAddress<true>(
+                            'first-email-id',
+                            faker.date.past(),
+                            faker.date.past(),
+                            fakePersonId,
+                            'first@example.com',
+                            EmailAddressStatus.DISABLED,
+                        );
+
+                        // Mock finding multiple disabled emails (latest first due to sorting)
+                        // eslint-disable-next-line @typescript-eslint/require-await
+                        emailRepoMock.findByPersonSortedByUpdatedAtDesc.mockImplementationOnce(async () => [
+                            firstDisabledEmail, // This will be found first by .find() and enabled as primary
+                            latestDisabledEmail, // This will be found as alternative (stays disabled)
+                        ]);
+
+                        // Mock successful save for the first disabled email (which becomes primary)
+                        const enabledPrimaryEmail: EmailAddress<true> = new EmailAddress<true>(
+                            'first-email-id',
+                            faker.date.past(),
+                            faker.date.recent(),
+                            fakePersonId,
+                            'first@example.com',
+                            EmailAddressStatus.ENABLED, // Now enabled
+                        );
+
+                        emailRepoMock.save.mockResolvedValueOnce(enabledPrimaryEmail);
+
+                        await emailEventHandler.handlePersonenkontextUpdatedEvent(event);
+
+
+                        expect(loggerMock.info).toHaveBeenCalledWith(
+                            `Enabled PRIMARY email address:first@example.com, personId:${fakePersonId}, username:${fakeUsername}`,
+                        );
+
+                        // Verify save was called only once (only primary email was enabled)
+                        expect(emailRepoMock.save).toHaveBeenCalledTimes(1);
+                        expect(emailRepoMock.save).toHaveBeenCalledWith(firstDisabledEmail);
+                    });
+                });
+            });
         });
 
         describe('when lehrer does not have any PK, email is enabled, disable email and error occurs during persisting', () => {

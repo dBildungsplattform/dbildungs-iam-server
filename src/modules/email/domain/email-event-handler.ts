@@ -731,53 +731,54 @@ export class EmailEventHandler {
         let primaryEmail: EmailAddress<true> | undefined;
         let alternativeEmail: EmailAddress<true> | undefined;
 
+        // Check if any email is already enabled
         for (const email of existingEmails) {
             if (email.enabled) {
                 return this.logger.info(
                     `Existing email for personId:${personId}, username:${personUsername.value} already ENABLED`,
                 );
             }
+        }
 
-            if (email.disabled && this.OX_ENABLED) {
-                email.enable();
-                // eslint-disable-next-line no-await-in-loop
-                const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(email);
+        // Find the first disabled email to enable as primary
+        const firstDisabledEmail: EmailAddress<true> | undefined = existingEmails.find(
+            (email: EmailAddress<true>) => email.disabled,
+        );
 
-                if (persistenceResult instanceof EmailAddress) {
-                    if (!primaryEmail) {
-                        primaryEmail = persistenceResult;
-                        this.logger.info(
-                            `Enabled PRIMARY email address:${persistenceResult.address}, personId:${personId}, username:${personUsername.value}`,
-                        );
-                    } else if (!alternativeEmail) {
-                        alternativeEmail = persistenceResult;
-                        this.logger.info(
-                            `Enabled ALTERNATIVE email address:${persistenceResult.address}, personId:${personId}, username:${personUsername.value}`,
-                        );
-                    }
-                } else {
-                    this.logger.error(
-                        `Could not ENABLE email for personId:${personId}, username:${personUsername.value}, error:${persistenceResult.message}`,
-                    );
-                    return; // stop if save failed
-                }
+        if (firstDisabledEmail && this.OX_ENABLED) {
+            firstDisabledEmail.enable();
+            const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(firstDisabledEmail);
 
-                if (primaryEmail && alternativeEmail) {
-                    break; // we got both → no need to continue so we exit on second iteration
-                }
+            if (persistenceResult instanceof EmailAddress) {
+                // The enabled email becomes the primary email
+                primaryEmail = persistenceResult;
+                this.logger.info(
+                    `Enabled PRIMARY email address:${persistenceResult.address}, personId:${personId}, username:${personUsername.value}`,
+                );
+
+                // Find the latest disabled email (that wasn't just enabled) as alternative
+                // Since emails are sorted by updatedAt desc, find the first disabled email that's not the one we just enabled
+                alternativeEmail = existingEmails.find(
+                    (email: EmailAddress<true>) => email.disabled && email.id !== firstDisabledEmail.id,
+                );
+            } else {
+                this.logger.error(
+                    `Could not ENABLE email for personId:${personId}, username:${personUsername.value}, error:${persistenceResult.message}`,
+                );
+                return; // stop if save failed
             }
         }
 
-        // No existing emails found → create a completely new one
+        // No existing emails found or none could be enabled → create a completely new one
         if (!primaryEmail) {
             this.logger.info(
                 `No existing email found for personId:${personId}, username:${personUsername.value}, creating a new one`,
             );
-            await this.createNewEmail(personId, organisationId, generateEmailAddressGeneratedEvent);
+            await this.createNewEmail(personId, organisationId, emailAdressGeneratedCreator);
             return;
         }
 
-        // This fires ONE event in the end, with both addresses
+        // This fires ONE event with primary email and alternative email (if exists)
         const events: [EmailAddressGeneratedEvent, KafkaEmailAddressGeneratedEvent] = emailAdressGeneratedCreator(
             personId,
             personUsername.value,
@@ -785,7 +786,7 @@ export class EmailEventHandler {
             primaryEmail.address,
             primaryEmail.enabled,
             organisationKennung.value,
-            alternativeEmail?.address ?? '',
+            alternativeEmail?.address ?? '', // Alternative email address (still disabled)
         );
 
         this.eventService.publish(...events);
