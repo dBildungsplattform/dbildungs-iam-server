@@ -1,4 +1,4 @@
-import { Kafka, logLevel } from 'kafkajs';
+import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../shared/config/kafka.config.js';
 import { ServerConfig } from '../../shared/config/server.config.js';
@@ -8,9 +8,9 @@ import { Provider } from '@nestjs/common';
 
 export const KAFKA_INSTANCE: symbol = Symbol('KAFKA_INSTANCE');
 
-export const KafkaProvider: Provider<Kafka | null> = {
+export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
     provide: KAFKA_INSTANCE,
-    useFactory: (configService: ConfigService<ServerConfig>): Kafka | null => {
+    useFactory: (configService: ConfigService<ServerConfig>): KafkaJS.Kafka | null => {
         const kafkaConfig: KafkaConfig = configService.getOrThrow<KafkaConfig>('KAFKA');
 
         if (kafkaConfig.KAFKA_SSL_ENABLED) {
@@ -22,15 +22,14 @@ export const KafkaProvider: Provider<Kafka | null> = {
                 throw new Error('SSL enabled but cert paths are missing');
             }
 
-            return new Kafka({
-                brokers: kafkaConfig.BROKER,
-                logLevel: logLevel.DEBUG,
-                connectionTimeout: 30000,
-                ssl: {
-                    rejectUnauthorized: false,
-                    ca: [fs.readFileSync(caPath, 'utf-8')],
-                    cert: fs.readFileSync(certPath, 'utf-8'),
-                    key: fs.readFileSync(keyPath, 'utf-8'),
+            return new KafkaJS.Kafka({
+                'ssl.ca.pem': fs.readFileSync(caPath, 'utf-8'),
+                'ssl.certificate.pem': fs.readFileSync(certPath, 'utf-8'),
+                'ssl.key.pem': fs.readFileSync(keyPath, 'utf-8'),
+                kafkaJS: {
+                    brokers: kafkaConfig.BROKER,
+                    logLevel: KafkaJS.logLevel.DEBUG,
+                    connectionTimeout: 30000,
                 },
             });
         } else {

@@ -1,16 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Kafka } from 'kafkajs';
+import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { KafkaProvider, KAFKA_INSTANCE } from './kafka-client-provider.js';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../shared/config/kafka.config.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+
+const Kafka: typeof KafkaJS.Kafka = KafkaJS.Kafka;
 
 describe('KafkaProvider', () => {
     let module: TestingModule;
     let configService: DeepMocked<ConfigService>;
 
     const kafkaConfigEnabled: KafkaConfig = {
-        BROKER: '10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093',
+        BROKER: ['10.7.250.100:9093', '10.7.250.101:9093', '10.7.250.102:9093'],
         GROUP_ID: 'test-group',
         SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
@@ -19,9 +21,9 @@ describe('KafkaProvider', () => {
         USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
         KAFKA_SSL_ENABLED: true,
-        KAFKA_SSL_CA_PATH: "/tls/ca.pem",
-        KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
-        KAFKA_SSL_KEY_PATH: "/tls/client-key.pem"
+        KAFKA_SSL_CA_PATH: '/tls/ca.pem',
+        KAFKA_SSL_CERT_PATH: '/tls/client-cert.pem',
+        KAFKA_SSL_KEY_PATH: '/tls/client-key.pem',
     };
 
     const kafkaConfigSslEnabled: KafkaConfig = {

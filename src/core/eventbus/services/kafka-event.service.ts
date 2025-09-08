@@ -1,5 +1,5 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Consumer, Kafka, KafkaMessage, Producer } from 'kafkajs';
+import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { BaseEvent } from '../../../shared/events/index.js';
 import { Constructor, EventHandlerType, MaybePromise } from '../types/util.types.js';
 import { ClassLogger } from '../../logging/class-logger.js';
@@ -17,6 +17,11 @@ import { ConfigService } from '@nestjs/config';
 import { ServerConfig } from '../../../shared/config/server.config.js';
 import { KafkaConfig } from '../../../shared/config/kafka.config.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
+
+type Kafka = KafkaJS.Kafka;
+type Consumer = KafkaJS.Consumer;
+type Producer = KafkaJS.Producer;
+type KafkaMessage = KafkaJS.KafkaMessage;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -48,10 +53,13 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             return;
         }
         this.consumer = this.kafka.consumer({
-            groupId: this.kafkaConfig.GROUP_ID,
-            sessionTimeout: this.kafkaConfig.SESSION_TIMEOUT,
-            heartbeatInterval: this.kafkaConfig.HEARTBEAT_INTERVAL,
-            allowAutoTopicCreation: false,
+            kafkaJS: {
+                groupId: this.kafkaConfig.GROUP_ID,
+                sessionTimeout: this.kafkaConfig.SESSION_TIMEOUT,
+                heartbeatInterval: this.kafkaConfig.HEARTBEAT_INTERVAL,
+                allowAutoTopicCreation: false,
+                autoCommit: true,
+            },
         });
         this.producer = this.kafka.producer();
     }
@@ -72,11 +80,9 @@ export class KafkaEventService implements OnModuleInit, OnModuleDestroy {
             // });
 
             const topics: Set<string> = this.getTopicSetWithPrefixFromMappings();
-            await this.consumer?.subscribe({ topics: Array.from(topics), fromBeginning: true });
+            await this.consumer?.subscribe({ topics: Array.from(topics) });
 
             await this.consumer?.run({
-                autoCommit: true,
-                autoCommitThreshold: 1,
                 eachMessage: async ({
                     topic,
                     partition,

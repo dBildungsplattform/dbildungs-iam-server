@@ -7,18 +7,18 @@ import { KafkaEventService } from './kafka-event.service.js';
 import { KafkaEvent } from '../../../shared/events/kafka-event.js';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConfig } from '../../../shared/config/kafka.config.js';
-import {
-    Kafka,
-    Consumer,
-    Producer,
-    KafkaMessage,
-    EachMessageHandler,
-    ConsumerRunConfig,
-    EachMessagePayload,
-} from 'kafkajs';
+import { KafkaJS } from '@confluentinc/kafka-javascript';
 import { KafkaPersonDeletedEvent } from '../../../shared/events/kafka-person-deleted.event.js';
 import { KAFKA_INSTANCE } from '../kafka-client-provider.js';
 import { inspect } from 'util';
+
+type Kafka = KafkaJS.Kafka;
+type Consumer = KafkaJS.Consumer;
+type Producer = KafkaJS.Producer;
+type KafkaMessage = KafkaJS.KafkaMessage;
+type EachMessageHandler = KafkaJS.EachMessageHandler;
+type ConsumerRunConfig = KafkaJS.ConsumerRunConfig;
+type EachMessagePayload = KafkaJS.EachMessagePayload;
 
 class TestEvent extends BaseEvent implements KafkaEvent {
     public constructor() {
@@ -40,7 +40,7 @@ describe('KafkaEventService', () => {
     let producer: DeepMocked<Producer>;
 
     const defaultKafkaConfig: KafkaConfig = {
-        BROKER: 'broker',
+        BROKER: ['broker'],
         GROUP_ID: 'groupId',
         SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
@@ -49,9 +49,9 @@ describe('KafkaEventService', () => {
         USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
         KAFKA_SSL_ENABLED: true,
-        KAFKA_SSL_CA_PATH: "/tls/ca.pem",
-        KAFKA_SSL_CERT_PATH: "/tls/client-cert.pem",
-        KAFKA_SSL_KEY_PATH: "/tls/client-key.pem"
+        KAFKA_SSL_CA_PATH: '/tls/ca.pem',
+        KAFKA_SSL_CERT_PATH: '/tls/client-cert.pem',
+        KAFKA_SSL_KEY_PATH: '/tls/client-key.pem',
     };
 
     beforeEach(async () => {
