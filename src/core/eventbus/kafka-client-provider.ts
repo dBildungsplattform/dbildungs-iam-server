@@ -22,23 +22,21 @@ export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
                 throw new Error('SSL enabled but cert paths are missing');
             }
 
-            const kafka = new KafkaJS.Kafka({
-                'ssl.ca.pem': fs.readFileSync(caPath, 'utf-8'),
-                'ssl.certificate.pem': fs.readFileSync(certPath, 'utf-8'),
-                'ssl.key.pem': fs.readFileSync(keyPath, 'utf-8'),
-                kafkaJS: {
-                    brokers: kafkaConfig.BROKER,
-                    logLevel: KafkaJS.logLevel.DEBUG,
-                    connectionTimeout: 30000,
-                },
+            const kafka: KafkaJS.Kafka = new KafkaJS.Kafka({
+                'enable.ssl.certificate.verification': false,
+                'ssl.ca.pem': fs.readFileSync(caPath, 'utf8'),
+                'ssl.certificate.pem': fs.readFileSync(certPath, 'utf8'),
+                'ssl.key.pem': fs.readFileSync(keyPath, 'utf8'),
+                'bootstrap.servers': kafkaConfig.BROKER.join(','),
+                log_level: 7,
             });
 
-            const admin = kafka.admin();
+            const admin: KafkaJS.Admin = kafka.admin();
 
             void admin
                 .connect()
                 .then(() => admin.listTopics())
-                .then((topics) => console.log(topics));
+                .then((topics: string[]) => console.log(topics));
 
             return kafka;
         } else {
