@@ -22,7 +22,7 @@ export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
                 throw new Error('SSL enabled but cert paths are missing');
             }
 
-            return new KafkaJS.Kafka({
+            const kafka = new KafkaJS.Kafka({
                 'ssl.ca.pem': fs.readFileSync(caPath, 'utf-8'),
                 'ssl.certificate.pem': fs.readFileSync(certPath, 'utf-8'),
                 'ssl.key.pem': fs.readFileSync(keyPath, 'utf-8'),
@@ -32,6 +32,15 @@ export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
                     connectionTimeout: 30000,
                 },
             });
+
+            const admin = kafka.admin();
+
+            void admin
+                .connect()
+                .then(() => admin.listTopics())
+                .then((topics) => console.log(topics));
+
+            return kafka;
         } else {
             throw new Error('SSL is disabled. SSL must be enabled');
         }
