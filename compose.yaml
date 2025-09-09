@@ -372,3 +372,4 @@ services:
 volumes:
   db-data:
   mariadb:
+  kafka:
