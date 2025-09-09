@@ -97,8 +97,8 @@ describe('KafkaEventService', () => {
 
         expect(consumer.connect).toHaveBeenCalled();
         expect(consumer.subscribe).toHaveBeenCalledWith({
-            topic: 'prefix.user-topic',
-            fromBeginning: true,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            topics: expect.arrayContaining(['prefix.user-topic']),
         });
         expect(producer.connect).toHaveBeenCalled();
         expect(logger.info).toHaveBeenCalledWith('Connecting to Kafka');
