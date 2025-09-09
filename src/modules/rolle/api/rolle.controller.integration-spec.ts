@@ -849,14 +849,6 @@ describe('Rolle API', () => {
                 .send(params);
 
             expect(response.status).toBe(200);
-            // const expectedResponse: RolleWithServiceProvidersResponse = {
-            //     id: rolle.id,
-            //     name: params.name,
-            //     administeredBySchulstrukturknoten: organisation.id,
-            //     rollenart: rolle.rollenart,
-            //     merkmale: params.merkmale,
-            //     systemrechte: [new SystemRechtResponse(RollenSystemRecht.ROLLEN_ERWEITERN)],
-            // };
             expect(response.body).toMatchObject({
                 id: rolle.id,
                 name: params.name,
