@@ -200,6 +200,8 @@ kafka:
   initEnabled: true
   sessionTimeout: 8000
   heartbeatInterval: 1000
+  topicPartitions: 3
+  topicReplications: 3
   initImage:
     repository: docker.io/bitnami/kafka
     tag: '3.9.0'
