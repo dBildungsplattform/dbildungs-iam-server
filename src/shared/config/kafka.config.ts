@@ -1,5 +1,4 @@
 import { IsBoolean, IsNumber, IsString, ValidateIf } from 'class-validator';
-import { Type } from 'class-transformer';
 
 type Required<T, IsRequired extends boolean> = Persisted<T, IsRequired>;
 
