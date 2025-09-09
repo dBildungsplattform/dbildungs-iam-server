@@ -57,13 +57,20 @@ export class PersonenInfoService {
             return [];
         }
 
-        const personIds: PersonID[] =
-            await this.schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
+        const [idsWithRollenerweiterung, idsWithKontext]: [PersonID[], PersonID[]] = await Promise.all([
+            this.schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                 permittedServiceProviderIds,
                 permittedOrgas.all ? 'all' : new Set<string>(permittedOrgas.orgaIds),
-                offset,
-                limit,
-            );
+            ),
+            this.schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations(
+                permittedServiceProviderIds,
+                permittedOrgas.all ? 'all' : new Set<string>(permittedOrgas.orgaIds),
+            ),
+        ]);
+
+        const personIds: PersonID[] = Array.from(new Set([...idsWithRollenerweiterung, ...idsWithKontext]))
+            .sort()
+            .slice(offset, offset + limit);
 
         const [persons, emailsForPersons, kontexteForPersons, userLocksForPersons]: [
             Person<true>[],
