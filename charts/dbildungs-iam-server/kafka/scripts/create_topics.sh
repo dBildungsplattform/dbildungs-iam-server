@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Usage:
 #   create_topics.sh <file>
@@ -48,16 +48,16 @@ fi
 
 # When KAFKA_SSL_ENABLED is set create JAAS file
 if [ "${KAFKA_SSL_ENABLED,,}" = "true" ]; then
-    if [ -z "${KAFKA_SSL_CA_PATH}" ]; then
-        echo "Environment-variable KAFKA_SSL_CA_PATH was not set!" && exit 1
+    if [ ! -e "$KAFKA_SSL_CA_PATH" ]; then
+        echo "KAFKA_SSL_CA_PATH file does not exist!" && exit 1
     fi
 
-    if [ -z "${KAFKA_SSL_CERT_PATH}" ]; then
-        echo "Environment-variable KAFKA_SSL_CERT_PATH was not set!" && exit 1
+    if [ ! -e "$KAFKA_SSL_CERT_PATH" ]; then
+        echo "KAFKA_SSL_CERT_PATH file does not exist!" && exit 1
     fi
 
-    if [ -z "${KAFKA_SSL_KEY_PATH}" ]; then
-        echo "Environment-variable KAFKA_SSL_KEY_PATH was not set!" && exit 1
+    if [ ! -e "$KAFKA_SSL_KEY_PATH" ]; then
+        echo "KAFKA_SSL_KEY_PATH file does not exist!" && exit 1
     fi
 
     CONFIG_DIR=$(mktemp -d)

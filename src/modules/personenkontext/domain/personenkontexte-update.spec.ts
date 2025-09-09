@@ -28,6 +28,7 @@ import { UpdateInvalidRollenartForLernError } from './error/update-invalid-rolle
 import { PersonenkontextBefristungRequiredError } from './error/personenkontext-befristung-required.error.js';
 import { CheckBefristungSpecification } from '../specification/befristung-required-bei-rolle-befristungspflicht.js';
 import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 function createPKBodyParams(personId: PersonID): DbiamPersonenkontextBodyParams[] {
     const firstCreatePKBodyParams: DbiamPersonenkontextBodyParams = createMock<DbiamPersonenkontextBodyParams>({
@@ -753,6 +754,58 @@ describe('PersonenkontexteUpdate', () => {
 
                 expect(updateError).toBeInstanceOf(PersonenkontextBefristungRequiredError);
             });
+            it('should return DuplicatePersonalnummerError when saving person with personalnummer fails', async () => {
+                const newPerson: Person<true> = createMock<Person<true>>({
+                    id: personId,
+                    personalnummer: 'old-number',
+                });
+
+                // Setup sut with personalnummer
+                sut = dbiamPersonenkontextFactory.createNewPersonenkontexteUpdate(
+                    personId,
+                    lastModified,
+                    2,
+                    [bodyParam1, bodyParam2],
+                    personPermissionsMock,
+                    'new-personalnummer',
+                );
+
+                personRepoMock.findById.mockResolvedValue(newPerson);
+
+                dBiamPersonenkontextRepoMock.find.mockResolvedValue(pk1);
+                dBiamPersonenkontextRepoMock.findByPerson.mockResolvedValue([pk1, pk2]);
+
+                rolleRepoMock.findByIds.mockImplementation(async (ids: string[]): Promise<Map<string, Rolle<true>>> => {
+                    const map: Map<string, Rolle<true>> = new Map<string, Rolle<true>>();
+                    for (const id of ids) {
+                        if (id === pk1.rolleId || id === pk2.rolleId) {
+                            map.set(
+                                id,
+                                DoFactory.createRolle(true, {
+                                    id,
+                                    rollenart: RollenArt.LEHR,
+                                    merkmale: [],
+                                }),
+                            );
+                        } else {
+                            map.set(id, DoFactory.createRolle(true, { id, rollenart: RollenArt.LEHR }));
+                        }
+                    }
+                    return Promise.resolve(map);
+                });
+
+                organisationRepoMock.findByIds.mockResolvedValue(new Map());
+
+                const saveError: DuplicatePersonalnummerError = new DuplicatePersonalnummerError(
+                    'PERSONALNUMMER_SAVE_ERROR',
+                );
+                personRepoMock.save.mockResolvedValue(saveError);
+
+                const updateResult: Personenkontext<true>[] | DuplicatePersonalnummerError = await sut.update();
+
+                expect(updateResult).toBeInstanceOf(DuplicatePersonalnummerError);
+            });
+
             it('Should not throw any PersonenkontextBefristungRequiredError', async () => {
                 const newPerson: Person<true> = createMock<Person<true>>();
                 personRepoMock.findById.mockResolvedValueOnce(newPerson);

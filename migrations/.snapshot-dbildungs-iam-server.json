@@ -249,7 +249,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -285,7 +286,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -517,7 +519,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -553,7 +556,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -807,7 +811,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -843,7 +848,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -1089,7 +1095,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -1125,7 +1132,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -1363,7 +1371,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -1399,7 +1408,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -1666,7 +1676,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -1702,7 +1713,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -2084,7 +2096,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -2120,7 +2133,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -2379,7 +2393,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -2415,7 +2430,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -2970,7 +2986,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -3006,7 +3023,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -3319,7 +3337,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -3355,7 +3374,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -3604,7 +3624,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -3640,7 +3661,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -3928,7 +3950,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -3964,7 +3987,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -4399,7 +4423,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -4435,7 +4460,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -4790,7 +4816,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -4826,7 +4853,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -5160,7 +5188,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -5196,7 +5225,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -5446,7 +5476,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -5482,7 +5513,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -5522,7 +5554,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ],
           "mappedType": "enum"
         }
@@ -5746,7 +5779,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -5782,7 +5816,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -6110,7 +6145,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -6146,7 +6182,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -6506,7 +6543,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -6542,7 +6580,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -6789,7 +6828,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -6826,6 +6866,385 @@
           "schema": "public",
           "items": [
             "NACHTRAEGLICH_ZUWEISBAR"
+          ]
+        }
+      }
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "organisation_id": {
+          "name": "organisation_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "rolle_id": {
+          "name": "rolle_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        },
+        "service_provider_id": {
+          "name": "service_provider_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
+        }
+      },
+      "name": "rollenerweiterung",
+      "schema": "public",
+      "indexes": [
+        {
+          "keyName": "rolle_erweiterung_organisation_id_index",
+          "columnNames": [
+            "organisation_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "type": "hash"
+        },
+        {
+          "keyName": "rolle_erweiterung_rolle_id_index",
+          "columnNames": [
+            "rolle_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "type": "hash"
+        },
+        {
+          "keyName": "rolle_erweiterung_service_provider_id_index",
+          "columnNames": [
+            "service_provider_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "type": "hash"
+        },
+        {
+          "keyName": "rollenerweiterung_organisation_id_rolle_id_service_8581c_unique",
+          "columnNames": [
+            "organisation_id",
+            "rolle_id",
+            "service_provider_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "rollenerweiterung_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "rollenerweiterung_organisation_id_foreign": {
+          "constraintName": "rollenerweiterung_organisation_id_foreign",
+          "columnNames": [
+            "organisation_id"
+          ],
+          "localTableName": "public.rollenerweiterung",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.organisation",
+          "updateRule": "cascade"
+        },
+        "rollenerweiterung_rolle_id_foreign": {
+          "constraintName": "rollenerweiterung_rolle_id_foreign",
+          "columnNames": [
+            "rolle_id"
+          ],
+          "localTableName": "public.rollenerweiterung",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.rolle",
+          "updateRule": "cascade"
+        },
+        "rollenerweiterung_service_provider_id_foreign": {
+          "constraintName": "rollenerweiterung_service_provider_id_foreign",
+          "columnNames": [
+            "service_provider_id"
+          ],
+          "localTableName": "public.rollenerweiterung",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "public.service_provider",
+          "updateRule": "cascade"
+        }
+      },
+      "nativeEnums": {
+        "db_seed_status_enum": {
+          "name": "db_seed_status_enum",
+          "schema": "public",
+          "items": [
+            "STARTED",
+            "DONE",
+            "FAILED"
+          ]
+        },
+        "referenced_entity_type_enum": {
+          "name": "referenced_entity_type_enum",
+          "schema": "public",
+          "items": [
+            "PERSON",
+            "ORGANISATION",
+            "ROLLE",
+            "SERVICE_PROVIDER"
+          ]
+        },
+        "meldung_status_enum": {
+          "name": "meldung_status_enum",
+          "schema": "public",
+          "items": [
+            "VEROEFFENTLICHT",
+            "NICHT_VEROEFFENTLICHT"
+          ]
+        },
+        "organisations_typ_enum": {
+          "name": "organisations_typ_enum",
+          "schema": "public",
+          "items": [
+            "ROOT",
+            "LAND",
+            "TRAEGER",
+            "SCHULE",
+            "KLASSE",
+            "ANBIETER",
+            "SONSTIGE ORGANISATION / EINRICHTUNG",
+            "UNBESTAETIGT"
+          ]
+        },
+        "traegerschaft_enum": {
+          "name": "traegerschaft_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "geschlecht_enum": {
+          "name": "geschlecht_enum",
+          "schema": "public",
+          "items": [
+            "m",
+            "w",
+            "d",
+            "x"
+          ]
+        },
+        "vertrauensstufe_enum": {
+          "name": "vertrauensstufe_enum",
+          "schema": "public",
+          "items": [
+            "KEIN",
+            "UNBE",
+            "TEIL",
+            "VOLL"
+          ]
+        },
+        "email_address_status_enum": {
+          "name": "email_address_status_enum",
+          "schema": "public",
+          "items": [
+            "ENABLED",
+            "DISABLED",
+            "REQUESTED",
+            "FAILED",
+            "DELETED_LDAP",
+            "DELETED_OX",
+            "DELETED"
+          ]
+        },
+        "external_id_enum": {
+          "name": "external_id_enum",
+          "schema": "public",
+          "items": [
+            "LDAP"
+          ]
+        },
+        "rollen_art_enum": {
+          "name": "rollen_art_enum",
+          "schema": "public",
+          "items": [
+            "LERN",
+            "LEHR",
+            "EXTERN",
+            "ORGADMIN",
+            "LEIT",
+            "SYSADMIN"
+          ]
+        },
+        "personenstatus_enum": {
+          "name": "personenstatus_enum",
+          "schema": "public",
+          "items": [
+            "AKTIV"
+          ]
+        },
+        "jahrgangsstufe_enum": {
+          "name": "jahrgangsstufe_enum",
+          "schema": "public",
+          "items": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10"
+          ]
+        },
+        "import_status_enum": {
+          "name": "import_status_enum",
+          "schema": "public",
+          "items": [
+            "CANCELLED",
+            "COMPLETED",
+            "FAILED",
+            "FINISHED",
+            "INPROGRESS",
+            "INVALID",
+            "STARTED",
+            "VALID"
+          ]
+        },
+        "import_data_item_status_enum": {
+          "name": "import_data_item_status_enum",
+          "schema": "public",
+          "items": [
+            "FAILED",
+            "SUCCESS",
+            "PENDING"
+          ]
+        },
+        "rollen_merkmal_enum": {
+          "name": "rollen_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "BEFRISTUNG_PFLICHT",
+            "KOPERS_PFLICHT"
+          ]
+        },
+        "rollen_system_recht_enum": {
+          "name": "rollen_system_recht_enum",
+          "schema": "public",
+          "items": [
+            "ROLLEN_VERWALTEN",
+            "PERSONEN_SOFORT_LOESCHEN",
+            "PERSONEN_VERWALTEN",
+            "LANDESBEDIENSTETE_SUCHEN_UND_HINZUFUEGEN",
+            "EINGESCHRAENKT_NEUE_BENUTZER_ERSTELLEN",
+            "SCHULEN_VERWALTEN",
+            "KLASSEN_VERWALTEN",
+            "SCHULTRAEGER_VERWALTEN",
+            "PERSON_SYNCHRONISIEREN",
+            "CRON_DURCHFUEHREN",
+            "PERSONEN_ANLEGEN",
+            "IMPORT_DURCHFUEHREN",
+            "PERSONEN_LESEN",
+            "BULK_VERWALTEN",
+            "SCHULPORTAL_VERWALTEN",
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
+          ]
+        },
+        "service_provider_target_enum": {
+          "name": "service_provider_target_enum",
+          "schema": "public",
+          "items": [
+            "URL",
+            "EMAIL",
+            "SCHULPORTAL_ADMINISTRATION"
+          ]
+        },
+        "service_provider_kategorie_enum": {
+          "name": "service_provider_kategorie_enum",
+          "schema": "public",
+          "items": [
+            "EMAIL",
+            "UNTERRICHT",
+            "VERWALTUNG",
+            "HINWEISE",
+            "ANGEBOTE"
+          ]
+        },
+        "service_provider_system_enum": {
+          "name": "service_provider_system_enum",
+          "schema": "public",
+          "items": [
+            "NONE",
+            "EMAIL",
+            "ITSLEARNING"
+          ]
+        },
+        "service_provider_merkmal_enum": {
+          "name": "service_provider_merkmal_enum",
+          "schema": "public",
+          "items": [
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7072,7 +7491,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -7108,7 +7528,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7133,7 +7554,8 @@
           "nullable": false,
           "nativeEnumName": "service_provider_merkmal_enum",
           "enumItems": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ],
           "mappedType": "enum"
         }
@@ -7357,7 +7779,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -7393,7 +7816,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7687,7 +8111,8 @@
             "PERSONEN_LESEN",
             "BULK_VERWALTEN",
             "SCHULPORTAL_VERWALTEN",
-            "HINWEISE_BEARBEITEN"
+            "HINWEISE_BEARBEITEN",
+            "ROLLEN_ERWEITERN"
           ]
         },
         "service_provider_target_enum": {
@@ -7723,7 +8148,8 @@
           "name": "service_provider_merkmal_enum",
           "schema": "public",
           "items": [
-            "NACHTRAEGLICH_ZUWEISBAR"
+            "NACHTRAEGLICH_ZUWEISBAR",
+            "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
           ]
         }
       }
@@ -7908,7 +8334,8 @@
         "PERSONEN_LESEN",
         "BULK_VERWALTEN",
         "SCHULPORTAL_VERWALTEN",
-        "HINWEISE_BEARBEITEN"
+        "HINWEISE_BEARBEITEN",
+        "ROLLEN_ERWEITERN"
       ]
     },
     "service_provider_target_enum": {
@@ -7944,7 +8371,8 @@
       "name": "service_provider_merkmal_enum",
       "schema": "public",
       "items": [
-        "NACHTRAEGLICH_ZUWEISBAR"
+        "NACHTRAEGLICH_ZUWEISBAR",
+        "VERFUEGBAR_FUER_ROLLENERWEITERUNG"
       ]
     }
   }

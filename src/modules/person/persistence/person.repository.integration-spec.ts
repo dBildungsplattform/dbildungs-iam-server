@@ -1,5 +1,7 @@
 import { faker } from '@faker-js/faker';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Collection, EntityManager, MikroORM, ref, RequiredEntityData } from '@mikro-orm/core';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
     ConfigTestModule,
@@ -9,22 +11,10 @@ import {
     LoggingTestModule,
     MapperTestModule,
 } from '../../../../test/utils/index.js';
-import { PersonEntity } from './person.entity.js';
-import {
-    getEnabledOrAlternativeEmailAddress,
-    getOxUserId,
-    mapAggregateToData,
-    mapEntityToAggregate,
-    mapEntityToAggregateInplace,
-    PersonenQueryParams,
-    PersonRepository,
-} from './person.repository.js';
-import { Person } from '../domain/person.js';
-import { PersonScope } from './person.scope.js';
-import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { UsernameGeneratorService } from '../domain/username-generator.service.js';
-import { KeycloakUserService, PersonHasNoKeycloakId } from '../../keycloak-administration/index.js';
+import { createAndPersistOrganisation } from '../../../../test/utils/organisation-test-helper.js';
+import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
+import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 import {
     DomainError,
     EntityCouldNotBeDeleted,
@@ -35,46 +25,57 @@ import {
     MismatchedRevisionError,
     MissingPermissionsError,
 } from '../../../shared/error/index.js';
-import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { ConfigService } from '@nestjs/config';
-import { EmailRepo } from '../../email/persistence/email.repo.js';
-import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
-import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
-import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
-import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
-import { createAndPersistOrganisation } from '../../../../test/utils/organisation-test-helper.js';
-import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
-import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
-import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
-import { EmailAddressStatus } from '../../email/domain/email-address.js';
-import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
-import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
-import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
-import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
-import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
-import { Rolle } from '../../rolle/domain/rolle.js';
-import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
-import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
-import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
-import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
-import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
-import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
-import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
-import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
-import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
-import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
-import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
-import { Organisation } from '../../organisation/domain/organisation.js';
-import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
-import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/event-routing-legacy-kafka.service.js';
 import { KafkaPersonRenamedEvent } from '../../../shared/events/kafka-person-renamed-event.js';
 import { PersonRenamedEvent } from '../../../shared/events/person-renamed-event.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
+import { PersonenkontextEventKontextData } from '../../../shared/events/personenkontext-event.types.js';
+import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { PersonID } from '../../../shared/types/aggregate-ids.types.js';
 import { OXUserID } from '../../../shared/types/ox-ids.types.js';
-import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
+import { EmailAddressStatus } from '../../email/domain/email-address.js';
+import { EmailAddressEntity } from '../../email/persistence/email-address.entity.js';
+import { EmailRepo } from '../../email/persistence/email.repo.js';
+import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
+import { KeycloakUserService, PersonHasNoKeycloakId } from '../../keycloak-administration/index.js';
+import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
+import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
+import { Organisation } from '../../organisation/domain/organisation.js';
+import { OrganisationEntity } from '../../organisation/persistence/organisation.entity.js';
+import { OrganisationRepository } from '../../organisation/persistence/organisation.repository.js';
+import { PersonenkontextFactory } from '../../personenkontext/domain/personenkontext.factory.js';
+import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
+import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
+import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
+import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
+import { Rolle } from '../../rolle/domain/rolle.js';
+import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
+import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
+import { ServiceProvider } from '../../service-provider/domain/service-provider.js';
+import { ServiceProviderRepo } from '../../service-provider/repo/service-provider.repo.js';
+import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
+import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
+import { PersonExternalIdType, PersonLockOccasion, SortFieldPerson } from '../domain/person.enums.js';
+import { Person } from '../domain/person.js';
+import { PersonalnummerRequiredError } from '../domain/personalnummer-required.error.js';
+import { PersonalNummerForPersonWithTrailingSpaceError } from '../domain/personalnummer-with-trailing-space.error.js';
+import { PersonUpdateOutdatedError } from '../domain/update-outdated.error.js';
+import { UsernameGeneratorService } from '../domain/username-generator.service.js';
+import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-trailing-space.error.js';
+import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
+import { PersonEntity } from './person.entity.js';
+import {
+    getEnabledOrAlternativeEmailAddress,
+    getOxUserId,
+    mapAggregateToData,
+    mapEntityToAggregate,
+    mapEntityToAggregateInplace,
+    PersonenQueryParams,
+    PersonRepository,
+    PersonWithoutOrgDeleteListResult,
+} from './person.repository.js';
+import { PersonScope } from './person.scope.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;
@@ -759,6 +760,99 @@ describe('PersonRepository Integration', () => {
     });
 
     describe('update', () => {
+        describe('when updating personalnummer to duplicate value', () => {
+            beforeEach(() => {
+                jest.restoreAllMocks();
+            });
+            it('should return DuplicatePersonalnummerError', async () => {
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'testusername1',
+                });
+
+                const personalnummer: string = '54321';
+
+                // Create first person with personalnummer
+                const person1: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                    personalnummer: personalnummer,
+                });
+                expect(person1).not.toBeInstanceOf(DomainError);
+                if (person1 instanceof DomainError) {
+                    throw person1;
+                }
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something',
+                });
+
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+
+                const existingPerson1: Person<true> | DomainError = await sut.create(person1);
+                expect(existingPerson1).not.toBeInstanceOf(DomainError);
+                if (existingPerson1 instanceof DomainError) {
+                    throw existingPerson1;
+                }
+
+                // Create second person without personalnummer
+                usernameGeneratorService.generateUsername.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'testusername2',
+                });
+
+                const person2: Person<false> | DomainError = await Person.createNew(usernameGeneratorService, {
+                    familienname: faker.person.lastName(),
+                    vorname: faker.person.firstName(),
+                });
+                expect(person2).not.toBeInstanceOf(DomainError);
+                if (person2 instanceof DomainError) {
+                    throw person2;
+                }
+
+                kcUserServiceMock.create.mockResolvedValueOnce({
+                    ok: true,
+                    value: 'something2',
+                });
+
+                kcUserServiceMock.setPassword.mockResolvedValueOnce({
+                    ok: true,
+                    value: '',
+                });
+
+                const existingPerson2: Person<true> | DomainError = await sut.create(person2);
+                expect(existingPerson2).not.toBeInstanceOf(DomainError);
+                if (existingPerson2 instanceof DomainError) {
+                    throw existingPerson2;
+                }
+
+                // Try to update person2 with the same personalnummer as person1
+                const personToUpdate: Person<true> = Person.construct(
+                    existingPerson2.id,
+                    existingPerson2.createdAt,
+                    existingPerson2.updatedAt,
+                    existingPerson2.familienname,
+                    existingPerson2.vorname,
+                    existingPerson2.revision,
+                    existingPerson2.username,
+                );
+
+                personToUpdate.keycloakUserId = existingPerson2.keycloakUserId;
+                personToUpdate.personalnummer = personalnummer; // Duplicate personalnummer
+
+                const result: Person<true> | DomainError = await sut.update(personToUpdate);
+
+                expect(result).toBeInstanceOf(DuplicatePersonalnummerError);
+                if (result instanceof DuplicatePersonalnummerError) {
+                    expect(result.message).toContain('Personalnummer 54321 already exists');
+                }
+            });
+        });
+
         describe('when person exist', () => {
             describe('when only updating database attributes', () => {
                 it('should return updated person', async () => {
@@ -1529,7 +1623,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1582,7 +1675,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1639,7 +1731,6 @@ describe('PersonRepository Integration', () => {
                     email: faker.internet.email(),
                     createdDate: new Date(),
                     externalSystemIDs: {},
-                    attributes: {},
                 },
             });
 
@@ -1673,7 +1764,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1753,7 +1843,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1789,7 +1878,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1822,7 +1910,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1889,7 +1976,6 @@ describe('PersonRepository Integration', () => {
                             email: faker.internet.email(),
                             createdDate: new Date(),
                             externalSystemIDs: {},
-                            attributes: {},
                         },
                     });
 
@@ -1949,7 +2035,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -1982,7 +2067,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2025,7 +2109,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2058,7 +2141,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2131,7 +2213,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2218,7 +2299,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -2251,7 +2331,6 @@ describe('PersonRepository Integration', () => {
                         email: faker.internet.email(),
                         createdDate: new Date(),
                         externalSystemIDs: {},
-                        attributes: {},
                     },
                 });
 
@@ -3087,12 +3166,13 @@ describe('PersonRepository Integration', () => {
                 person4.id = personEntity4.id;
 
                 //get person ids without personenkontext
-                const personsWithOrgList: string[] = await sut.getPersonWithoutOrgDeleteList();
+                const { ids, total }: PersonWithoutOrgDeleteListResult = await sut.getPersonWithoutOrgDeleteList();
 
-                expect(personsWithOrgList).toContain(person1.id);
-                expect(personsWithOrgList).toContain(person2.id);
-                expect(personsWithOrgList).not.toContain(person3.id);
-                expect(personsWithOrgList).not.toContain(person4.id);
+                expect(ids).toContain(person1.id);
+                expect(ids).toContain(person2.id);
+                expect(ids).not.toContain(person3.id);
+                expect(ids).not.toContain(person4.id);
+                expect(total).toBe(2);
             });
         });
         describe('findOrganisationAdminsByOrganisationId', () => {

@@ -6,7 +6,7 @@ metadata:
   name: {{ template "common.names.name" $ }}-{{ $job_name}}
   namespace: {{ template "common.names.namespace" $ }}
 spec:
-  schedule: {{ $job_options.schedule }}
+  schedule: {{ $job_options.schedule | quote }}
   startingDeadlineSeconds: 300
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1

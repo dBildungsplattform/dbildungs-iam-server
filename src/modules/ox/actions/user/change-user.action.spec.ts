@@ -22,6 +22,7 @@ describe('ChangeUserAction', () => {
         it('should return object', () => {
             const action: ChangeUserAction = new ChangeUserAction({
                 contextId: faker.string.uuid(),
+                contextName: faker.string.alpha(),
                 userId: oxUserId,
                 email1: email,
                 defaultSenderAddress: email,
@@ -43,6 +44,7 @@ describe('ChangeUserAction', () => {
         it('should return CreateUserResponse', () => {
             const action: ChangeUserAction = new ChangeUserAction({
                 contextId: faker.string.uuid(),
+                contextName: faker.string.alpha(),
                 userId: oxUserId,
                 email1: email,
                 defaultSenderAddress: email,

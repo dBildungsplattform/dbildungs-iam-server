@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "common.names.name" . }}-email-backend
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: email-backend
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.emailBackend.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.emailBackend.maxUnavailable }}
+      maxSurge: {{ .Values.emailBackend.maxSurge }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "common.names.name" . }}
+      app.kubernetes.io/component: email-backend
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels" . | nindent 8 }}
+        app.kubernetes.io/component: email-backend
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: "{{ template "common.names.name" . }}-email-backend"
+          image: "{{ .Values.emailBackend.image.repository }}:{{ .Values.emailBackend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.emailBackend.image.pullPolicy | default "Always"}}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          command: ['node', 'dist/src/email/main.js']
+          ports:
+            - name: web
+              containerPort: {{ .Values.emailBackend.containerPorts.http }}
+              protocol: TCP
+          env:
+            {{- include "dbildungs-iam-server-email-backend-envs" . | nindent 12 }}
+            {{- if .Values.emailBackend.extraEnvVars }}
+            {{ toYaml .Values.emailBackend.extraEnvVars | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}-email
+          volumeMounts:
+            {{- toYaml .Values.emailBackend.volumeMounts | nindent 12 }}
+            {{- with .Values.emailBackend.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources: {{- toYaml .Values.emailBackend.resources | nindent 12 }}
+          startupProbe: {{- omit .Values.emailBackend.startupProbe "enabled" | toYaml | nindent 12 }}
+          livenessProbe: {{- omit .Values.emailBackend.livenessProbe "enabled" | toYaml | nindent 12 }}
+          readinessProbe: {{- omit .Values.emailBackend.readinessProbe "enabled" | toYaml | nindent 12 }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ template "common.names.name" . }}-email
+        - name: secret-volume
+          secret:
+            secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
+        {{- with .Values.emailBackend.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
