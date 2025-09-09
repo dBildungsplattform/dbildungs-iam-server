@@ -11,7 +11,7 @@
 #   KAFKA_SSL_KEY_PATH       - (required if SSL enabled) Key file in PEM format
 #   KAFKA_TOPIC_PREFIX       - (optional) A prefix that will be prepended to every created topic
 #   KAFKA_TOPIC_PARTITIONS   - (optional) The number of partitions to use
-#   KAFKA_REPLICATION_FACTOR - (optional) The replication factor to use
+#   KAFKA_TOPIC_REPLICATIONS - (optional) The replication factor to use
 #   KAFKA_JAAS_FILE          - (optional) The JAAS file to use for authentication (does nothing, when SSL_ENABLED is set)
 #
 # This script will create a topic for every line in the input file (if it does not already exist)
@@ -38,12 +38,12 @@ if [ -z "${KAFKA_TOPIC_PARTITIONS}" ]; then
     echo "Environment-variable KAFKA_TOPIC_PARTITIONS was not set, using the default (= 3)."
 fi
 
-# Check for KAFKA_REPLICATION_FACTOR (optional)
+# Check for KAFKA_TOPIC_REPLICATIONS (optional)
 # If not set, omit it from the create-topics command (uses cluster default)
-if [ -z "${KAFKA_REPLICATION_FACTOR}" ]; then
-    echo "Environment-variable KAFKA_REPLICATION_FACTOR was not set, using the cluster default."
+if [ -z "${KAFKA_TOPIC_REPLICATIONS}" ]; then
+    echo "Environment-variable KAFKA_TOPIC_REPLICATIONS was not set, using the cluster default."
 else
-    REPLICATION_FLAG="--replication-factor ${KAFKA_REPLICATION_FACTOR}"
+    REPLICATION_FLAG="--replication-factor ${KAFKA_TOPIC_REPLICATIONS}"
 fi
 
 # When KAFKA_SSL_ENABLED is set create JAAS file
