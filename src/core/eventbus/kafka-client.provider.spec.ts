@@ -12,7 +12,7 @@ describe('KafkaProvider', () => {
     let configService: DeepMocked<ConfigService>;
 
     const kafkaConfigEnabled: KafkaConfig = {
-        BROKER: ['10.7.250.100:9093', '10.7.250.101:9093', '10.7.250.102:9093'],
+        BROKER: '10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093',
         GROUP_ID: 'test-group',
         SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
@@ -20,16 +20,19 @@ describe('KafkaProvider', () => {
         USER_TOPIC: 'user-topic',
         USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
-        KAFKA_SSL_ENABLED: true,
-        KAFKA_SSL_CA_PATH: '/tls/ca.pem',
-        KAFKA_SSL_CERT_PATH: '/tls/client-cert.pem',
-        KAFKA_SSL_KEY_PATH: '/tls/client-key.pem',
+        SSL_ENABLED: false,
+        SSL_CA_PATH: undefined,
+        SSL_CERT_PATH: undefined,
+        SSL_KEY_PATH: undefined,
     };
 
     const kafkaConfigSslEnabled: KafkaConfig = {
         ...kafkaConfigEnabled,
         ENABLED: true,
-        KAFKA_SSL_ENABLED: true,
+        SSL_ENABLED: true,
+        SSL_CA_PATH: '/ca.pem',
+        SSL_CERT_PATH: '/cert.pem',
+        SSL_KEY_PATH: '/key.pem',
     };
 
     const kafkaConfigDisabled: KafkaConfig = {
@@ -52,7 +55,7 @@ describe('KafkaProvider', () => {
             providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
         }).compile();
 
-        const kafkaInstance: Kafka | null = module.get<Kafka | null>(KAFKA_INSTANCE);
+        const kafkaInstance: KafkaJS.Kafka | null = module.get<KafkaJS.Kafka | null>(KAFKA_INSTANCE);
 
         expect(kafkaInstance).toBeInstanceOf(Kafka);
         expect(configService.getOrThrow).toHaveBeenCalledWith('KAFKA');
@@ -66,7 +69,7 @@ describe('KafkaProvider', () => {
             providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
         }).compile();
 
-        const kafkaInstance: Kafka | null = module.get<Kafka | null>(KAFKA_INSTANCE);
+        const kafkaInstance: KafkaJS.Kafka | null = module.get<KafkaJS.Kafka | null>(KAFKA_INSTANCE);
 
         expect(kafkaInstance).toBeInstanceOf(Kafka);
         expect(configService.getOrThrow).toHaveBeenCalledWith('KAFKA');
@@ -80,7 +83,7 @@ describe('KafkaProvider', () => {
             providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
         }).compile();
 
-        const kafkaInstance: Kafka | null = module.get<Kafka | null>(KAFKA_INSTANCE);
+        const kafkaInstance: KafkaJS.Kafka | null = module.get<KafkaJS.Kafka | null>(KAFKA_INSTANCE);
 
         expect(kafkaInstance).toBeNull();
         expect(configService.getOrThrow).toHaveBeenCalledWith('KAFKA');

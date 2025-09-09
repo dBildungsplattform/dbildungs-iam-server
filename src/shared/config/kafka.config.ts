@@ -1,7 +1,9 @@
 import { IsBoolean, IsNumber, IsString, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class KafkaConfig {
+type Required<T, IsRequired extends boolean> = Persisted<T, IsRequired>;
+
+export class KafkaConfig<SslEnabled extends boolean = boolean> {
     @IsString()
     public readonly BROKER!: string;
 
@@ -29,17 +31,17 @@ export class KafkaConfig {
     public readonly ENABLED!: boolean;
 
     @IsBoolean()
-    public readonly KAFKA_SSL_ENABLED!: boolean;
+    public readonly SSL_ENABLED!: SslEnabled;
 
-    @ValidateIf((o: KafkaConfig) => o.KAFKA_SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED === true)
     @IsString()
-    public readonly KAFKA_SSL_CA_PATH?: string;
+    public readonly SSL_CA_PATH!: Required<string, SslEnabled>;
 
-    @ValidateIf((o: KafkaConfig) => o.KAFKA_SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED === true)
     @IsString()
-    public readonly KAFKA_SSL_CERT_PATH?: string;
+    public readonly SSL_CERT_PATH!: Required<string, SslEnabled>;
 
-    @ValidateIf((o: KafkaConfig) => o.KAFKA_SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED === true)
     @IsString()
-    public readonly KAFKA_SSL_KEY_PATH?: string;
+    public readonly SSL_KEY_PATH!: Required<string, SslEnabled>;
 }

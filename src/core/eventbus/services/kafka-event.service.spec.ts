@@ -40,7 +40,7 @@ describe('KafkaEventService', () => {
     let producer: DeepMocked<Producer>;
 
     const defaultKafkaConfig: KafkaConfig = {
-        BROKER: ['broker'],
+        BROKER: 'broker',
         GROUP_ID: 'groupId',
         SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,
@@ -48,10 +48,10 @@ describe('KafkaEventService', () => {
         USER_TOPIC: 'user-topic',
         USER_DLQ_TOPIC: 'dlq-topic',
         ENABLED: true,
-        KAFKA_SSL_ENABLED: true,
-        KAFKA_SSL_CA_PATH: '/tls/ca.pem',
-        KAFKA_SSL_CERT_PATH: '/tls/client-cert.pem',
-        KAFKA_SSL_KEY_PATH: '/tls/client-key.pem',
+        SSL_ENABLED: false,
+        SSL_CA_PATH: undefined,
+        SSL_CERT_PATH: undefined,
+        SSL_KEY_PATH: undefined,
     };
 
     beforeEach(async () => {

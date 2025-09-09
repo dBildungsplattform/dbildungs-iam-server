@@ -178,6 +178,9 @@ backend:
     - mountPath: /app/config/secrets.json
       subPath: secrets-json
       name: secret-volume
+    - mountPath: /tls
+      name: dbildungs-iam-kafka-tls
+      readOnly: true
   env:
     renameWaitingTimeInSeconds: 3
     stepUpTimeoutInSeconds: 900
@@ -197,6 +200,9 @@ kafka:
   kafka_broker: '10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093'
   enabled: true
   sslEnabled: true
+  sslCaPath: /tls/ca.pem
+  sslCertPath: /tls/client-cert.pem
+  sslKeyPath: /tls/client-key.pem
   initEnabled: true
   sessionTimeout: 8000
   heartbeatInterval: 1000

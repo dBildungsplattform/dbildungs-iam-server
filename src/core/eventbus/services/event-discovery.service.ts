@@ -15,16 +15,16 @@ type HandlerMethod = DiscoveredMethodWithMeta<Constructor<BaseEvent>>;
 
 @Injectable()
 export class EventDiscoveryService {
-    private readonly kafkaConfig: KafkaConfig;
+    private readonly kafkaEnabled: boolean;
 
     public constructor(
         private readonly logger: ClassLogger,
         private readonly discoveryService: DiscoveryService,
         private readonly eventService: EventService,
         private readonly kafkaEventService: KafkaEventService,
-        private readonly configService: ConfigService<ServerConfig>,
+        configService: ConfigService<ServerConfig>,
     ) {
-        this.kafkaConfig = this.configService.getOrThrow<KafkaConfig>('KAFKA');
+        this.kafkaEnabled = configService.getOrThrow<KafkaConfig>('KAFKA').ENABLED;
     }
 
     private async discoverHandlerMethods(meta: symbol): Promise<HandlerMethod[]> {
@@ -39,7 +39,7 @@ export class EventDiscoveryService {
         let results: HandlerMethod[] = await this.discoverHandlerMethods(EVENT_HANDLER_META);
         const kafkaResults: HandlerMethod[] = await this.discoverHandlerMethods(KAFKA_EVENT_HANDLER_META);
 
-        if (this.kafkaConfig.ENABLED) {
+        if (this.kafkaEnabled) {
             kafkaResults.forEach((method: HandlerMethod) => {
                 const eventConstructor: Constructor<BaseEvent> = method.meta;
                 const eventHandler: EventHandlerType<BaseEvent> = method.discoveredMethod.handler;
