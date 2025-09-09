@@ -1,11 +1,87 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { KafkaJS } from '@confluentinc/kafka-javascript';
-import { KafkaProvider, KAFKA_INSTANCE } from './kafka-client-provider.js';
-import { ConfigService } from '@nestjs/config';
-import { KafkaConfig } from '../../shared/config/kafka.config.js';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { LoggingTestModule } from '../../../test/utils/logging-test.module.js';
+import { KafkaConfig } from '../../shared/config/kafka.config.js';
+import { ClassLogger } from '../logging/class-logger.js';
+import { KAFKA_INSTANCE, KafkaLogger, KafkaProvider } from './kafka-client-provider.js';
 
 const Kafka: typeof KafkaJS.Kafka = KafkaJS.Kafka;
+
+describe('KafkaLogger', () => {
+    let module: TestingModule;
+    let sut: KafkaLogger;
+
+    let loggerMock: DeepMocked<ClassLogger>;
+
+    beforeAll(async () => {
+        module = await Test.createTestingModule({
+            imports: [LoggingTestModule],
+            providers: [KafkaLogger],
+        }).compile();
+
+        await module.init();
+
+        sut = module.get(KafkaLogger);
+        loggerMock = module.get(ClassLogger);
+    });
+
+    describe('info', () => {
+        it('should call logger.info', () => {
+            const message: string = 'Info Log';
+
+            sut.info(message);
+
+            expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining(message));
+        });
+    });
+
+    describe('error', () => {
+        it('should call logger.error', () => {
+            const message: string = 'Error Log';
+
+            sut.error(message);
+
+            expect(loggerMock.error).toHaveBeenCalledWith(expect.stringContaining(message));
+        });
+    });
+
+    describe('warn', () => {
+        it('should call logger.warn', () => {
+            const message: string = 'Warn Log';
+
+            sut.warn(message);
+
+            expect(loggerMock.warning).toHaveBeenCalledWith(expect.stringContaining(message));
+        });
+    });
+
+    describe('debug', () => {
+        it('should call logger.debug', () => {
+            const message: string = 'Debug Log';
+
+            sut.debug(message);
+
+            expect(loggerMock.debug).toHaveBeenCalledWith(expect.stringContaining(message));
+        });
+    });
+
+    describe('additional methods', () => {
+        describe('namespace', () => {
+            it('should return logger', () => {
+                expect(sut.namespace()).toBe(sut);
+            });
+        });
+
+        describe('setLogLevel', () => {
+            it('should not return anything', () => {
+                expect(sut.setLogLevel()).toBeUndefined();
+            });
+        });
+    });
+});
 
 describe('KafkaProvider', () => {
     let module: TestingModule;
