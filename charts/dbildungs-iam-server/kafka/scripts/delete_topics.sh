@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Usage:
 #   delete_topics.sh <prefix>
@@ -30,7 +30,8 @@ if [ -z "${KAFKA_TOPIC_PREFIX}" ]; then
 fi
 
 # When KAFKA_SSL_ENABLED is set create JAAS file
-if [ "${KAFKA_SSL_ENABLED,,}" = "true" ]; then
+KAFKA_SSL_ENABLED=$(tr '[:upper:]' '[:lower:]' <<< "$KAFKA_SSL_ENABLED" )
+if [ "$KAFKA_SSL_ENABLED" = "true" ]; then
     if [ ! -e "$KAFKA_SSL_CA_PATH" ]; then
         echo "KAFKA_SSL_CA_PATH file does not exist!" && exit 1
     fi
@@ -45,6 +46,8 @@ if [ "${KAFKA_SSL_ENABLED,,}" = "true" ]; then
 
     CONFIG_DIR=$(mktemp -d)
     KAFKA_JAAS_FILE="${CONFIG_DIR}/client.properties"
+    KEYSTORE_FILE="${CONFIG_DIR}/keystore.pem"
+    TRUSTSTORE_FILE="${CONFIG_DIR}/truststore.pem"
 
     # Create Keystore and Truststore
     cat "${KAFKA_SSL_KEY_PATH}" "${KAFKA_SSL_CERT_PATH}" > "${KEYSTORE_FILE}"
