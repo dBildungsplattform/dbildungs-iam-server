@@ -1,8 +1,11 @@
 import 'reflect-metadata'; // some decorators use reflect-metadata in the background
+
 import fs from 'fs';
-import { JsonConfig, loadConfigFiles } from './index.js';
-import { DeepPartial } from '../../../test/utils/index.js';
 import { PathLike } from 'node:fs';
+
+import { DeepPartial } from '../../../test/utils/index.js';
+import { EmailAppConfig } from './email-app.config.js';
+import { JsonConfig, loadConfigFiles, loadEmailAppConfigFiles } from './index.js';
 
 describe('configloader', () => {
     describe('loadConfigFiles', () => {
@@ -93,6 +96,7 @@ describe('configloader', () => {
                     CONTEXT_ID: '1337',
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
+                    USER_PASSWORD_DEFAULT: 'password',
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -124,6 +128,9 @@ describe('configloader', () => {
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                },
+                CRON: {
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
                 },
             };
 
@@ -264,6 +271,7 @@ describe('configloader', () => {
                     CONTEXT_NAME: 'context1',
                     USERNAME: 'username',
                     PASSWORD: 'password',
+                    USER_PASSWORD_DEFAULT: 'password',
                 },
                 EMAIL: {
                     NON_ENABLED_EMAIL_ADDRESSES_DEADLINE_IN_DAYS: 180,
@@ -297,6 +305,9 @@ describe('configloader', () => {
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],
+                },
+                CRON: {
+                    PERSON_WITHOUT_ORG_LIMIT: 30,
                 },
             };
 
@@ -349,6 +360,91 @@ describe('configloader', () => {
 
             it('should throw', () => {
                 expect(() => loadConfigFiles()).toThrow();
+                expect(readFileSyncSpy).toHaveBeenCalled();
+            });
+        });
+    });
+
+    describe('loadEmailAppConfigFiles', () => {
+        describe('when config is valid', () => {
+            let readFileSyncSpy: jest.SpyInstance;
+
+            const config: DeepPartial<EmailAppConfig> = {
+                HOST: {
+                    PORT: 8080,
+                },
+                LOGGING: {
+                    DEFAULT_LOG_LEVEL: 'debug',
+                },
+            };
+
+            const secrets: DeepPartial<EmailAppConfig> = {};
+
+            beforeEach(() => {
+                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
+                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(secrets));
+            });
+
+            afterEach(() => {
+                jest.clearAllMocks();
+            });
+
+            it('should return validated JsonConfig', () => {
+                jest.spyOn(fs, 'existsSync').mockReturnValueOnce(true);
+                const validatedConfig: EmailAppConfig = loadEmailAppConfigFiles();
+                expect(validatedConfig).toBeInstanceOf(EmailAppConfig);
+                expect(readFileSyncSpy).toHaveBeenCalledTimes(2);
+            });
+        });
+
+        describe('When there is no secrets config', () => {
+            beforeAll(() => {
+                jest.clearAllMocks();
+            });
+
+            const config: DeepPartial<EmailAppConfig> = {
+                HOST: {
+                    PORT: 8080,
+                },
+                LOGGING: {
+                    DEFAULT_LOG_LEVEL: 'debug',
+                },
+            };
+
+            it("should not load the secrets file if it can't find it", () => {
+                const existsSyncSpy: jest.SpyInstance = jest
+                    .spyOn(fs, 'existsSync')
+                    .mockImplementation((name: PathLike): boolean => {
+                        if (name == './config/email-secrets.json') {
+                            return false;
+                        }
+                        fail(`Unknown file ${name.toString()}`);
+                    });
+                jest.spyOn(fs, 'readFileSync').mockReturnValueOnce(JSON.stringify(config));
+                loadEmailAppConfigFiles();
+                expect(existsSyncSpy).toHaveBeenCalledTimes(1);
+            });
+        });
+
+        describe('when config is invalid', () => {
+            let readFileSyncSpy: jest.SpyInstance;
+
+            const config: DeepPartial<EmailAppConfig> = {
+                HOST: {
+                    PORT: 1,
+                },
+            };
+
+            beforeEach(() => {
+                readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+            });
+
+            afterEach(() => {
+                jest.clearAllMocks();
+            });
+
+            it('should throw', () => {
+                expect(() => loadEmailAppConfigFiles()).toThrow();
                 expect(readFileSyncSpy).toHaveBeenCalled();
             });
         });

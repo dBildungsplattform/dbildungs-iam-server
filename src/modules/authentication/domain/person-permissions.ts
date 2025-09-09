@@ -1,4 +1,4 @@
-import { uniq } from 'lodash-es';
+import { cloneDeep, uniq } from 'lodash-es';
 import { IPersonPermissions } from '../../../shared/permissions/person-permissions.interface.js';
 import { OrganisationID, PersonID, RolleID } from '../../../shared/types/index.js';
 import { OrganisationsTyp } from '../../organisation/domain/organisation.enums.js';
@@ -35,14 +35,14 @@ export type PermittedOrgas = { all: true } | { all: false; orgaIds: Organisation
 export class PersonPermissions implements IPersonPermissions {
     private cachedPersonenkontextsFields?: PersonKontextFields[];
 
-    private cachedPersonFields: PersonFields;
+    private readonly cachedPersonFields: PersonFields;
 
     private cachedRollenFields?: PersonenkontextRolleWithOrganisation[];
 
     public constructor(
-        private personenkontextRepo: DBiamPersonenkontextRepo,
-        private organisationRepo: OrganisationRepository,
-        private rolleRepo: RolleRepo,
+        private readonly personenkontextRepo: DBiamPersonenkontextRepo,
+        private readonly organisationRepo: OrganisationRepository,
+        private readonly rolleRepo: RolleRepo,
         person: Person<true>,
     ) {
         this.cachedPersonFields = {
@@ -142,19 +142,14 @@ export class PersonPermissions implements IPersonPermissions {
     }
 
     public async canModifyPerson(personId: PersonID): Promise<boolean> {
-        {
-            const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
-                RollenSystemRecht.PERSONEN_VERWALTEN,
-            ]);
+        const hasModifyRechtAtRoot: boolean = await this.hasSystemrechteAtRootOrganisation([
+            RollenSystemRecht.PERSONEN_VERWALTEN,
+        ]);
 
-            if (hasModifyRechtAtRoot) {
-                return true;
-            }
+        if (hasModifyRechtAtRoot) {
+            return true;
         }
-
-        {
-            return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
-        }
+        return this.hasSystemrechtAtAnyKontextOfTargetPerson(personId, RollenSystemRecht.PERSONEN_VERWALTEN);
     }
 
     private async getPersonenkontextsFields(): Promise<PersonKontextFields[]> {
@@ -169,6 +164,10 @@ export class PersonPermissions implements IPersonPermissions {
         }
 
         return this.cachedPersonenkontextsFields;
+    }
+
+    public async getPersonenkontextIds(): Promise<Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[]> {
+        return cloneDeep(await this.getPersonenkontextsFields());
     }
 
     public async getPersonenkontexteWithRolesAndOrgs(): Promise<PersonenkontextRolleWithOrganisation[]> {

@@ -29,6 +29,7 @@ import { EventRoutingLegacyKafkaService } from '../../../core/eventbus/services/
 import { KafkaPersonenkontextUpdatedEvent } from '../../../shared/events/kafka-personenkontext-updated.event.js';
 import { LernHatKlasse } from '../specification/lern-hat-klasse.js';
 import { LernHatKeineKlasseError } from '../specification/error/lern-hat-keine-klasse.error.js';
+import { DuplicatePersonalnummerError } from '../../../shared/error/duplicate-personalnummer.error.js';
 
 export class PersonenkontexteUpdate {
     private constructor(
@@ -322,7 +323,9 @@ export class PersonenkontexteUpdate {
         return undefined;
     }
 
-    public async update(): Promise<Personenkontext<true>[] | PersonenkontexteUpdateError> {
+    public async update(): Promise<
+        Personenkontext<true>[] | PersonenkontexteUpdateError | DuplicatePersonalnummerError
+    > {
         const sentPKs: Personenkontext<true>[] | PersonenkontexteUpdateError = await this.getSentPersonenkontexte();
         if (sentPKs instanceof PersonenkontexteUpdateError) {
             return sentPKs;
@@ -357,21 +360,24 @@ export class PersonenkontexteUpdate {
             return permissionsError;
         }
 
+        // Update the personalnummer if it is provided
+        if (this.personalnummer) {
+            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
+            if (person) {
+                person.personalnummer = this.personalnummer;
+                const saveResult: DomainError | Person<true> = await this.personRepo.save(person);
+                if (saveResult instanceof DomainError) {
+                    return saveResult;
+                }
+            }
+        }
+
         const deletedPKs: Personenkontext<true>[] = await this.delete(existingPKs, sentPKs);
         const createdPKs: Personenkontext<true>[] = await this.add(existingPKs, sentPKs);
 
         const existingPKsAfterUpdate: Personenkontext<true>[] = await this.dBiamPersonenkontextRepo.findByPerson(
             this.personId,
         );
-
-        // Update the personalnummer if it is provided
-        if (this.personalnummer) {
-            const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
-            if (person) {
-                person.personalnummer = this.personalnummer;
-                await this.personRepo.save(person);
-            }
-        }
 
         // Set value with current date in database, when person has no Personenkontext anymore
         if (existingPKsAfterUpdate.length == 0) {

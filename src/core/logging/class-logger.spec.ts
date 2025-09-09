@@ -182,6 +182,19 @@ describe('ClassLogger', () => {
             expect(loggerMock.log).toHaveBeenCalledWith('warning', createTestMessage('Blah2', 'TraceInfo'));
         });
 
+        it('should take the trace into account for level warning and extend personIdentifier', () => {
+            sut.warningPersonalized('Blah2', personIdentifier, 'TraceInfo');
+
+            expect(loggerMock.log).toHaveBeenCalledTimes(1);
+            expect(loggerMock.log).toHaveBeenCalledWith(
+                'warning',
+                createTestMessage(
+                    `Blah2, personId:${personIdentifier.personId}, username:${personIdentifier.username}`,
+                    'TraceInfo',
+                ),
+            );
+        });
+
         it('should take the trace into account for level alert', () => {
             sut.alert('Blah2', 'TraceInfo');
 

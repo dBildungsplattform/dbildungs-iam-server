@@ -641,4 +641,20 @@ describe('PersonPermissions', () => {
             expect(result).toBe(false);
         });
     });
+
+    describe('getPersonenkontextIds', () => {
+        it('should return fields', async () => {
+            const personPermissions: PersonPermissions = new PersonPermissions(
+                dbiamPersonenkontextRepoMock,
+                organisationRepoMock,
+                rolleRepoMock,
+                createPerson(),
+            );
+            const pk: Personenkontext<true> = createPersonenkontext();
+            dbiamPersonenkontextRepoMock.findByPerson.mockResolvedValueOnce([pk]);
+            const result: Pick<Personenkontext<true>, 'organisationId' | 'rolleId'>[] =
+                await personPermissions.getPersonenkontextIds();
+            expect(result).toEqual([{ organisationId: pk.organisationId, rolleId: pk.rolleId }]);
+        });
+    });
 });
