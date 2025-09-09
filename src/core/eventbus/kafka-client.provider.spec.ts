@@ -128,7 +128,8 @@ describe('KafkaProvider', () => {
         configService.getOrThrow.mockReturnValue(kafkaConfigEnabled);
 
         module = await Test.createTestingModule({
-            providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
+            imports: [LoggingTestModule],
+            providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider, KafkaLogger],
         }).compile();
 
         const kafkaInstance: KafkaJS.Kafka | null = module.get<KafkaJS.Kafka | null>(KAFKA_INSTANCE);
@@ -142,7 +143,8 @@ describe('KafkaProvider', () => {
         configService.getOrThrow.mockReturnValue(kafkaConfigSslEnabled);
 
         module = await Test.createTestingModule({
-            providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
+            imports: [LoggingTestModule],
+            providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider, KafkaLogger],
         }).compile();
 
         const kafkaInstance: KafkaJS.Kafka | null = module.get<KafkaJS.Kafka | null>(KAFKA_INSTANCE);
@@ -156,7 +158,8 @@ describe('KafkaProvider', () => {
         configService.getOrThrow.mockReturnValue(kafkaConfigDisabled);
 
         module = await Test.createTestingModule({
-            providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider],
+            imports: [LoggingTestModule],
+            providers: [{ provide: ConfigService, useValue: configService }, KafkaProvider, KafkaLogger],
         }).compile();
 
         const kafkaInstance: KafkaJS.Kafka | null = module.get<KafkaJS.Kafka | null>(KAFKA_INSTANCE);
