@@ -33,15 +33,15 @@ fi
 if [ "${KAFKA_SSL_ENABLED,,}" = "true" ]; then
     if [ -z "${KAFKA_SSL_CA_PATH}" ]; then
         echo "Environment-variable KAFKA_SSL_CA_PATH was not set!" && exit 1
-    else
+    fi
 
     if [ -z "${KAFKA_SSL_CERT_PATH}" ]; then
         echo "Environment-variable KAFKA_SSL_CERT_PATH was not set!" && exit 1
-    else
+    fi
 
     if [ -z "${KAFKA_SSL_KEY_PATH}" ]; then
         echo "Environment-variable KAFKA_SSL_KEY_PATH was not set!" && exit 1
-    else
+    fi
 
     CONFIG_DIR=$(mktemp -d)
     KAFKA_JAAS_FILE="${CONFIG_DIR}/client.properties"
