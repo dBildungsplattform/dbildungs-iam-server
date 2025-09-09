@@ -12,7 +12,7 @@ describe('KafkaProvider', () => {
     let configService: DeepMocked<ConfigService>;
 
     const kafkaConfigEnabled: KafkaConfig = {
-        BROKER: '10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093',
+        BROKER: 'localhost:9092',
         GROUP_ID: 'test-group',
         SESSION_TIMEOUT: 300000,
         HEARTBEAT_INTERVAL: 3000,

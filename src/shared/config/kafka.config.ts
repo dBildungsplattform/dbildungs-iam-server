@@ -19,11 +19,9 @@ export class KafkaConfig<SslEnabled extends boolean = boolean> {
     @IsString()
     public readonly GROUP_ID!: string;
 
-    @Type(() => Number)
     @IsNumber()
     public readonly SESSION_TIMEOUT!: number;
 
-    @Type(() => Number)
     @IsNumber()
     public readonly HEARTBEAT_INTERVAL!: number;
 
@@ -33,15 +31,15 @@ export class KafkaConfig<SslEnabled extends boolean = boolean> {
     @IsBoolean()
     public readonly SSL_ENABLED!: SslEnabled;
 
-    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED)
     @IsString()
     public readonly SSL_CA_PATH!: Required<string, SslEnabled>;
 
-    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED)
     @IsString()
     public readonly SSL_CERT_PATH!: Required<string, SslEnabled>;
 
-    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED === true)
+    @ValidateIf((o: KafkaConfig) => o.SSL_ENABLED)
     @IsString()
     public readonly SSL_KEY_PATH!: Required<string, SslEnabled>;
 }

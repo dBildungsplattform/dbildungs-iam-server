@@ -16,6 +16,10 @@ export const KafkaProvider: Provider<KafkaJS.Kafka | null> = {
     useFactory: (configService: ConfigService<ServerConfig>): KafkaJS.Kafka | null => {
         const kafkaConfig: KafkaConfig = configService.getOrThrow<KafkaConfig>('KAFKA');
 
+        if (kafkaConfig.ENABLED !== true) {
+            return null;
+        }
+
         if (configSslEnabled(kafkaConfig)) {
             const caPath: string = kafkaConfig.SSL_CA_PATH;
             const certPath: string = kafkaConfig.SSL_CERT_PATH;

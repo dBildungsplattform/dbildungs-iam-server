@@ -111,7 +111,7 @@ describe('configloader', () => {
                     INTERNAL_COMMUNICATION_API_KEY: 'test123',
                 },
                 KAFKA: {
-                    BROKER: 'localhost',
+                    BROKER: 'localhost:9094',
                     TOPIC_PREFIX: 'local.',
                     USER_TOPIC: 'spsh-user-topic',
                     USER_DLQ_TOPIC: 'spsh-user-dlq-topic',
@@ -145,12 +145,6 @@ describe('configloader', () => {
                 },
                 OX: {
                     PASSWORD: 'password',
-                },
-                KAFKA: {
-                    SSL_ENABLED: true,
-                    SSL_CA_PATH: '/tls/ca.pem',
-                    SSL_CERT_PATH: '/tls/client-cert.pem',
-                    SSL_KEY_PATH: '/tls/client-key.pem',
                 },
             };
 
@@ -294,10 +288,10 @@ describe('configloader', () => {
                     SESSION_TIMEOUT: 300000,
                     HEARTBEAT_INTERVAL: 10000,
                     ENABLED: true,
-                    SSL_ENABLED: true,
-                    SSL_CA_PATH: '/tls/ca.pem',
-                    SSL_CERT_PATH: '/tls/client-cert.pem',
-                    SSL_KEY_PATH: '/tls/client-key.pem',
+                    SSL_ENABLED: false,
+                    SSL_CA_PATH: undefined,
+                    SSL_CERT_PATH: undefined,
+                    SSL_KEY_PATH: undefined,
                 },
                 PORTAL: {
                     LIMITED_ROLLENART_ALLOWLIST: ['LERN', 'EXTERN'],

@@ -68,7 +68,7 @@ ssl.truststore.location=${TRUSTSTORE_FILE}
 ssl.enabled.protocols=TLSv1.2,TLSv1.1
 EOF
 else
-    echo "The envs KAFKA_SSL_ENABLED is not set. Authentication may fail."
+    echo "The env KAFKA_SSL_ENABLED is not set. Not creating JAAS file."
 fi
 
 # Check for KAFKA_JAAS_FILE
