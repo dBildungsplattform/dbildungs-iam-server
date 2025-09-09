@@ -14,7 +14,8 @@ import { PersonInfoResponseV1 } from '../../api/personinfo/v1/person-info.respon
 import { Personenkontext } from '../../../personenkontext/domain/personenkontext.js';
 import { DoFactory } from '../../../../../test/utils/do-factory.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
-import { RollenArt, RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../../rolle/domain/systemrecht.js';
 import { OrganisationsTyp } from '../../../organisation/domain/organisation.enums.js';
 import { Organisation } from '../../../organisation/domain/organisation.js';
 import { faker } from '@faker-js/faker';

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { PersonPermissions } from '../../modules/authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../modules/rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../modules/rolle/domain/systemrecht.js';
 import { OrganisationID, PersonID } from '../types/index.js';
 import { PermissionsOverride } from './permissions-override.js';
 
@@ -117,7 +117,7 @@ describe('PermissionsOverride', () => {
         describe('when no rechte are overridden', () => {
             it('should call the underlying permissions', async () => {
                 const orgaId: OrganisationID = faker.string.uuid();
-                const systemrecht: RollenSystemRecht = faker.helpers.enumValue(RollenSystemRecht);
+                const systemrecht: RollenSystemRecht = RollenSystemRecht.ROLLEN_VERWALTEN;
                 const fakeResult: boolean = faker.datatype.boolean();
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 permissionsMock.hasSystemrechtAtOrganisation.mockResolvedValueOnce(fakeResult);
@@ -132,7 +132,7 @@ describe('PermissionsOverride', () => {
             it('should return true', async () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 const orgaId: OrganisationID = faker.string.uuid();
-                const systemrecht: RollenSystemRecht = faker.helpers.enumValue(RollenSystemRecht);
+                const systemrecht: RollenSystemRecht = RollenSystemRecht.ROLLEN_VERWALTEN;
                 const override: PermissionsOverride = new PermissionsOverride(permissionsMock).grantSystemrechteAtOrga(
                     orgaId,
                     [systemrecht],
@@ -144,7 +144,7 @@ describe('PermissionsOverride', () => {
             it('should not call underlying permissions', async () => {
                 const permissionsMock: DeepMocked<PersonPermissions> = createMock<PersonPermissions>();
                 const orgaId: OrganisationID = faker.string.uuid();
-                const systemrecht: RollenSystemRecht = faker.helpers.enumValue(RollenSystemRecht);
+                const systemrecht: RollenSystemRecht = RollenSystemRecht.ROLLEN_VERWALTEN;
                 const override: PermissionsOverride = new PermissionsOverride(permissionsMock).grantSystemrechteAtOrga(
                     orgaId,
                     [systemrecht],
