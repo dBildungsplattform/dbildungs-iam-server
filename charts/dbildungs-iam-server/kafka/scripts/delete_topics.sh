@@ -31,9 +31,17 @@ fi
 
 # When KAFKA_SSL_ENABLED is set create JAAS file
 if [ "${KAFKA_SSL_ENABLED,,}" = "true" ]; then
-    KAFKA_SSL_CA_PATH="${KAFKA_SSL_CA_PATH:?Missing CA file}"
-    KAFKA_SSL_CERT_PATH="${KAFKA_SSL_CERT_PATH:?Missing client cert}"
-    KAFKA_SSL_KEY_PATH="${KAFKA_SSL_KEY_PATH:?Missing client key}"
+    if [ -z "${KAFKA_SSL_CA_PATH}" ]; then
+        echo "Environment-variable KAFKA_SSL_CA_PATH was not set!" && exit 1
+    else
+
+    if [ -z "${KAFKA_SSL_CERT_PATH}" ]; then
+        echo "Environment-variable KAFKA_SSL_CERT_PATH was not set!" && exit 1
+    else
+
+    if [ -z "${KAFKA_SSL_KEY_PATH}" ]; then
+        echo "Environment-variable KAFKA_SSL_KEY_PATH was not set!" && exit 1
+    else
 
     CONFIG_DIR=$(mktemp -d)
     KAFKA_JAAS_FILE="${CONFIG_DIR}/client.properties"
