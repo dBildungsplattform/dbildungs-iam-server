@@ -4,7 +4,7 @@ import {
     DBiamPersonenkontextRepo,
     KontextWithOrgaAndRolle,
 } from '../../../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../../rolle/domain/systemrecht.js';
 import { EmailRepo } from '../../../email/persistence/email.repo.js';
 import { PersonEmailResponse } from '../../../person/api/person-email-response.js';
 import { UserLockRepository } from '../../../keycloak-administration/repository/user-lock.repository.js';

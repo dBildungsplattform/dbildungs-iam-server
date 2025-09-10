@@ -46,7 +46,7 @@ import { PersonenkontextFactory } from '../../personenkontext/domain/personenkon
 import { Personenkontext } from '../../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepoInternal } from '../../personenkontext/persistence/internal-dbiam-personenkontext.repo.js';
 import { PersonenkontextEntity } from '../../personenkontext/persistence/personenkontext.entity.js';
-import { RollenArt, RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt, RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleEntity } from '../../rolle/entity/rolle.entity.js';
@@ -76,6 +76,7 @@ import {
     PersonWithoutOrgDeleteListResult,
 } from './person.repository.js';
 import { PersonScope } from './person.scope.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 describe('PersonRepository Integration', () => {
     let module: TestingModule;

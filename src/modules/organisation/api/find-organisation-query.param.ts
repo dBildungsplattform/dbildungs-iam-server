@@ -2,9 +2,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ArrayUnique, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PagedQueryParams } from '../../../shared/paging/index.js';
 import { TransformToArray } from '../../../shared/util/array-transform.validator.js';
-import { RollenSystemRecht, RollenSystemRechtTypName } from '../../rolle/domain/rolle.enums.js';
 import { OrganisationsTyp, OrganisationsTypName, SortFieldOrganisation } from '../domain/organisation.enums.js';
 import { ScopeOrder } from '../../../shared/persistence/scope.enums.js';
+import { RollenSystemRechtEnum, RollenSystemRechtEnumName } from '../../rolle/domain/systemrecht.js';
 
 export class FindOrganisationQueryParams extends PagedQueryParams {
     @IsString()
@@ -44,16 +44,16 @@ export class FindOrganisationQueryParams extends PagedQueryParams {
 
     @IsOptional()
     @TransformToArray()
-    @IsEnum(RollenSystemRecht, { each: true })
+    @IsEnum(RollenSystemRechtEnum, { each: true })
     @ArrayUnique()
     @ApiProperty({
         required: false,
         nullable: true,
-        enum: RollenSystemRecht,
-        enumName: RollenSystemRechtTypName,
         isArray: true,
+        enum: RollenSystemRechtEnum,
+        enumName: RollenSystemRechtEnumName,
     })
-    public readonly systemrechte: RollenSystemRecht[] = [];
+    public readonly systemrechte: RollenSystemRechtEnum[] = [];
 
     @IsOptional()
     @TransformToArray()
