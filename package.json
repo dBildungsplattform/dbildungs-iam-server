@@ -12,7 +12,8 @@
     "scripts": {
         "build": "nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-        "start": "nest start server ",
+        "email": "nest start email",
+        "start": "nest start server",
         "start:debug": "nest start server --debug --watch",
         "start:prod": "node dist/src/server/main.js",
         "test": "jest",

@@ -1,0 +1,23 @@
+{{ if .Values.emailBackend.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "common.names.name" . }}-email
+  namespace: {{ template "common.names.namespace" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: email-backend
+spec:
+  namespaceSelector:
+    matchNames:
+      - {{ include "common.names.namespace" . | quote }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "common.names.name" . }}
+      app.kubernetes.io/component: email-backend
+  endpoints:
+    - port: {{ (index .Values.emailBackend.serviceMonitor.endpoints 0).port }}
+      path: {{ .Values.emailBackend.serviceMonitor.path }}
+      interval: {{ .Values.emailBackend.serviceMonitor.interval }}
+{{ end }}
+

@@ -46,7 +46,7 @@ import { compareEmailAddressesByUpdatedAtDesc } from '../../email/persistence/em
 import { UserLock } from '../../keycloak-administration/domain/user-lock.js';
 import { KeycloakUserService, PersonHasNoKeycloakId, User } from '../../keycloak-administration/index.js';
 import { UserLockRepository } from '../../keycloak-administration/repository/user-lock.repository.js';
-import { RollenMerkmal, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenMerkmal } from '../../rolle/domain/rolle.enums.js';
 import { ServiceProviderSystem } from '../../service-provider/domain/service-provider.enum.js';
 import { FamiliennameForPersonWithTrailingSpaceError } from '../domain/familienname-with-trailing-space.error.js';
 import { DownstreamKeycloakError } from '../domain/person-keycloak.error.js';
@@ -61,6 +61,7 @@ import { VornameForPersonWithTrailingSpaceError } from '../domain/vorname-with-t
 import { PersonExternalIdMappingEntity } from './external-id-mappings.entity.js';
 import { PersonEntity } from './person.entity.js';
 import { PersonScope } from './person.scope.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 /**
  * Return email-address for person, if an enabled email-address exists, return it.
