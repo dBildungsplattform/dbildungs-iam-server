@@ -157,6 +157,9 @@ describe('PersonInfoService', () => {
                 personId1,
                 personId2,
             ]);
+            schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
+                [],
+            );
 
             personRepositoryMock.findByPersonIds.mockResolvedValue([
                 DoFactory.createPerson(true, { id: personId1 }),
@@ -186,13 +189,18 @@ describe('PersonInfoService', () => {
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).toHaveBeenCalled();
-            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
-            expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([personId1, personId2]);
-            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith([
-                personId1,
-                personId2,
-            ]);
-            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
+            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
             expect(res.length).toEqual(2);
             expect(res[0]).toBeInstanceOf(PersonInfoResponseV1);
             expect(res[1]).toBeInstanceOf(PersonInfoResponseV1);
@@ -244,6 +252,9 @@ describe('PersonInfoService', () => {
                 personId1,
                 personId2,
             ]);
+            schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
+                [],
+            );
 
             personRepositoryMock.findByPersonIds.mockResolvedValue([
                 DoFactory.createPerson(true, { id: personId1 }),
@@ -273,13 +284,18 @@ describe('PersonInfoService', () => {
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).toHaveBeenCalled();
-            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
-            expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([personId1, personId2]);
-            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith([
-                personId1,
-                personId2,
-            ]);
-            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
+            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
             expect(res.length).toEqual(2);
             expect(res[0]).toBeInstanceOf(PersonInfoResponseV1);
             expect(res[1]).toBeInstanceOf(PersonInfoResponseV1);
@@ -331,6 +347,9 @@ describe('PersonInfoService', () => {
                 personId1,
                 personId2,
             ]);
+            schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
+                [],
+            );
 
             personRepositoryMock.findByPersonIds.mockResolvedValue([
                 DoFactory.createPerson(true, { id: personId1 }),
@@ -360,13 +379,18 @@ describe('PersonInfoService', () => {
             expect(
                 schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations,
             ).toHaveBeenCalled();
-            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
-            expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith([personId1, personId2]);
-            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith([
-                personId1,
-                personId2,
-            ]);
-            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith([personId1, personId2]);
+            expect(personRepositoryMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(emailRepoMock.getEmailAddressAndStatusForPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(dBiamPersonenkontextRepoMock.findByPersonIdsWithOrgaAndRolle).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
+            expect(userLockRepoMock.findByPersonIds).toHaveBeenCalledWith(
+                expect.arrayContaining([personId1, personId2]),
+            );
             expect(res.length).toEqual(2);
             expect(res[0]).toBeInstanceOf(PersonInfoResponseV1);
             expect(res[1]).toBeInstanceOf(PersonInfoResponseV1);
