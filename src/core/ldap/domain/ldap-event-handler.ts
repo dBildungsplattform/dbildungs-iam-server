@@ -269,7 +269,7 @@ export class LdapEventHandler {
             event.personId,
             event.username,
             event.address,
-            event.alternativeAddress ?? '',
+            event.alternativeAddress,
         );
 
         return result;

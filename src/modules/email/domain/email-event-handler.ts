@@ -725,6 +725,7 @@ export class EmailEventHandler {
 
         const personUsername: Result<string> = await this.getPersonUsernameOrError(personId);
         if (!personUsername.ok) {
+            //error logging is done in getPersonUsernameOrError
             return;
         }
 
@@ -749,24 +750,23 @@ export class EmailEventHandler {
             firstDisabledEmail.enable();
             const persistenceResult: EmailAddress<true> | DomainError = await this.emailRepo.save(firstDisabledEmail);
 
-            if (persistenceResult instanceof EmailAddress) {
-                // The enabled email becomes the primary email
-                primaryEmail = persistenceResult;
-                this.logger.info(
-                    `Enabled PRIMARY email address:${persistenceResult.address}, personId:${personId}, username:${personUsername.value}`,
-                );
-
-                // Find the latest disabled email (that wasn't just enabled) as alternative
-                // Since emails are sorted by updatedAt desc, find the first disabled email that's not the one we just enabled
-                alternativeEmail = existingEmails.find(
-                    (email: EmailAddress<true>) => email.disabled && email.id !== firstDisabledEmail.id,
-                );
-            } else {
+            if (!(persistenceResult instanceof EmailAddress)) {
                 this.logger.error(
                     `Could not ENABLE email for personId:${personId}, username:${personUsername.value}, error:${persistenceResult.message}`,
                 );
                 return; // stop if save failed
             }
+
+            // The enabled email becomes the primary email
+            primaryEmail = persistenceResult;
+            this.logger.info(
+                `Enabled PRIMARY email address:${persistenceResult.address}, personId:${personId}, username:${personUsername.value}`,
+            );
+
+            // Find the latest disabled email (that wasn't just enabled) as alternative
+            alternativeEmail = existingEmails.find(
+                (email: EmailAddress<true>) => email.disabled && email.id !== firstDisabledEmail.id,
+            );
         }
 
         // No existing emails found or none could be enabled → create a completely new one
@@ -786,7 +786,7 @@ export class EmailEventHandler {
             primaryEmail.address,
             primaryEmail.enabled,
             organisationKennung.value,
-            alternativeEmail?.address ?? '', // Alternative email address (still disabled)
+            alternativeEmail?.address, // Alternative email address (still disabled)
         );
 
         this.eventService.publish(...events);
