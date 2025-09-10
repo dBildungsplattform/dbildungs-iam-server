@@ -31,7 +31,7 @@ import { UsernameGeneratorService } from '../../person/domain/username-generator
 import { EntityAggregateMapper } from '../../person/mapper/entity-aggregate.mapper.js';
 import { OxUserBlacklistRepo } from '../../person/persistence/ox-user-blacklist.repo.js';
 import { PersonRepository } from '../../person/persistence/person.repository.js';
-import { RollenArt, RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenArt } from '../../rolle/domain/rolle.enums.js';
 import { RolleFactory } from '../../rolle/domain/rolle.factory.js';
 import { Rolle } from '../../rolle/domain/rolle.js';
 import { RolleRepo } from '../../rolle/repo/rolle.repo.js';
@@ -49,6 +49,7 @@ import {
 } from './dbiam-personenkontext.repo.js';
 import { DBiamPersonenkontextRepoInternal } from './internal-dbiam-personenkontext.repo.js';
 import { PersonenkontextScope } from './personenkontext.scope.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 describe('dbiam Personenkontext Repo', () => {
     let module: TestingModule;

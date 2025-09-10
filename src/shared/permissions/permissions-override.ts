@@ -1,4 +1,4 @@
-import { RollenSystemRecht } from '../../modules/rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../modules/rolle/domain/systemrecht.js';
 import { OrganisationID, PersonID } from '../types/index.js';
 import { IPersonPermissions } from './person-permissions.interface.js';
 

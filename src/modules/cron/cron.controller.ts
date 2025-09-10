@@ -34,7 +34,7 @@ import { PersonenkontexteUpdateError } from '../personenkontext/domain/error/per
 import { PersonenkontextWorkflowFactory } from '../personenkontext/domain/personenkontext-workflow.factory.js';
 import { Personenkontext } from '../personenkontext/domain/personenkontext.js';
 import { DBiamPersonenkontextRepo } from '../personenkontext/persistence/dbiam-personenkontext.repo.js';
-import { RollenSystemRecht } from '../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../rolle/domain/systemrecht.js';
 import { ServiceProviderService } from '../service-provider/domain/service-provider.service.js';
 
 @Controller({ path: 'cron' })

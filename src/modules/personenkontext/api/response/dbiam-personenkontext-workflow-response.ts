@@ -3,7 +3,6 @@ import { OrganisationResponseLegacy } from '../../../organisation/api/organisati
 import { RolleResponse } from '../../../rolle/api/rolle.response.js';
 import { Rolle } from '../../../rolle/domain/rolle.js';
 import { TransformToArray } from '../../../../shared/util/array-transform.validator.js';
-
 export class PersonenkontextWorkflowResponse {
     @ApiProperty({
         description: 'List of available organisations.',
@@ -46,23 +45,9 @@ export class PersonenkontextWorkflowResponse {
         selectedRollen?: string[],
     ) {
         this.organisations = organisations;
-        this.rollen = rollen.map((rolle: Rolle<true>) => this.createRolleResponse(rolle));
+        this.rollen = rollen.map((rolle: Rolle<true>) => new RolleResponse(rolle));
         this.selectedOrganisation = selectedOrganisation;
         this.selectedRollen = selectedRollen;
         this.canCommit = canCommit;
-    }
-
-    private createRolleResponse(rolle: Rolle<true>): RolleResponse {
-        return {
-            createdAt: rolle.createdAt,
-            updatedAt: rolle.updatedAt,
-            name: rolle.name,
-            id: rolle.id,
-            administeredBySchulstrukturknoten: rolle.administeredBySchulstrukturknoten,
-            rollenart: rolle.rollenart,
-            merkmale: rolle.merkmale,
-            systemrechte: rolle.systemrechte,
-            version: rolle.version,
-        };
     }
 }
