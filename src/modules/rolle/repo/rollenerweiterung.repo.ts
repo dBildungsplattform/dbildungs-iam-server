@@ -5,7 +5,7 @@ import { EntityNotFoundError } from '../../../shared/error/entity-not-found.erro
 import { MissingPermissionsError } from '../../../shared/error/missing-permissions.error.js';
 import { OrganisationID, RolleID, ServiceProviderID } from '../../../shared/types/aggregate-ids.types.js';
 import { PermittedOrgas, PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenSystemRecht } from '../domain/systemrecht.js';
 import { RollenerweiterungFactory } from '../domain/rollenerweiterung.factory.js';
 import { Rollenerweiterung } from '../domain/rollenerweiterung.js';
 import { RollenerweiterungEntity } from '../entity/rollenerweiterung.entity.js';
@@ -114,7 +114,7 @@ export class RollenerweiterungRepo {
         if (permittedOrgas.all || permittedOrgas.orgaIds.includes(organisationId)) {
             return undefined;
         }
-        return new MissingPermissionsError(`Missing systemrecht ${RollenSystemRecht.ROLLEN_ERWEITERN}.`);
+        return new MissingPermissionsError(`Missing systemrecht ${RollenSystemRecht.ROLLEN_ERWEITERN.name}.`);
     }
 
     public async findManyByOrganisationAndRolle(
