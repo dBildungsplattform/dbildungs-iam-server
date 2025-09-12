@@ -11,7 +11,6 @@ export class SchulconnexRepo {
         protected readonly entityAggregateMapper: EntityAggregateMapper,
     ) {}
 
-
     /**
      * Finds all unique person IDs that have at least one personenkontext
      * where the associated role is linked to one of the given service providers.
