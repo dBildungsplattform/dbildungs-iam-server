@@ -155,10 +155,9 @@ describe('PersonInfoService', () => {
             const personId2: string = faker.string.uuid();
             schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations.mockResolvedValueOnce([
                 personId1,
-                personId2,
             ]);
             schulconnexRepo.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations.mockResolvedValueOnce(
-                [],
+                [personId2],
             );
 
             personRepositoryMock.findByPersonIds.mockResolvedValue([
