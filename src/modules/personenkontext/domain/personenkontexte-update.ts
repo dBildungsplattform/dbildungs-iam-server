@@ -117,7 +117,6 @@ export class PersonenkontexteUpdate {
         return personenKontexte;
     }
 
-    /* eslint-disable no-await-in-loop */
     private async validate(existingPKs: Personenkontext<true>[]): Promise<Option<PersonenkontexteUpdateError>> {
         const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
 
@@ -230,13 +229,11 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 try {
-                    /* eslint-disable no-await-in-loop */
                     await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
                     deletedPKs.push(existingPK);
                     this.logger.info(
                         `Schulzuordnung (Organisation:${existingPK.organisationId}, Rolle:${existingPK.rolleId}) für Benutzer mit BenutzerId: {${existingPK.personId}}.'}`,
                     );
-                    /* eslint-disable no-await-in-loop */
                 } catch (err) {
                     this.logger.error(`Personenkontext with ID ${existingPK.id} could not be deleted!`, err);
                 }
@@ -277,7 +274,6 @@ export class PersonenkontexteUpdate {
                 }
             }
         }
-        /* eslint-disable no-await-in-loop */
 
         return createdPKs;
     }

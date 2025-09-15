@@ -313,7 +313,7 @@ export class RolleRepo {
 
     public async save(rolle: Rolle<boolean>): Promise<Rolle<true> | DomainError> {
         const rolleNameUniqueOnSSK: RolleNameUniqueOnSsk = new RolleNameUniqueOnSsk(this, rolle.name);
-        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) return new RolleNameNotUniqueOnSskError();
+        if (!(await rolleNameUniqueOnSSK.isSatisfiedBy(rolle))) {return new RolleNameNotUniqueOnSskError();}
 
         if (rolle.id) {
             return this.update(rolle);
@@ -345,7 +345,7 @@ export class RolleRepo {
                 merkmale.every((m: RollenMerkmal) => authorizedRoleResult.value.merkmale.includes(m)) &&
                 authorizedRoleResult.value.merkmale.every((m: RollenMerkmal) => merkmale.includes(m))
             );
-            if (willMerkmaleChange) return new UpdateMerkmaleError();
+            if (willMerkmaleChange) {return new UpdateMerkmaleError();}
         }
 
         const authorizedRole: Rolle<true> = authorizedRoleResult.value;

@@ -307,7 +307,7 @@ export class Person<WasPersisted extends boolean> {
         this.isLocked = isLocked;
         this.email = email;
         this.userLock = userLock ?? [];
-        if (istTechnisch !== undefined) this.istTechnisch = istTechnisch;
+        if (istTechnisch !== undefined) {this.istTechnisch = istTechnisch;}
         this.externalIds = externalIds ?? this.externalIds;
     }
 

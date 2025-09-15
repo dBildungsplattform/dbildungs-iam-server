@@ -26,10 +26,10 @@ export function compareEmailAddressesByUpdatedAt(
     ea2: EmailAddressEntity,
     order: SortOrder,
 ): number {
-    if (!ea1.updatedAt && order === SortOrder.ASC) return Number.MAX_VALUE;
-    if (!ea1.updatedAt && order === SortOrder.DESC) return Number.MIN_VALUE;
-    if (!ea2.updatedAt && order === SortOrder.ASC) return Number.MIN_VALUE;
-    if (!ea2.updatedAt && order === SortOrder.DESC) return Number.MAX_VALUE;
+    if (!ea1.updatedAt && order === SortOrder.ASC) {return Number.MAX_VALUE;}
+    if (!ea1.updatedAt && order === SortOrder.DESC) {return Number.MIN_VALUE;}
+    if (!ea2.updatedAt && order === SortOrder.ASC) {return Number.MIN_VALUE;}
+    if (!ea2.updatedAt && order === SortOrder.DESC) {return Number.MAX_VALUE;}
     if (order === SortOrder.ASC) {
         return ea1.updatedAt.getTime() - ea2.updatedAt.getTime();
     }
@@ -82,7 +82,7 @@ export class EmailRepo {
             },
             {},
         );
-        if (!emailAddressEntity) return undefined;
+        if (!emailAddressEntity) {return undefined;}
 
         return mapEntityToAggregate(emailAddressEntity);
     }
@@ -97,7 +97,7 @@ export class EmailRepo {
             EmailAddressStatus.REQUESTED,
         );
 
-        if (!emailAddresses || !emailAddresses[0]) return null;
+        if (!emailAddresses || !emailAddresses[0]) {return null;}
 
         if (emailAddresses.length > 1) {
             this.logger.warning(
@@ -161,7 +161,7 @@ export class EmailRepo {
             { orderBy: { updatedAt: QueryOrder.DESC } },
         );
 
-        if (!emailAddressEntity) return undefined;
+        if (!emailAddressEntity) {return undefined;}
 
         return mapEntityToAggregate(emailAddressEntity);
     }
@@ -211,7 +211,7 @@ export class EmailRepo {
             { address: emailAddress },
             {},
         );
-        if (!emailAddressEntity) return new EmailAddressNotFoundError(emailAddress);
+        if (!emailAddressEntity) {return new EmailAddressNotFoundError(emailAddress);}
 
         emailAddressEntity.status = EmailAddressStatus.DISABLED;
         await this.em.persistAndFlush(emailAddressEntity);
@@ -225,7 +225,7 @@ export class EmailRepo {
             return new PersonEmailResponse(enabledEmailAddress.status, enabledEmailAddress.address);
         }
         const emailAddresses: Option<EmailAddress<true>[]> = await this.findByPersonSortedByUpdatedAtDesc(person.id);
-        if (!emailAddresses || !emailAddresses[0]) return undefined;
+        if (!emailAddresses || !emailAddresses[0]) {return undefined;}
 
         return new PersonEmailResponse(emailAddresses[0].status, emailAddresses[0].address);
     }
@@ -271,7 +271,7 @@ export class EmailRepo {
                 emailAddress.personId,
             );
             if (enabledEmailAddressExists)
-                return new PersonAlreadyHasEnabledEmailAddressError(emailAddress.personId, emailAddress.address);
+                {return new PersonAlreadyHasEnabledEmailAddressError(emailAddress.personId, emailAddress.address);}
         }
         if (emailAddress.id) {
             return this.update(emailAddress);

@@ -245,9 +245,9 @@ export class ItsLearningPersonsEventHandler {
         const filteredKontexte: [...T] = kontexte.map((pks: PersonenkontextUpdatedData[]) =>
             pks.filter((pk: PersonenkontextUpdatedData) => {
                 if (pk.orgaTyp == OrganisationsTyp.SCHULE) {
-                    if (!pk.isItslearningOrga) return false;
+                    if (!pk.isItslearningOrga) {return false;}
                 } else if (pk.orgaTyp == OrganisationsTyp.KLASSE) {
-                    if (!pk.parentOrgaId || !schoolsWithItslearning.has(pk.parentOrgaId)) return false;
+                    if (!pk.parentOrgaId || !schoolsWithItslearning.has(pk.parentOrgaId)) {return false;}
                 } else {
                     return false;
                 }

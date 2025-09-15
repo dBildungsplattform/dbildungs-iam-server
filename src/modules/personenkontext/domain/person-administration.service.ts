@@ -27,7 +27,7 @@ export class PersonAdministrationService {
             rollen = await this.rolleRepo.find(false);
         }
 
-        if (rollen.length === 0) return [];
+        if (rollen.length === 0) {return [];}
 
         const permittedOrgas: PermittedOrgas = await permissions.getOrgIdsWithSystemrecht(
             [RollenSystemRecht.PERSONEN_VERWALTEN],

@@ -132,7 +132,7 @@ export class EmailAddress<WasPersisted extends boolean> {
     }
 
     public get currentAddress(): Option<string> {
-        if (!this.enabled) return undefined;
+        if (!this.enabled) {return undefined;}
 
         return this.addressAddress;
     }

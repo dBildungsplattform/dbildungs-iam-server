@@ -71,7 +71,7 @@ import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 export function getEnabledOrAlternativeEmailAddress(entity: PersonEntity): string | undefined {
     for (const emailAddress of entity.emailAddresses) {
         // Email-Repo is responsible to avoid persisting multiple enabled email-addresses for same user
-        if (emailAddress.status === EmailAddressStatus.ENABLED) return emailAddress.address;
+        if (emailAddress.status === EmailAddressStatus.ENABLED) {return emailAddress.address;}
     }
     return entity.emailAddresses[0] ? entity.emailAddresses[0].address : undefined;
 }
@@ -113,11 +113,11 @@ export function getOxUserId(entity: PersonEntity): OXUserID | undefined {
                 break;
         }
     }
-    if (enabledAddresses[0]) return enabledAddresses[0].oxUserId;
-    if (disabledAddresses[0]) return disabledAddresses[0].oxUserId;
-    if (deletedAddresses[0]) return deletedAddresses[0].oxUserId;
-    if (failedAddresses[0]) return failedAddresses[0].oxUserId;
-    if (requestedAddresses[0]) return requestedAddresses[0].oxUserId;
+    if (enabledAddresses[0]) {return enabledAddresses[0].oxUserId;}
+    if (disabledAddresses[0]) {return disabledAddresses[0].oxUserId;}
+    if (deletedAddresses[0]) {return deletedAddresses[0].oxUserId;}
+    if (failedAddresses[0]) {return failedAddresses[0].oxUserId;}
+    if (requestedAddresses[0]) {return requestedAddresses[0].oxUserId;}
     const sortedEmailAddresses: EmailAddressEntity[] = emailAddresses.sort(compareEmailAddressesByUpdatedAtDesc);
 
     return sortedEmailAddresses[0]?.oxUserId;
@@ -418,7 +418,7 @@ export class PersonRepository {
 
         const [persons]: Counted<Person<true>> = await this.findBy(scope);
         let person: Person<true> | undefined = persons[0];
-        if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+        if (!person) {return { ok: false, error: new EntityNotFoundError('Person') };}
         person = await this.extendPersonWithKeycloakData(person);
 
         return { ok: true, value: person };
@@ -430,7 +430,7 @@ export class PersonRepository {
     ): Promise<Result<Person<true>>> {
         if (personId == permissions.personFields.id) {
             let person: Option<Person<true>> = await this.findById(personId);
-            if (!person) return { ok: false, error: new EntityNotFoundError('Person') };
+            if (!person) {return { ok: false, error: new EntityNotFoundError('Person') };}
             person = await this.extendPersonWithKeycloakData(person);
             return { ok: true, value: person };
         }
@@ -787,6 +787,7 @@ export class PersonRepository {
             );
             // wait for privacyIDEA to update the username
             await new Promise<void>((resolve: () => void) =>
+                // eslint-disable-next-line no-promise-executor-return
                 setTimeout(resolve, this.RENAME_WAITING_TIME_IN_SECONDS * 1000),
             );
         }
@@ -801,7 +802,7 @@ export class PersonRepository {
         const newFamilienname: string = person.familienname.toLowerCase();
 
         //NOT only look for first letter, because email-address is full-firstname.full-lastname@domain.de
-        if (oldVorname !== newVorname) return true;
+        if (oldVorname !== newVorname) {return true;}
 
         return oldFamilienname !== newFamilienname;
     }
@@ -1113,7 +1114,7 @@ export class PersonRepository {
         const newVornameLowerCase: string = toDIN91379SearchForm(newVorname).toLowerCase();
         const newFamiliennameLowerCase: string = toDIN91379SearchForm(newFamilienname).toLowerCase();
 
-        if (oldVornameLowerCase[0] !== newVornameLowerCase[0]) return true;
+        if (oldVornameLowerCase[0] !== newVornameLowerCase[0]) {return true;}
 
         return oldFamiliennameLowerCase !== newFamiliennameLowerCase;
     }
@@ -1152,7 +1153,7 @@ export class PersonRepository {
         return personEntities.map((person: PersonEntity) => [person.id, person.keycloakUserId]);
     }
 
-    public async getPersonWithoutOrgDeleteList(limit?: number | undefined): Promise<PersonWithoutOrgDeleteListResult> {
+    public async getPersonWithoutOrgDeleteList(limit?: number): Promise<PersonWithoutOrgDeleteListResult> {
         const daysAgo: Date = new Date();
         daysAgo.setDate(daysAgo.getDate() - NO_KONTEXTE_DEADLINE_IN_DAYS);
 

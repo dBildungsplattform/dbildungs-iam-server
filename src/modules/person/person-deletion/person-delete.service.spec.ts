@@ -103,7 +103,6 @@ describe('PersonDeleteService', () => {
             it('should log error', async () => {
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
                     createMock<Personenkontext<true>>({
-                        // eslint-disable-next-line @typescript-eslint/require-await
                         async getRolle(): Promise<Option<Rolle<true>>> {
                             return Promise.reject('reason');
                         },

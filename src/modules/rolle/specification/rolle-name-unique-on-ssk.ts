@@ -18,7 +18,7 @@ export class RolleNameUniqueOnSsk extends CompositeSpecification<Rolle<boolean>>
     private async validateRolleNameIsUniqueOnSSK(rolle: Rolle<boolean>, newName: string): Promise<boolean> {
         const rollen: Option<Rolle<true>[]> = await this.rolleRepo.findByName(newName, true);
 
-        if (!rollen || rollen.length == 0) return true;
+        if (!rollen || rollen.length == 0) {return true;}
 
         const rollenOnSameSSK: Rolle<true>[] = rollen.filter(
             (existingRolle: Rolle<true>) =>

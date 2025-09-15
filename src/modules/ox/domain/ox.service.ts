@@ -89,7 +89,7 @@ export class OxService {
                         error,
                     );
 
-                    // eslint-disable-next-line no-await-in-loop
+                    // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
                     await new Promise<void>((resolve: () => void) => setTimeout(resolve, delay));
                 }
             }

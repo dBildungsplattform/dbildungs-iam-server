@@ -55,10 +55,10 @@ export class LdapEventHandler {
         const emailDomain: string | undefined =
             await this.organisationRepository.findEmailDomainForOrganisation(organisationId);
         if (emailDomain)
-            return {
+            {return {
                 ok: true,
                 value: emailDomain,
-            };
+            };}
 
         return { ok: false, error: new LdapEmailDomainError() };
     }
@@ -229,7 +229,7 @@ export class LdapEventHandler {
                                 this.logger.error(
                                     `LdapClientService createLehrer NOT called, because organisation:${pk.orgaId} has no valid emailDomain`,
                                 );
-                                return Promise.reject({ ok: false, error: new Error('Invalid email domain') });
+                                return Promise.reject(new Error('Invalid email domain'));
                             }
                         });
                 }),

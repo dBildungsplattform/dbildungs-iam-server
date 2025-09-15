@@ -408,9 +408,9 @@ export class DbSeedService {
             seedingId,
             ReferencedEntityType.PERSON,
         );
-        if (!personUUID) throw new EntityNotFoundError('Person', seedingId.toString());
+        if (!personUUID) {throw new EntityNotFoundError('Person', seedingId.toString());}
         const person: Option<Person<true>> = await this.personRepository.findById(personUUID);
-        if (!person) throw new EntityNotFoundError('Person', seedingId.toString());
+        if (!person) {throw new EntityNotFoundError('Person', seedingId.toString());}
 
         return person;
     }
@@ -420,9 +420,9 @@ export class DbSeedService {
             seedingId,
             ReferencedEntityType.ORGANISATION,
         );
-        if (!organisationUUID) throw new EntityNotFoundError('Organisation', seedingId.toString());
+        if (!organisationUUID) {throw new EntityNotFoundError('Organisation', seedingId.toString());}
         const organisation: Option<Organisation<true>> = await this.organisationRepository.findById(organisationUUID);
-        if (!organisation) throw new EntityNotFoundError('Organisation', seedingId.toString());
+        if (!organisation) {throw new EntityNotFoundError('Organisation', seedingId.toString());}
 
         return organisation;
     }
@@ -432,9 +432,9 @@ export class DbSeedService {
             seedingId,
             ReferencedEntityType.ROLLE,
         );
-        if (!rolleUUID) throw new EntityNotFoundError('Rolle', seedingId.toString());
+        if (!rolleUUID) {throw new EntityNotFoundError('Rolle', seedingId.toString());}
         const rolle: Option<Rolle<true>> = await this.rolleRepo.findById(rolleUUID, true);
-        if (!rolle) throw new EntityNotFoundError('Rolle', seedingId.toString());
+        if (!rolle) {throw new EntityNotFoundError('Rolle', seedingId.toString());}
 
         return rolle;
     }
@@ -444,10 +444,10 @@ export class DbSeedService {
             seedingId,
             ReferencedEntityType.SERVICE_PROVIDER,
         );
-        if (!serviceProviderUUID) throw new EntityNotFoundError('ServiceProvider', seedingId.toString());
+        if (!serviceProviderUUID) {throw new EntityNotFoundError('ServiceProvider', seedingId.toString());}
         const serviceProvider: Option<ServiceProvider<true>> =
             await this.serviceProviderRepo.findById(serviceProviderUUID);
-        if (!serviceProvider) throw new EntityNotFoundError('ServiceProvider', seedingId.toString());
+        if (!serviceProvider) {throw new EntityNotFoundError('ServiceProvider', seedingId.toString());}
 
         return serviceProvider;
     }

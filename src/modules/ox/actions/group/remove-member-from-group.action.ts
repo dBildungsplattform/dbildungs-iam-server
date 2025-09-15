@@ -5,15 +5,12 @@ import { GroupMemberParams } from './ox-group.types.js';
 
 export type RemoveMemberFromGroupResponse = {
     status: OXRequestStatus;
-    data: RemoveMemberFromGroupResponseBody;
+    data: unknown;
 };
 
-export type RemoveMemberFromGroupResponseBody = {
-    // body is empty
-};
 
 export class RemoveMemberFromGroupAction extends OxBaseAction<
-    RemoveMemberFromGroupResponseBody,
+    unknown,
     RemoveMemberFromGroupResponse
 > {
     public override action: string = 'http://soap.admin.openexchange.com/removeMember';
@@ -53,7 +50,7 @@ export class RemoveMemberFromGroupAction extends OxBaseAction<
     }
 
     public override parseBody(
-        body: RemoveMemberFromGroupResponseBody,
+        body: unknown,
     ): Result<RemoveMemberFromGroupResponse, DomainError> {
         return {
             ok: true,

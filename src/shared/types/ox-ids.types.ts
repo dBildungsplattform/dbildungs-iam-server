@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Flavor } from './flavor.types.js';
 
 declare const oxEmailSymbol: unique symbol;

@@ -33,7 +33,7 @@ export async function findAllowedRollen({
     }
 
     const organisation: Option<Organisation<true>> = await organisationRepository.findById(organisationId);
-    if (!organisation) return [];
+    if (!organisation) {return [];}
 
     const rollen: Rolle<true>[] = rolleName
         ? await rolleRepo.findByName(rolleName, false, undefined, undefined, allowedRollenArten)

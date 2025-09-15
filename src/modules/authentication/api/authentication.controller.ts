@@ -143,7 +143,7 @@ export class AuthenticationController {
             const lastPasswordChange: Result<Date, DomainError> = await this.keycloakUserService.getLastPasswordChange(
                 permissions.personFields.keycloakUserId,
             );
-            if (lastPasswordChange.ok) userinfoExtension.password_updated_at = lastPasswordChange.value;
+            if (lastPasswordChange.ok) {userinfoExtension.password_updated_at = lastPasswordChange.value;}
         }
 
         const timeLimitInfos: PersonTimeLimitInfo[] = await this.personTimeLimitService.getPersonTimeLimitInfo(

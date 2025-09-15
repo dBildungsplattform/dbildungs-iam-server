@@ -139,7 +139,6 @@ const mockErrorResponse = (): never => {
 };
 
 const mockNonErrorThrow = (): never => {
-    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw { message: mockErrorMsg };
 };
 

@@ -327,10 +327,10 @@ export class OxEventService {
 
         //return if OxGroupNameAmbiguousError or any other error
         if (oxGroupId instanceof DomainError)
-            return {
+            {return {
                 ok: false,
                 error: oxGroupId,
-            };
+            };}
 
         return {
             ok: true,

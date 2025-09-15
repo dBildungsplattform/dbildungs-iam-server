@@ -32,8 +32,8 @@ export class EmailHealthIndicator extends HealthIndicator {
                 this.httpService.get('http://localhost:9090/read', {}),
             );
             return response.data;
-        } catch (error) {
-            throw new Error('Failed retrieving email address');
+        } catch (error: unknown) {
+            throw new Error(`Failed retrieving email address ${JSON.stringify(error)}`);
         }
     }
 }

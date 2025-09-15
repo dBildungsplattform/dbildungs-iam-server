@@ -239,7 +239,7 @@ export class LdapClientService {
         domain: string,
     ): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {return rootName;}
 
         const lehrerUid: string = this.getLehrerUid(username, rootName.value);
 
@@ -294,18 +294,18 @@ export class LdapClientService {
             emailDomain === this.ldapInstanceConfig.ERSATZSCHULEN_DOMAIN ||
             emailDomain === LdapClientService.ERSATZ_SCHULEN_DOMAIN_DEFAULT
         )
-            return {
+            {return {
                 ok: true,
                 value: LdapClientService.ERSATZ_SCHULEN_OU,
-            };
+            };}
         if (
             emailDomain === this.ldapInstanceConfig.OEFFENTLICHE_SCHULEN_DOMAIN ||
             emailDomain === LdapClientService.OEFFENTLICHE_SCHULEN_DOMAIN_DEFAULT
         )
-            return {
+            {return {
                 ok: true,
                 value: LdapClientService.OEFFENTLICHE_SCHULEN_OU,
-            };
+            };}
 
         return {
             ok: false,
@@ -341,14 +341,14 @@ export class LdapClientService {
             };
         }
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {return rootName;}
 
         const lehrerUid: string = this.getLehrerUid(username, rootName.value);
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: createLehrer');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const groupResult: Result<boolean, Error> = await this.addPersonToGroup(username, schulId, lehrerUid);
             if (!groupResult.ok) {
@@ -384,7 +384,7 @@ export class LdapClientService {
                 await client.add(lehrerUid, entry);
 
                 const entryUUIDResult: Result<string> = await this.getEntryUUID(client, person.id, username);
-                if (!entryUUIDResult.ok) return entryUUIDResult;
+                if (!entryUUIDResult.ok) {return entryUUIDResult;}
                 person.ldapEntryUUID = entryUUIDResult.value;
 
                 this.logger.info(`LDAP: Successfully created lehrer ${lehrerUid}`);
@@ -400,13 +400,13 @@ export class LdapClientService {
 
     private async isLehrerExistingInternal(username: PersonReferrer, domain: string): Promise<Result<boolean>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {return rootName;}
 
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: isLehrerExisting');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const searchResultLehrer: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
@@ -431,7 +431,7 @@ export class LdapClientService {
             this.logger.info('LDAP: modifyPersonAttributes');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -535,7 +535,7 @@ export class LdapClientService {
             this.logger.info('LDAP: getPersonAttributes');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -556,7 +556,7 @@ export class LdapClientService {
                     `Fetching person-attributes FAILED, no entry for username:${username}, personId:${personId}`,
                 );
                 const creationResult: Result<string> = await this.createEmptyPersonEntry(username, emailDomain);
-                if (!creationResult.ok) return creationResult;
+                if (!creationResult.ok) {return creationResult;}
 
                 const entryUUIDResult: Result<string> = await this.getEntryUUID(client, personId, username);
                 if (!entryUUIDResult.ok) {
@@ -660,10 +660,10 @@ export class LdapClientService {
         this.logger.info('LDAP: createEmptyPersonEntry');
         const client: Client = this.ldapClient.getClient();
         const bindResult: Result<boolean> = await this.bind();
-        if (!bindResult.ok) return bindResult;
+        if (!bindResult.ok) {return bindResult;}
 
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {return rootName;}
 
         const lehrerUid: string = this.getLehrerUid(username, rootName.value);
 
@@ -725,7 +725,7 @@ export class LdapClientService {
             this.logger.info('LDAP: setMailAlternativeAddress');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -769,7 +769,7 @@ export class LdapClientService {
             this.logger.info('LDAP: getGroupsForPerson');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const personSearchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -896,7 +896,7 @@ export class LdapClientService {
             this.logger.info('LDAP: deleteLehrerByUsernameInternal');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const searchResultLehrer: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -928,13 +928,13 @@ export class LdapClientService {
         domain: string,
     ): Promise<Result<PersonData>> {
         const rootName: Result<string> = this.getRootNameOrError(domain);
-        if (!rootName.ok) return rootName;
+        if (!rootName.ok) {return rootName;}
 
         return this.mutex.runExclusive(async () => {
             this.logger.info('LDAP: deleteLehrer by person');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
             if (!person.username) {
                 return {
                     ok: false,
@@ -988,10 +988,10 @@ export class LdapClientService {
             }
             const domain: string = splitted[1];
             const rootName: Result<string> = this.getRootNameOrError(domain);
-            if (!rootName.ok) return rootName;
+            if (!rootName.ok) {return rootName;}
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
             const searchResult: SearchResult = await client.search(
                 `ou=${rootName.value},${this.ldapInstanceConfig.BASE_DN}`,
                 {
@@ -1079,10 +1079,10 @@ export class LdapClientService {
             }
             const domain: string = splitted[1];
             const rootName: Result<string> = this.getRootNameOrError(domain);
-            if (!rootName.ok) return rootName;
+            if (!rootName.ok) {return rootName;}
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const searchResult: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
                 scope: 'sub',
@@ -1157,7 +1157,7 @@ export class LdapClientService {
             this.logger.info(`LDAP: Adding person ${personUid} to group ${groupId}`);
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const orgUnitDn: string = `ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`;
             const searchResultOrgUnit: SearchResult = await client.search(`${this.ldapInstanceConfig.BASE_DN}`, {
@@ -1241,7 +1241,7 @@ export class LdapClientService {
             this.logger.info(`LDAP: Removing person ${username} from group ${groupId}`);
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
             const searchResultOrgUnit: SearchResult = await client.search(
                 `cn=${LdapClientService.GROUPS},ou=${orgaKennung},${this.ldapInstanceConfig.BASE_DN}`,
                 {
@@ -1320,7 +1320,7 @@ export class LdapClientService {
             this.logger.info('LDAP: changeUserPassword');
             const client: Client = this.ldapClient.getClient();
             const bindResult: Result<boolean> = await this.bind();
-            if (!bindResult.ok) return bindResult;
+            if (!bindResult.ok) {return bindResult;}
 
             const searchResult: SearchResult = await client.search(`${LdapClientService.DC_SCHULE_SH_DC_DE}`, {
                 scope: 'sub',
@@ -1395,7 +1395,7 @@ export class LdapClientService {
                 );
 
                 // eslint-disable-next-line no-await-in-loop
-                if (currentAttempt < retries) await this.sleep(delay);
+                if (currentAttempt < retries) {await this.sleep(delay);}
             }
             currentAttempt++;
         }
@@ -1404,6 +1404,7 @@ export class LdapClientService {
     }
 
     private async sleep(ms: number): Promise<void> {
+        // eslint-disable-next-line no-promise-executor-return
         return new Promise<void>((resolve: () => void) => setTimeout(resolve, ms));
     }
 }
