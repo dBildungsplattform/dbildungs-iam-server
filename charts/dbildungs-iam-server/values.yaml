@@ -76,8 +76,6 @@ auth:
   import_passphrase_salt: ""
   ox_password: ""
   basic_auth_password: ""
-  kafka_username: ""
-  kafka_password: ""
 
 ox:
   enabled: false
@@ -260,7 +258,7 @@ redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
-  kafka_broker: "10.7.250.100:9093,10.7.250.101:9093,10.7.250.102:9093"
+  kafka_broker: ""
   enabled: true
   sslEnabled: true
   sslCaPath: /tls/ca.pem
