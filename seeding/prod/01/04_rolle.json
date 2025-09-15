@@ -20,7 +20,7 @@
                 "BULK_VERWALTEN",
                 "SERVICEPROVIDER_VERWALTEN"
             ],
-            "serviceProviderIds": [5, 8, 9, 10, 11]
+            "serviceProviderIds": [5, 8, 9, 10, 11, 13, 14]
         },
         {
             "id": 1,
@@ -220,7 +220,7 @@
                 "LMS_VERWALTEN",
                 "SERVICEPROVIDER_VERWALTEN"
             ],
-            "serviceProviderIds": [],
+            "serviceProviderIds": [13, 14],
             "istTechnisch": false
         },
         {
@@ -234,8 +234,8 @@
                 "SERVICEPROVIDER_VERWALTEN",
                 "ROLLEN_VERWALTEN"
             ],
-            "serviceProviderIds": [],
-            "istTechnisch": false 
+            "serviceProviderIds": [13],
+            "istTechnisch": false
         },
         {
            "id": 105,
@@ -248,9 +248,9 @@
                 "SERVICEPROVIDER_VERWALTEN",
                 "ROLLEN_VERWALTEN"
             ],
-            "serviceProviderIds": [],
-            "istTechnisch": false 
-        }, 
+            "serviceProviderIds": [14],
+            "istTechnisch": false
+        },
         {
            "id": 106,
             "administeredBySchulstrukturknoten": 1,
@@ -258,8 +258,8 @@
             "rollenart": "LEIT",
             "merkmale": [],
             "systemrechte": ["PERSONEN_LESEN"],
-            "serviceProviderIds": [],
-            "istTechnisch": false 
+            "serviceProviderIds": [13],
+            "istTechnisch": false
         },
         {
            "id": 107,
@@ -268,8 +268,8 @@
             "rollenart": "LEIT",
             "merkmale": [],
             "systemrechte": ["PERSONEN_LESEN"],
-            "serviceProviderIds": [],
-            "istTechnisch": false 
+            "serviceProviderIds": [14],
+            "istTechnisch": false
         }
     ]
 }

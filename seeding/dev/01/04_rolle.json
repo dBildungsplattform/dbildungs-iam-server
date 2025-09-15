@@ -22,7 +22,7 @@
                 "HINWEISE_BEARBEITEN",
                 "SERVICEPROVIDER_VERWALTEN"
             ],
-            "serviceProviderIds": [5, 8, 9, 10, 11]
+            "serviceProviderIds": [5, 8, 9, 10, 11, 15, 16]
         },
         {
             "id": 1,
@@ -222,7 +222,7 @@
                 "LMS_VERWALTEN",
                 "SERVICEPROVIDER_VERWALTEN"
             ],
-            "serviceProviderIds": [],
+            "serviceProviderIds": [15, 16],
             "istTechnisch": false
         },
         {
@@ -236,8 +236,8 @@
                 "SERVICEPROVIDER_VERWALTEN",
                 "ROLLEN_VERWALTEN"
             ],
-            "serviceProviderIds": [],
-            "istTechnisch": false 
+            "serviceProviderIds": [15, 16],
+            "istTechnisch": false
         },
         {
            "id": 105,
@@ -250,9 +250,9 @@
                 "SERVICEPROVIDER_VERWALTEN",
                 "ROLLEN_VERWALTEN"
             ],
-            "serviceProviderIds": [],
-            "istTechnisch": false 
-        }, 
+            "serviceProviderIds": [15, 16],
+            "istTechnisch": false
+        },
         {
            "id": 106,
             "administeredBySchulstrukturknoten": 1,
@@ -260,8 +260,8 @@
             "rollenart": "LEIT",
             "merkmale": [],
             "systemrechte": ["PERSONEN_LESEN"],
-            "serviceProviderIds": [],
-            "istTechnisch": false 
+            "serviceProviderIds": [15, 16],
+            "istTechnisch": false
         },
         {
            "id": 107,
@@ -270,9 +270,9 @@
             "rollenart": "LEIT",
             "merkmale": [],
             "systemrechte": ["PERSONEN_LESEN"],
-            "serviceProviderIds": [],
-            "istTechnisch": false 
-        },      
+            "serviceProviderIds": [15, 16],
+            "istTechnisch": false
+        },
         {
             "id": 200,
             "administeredBySchulstrukturknoten": 0,
@@ -294,7 +294,9 @@
             "systemrechte": [],
             "serviceProviderIds": [
                 13,
-                14
+                14,
+                15,
+                16
             ]
         }
     ]
