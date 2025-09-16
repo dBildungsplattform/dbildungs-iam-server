@@ -258,7 +258,7 @@ redis:
   host: dbildungs-iam-redis-master.spsh.svc.cluster.local
 
 kafka:
-  existingSecret: dbildungs-iam-kafka-tls
+  #existingSecret: dbildungs-iam-kafka-tls
   kafka_broker: ""
   enabled: true
   sslEnabled: true

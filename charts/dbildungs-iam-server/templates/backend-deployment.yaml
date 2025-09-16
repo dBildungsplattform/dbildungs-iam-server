@@ -36,6 +36,12 @@ spec:
           envFrom:
             - configMapRef:
                 name:  {{ template "common.names.name" $ }}-kafka-envs-configmap
+          env:
+            - name: KAFKA_BROKER
+              valueFrom:
+                secretKeyRef:
+                  name: dbildungs-iam-kafka-tls
+                  key: kafka_broker
           volumeMounts:
             - name: kafka-init-volume
               mountPath: /init
