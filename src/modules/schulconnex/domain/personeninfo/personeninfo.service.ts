@@ -57,7 +57,7 @@ export class PersonenInfoService {
             return [];
         }
 
-        const [idsWithRollenerweiterung, idsWithKontext]: [PersonID[], PersonID[]] = await Promise.all([
+        const [idsWithKontext, idsWithRollenerweiterung]: [PersonID[], PersonID[]] = await Promise.all([
             this.schulconnexRepo.findPersonIdsWithKontextAtServiceProvidersAndOptionallyOrganisations(
                 permittedServiceProviderIds,
                 permittedOrgas.all ? 'all' : new Set<string>(permittedOrgas.orgaIds),
