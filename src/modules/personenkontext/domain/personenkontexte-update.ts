@@ -364,10 +364,17 @@ export class PersonenkontexteUpdate {
         if (this.personalnummer) {
             const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
             if (person) {
-                person.personalnummer = this.personalnummer;
-                const saveResult: DomainError | Person<true> = await this.personRepo.save(person);
-                if (saveResult instanceof DomainError) {
-                    return saveResult;
+                const updateResult: Person<true> | DomainError = await this.personRepo.updatePersonMetadata(
+                    person.id,
+                    person.familienname,
+                    person.vorname,
+                    this.personalnummer,
+                    person.updatedAt,
+                    person.revision,
+                    this.permissions,
+                );
+                if (updateResult instanceof DomainError) {
+                    return updateResult;
                 }
             }
         }
@@ -388,7 +395,7 @@ export class PersonenkontexteUpdate {
             }
         } else {
             const person: Option<Person<true>> = await this.personRepo.findById(this.personId);
-            if (person && person.orgUnassignmentDate) {
+            if (person?.orgUnassignmentDate) {
                 person.orgUnassignmentDate = undefined;
                 await this.personRepo.save(person);
             }
