@@ -4,7 +4,7 @@ import { ImportVorgangEntity } from './import-vorgang.entity.js';
 import { ImportVorgang } from '../domain/import-vorgang.js';
 import { ImportStatus } from '../domain/import.enums.js';
 import { PersonPermissions } from '../../authentication/domain/person-permissions.js';
-import { RollenSystemRecht } from '../../rolle/domain/rolle.enums.js';
+import { RollenSystemRecht } from '../../rolle/domain/systemrecht.js';
 
 export function mapAggregateToData(importVorgang: ImportVorgang<boolean>): RequiredEntityData<ImportVorgangEntity> {
     return {

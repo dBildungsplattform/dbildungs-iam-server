@@ -1,6 +1,6 @@
 import { BaseEntity, Entity, Enum, Index, ManyToOne, PrimaryKeyProp, Rel } from '@mikro-orm/core';
 import { RolleEntity } from './rolle.entity.js';
-import { RollenSystemRecht } from '../domain/rolle.enums.js';
+import { RollenSystemRechtEnum } from '../domain/systemrecht.js';
 
 @Entity({ tableName: 'rolle_systemrecht' })
 export class RolleSystemrechtEntity extends BaseEntity {
@@ -10,8 +10,8 @@ export class RolleSystemrechtEntity extends BaseEntity {
     })
     public rolle!: Rel<RolleEntity>;
 
-    @Enum({ primary: true, items: () => RollenSystemRecht, nativeEnumName: 'rollen_system_recht_enum' })
-    public systemrecht!: RollenSystemRecht;
+    @Enum({ primary: true, items: () => RollenSystemRechtEnum, nativeEnumName: 'rollen_system_recht_enum' })
+    public systemrecht!: RollenSystemRechtEnum;
 
     public [PrimaryKeyProp]?: ['rolle', 'systemrecht'];
 }
