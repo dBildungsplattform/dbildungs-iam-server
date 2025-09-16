@@ -428,7 +428,7 @@ export class PersonRepository {
         personId: string,
         permissions: PersonPermissions,
     ): Promise<Result<Person<true>>> {
-        if (personId == permissions.personFields.id) {
+        if (personId === permissions.personFields.id) {
             let person: Option<Person<true>> = await this.findById(personId);
             if (!person) {return { ok: false, error: new EntityNotFoundError('Person') };}
             person = await this.extendPersonWithKeycloakData(person);

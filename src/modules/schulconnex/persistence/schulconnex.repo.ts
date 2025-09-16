@@ -35,7 +35,7 @@ export class SchulconnexRepo {
         }
 
         let qb: QueryBuilder<PersonenkontextEntity>;
-        if (organisationIds != 'all' && organisationIds.size > 0) {
+        if (organisationIds !== 'all' && organisationIds.size > 0) {
             qb = this.em
                 .createQueryBuilder(PersonenkontextEntity, 'pk')
                 .select('pk.personId')

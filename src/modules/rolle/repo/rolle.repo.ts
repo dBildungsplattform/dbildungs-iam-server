@@ -268,7 +268,7 @@ export class RolleRepo {
             true,
         );
 
-        if (!orgIdsWithRecht.all && orgIdsWithRecht.orgaIds.length == 0) {
+        if (!orgIdsWithRecht.all && orgIdsWithRecht.orgaIds.length === 0) {
             return [[], 0];
         }
 

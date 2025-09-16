@@ -5,11 +5,12 @@ import { Linter } from "eslint";
 // import prettier from 'prettier';
 
 const rules: Partial<Linter.RulesRecord> = {
+    'class-methods-use-this': 'off',
     'curly': ['error', 'all'],
+    'eqeqeq': ['error', 'smart'],
+    'max-classes-per-file': ['error', 1],
     'no-void': ['error', { allowAsStatement: true }],
     'no-console': ['warn'],
-    'max-classes-per-file': ['error', 1],
-    'class-methods-use-this': 'off',
     'no-param-reassign': 'warn',
     'no-underscore-dangle': 'error',
     'no-await-in-loop': 'error',

@@ -280,7 +280,7 @@ export class KeycloakUserService {
             {return { ok: false, error: new KeycloakClientError('Keycloak returned no credentials') };}
 
         const password: CredentialRepresentation | undefined = credentialsResult.value.find(
-            (credential: CredentialRepresentation) => credential.type == 'password',
+            (credential: CredentialRepresentation) => credential.type === 'password',
         );
         if (!password) {return { ok: false, error: new KeycloakClientError('Keycloak user has no password') };}
         if (!password.createdDate)
@@ -472,7 +472,7 @@ export class KeycloakUserService {
             //lock describes whether the user should be locked or not
             if (lock) {
                 const existingUserLock: UserLock | void = (await this.userLockRepository.findByPersonId(personId)).find(
-                    (foundUserLock: UserLock) => foundUserLock.locked_occasion == PersonLockOccasion.MANUELL_GESPERRT,
+                    (foundUserLock: UserLock) => foundUserLock.locked_occasion === PersonLockOccasion.MANUELL_GESPERRT,
                 );
                 if (existingUserLock) {
                     await this.userLockRepository.update(userLock);
