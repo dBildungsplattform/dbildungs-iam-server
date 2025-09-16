@@ -99,7 +99,11 @@ export class OrganisationService {
                     organisation.zugehoerigZu,
                 );
                 let schoolName: string = 'SCHOOL_NOT_FOUND';
-                if (school) {if (school.name) {schoolName = school.name;}}
+                if (school) {
+                    if (school.name) {
+                        schoolName = school.name;
+                    }
+                }
 
                 if (error) {
                     this.logger.error(
@@ -430,7 +434,9 @@ export class OrganisationService {
 
         const validateStructureSpecifications: Result<boolean, OrganisationSpecificationError> =
             await this.validateStructureSpecifications(childOrganisation);
-        if (!validateStructureSpecifications.ok) {return { ok: false, error: validateStructureSpecifications.error };}
+        if (!validateStructureSpecifications.ok) {
+            return { ok: false, error: validateStructureSpecifications.error };
+        }
 
         return { ok: true, value: true };
     }

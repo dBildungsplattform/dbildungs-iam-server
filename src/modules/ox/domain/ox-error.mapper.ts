@@ -27,17 +27,24 @@ export class OxErrorMapper {
     public static mapOxErrorResponseToOxError(oxErrorResponse: OxErrorResponse): OxError {
         const faultString: string = oxErrorResponse.Envelope.Body.Fault.faultstring;
 
-        if (OxErrorMapper.USERNAME_ALREADY_EXISTS_REGEX.test(faultString))
-            {return new OxUsernameAlreadyExistsError(faultString);}
-        if (OxErrorMapper.DISPLAYNAME_ALDREADY_USED_REGEX.test(faultString))
-            {return new OxDisplaynameAlreadyUsedError(faultString);}
-        if (OxErrorMapper.PRIMARY_MAIL_ADDRESS_ALREADY_EXISTS_REGEX.test(faultString))
-            {return new OxPrimaryMailAlreadyExistsError(faultString);}
-        if (OxErrorMapper.PRIMARY_MAIL_ADDRESS_HAS_TO_EQUAL_EMAIL1_REGEX.test(faultString))
-            {return new OxPrimaryMailNotEqualEmail1Error(faultString);}
-        if (OxErrorMapper.NO_SUCH_USER_REGEX.test(faultString)) {return new OxNoSuchUserError(faultString);}
-        if (OxErrorMapper.MEMBER_ALREADY_IN_GROUP_REGEX.test(faultString))
-            {return new OxMemberAlreadyInGroupError(faultString);}
+        if (OxErrorMapper.USERNAME_ALREADY_EXISTS_REGEX.test(faultString)) {
+            return new OxUsernameAlreadyExistsError(faultString);
+        }
+        if (OxErrorMapper.DISPLAYNAME_ALDREADY_USED_REGEX.test(faultString)) {
+            return new OxDisplaynameAlreadyUsedError(faultString);
+        }
+        if (OxErrorMapper.PRIMARY_MAIL_ADDRESS_ALREADY_EXISTS_REGEX.test(faultString)) {
+            return new OxPrimaryMailAlreadyExistsError(faultString);
+        }
+        if (OxErrorMapper.PRIMARY_MAIL_ADDRESS_HAS_TO_EQUAL_EMAIL1_REGEX.test(faultString)) {
+            return new OxPrimaryMailNotEqualEmail1Error(faultString);
+        }
+        if (OxErrorMapper.NO_SUCH_USER_REGEX.test(faultString)) {
+            return new OxNoSuchUserError(faultString);
+        }
+        if (OxErrorMapper.MEMBER_ALREADY_IN_GROUP_REGEX.test(faultString)) {
+            return new OxMemberAlreadyInGroupError(faultString);
+        }
         return new OxError();
     }
 }

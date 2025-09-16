@@ -38,8 +38,8 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
         }
 
         if (accessToken) {
-            if (!(await this.client.introspect(accessToken)).active)
-                {if (refreshToken && (await this.client.introspect(refreshToken)).active && req.passportUser) {
+            if (!(await this.client.introspect(accessToken)).active) {
+                if (refreshToken && (await this.client.introspect(refreshToken)).active && req.passportUser) {
                     // Do we have a refresh token and somewhere to store the result of the refresh?
                     try {
                         const tokens: TokenSet = await this.client.refresh(refreshToken);
@@ -60,7 +60,8 @@ export class SessionAccessTokenMiddleware implements NestMiddleware {
                     req.logout((err: unknown) => {
                         this.logger.logUnknownAsError('Logout Failed', err, false);
                     });
-                }}
+                }
+            }
         }
         next();
     }

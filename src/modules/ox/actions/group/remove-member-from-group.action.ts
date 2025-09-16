@@ -8,11 +8,7 @@ export type RemoveMemberFromGroupResponse = {
     data: unknown;
 };
 
-
-export class RemoveMemberFromGroupAction extends OxBaseAction<
-    unknown,
-    RemoveMemberFromGroupResponse
-> {
+export class RemoveMemberFromGroupAction extends OxBaseAction<unknown, RemoveMemberFromGroupResponse> {
     public override action: string = 'http://soap.admin.openexchange.com/removeMember';
 
     public override soapServiceName: string = 'OXGroupService';
@@ -49,9 +45,7 @@ export class RemoveMemberFromGroupAction extends OxBaseAction<
         };
     }
 
-    public override parseBody(
-        body: unknown,
-    ): Result<RemoveMemberFromGroupResponse, DomainError> {
+    public override parseBody(body: unknown): Result<RemoveMemberFromGroupResponse, DomainError> {
         return {
             ok: true,
             value: {

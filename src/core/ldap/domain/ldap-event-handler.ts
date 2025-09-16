@@ -54,11 +54,12 @@ export class LdapEventHandler {
     private async getEmailDomainForOrganisationId(organisationId: OrganisationID): Promise<Result<string>> {
         const emailDomain: string | undefined =
             await this.organisationRepository.findEmailDomainForOrganisation(organisationId);
-        if (emailDomain)
-            {return {
+        if (emailDomain) {
+            return {
                 ok: true,
                 value: emailDomain,
-            };}
+            };
+        }
 
         return { ok: false, error: new LdapEmailDomainError() };
     }

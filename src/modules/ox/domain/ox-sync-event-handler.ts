@@ -178,7 +178,9 @@ export class OxSyncEventHandler {
 
         const mostRecentRequestedOrEnabledEA: Option<EmailAddress<true>> =
             await this.oxEventService.getMostRecentEnabledOrRequestedEmailAddress(personId);
-        if (!mostRecentRequestedOrEnabledEA) {return;} //logging is done in getMostRecentRequestedEmailAddress
+        if (!mostRecentRequestedOrEnabledEA) {
+            return;
+        } //logging is done in getMostRecentRequestedEmailAddress
         const currentEmailAddressString: string = mostRecentRequestedOrEnabledEA.address;
 
         const disabledEmailAddresses: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(

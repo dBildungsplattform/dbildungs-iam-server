@@ -65,7 +65,9 @@ export class PersonLandesbediensteterSearchService {
         const person: Person<true> = persons.at(0)!;
 
         const searchableResult: Result<void, DomainError> = await this.personIsSearchable(person);
-        if (!searchableResult.ok) {throw searchableResult.error;}
+        if (!searchableResult.ok) {
+            throw searchableResult.error;
+        }
 
         const [email, kontexteWithOrgaAndRolle]: [Option<PersonEmailResponse>, Array<KontextWithOrgaAndRolle>] =
             await Promise.all([

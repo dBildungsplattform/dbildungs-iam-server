@@ -353,7 +353,9 @@ export class EmailEventHandler {
         const rolleIds: Option<string>[] = await Promise.all(pro);
 
         for (const rolleId of rolleIds) {
-            if (rolleId) {return rolleId;}
+            if (rolleId) {
+                return rolleId;
+            }
         }
 
         return undefined;
@@ -694,7 +696,9 @@ export class EmailEventHandler {
         emailAdressGeneratedCreator: EmailAddressGeneratedCreator,
     ): Promise<void> {
         const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
-        if (!organisationKennung.ok) {return;}
+        if (!organisationKennung.ok) {
+            return;
+        }
 
         const existingEmails: EmailAddress<true>[] = await this.emailRepo.findByPersonSortedByUpdatedAtDesc(personId);
 
@@ -781,7 +785,9 @@ export class EmailEventHandler {
         emailAdressGeneratedCreator: EmailAddressGeneratedCreator,
     ): Promise<void> {
         const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
-        if (!organisationKennung.ok) {return;}
+        if (!organisationKennung.ok) {
+            return;
+        }
         const personUsername: Result<string> = await this.getPersonUsernameOrError(personId);
         if (!personUsername.ok) {
             return; //error logging is done in getPersonUsernameOrError
@@ -865,7 +871,9 @@ export class EmailEventHandler {
         oldEmail: EmailAddress<true>,
     ): Promise<void> {
         const organisationKennung: Result<OrganisationKennung> = await this.getOrganisationKennung(organisationId);
-        if (!organisationKennung.ok) {return;}
+        if (!organisationKennung.ok) {
+            return;
+        }
         const personUsername: Result<string> = await this.getPersonUsernameOrError(personId);
         if (!personUsername.ok) {
             return; //error logging is done in getPersonUsernameOrError
@@ -926,7 +934,9 @@ export class EmailEventHandler {
             (sp: ServiceProvider<true>) => sp.kategorie === ServiceProviderKategorie.EMAIL,
         );
 
-        if (references) {return rolle.id;}
+        if (references) {
+            return rolle.id;
+        }
 
         return undefined;
     }

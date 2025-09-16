@@ -1,8 +1,9 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint from 'typescript-eslint';
+import importPlugin from 'eslint-plugin-import';
 // import jest from "eslint-plugin-jest";
 import { Linter } from "eslint";
-// import prettier from 'prettier';
+import prettier from 'eslint-plugin-prettier';
 
 const rules: Partial<Linter.RulesRecord> = {
     'class-methods-use-this': 'off',
@@ -19,6 +20,10 @@ const rules: Partial<Linter.RulesRecord> = {
     'no-use-before-define': 'error',
     'no-template-curly-in-string': 'error',
     'no-promise-executor-return': 'error',
+    // 'import/extensions': ['error', 'ignorePackages'],
+    'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+    'import/no-cycle': ['error'],
+    'prettier/prettier': ['warn'],
     '@typescript-eslint/no-inferrable-types': ['off'],
     '@typescript-eslint/typedef': [
         'warn',
@@ -64,9 +69,8 @@ export default defineConfig(
         name: 'ts-config',
         extends: [
             tseslint.configs.recommendedTypeChecked,
-            // 'prettier',
         ],
-        plugins: { tseslint: tseslint },
+        plugins: { tseslint: tseslint, import: importPlugin, prettier: prettier },
         languageOptions: {
             parser: tseslint.parser,
             parserOptions: {

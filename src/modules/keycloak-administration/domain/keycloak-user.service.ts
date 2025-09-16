@@ -267,28 +267,38 @@ export class KeycloakUserService {
         const userResult: Result<Option<UserRepresentation>, DomainError> = await this.wrapClientResponse(
             kcAdminClientResult.value.users.findOne({ id: userId }),
         );
-        if (!userResult.ok) {return userResult;}
-        if (!userResult.value?.createdTimestamp)
-            {return { ok: false, error: new KeycloakClientError('Keycloak user has no createdTimestamp') };}
+        if (!userResult.ok) {
+            return userResult;
+        }
+        if (!userResult.value?.createdTimestamp) {
+            return { ok: false, error: new KeycloakClientError('Keycloak user has no createdTimestamp') };
+        }
 
         const credentialsResult: Result<
             Option<Array<CredentialRepresentation>>,
             DomainError
         > = await this.wrapClientResponse(kcAdminClientResult.value.users.getCredentials({ id: userId }));
-        if (!credentialsResult.ok) {return credentialsResult;}
-        if (!credentialsResult.value || credentialsResult.value.length <= 0)
-            {return { ok: false, error: new KeycloakClientError('Keycloak returned no credentials') };}
+        if (!credentialsResult.ok) {
+            return credentialsResult;
+        }
+        if (!credentialsResult.value || credentialsResult.value.length <= 0) {
+            return { ok: false, error: new KeycloakClientError('Keycloak returned no credentials') };
+        }
 
         const password: CredentialRepresentation | undefined = credentialsResult.value.find(
             (credential: CredentialRepresentation) => credential.type === 'password',
         );
-        if (!password) {return { ok: false, error: new KeycloakClientError('Keycloak user has no password') };}
-        if (!password.createdDate)
-            {return { ok: false, error: new KeycloakClientError('Keycloak user password has no createdDate') };}
+        if (!password) {
+            return { ok: false, error: new KeycloakClientError('Keycloak user has no password') };
+        }
+        if (!password.createdDate) {
+            return { ok: false, error: new KeycloakClientError('Keycloak user password has no createdDate') };
+        }
 
         const tolerance: number = 10000; // 10 seconds
-        if (password.createdDate - userResult.value.createdTimestamp <= tolerance)
-            {return { ok: false, error: new KeycloakClientError('Keycloak user password has never been updated') };}
+        if (password.createdDate - userResult.value.createdTimestamp <= tolerance) {
+            return { ok: false, error: new KeycloakClientError('Keycloak user password has never been updated') };
+        }
         return { ok: true, value: new Date(password.createdDate) };
     }
 

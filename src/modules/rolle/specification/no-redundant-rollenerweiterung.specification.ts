@@ -9,8 +9,12 @@ export class NoRedundantRollenerweiterung extends CompositeSpecification<Rollene
 
     public async isSatisfiedBy(rollenerweiterung: Rollenerweiterung<boolean>): Promise<boolean> {
         const rolle: Option<Rolle<true>> = await rollenerweiterung.getRolle();
-        if (!rolle) {return false;}
-        if (rolle.serviceProviderIds.includes(rollenerweiterung.serviceProviderId)) {return false;}
+        if (!rolle) {
+            return false;
+        }
+        if (rolle.serviceProviderIds.includes(rollenerweiterung.serviceProviderId)) {
+            return false;
+        }
         return true;
     }
 }

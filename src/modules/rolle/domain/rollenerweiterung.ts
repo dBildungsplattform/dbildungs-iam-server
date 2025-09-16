@@ -80,9 +80,15 @@ export class Rollenerweiterung<WasPersisted extends boolean> {
             this.rolleRepo.findById(this.rolleId),
             this.serviceProviderRepo.findById(this.serviceProviderId),
         ]);
-        if (!organisation) {return new EntityNotFoundError('Organisation', this.organisationId);}
-        if (!rolle) {return new EntityNotFoundError('Rolle', this.rolleId);}
-        if (!serviceProvider) {return new EntityNotFoundError('ServiceProvider', this.serviceProviderId);}
+        if (!organisation) {
+            return new EntityNotFoundError('Organisation', this.organisationId);
+        }
+        if (!rolle) {
+            return new EntityNotFoundError('Rolle', this.rolleId);
+        }
+        if (!serviceProvider) {
+            return new EntityNotFoundError('ServiceProvider', this.serviceProviderId);
+        }
         return undefined;
     }
 

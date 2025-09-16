@@ -38,7 +38,9 @@ export function getLowestStepUpLevel(): StepUpLevel {
 // timeout in seconds
 export function isStepUpTimeOver(req: Request, timeout: number): boolean {
     const currentTime: number = Date.now();
-    if (!req.session?.lastRouteChangeTime) {return false;}
+    if (!req.session?.lastRouteChangeTime) {
+        return false;
+    }
     const lastRouteChangeTime: number = req.session.lastRouteChangeTime;
     const deltaTime: number = currentTime - lastRouteChangeTime;
     return deltaTime >= timeout * 1000;
@@ -50,7 +52,9 @@ export function updateAndGetStepUpLevel(req: Request, timeout: number): StepUpLe
     }
 
     if (isStepUpTimeOver(req, timeout)) {
-        if (req.passportUser) {req.passportUser.stepUpLevel = getLowestStepUpLevel();}
+        if (req.passportUser) {
+            req.passportUser.stepUpLevel = getLowestStepUpLevel();
+        }
     }
 
     req.session.lastRouteChangeTime = new Date().getTime();

@@ -80,7 +80,9 @@ export class PersonDeleteService {
                                     };
                                 });
                         } else {
-                            return Promise.reject(new Error(`Rolle not found for Personenkontext ${personenKontext.id}`));
+                            return Promise.reject(
+                                new Error(`Rolle not found for Personenkontext ${personenKontext.id}`),
+                            );
                         }
                     });
                 }),

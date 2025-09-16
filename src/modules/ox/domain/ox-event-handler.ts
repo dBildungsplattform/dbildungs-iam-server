@@ -223,7 +223,9 @@ export class OxEventHandler {
             return this.logger.info('Not enabled, ignoring event');
         }
         const person: Option<Person<true>> = await this.personRepository.findById(event.personId);
-        if (!person) {return this.logger.error(`Could Not Find Person For personId:${event.personId}`);}
+        if (!person) {
+            return this.logger.error(`Could Not Find Person For personId:${event.personId}`);
+        }
         if (!person.oxUserId) {
             return this.logger.error(
                 `Could Not Remove Person From OxGroups, No OxUserId For personId:${event.personId}`,
@@ -535,7 +537,9 @@ export class OxEventHandler {
 
         const mostRecentRequestedEmailAddress: Option<EmailAddress<true>> =
             await this.getMostRecentRequestedEmailAddress(personId);
-        if (!mostRecentRequestedEmailAddress) {return;}
+        if (!mostRecentRequestedEmailAddress) {
+            return;
+        }
         const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
 
         const existsAction: ExistsUserAction = this.oxEventService.createExistsUserAction(person.referrer);
@@ -660,7 +664,9 @@ export class OxEventHandler {
 
         const mostRecentRequestedEmailAddress: Option<EmailAddress<true>> =
             await this.getMostRecentRequestedEmailAddress(personId);
-        if (!mostRecentRequestedEmailAddress) {return;} //logging is done in getMostRecentRequestedEmailAddress
+        if (!mostRecentRequestedEmailAddress) {
+            return;
+        } //logging is done in getMostRecentRequestedEmailAddress
         const requestedEmailAddressString: string = mostRecentRequestedEmailAddress.address;
 
         const getDataAction: GetDataForUserAction = this.oxEventService.createGetDataForUserAction(person.oxUserId);

@@ -78,7 +78,9 @@ export class PersonenkontextWorkflowAggregate {
         );
 
         // If there are no permitted orgas, return an empty array early
-        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {return [];}
+        if (!permittedOrgas.all && permittedOrgas.orgaIds.length === 0) {
+            return [];
+        }
 
         let allOrganisationsExceptKlassen: Organisation<true>[] = [];
 
@@ -92,7 +94,9 @@ export class PersonenkontextWorkflowAggregate {
             );
 
         // If no organizations were found, return an empty array
-        if (allOrganisationsExceptKlassen.length === 0) {return [];}
+        if (allOrganisationsExceptKlassen.length === 0) {
+            return [];
+        }
 
         // Return only the orgas that the admin have rights on
         let filteredOrganisations: Organisation<boolean>[] = allOrganisationsExceptKlassen.filter(
@@ -120,8 +124,12 @@ export class PersonenkontextWorkflowAggregate {
                 return aTitle.localeCompare(bTitle, 'de', { numeric: true });
             }
             // Ensure a return value for cases where name is not defined (Should never happen normally)
-            if (a.name) {return -1;}
-            if (b.name) {return 1;}
+            if (a.name) {
+                return -1;
+            }
+            if (b.name) {
+                return 1;
+            }
             return 0;
         });
 
@@ -255,7 +263,9 @@ export class PersonenkontextWorkflowAggregate {
         // When person is given, check for permission regardless of operationContext
         if (personId) {
             const hasPersonModifyPermission: boolean = await permissions.canModifyPerson(personId);
-            if (!hasPersonModifyPermission) {return new MissingPermissionsError('Unauthorized to manage person');}
+            if (!hasPersonModifyPermission) {
+                return new MissingPermissionsError('Unauthorized to manage person');
+            }
         }
 
         if (operationContext === OperationContext.PERSON_ANLEGEN) {
@@ -300,7 +310,9 @@ export class PersonenkontextWorkflowAggregate {
                 organisationId,
                 RollenSystemRecht.PERSONEN_VERWALTEN,
             );
-            if (hasVerwaltenPermissionAtOrga) {return;}
+            if (hasVerwaltenPermissionAtOrga) {
+                return;
+            }
         }
 
         return new MissingPermissionsError('Unauthorized to manage persons at the organisation');
