@@ -83,13 +83,13 @@ export class PersonenkontexteUpdate {
         );
     }
 
-    /* eslint-disable no-await-in-loop */
     private async getSentPersonenkontexte(): Promise<Personenkontext<boolean>[] | PersonenkontexteUpdateError> {
         const personenKontexte: Personenkontext<boolean>[] = [];
         for (const pkBodyParam of this.dBiamPersonenkontextBodyParams) {
             if (pkBodyParam.personId != this.personId) {
                 return new UpdatePersonIdMismatchError();
             }
+            // eslint-disable-next-line no-await-in-loop
             const pk: Option<Personenkontext<true>> = await this.dBiamPersonenkontextRepo.find(
                 pkBodyParam.personId,
                 pkBodyParam.organisationId,
@@ -229,7 +229,8 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 try {
-                    await this.dBiamPersonenkontextRepoInternal.delete(existingPK).then(() => {});
+                    // eslint-disable-next-line no-await-in-loop
+                    await this.dBiamPersonenkontextRepoInternal.delete(existingPK);
                     deletedPKs.push(existingPK);
                     this.logger.info(
                         `Schulzuordnung (Organisation:${existingPK.organisationId}, Rolle:${existingPK.rolleId}) für Benutzer mit BenutzerId: {${existingPK.personId}}.'}`,
@@ -243,7 +244,6 @@ export class PersonenkontexteUpdate {
         return deletedPKs;
     }
 
-    /* eslint-disable no-await-in-loop */
     private async add(
         existingPKs: Personenkontext<true>[],
         sentPKs: Personenkontext<boolean>[],
@@ -261,6 +261,7 @@ export class PersonenkontexteUpdate {
                 )
             ) {
                 try {
+                    // eslint-disable-next-line no-await-in-loop
                     const savedPK: Personenkontext<true> = await this.dBiamPersonenkontextRepoInternal.save(sentPK);
                     createdPKs.push(savedPK);
                     this.logger.info(
