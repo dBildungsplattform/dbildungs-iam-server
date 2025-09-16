@@ -129,7 +129,7 @@ spec:
         - name: secret-volume
           secret:
             secretName: {{ default .Values.auth.existingSecret .Values.auth.secretName }}
-        {{if and .Values.kafka.initEnabled .Values.kafka.sslEnabled }}
+        {{if .Values.kafka.enabled }}
         - name: kafka-init-volume
           configMap:
             name: {{ template "common.names.name" $ }}-kafka-init-configmap
