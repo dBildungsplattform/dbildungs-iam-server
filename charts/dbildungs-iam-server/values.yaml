@@ -76,8 +76,6 @@ auth:
   import_passphrase_salt: ""
   ox_password: ""
   basic_auth_password: ""
-  kafka_username: ""
-  kafka_password: ""
 
 ox:
   enabled: false
@@ -118,7 +116,7 @@ backend:
     enabled: true
     initialDelaySeconds: 10
     periodSeconds: 10
-    failureThreshold: 5
+    failureThreshold: 10
     httpGet:
       scheme: "HTTP"
       port: 8080
