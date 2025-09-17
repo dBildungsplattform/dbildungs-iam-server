@@ -2,6 +2,7 @@ import { DateTimeType, Entity, Enum, Index, Property } from '@mikro-orm/core';
 import { TimestampedEntity } from '../../../persistence/timestamped.entity.js';
 
 export enum EmailAddressNewStatus {
+    REQUESTED = 'REQUESTED',
     ACTIVE = 'ACTIVE',
     DEACTIVE = 'DEACTIVE',
     UNASSIGNED = 'UNASSIGNED',
@@ -10,7 +11,7 @@ export enum EmailAddressNewStatus {
 
 @Entity({ schema: 'email', tableName: 'address' })
 export class EmailAddressNewEntity extends TimestampedEntity {
-    @Property({ primary: true, nullable: false, unique: true })
+    @Property({ nullable: false, unique: true })
     public address!: string;
 
     @Property({ nullable: false })
