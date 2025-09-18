@@ -624,7 +624,7 @@ describe('PersonenkontexteUpdate', () => {
                 );
                 await sut.update();
 
-                expect(personRepoMock.save).toHaveBeenCalledTimes(1);
+                expect(personRepoMock.updatePersonMetadata).toHaveBeenCalledTimes(1);
             });
         });
         describe('when existing personenkontexte have one personenkontext with rollenart LERN', () => {
@@ -799,7 +799,7 @@ describe('PersonenkontexteUpdate', () => {
                 const saveError: DuplicatePersonalnummerError = new DuplicatePersonalnummerError(
                     'PERSONALNUMMER_SAVE_ERROR',
                 );
-                personRepoMock.save.mockResolvedValue(saveError);
+                personRepoMock.updatePersonMetadata.mockResolvedValue(saveError);
 
                 const updateResult: Personenkontext<true>[] | DuplicatePersonalnummerError = await sut.update();
 
