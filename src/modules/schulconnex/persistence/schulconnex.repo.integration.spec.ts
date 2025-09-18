@@ -180,7 +180,7 @@ describe('Schulconnex Repo', () => {
             expect(personIds).toHaveLength(0);
         });
 
-        it('should return only persons at organisation with correct serviceProvider-Role', async () => {
+        it('should return only persons that have a correct rollenerweiterung at dedicated orgas', async () => {
             const personA: Person<true> = await createPerson();
             const personB: Person<true> = await createPerson();
             const personC: Person<true> = await createPerson();
@@ -197,6 +197,9 @@ describe('Schulconnex Repo', () => {
             const organisationB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
+            const organisationC: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
             if (rolleA instanceof DomainError) throw Error();
             if (rolleB instanceof DomainError) throw Error();
 
@@ -204,6 +207,13 @@ describe('Schulconnex Repo', () => {
                 DoFactory.createRollenerweiterung(false, {
                     rolleId: rolleA.id,
                     organisationId: organisationA.id,
+                    serviceProviderId: serviceProviderA.id,
+                }),
+            );
+            await rollenErweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationC.id,
                     serviceProviderId: serviceProviderA.id,
                 }),
             );
@@ -228,6 +238,13 @@ describe('Schulconnex Repo', () => {
                         personId: personC.id,
                         rolleId: rolleB.id,
                         organisationId: organisationA.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personC.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisationC.id,
                     }),
                 ),
             ]);
@@ -235,13 +252,13 @@ describe('Schulconnex Repo', () => {
             const personIds: PersonID[] =
                 await sut.findPersonIdsWithRollenerweiterungForServiceProviderAndOptionallyOrganisations(
                     new Set([serviceProviderA.id]),
-                    new Set([organisationA.id]),
+                    new Set([organisationA.id, organisationB.id]),
                 );
             expect(personIds).toHaveLength(1);
-            expect(personIds.at(0)).toEqual(personA.id);
+            expect(personIds).toContain(personA.id);
         });
 
-        it('should return all persons at all organisation with correct serviceProvider-Role', async () => {
+        it('should return only persons that have a correct rollenerweiterung at any orga', async () => {
             const personA: Person<true> = await createPerson();
             const personB: Person<true> = await createPerson();
             const personC: Person<true> = await createPerson();
@@ -258,6 +275,9 @@ describe('Schulconnex Repo', () => {
             const organisationB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
+            const organisationC: Organisation<true> = await organisationRepository.save(
+                DoFactory.createOrganisation(false),
+            );
             if (rolleA instanceof DomainError) throw Error();
             if (rolleB instanceof DomainError) throw Error();
 
@@ -265,6 +285,13 @@ describe('Schulconnex Repo', () => {
                 DoFactory.createRollenerweiterung(false, {
                     rolleId: rolleA.id,
                     organisationId: organisationA.id,
+                    serviceProviderId: serviceProviderA.id,
+                }),
+            );
+            await rollenErweiterungRepo.create(
+                DoFactory.createRollenerweiterung(false, {
+                    rolleId: rolleA.id,
+                    organisationId: organisationC.id,
                     serviceProviderId: serviceProviderA.id,
                 }),
             );
@@ -289,6 +316,13 @@ describe('Schulconnex Repo', () => {
                         personId: personC.id,
                         rolleId: rolleB.id,
                         organisationId: organisationA.id,
+                    }),
+                ),
+                personenkontextRepoInternal.save(
+                    createPersonenkontext(false, {
+                        personId: personC.id,
+                        rolleId: rolleA.id,
+                        organisationId: organisationC.id,
                     }),
                 ),
             ]);
@@ -299,7 +333,6 @@ describe('Schulconnex Repo', () => {
                     'all',
                 );
             expect(personIds).toHaveLength(2);
-            expect(personIds.findIndex((id: PersonID) => id === personA.id)).not.toEqual(-1);
             expect(personIds).toContain(personA.id);
             expect(personIds).toContain(personB.id);
         });

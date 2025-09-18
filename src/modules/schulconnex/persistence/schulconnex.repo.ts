@@ -80,16 +80,21 @@ export class SchulconnexRepo {
             return [];
         }
 
-        let query: string = `
+        const query: string = `
             SELECT DISTINCT pk.person_id
             FROM public.personenkontext pk
-            JOIN public.rollenerweiterung re ON pk.rolle_id = re.rolle_id
-            WHERE re.service_provider_id IN (?)
+            WHERE EXISTS (
+                SELECT 1
+                FROM public.rollenerweiterung re
+                WHERE re.rolle_id = pk.rolle_id
+                AND re.service_provider_id IN (?)
+                AND re.organisation_id = pk.organisation_id
+                ${organisationIds !== 'all' && organisationIds.size > 0 ? 'AND re.organisation_id IN (?)' : ''}
+            )
         `;
-        const params: Array<string>[] = [Array.from(serviceProviderIds)];
 
+        const params: string[][] = [Array.from(serviceProviderIds)];
         if (organisationIds !== 'all' && organisationIds.size > 0) {
-            query += ` AND pk.organisation_id IN (?) AND re.organisation_id IN (?)`;
             params.push(Array.from(organisationIds), Array.from(organisationIds));
         }
 
