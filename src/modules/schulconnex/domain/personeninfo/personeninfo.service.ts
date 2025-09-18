@@ -69,7 +69,7 @@ export class PersonenInfoService {
         ]);
 
         const personIds: PersonID[] = Array.from(new Set([...idsWithRollenerweiterung, ...idsWithKontext]))
-            .sort()
+            .sort((a: string, b: string) => a.localeCompare(b))
             .slice(offset, offset + limit);
 
         const [persons, emailsForPersons, kontexteForPersons, userLocksForPersons]: [
