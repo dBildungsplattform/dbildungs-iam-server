@@ -58,7 +58,7 @@ export class SchulconnexRepo {
 
     /**
      * Finds all unique person IDs that have at least one personenkontext
-     * where the associated rolle has a rollenerweiterung entry for one of the given service providers.
+     * where the associated organisation and rolle have a rollenerweiterung entry for one of the given service providers.
      * Optionally filters by organisation IDs if provided.
      *
      * Supports consistent pagination via stable sorting on `person_id` (if used).
