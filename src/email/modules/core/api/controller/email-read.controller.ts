@@ -10,10 +10,11 @@ import {
     ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { FindEmailAddressByPersonIdParams } from './find-email-address-by-person-id.params.js';
-import { EmailAddressResponse } from './email-address.response.js';
-import { ClassLogger } from '../../../core/logging/class-logger.js';
-import { EmailAddress, EmailAddressStatus } from '../../../modules/email/domain/email-address.js';
+import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
+import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
+import { ClassLogger } from '../../../../../core/logging/class-logger.js';
+import { EmailAddress } from '../../domain/EmailAddress.js';
+import { EmailAddressStatus } from '../../persistence/email-address.entity.js';
 
 @ApiTags('email')
 @ApiBearerAuth()
@@ -33,18 +34,20 @@ export class EmailReadController {
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
     // eslint-disable-next-line @typescript-eslint/require-await
     public async findEmailAddressesByPersonId(
-        @Param() findEmailAddressByPersonIdParams: FindEmailAddressByPersonIdParams,
+        @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdParams,
         //@Permissions() permissions: PersonPermissions,
     ): Promise<EmailAddressResponse[]> {
         //currently just a dummy
-        this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.personId}`);
+        this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
         const emailAddress: EmailAddress<true> = EmailAddress.construct(
             '0',
             new Date(),
             new Date(),
-            undefined,
             'test@schule-sh.de',
-            EmailAddressStatus.ENABLED,
+            0,
+            EmailAddressStatus.ACTIVE,
+            undefined,
+            undefined,
             undefined,
         );
 

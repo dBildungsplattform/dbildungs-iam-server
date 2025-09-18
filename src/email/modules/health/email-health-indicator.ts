@@ -2,7 +2,7 @@ import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { Injectable } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
-import { EmailAddressResponse } from '../api/email-address.response.js';
+import { EmailAddressResponse } from '../core/api/dtos/response/email-address.response.js';
 import { HttpService } from '@nestjs/axios';
 
 @Injectable()

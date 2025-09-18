@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EmailAddress } from '../../../modules/email/domain/email-address.js';
+import { EmailAddress } from '../../../domain/EmailAddress.js';
+import { EmailAddressStatus } from '../../../persistence/email-address.entity.js';
 
 export class EmailAddressResponse {
     @ApiProperty()
@@ -15,10 +16,10 @@ export class EmailAddressResponse {
     public address: string;
 
     @ApiProperty()
-    public status: string;
+    public status: EmailAddressStatus;
 
     @ApiProperty()
-    public personId?: string;
+    public spshPersonId?: string;
 
     @ApiProperty()
     public oxUserId?: string;
@@ -29,7 +30,7 @@ export class EmailAddressResponse {
         this.updatedAt = emailAddress.updatedAt;
         this.address = emailAddress.address;
         this.status = emailAddress.status;
-        this.personId = emailAddress.personId;
-        this.oxUserId = emailAddress.oxUserID ?? undefined;
+        this.spshPersonId = emailAddress.spshPersonId;
+        this.oxUserId = emailAddress.oxUserId ?? undefined;
     }
 }

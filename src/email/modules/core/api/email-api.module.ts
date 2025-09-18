@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { LoggerModule } from '../../../core/logging/logger.module.js';
-import { EmailReadController } from './email-read.controller.js';
+import { LoggerModule } from '../../../../core/logging/logger.module.js';
+import { EmailReadController } from './controller/email-read.controller.js';
 
 @Module({
     imports: [LoggerModule.register(EmailApiModule.name)],
