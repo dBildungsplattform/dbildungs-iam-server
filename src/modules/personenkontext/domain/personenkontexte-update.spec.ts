@@ -221,7 +221,7 @@ describe('PersonenkontexteUpdate', () => {
                                 id: pk1.rolleId,
                                 serviceProviderData: [DoFactory.createServiceProvider(true)],
                             });
-                        } else if(id === pk2.rolleId) {
+                        } else if (id === pk2.rolleId) {
                             return DoFactory.createRolle(true, {
                                 rollenart: RollenArt.LEHR,
                                 merkmale: [RollenMerkmal.KOPERS_PFLICHT],
@@ -229,7 +229,7 @@ describe('PersonenkontexteUpdate', () => {
                                 serviceProviderData: [DoFactory.createServiceProvider(true)],
                             });
                         }
-                        return undefined
+                        return undefined;
                     },
                 });
                 rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
@@ -258,7 +258,7 @@ describe('PersonenkontexteUpdate', () => {
                                 id: pk1.rolleId,
                                 serviceProviderData: [DoFactory.createServiceProvider(true)],
                             });
-                        } else if(id === pk2.rolleId) {
+                        } else if (id === pk2.rolleId) {
                             return DoFactory.createRolle(true, {
                                 rollenart: RollenArt.LEHR,
                                 merkmale: [RollenMerkmal.KOPERS_PFLICHT],
@@ -266,7 +266,7 @@ describe('PersonenkontexteUpdate', () => {
                                 serviceProviderData: [DoFactory.createServiceProvider(true)],
                             });
                         }
-                        return undefined
+                        return undefined;
                     },
                 });
                 rolleRepoMock.findByIds.mockResolvedValue(mapRollen);
@@ -276,12 +276,13 @@ describe('PersonenkontexteUpdate', () => {
                 const updateResult: Personenkontext<true>[] | PersonenkontexteUpdateError = await sut.update();
 
                 expect(updateResult).toBeInstanceOf(Array);
-                loggerMock.error.mock.calls.find((call) => {
-                    call[0].includes(`Personenkontext with ID ${pk2.id} could not be deleted!`) && (call[1]as Error).message === 'DB Error';
+                loggerMock.error.mock.calls.find((call: [message: string, trace?: unknown]) => {
+                    return (
+                        call[0].includes(`Personenkontext with ID ${pk2.id} could not be deleted!`) &&
+                        (call[1] as Error).message === 'DB Error'
+                    );
                 });
-
             });
-
         });
 
         describe('when personenkontext could not be saved', () => {

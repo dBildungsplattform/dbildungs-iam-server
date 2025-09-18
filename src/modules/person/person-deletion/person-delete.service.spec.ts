@@ -104,7 +104,7 @@ describe('PersonDeleteService', () => {
                 personenkontextRepoMock.findByPerson.mockResolvedValueOnce([
                     createMock<Personenkontext<true>>({
                         async getRolle(): Promise<Option<Rolle<true>>> {
-                            return Promise.reject('reason');
+                            return Promise.reject(new Error('reason'));
                         },
                     }),
                 ]);

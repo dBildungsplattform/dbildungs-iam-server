@@ -24,7 +24,6 @@ class TestClass {
 
 describe('KafkaEventHandler decorator', () => {
     it('should set metadata', () => {
-        // eslint-disable-next-line jest/unbound-method
         const meta: unknown = Reflect.getMetadata(KAFKA_EVENT_HANDLER_META, TestClass.prototype.handler);
 
         expect(meta).toBe(TestEvent);

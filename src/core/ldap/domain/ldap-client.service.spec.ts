@@ -209,7 +209,7 @@ describe('LDAP Client Service', () => {
         jest.resetAllMocks();
         await DatabaseTestModule.clearDatabase(orm);
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         jest.spyOn(ldapClientService as any, 'executeWithRetry').mockImplementation((...args: unknown[]) => {
             //Needed To globally mock the private executeWithRetry function (otherwise test run too long)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

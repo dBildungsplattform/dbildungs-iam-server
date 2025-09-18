@@ -1,7 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
-// import jest from "eslint-plugin-jest";
+import jest from "eslint-plugin-jest";
 import { Linter } from "eslint";
 import prettier from 'eslint-plugin-prettier';
 
@@ -83,49 +83,49 @@ export default defineConfig(
         ignores: ['**/*spec.ts', 'test-migrations/**/*.ts', 'migrations/**/*.ts'],
         rules: rules,
     },
-    // {
-    //     name: 'jest-config',
-    //     extends: [
-    //         tseslint.configs.recommendedTypeChecked,
-    //         // 'prettier',
-    //     ],
-    //     ...jest.configs['flat/recommended'],
-    //     plugins: { tseslint: tseslint, jest: jest },
-    //     languageOptions: {
-    //         parser: tseslint.parser,
-    //         parserOptions: {
-    //             ecmaVersion: 2020,
-    //             sourceType: "module",
-    //             project: ['./tsconfig.json'],
-    //         },
-    //     },
-    //     files: ['**/*spec.ts'],
-    //     rules: {
-    //         // ...rules,
-    //         // you should turn the original rule off *only* for test files
-    //         '@typescript-eslint/unbound-method': 'off',
-    //         // 'jest/unbound-method': 'error',
-    //     },
-    // },
-    // {
-    //     extends: [
-    //         tseslint.configs.recommendedTypeChecked,
-    //         // 'prettier',
-    //     ],
-    //     plugins: { tseslint: tseslint },
-    //     languageOptions: {
-    //         parser: tseslint.parser,
-    //         parserOptions: {
-    //             ecmaVersion: 2020,
-    //             sourceType: "module",
-    //             project: ['./tsconfig.json'],
-    //         },
-    //     },
-    //     files: ['test-migrations/**/*.ts', 'migrations/**/*.ts' ],
-    //     rules: {
-    //         ...rules,
-    //         'no-await-in-loop': 'off',
-    //         '@typescript-eslint/require-await': 'off',
-    //     },
-    // },
+    {
+        name: 'jest-config',
+        extends: [
+            tseslint.configs.recommendedTypeChecked,
+        ],
+        plugins: { tseslint: tseslint, import: importPlugin, prettier: prettier, jest: jest },
+        languageOptions: {
+            parser: tseslint.parser,
+            parserOptions: {
+                ecmaVersion: 2020,
+                sourceType: "module",
+                project: ['./tsconfig.json'],
+            },
+        },
+        files: ['**/*spec.ts'],
+        rules: {
+            ...rules,
+            // you should turn the original rule off *only* for test files
+            '@typescript-eslint/unbound-method': 'off',
+            '@typescript-eslint/no-empty-function': 'off',
+            // 'jest/unbound-method': 'error',
+        },
+    },
+    {
+        extends: [
+            tseslint.configs.recommendedTypeChecked,
+        ],
+        plugins: { tseslint: tseslint, import: importPlugin, prettier: prettier },
+        languageOptions: {
+            parser: tseslint.parser,
+            parserOptions: {
+                ecmaVersion: 2020,
+                sourceType: "module",
+                project: ['./tsconfig.json'],
+            },
+        },
+        files: ['test-migrations/**/*.ts', 'migrations/**/*.ts' ],
+        rules: {
+            ...rules,
+            'no-await-in-loop': 'off',
+            '@typescript-eslint/require-await': 'off',
+            '@typescript-eslint/explicit-member-accessibility': 'off',
+            '@typescript-eslint/no-empty-function': 'off',
+        },
+    },
 );

@@ -14,6 +14,8 @@ jest.mock('../authentication/services/oidc-client.service.js', () => {
         tryGetClient: function (): Promise<BaseClient> {
             if (error === undefined) {
                 return Promise.resolve(createMock<BaseClient>());
+            } else if (typeof error === 'string') {
+                return Promise.reject(new Error(error));
             } else {
                 return Promise.reject(error);
             }

@@ -194,8 +194,12 @@ describe('Schulconnex Repo', () => {
             const organisationB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolleA instanceof DomainError) throw Error();
-            if (rolleB instanceof DomainError) throw Error();
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(
@@ -249,8 +253,12 @@ describe('Schulconnex Repo', () => {
             const organisationB: Organisation<true> = await organisationRepository.save(
                 DoFactory.createOrganisation(false),
             );
-            if (rolleA instanceof DomainError) throw Error();
-            if (rolleB instanceof DomainError) throw Error();
+            if (rolleA instanceof DomainError) {
+                throw Error();
+            }
+            if (rolleB instanceof DomainError) {
+                throw Error();
+            }
 
             await Promise.all([
                 personenkontextRepoInternal.save(

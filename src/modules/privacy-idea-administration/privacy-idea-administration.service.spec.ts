@@ -139,6 +139,7 @@ const mockErrorResponse = (): never => {
 };
 
 const mockNonErrorThrow = (): never => {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw { message: mockErrorMsg };
 };
 
@@ -455,7 +456,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 service as unknown as { getJWTToken: () => Promise<string> },
                 'getJWTToken',
             ).mockImplementationOnce(() => {
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw 'This is a non-Error throw';
             });
 
@@ -508,7 +509,7 @@ describe(`PrivacyIdeaAdministrationService`, () => {
                 service as unknown as { getUserTokens: () => Promise<string> },
                 'getUserTokens',
             ).mockImplementationOnce(() => {
-                // eslint-disable-next-line @typescript-eslint/no-throw-literal
+                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw 'This is a non-Error throw';
             });
 
@@ -1013,9 +1014,9 @@ describe(`PrivacyIdeaAdministrationService`, () => {
             ).mockResolvedValueOnce({ ok: true, value: undefined });
             const result: Result<void, DomainError> = await service.updateUsername(oldUserName, newUserName);
             expect(result.ok).toBe(true);
-            // eslint-disable-next-line @typescript-eslint/dot-notation
+
             expect(service['deleteUser']).toHaveBeenCalledWith(oldUserName, mockJWTToken);
-            // eslint-disable-next-line @typescript-eslint/dot-notation
+
             expect(service['addUser']).toHaveBeenCalledWith(newUserName);
         });
 

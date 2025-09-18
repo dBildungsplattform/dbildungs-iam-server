@@ -81,7 +81,9 @@ describe('PersonenkontextScope', () => {
 
                 for (let i: number = 0; i < 30; i++) {
                     const rolle: Rolle<true> | DomainError = await rolleRepo.save(DoFactory.createRolle(false));
-                    if (rolle instanceof DomainError) throw Error();
+                    if (rolle instanceof DomainError) {
+                        throw Error();
+                    }
                     await createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
                 }
             });
@@ -115,7 +117,9 @@ describe('PersonenkontextScope', () => {
                 for (let i: number = 0; i < 30; i++) {
                     personenkontextPromises.push(
                         rolleRepo.save(DoFactory.createRolle(false)).then((rolle: Rolle<true> | DomainError) => {
-                            if (rolle instanceof DomainError) throw Error();
+                            if (rolle instanceof DomainError) {
+                                throw Error();
+                            }
                             return createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
                         }),
                     );
@@ -155,7 +159,9 @@ describe('PersonenkontextScope', () => {
                             rolleRepo
                                 .save(DoFactory.createRolle(false, { rollenart: rolleArt }))
                                 .then((rolle: Rolle<true> | DomainError) => {
-                                    if (rolle instanceof DomainError) throw Error();
+                                    if (rolle instanceof DomainError) {
+                                        throw Error();
+                                    }
                                     return createAndPersistPersonenkontext(em, person.id, rolle.id, organisation1.id);
                                 }),
                         );
