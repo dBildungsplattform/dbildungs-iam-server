@@ -334,7 +334,7 @@ describe('Schulconnex Repo', () => {
                 );
             expect(personIds).toHaveLength(2);
             expect(personIds).toContain(personA.id);
-            expect(personIds).toContain(personB.id);
+            expect(personIds).toContain(personC.id);
         });
     });
 
