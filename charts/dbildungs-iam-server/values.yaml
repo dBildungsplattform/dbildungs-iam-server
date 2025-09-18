@@ -168,7 +168,7 @@ backend:
   serviceMonitor:
     enabled: true
     path: '/metrics'
-    interval: 30m
+    interval: 1m
     endpoints:
       - port: 'web'
   extraEnvVars: []
@@ -235,7 +235,7 @@ emailBackend:
   serviceMonitor:
     enabled: false # No Metrics yet?
     path: '/metrics'
-    interval: 1m
+    interval: 30m
     endpoints:
       - port: 'web'
   extraEnvVars: []
