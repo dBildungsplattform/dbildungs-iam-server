@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EmailAddress } from '../../../domain/EmailAddress.js';
+import { EmailAddress } from '../../../domain/email-address.js';
 import { EmailAddressStatus } from '../../../persistence/email-address.entity.js';
 
 export class EmailAddressResponse {

@@ -1,19 +1,17 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import {
     ApiBearerAuth,
-    ApiForbiddenResponse,
     ApiInternalServerErrorResponse,
     ApiOAuth2,
     ApiOkResponse,
     ApiOperation,
     ApiTags,
-    ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { FindEmailAddressBySpshPersonIdParams } from '../dtos/params/find-email-address-by-spsh-person-id.params.js';
 import { EmailAddressResponse } from '../dtos/response/email-address.response.js';
 import { ClassLogger } from '../../../../../core/logging/class-logger.js';
-import { EmailAddress } from '../../domain/EmailAddress.js';
+import { EmailAddress } from '../../domain/email-address.js';
 import { EmailAddressStatus } from '../../persistence/email-address.entity.js';
 
 @ApiTags('email')
@@ -29,13 +27,10 @@ export class EmailReadController {
         description: 'The email-addresses for corresponding person were successfully returned.',
         type: [EmailAddressResponse],
     })
-    @ApiUnauthorizedResponse({ description: 'Not authorized to get email-addresses by personId.' })
-    @ApiForbiddenResponse({ description: 'Insufficient permission to get email-addresses by personId.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error while getting email-addresses by personId.' })
     // eslint-disable-next-line @typescript-eslint/require-await
     public async findEmailAddressesByPersonId(
         @Param() findEmailAddressByPersonIdParams: FindEmailAddressBySpshPersonIdParams,
-        //@Permissions() permissions: PersonPermissions,
     ): Promise<EmailAddressResponse[]> {
         //currently just a dummy
         this.logger.info(`PersonId:${findEmailAddressByPersonIdParams.spshPersonId}`);
