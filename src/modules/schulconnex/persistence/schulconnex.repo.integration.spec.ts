@@ -300,7 +300,8 @@ describe('Schulconnex Repo', () => {
                 );
             expect(personIds).toHaveLength(2);
             expect(personIds.findIndex((id: PersonID) => id === personA.id)).not.toEqual(-1);
-            expect(personIds.findIndex((id: PersonID) => id === personB.id)).not.toEqual(-1);
+            expect(personIds).toContain(personA.id);
+            expect(personIds).toContain(personB.id);
         });
     });
 
