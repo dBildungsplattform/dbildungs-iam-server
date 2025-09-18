@@ -218,6 +218,58 @@ describe('Provider Controller Test', () => {
                     RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
                 ]);
             });
+
+            it('should create a new service-provider with undefined logo', async () => {
+                const spId: string = faker.string.uuid();
+                const spNew: ServiceProvider<false> = {
+                    ...DoFactory.createServiceProvider(false),
+                    logo: undefined,
+                };
+                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, { id: spId, logo: undefined });
+
+                serviceProviderFactoryMock.createNew.mockReturnValueOnce(spNew);
+                serviceProviderRepoMock.save.mockResolvedValueOnce(sp);
+
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                const spBodyParams: CreateServiceProviderBodyParams = {
+                    name: sp.name,
+                    target: sp.target,
+                    url: sp.url ?? '',
+                    kategorie: sp.kategorie,
+                    providedOnSchulstrukturknoten: sp.providedOnSchulstrukturknoten,
+                    externalSystem: sp.externalSystem,
+                    requires2fa: sp.requires2fa,
+                    keycloakGroup: sp.keycloakGroup,
+                    keycloakRole: sp.keycloakRole,
+                    logo: undefined,
+                    logoMimeType: sp.logoMimeType,
+                    vidisAngebotId: sp.vidisAngebotId,
+                };
+
+                const spResponse: ServiceProviderResponse = await providerController.createNewServiceProvider(
+                    spBodyParams,
+                    personPermissions,
+                );
+
+                expect(spNew.logo).toBeUndefined();
+                expect(spResponse).toBeDefined();
+                expect(serviceProviderFactoryMock.createNew).toHaveBeenCalledWith(
+                    sp.name,
+                    sp.target,
+                    sp.url,
+                    sp.kategorie,
+                    sp.providedOnSchulstrukturknoten,
+                    undefined,
+                    sp.logoMimeType,
+                    sp.keycloakGroup,
+                    sp.keycloakRole,
+                    sp.externalSystem,
+                    sp.requires2fa,
+                    sp.vidisAngebotId,
+                );
+            });
         });
 
         describe('when user does not have the RollenSystemRecht SERVICEPROVIDER_VERWALTEN', () => {
@@ -325,6 +377,104 @@ describe('Provider Controller Test', () => {
                 expect(personPermissions.hasSystemrechteAtRootOrganisation).toHaveBeenCalledWith([
                     RollenSystemRecht.SERVICEPROVIDER_VERWALTEN,
                 ]);
+            });
+
+            it('should use fallback values from serviceProvider if body params are missing', async () => {
+                const spId: string = faker.string.uuid();
+                const sp: ServiceProvider<true> = DoFactory.createServiceProvider(true, { id: spId });
+                serviceProviderFactoryMock.construct.mockReturnValueOnce(sp);
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(sp);
+                serviceProviderRepoMock.save.mockResolvedValueOnce(sp);
+
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                const spBodyParams: UpdateServiceProviderBodyParams = {};
+
+                const spResponse: ServiceProviderResponse = await providerController.updateServiceProvider(
+                    { angebotId: spId },
+                    spBodyParams,
+                    personPermissions,
+                );
+
+                expect(spResponse).toBeDefined();
+                expect(serviceProviderFactoryMock.construct).toHaveBeenCalledWith(
+                    sp.id,
+                    sp.createdAt,
+                    sp.updatedAt,
+                    sp.name,
+                    sp.target,
+                    sp.url,
+                    sp.kategorie,
+                    sp.providedOnSchulstrukturknoten,
+                    sp.logo,
+                    sp.logoMimeType,
+                    sp.keycloakGroup,
+                    sp.keycloakRole,
+                    sp.externalSystem,
+                    sp.requires2fa,
+                    sp.vidisAngebotId,
+                );
+            });
+
+            it('uses spBodyParams.providedOnSchulstrukturknoten if set', async () => {
+                const spId: string = faker.string.uuid();
+                const bodyNode: string = faker.string.uuid();
+                const entityNode: string = faker.string.uuid();
+
+                const existingProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    id: spId,
+                    kategorie: ServiceProviderKategorie.LMS,
+                    providedOnSchulstrukturknoten: entityNode,
+                });
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(existingProvider);
+
+                organisationRepoMock.findById.mockResolvedValueOnce(
+                    DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LMS }),
+                );
+                serviceProviderFactoryMock.construct.mockReturnValueOnce(existingProvider);
+                serviceProviderRepoMock.save.mockResolvedValueOnce(existingProvider);
+
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                const spBodyParams: UpdateServiceProviderBodyParams = {
+                    kategorie: ServiceProviderKategorie.LMS,
+                    providedOnSchulstrukturknoten: bodyNode,
+                };
+
+                await providerController.updateServiceProvider({ angebotId: spId }, spBodyParams, personPermissions);
+
+                expect(organisationRepoMock.findById).toHaveBeenCalledWith(bodyNode);
+            });
+
+            it('uses serviceProvider.providedOnSchulstrukturknoten if body params are missing', async () => {
+                const spId: string = faker.string.uuid();
+                const entityNode: string = faker.string.uuid();
+
+                const existingProvider: ServiceProvider<true> = DoFactory.createServiceProvider(true, {
+                    id: spId,
+                    kategorie: ServiceProviderKategorie.LMS,
+                    providedOnSchulstrukturknoten: entityNode,
+                });
+                serviceProviderRepoMock.findById.mockResolvedValueOnce(existingProvider);
+
+                organisationRepoMock.findById.mockResolvedValueOnce(
+                    DoFactory.createOrganisation(true, { typ: OrganisationsTyp.LMS }),
+                );
+                serviceProviderFactoryMock.construct.mockReturnValueOnce(existingProvider);
+                serviceProviderRepoMock.save.mockResolvedValueOnce(existingProvider);
+
+                const personPermissions: DeepMocked<PersonPermissions> = createMock<PersonPermissions>({});
+                personPermissions.hasSystemrechteAtRootOrganisation.mockResolvedValueOnce(true);
+
+                const spBodyParams: UpdateServiceProviderBodyParams = {
+                    kategorie: ServiceProviderKategorie.LMS,
+                };
+
+                await providerController.updateServiceProvider({ angebotId: spId }, spBodyParams, personPermissions);
+
+                expect(organisationRepoMock.findById).toHaveBeenCalledWith(entityNode);
             });
         });
 

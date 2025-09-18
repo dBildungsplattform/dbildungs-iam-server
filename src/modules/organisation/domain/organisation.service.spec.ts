@@ -766,8 +766,8 @@ describe('OrganisationService', () => {
 
                 organisationRepositoryMock.findBy.mockResolvedValue([organisations, total]);
 
-                const result: Paged<Organisation<true>> = await organisationService.findAllOrganizations(organisation);
-
+                const filter: Partial<Organisation<false>> = {};
+                const result: Paged<Organisation<true>> = await organisationService.findAllOrganizations(filter);
                 expect(result).toEqual({
                     total: total,
                     offset: 0,

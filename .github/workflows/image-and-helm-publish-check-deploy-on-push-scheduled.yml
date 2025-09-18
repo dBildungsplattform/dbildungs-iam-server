@@ -73,6 +73,18 @@ jobs:
     permissions:
       contents: read
 
+  tests_and_sonarcloud:
+    name: "Tests and Sonarcloud"
+    if: ${{ github.event_name == 'push' }}
+    uses: dBildungsplattform/dbp-github-workflows/.github/workflows/check-nest-test-sonarcloud.yaml@7
+    with:
+      node_version: '22'
+      deploy_stage: 'dev'
+      timeout_minutes: 20
+    permissions:
+      contents: read
+    secrets: inherit
+
   build_image_on_push:
     needs:
       - check_deployment_clearance

@@ -31,14 +31,14 @@ describe('OrganisationPersistenceMapperProfile', () => {
     describe('when the mapper is initialized', () => {
         it('should map Organisation Do into Organisatio Entity', () => {
             const organisationDO: OrganisationDo<true> = DoFactory.createOrganisation(true);
-            expect(() => sut.map(organisationDO, OrganisationDo, OrganisationEntity)).not.toThrowError(MappingError);
+            expect(() => sut.map(organisationDO, OrganisationDo, OrganisationEntity)).not.toThrow(MappingError);
         });
 
         it('should map organisation entity into organisation Domain object', () => {
             const organisation: OrganisationEntity = new OrganisationEntity();
             organisation.administriertVon = faker.string.uuid();
             organisation.zugehoerigZu = faker.string.uuid();
-            expect(() => sut.map(organisation, OrganisationEntity, OrganisationDo)).not.toThrowError(MappingError);
+            expect(() => sut.map(organisation, OrganisationEntity, OrganisationDo)).not.toThrow(MappingError);
         });
     });
 });
