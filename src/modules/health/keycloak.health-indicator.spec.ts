@@ -68,9 +68,7 @@ describe('Keycloak health indicator', () => {
             .then((r: HealthIndicatorResult) => r['Keycloak']);
         expect(checkResult).toBeDefined();
         expect(checkResult?.status).toBe('down');
-        expect(checkResult?.['message']).toBe(
-            'Keycloak does not seem to be up and there is no error message available',
-        );
+        expect(checkResult?.['message']).toBe('Keycloak does not seem to be up: something horrible happened');
         error = undefined;
     });
 });

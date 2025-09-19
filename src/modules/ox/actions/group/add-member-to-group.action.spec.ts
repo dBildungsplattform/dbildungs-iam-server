@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { AddMemberToGroupAction, AddMemberToGroupResponseBody } from './add-member-to-group.action.js';
+import { AddMemberToGroupAction } from './add-member-to-group.action.js';
 
 describe('AddMemberToGroupAction', () => {
     describe('buildRequest', () => {
